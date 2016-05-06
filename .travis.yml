@@ -6,6 +6,13 @@ go:
     - 1.6
     - tip
 
+before_install:
+  - go get github.com/mattn/goveralls
+  - go get golang.org/x/tools/cmd/cover
+
+script:
+  - $HOME/gopath/bin/goveralls -v -service=travis-ci
+
 matrix:
   allow_failures:
     - go: tip
