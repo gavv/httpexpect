@@ -14,7 +14,7 @@ func (v *Value) Raw() interface{} {
 }
 
 func (v *Value) Object() *Object {
-	data, ok := v.value.(map[string]interface{})
+	data, ok := canonMap(v.checker, v.value)
 	if !ok {
 		v.checker.Fail("can't convert value to object")
 	}
@@ -22,7 +22,7 @@ func (v *Value) Object() *Object {
 }
 
 func (v *Value) Array() *Array {
-	data, ok := v.value.([]interface{})
+	data, ok := canonArray(v.checker, v.value)
 	if !ok {
 		v.checker.Fail("can't convert value to array")
 	}
