@@ -3,16 +3,15 @@ package httpexpect
 type Object struct {
 	checker Checker
 	value   map[string]interface{}
-	canon   map[string]interface{}
 }
 
 func NewObject(checker Checker, value map[string]interface{}) *Object {
-	o := &Object{checker, value, value}
-	v, ok := canonMap(o.checker, o.value)
-	if ok {
-		o.canon = v
+	if value == nil {
+		checker.Fail("expected non-nil map value")
+	} else {
+		value, _ = canonMap(checker, value)
 	}
-	return o
+	return &Object{checker, value}
 }
 
 func (o *Object) Raw() map[string]interface{} {
@@ -46,21 +45,13 @@ func (o *Object) Value(key string) *Value {
 
 func (o *Object) Empty() *Object {
 	expected := make(map[string]interface{})
-	actual := o.canon
-	if actual == nil {
-		actual = make(map[string]interface{})
-	}
-	o.checker.Equal(expected, actual)
+	o.checker.Equal(expected, o.value)
 	return o
 }
 
 func (o *Object) NotEmpty() *Object {
 	expected := make(map[string]interface{})
-	actual := o.canon
-	if actual == nil {
-		actual = make(map[string]interface{})
-	}
-	o.checker.NotEqual(expected, actual)
+	o.checker.NotEqual(expected, o.value)
 	return o
 }
 
@@ -69,7 +60,7 @@ func (o *Object) Equal(v map[string]interface{}) *Object {
 	if !ok {
 		return o
 	}
-	o.checker.Equal(expected, o.canon)
+	o.checker.Equal(expected, o.value)
 	return o
 }
 
@@ -78,7 +69,7 @@ func (o *Object) NotEqual(v map[string]interface{}) *Object {
 	if !ok {
 		return o
 	}
-	o.checker.NotEqual(expected, o.canon)
+	o.checker.NotEqual(expected, o.value)
 	return o
 }
 
@@ -119,7 +110,7 @@ func (o *Object) ValueEqual(k string, v interface{}) *Object {
 	if !ok {
 		return o
 	}
-	actual, ok := canonValue(o.checker, o.canon[k])
+	actual, ok := canonValue(o.checker, o.value[k])
 	if !ok {
 		return o
 	}
@@ -136,12 +127,12 @@ func (o *Object) ValueNotEqual(k string, v interface{}) *Object {
 	if !ok {
 		return o
 	}
-	o.checker.NotEqual(expected, o.canon[k])
+	o.checker.NotEqual(expected, o.value[k])
 	return o
 }
 
 func (o *Object) containsKey(key string) bool {
-	for k, _ := range o.canon {
+	for k, _ := range o.value {
 		if k == key {
 			return true
 		}
@@ -158,7 +149,7 @@ func (o *Object) containsMap(sm map[string]interface{}) bool {
 		if !o.containsKey(k) {
 			return false
 		}
-		if !o.checker.Compare(v, o.canon[k]) {
+		if !o.checker.Compare(v, o.value[k]) {
 			return false
 		}
 	}

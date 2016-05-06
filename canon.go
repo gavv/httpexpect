@@ -17,22 +17,28 @@ func canonNumber(checker Checker, number interface{}) (f float64, ok bool) {
 	return
 }
 
-func canonArray(checker Checker, in []interface{}) ([]interface{}, bool) {
-	out, ok := canonValue(checker, in)
-	if out == nil || !ok {
-		return nil, ok
-	} else {
-		return out.([]interface{}), ok
+func canonArray(checker Checker, in interface{}) ([]interface{}, bool) {
+	var out []interface{}
+	data, ok := canonValue(checker, in)
+	if ok {
+		out, ok = data.([]interface{})
+		if !ok {
+			checker.Fail("expected array, got %v", out)
+		}
 	}
+	return out, ok
 }
 
-func canonMap(checker Checker, in map[string]interface{}) (map[string]interface{}, bool) {
-	out, ok := canonValue(checker, in)
-	if out == nil || !ok {
-		return nil, ok
-	} else {
-		return out.(map[string]interface{}), ok
+func canonMap(checker Checker, in interface{}) (map[string]interface{}, bool) {
+	var out map[string]interface{}
+	data, ok := canonValue(checker, in)
+	if ok {
+		out, ok = data.(map[string]interface{})
+		if !ok {
+			checker.Fail("expected map, got %v", out)
+		}
 	}
+	return out, ok
 }
 
 func canonValue(checker Checker, in interface{}) (interface{}, bool) {

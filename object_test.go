@@ -5,16 +5,48 @@ import (
 	"testing"
 )
 
+func TestObjectGetters(t *testing.T) {
+	checker := &mockChecker{}
+
+	m := map[string]interface{}{
+		"foo": 123.0,
+		"bar": []interface{}{"456", 789.0},
+		"baz": map[string]interface{}{
+			"a": "b",
+		},
+	}
+
+	value := NewObject(checker, m)
+
+	keys := []interface{}{"foo", "bar", "baz"}
+
+	values := []interface{}{
+		123.0,
+		[]interface{}{"456", 789.0},
+		map[string]interface{}{
+			"a": "b",
+		},
+	}
+
+	value.Keys().ElementsAnyOrder(keys...)
+	checker.AssertSuccess(t)
+	checker.Reset()
+
+	value.Values().ElementsAnyOrder(values...)
+	checker.AssertSuccess(t)
+	checker.Reset()
+
+	assert.Equal(t, m["foo"], value.Value("foo").Raw())
+	assert.Equal(t, m["bar"], value.Value("bar").Raw())
+	assert.Equal(t, m["baz"], value.Value("baz").Raw())
+}
+
 func TestObjectEmpty(t *testing.T) {
 	checker := &mockChecker{}
 
 	value1 := NewObject(checker, nil)
 
-	value1.Empty()
-	checker.AssertSuccess(t)
-	checker.Reset()
-
-	value1.NotEmpty()
+	_ = value1
 	checker.AssertFailed(t)
 	checker.Reset()
 
@@ -39,52 +71,12 @@ func TestObjectEmpty(t *testing.T) {
 	checker.Reset()
 }
 
-func TestObjectEqualNil(t *testing.T) {
-	checker := &mockChecker{}
-
-	value := NewObject(checker, nil)
-
-	assert.Equal(t, map[string]interface{}(nil), value.Raw())
-
-	value.Equal(nil)
-	checker.AssertSuccess(t)
-	checker.Reset()
-
-	value.NotEqual(nil)
-	checker.AssertFailed(t)
-	checker.Reset()
-
-	value.Equal(map[string]interface{}{})
-	checker.AssertFailed(t)
-	checker.Reset()
-
-	value.NotEqual(map[string]interface{}{})
-	checker.AssertSuccess(t)
-	checker.Reset()
-
-	value.Equal(map[string]interface{}{"":nil})
-	checker.AssertFailed(t)
-	checker.Reset()
-
-	value.NotEqual(map[string]interface{}{"":nil})
-	checker.AssertSuccess(t)
-	checker.Reset()
-}
-
 func TestObjectEqualEmpty(t *testing.T) {
 	checker := &mockChecker{}
 
 	value := NewObject(checker, map[string]interface{}{})
 
 	assert.Equal(t, map[string]interface{}{}, value.Raw())
-
-	value.Equal(nil)
-	checker.AssertFailed(t)
-	checker.Reset()
-
-	value.NotEqual(nil)
-	checker.AssertSuccess(t)
-	checker.Reset()
 
 	value.Equal(map[string]interface{}{})
 	checker.AssertSuccess(t)
@@ -106,17 +98,9 @@ func TestObjectEqualEmpty(t *testing.T) {
 func TestObjectEqual(t *testing.T) {
 	checker := &mockChecker{}
 
-	value := NewObject(checker, map[string]interface{}{"foo": 123})
+	value := NewObject(checker, map[string]interface{}{"foo": 123.0})
 
-	assert.Equal(t, map[string]interface{}{"foo": 123}, value.Raw())
-
-	value.Equal(nil)
-	checker.AssertFailed(t)
-	checker.Reset()
-
-	value.NotEqual(nil)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	assert.Equal(t, map[string]interface{}{"foo": 123.0}, value.Raw())
 
 	value.Equal(map[string]interface{}{})
 	checker.AssertFailed(t)
@@ -126,27 +110,27 @@ func TestObjectEqual(t *testing.T) {
 	checker.AssertSuccess(t)
 	checker.Reset()
 
-	value.Equal(map[string]interface{}{"FOO": 123})
+	value.Equal(map[string]interface{}{"FOO": 123.0})
 	checker.AssertFailed(t)
 	checker.Reset()
 
-	value.NotEqual(map[string]interface{}{"FOO": 123})
+	value.NotEqual(map[string]interface{}{"FOO": 123.0})
 	checker.AssertSuccess(t)
 	checker.Reset()
 
-	value.Equal(map[string]interface{}{"foo": 456})
+	value.Equal(map[string]interface{}{"foo": 456.0})
 	checker.AssertFailed(t)
 	checker.Reset()
 
-	value.NotEqual(map[string]interface{}{"foo": 456})
+	value.NotEqual(map[string]interface{}{"foo": 456.0})
 	checker.AssertSuccess(t)
 	checker.Reset()
 
-	value.Equal(map[string]interface{}{"foo": 123})
+	value.Equal(map[string]interface{}{"foo": 123.0})
 	checker.AssertSuccess(t)
 	checker.Reset()
 
-	value.NotEqual(map[string]interface{}{"foo": 123})
+	value.NotEqual(map[string]interface{}{"foo": 123.0})
 	checker.AssertFailed(t)
 	checker.Reset()
 }
@@ -376,35 +360,4 @@ func TestObjectConvertValueEqual(t *testing.T) {
 	value.ValueNotEqual("baz", myMap{"a": "b"})
 	checker.AssertFailed(t)
 	checker.Reset()
-}
-
-func TestObjectGetters(t *testing.T) {
-	checker := &mockChecker{}
-
-	m := map[string]interface{}{
-		"foo": 123,
-		"bar": []interface{}{"456", 789.0},
-		"baz": map[string]interface{}{
-			"a": "b",
-		},
-	}
-
-	value := NewObject(checker, m)
-
-	keys := []interface{}{"foo", "bar", "baz"}
-
-	values := []interface{}{
-		123,
-		[]interface{}{"456", 789.0},
-		map[string]interface{}{
-			"a": "b",
-		},
-	}
-
-	assert.Equal(t, keys, value.Keys().Raw())
-	assert.Equal(t, values, value.Values().Raw())
-
-	assert.Equal(t, m["foo"], value.Value("foo").Raw())
-	assert.Equal(t, m["bar"], value.Value("bar").Raw())
-	assert.Equal(t, m["baz"], value.Value("baz").Raw())
 }

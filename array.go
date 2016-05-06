@@ -3,16 +3,15 @@ package httpexpect
 type Array struct {
 	checker Checker
 	value   []interface{}
-	canon   []interface{}
 }
 
 func NewArray(checker Checker, value []interface{}) *Array {
-	a := &Array{checker, value, value}
-	v, ok := canonArray(a.checker, a.value)
-	if ok {
-		a.canon = v
+	if value == nil {
+		checker.Fail("expected non-nil array value")
+	} else {
+		value, _ = canonArray(checker, value)
 	}
-	return a
+	return &Array{checker, value}
 }
 
 func (a *Array) Raw() []interface{} {
@@ -33,21 +32,13 @@ func (a *Array) Element(index int) *Value {
 
 func (a *Array) Empty() *Array {
 	expected := make([]interface{}, 0)
-	actual := a.canon
-	if actual == nil {
-		actual = make([]interface{}, 0)
-	}
-	a.checker.Equal(expected, actual)
+	a.checker.Equal(expected, a.value)
 	return a
 }
 
 func (a *Array) NotEmpty() *Array {
 	expected := make([]interface{}, 0)
-	actual := a.canon
-	if actual == nil {
-		actual = make([]interface{}, 0)
-	}
-	a.checker.NotEqual(expected, actual)
+	a.checker.NotEqual(expected, a.value)
 	return a
 }
 
@@ -56,7 +47,7 @@ func (a *Array) Equal(v []interface{}) *Array {
 	if !ok {
 		return a
 	}
-	a.checker.Equal(expected, a.canon)
+	a.checker.Equal(expected, a.value)
 	return a
 }
 
@@ -65,7 +56,7 @@ func (a *Array) NotEqual(v []interface{}) *Array {
 	if !ok {
 		return a
 	}
-	a.checker.NotEqual(expected, a.canon)
+	a.checker.NotEqual(expected, a.value)
 	return a
 }
 
@@ -117,7 +108,7 @@ func (a *Array) ElementsAnyOrder(v... interface{}) *Array {
 }
 
 func (a *Array) containsElement(expected interface{}) bool {
-	for _, e := range a.canon {
+	for _, e := range a.value {
 		if a.checker.Compare(expected, e) {
 			return true
 		}

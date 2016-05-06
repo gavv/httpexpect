@@ -5,16 +5,29 @@ import (
 	"testing"
 )
 
+func TestArrayGetters(t *testing.T) {
+	checker := &mockChecker{}
+
+	value := NewArray(checker, []interface{}{"foo", 123.0})
+
+	assert.Equal(t, 2.0, value.Length().Raw())
+
+	assert.Equal(t, "foo", value.Element(0).Raw().(string))
+	assert.Equal(t, 123.0, value.Element(1).Raw().(float64))
+	checker.AssertSuccess(t)
+	checker.Reset()
+
+	assert.Equal(t, nil, value.Element(2).Raw())
+	checker.AssertFailed(t)
+	checker.Reset()
+}
+
 func TestArrayEmpty(t *testing.T) {
 	checker := &mockChecker{}
 
 	value1 := NewArray(checker, nil)
 
-	value1.Empty()
-	checker.AssertSuccess(t)
-	checker.Reset()
-
-	value1.NotEmpty()
+	_ = value1
 	checker.AssertFailed(t)
 	checker.Reset()
 
@@ -39,38 +52,6 @@ func TestArrayEmpty(t *testing.T) {
 	checker.Reset()
 }
 
-func TestArrayEqualNil(t *testing.T) {
-	checker := &mockChecker{}
-
-	value := NewArray(checker, nil)
-
-	assert.Equal(t, []interface{}(nil), value.Raw())
-
-	value.Equal(nil)
-	checker.AssertSuccess(t)
-	checker.Reset()
-
-	value.NotEqual(nil)
-	checker.AssertFailed(t)
-	checker.Reset()
-
-	value.Equal([]interface{}{})
-	checker.AssertFailed(t)
-	checker.Reset()
-
-	value.NotEqual([]interface{}{})
-	checker.AssertSuccess(t)
-	checker.Reset()
-
-	value.Equal([]interface{}{""})
-	checker.AssertFailed(t)
-	checker.Reset()
-
-	value.NotEqual([]interface{}{""})
-	checker.AssertSuccess(t)
-	checker.Reset()
-}
-
 func TestArrayEqualEmpty(t *testing.T) {
 	checker := &mockChecker{}
 
@@ -78,14 +59,6 @@ func TestArrayEqualEmpty(t *testing.T) {
 
 	assert.Equal(t, []interface{}{}, value.Raw())
 
-	value.Equal(nil)
-	checker.AssertFailed(t)
-	checker.Reset()
-
-	value.NotEqual(nil)
-	checker.AssertSuccess(t)
-	checker.Reset()
-
 	value.Equal([]interface{}{})
 	checker.AssertSuccess(t)
 	checker.Reset()
@@ -103,20 +76,12 @@ func TestArrayEqualEmpty(t *testing.T) {
 	checker.Reset()
 }
 
-func TestArrayEqual(t *testing.T) {
+func TestArrayEqualNotEmpty(t *testing.T) {
 	checker := &mockChecker{}
 
 	value := NewArray(checker, []interface{}{"foo", "bar"})
 
 	assert.Equal(t, []interface{}{"foo", "bar"}, value.Raw())
-
-	value.Equal(nil)
-	checker.AssertFailed(t)
-	checker.Reset()
-
-	value.NotEqual(nil)
-	checker.AssertSuccess(t)
-	checker.Reset()
 
 	value.Equal([]interface{}{})
 	checker.AssertFailed(t)
@@ -263,7 +228,7 @@ func TestArrayConvertEqual(t *testing.T) {
 
 	value := NewArray(checker, []interface{}{123, 456})
 
-	assert.Equal(t, []interface{}{123, 456}, value.Raw())
+	assert.Equal(t, []interface{}{123.0, 456.0}, value.Raw())
 
 	value.Equal(myArray{myInt(123), 456.0})
 	checker.AssertSuccess(t)
@@ -291,7 +256,7 @@ func TestArrayConvertContains(t *testing.T) {
 
 	value := NewArray(checker, []interface{}{123, 456})
 
-	assert.Equal(t, []interface{}{123, 456}, value.Raw())
+	assert.Equal(t, []interface{}{123.0, 456.0}, value.Raw())
 
 	value.Contains(myInt(123), 456.0)
 	checker.AssertSuccess(t)
@@ -319,7 +284,7 @@ func TestArrayConvertElements(t *testing.T) {
 
 	value := NewArray(checker, []interface{}{123, 456})
 
-	assert.Equal(t, []interface{}{123, 456}, value.Raw())
+	assert.Equal(t, []interface{}{123.0, 456.0}, value.Raw())
 
 	value.Elements(myInt(123), 456.0)
 	checker.AssertSuccess(t)
@@ -330,23 +295,6 @@ func TestArrayConvertElements(t *testing.T) {
 	checker.Reset()
 
 	value.ElementsAnyOrder("123", "456")
-	checker.AssertFailed(t)
-	checker.Reset()
-}
-
-func TestArrayGetters(t *testing.T) {
-	checker := &mockChecker{}
-
-	value := NewArray(checker, []interface{}{"foo", 123})
-
-	assert.Equal(t, float64(2), value.Length().Raw())
-
-	assert.Equal(t, "foo", value.Element(0).Raw().(string))
-	assert.Equal(t, 123, value.Element(1).Raw().(int))
-	checker.AssertSuccess(t)
-	checker.Reset()
-
-	assert.Equal(t, nil, value.Element(2).Raw())
 	checker.AssertFailed(t)
 	checker.Reset()
 }
