@@ -5,6 +5,36 @@ import (
 	"testing"
 )
 
+func TestValueFailed(t *testing.T) {
+	checker := newMockChecker(t)
+
+	checker.Fail("fail")
+
+	value := NewValue(checker, nil)
+
+	value.Object()
+	value.Array()
+	value.String()
+	value.Number()
+	value.Boolean()
+	value.Null()
+	value.NotNull()
+}
+
+func TestValueCheckers(t *testing.T) {
+	checker := newMockChecker(t)
+
+	var data interface{}
+
+	value := NewValue(checker, data)
+
+	assert.False(t, value.checker == value.Object().checker)
+	assert.False(t, value.checker == value.Array().checker)
+	assert.False(t, value.checker == value.String().checker)
+	assert.False(t, value.checker == value.Number().checker)
+	assert.False(t, value.checker == value.Boolean().checker)
+}
+
 func TestValueCastNull(t *testing.T) {
 	checker := newMockChecker(t)
 

@@ -5,6 +5,29 @@ import (
 	"testing"
 )
 
+func TestObjectFailed(t *testing.T) {
+	checker := newMockChecker(t)
+
+	checker.Fail("fail")
+
+	value := NewObject(checker, nil)
+
+	assert.False(t, value.Keys() == nil)
+	assert.False(t, value.Values() == nil)
+	assert.False(t, value.Value("foo") == nil)
+
+	value.Empty()
+	value.NotEmpty()
+	value.Equal(nil)
+	value.NotEqual(nil)
+	value.ContainsKey("foo")
+	value.NotContainsKey("foo")
+	value.ContainsMap(nil)
+	value.NotContainsMap(nil)
+	value.ValueEqual("foo", nil)
+	value.ValueNotEqual("foo", nil)
+}
+
 func TestObjectGetters(t *testing.T) {
 	checker := newMockChecker(t)
 
@@ -51,6 +74,10 @@ func TestObjectGetters(t *testing.T) {
 	assert.Equal(t, nil, value.Value("BAZ").Raw())
 	checker.AssertFailed(t)
 	checker.Reset()
+
+	assert.False(t, value.checker == value.Keys().checker)
+	assert.False(t, value.checker == value.Values().checker)
+	assert.False(t, value.checker == value.Value("foo").checker)
 }
 
 func TestObjectEmpty(t *testing.T) {

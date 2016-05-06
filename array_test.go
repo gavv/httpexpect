@@ -5,6 +5,26 @@ import (
 	"testing"
 )
 
+func TestArrayFailed(t *testing.T) {
+	checker := newMockChecker(t)
+
+	checker.Fail("fail")
+
+	value := NewArray(checker, nil)
+
+	assert.False(t, value.Length() == nil)
+	assert.False(t, value.Element(0) == nil)
+
+	value.Empty()
+	value.NotEmpty()
+	value.Equal(nil)
+	value.NotEqual(nil)
+	value.Contains("foo")
+	value.NotContains("foo")
+	value.Elements("foo")
+	value.ElementsAnyOrder("foo")
+}
+
 func TestArrayGetters(t *testing.T) {
 	checker := newMockChecker(t)
 
@@ -20,6 +40,9 @@ func TestArrayGetters(t *testing.T) {
 	assert.Equal(t, nil, value.Element(2).Raw())
 	checker.AssertFailed(t)
 	checker.Reset()
+
+	assert.False(t, value.checker == value.Length().checker)
+	assert.False(t, value.checker == value.Element(0).checker)
 }
 
 func TestArrayEmpty(t *testing.T) {

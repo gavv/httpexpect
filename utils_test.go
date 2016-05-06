@@ -24,6 +24,8 @@ type mockClient struct {
 func (c *mockClient) Do(req *http.Request) (*http.Response, error) {
 	c.req = req
 	if c.err == nil {
+		c.resp.Header = c.req.Header
+		c.resp.Body = c.req.Body
 		return &c.resp, nil
 	} else {
 		return nil, c.err

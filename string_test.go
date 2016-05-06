@@ -5,6 +5,25 @@ import (
 	"testing"
 )
 
+func TestStringFailed(t *testing.T) {
+	checker := newMockChecker(t)
+
+	checker.Fail("fail")
+
+	value := NewString(checker, "")
+
+	value.Empty()
+	value.NotEmpty()
+	value.Equal("")
+	value.NotEqual("")
+	value.EqualFold("")
+	value.NotEqualFold("")
+	value.Contains("")
+	value.NotContains("")
+	value.ContainsFold("")
+	value.NotContainsFold("")
+}
+
 func TestStringEmpty(t *testing.T) {
 	checker := newMockChecker(t)
 

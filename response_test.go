@@ -7,6 +7,20 @@ import (
 	"testing"
 )
 
+func TestResponseFailed(t *testing.T) {
+	checker := newMockChecker(t)
+
+	checker.Fail("fail")
+
+	resp := NewResponse(checker, &http.Response{})
+
+	resp.Status(123)
+	resp.Headers(nil)
+	resp.Header("foo", "bar")
+	resp.NoContent()
+	resp.JSON()
+}
+
 func TestResponseHeaders(t *testing.T) {
 	checker := newMockChecker(t)
 
@@ -110,6 +124,8 @@ func TestResponseJson(t *testing.T) {
 
 	assert.Equal(t,
 		map[string]interface{}{"key": "value"}, resp.JSON().Object().Raw())
+
+	assert.False(t, resp.checker == resp.JSON().checker)
 }
 
 func TestResponseJsonEncodingEmpty(t *testing.T) {

@@ -9,6 +9,42 @@ import (
 	"testing"
 )
 
+func TestRequestFailed(t *testing.T) {
+	client := &mockClient{}
+
+	checker := newMockChecker(t)
+
+	checker.Fail("fail")
+
+	config := Config{
+		Client:  client,
+		Checker: checker,
+	}
+
+	req := NewRequest(config, "", "")
+
+	resp := req.Expect()
+
+	assert.False(t, resp == nil)
+}
+
+func TestRequestEmpty(t *testing.T) {
+	client := &mockClient{}
+
+	checker := newMockChecker(t)
+
+	config := Config{
+		Client:  client,
+		Checker: checker,
+	}
+
+	req := NewRequest(config, "", "")
+
+	resp := req.Expect()
+
+	assert.False(t, req.config.Checker == resp.checker)
+}
+
 func TestRequestHeaders(t *testing.T) {
 	client := &mockClient{}
 

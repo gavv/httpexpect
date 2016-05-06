@@ -71,6 +71,10 @@ func (r *Response) getContent() []byte {
 		return r.content
 	}
 
+	if r.resp.Body == nil {
+		return []byte{}
+	}
+
 	content, err := ioutil.ReadAll(r.resp.Body)
 	if err != nil {
 		r.checker.Fail(err.Error())

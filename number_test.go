@@ -5,6 +5,22 @@ import (
 	"testing"
 )
 
+func TestNumberFailed(t *testing.T) {
+	checker := newMockChecker(t)
+
+	checker.Fail("fail")
+
+	value := NewNumber(checker, 0)
+
+	value.Equal(0)
+	value.NotEqual(0)
+	value.Gt(0)
+	value.Ge(0)
+	value.Lt(0)
+	value.Le(0)
+	value.InRange(0, 0)
+}
+
 func TestNumberEqual(t *testing.T) {
 	checker := newMockChecker(t)
 

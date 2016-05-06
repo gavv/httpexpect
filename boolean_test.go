@@ -5,6 +5,19 @@ import (
 	"testing"
 )
 
+func TestBooleanFailed(t *testing.T) {
+	checker := newMockChecker(t)
+
+	checker.Fail("fail")
+
+	value := NewBoolean(checker, false)
+
+	value.Equal(false)
+	value.NotEqual(false)
+	value.True()
+	value.False()
+}
+
 func TestBooleanTrue(t *testing.T) {
 	checker := newMockChecker(t)
 
