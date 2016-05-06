@@ -91,7 +91,7 @@ func TestResponseNoContent(t *testing.T) {
 	checker.Reset()
 }
 
-func TestResponseJSON(t *testing.T) {
+func TestResponseJson(t *testing.T) {
 	checker := newMockChecker(t)
 
 	headers := map[string][]string{
@@ -120,7 +120,7 @@ func TestResponseJSON(t *testing.T) {
 		map[string]interface{}{"key": "value"}, resp.JSON().Object().Raw())
 }
 
-func TestResponseJSONNoEncoding(t *testing.T) {
+func TestResponseJsonEncodingEmpty(t *testing.T) {
 	checker := newMockChecker(t)
 
 	headers := map[string][]string{
@@ -147,4 +147,32 @@ func TestResponseJSONNoEncoding(t *testing.T) {
 
 	assert.Equal(t,
 		map[string]interface{}{"key": "value"}, resp.JSON().Object().Raw())
+}
+
+func TestResponseJsonEncodingBad(t *testing.T) {
+	checker := newMockChecker(t)
+
+	headers := map[string][]string{
+		"Content-Type": []string{"application/json; charset=bad"},
+	}
+
+	body := `{"key": "value"}`
+
+	httpResp := &http.Response{
+		StatusCode: http.StatusOK,
+		Header:     http.Header(headers),
+		Body:       closingBuffer{bytes.NewBufferString(body)},
+	}
+
+	resp := NewResponse(checker, httpResp)
+
+	resp.NoContent()
+	checker.AssertFailed(t)
+	checker.Reset()
+
+	resp.JSON()
+	checker.AssertFailed(t)
+	checker.Reset()
+
+	assert.Equal(t, nil, resp.JSON().Raw())
 }

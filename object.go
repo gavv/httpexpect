@@ -110,11 +110,7 @@ func (o *Object) ValueEqual(k string, v interface{}) *Object {
 	if !ok {
 		return o
 	}
-	actual, ok := canonValue(o.checker, o.value[k])
-	if !ok {
-		return o
-	}
-	o.checker.Equal(expected, actual)
+	o.checker.Equal(expected, o.value[k])
 	return o
 }
 

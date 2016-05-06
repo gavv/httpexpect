@@ -213,4 +213,8 @@ func TestNumberConvertInRange(t *testing.T) {
 	value.InRange(int64(1233), "1235")
 	checker.AssertFailed(t)
 	checker.Reset()
+
+	value.InRange(nil, 1235)
+	checker.AssertFailed(t)
+	checker.Reset()
 }

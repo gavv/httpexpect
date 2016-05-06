@@ -245,6 +245,14 @@ func TestArrayConvertEqual(t *testing.T) {
 	value.NotEqual([]interface{}{"123", "456"})
 	checker.AssertSuccess(t)
 	checker.Reset()
+
+	value.Equal(nil)
+	checker.AssertFailed(t)
+	checker.Reset()
+
+	value.NotEqual(nil)
+	checker.AssertFailed(t)
+	checker.Reset()
 }
 
 func TestArrayConvertContains(t *testing.T) {
@@ -273,6 +281,14 @@ func TestArrayConvertContains(t *testing.T) {
 	value.NotContains("123")
 	checker.AssertSuccess(t)
 	checker.Reset()
+
+	value.Contains(func(){})
+	checker.AssertFailed(t)
+	checker.Reset()
+
+	value.NotContains(func(){})
+	checker.AssertFailed(t)
+	checker.Reset()
 }
 
 func TestArrayConvertElements(t *testing.T) {
@@ -295,6 +311,14 @@ func TestArrayConvertElements(t *testing.T) {
 	checker.Reset()
 
 	value.ElementsAnyOrder("123", "456")
+	checker.AssertFailed(t)
+	checker.Reset()
+
+	value.Elements(func(){})
+	checker.AssertFailed(t)
+	checker.Reset()
+
+	value.ElementsAnyOrder(func(){})
 	checker.AssertFailed(t)
 	checker.Reset()
 }

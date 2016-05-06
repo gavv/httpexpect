@@ -13,6 +13,10 @@ func testCheckerCompare(t *testing.T, checker Checker) {
 
 func testCheckerFail(t *testing.T, checker Checker) {
 	assert.False(t, checker.Failed())
+
+	checker.Fail("fail")
+	assert.True(t, checker.Failed())
+
 	checker.Fail("fail")
 	assert.True(t, checker.Failed())
 }
@@ -27,6 +31,11 @@ func testCheckerClone(t *testing.T, checker Checker) {
 
 	assert.True(t, checker.Failed())
 	assert.False(t, clone.Failed())
+
+	clone.Fail("fail")
+
+	assert.True(t, checker.Failed())
+	assert.True(t, clone.Failed())
 }
 
 func testCheckerEqual(t *testing.T, checker Checker) {

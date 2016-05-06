@@ -37,8 +37,20 @@ func TestObjectGetters(t *testing.T) {
 	checker.Reset()
 
 	assert.Equal(t, m["foo"], value.Value("foo").Raw())
+	checker.AssertSuccess(t)
+	checker.Reset()
+
 	assert.Equal(t, m["bar"], value.Value("bar").Raw())
+	checker.AssertSuccess(t)
+	checker.Reset()
+
 	assert.Equal(t, m["baz"], value.Value("baz").Raw())
+	checker.AssertSuccess(t)
+	checker.Reset()
+
+	assert.Equal(t, nil, value.Value("BAZ").Raw())
+	checker.AssertFailed(t)
+	checker.Reset()
 }
 
 func TestObjectEmpty(t *testing.T) {
@@ -133,6 +145,14 @@ func TestObjectEqual(t *testing.T) {
 	value.NotEqual(map[string]interface{}{"foo": 123.0})
 	checker.AssertFailed(t)
 	checker.Reset()
+
+	value.Equal(nil)
+	checker.AssertFailed(t)
+	checker.Reset()
+
+	value.NotEqual(nil)
+	checker.AssertFailed(t)
+	checker.Reset()
 }
 
 func TestObjectContainsKey(t *testing.T) {
@@ -165,7 +185,7 @@ func TestObjectContainsKey(t *testing.T) {
 	checker.Reset()
 }
 
-func TestObjectContainsMap(t *testing.T) {
+func TestObjectContainsMapSuccess(t *testing.T) {
 	checker := newMockChecker(t)
 
 	value := NewObject(checker, map[string]interface{}{
@@ -203,18 +223,51 @@ func TestObjectContainsMap(t *testing.T) {
 	value.NotContainsMap(submap2)
 	checker.AssertFailed(t)
 	checker.Reset()
+}
 
-	submap3 := map[string]interface{}{
+func TestObjectContainsMapFailed(t *testing.T) {
+	checker := newMockChecker(t)
+
+	value := NewObject(checker, map[string]interface{}{
+		"foo": 123,
+		"bar": []interface{}{"456", 789},
+		"baz": map[string]interface{}{
+			"a": "b",
+		},
+	})
+
+	submap1 := map[string]interface{}{
 		"foo": 123,
 		"qux": 456,
 	}
 
-	value.ContainsMap(submap3)
+	value.ContainsMap(submap1)
 	checker.AssertFailed(t)
 	checker.Reset()
 
-	value.NotContainsMap(submap3)
+	value.NotContainsMap(submap1)
 	checker.AssertSuccess(t)
+	checker.Reset()
+
+	submap2 := map[string]interface{}{
+		"foo": 123,
+		"bar": []interface{}{"456", "789"},
+	}
+
+	value.ContainsMap(submap2)
+	checker.AssertFailed(t)
+	checker.Reset()
+
+	value.NotContainsMap(submap2)
+	checker.AssertSuccess(t)
+	checker.Reset()
+
+	value.ContainsMap(nil)
+	checker.AssertFailed(t)
+	checker.Reset()
+
+	value.NotContainsMap(nil)
+	checker.AssertFailed(t)
 	checker.Reset()
 }
 
@@ -250,6 +303,22 @@ func TestObjectValueEqual(t *testing.T) {
 	checker.Reset()
 
 	value.ValueNotEqual("baz", map[string]interface{}{"a": "b"})
+	checker.AssertFailed(t)
+	checker.Reset()
+
+	value.ValueEqual("baz", func(){})
+	checker.AssertFailed(t)
+	checker.Reset()
+
+	value.ValueNotEqual("baz", func(){})
+	checker.AssertFailed(t)
+	checker.Reset()
+
+	value.ValueEqual("BAZ", 777)
+	checker.AssertFailed(t)
+	checker.Reset()
+
+	value.ValueNotEqual("BAZ", 777)
 	checker.AssertFailed(t)
 	checker.Reset()
 }
