@@ -71,19 +71,41 @@ func TestResponseHeaders(t *testing.T) {
 	checker.Reset()
 }
 
-func TestResponseNoContent(t *testing.T) {
+func TestResponseNoContentEmpty(t *testing.T) {
 	checker := newMockChecker(t)
 
 	headers := map[string][]string{
 		"Content-Type": []string{""},
 	}
 
-	body := ""
+	httpResp := &http.Response{
+		StatusCode: http.StatusOK,
+		Header:     http.Header(headers),
+		Body:       closingBuffer{bytes.NewBufferString("")},
+	}
+
+	resp := NewResponse(checker, httpResp)
+
+	resp.NoContent()
+	checker.AssertSuccess(t)
+	checker.Reset()
+
+	resp.JSON()
+	checker.AssertFailed(t)
+	checker.Reset()
+}
+
+func TestResponseNoContentNil(t *testing.T) {
+	checker := newMockChecker(t)
+
+	headers := map[string][]string{
+		"Content-Type": []string{""},
+	}
 
 	httpResp := &http.Response{
 		StatusCode: http.StatusOK,
 		Header:     http.Header(headers),
-		Body:       closingBuffer{bytes.NewBufferString(body)},
+		Body:       nil,
 	}
 
 	resp := NewResponse(checker, httpResp)
