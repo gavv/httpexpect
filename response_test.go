@@ -7,14 +7,6 @@ import (
 	"testing"
 )
 
-type closingBuffer struct {
-	*bytes.Buffer
-}
-
-func (_ closingBuffer) Close() error {
-	return nil
-}
-
 func TestResponseHeaders(t *testing.T) {
 	checker := newMockChecker(t)
 
