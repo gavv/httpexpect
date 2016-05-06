@@ -24,7 +24,12 @@ func NewRequest(config Config, method, url string) *Request {
 }
 
 func (r *Request) WithHeaders(headers map[string]string) *Request {
-	r.headers = headers
+	if r.headers == nil {
+		r.headers = make(map[string]string)
+	}
+	for k, v := range headers {
+		r.headers[k] = v
+	}
 	return r
 }
 
@@ -52,7 +57,7 @@ func (r *Request) WithJSON(obj interface{}) *Request {
 		return r
 	}
 
-	r.WithHeader("Content-Type", "application/json")
+	r.WithHeader("Content-Type", "application/json; charset=utf-8")
 	r.WithBytes(b)
 
 	return r
