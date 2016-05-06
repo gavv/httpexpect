@@ -6,7 +6,7 @@ import (
 )
 
 func TestNumberEqual(t *testing.T) {
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	value := NewNumber(checker, 1234)
 
@@ -30,7 +30,7 @@ func TestNumberEqual(t *testing.T) {
 }
 
 func TestNumberGreater(t *testing.T) {
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	value := NewNumber(checker, 1234)
 
@@ -56,7 +56,7 @@ func TestNumberGreater(t *testing.T) {
 }
 
 func TestNumberLesser(t *testing.T) {
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	value := NewNumber(checker, 1234)
 
@@ -82,7 +82,7 @@ func TestNumberLesser(t *testing.T) {
 }
 
 func TestNumberInRange(t *testing.T) {
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	value := NewNumber(checker, 1234)
 
@@ -112,7 +112,7 @@ func TestNumberInRange(t *testing.T) {
 }
 
 func TestNumberConvertEqual(t *testing.T) {
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	value := NewNumber(checker, 1234)
 
@@ -142,7 +142,7 @@ func TestNumberConvertEqual(t *testing.T) {
 }
 
 func TestNumberConvertGreater(t *testing.T) {
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	value := NewNumber(checker, 1234)
 
@@ -172,7 +172,7 @@ func TestNumberConvertGreater(t *testing.T) {
 }
 
 func TestNumberConvertLesser(t *testing.T) {
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	value := NewNumber(checker, 1234)
 
@@ -202,7 +202,7 @@ func TestNumberConvertLesser(t *testing.T) {
 }
 
 func TestNumberConvertInRange(t *testing.T) {
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	value := NewNumber(checker, 1234)
 

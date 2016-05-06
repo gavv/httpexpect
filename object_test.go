@@ -6,7 +6,7 @@ import (
 )
 
 func TestObjectGetters(t *testing.T) {
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	m := map[string]interface{}{
 		"foo": 123.0,
@@ -42,7 +42,7 @@ func TestObjectGetters(t *testing.T) {
 }
 
 func TestObjectEmpty(t *testing.T) {
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	value1 := NewObject(checker, nil)
 
@@ -72,7 +72,7 @@ func TestObjectEmpty(t *testing.T) {
 }
 
 func TestObjectEqualEmpty(t *testing.T) {
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	value := NewObject(checker, map[string]interface{}{})
 
@@ -96,7 +96,7 @@ func TestObjectEqualEmpty(t *testing.T) {
 }
 
 func TestObjectEqual(t *testing.T) {
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	value := NewObject(checker, map[string]interface{}{"foo": 123.0})
 
@@ -136,7 +136,7 @@ func TestObjectEqual(t *testing.T) {
 }
 
 func TestObjectContainsKey(t *testing.T) {
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	value := NewObject(checker, map[string]interface{}{"foo": 123, "bar": ""})
 
@@ -166,7 +166,7 @@ func TestObjectContainsKey(t *testing.T) {
 }
 
 func TestObjectContainsMap(t *testing.T) {
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	value := NewObject(checker, map[string]interface{}{
 		"foo": 123,
@@ -219,7 +219,7 @@ func TestObjectContainsMap(t *testing.T) {
 }
 
 func TestObjectValueEqual(t *testing.T) {
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	value := NewObject(checker, map[string]interface{}{
 		"foo": 123,
@@ -260,7 +260,7 @@ func TestObjectConvertEqual(t *testing.T) {
 		myInt int
 	)
 
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	value := NewObject(checker, map[string]interface{}{"foo": 123})
 
@@ -304,7 +304,7 @@ func TestObjectConvertContainsMap(t *testing.T) {
 		myInt   int
 	)
 
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	value := NewObject(checker, map[string]interface{}{
 		"foo": 123,
@@ -335,7 +335,7 @@ func TestObjectConvertValueEqual(t *testing.T) {
 		myInt   int
 	)
 
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	value := NewObject(checker, map[string]interface{}{
 		"foo": 123,

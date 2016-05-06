@@ -6,7 +6,7 @@ import (
 )
 
 func TestBooleanTrue(t *testing.T) {
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	value := NewBoolean(checker, true)
 
@@ -38,7 +38,7 @@ func TestBooleanTrue(t *testing.T) {
 }
 
 func TestBooleanFalse(t *testing.T) {
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	value := NewBoolean(checker, false)
 

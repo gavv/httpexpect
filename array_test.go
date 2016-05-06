@@ -6,7 +6,7 @@ import (
 )
 
 func TestArrayGetters(t *testing.T) {
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	value := NewArray(checker, []interface{}{"foo", 123.0})
 
@@ -23,7 +23,7 @@ func TestArrayGetters(t *testing.T) {
 }
 
 func TestArrayEmpty(t *testing.T) {
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	value1 := NewArray(checker, nil)
 
@@ -53,7 +53,7 @@ func TestArrayEmpty(t *testing.T) {
 }
 
 func TestArrayEqualEmpty(t *testing.T) {
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	value := NewArray(checker, []interface{}{})
 
@@ -77,7 +77,7 @@ func TestArrayEqualEmpty(t *testing.T) {
 }
 
 func TestArrayEqualNotEmpty(t *testing.T) {
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	value := NewArray(checker, []interface{}{"foo", "bar"})
 
@@ -117,7 +117,7 @@ func TestArrayEqualNotEmpty(t *testing.T) {
 }
 
 func TestArrayContains(t *testing.T) {
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	value := NewArray(checker, []interface{}{123, "foo"})
 
@@ -167,7 +167,7 @@ func TestArrayContains(t *testing.T) {
 }
 
 func TestArrayElements(t *testing.T) {
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	value := NewArray(checker, []interface{}{123, "foo"})
 
@@ -193,7 +193,7 @@ func TestArrayElements(t *testing.T) {
 }
 
 func TestArrayElementsAnyOrder(t *testing.T) {
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	value := NewArray(checker, []interface{}{123, "foo"})
 
@@ -224,7 +224,7 @@ func TestArrayConvertEqual(t *testing.T) {
 		myInt   int
 	)
 
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	value := NewArray(checker, []interface{}{123, 456})
 
@@ -252,7 +252,7 @@ func TestArrayConvertContains(t *testing.T) {
 		myInt int
 	)
 
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	value := NewArray(checker, []interface{}{123, 456})
 
@@ -280,7 +280,7 @@ func TestArrayConvertElements(t *testing.T) {
 		myInt int
 	)
 
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	value := NewArray(checker, []interface{}{123, 456})
 

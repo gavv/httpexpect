@@ -10,7 +10,7 @@ func TestCanonNumber(t *testing.T) {
 		myInt int
 	)
 
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	d1, ok := canonNumber(checker, 123)
 	assert.True(t, ok)
@@ -47,7 +47,7 @@ func TestCanonArray(t *testing.T) {
 		myInt   int
 	)
 
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	d1, ok := canonArray(checker, []interface{}{123.0, 456.0})
 	assert.True(t, ok)
@@ -83,7 +83,7 @@ func TestCanonMap(t *testing.T) {
 		myInt int
 	)
 
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	d1, ok := canonMap(checker, map[string]interface{}{"foo": 123.0})
 	assert.True(t, ok)

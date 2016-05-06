@@ -67,7 +67,7 @@ func TestAssertChecker(t *testing.T) {
 
 func TestMockChecker(t *testing.T) {
 	testCheckerType(t, func() Checker {
-		return &mockChecker{}
+		return newMockChecker(t)
 	})
 }
 

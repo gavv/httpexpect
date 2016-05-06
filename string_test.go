@@ -6,7 +6,7 @@ import (
 )
 
 func TestStringEmpty(t *testing.T) {
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	value1 := NewString(checker, "")
 
@@ -30,7 +30,7 @@ func TestStringEmpty(t *testing.T) {
 }
 
 func TestStringEqual(t *testing.T) {
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	value := NewString(checker, "foo")
 
@@ -54,7 +54,7 @@ func TestStringEqual(t *testing.T) {
 }
 
 func TestStringEqualFold(t *testing.T) {
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	value := NewString(checker, "foo")
 
@@ -84,7 +84,7 @@ func TestStringEqualFold(t *testing.T) {
 }
 
 func TestStringContains(t *testing.T) {
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	value := NewString(checker, "11-foo-22")
 
@@ -106,7 +106,7 @@ func TestStringContains(t *testing.T) {
 }
 
 func TestStringContainsFold(t *testing.T) {
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	value := NewString(checker, "11-foo-22")
 

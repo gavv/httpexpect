@@ -87,7 +87,12 @@ func (c *RequireChecker) NotEqual(expected, actual interface{}) {
 }
 
 type mockChecker struct {
+	testing *testing.T
 	failed bool
+}
+
+func newMockChecker(t *testing.T) *mockChecker {
+	return &mockChecker{testing: t}
 }
 
 func (c *mockChecker) AssertSuccess(t *testing.T) {
@@ -115,18 +120,21 @@ func (c *mockChecker) Failed() bool {
 	return c.failed
 }
 
-func (c *mockChecker) Fail(_ string, _... interface{}) {
+func (c *mockChecker) Fail(message string, args... interface{}) {
+	c.testing.Logf("Fail: " + message, args...)
 	c.failed = true
 }
 
 func (c *mockChecker) Equal(expected, actual interface{}) {
 	if !c.Compare(expected, actual) {
+		c.testing.Logf("Equal: `%v` (expected) != `%v` (actual)", expected, actual)
 		c.failed = true
 	}
 }
 
 func (c *mockChecker) NotEqual(expected, actual interface{}) {
 	if c.Compare(expected, actual) {
+		c.testing.Logf("NotEqual: `%v` (expected) == `%v` (actual)", expected, actual)
 		c.failed = true
 	}
 }

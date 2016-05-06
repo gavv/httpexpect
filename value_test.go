@@ -6,7 +6,7 @@ import (
 )
 
 func TestValueCastNull(t *testing.T) {
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	var data interface{}
 
@@ -40,7 +40,7 @@ func TestValueCastNull(t *testing.T) {
 }
 
 func TestValueCastObject(t *testing.T) {
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	data := map[string]interface{}{}
 
@@ -74,7 +74,7 @@ func TestValueCastObject(t *testing.T) {
 }
 
 func TestValueCastArray(t *testing.T) {
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	data := []interface{}{}
 
@@ -108,7 +108,7 @@ func TestValueCastArray(t *testing.T) {
 }
 
 func TestValueCastString(t *testing.T) {
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	data := ""
 
@@ -142,7 +142,7 @@ func TestValueCastString(t *testing.T) {
 }
 
 func TestValueCastNumber(t *testing.T) {
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	data := 0.0
 
@@ -176,7 +176,7 @@ func TestValueCastNumber(t *testing.T) {
 }
 
 func TestValueCastBoolean(t *testing.T) {
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	data := false
 
@@ -214,7 +214,7 @@ func TestValueGetObject(t *testing.T) {
 		myMap map[string]interface{}
 	)
 
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	data1 := map[string]interface{}{"foo": 123.0}
 
@@ -240,7 +240,7 @@ func TestValueGetArray(t *testing.T) {
 		myArray []interface{}
 	)
 
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	data1 := []interface{}{"foo", 123.0}
 
@@ -262,7 +262,7 @@ func TestValueGetArray(t *testing.T) {
 }
 
 func TestValueGetString(t *testing.T) {
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	value := NewValue(checker, "foo")
 	inner := value.String()
@@ -277,7 +277,7 @@ func TestValueGetNumber(t *testing.T) {
 		myInt int
 	)
 
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	data1 := 123.0
 
@@ -308,7 +308,7 @@ func TestValueGetNumber(t *testing.T) {
 }
 
 func TestValueGetBoolean(t *testing.T) {
-	checker := &mockChecker{}
+	checker := newMockChecker(t)
 
 	value1 := NewValue(checker, true)
 	inner1 := value1.Boolean()
