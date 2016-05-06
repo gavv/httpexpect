@@ -1,82 +1,77 @@
 package httpexpect
 
 import (
-	"encoding/json"
-	"github.com/op/go-logging"
-	"github.com/stretchr/testify/require"
+	"log"
 	"net/http"
 	"strings"
 	"testing"
 )
 
-var (
-	log = logging.MustGetLogger("httpexpect")
-)
-
 type Expect struct {
-	testing *testing.T
-	address string
+	config Config
 }
 
-func New(t *testing.T, address string) *Expect {
-	return &Expect{
-		testing: t,
-		address: address,
+type Config struct {
+	BaseUrl string
+	Client  Client
+	Checker Checker
+	Logger  Logger
+}
+
+type Client interface {
+	Do(*http.Request) (*http.Response, error)
+}
+
+type Checker interface {
+	Clone() Checker
+	Compare(a, b interface{}) bool
+	Failed() bool
+	Fail(message string, args... interface{})
+	Equal(expected, actual interface{})
+	NotEqual(expected, actual interface{})
+}
+
+type Logger interface {
+	LogRequest(method, url string)
+}
+
+type DefaultLogger struct{}
+
+func (_ DefaultLogger) LogRequest(method, url string) {
+	log.Printf("[httpexpect] %s %s", method, url)
+}
+
+func New(t *testing.T, baseUrl string) *Expect {
+	return WithConfig(Config{
+		BaseUrl: baseUrl,
+		Checker: NewAssertChecker(t),
+		Logger:  DefaultLogger{},
+	})
+}
+
+func WithConfig(config Config) *Expect {
+	if config.Client == nil {
+		config.Client = http.DefaultClient
 	}
-}
-
-func (e *Expect) HEAD(url string) *Response {
-	return e.Request("HEAD", url, nil)
-}
-
-func (e *Expect) GET(url string) *Response {
-	return e.Request("GET", url, nil)
-}
-
-func (e *Expect) POST(url string, payload interface{}) *Response {
-	return e.Request("POST", url, payload)
-}
-
-func (e *Expect) PUT(url string, payload interface{}) *Response {
-	return e.Request("PUT", url, payload)
-}
-
-func (e *Expect) DELETE(url string) *Response {
-	return e.Request("DELETE", url, nil)
-}
-
-func (e *Expect) Request(method, url string, payload interface{}) *Response {
-	url = joinUrl(e.address, url)
-
-	log.Debugf("%s %s", method, url)
-
-	var str string
-	if payload != nil {
-		b, err := json.Marshal(payload)
-		if err != nil {
-			require.FailNow(e.testing, err.Error())
-		}
-		str = string(b)
+	if config.Checker == nil {
+		panic("config.Checker is nil")
 	}
-
-	req, err := http.NewRequest(method, url, strings.NewReader(str))
-	if err != nil {
-		require.FailNow(e.testing, err.Error())
-	}
-
-	if payload != nil {
-		req.Header.Set("Content-Type", "application/json")
-	}
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		require.FailNow(e.testing, err.Error())
-	}
-
-	return &Response{e.testing, resp}
+	return &Expect{config}
 }
 
-func joinUrl(a, b string) string {
+func (e *Expect) Request(method, url string) *Request {
+	config := e.config
+	config.Checker = config.Checker.Clone()
+	return NewRequest(config, method, concatUrls(config.BaseUrl, url))
+}
+
+func concatUrls(a, b string) string {
+	if a == "" {
+		return b
+	}
+	if b == "" {
+		return a
+	}
 	if strings.HasSuffix(a, "/") {
 		a = a[:len(a)-1]
 	}
@@ -84,4 +79,32 @@ func joinUrl(a, b string) string {
 		b = b[1:len(b)]
 	}
 	return a + "/" + b
+}
+
+func (e *Expect) OPTIONS(url string) *Request {
+	return e.Request("OPTIONS", url)
+}
+
+func (e *Expect) HEAD(url string) *Request {
+	return e.Request("HEAD", url)
+}
+
+func (e *Expect) GET(url string) *Request {
+	return e.Request("GET", url)
+}
+
+func (e *Expect) POST(url string) *Request {
+	return e.Request("POST", url)
+}
+
+func (e *Expect) PUT(url string) *Request {
+	return e.Request("PUT", url)
+}
+
+func (e *Expect) PATCH(url string) *Request {
+	return e.Request("PATCH", url)
+}
+
+func (e *Expect) DELETE(url string) *Request {
+	return e.Request("DELETE", url)
 }

@@ -2,140 +2,103 @@ package httpexpect
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"mime"
 	"net/http"
-	"reflect"
 	"strings"
-	"testing"
 )
 
 type Response struct {
-	testing *testing.T
+	checker Checker
 	resp    *http.Response
 }
 
-func (r *Response) ExpectCode(code int) *Response {
-	require.Equal(r.testing, r.resp.StatusCode, code)
+func NewResponse(checker Checker, resp *http.Response) *Response {
+	return &Response{checker, resp}
+}
+
+func (r *Response) Raw() *http.Response {
+	return r.resp
+}
+
+func (r *Response) Status(status int) *Response {
+	if r.checker.Failed() {
+		return r
+	}
+	r.checker.Equal(status, r.resp.StatusCode)
 	return r
 }
 
-func (r *Response) ExpectEmpty() *Response {
+func (r *Response) Headers(headers map[string]string) *Response {
+	if r.checker.Failed() {
+		return r
+	}
+	r.checker.Equal(headers, r.resp.Header)
+	return r
+}
+
+func (r *Response) Header(k, v string) *Response {
+	if r.checker.Failed() {
+		return r
+	}
+	r.checker.Equal(v, r.resp.Header[k])
+	return r
+}
+
+func (r *Response) NoContent() *Response {
+	if r.checker.Failed() {
+		return r
+	}
+
 	contentType := r.resp.Header.Get("Content-Type")
 
-	require.Equal(r.testing, contentType, "")
-	require.Equal(r.testing, r.getString(), "")
+	content, err := ioutil.ReadAll(r.resp.Body)
+	if err != nil {
+		r.checker.Fail(err.Error())
+	}
+
+	r.checker.Equal("", contentType)
+	r.checker.Equal("", content)
 
 	return r
 }
 
-func (r *Response) ExpectJSON() *Response {
+func (r *Response) JSON() *Value {
+	value := r.getJSON()
+	return NewValue(r.checker.Clone(), value)
+}
+
+func (r *Response) getJSON() interface{} {
+	if r.checker.Failed() {
+		return nil
+	}
+
 	contentType := r.resp.Header.Get("Content-Type")
 
 	mediaType, params, _ := mime.ParseMediaType(contentType)
 	charset := params["charset"]
 
-	require.Equal(r.testing, mediaType, "application/json")
-	require.Contains(r.testing, []string{"utf-8", ""}, strings.ToLower(charset))
-
-	return r
-}
-
-func (r *Response) ExpectList(values ...interface{}) *Response {
-	actual := r.getList()
-
-	if actual == nil {
-		actual = make([]interface{}, 0, 0)
+	r.checker.Equal("application/json", mediaType)
+	if r.checker.Failed() {
+		return nil
 	}
 
-	if values == nil {
-		values = make([]interface{}, 0, 0)
+	if charset != "" && strings.ToLower(charset) != "utf-8" {
+		r.checker.Fail("bad charset: expected empty or 'utf-8', got '"+charset+"'")
+		return nil
 	}
-
-	require.Equal(r.testing, actual, values)
-
-	return r
-}
-
-func (r *Response) ExpectListAnyOrder(values ...interface{}) *Response {
-	actual := r.getList()
-
-	require.Equal(r.testing, len(actual), len(values))
-
-	if actual == nil {
-		actual = make([]interface{}, 0, 0)
-	}
-
-	sorted := make([]interface{}, len(actual), len(actual))
-
-	for _, v := range values {
-		for n, a := range actual {
-			if reflect.DeepEqual(v, a) {
-				sorted[n] = v
-				break
-			}
-		}
-	}
-
-	require.Equal(r.testing, actual, sorted)
-
-	return r
-}
-
-func (r *Response) ExpectMap(value map[string]interface{}) *Response {
-	actual := r.getMap()
-
-	require.Equal(r.testing, actual, value)
-
-	return r
-}
-
-func (r *Response) ExpectKey(key string) *Response {
-	actual := r.getMap()
-
-	require.Contains(r.testing, actual, key)
-
-	return r
-}
-
-func (r *Response) getString() string {
-	content, err := ioutil.ReadAll(r.resp.Body)
-	if err != nil {
-		require.FailNow(r.testing, err.Error())
-	}
-
-	return string(content)
-}
-
-func (r *Response) getList() []interface{} {
-	r.ExpectJSON()
 
 	content, err := ioutil.ReadAll(r.resp.Body)
 	if err != nil {
-		require.FailNow(r.testing, err.Error())
+		r.checker.Fail(err.Error())
+		return nil
 	}
 
-	var result []interface{}
-	if err := json.Unmarshal(content, &result); err != nil {
-		require.FailNow(r.testing, err.Error())
+	var value interface{}
+	if err := json.Unmarshal(content, &value); err != nil {
+		r.checker.Fail(err.Error())
+		return nil
 	}
 
-	return result
-}
-
-func (r *Response) getMap() map[string]interface{} {
-	r.ExpectJSON()
-
-	content, err := ioutil.ReadAll(r.resp.Body)
-	if err != nil {
-		require.FailNow(r.testing, err.Error())
-	}
-
-	var result map[string]interface{}
-	if err := json.Unmarshal(content, &result); err != nil {
-		require.FailNow(r.testing, err.Error())
-	}
-
-	return result
+	return value
 }
