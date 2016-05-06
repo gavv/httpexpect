@@ -1,4 +1,4 @@
-# httpexpect
+# httpexpect [![build status](https://travis-ci.org/gavv/httpexpect.svg?branch=master)](https://travis-ci.org/gavv/httpexpect)
 
 Go module to make nice tests for your HTTP API.
 
