@@ -11,10 +11,11 @@ import (
 type Response struct {
 	checker Checker
 	resp    *http.Response
+	content []byte
 }
 
 func NewResponse(checker Checker, resp *http.Response) *Response {
-	return &Response{checker, resp}
+	return &Response{checker, resp, nil}
 }
 
 func (r *Response) Raw() *http.Response {
@@ -29,11 +30,11 @@ func (r *Response) Status(status int) *Response {
 	return r
 }
 
-func (r *Response) Headers(headers map[string]string) *Response {
+func (r *Response) Headers(headers map[string][]string) *Response {
 	if r.checker.Failed() {
 		return r
 	}
-	r.checker.Equal(headers, r.resp.Header)
+	r.checker.Equal(headers, map[string][]string(r.resp.Header))
 	return r
 }
 
@@ -41,7 +42,7 @@ func (r *Response) Header(k, v string) *Response {
 	if r.checker.Failed() {
 		return r
 	}
-	r.checker.Equal(v, r.resp.Header[k])
+	r.checker.Equal(v, r.resp.Header.Get(k))
 	return r
 }
 
@@ -52,10 +53,7 @@ func (r *Response) NoContent() *Response {
 
 	contentType := r.resp.Header.Get("Content-Type")
 
-	content, err := ioutil.ReadAll(r.resp.Body)
-	if err != nil {
-		r.checker.Fail(err.Error())
-	}
+	content := string(r.getContent())
 
 	r.checker.Equal("", contentType)
 	r.checker.Equal("", content)
@@ -66,6 +64,21 @@ func (r *Response) NoContent() *Response {
 func (r *Response) JSON() *Value {
 	value := r.getJSON()
 	return NewValue(r.checker.Clone(), value)
+}
+
+func (r *Response) getContent() []byte {
+	if r.content != nil {
+		return r.content
+	}
+
+	content, err := ioutil.ReadAll(r.resp.Body)
+	if err != nil {
+		r.checker.Fail(err.Error())
+		return nil
+	}
+
+	r.content = content
+	return r.content
 }
 
 func (r *Response) getJSON() interface{} {
@@ -88,11 +101,7 @@ func (r *Response) getJSON() interface{} {
 		return nil
 	}
 
-	content, err := ioutil.ReadAll(r.resp.Body)
-	if err != nil {
-		r.checker.Fail(err.Error())
-		return nil
-	}
+	content := r.getContent()
 
 	var value interface{}
 	if err := json.Unmarshal(content, &value); err != nil {
