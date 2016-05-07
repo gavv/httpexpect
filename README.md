@@ -2,45 +2,73 @@
 
 Go module that helps writing nice tests for HTTP API.
 
-*Work in progress.*
-
 ## Example
+
+See [`example`](example) directory for complete sources of server and test.
 
 ```go
 import (
-    "github.com/gavv/httpexpect"
-    "net/http"
-    "testing"
+	"github.com/gavv/httpexpect"
+	"net/http"
+	"net/http/httptest"
+	"testing"
 )
 
-func TestUsers(t *testing.T) {
-    e := httpexpect.New(t, "http://127.0.0.1:8080")
+func TestFruits(t *testing.T) {
+	server := httptest.NewServer(FruitServer())
+	defer server.Close()
 
-    e.GET("/users").
-        ExpectCode(http.StatusOK).ExpectList()
+	e := httpexpect.New(t, server.URL)
 
-    e.GET("/users/john").
-        ExpectCode(http.StatusNotFound)
+	e.GET("/fruits").
+		Expect().
+		Status(http.StatusOK).JSON().Array().Empty()
 
-    user1 := map[string]interface{}{
-        "login": "john",
-    }
+	orange := map[string]interface{}{
+		"weight": 100,
+	}
 
-    user2 := map[string]interface{}{
-        "login": "bob",
-    }
+	e.PUT("/fruits/orange").WithJSON(orange).
+		Expect().
+		Status(http.StatusNoContent).NoContent()
 
-    e.POST("/users", user1).
-        ExpectCode(http.StatusCreated).ExpectEmpty()
+	apple := map[string]interface{}{
+		"colors": []interface{}{"green", "red"},
+		"weight": 200,
+	}
 
-    e.POST("/users", user2).
-        ExpectCode(http.StatusCreated).ExpectEmpty()
+	e.PUT("/fruits/apple").WithJSON(apple).
+		Expect().
+		Status(http.StatusNoContent).NoContent()
 
-    e.GET("/users").
-        ExpectCode(http.StatusOK).ExpectList(user1, user2)
+	e.GET("/fruits").
+		Expect().
+		Status(http.StatusOK).JSON().Array().ElementsAnyOrder("orange", "apple")
 
-    e.GET("/users/john").
-        ExpectCode(http.StatusOK).ExpectMap(user1)
+	e.GET("/fruits/orange").
+		Expect().
+		Status(http.StatusOK).JSON().Object().Equal(orange).NotEqual(apple)
+
+	e.GET("/fruits/orange").
+		Expect().
+		Status(http.StatusOK).
+		JSON().Object().ContainsKey("weight").ValueEqual("weight", 100)
+
+	obj := e.GET("/fruits/apple").
+		Expect().
+		Status(http.StatusOK).JSON().Object()
+
+	obj.Keys().ElementsAnyOrder("colors", "weight")
+
+	obj.Value("colors").Array().Elements("green", "red")
+	obj.Value("colors").Array().Element(0).String().Equal("green")
+	obj.Value("colors").Array().Element(1).String().Equal("red")
+
+	obj.Value("weight").Number().Equal(200)
+
+	e.GET("/fruits/melon").
+		Expect().
+		Status(http.StatusNotFound)
 }
 ```
 
