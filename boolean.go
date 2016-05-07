@@ -61,7 +61,7 @@ func (b *Boolean) True() *Boolean {
 	return b.Equal(true)
 }
 
-// True succeedes if boolean is false.
+// False succeedes if boolean is false.
 //
 // Example:
 //  boolean := NewBoolean(checker, false)

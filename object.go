@@ -39,8 +39,8 @@ func (o *Object) Raw() map[string]interface{} {
 //  object := NewObject(checker, map[string]interface{}{"foo": 123, "bar": 456})
 //  object.Keys().ElementsAnyOrder("foo", "bar")
 func (o *Object) Keys() *Array {
-	keys := make([]interface{}, 0)
-	for k, _ := range o.value {
+	keys := []interface{}{}
+	for k := range o.value {
 		keys = append(keys, k)
 	}
 	return NewArray(o.checker.Clone(), keys)
@@ -52,7 +52,7 @@ func (o *Object) Keys() *Array {
 //  object := NewObject(checker, map[string]interface{}{"foo": 123, "bar": 456})
 //  object.Values().ElementsAnyOrder(123, 456)
 func (o *Object) Values() *Array {
-	values := make([]interface{}, 0)
+	values := []interface{}{}
 	for _, v := range o.value {
 		values = append(values, v)
 	}
@@ -226,7 +226,7 @@ func (o *Object) ValueNotEqual(k string, v interface{}) *Object {
 }
 
 func (o *Object) containsKey(key string) bool {
-	for k, _ := range o.value {
+	for k := range o.value {
 		if k == key {
 			return true
 		}

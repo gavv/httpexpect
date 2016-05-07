@@ -11,7 +11,7 @@ type closingBuffer struct {
 	*bytes.Buffer
 }
 
-func (_ closingBuffer) Close() error {
+func (b closingBuffer) Close() error {
 	return nil
 }
 
@@ -27,9 +27,8 @@ func (c *mockClient) Do(req *http.Request) (*http.Response, error) {
 		c.resp.Header = c.req.Header
 		c.resp.Body = c.req.Body
 		return &c.resp, nil
-	} else {
-		return nil, c.err
 	}
+	return nil, c.err
 }
 
 type mockChecker struct {
@@ -58,7 +57,7 @@ func (c *mockChecker) Clone() Checker {
 	return &copy
 }
 
-func (_ *mockChecker) Compare(a, b interface{}) bool {
+func (c *mockChecker) Compare(a, b interface{}) bool {
 	return assert.ObjectsAreEqual(a, b)
 }
 

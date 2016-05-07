@@ -28,7 +28,7 @@ func (c *AssertChecker) Clone() Checker {
 }
 
 // Compare implements Checker.Compare.
-func (_ *AssertChecker) Compare(a, b interface{}) bool {
+func (c *AssertChecker) Compare(a, b interface{}) bool {
 	return assert.ObjectsAreEqual(a, b)
 }
 
@@ -85,12 +85,12 @@ func (c *RequireChecker) Clone() Checker {
 }
 
 // Compare implements Checker.Compare.
-func (_ *RequireChecker) Compare(a, b interface{}) bool {
+func (c *RequireChecker) Compare(a, b interface{}) bool {
 	return assert.ObjectsAreEqual(a, b)
 }
 
 // Failed implements Checker.Failed.
-func (_ *RequireChecker) Failed() bool {
+func (c *RequireChecker) Failed() bool {
 	return false
 }
 

@@ -104,7 +104,7 @@ func (r *Request) WithJSON(object interface{}) *Request {
 	return r
 }
 
-// Expects constructs http.Request, sends it, receives http.Response, and
+// Expect constructs http.Request, sends it, receives http.Response, and
 // returns a new Response object to inspect received response.
 //
 // Request is sent using Config.Client interface.

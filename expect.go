@@ -54,10 +54,10 @@ type Expect struct {
 
 // Config contains various settings.
 type Config struct {
-	// BaseUrl is a URL to prepended to all request. My be empty. If
+	// BaseURL is a URL to prepended to all request. My be empty. If
 	// non-empty, trailing slash is allowed but not required and is
 	// appended automatically.
-	BaseUrl string
+	BaseURL string
 
 	// Client is used to send http.Request and receive http.Response.
 	// Should not be nil.
@@ -141,7 +141,7 @@ func (logger DefaultLogger) LogRequest(method, url string) {
 
 // New returns a new Expect object.
 //
-// baseUrl specifies URL to prepended to all request. My be empty. If non-empty,
+// baseURL specifies URL to prepended to all request. My be empty. If non-empty,
 // trailing slash is allowed but not required and is appended automatically.
 //
 // New is shorthand for WithConfig. It uses:
@@ -154,9 +154,9 @@ func (logger DefaultLogger) LogRequest(method, url string) {
 //      e := httpexpect.New(t, "http://example.org/")
 //      e.GET("/path").Expect().Status(http.StatusOK)
 //  }
-func New(t *testing.T, baseUrl string) *Expect {
+func New(t *testing.T, baseURL string) *Expect {
 	return WithConfig(Config{
-		BaseUrl: baseUrl,
+		BaseURL: baseURL,
 		Checker: NewAssertChecker(t),
 		Logger:  DefaultLogger{t},
 	})
@@ -169,7 +169,7 @@ func New(t *testing.T, baseUrl string) *Expect {
 // Example:
 //  func TestAPI(t *testing.T) {
 //      e := httpexpect.WithConfig(httpexpect.Config{
-//          BaseUrl: "http://example.org/",
+//          BaseURL: "http://example.org/",
 //          Client:  http.DefaultClient,
 //          Checker: httpexpect.NewAssertChecker(t),
 //          Logger:  httpexpect.DefaultLogger{t},
@@ -190,14 +190,14 @@ func WithConfig(config Config) *Expect {
 // object allows to build request incrementally and send it to server.
 //
 // method specifies the HTTP method (GET, POST, PUT, etc.).
-// Config.BaseUrl is prepended to url.
+// Config.BaseURL is prepended to url.
 func (e *Expect) Request(method, url string) *Request {
 	config := e.config
 	config.Checker = config.Checker.Clone()
-	return NewRequest(config, method, concatUrls(config.BaseUrl, url))
+	return NewRequest(config, method, concatURLs(config.BaseURL, url))
 }
 
-func concatUrls(a, b string) string {
+func concatURLs(a, b string) string {
 	if a == "" {
 		return b
 	}

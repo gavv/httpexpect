@@ -66,18 +66,18 @@ func (a *Array) Element(index int) *Value {
 //  array := NewArray(checker, []interface{}{})
 //  array.Empty()
 func (a *Array) Empty() *Array {
-	expected := make([]interface{}, 0)
+	expected := []interface{}{}
 	a.checker.Equal(expected, a.value)
 	return a
 }
 
-// Empty succeedes if array is non-empty.
+// NotEmpty succeedes if array is non-empty.
 //
 // Example:
 //  array := NewArray(checker, []interface{}{"foo", 123})
 //  array.NotEmpty()
 func (a *Array) NotEmpty() *Array {
-	expected := make([]interface{}, 0)
+	expected := []interface{}{}
 	a.checker.NotEqual(expected, a.value)
 	return a
 }

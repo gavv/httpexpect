@@ -15,7 +15,7 @@ func TestExpectURLs(t *testing.T) {
 	var reqs [5]*Request
 
 	config1 := Config{
-		BaseUrl: "",
+		BaseURL: "",
 		Client:  client,
 		Checker: checker,
 	}
@@ -23,7 +23,7 @@ func TestExpectURLs(t *testing.T) {
 	reqs[0] = WithConfig(config1).Request("METHOD", "http://example.com/path")
 
 	config2 := Config{
-		BaseUrl: "http://example.com",
+		BaseURL: "http://example.com",
 		Client:  client,
 		Checker: checker,
 	}
@@ -32,7 +32,7 @@ func TestExpectURLs(t *testing.T) {
 	reqs[2] = WithConfig(config2).Request("METHOD", "/path")
 
 	config3 := Config{
-		BaseUrl: "http://example.com/",
+		BaseURL: "http://example.com/",
 		Client:  client,
 		Checker: checker,
 	}
@@ -92,7 +92,7 @@ func TestExpectTraverse(t *testing.T) {
 	checker := NewAssertChecker(t)
 
 	config := Config{
-		BaseUrl: "http://example.com",
+		BaseURL: "http://example.com",
 		Client:  client,
 		Checker: checker,
 	}
@@ -134,7 +134,7 @@ func TestExpectBranches(t *testing.T) {
 	checker := newMockChecker(t)
 
 	config := Config{
-		BaseUrl: "http://example.com",
+		BaseURL: "http://example.com",
 		Client:  client,
 		Checker: checker,
 	}
