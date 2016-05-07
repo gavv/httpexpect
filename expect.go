@@ -63,7 +63,7 @@ type Config struct {
 	// Should not be nil.
 	//
 	// You can use http.DefaultClient or provide custom implementation.
-	Client  Client
+	Client Client
 
 	// Checker is used to compare arbitrary values and report failures.
 	// Should not be nil.
