@@ -182,7 +182,7 @@ func TestRequestErrorMarshal(t *testing.T) {
 
 	req := NewRequest(config, "METHOD", "url")
 
-	req.WithJSON(func(){})
+	req.WithJSON(func() {})
 
 	resp := req.Expect()
 	checker.AssertFailed(t)

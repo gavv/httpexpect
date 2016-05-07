@@ -118,7 +118,7 @@ func (a *Array) NotEqual(v []interface{}) *Array {
 // Example:
 //  array := NewArray(checker, []interface{}{"foo", 123})
 //  array.Contains(123, "foo")
-func (a *Array) Contains(v... interface{}) *Array {
+func (a *Array) Contains(v ...interface{}) *Array {
 	elements, ok := canonArray(a.checker, v)
 	if !ok {
 		return a
@@ -138,7 +138,7 @@ func (a *Array) Contains(v... interface{}) *Array {
 //  array := NewArray(checker, []interface{}{"foo", 123})
 //  array.NotContains("bar")         // success
 //  array.NotContains("bar", "foo")  // failure (array contains "foo")
-func (a *Array) NotContains(v... interface{}) *Array {
+func (a *Array) NotContains(v ...interface{}) *Array {
 	elements, ok := canonArray(a.checker, v)
 	if !ok {
 		return a
@@ -161,7 +161,7 @@ func (a *Array) NotContains(v... interface{}) *Array {
 // This calls are equivalent:
 //  array.Elelems("a", "b")
 //  array.Equal([]interface{}{"a", "b"})
-func (a *Array) Elements(v... interface{}) *Array {
+func (a *Array) Elements(v ...interface{}) *Array {
 	return a.Equal(v)
 }
 
@@ -175,7 +175,7 @@ func (a *Array) Elements(v... interface{}) *Array {
 // This calls are equivalent:
 //  array.ElementsAnyOrder("a", "b")
 //  array.ElementsAnyOrder("b", "a")
-func (a *Array) ElementsAnyOrder(v... interface{}) *Array {
+func (a *Array) ElementsAnyOrder(v ...interface{}) *Array {
 	elements, ok := canonArray(a.checker, v)
 	if !ok {
 		return a

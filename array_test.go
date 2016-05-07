@@ -305,11 +305,11 @@ func TestArrayConvertContains(t *testing.T) {
 	checker.AssertSuccess(t)
 	checker.Reset()
 
-	value.Contains(func(){})
+	value.Contains(func() {})
 	checker.AssertFailed(t)
 	checker.Reset()
 
-	value.NotContains(func(){})
+	value.NotContains(func() {})
 	checker.AssertFailed(t)
 	checker.Reset()
 }
@@ -337,11 +337,11 @@ func TestArrayConvertElements(t *testing.T) {
 	checker.AssertFailed(t)
 	checker.Reset()
 
-	value.Elements(func(){})
+	value.Elements(func() {})
 	checker.AssertFailed(t)
 	checker.Reset()
 
-	value.ElementsAnyOrder(func(){})
+	value.ElementsAnyOrder(func() {})
 	checker.AssertFailed(t)
 	checker.Reset()
 }

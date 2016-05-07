@@ -34,7 +34,7 @@ func (c *mockClient) Do(req *http.Request) (*http.Response, error) {
 
 type mockChecker struct {
 	testing *testing.T
-	failed bool
+	failed  bool
 }
 
 func newMockChecker(t *testing.T) *mockChecker {
@@ -66,8 +66,8 @@ func (c *mockChecker) Failed() bool {
 	return c.failed
 }
 
-func (c *mockChecker) Fail(message string, args... interface{}) {
-	c.testing.Logf("Fail: " + message, args...)
+func (c *mockChecker) Fail(message string, args ...interface{}) {
+	c.testing.Logf("Fail: "+message, args...)
 	c.failed = true
 }
 

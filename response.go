@@ -101,7 +101,7 @@ func (r *Response) getJSON() interface{} {
 	}
 
 	if charset != "" && strings.ToLower(charset) != "utf-8" {
-		r.checker.Fail("bad charset: expected empty or 'utf-8', got '"+charset+"'")
+		r.checker.Fail("bad charset: expected empty or 'utf-8', got '" + charset + "'")
 		return nil
 	}
 

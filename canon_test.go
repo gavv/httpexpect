@@ -66,7 +66,7 @@ func TestCanonArray(t *testing.T) {
 	checker.AssertFailed(t)
 	checker.Reset()
 
-	_, ok = canonArray(checker, func(){})
+	_, ok = canonArray(checker, func() {})
 	assert.False(t, ok)
 	checker.AssertFailed(t)
 	checker.Reset()
@@ -107,7 +107,7 @@ func TestCanonMap(t *testing.T) {
 	checker.AssertFailed(t)
 	checker.Reset()
 
-	_, ok = canonMap(checker, func(){})
+	_, ok = canonMap(checker, func() {})
 	assert.False(t, ok)
 	checker.AssertFailed(t)
 	checker.Reset()

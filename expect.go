@@ -26,7 +26,7 @@ type Checker interface {
 	Clone() Checker
 	Compare(a, b interface{}) bool
 	Failed() bool
-	Fail(message string, args... interface{})
+	Fail(message string, args ...interface{})
 	Equal(expected, actual interface{})
 	NotEqual(expected, actual interface{})
 }

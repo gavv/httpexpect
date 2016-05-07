@@ -29,7 +29,7 @@ func (c *AssertChecker) Failed() bool {
 	return c.failed
 }
 
-func (c *AssertChecker) Fail(message string, args... interface{}) {
+func (c *AssertChecker) Fail(message string, args ...interface{}) {
 	if c.failed {
 		return
 	}
@@ -75,7 +75,7 @@ func (_ *RequireChecker) Failed() bool {
 	return false
 }
 
-func (c *RequireChecker) Fail(message string, args... interface{}) {
+func (c *RequireChecker) Fail(message string, args ...interface{}) {
 	c.Assertions.FailNow(fmt.Sprintf(message, args...))
 }
 

@@ -99,7 +99,7 @@ func TestObjectEmpty(t *testing.T) {
 	checker.AssertFailed(t)
 	checker.Reset()
 
-	value3 := NewObject(checker, map[string]interface{}{"":nil})
+	value3 := NewObject(checker, map[string]interface{}{"": nil})
 
 	value3.Empty()
 	checker.AssertFailed(t)
@@ -125,11 +125,11 @@ func TestObjectEqualEmpty(t *testing.T) {
 	checker.AssertFailed(t)
 	checker.Reset()
 
-	value.Equal(map[string]interface{}{"":nil})
+	value.Equal(map[string]interface{}{"": nil})
 	checker.AssertFailed(t)
 	checker.Reset()
 
-	value.NotEqual(map[string]interface{}{"":nil})
+	value.NotEqual(map[string]interface{}{"": nil})
 	checker.AssertSuccess(t)
 	checker.Reset()
 }
@@ -333,11 +333,11 @@ func TestObjectValueEqual(t *testing.T) {
 	checker.AssertFailed(t)
 	checker.Reset()
 
-	value.ValueEqual("baz", func(){})
+	value.ValueEqual("baz", func() {})
 	checker.AssertFailed(t)
 	checker.Reset()
 
-	value.ValueNotEqual("baz", func(){})
+	value.ValueNotEqual("baz", func() {})
 	checker.AssertFailed(t)
 	checker.Reset()
 

@@ -106,23 +106,23 @@ func TestNumberInRange(t *testing.T) {
 	checker.AssertSuccess(t)
 	checker.Reset()
 
-	value.InRange(1234 - 1, 1234)
+	value.InRange(1234-1, 1234)
 	checker.AssertSuccess(t)
 	checker.Reset()
 
-	value.InRange(1234, 1234 + 1)
+	value.InRange(1234, 1234+1)
 	checker.AssertSuccess(t)
 	checker.Reset()
 
-	value.InRange(1234 + 1, 1234 + 2)
+	value.InRange(1234+1, 1234+2)
 	checker.AssertFailed(t)
 	checker.Reset()
 
-	value.InRange(1234 - 2, 1234 - 1)
+	value.InRange(1234-2, 1234-1)
 	checker.AssertFailed(t)
 	checker.Reset()
 
-	value.InRange(1234 + 1, 1234 - 1)
+	value.InRange(1234+1, 1234-1)
 	checker.AssertFailed(t)
 	checker.Reset()
 }

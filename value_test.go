@@ -106,7 +106,7 @@ func TestValueCastIndirectNull(t *testing.T) {
 func TestValueCastBad(t *testing.T) {
 	checker := newMockChecker(t)
 
-	data := func(){}
+	data := func() {}
 
 	NewValue(checker, data).Object()
 	checker.AssertFailed(t)
