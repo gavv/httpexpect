@@ -69,6 +69,40 @@ func TestValueCastNull(t *testing.T) {
 	checker.Reset()
 }
 
+func TestValueCastIndirectNull(t *testing.T) {
+	checker := newMockChecker(t)
+
+	var data []interface{}
+
+	NewValue(checker, data).Object()
+	checker.AssertFailed(t)
+	checker.Reset()
+
+	NewValue(checker, data).Array()
+	checker.AssertFailed(t)
+	checker.Reset()
+
+	NewValue(checker, data).String()
+	checker.AssertFailed(t)
+	checker.Reset()
+
+	NewValue(checker, data).Number()
+	checker.AssertFailed(t)
+	checker.Reset()
+
+	NewValue(checker, data).Boolean()
+	checker.AssertFailed(t)
+	checker.Reset()
+
+	NewValue(checker, data).NotNull()
+	checker.AssertFailed(t)
+	checker.Reset()
+
+	NewValue(checker, data).Null()
+	checker.AssertSuccess(t)
+	checker.Reset()
+}
+
 func TestValueCastObject(t *testing.T) {
 	checker := newMockChecker(t)
 

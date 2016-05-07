@@ -1,3 +1,4 @@
+// Package httpexpect helps writing nice tests for your HTTP API.
 package httpexpect
 
 import (
