@@ -1,6 +1,7 @@
 package httpexpect
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -32,7 +33,7 @@ func (c *AssertChecker) Fail(message string, args... interface{}) {
 	if c.failed {
 		return
 	}
-	c.Assertions.Fail(message, args...)
+	c.Assertions.Fail(fmt.Sprintf(message, args...))
 	c.failed = true
 }
 
@@ -75,7 +76,7 @@ func (_ *RequireChecker) Failed() bool {
 }
 
 func (c *RequireChecker) Fail(message string, args... interface{}) {
-	c.Assertions.FailNow(message, args...)
+	c.Assertions.FailNow(fmt.Sprintf(message, args...))
 }
 
 func (c *RequireChecker) Equal(expected, actual interface{}) {

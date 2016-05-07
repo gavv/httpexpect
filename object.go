@@ -37,7 +37,7 @@ func (o *Object) Values() *Array {
 func (o *Object) Value(key string) *Value {
 	value, ok := o.value[key]
 	if !ok {
-		o.checker.Fail("expected map containing %v, got %v", key, o.value)
+		o.checker.Fail("expected map containing '%v' key, got %v", key, o.value)
 		return NewValue(o.checker.Clone(), nil)
 	}
 	return NewValue(o.checker.Clone(), value)
@@ -75,14 +75,14 @@ func (o *Object) NotEqual(v map[string]interface{}) *Object {
 
 func (o *Object) ContainsKey(key string) *Object {
 	if !o.containsKey(key) {
-		o.checker.Fail("expected map containing %v, got %v", key, o.value)
+		o.checker.Fail("expected map containing '%v' key, got %v", key, o.value)
 	}
 	return o
 }
 
 func (o *Object) NotContainsKey(key string) *Object {
 	if o.containsKey(key) {
-		o.checker.Fail("expected map NOT containing %v, got %v", key, o.value)
+		o.checker.Fail("expected map NOT containing '%v' key, got %v", key, o.value)
 	}
 	return o
 }
@@ -103,7 +103,7 @@ func (o *Object) NotContainsMap(submap map[string]interface{}) *Object {
 
 func (o *Object) ValueEqual(k string, v interface{}) *Object {
 	if !o.containsKey(k) {
-		o.checker.Fail("expected map containing %v, got %v", k, o.value)
+		o.checker.Fail("expected map containing '%v' key, got %v", k, o.value)
 		return o
 	}
 	expected, ok := canonValue(o.checker, v)
@@ -116,7 +116,7 @@ func (o *Object) ValueEqual(k string, v interface{}) *Object {
 
 func (o *Object) ValueNotEqual(k string, v interface{}) *Object {
 	if !o.containsKey(k) {
-		o.checker.Fail("expected map containing %v, got %v", k, o.value)
+		o.checker.Fail("expected map containing '%v' key, got %v", k, o.value)
 		return o
 	}
 	expected, ok := canonValue(o.checker, v)
