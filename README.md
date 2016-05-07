@@ -5,8 +5,8 @@
 ## Features
 
 * Incrementally build HTTP requests.
-* Examinate HTTP responses.
-* Examinate JSON payload, recursively (supported types: object, array, string, number, boolean, null).
+* Inspect HTTP responses.
+* Inspect JSON payload, recursively (supported types: object, array, string, number, boolean, null).
 * By default, uses [`testify`](https://github.com/stretchr/testify/) to report failures (can be configured to use `assert` or `require` package).
 * Configurable (accepts custom implementations of failure reporter, HTTP client, and logger).
 
