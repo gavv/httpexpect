@@ -1,3 +1,4 @@
+// Package fruits is usage example for httpexpect.
 package fruits
 
 import (
@@ -10,6 +11,12 @@ var (
 	fruits map[string]interface{} = make(map[string]interface{})
 )
 
+// FruitServer creates http.Handler for fruits server.
+//
+// Implemented API:
+//  GET /fruits           get fruit list
+//  GET /fruits/{name}    get fruit
+//  PUT /fruits/{name}    add or update fruit
 func FruitServer() http.Handler {
 	mux := http.NewServeMux()
 
