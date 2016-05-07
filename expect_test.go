@@ -2,6 +2,8 @@ package httpexpect
 
 import (
 	"github.com/stretchr/testify/assert"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 )
 
@@ -162,4 +164,38 @@ func TestExpectBranches(t *testing.T) {
 	assert.True(t, e2.checker.Failed())
 	assert.True(t, e3.checker.Failed())
 	assert.False(t, e4.checker.Failed())
+}
+
+func TestExpectLive(t *testing.T) {
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/foo", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"foo":123}`))
+	})
+
+	mux.HandleFunc("/bar", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case "GET":
+			w.Header().Set("Content-Type", "application/json")
+			w.Write([]byte(`[true, false]`))
+
+		case "PUT":
+			w.WriteHeader(http.StatusNoContent)
+		}
+	})
+
+	server := httptest.NewServer(mux)
+	defer server.Close()
+
+	e := New(t, server.URL)
+
+	e.GET("/foo").Expect().
+		Status(http.StatusOK).JSON().Object().ValueEqual("foo", 123)
+
+	e.GET("/bar").Expect().
+		Status(http.StatusOK).JSON().Array().Elements(true, false)
+
+	e.PUT("/bar").Expect().
+		Status(http.StatusNoContent).NoContent()
 }
