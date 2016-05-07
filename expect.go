@@ -1,7 +1,6 @@
 package httpexpect
 
 import (
-	"log"
 	"net/http"
 	"strings"
 	"testing"
@@ -35,17 +34,19 @@ type Logger interface {
 	LogRequest(method, url string)
 }
 
-type DefaultLogger struct{}
+type DefaultLogger struct {
+	*testing.T
+}
 
-func (_ DefaultLogger) LogRequest(method, url string) {
-	log.Printf("[httpexpect] %s %s", method, url)
+func (logger DefaultLogger) LogRequest(method, url string) {
+	logger.T.Logf("[httpexpect] %s %s", method, url)
 }
 
 func New(t *testing.T, baseUrl string) *Expect {
 	return WithConfig(Config{
 		BaseUrl: baseUrl,
 		Checker: NewAssertChecker(t),
-		Logger:  DefaultLogger{},
+		Logger:  DefaultLogger{t},
 	})
 }
 
