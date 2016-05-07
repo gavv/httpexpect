@@ -1,4 +1,4 @@
-// Package fruits is usage example for httpexpect.
+// Usage example for httpexpect.
 package fruits
 
 import (

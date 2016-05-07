@@ -15,8 +15,8 @@ type Expect struct {
 
 // Config contains various settings.
 type Config struct {
-	// BaseUrl is a URL to prepended to all request. My be empty. If non-empty, trailing
-	// slash is allowed but not required and is appended automatically.
+	// BaseUrl is a URL to prepended to all request. My be empty. If non-empty,
+	// trailing slash is allowed but not required and is appended automatically.
 	BaseUrl string
 
 	// Client is used to send http.Request and receive http.Response.

@@ -93,7 +93,7 @@ func (r *Response) NoContent() *Response {
 // JSON returns a new Value object that may be used to inspect JSON contents
 // of response.
 //
-// NoContent succeedes if response contains "application/json" Content-Type header
+// JSON succeedes if response contains "application/json" Content-Type header
 // with empty or "utf-8" charset and if JSON may be decoded from response body.
 //
 // Example:
