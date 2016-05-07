@@ -11,7 +11,9 @@ before_install:
   - go get golang.org/x/tools/cmd/cover
 
 script:
-  - $HOME/gopath/bin/goveralls -v -service=travis-ci
+  - go test -coverprofile coverage .
+  - go test ./example
+  - $HOME/gopath/bin/goveralls -coverprofile coverage -service=travis-ci
 
 matrix:
   allow_failures:
