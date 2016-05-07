@@ -1,4 +1,43 @@
 // Package httpexpect helps writing nice tests for your HTTP API.
+//
+// Usage example
+//
+// See example directory:
+//  - https://godoc.org/github.com/gavv/httpexpect/example
+//  - https://github.com/gavv/httpexpect/tree/master/example
+//
+// Value equality
+//
+// Whenever values are checked for equality in httpexpect, they are converted
+// to "canonical form":
+//  - type aliases are removed
+//  - numeric types are converted to float64
+//  - non-nil interfaces pointed to nil slices and maps are replaced with
+//    nil interfaces
+//
+// This is equivalent to subsequently aplying json.Marshal() and json.Unmarshal()
+// to value.
+//
+// Failure handling
+//
+// When some check fails, failure is reported. If non-fatal failures are used
+// (see Checker), execution is continued and instance that was checked is marked
+// as failed.
+//
+// If specific instance is marked as failed, all subsequent checks are ignored
+// for this instance and any child instances retreived after failure.
+//
+// Example:
+//  array := NewArray(NewAssertChecker(t), []interface{}{"foo", 123})
+//
+//  e0 := array.Element(0)  // success
+//  e1 := array.Element(1)  // success
+//
+//  s0 := e0.String()       // success
+//  s1 := e1.String()       // failure; e1 and s1 are marked as failed, e0 and s0 are not
+//
+//  s0.Equal("foo")         // success
+//  s1.Equal("bar")         // this check is ignored because s1 is marked as failed
 package httpexpect
 
 import (
@@ -15,20 +54,28 @@ type Expect struct {
 
 // Config contains various settings.
 type Config struct {
-	// BaseUrl is a URL to prepended to all request. My be empty. If non-empty,
-	// trailing slash is allowed but not required and is appended automatically.
+	// BaseUrl is a URL to prepended to all request. My be empty. If
+	// non-empty, trailing slash is allowed but not required and is
+	// appended automatically.
 	BaseUrl string
 
 	// Client is used to send http.Request and receive http.Response.
 	// Should not be nil.
+	//
+	// You can use http.DefaultClient or provide custom implementation.
 	Client  Client
 
 	// Checker is used to compare arbitrary values and report failures.
 	// Should not be nil.
+	//
+	// You can use AssertChecker or RequireChecker, or provide custom
+	// implementation.
 	Checker Checker
 
 	// Logger is used to report various events.
 	// May be nil.
+	//
+	// You can use DefaultLogger or provide custom implementation.
 	Logger Logger
 }
 
@@ -55,9 +102,9 @@ type Checker interface {
 	// Compare doesn't report any failures.
 	Compare(a, b interface{}) bool
 
-	// Failed checks if some previous check was failed. Clones inherit their failed
-	// state from original instance. However, if a clone becomes failed later, it
-	// doesn't affect original instance.
+	// Failed checks if some previous check was failed. Clones inherit their
+	// failed state from original instance. However, if a clone becomes failed
+	// later, it doesn't affect original instance.
 	Failed() bool
 
 	// Fail reports failure.
@@ -69,7 +116,8 @@ type Checker interface {
 	// This method exists to allow Checker implementing enhanced failure reporting.
 	Equal(expected, actual interface{})
 
-	// NotEqual compares two values using Compare and reporst failure if they are equal.
+	// NotEqual compares two values using Compare and reporst failure if they are
+	// equal.
 	//
 	// This method exists to allow Checker implementing enhanced failure reporting.
 	NotEqual(expected, actual interface{})
