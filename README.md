@@ -1,10 +1,28 @@
 # httpexpect [![build status](https://travis-ci.org/gavv/httpexpect.svg?branch=master)](https://travis-ci.org/gavv/httpexpect) [![coverage status](https://coveralls.io/repos/github/gavv/httpexpect/badge.svg?branch=master)](https://coveralls.io/github/gavv/httpexpect?branch=master)
 
-Go module that helps writing nice tests for HTTP API.
+*Go module that helps writing nice tests for your HTTP API.*
+
+## Features
+
+* Incrementally build and send HTTP requests.
+* Examinate HTTP responses.
+* Examinate JSON payload, recursively (supported types: object, array, string, number, boolean, null).
+* By default, uses [`testify`](https://github.com/stretchr/testify/) to report failures (can be configured to use `assert` or `require` package).
+* Configurable (accepts custom implementations of failure reporter, HTTP client, and logger).
+
+## Documentation
+
+*TODO*
+
+## Installation
+
+```
+$ go get github.com/gavv/httpexpect
+```
 
 ## Example
 
-See [`example`](example) directory for complete sources of server and test.
+See [`example`](example) directory for complete sources of fruits server and test.
 
 ```go
 import (
@@ -76,6 +94,14 @@ func TestFruits(t *testing.T) {
 
 * [`go-json-rest/rest/test`](https://godoc.org/github.com/ant0ine/go-json-rest/rest/test)
 * [`http-test`](https://github.com/vsco/http-test)
+
+## Contributing
+
+Feel free to report bugs, suggest improvements, and send pull requests! Don't forget to add documentation and tests for new features and run all tests before submitting pull requests:
+
+```
+$ go test github.com/gavv/httpexpect/...
+```
 
 ## License
 
