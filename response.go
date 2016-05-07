@@ -8,20 +8,35 @@ import (
 	"strings"
 )
 
+// Response provides methods to inspect attached http.Response object.
 type Response struct {
 	checker Checker
 	resp    *http.Response
 	content []byte
 }
 
-func NewResponse(checker Checker, resp *http.Response) *Response {
-	return &Response{checker, resp, nil}
+// NewResponse returns a new Response given a checker used to report failures
+// and http.Response to be inspected.
+//
+// Both checker and response should not be nil. If response is nil, failure is reported.
+func NewResponse(checker Checker, response *http.Response) *Response {
+	if response == nil {
+		checker.Fail("expected non-nil response")
+	}
+	return &Response{checker, response, nil}
 }
 
+// Raw returns underlying http.Response object.
+// This is the value originally passed to NewResponse.
 func (r *Response) Raw() *http.Response {
 	return r.resp
 }
 
+// Status succeedes if response contains given status code.
+//
+// Example:
+//  resp := NewResponse(checker, response)
+//  resp.Status(http.StatusOK)
 func (r *Response) Status(status int) *Response {
 	if r.checker.Failed() {
 		return r
@@ -30,6 +45,13 @@ func (r *Response) Status(status int) *Response {
 	return r
 }
 
+// Headers succeedes if response has exactly given headers map.
+//
+// Example:
+//  resp := NewResponse(checker, response)
+//  resp.Headers(map[string][]string{
+//      "Content-Type": []string{"application-json"},
+//  })
 func (r *Response) Headers(headers map[string][]string) *Response {
 	if r.checker.Failed() {
 		return r
@@ -38,6 +60,11 @@ func (r *Response) Headers(headers map[string][]string) *Response {
 	return r
 }
 
+// Header succeedes if response contains given single header.
+//
+// Example:
+//  resp := NewResponse(checker, response)
+//  resp.Header("Content-Type", "application-json")
 func (r *Response) Header(k, v string) *Response {
 	if r.checker.Failed() {
 		return r
@@ -46,6 +73,8 @@ func (r *Response) Header(k, v string) *Response {
 	return r
 }
 
+// NoContent succeedes if response contains empty Content-Type header and
+// empty body.
 func (r *Response) NoContent() *Response {
 	if r.checker.Failed() {
 		return r
@@ -61,6 +90,15 @@ func (r *Response) NoContent() *Response {
 	return r
 }
 
+// JSON returns a new Value object that may be used to inspect JSON contents
+// of response.
+//
+// NoContent succeedes if response contains "application/json" Content-Type header
+// with empty or "utf-8" charset and if JSON may be decoded from response body.
+//
+// Example:
+//  resp := NewResponse(checker, response)
+//  resp.JSON().Array().Elements("foo", "bar")
 func (r *Response) JSON() *Value {
 	value := r.getJSON()
 	return NewValue(r.checker.Clone(), value)

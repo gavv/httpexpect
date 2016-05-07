@@ -12,7 +12,7 @@ func TestResponseFailed(t *testing.T) {
 
 	checker.Fail("fail")
 
-	resp := NewResponse(checker, &http.Response{})
+	resp := NewResponse(checker, nil)
 
 	resp.Status(123)
 	resp.Headers(nil)
