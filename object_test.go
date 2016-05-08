@@ -219,7 +219,10 @@ func TestObjectContainsMapSuccess(t *testing.T) {
 		"foo": 123,
 		"bar": []interface{}{"456", 789},
 		"baz": map[string]interface{}{
-			"a": "b",
+			"a": map[string]interface{}{
+				"b": 333,
+				"c": 444,
+			},
 		},
 	})
 
@@ -239,7 +242,9 @@ func TestObjectContainsMapSuccess(t *testing.T) {
 	submap2 := map[string]interface{}{
 		"bar": []interface{}{"456", 789},
 		"baz": map[string]interface{}{
-			"a": "b",
+			"a": map[string]interface{}{
+				"c": 444,
+			},
 		},
 	}
 

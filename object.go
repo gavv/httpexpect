@@ -239,11 +239,24 @@ func (o *Object) containsMap(sm map[string]interface{}) bool {
 	if !ok {
 		return false
 	}
-	for k, v := range submap {
-		if !o.containsKey(k) {
+	return checkContainsMap(o.checker, o.value, submap)
+}
+
+func checkContainsMap(checker Checker, outer, inner map[string]interface{}) bool {
+	for k, iv := range inner {
+		ov, ok := outer[k]
+		if !ok {
 			return false
 		}
-		if !o.checker.Compare(v, o.value[k]) {
+		if ovm, ok := ov.(map[string]interface{}); ok {
+			if ivm, ok := iv.(map[string]interface{}); ok {
+				if !checkContainsMap(checker, ovm, ivm) {
+					return false
+				}
+				continue
+			}
+		}
+		if !checker.Compare(ov, iv) {
 			return false
 		}
 	}
