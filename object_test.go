@@ -264,7 +264,10 @@ func TestObjectContainsMapFailed(t *testing.T) {
 		"foo": 123,
 		"bar": []interface{}{"456", 789},
 		"baz": map[string]interface{}{
-			"a": "b",
+			"a": map[string]interface{}{
+				"b": 333,
+				"c": 444,
+			},
 		},
 	})
 
@@ -291,6 +294,23 @@ func TestObjectContainsMapFailed(t *testing.T) {
 	checker.Reset()
 
 	value.NotContainsMap(submap2)
+	checker.AssertSuccess(t)
+	checker.Reset()
+
+	submap3 := map[string]interface{}{
+		"baz": map[string]interface{}{
+			"a": map[string]interface{}{
+				"b": "333",
+				"c": 444,
+			},
+		},
+	}
+
+	value.ContainsMap(submap3)
+	checker.AssertFailed(t)
+	checker.Reset()
+
+	value.NotContainsMap(submap3)
 	checker.AssertSuccess(t)
 	checker.Reset()
 
