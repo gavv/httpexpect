@@ -128,18 +128,7 @@ func (r *Response) getJSON() interface{} {
 		return nil
 	}
 
-	contentType := r.resp.Header.Get("Content-Type")
-
-	mediaType, params, _ := mime.ParseMediaType(contentType)
-	charset := params["charset"]
-
-	r.checker.Equal("application/json", mediaType)
-	if r.checker.Failed() {
-		return nil
-	}
-
-	if charset != "" && strings.ToLower(charset) != "utf-8" {
-		r.checker.Fail("bad charset: expected empty or 'utf-8', got '" + charset + "'")
+	if !r.checkJSON() {
 		return nil
 	}
 
@@ -152,4 +141,27 @@ func (r *Response) getJSON() interface{} {
 	}
 
 	return value
+}
+
+func (r *Response) checkJSON() bool {
+	if r.checker.Failed() {
+		return false
+	}
+
+	contentType := r.resp.Header.Get("Content-Type")
+
+	mediaType, params, _ := mime.ParseMediaType(contentType)
+	charset := params["charset"]
+
+	r.checker.Equal("application/json", mediaType)
+	if r.checker.Failed() {
+		return false
+	}
+
+	if charset != "" && strings.ToLower(charset) != "utf-8" {
+		r.checker.Fail("bad charset: expected empty or 'utf-8', got '" + charset + "'")
+		return false
+	}
+
+	return true
 }
