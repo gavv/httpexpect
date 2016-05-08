@@ -17,7 +17,9 @@ func TestResponseFailed(t *testing.T) {
 	resp.Status(123)
 	resp.Headers(nil)
 	resp.Header("foo", "bar")
+	resp.Body()
 	resp.NoContent()
+	resp.ContentTypeJSON()
 	resp.JSON()
 }
 

@@ -122,6 +122,10 @@ func (r *Response) JSON() *Value {
 }
 
 func (r *Response) getContent() []byte {
+	if r.checker.Failed() {
+		return nil
+	}
+
 	if r.content != nil {
 		return r.content
 	}
