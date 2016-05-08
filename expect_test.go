@@ -7,6 +7,23 @@ import (
 	"testing"
 )
 
+func TestExpectCheckers(t *testing.T) {
+	checker := NewAssertChecker(t)
+
+	config := Config{
+		Checker: checker,
+	}
+
+	e := WithConfig(config)
+
+	assert.False(t, e.config.Checker == e.Value(nil).checker)
+	assert.False(t, e.config.Checker == e.Object(map[string]interface{}{}).checker)
+	assert.False(t, e.config.Checker == e.Array([]interface{}{}).checker)
+	assert.False(t, e.config.Checker == e.String("").checker)
+	assert.False(t, e.config.Checker == e.Number(0).checker)
+	assert.False(t, e.config.Checker == e.Boolean(false).checker)
+}
+
 func TestExpectMethods(t *testing.T) {
 	client := &mockClient{}
 

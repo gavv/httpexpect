@@ -250,4 +250,33 @@ func (e *Expect) PATCH(url string, args ...interface{}) *Request {
 func (e *Expect) DELETE(url string, args ...interface{}) *Request {
 	return e.Request("DELETE", url, args...)
 }
+
+// Value is a shorthand for NewValue(Config.Checker.Clone(), value).
+func (e *Expect) Value(value interface{}) *Value {
+	return NewValue(e.config.Checker.Clone(), value)
+}
+
+// Object is a shorthand for NewObject(Config.Checker.Clone(), value).
+func (e *Expect) Object(value map[string]interface{}) *Object {
+	return NewObject(e.config.Checker.Clone(), value)
+}
+
+// Array is a shorthand for NewArray(Config.Checker.Clone(), value).
+func (e *Expect) Array(value []interface{}) *Array {
+	return NewArray(e.config.Checker.Clone(), value)
+}
+
+// String is a shorthand for NewString(Config.Checker.Clone(), value).
+func (e *Expect) String(value string) *String {
+	return NewString(e.config.Checker.Clone(), value)
+}
+
+// Number is a shorthand for NewNumber(Config.Checker.Clone(), value).
+func (e *Expect) Number(value float64) *Number {
+	return NewNumber(e.config.Checker.Clone(), value)
+}
+
+// Boolean is a shorthand for NewBoolean(Config.Checker.Clone(), value).
+func (e *Expect) Boolean(value bool) *Boolean {
+	return NewBoolean(e.config.Checker.Clone(), value)
 }
