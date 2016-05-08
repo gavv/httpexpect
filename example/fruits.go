@@ -1,4 +1,4 @@
-// Usage example for httpexpect.
+// Package fruits is usage example for httpexpect.
 package fruits
 
 import (
@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	fruits map[string]interface{} = make(map[string]interface{})
+	fruits = make(map[string]interface{})
 )
 
 // FruitServer creates http.Handler for fruits server.
@@ -29,8 +29,8 @@ func FruitServer() http.Handler {
 func handleFruitList(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
-		ret := make([]string, 0)
-		for k, _ := range fruits {
+		ret := []string{}
+		for k := range fruits {
 			ret = append(ret, k)
 		}
 

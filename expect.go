@@ -25,7 +25,7 @@
 // as failed.
 //
 // If specific instance is marked as failed, all subsequent checks are ignored
-// for this instance and any child instances retreived after failure.
+// for this instance and any child instances retrieved after failure.
 //
 // Example:
 //  array := NewArray(NewAssertChecker(t), []interface{}{"foo", 123})
@@ -208,7 +208,7 @@ func concatURLs(a, b string) string {
 		a = a[:len(a)-1]
 	}
 	if strings.HasPrefix(b, "/") {
-		b = b[1:len(b)]
+		b = b[1:]
 	}
 	return a + "/" + b
 }

@@ -10,7 +10,7 @@ import (
 // AssertChecker implements Checker interface using `testify/assert' package.
 //
 // All failures are non-fatal with this checker. After first failure, all
-// futher failures within this copy of checker and its clones are ignored.
+// further failures within this copy of checker and its clones are ignored.
 type AssertChecker struct {
 	*assert.Assertions
 	failed bool

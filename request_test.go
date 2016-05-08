@@ -65,9 +65,9 @@ func TestRequestHeaders(t *testing.T) {
 	})
 
 	expectedHeaders := map[string][]string{
-		"First-Header":  []string{"foo"},
-		"Second-Header": []string{"bar"},
-		"Third-Header":  []string{"baz"},
+		"First-Header":  {"foo"},
+		"Second-Header": {"bar"},
+		"Third-Header":  {"baz"},
 	}
 
 	resp := req.Expect()
@@ -145,8 +145,8 @@ func TestRequestBodyJSON(t *testing.T) {
 	}
 
 	expectedHeaders := map[string][]string{
-		"Content-Type": []string{"application/json; charset=utf-8"},
-		"Some-Header":  []string{"foo"},
+		"Content-Type": {"application/json; charset=utf-8"},
+		"Some-Header":  {"foo"},
 	}
 
 	req := NewRequest(config, "METHOD", "url")

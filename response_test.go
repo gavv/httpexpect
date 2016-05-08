@@ -27,8 +27,8 @@ func TestResponseHeaders(t *testing.T) {
 	checker := newMockChecker(t)
 
 	headers := map[string][]string{
-		"First-Header":  []string{"foo"},
-		"Second-Header": []string{"bar"},
+		"First-Header":  {"foo"},
+		"Second-Header": {"bar"},
 	}
 
 	httpResp := &http.Response{
@@ -92,7 +92,7 @@ func TestResponseNoContentEmpty(t *testing.T) {
 	checker := newMockChecker(t)
 
 	headers := map[string][]string{
-		"Content-Type": []string{""},
+		"Content-Type": {""},
 	}
 
 	httpResp := &http.Response{
@@ -124,7 +124,7 @@ func TestResponseNoContentNil(t *testing.T) {
 	checker := newMockChecker(t)
 
 	headers := map[string][]string{
-		"Content-Type": []string{""},
+		"Content-Type": {""},
 	}
 
 	httpResp := &http.Response{
@@ -156,7 +156,7 @@ func TestResponseJson(t *testing.T) {
 	checker := newMockChecker(t)
 
 	headers := map[string][]string{
-		"Content-Type": []string{"application/json; charset=utf-8"},
+		"Content-Type": {"application/json; charset=utf-8"},
 	}
 
 	body := `{"key": "value"}`
@@ -195,7 +195,7 @@ func TestResponseJsonEncodingEmpty(t *testing.T) {
 	checker := newMockChecker(t)
 
 	headers := map[string][]string{
-		"Content-Type": []string{"application/json"},
+		"Content-Type": {"application/json"},
 	}
 
 	body := `{"key": "value"}`
@@ -228,7 +228,7 @@ func TestResponseJsonEncodingBad(t *testing.T) {
 	checker := newMockChecker(t)
 
 	headers := map[string][]string{
-		"Content-Type": []string{"application/json; charset=bad"},
+		"Content-Type": {"application/json; charset=bad"},
 	}
 
 	body := `{"key": "value"}`
