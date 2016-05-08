@@ -73,6 +73,16 @@ func (r *Response) Header(k, v string) *Response {
 	return r
 }
 
+// Body returns a new String object that may be used to inspect response body.
+//
+// Example:
+//  resp := NewResponse(checker, response)
+//  resp.Body().NotEmpty()
+func (r *Response) Body() *String {
+	value := r.getContent()
+	return NewString(r.checker.Clone(), string(value))
+}
+
 // NoContent succeedes if response contains empty Content-Type header and
 // empty body.
 func (r *Response) NoContent() *Response {
@@ -87,6 +97,13 @@ func (r *Response) NoContent() *Response {
 	r.checker.Equal("", contentType)
 	r.checker.Equal("", content)
 
+	return r
+}
+
+// ContentTypeJSON succeedes if response contains "application/json" Content-Type
+// header with empty or "utf-8" charset
+func (r *Response) ContentTypeJSON() *Response {
+	r.checkJSON()
 	return r
 }
 

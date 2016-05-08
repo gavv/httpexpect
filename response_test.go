@@ -71,6 +71,21 @@ func TestResponseHeaders(t *testing.T) {
 	checker.Reset()
 }
 
+func TestResponseBody(t *testing.T) {
+	checker := newMockChecker(t)
+
+	httpResp := &http.Response{
+		StatusCode: http.StatusOK,
+		Body:       closingBuffer{bytes.NewBufferString("body")},
+	}
+
+	resp := NewResponse(checker, httpResp)
+
+	assert.Equal(t, "body", resp.Body().Raw())
+	checker.AssertSuccess(t)
+	checker.Reset()
+}
+
 func TestResponseNoContentEmpty(t *testing.T) {
 	checker := newMockChecker(t)
 
@@ -86,8 +101,16 @@ func TestResponseNoContentEmpty(t *testing.T) {
 
 	resp := NewResponse(checker, httpResp)
 
+	assert.Equal(t, "", resp.Body().Raw())
+	checker.AssertSuccess(t)
+	checker.Reset()
+
 	resp.NoContent()
 	checker.AssertSuccess(t)
+	checker.Reset()
+
+	resp.ContentTypeJSON()
+	checker.AssertFailed(t)
 	checker.Reset()
 
 	resp.JSON()
@@ -110,8 +133,16 @@ func TestResponseNoContentNil(t *testing.T) {
 
 	resp := NewResponse(checker, httpResp)
 
+	assert.Equal(t, "", resp.Body().Raw())
+	checker.AssertSuccess(t)
+	checker.Reset()
+
 	resp.NoContent()
 	checker.AssertSuccess(t)
+	checker.Reset()
+
+	resp.ContentTypeJSON()
+	checker.AssertFailed(t)
 	checker.Reset()
 
 	resp.JSON()
@@ -136,8 +167,16 @@ func TestResponseJson(t *testing.T) {
 
 	resp := NewResponse(checker, httpResp)
 
+	assert.Equal(t, body, resp.Body().Raw())
+	checker.AssertSuccess(t)
+	checker.Reset()
+
 	resp.NoContent()
 	checker.AssertFailed(t)
+	checker.Reset()
+
+	resp.ContentTypeJSON()
+	checker.AssertSuccess(t)
 	checker.Reset()
 
 	resp.JSON()
@@ -171,6 +210,10 @@ func TestResponseJsonEncodingEmpty(t *testing.T) {
 	checker.AssertFailed(t)
 	checker.Reset()
 
+	resp.ContentTypeJSON()
+	checker.AssertSuccess(t)
+	checker.Reset()
+
 	resp.JSON()
 	checker.AssertSuccess(t)
 	checker.Reset()
@@ -197,6 +240,10 @@ func TestResponseJsonEncodingBad(t *testing.T) {
 	resp := NewResponse(checker, httpResp)
 
 	resp.NoContent()
+	checker.AssertFailed(t)
+	checker.Reset()
+
+	resp.ContentTypeJSON()
 	checker.AssertFailed(t)
 	checker.Reset()
 
