@@ -7,7 +7,40 @@ import (
 	"testing"
 )
 
-func TestExpectURLs(t *testing.T) {
+func TestExpectMethods(t *testing.T) {
+	client := &mockClient{}
+
+	checker := NewAssertChecker(t)
+
+	config := Config{
+		Client:  client,
+		Checker: checker,
+	}
+
+	var reqs [8]*Request
+
+	e := WithConfig(config)
+
+	reqs[0] = e.Request("METHOD", "/url")
+	reqs[1] = e.OPTIONS("/url")
+	reqs[2] = e.HEAD("/url")
+	reqs[3] = e.GET("/url")
+	reqs[4] = e.POST("/url")
+	reqs[5] = e.PUT("/url")
+	reqs[6] = e.PATCH("/url")
+	reqs[7] = e.DELETE("/url")
+
+	assert.Equal(t, "METHOD", reqs[0].method)
+	assert.Equal(t, "OPTIONS", reqs[1].method)
+	assert.Equal(t, "HEAD", reqs[2].method)
+	assert.Equal(t, "GET", reqs[3].method)
+	assert.Equal(t, "POST", reqs[4].method)
+	assert.Equal(t, "PUT", reqs[5].method)
+	assert.Equal(t, "PATCH", reqs[6].method)
+	assert.Equal(t, "DELETE", reqs[7].method)
+}
+
+func TestExpectURLConcat(t *testing.T) {
 	client := &mockClient{}
 
 	checker := NewAssertChecker(t)
@@ -53,37 +86,32 @@ func TestExpectURLs(t *testing.T) {
 	assert.Equal(t, "http://example.com/", empty3.url)
 }
 
-func TestExpectMethods(t *testing.T) {
+func TestExpectURLFormat(t *testing.T) {
 	client := &mockClient{}
 
 	checker := NewAssertChecker(t)
 
+	var reqs [9]*Request
+
 	config := Config{
+		BaseURL: "http://example.com/",
 		Client:  client,
 		Checker: checker,
 	}
 
-	var reqs [8]*Request
+	reqs[0] = WithConfig(config).Request("METHOD", "/foo/%s", "bar")
+	reqs[1] = WithConfig(config).Request("METHOD", "%sfoo%s", "/", "/bar")
+	reqs[2] = WithConfig(config).OPTIONS("%s", "/foo/bar")
+	reqs[3] = WithConfig(config).HEAD("%s", "/foo/bar")
+	reqs[4] = WithConfig(config).GET("%s", "/foo/bar")
+	reqs[5] = WithConfig(config).POST("%s", "/foo/bar")
+	reqs[6] = WithConfig(config).PUT("%s", "/foo/bar")
+	reqs[7] = WithConfig(config).PATCH("%s", "/foo/bar")
+	reqs[8] = WithConfig(config).DELETE("%s", "/foo/bar")
 
-	e := WithConfig(config)
-
-	reqs[0] = e.Request("METHOD", "/url")
-	reqs[1] = e.OPTIONS("/url")
-	reqs[2] = e.HEAD("/url")
-	reqs[3] = e.GET("/url")
-	reqs[4] = e.POST("/url")
-	reqs[5] = e.PUT("/url")
-	reqs[6] = e.PATCH("/url")
-	reqs[7] = e.DELETE("/url")
-
-	assert.Equal(t, "METHOD", reqs[0].method)
-	assert.Equal(t, "OPTIONS", reqs[1].method)
-	assert.Equal(t, "HEAD", reqs[2].method)
-	assert.Equal(t, "GET", reqs[3].method)
-	assert.Equal(t, "POST", reqs[4].method)
-	assert.Equal(t, "PUT", reqs[5].method)
-	assert.Equal(t, "PATCH", reqs[6].method)
-	assert.Equal(t, "DELETE", reqs[7].method)
+	for _, req := range reqs {
+		assert.Equal(t, "http://example.com/foo/bar", req.url)
+	}
 }
 
 func TestExpectTraverse(t *testing.T) {

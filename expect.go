@@ -41,6 +41,7 @@
 package httpexpect
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 	"testing"
@@ -190,11 +191,13 @@ func WithConfig(config Config) *Expect {
 // object allows to build request incrementally and send it to server.
 //
 // method specifies the HTTP method (GET, POST, PUT, etc.).
-// Config.BaseURL is prepended to url.
-func (e *Expect) Request(method, url string) *Request {
+// url and args are passed to fmt.Sprintf().
+// Config.BaseURL is prepended to final url.
+func (e *Expect) Request(method, url string, args ...interface{}) *Request {
 	config := e.config
 	config.Checker = config.Checker.Clone()
-	return NewRequest(config, method, concatURLs(config.BaseURL, url))
+	url = concatURLs(config.BaseURL, fmt.Sprintf(url, args...))
+	return NewRequest(config, method, url)
 }
 
 func concatURLs(a, b string) string {
@@ -213,37 +216,38 @@ func concatURLs(a, b string) string {
 	return a + "/" + b
 }
 
-// OPTIONS is a shorthand for Request("OPTIONS", url).
-func (e *Expect) OPTIONS(url string) *Request {
-	return e.Request("OPTIONS", url)
+// OPTIONS is a shorthand for Request("OPTIONS", url, args...).
+func (e *Expect) OPTIONS(url string, args ...interface{}) *Request {
+	return e.Request("OPTIONS", url, args...)
 }
 
-// HEAD is a shorthand for Request("HEAD", url).
-func (e *Expect) HEAD(url string) *Request {
-	return e.Request("HEAD", url)
+// HEAD is a shorthand for Request("HEAD", url, args...).
+func (e *Expect) HEAD(url string, args ...interface{}) *Request {
+	return e.Request("HEAD", url, args...)
 }
 
-// GET is a shorthand for Request("GET", url).
-func (e *Expect) GET(url string) *Request {
-	return e.Request("GET", url)
+// GET is a shorthand for Request("GET", url, args...).
+func (e *Expect) GET(url string, args ...interface{}) *Request {
+	return e.Request("GET", url, args...)
 }
 
-// POST is a shorthand for Request("POST", url).
-func (e *Expect) POST(url string) *Request {
-	return e.Request("POST", url)
+// POST is a shorthand for Request("POST", url, args...).
+func (e *Expect) POST(url string, args ...interface{}) *Request {
+	return e.Request("POST", url, args...)
 }
 
-// PUT is a shorthand for Request("PUT", url).
-func (e *Expect) PUT(url string) *Request {
-	return e.Request("PUT", url)
+// PUT is a shorthand for Request("PUT", url, args...).
+func (e *Expect) PUT(url string, args ...interface{}) *Request {
+	return e.Request("PUT", url, args...)
 }
 
-// PATCH is a shorthand for Request("PATCH", url).
-func (e *Expect) PATCH(url string) *Request {
-	return e.Request("PATCH", url)
+// PATCH is a shorthand for Request("PATCH", url, args...).
+func (e *Expect) PATCH(url string, args ...interface{}) *Request {
+	return e.Request("PATCH", url, args...)
 }
 
-// DELETE is a shorthand for Request("DELETE", url).
-func (e *Expect) DELETE(url string) *Request {
-	return e.Request("DELETE", url)
+// DELETE is a shorthand for Request("DELETE", url, args...).
+func (e *Expect) DELETE(url string, args ...interface{}) *Request {
+	return e.Request("DELETE", url, args...)
+}
 }
