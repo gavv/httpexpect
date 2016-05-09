@@ -92,9 +92,10 @@ func TestFruits(t *testing.T) {
 
 ## Similar modules
 
+* [`gorequest`](https://github.com/parnurzeal/gorequest)
+* [`gabs`](https://github.com/Jeffail/gabs)
 * [`go-json-rest/rest/test`](https://godoc.org/github.com/ant0ine/go-json-rest/rest/test)
 * [`http-test`](https://github.com/vsco/http-test)
-* [`gabs`](https://github.com/Jeffail/gabs)
 
 ## Contributing
 
