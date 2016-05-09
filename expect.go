@@ -12,20 +12,18 @@
 // to "canonical form":
 //  - type aliases are removed
 //  - numeric types are converted to float64
-//  - non-nil interfaces pointed to nil slices and maps are replaced with
-//    nil interfaces
+//  - non-nil interfaces pointing to nil slices and maps are replaced with nil interfaces
 //
-// This is equivalent to subsequently aplying json.Marshal() and json.Unmarshal()
-// to value.
+// This is equivalent to subsequently json.Marshal() and json.Unmarshal() the value.
 //
 // Failure handling
 //
 // When some check fails, failure is reported. If non-fatal failures are used
-// (see Checker), execution is continued and instance that was checked is marked
-// as failed.
+// (see Checker interface), execution is continued and instance that was checked
+// is marked as failed.
 //
 // If specific instance is marked as failed, all subsequent checks are ignored
-// for this instance and any child instances retrieved after failure.
+// for this instance and for any child instances retrieved after failure.
 //
 // Example:
 //  array := NewArray(NewAssertChecker(t), []interface{}{"foo", 123})
