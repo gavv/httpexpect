@@ -162,8 +162,8 @@ func TestExpectTraverse(t *testing.T) {
 	m.ValueEqual("bar", data["bar"])
 	m.ValueEqual("baz", data["baz"])
 
-	m.Keys().ElementsAnyOrder("foo", "bar", "baz")
-	m.Values().ElementsAnyOrder(data["foo"], data["bar"], data["baz"])
+	m.Keys().ContainsOnly("foo", "bar", "baz")
+	m.Values().ContainsOnly(data["foo"], data["bar"], data["baz"])
 
 	m.Value("foo").Array().Elements("bar", 123, false, nil)
 	m.Value("bar").String().Equal("hello")

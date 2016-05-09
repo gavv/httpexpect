@@ -112,6 +112,22 @@ func (a *Array) NotEqual(v []interface{}) *Array {
 	return a
 }
 
+// Elements succeedes if array contains all given elements, in given order, and only them.
+// Before comparison, array and all elements are converted to canonical form.
+//
+// For partial or unordered comparison, see Contains and ContainsOnly.
+//
+// Example:
+//  array := NewArray(checker, []interface{}{"foo", 123})
+//  array.Elements("foo", 123)
+//
+// This calls are equivalent:
+//  array.Elelems("a", "b")
+//  array.Equal([]interface{}{"a", "b"})
+func (a *Array) Elements(v ...interface{}) *Array {
+	return a.Equal(v)
+}
+
 // Contains succeedes if array contains all given elements (in any order).
 // Before comparison, array and all elements are converted to canonical form.
 //
@@ -151,31 +167,17 @@ func (a *Array) NotContains(v ...interface{}) *Array {
 	return a
 }
 
-// Elements succeedes if array contains all given elements, in given order, and only them.
-// Before comparison, array and all elements are converted to canonical form.
-//
-// Example:
-//  array := NewArray(checker, []interface{}{"foo", 123})
-//  array.Elements("foo", 123)
-//
-// This calls are equivalent:
-//  array.Elelems("a", "b")
-//  array.Equal([]interface{}{"a", "b"})
-func (a *Array) Elements(v ...interface{}) *Array {
-	return a.Equal(v)
-}
-
-// ElementsAnyOrder succeedes if array contains all given elements, in any order, and only
+// ContainsOnly succeedes if array contains all given elements, in any order, and only
 // them. Before comparison, array and all elements are converted to canonical form.
 //
 // Example:
 //  array := NewArray(checker, []interface{}{"foo", 123})
-//  array.ElementsAnyOrder(123, "foo")
+//  array.ContainsOnly(123, "foo")
 //
 // This calls are equivalent:
-//  array.ElementsAnyOrder("a", "b")
-//  array.ElementsAnyOrder("b", "a")
-func (a *Array) ElementsAnyOrder(v ...interface{}) *Array {
+//  array.ContainsOnly("a", "b")
+//  array.ContainsOnly("b", "a")
+func (a *Array) ContainsOnly(v ...interface{}) *Array {
 	elements, ok := canonArray(a.checker, v)
 	if !ok {
 		return a

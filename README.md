@@ -61,7 +61,7 @@ func TestFruits(t *testing.T) {
 
 	e.GET("/fruits").
 		Expect().
-		Status(http.StatusOK).JSON().Array().ElementsAnyOrder("orange", "apple")
+		Status(http.StatusOK).JSON().Array().ContainsOnly("orange", "apple")
 
 	e.GET("/fruits/orange").
 		Expect().
@@ -76,7 +76,7 @@ func TestFruits(t *testing.T) {
 		Expect().
 		Status(http.StatusOK).JSON().Object()
 
-	obj.Keys().ElementsAnyOrder("colors", "weight")
+	obj.Keys().ContainsOnly("colors", "weight")
 
 	obj.Value("colors").Array().Elements("green", "red")
 	obj.Value("colors").Array().Element(0).String().Equal("green")

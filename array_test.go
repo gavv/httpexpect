@@ -19,10 +19,10 @@ func TestArrayFailed(t *testing.T) {
 	value.NotEmpty()
 	value.Equal(nil)
 	value.NotEqual(nil)
+	value.Elements("foo")
 	value.Contains("foo")
 	value.NotContains("foo")
-	value.Elements("foo")
-	value.ElementsAnyOrder("foo")
+	value.ContainsOnly("foo")
 }
 
 func TestArrayGetters(t *testing.T) {
@@ -139,6 +139,32 @@ func TestArrayEqualNotEmpty(t *testing.T) {
 	checker.Reset()
 }
 
+func TestArrayElements(t *testing.T) {
+	checker := newMockChecker(t)
+
+	value := NewArray(checker, []interface{}{123, "foo"})
+
+	value.Elements(123)
+	checker.AssertFailed(t)
+	checker.Reset()
+
+	value.Elements("foo")
+	checker.AssertFailed(t)
+	checker.Reset()
+
+	value.Elements("foo", 123)
+	checker.AssertFailed(t)
+	checker.Reset()
+
+	value.Elements(123, "foo", "foo")
+	checker.AssertFailed(t)
+	checker.Reset()
+
+	value.Elements(123, "foo")
+	checker.AssertSuccess(t)
+	checker.Reset()
+}
+
 func TestArrayContains(t *testing.T) {
 	checker := newMockChecker(t)
 
@@ -189,54 +215,28 @@ func TestArrayContains(t *testing.T) {
 	checker.Reset()
 }
 
-func TestArrayElements(t *testing.T) {
+func TestArrayContainsOnly(t *testing.T) {
 	checker := newMockChecker(t)
 
 	value := NewArray(checker, []interface{}{123, "foo"})
 
-	value.Elements(123)
+	value.ContainsOnly(123)
 	checker.AssertFailed(t)
 	checker.Reset()
 
-	value.Elements("foo")
+	value.ContainsOnly("foo")
 	checker.AssertFailed(t)
 	checker.Reset()
 
-	value.Elements("foo", 123)
+	value.ContainsOnly(123, "foo", "foo")
 	checker.AssertFailed(t)
 	checker.Reset()
 
-	value.Elements(123, "foo", "foo")
-	checker.AssertFailed(t)
-	checker.Reset()
-
-	value.Elements(123, "foo")
-	checker.AssertSuccess(t)
-	checker.Reset()
-}
-
-func TestArrayElementsAnyOrder(t *testing.T) {
-	checker := newMockChecker(t)
-
-	value := NewArray(checker, []interface{}{123, "foo"})
-
-	value.ElementsAnyOrder(123)
-	checker.AssertFailed(t)
-	checker.Reset()
-
-	value.ElementsAnyOrder("foo")
-	checker.AssertFailed(t)
-	checker.Reset()
-
-	value.ElementsAnyOrder(123, "foo", "foo")
-	checker.AssertFailed(t)
-	checker.Reset()
-
-	value.ElementsAnyOrder(123, "foo")
+	value.ContainsOnly(123, "foo")
 	checker.AssertSuccess(t)
 	checker.Reset()
 
-	value.ElementsAnyOrder("foo", 123)
+	value.ContainsOnly("foo", 123)
 	checker.AssertSuccess(t)
 	checker.Reset()
 }
@@ -278,6 +278,26 @@ func TestArrayConvertEqual(t *testing.T) {
 	checker.Reset()
 }
 
+func TestArrayConvertElements(t *testing.T) {
+	type (
+		myInt int
+	)
+
+	checker := newMockChecker(t)
+
+	value := NewArray(checker, []interface{}{123, 456})
+
+	assert.Equal(t, []interface{}{123.0, 456.0}, value.Raw())
+
+	value.Elements(myInt(123), 456.0)
+	checker.AssertSuccess(t)
+	checker.Reset()
+
+	value.Elements(func() {})
+	checker.AssertFailed(t)
+	checker.Reset()
+}
+
 func TestArrayConvertContains(t *testing.T) {
 	type (
 		myInt int
@@ -297,12 +317,20 @@ func TestArrayConvertContains(t *testing.T) {
 	checker.AssertFailed(t)
 	checker.Reset()
 
+	value.ContainsOnly(myInt(123), 456.0)
+	checker.AssertSuccess(t)
+	checker.Reset()
+
 	value.Contains("123")
 	checker.AssertFailed(t)
 	checker.Reset()
 
 	value.NotContains("123")
 	checker.AssertSuccess(t)
+	checker.Reset()
+
+	value.ContainsOnly("123.0", "456.0")
+	checker.AssertFailed(t)
 	checker.Reset()
 
 	value.Contains(func() {})
@@ -312,36 +340,8 @@ func TestArrayConvertContains(t *testing.T) {
 	value.NotContains(func() {})
 	checker.AssertFailed(t)
 	checker.Reset()
-}
 
-func TestArrayConvertElements(t *testing.T) {
-	type (
-		myInt int
-	)
-
-	checker := newMockChecker(t)
-
-	value := NewArray(checker, []interface{}{123, 456})
-
-	assert.Equal(t, []interface{}{123.0, 456.0}, value.Raw())
-
-	value.Elements(myInt(123), 456.0)
-	checker.AssertSuccess(t)
-	checker.Reset()
-
-	value.ElementsAnyOrder(myInt(123), 123.0)
-	checker.AssertSuccess(t)
-	checker.Reset()
-
-	value.ElementsAnyOrder("123", "456")
-	checker.AssertFailed(t)
-	checker.Reset()
-
-	value.Elements(func() {})
-	checker.AssertFailed(t)
-	checker.Reset()
-
-	value.ElementsAnyOrder(func() {})
+	value.ContainsOnly(func() {})
 	checker.AssertFailed(t)
 	checker.Reset()
 }

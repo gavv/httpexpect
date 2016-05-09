@@ -37,7 +37,7 @@ func (o *Object) Raw() map[string]interface{} {
 //
 // Example:
 //  object := NewObject(checker, map[string]interface{}{"foo": 123, "bar": 456})
-//  object.Keys().ElementsAnyOrder("foo", "bar")
+//  object.Keys().ContainsOnly("foo", "bar")
 func (o *Object) Keys() *Array {
 	keys := []interface{}{}
 	for k := range o.value {
@@ -50,7 +50,7 @@ func (o *Object) Keys() *Array {
 //
 // Example:
 //  object := NewObject(checker, map[string]interface{}{"foo": 123, "bar": 456})
-//  object.Values().ElementsAnyOrder(123, 456)
+//  object.Values().ContainsOnly(123, 456)
 func (o *Object) Values() *Array {
 	values := []interface{}{}
 	for _, v := range o.value {

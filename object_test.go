@@ -51,11 +51,11 @@ func TestObjectGetters(t *testing.T) {
 		},
 	}
 
-	value.Keys().ElementsAnyOrder(keys...)
+	value.Keys().ContainsOnly(keys...)
 	checker.AssertSuccess(t)
 	checker.Reset()
 
-	value.Values().ElementsAnyOrder(values...)
+	value.Values().ContainsOnly(values...)
 	checker.AssertSuccess(t)
 	checker.Reset()
 
