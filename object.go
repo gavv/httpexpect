@@ -154,16 +154,30 @@ func (o *Object) NotContainsKey(key string) *Object {
 // Before comparison, both objects are converted to canonical form.
 //
 // Example:
-//  object := NewObject(checker, map[string]interface{}{"foo": 123, "bar": 456})
-//  object.ContainsMap(map[string]interface{}{"foo": 123})
+//  object := NewObject(checker, map[string]interface{}{
+//      "foo": 123,
+//      "bar": []interface{}{"x", "y"},
+//      "bar": map[string]interface{}{
+//          "a": true,
+//          "b": false,
+//      },
+//  })
 //
-// This calls are equivalent:
-//  object.ContainsMap(m)
+//  object.ContainsMap(map[string]interface{}{  // success
+//      "foo": 123,
+//      "bar": map[string]interface{}{
+//          "a": true,
+//      },
+//  })
 //
-//  // is equivalent to...
-//  for k, v := range m {
-//      object.ContainsKey(k).ValueEqual(k, v)
-//  }
+//  object.ContainsMap(map[string]interface{}{  // failure
+//      "foo": 123,
+//      "qux": 456,
+//  })
+//
+//  object.ContainsMap(map[string]interface{}{  // failure, slices should match exactly
+//      "bar": []interface{}{"x"},
+//  })
 func (o *Object) ContainsMap(submap map[string]interface{}) *Object {
 	if !o.containsMap(submap) {
 		o.checker.Fail("expected map containing submap %v, got %v", submap, o.value)
