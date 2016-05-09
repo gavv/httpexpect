@@ -99,11 +99,13 @@ func (o *Object) NotEmpty() *Object {
 // Equal succeedes if object is equal to another object.
 // Before comparison, both objects are converted to canonical form.
 //
+// value should map[string]interface{} or struct.
+//
 // Example:
 //  object := NewObject(checker, map[string]interface{}{"foo": 123})
 //  object.Equal(map[string]interface{}{"foo": 123})
-func (o *Object) Equal(v map[string]interface{}) *Object {
-	expected, ok := canonMap(o.checker, v)
+func (o *Object) Equal(value interface{}) *Object {
+	expected, ok := canonMap(o.checker, value)
 	if !ok {
 		return o
 	}
@@ -114,10 +116,13 @@ func (o *Object) Equal(v map[string]interface{}) *Object {
 // NotEqual succeedes if object is not equal to another object.
 // Before comparison, both objects are converted to canonical form.
 //
+//
+// value should map[string]interface{} or struct.
+//
 // Example:
 //  object := NewObject(checker, map[string]interface{}{"foo": 123})
 //  object.Equal(map[string]interface{}{"bar": 123})
-func (o *Object) NotEqual(v map[string]interface{}) *Object {
+func (o *Object) NotEqual(v interface{}) *Object {
 	expected, ok := canonMap(o.checker, v)
 	if !ok {
 		return o
@@ -150,8 +155,10 @@ func (o *Object) NotContainsKey(key string) *Object {
 	return o
 }
 
-// ContainsMap succeedes if object contains given "subobject".
+// ContainsMap succeedes if object contains given sub-object.
 // Before comparison, both objects are converted to canonical form.
+//
+// value should map[string]interface{} or struct.
 //
 // Example:
 //  object := NewObject(checker, map[string]interface{}{
@@ -178,22 +185,24 @@ func (o *Object) NotContainsKey(key string) *Object {
 //  object.ContainsMap(map[string]interface{}{  // failure, slices should match exactly
 //      "bar": []interface{}{"x"},
 //  })
-func (o *Object) ContainsMap(submap map[string]interface{}) *Object {
-	if !o.containsMap(submap) {
-		o.checker.Fail("expected map containing submap %v, got %v", submap, o.value)
+func (o *Object) ContainsMap(value interface{}) *Object {
+	if !o.containsMap(value) {
+		o.checker.Fail("expected map containing submap %v, got %v", value, o.value)
 	}
 	return o
 }
 
-// NotContainsMap succeedes if object doesn't contain given "subobject" exactly.
+// NotContainsMap succeedes if object doesn't contain given sub-object exactly.
 // Before comparison, both objects are converted to canonical form.
+//
+// value should map[string]interface{} or struct.
 //
 // Example:
 //  object := NewObject(checker, map[string]interface{}{"foo": 123, "bar": 456})
 //  object.NotContainsMap(map[string]interface{}{"foo": 123, "bar": "no-no-no"})
-func (o *Object) NotContainsMap(submap map[string]interface{}) *Object {
-	if o.containsMap(submap) {
-		o.checker.Fail("expected map NOT containing submap %v, got %v", submap, o.value)
+func (o *Object) NotContainsMap(value interface{}) *Object {
+	if o.containsMap(value) {
+		o.checker.Fail("expected map NOT containing submap %v, got %v", value, o.value)
 	}
 	return o
 }
@@ -201,24 +210,28 @@ func (o *Object) NotContainsMap(submap map[string]interface{}) *Object {
 // ValueEqual succeedes if object's value for given key is equal to given value.
 // Before comparison, both values are converted to canonical form.
 //
+// value should map[string]interface{} or struct.
+//
 // Example:
 //  object := NewObject(checker, map[string]interface{}{"foo": 123})
 //  object.ValueEqual("foo", 123)
-func (o *Object) ValueEqual(k string, v interface{}) *Object {
-	if !o.containsKey(k) {
-		o.checker.Fail("expected map containing '%v' key, got %v", k, o.value)
+func (o *Object) ValueEqual(key string, value interface{}) *Object {
+	if !o.containsKey(key) {
+		o.checker.Fail("expected map containing '%v' key, got %v", key, o.value)
 		return o
 	}
-	expected, ok := canonValue(o.checker, v)
+	expected, ok := canonValue(o.checker, value)
 	if !ok {
 		return o
 	}
-	o.checker.Equal(expected, o.value[k])
+	o.checker.Equal(expected, o.value[key])
 	return o
 }
 
 // ValueNotEqual succeedes if object's value for given key is not equal to given value.
 // Before comparison, both values are converted to canonical form.
+//
+// value should map[string]interface{} or struct.
 //
 // If object doesn't contain any value for given key, failure is reported.
 //
@@ -226,16 +239,16 @@ func (o *Object) ValueEqual(k string, v interface{}) *Object {
 //  object := NewObject(checker, map[string]interface{}{"foo": 123})
 //  object.ValueNotEqual("foo", "bad value")  // success
 //  object.ValueNotEqual("bar", "bad value")  // failure! (key is missing)
-func (o *Object) ValueNotEqual(k string, v interface{}) *Object {
-	if !o.containsKey(k) {
-		o.checker.Fail("expected map containing '%v' key, got %v", k, o.value)
+func (o *Object) ValueNotEqual(key string, value interface{}) *Object {
+	if !o.containsKey(key) {
+		o.checker.Fail("expected map containing '%v' key, got %v", key, o.value)
 		return o
 	}
-	expected, ok := canonValue(o.checker, v)
+	expected, ok := canonValue(o.checker, value)
 	if !ok {
 		return o
 	}
-	o.checker.NotEqual(expected, o.value[k])
+	o.checker.NotEqual(expected, o.value[key])
 	return o
 }
 
@@ -248,7 +261,7 @@ func (o *Object) containsKey(key string) bool {
 	return false
 }
 
-func (o *Object) containsMap(sm map[string]interface{}) bool {
+func (o *Object) containsMap(sm interface{}) bool {
 	submap, ok := canonMap(o.checker, sm)
 	if !ok {
 		return false

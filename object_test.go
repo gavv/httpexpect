@@ -182,6 +182,51 @@ func TestObjectEqual(t *testing.T) {
 	checker.Reset()
 }
 
+func TestObjectEqualStruct(t *testing.T) {
+	checker := newMockChecker(t)
+
+	value := NewObject(checker, map[string]interface{}{
+		"foo": 123,
+		"bar": map[string]interface{}{
+			"baz": []interface{}{true, false},
+		},
+	})
+
+	type (
+		Bar struct {
+			Baz []bool `json:"baz"`
+		}
+
+		S struct {
+			Foo int `json:"foo"`
+			Bar Bar `json:"bar"`
+		}
+	)
+
+	s := S{
+		Foo: 123,
+		Bar: Bar{
+			Baz: []bool{true, false},
+		},
+	}
+
+	value.Equal(s)
+	checker.AssertSuccess(t)
+	checker.Reset()
+
+	value.NotEqual(s)
+	checker.AssertFailed(t)
+	checker.Reset()
+
+	value.Equal(S{})
+	checker.AssertFailed(t)
+	checker.Reset()
+
+	value.NotEqual(S{})
+	checker.AssertSuccess(t)
+	checker.Reset()
+}
+
 func TestObjectContainsKey(t *testing.T) {
 	checker := newMockChecker(t)
 
@@ -323,6 +368,61 @@ func TestObjectContainsMapFailed(t *testing.T) {
 	checker.Reset()
 }
 
+func TestObjectContainsMapStruct(t *testing.T) {
+	checker := newMockChecker(t)
+
+	value := NewObject(checker, map[string]interface{}{
+		"foo": 123,
+		"bar": []interface{}{"456", 789},
+		"baz": map[string]interface{}{
+			"a": map[string]interface{}{
+				"b": 333,
+				"c": 444,
+			},
+		},
+	})
+
+	type (
+		A struct {
+			B int `json:"b"`
+		}
+
+		Baz struct {
+			A A `json:"a"`
+		}
+
+		S struct {
+			Foo int `json:"foo"`
+			Baz Baz `json:"baz"`
+		}
+	)
+
+	submap := S{
+		Foo: 123,
+		Baz: Baz{
+			A: A{
+				B: 333,
+			},
+		},
+	}
+
+	value.ContainsMap(submap)
+	checker.AssertSuccess(t)
+	checker.Reset()
+
+	value.NotContainsMap(submap)
+	checker.AssertFailed(t)
+	checker.Reset()
+
+	value.ContainsMap(S{})
+	checker.AssertFailed(t)
+	checker.Reset()
+
+	value.NotContainsMap(S{})
+	checker.AssertSuccess(t)
+	checker.Reset()
+}
+
 func TestObjectValueEqual(t *testing.T) {
 	checker := newMockChecker(t)
 
@@ -372,6 +472,55 @@ func TestObjectValueEqual(t *testing.T) {
 
 	value.ValueNotEqual("BAZ", 777)
 	checker.AssertFailed(t)
+	checker.Reset()
+}
+
+func TestObjectValueEqualStruct(t *testing.T) {
+	checker := newMockChecker(t)
+
+	value := NewObject(checker, map[string]interface{}{
+		"foo": 123,
+		"bar": []interface{}{"456", 789},
+		"baz": map[string]interface{}{
+			"a": map[string]interface{}{
+				"b": 333,
+				"c": 444,
+			},
+		},
+	})
+
+	type (
+		A struct {
+			B int `json:"b"`
+			C int `json:"c"`
+		}
+
+		Baz struct {
+			A A `json:"a"`
+		}
+	)
+
+	baz := Baz{
+		A: A{
+			B: 333,
+			C: 444,
+		},
+	}
+
+	value.ValueEqual("baz", baz)
+	checker.AssertSuccess(t)
+	checker.Reset()
+
+	value.ValueNotEqual("baz", baz)
+	checker.AssertFailed(t)
+	checker.Reset()
+
+	value.ValueEqual("baz", Baz{})
+	checker.AssertFailed(t)
+	checker.Reset()
+
+	value.ValueNotEqual("baz", Baz{})
+	checker.AssertSuccess(t)
 	checker.Reset()
 }
 
