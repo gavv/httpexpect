@@ -4,11 +4,13 @@
 
 ## Features
 
+**Essential:**
+
 * Incrementally build HTTP requests.
 * Inspect HTTP responses.
 * Inspect JSON payload, recursively (supported types: object, array, string, number, boolean, null).
 
-Bonus:
+**Misc.:**
 * By default, uses [`testify`](https://github.com/stretchr/testify/) to report failures (can be configured to use `assert` or `require` package).
 * May use [`httputil`](https://golang.org/pkg/net/http/httputil/) to dump requests and responses, or more compact logger.
 * Produces nice diff on failure, using [`gojsondiff`](https://github.com/yudai/gojsondiff/).
