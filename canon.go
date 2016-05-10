@@ -56,3 +56,11 @@ func canonValue(checker Checker, in interface{}) (interface{}, bool) {
 
 	return out, true
 }
+
+func dumpValue(checker Checker, value interface{}) string {
+	b, err := json.MarshalIndent(value, "", "  ")
+	if err != nil {
+		checker.Fail(err.Error())
+	}
+	return string(b)
+}

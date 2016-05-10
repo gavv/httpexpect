@@ -56,7 +56,8 @@ func (v *Value) Raw() interface{} {
 func (v *Value) Object() *Object {
 	data, ok := canonMap(v.checker, v.value)
 	if !ok {
-		v.checker.Fail("can't convert value to object")
+		v.checker.Fail("expected object value (map or struct), but got:\n%s",
+			dumpValue(v.checker, v.value))
 	}
 	return NewObject(v.checker.Clone(), data)
 }
@@ -72,7 +73,8 @@ func (v *Value) Object() *Object {
 func (v *Value) Array() *Array {
 	data, ok := canonArray(v.checker, v.value)
 	if !ok {
-		v.checker.Fail("can't convert value to array")
+		v.checker.Fail("expected array value, but got:\n%s",
+			dumpValue(v.checker, v.value))
 	}
 	return NewArray(v.checker.Clone(), data)
 }
@@ -88,7 +90,8 @@ func (v *Value) Array() *Array {
 func (v *Value) String() *String {
 	data, ok := v.value.(string)
 	if !ok {
-		v.checker.Fail("can't convert value to string")
+		v.checker.Fail("expected string value, but got:\n%s",
+			dumpValue(v.checker, v.value))
 	}
 	return NewString(v.checker.Clone(), data)
 }
@@ -104,7 +107,8 @@ func (v *Value) String() *String {
 func (v *Value) Number() *Number {
 	data, ok := canonNumber(v.checker, v.value)
 	if !ok {
-		v.checker.Fail("can't convert value to number")
+		v.checker.Fail("expected numeric value, but got:\n%s",
+			dumpValue(v.checker, v.value))
 	}
 	return NewNumber(v.checker.Clone(), data)
 }
@@ -120,7 +124,8 @@ func (v *Value) Number() *Number {
 func (v *Value) Boolean() *Boolean {
 	data, ok := v.value.(bool)
 	if !ok {
-		v.checker.Fail("can't convert value to boolean")
+		v.checker.Fail("expected boolean value, but got:\n%s",
+			dumpValue(v.checker, v.value))
 	}
 	return NewBoolean(v.checker.Clone(), data)
 }
@@ -143,7 +148,8 @@ func (v *Value) Null() *Value {
 		return v
 	}
 	if data != nil {
-		v.checker.Fail("expected nil value, got %v", v.value)
+		v.checker.Fail("expected nil value, but got:\n%s",
+			dumpValue(v.checker, v.value))
 	}
 	return v
 }
@@ -166,7 +172,8 @@ func (v *Value) NotNull() *Value {
 		return v
 	}
 	if data == nil {
-		v.checker.Fail("expected non-nil value, got %v", v.value)
+		v.checker.Fail("expected non-nil value, but got:\n%s",
+			dumpValue(v.checker, v.value))
 	}
 	return v
 }

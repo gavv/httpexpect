@@ -57,7 +57,7 @@ func (s *String) NotEmpty() *String {
 //  str.Equal("Hello")
 func (s *String) Equal(v string) *String {
 	if !(s.value == v) {
-		s.checker.Fail("expected string == \"%s\", got \"%s\"", v, s.value)
+		s.checker.Fail("expected string == \"%s\", but got \"%s\"", v, s.value)
 	}
 	return s
 }
@@ -69,7 +69,7 @@ func (s *String) Equal(v string) *String {
 //  str.NotEqual("Goodbye")
 func (s *String) NotEqual(v string) *String {
 	if !(s.value != v) {
-		s.checker.Fail("expected string != \"%s\", got \"%s\"", v, s.value)
+		s.checker.Fail("expected string != \"%s\", but got \"%s\"", v, s.value)
 	}
 	return s
 }
@@ -83,7 +83,7 @@ func (s *String) NotEqual(v string) *String {
 func (s *String) EqualFold(v string) *String {
 	if !strings.EqualFold(s.value, v) {
 		s.checker.Fail(
-			"expected string == \"%s\" (case-insensitive), got \"%s\"", v, s.value)
+			"expected string == \"%s\" (case-insensitive), but got \"%s\"", v, s.value)
 	}
 	return s
 }
@@ -97,7 +97,7 @@ func (s *String) EqualFold(v string) *String {
 func (s *String) NotEqualFold(v string) *String {
 	if strings.EqualFold(s.value, v) {
 		s.checker.Fail(
-			"expected string != \"%s\" (case-insensitive), got \"%s\"", v, s.value)
+			"expected string != \"%s\" (case-insensitive), but got \"%s\"", v, s.value)
 	}
 	return s
 }
@@ -110,7 +110,7 @@ func (s *String) NotEqualFold(v string) *String {
 func (s *String) Contains(v string) *String {
 	if !strings.Contains(s.value, v) {
 		s.checker.Fail(
-			"expected string containing substring \"%s\", got \"%s\"", v, s.value)
+			"expected string containing substring \"%s\", but got \"%s\"", v, s.value)
 	}
 	return s
 }
@@ -123,7 +123,7 @@ func (s *String) Contains(v string) *String {
 func (s *String) NotContains(v string) *String {
 	if strings.Contains(s.value, v) {
 		s.checker.Fail(
-			"expected string NOT containing substring \"%s\", got \"%s\"", v, s.value)
+			"expected string NOT containing substring \"%s\", but got \"%s\"", v, s.value)
 	}
 	return s
 }
@@ -138,7 +138,7 @@ func (s *String) ContainsFold(v string) *String {
 	if !strings.Contains(strings.ToLower(s.value), strings.ToLower(v)) {
 		s.checker.Fail(
 			"expected string containing substring \"%s\" (case-insensitive), "+
-				"got \"%s\"", v, s.value)
+				"but got \"%s\"", v, s.value)
 	}
 	return s
 }
@@ -153,7 +153,7 @@ func (s *String) NotContainsFold(v string) *String {
 	if strings.Contains(strings.ToLower(s.value), strings.ToLower(v)) {
 		s.checker.Fail(
 			"expected string NOT containing substring \"%s\" (case-insensitive), "+
-				"got \"%s\"", v, s.value)
+				"but got \"%s\"", v, s.value)
 	}
 	return s
 }

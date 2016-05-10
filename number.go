@@ -43,7 +43,7 @@ func (n *Number) Equal(value interface{}) *Number {
 		return n
 	}
 	if !(n.value == v) {
-		n.checker.Fail("expected number == %v, got %v", v, n.value)
+		n.checker.Fail("expected number == %v, but got %v", v, n.value)
 	}
 	return n
 }
@@ -63,7 +63,7 @@ func (n *Number) NotEqual(value interface{}) *Number {
 		return n
 	}
 	if !(n.value != v) {
-		n.checker.Fail("expected number != %v, got %v", v, n.value)
+		n.checker.Fail("expected number != %v, but got %v", v, n.value)
 	}
 	return n
 }
@@ -83,7 +83,7 @@ func (n *Number) Gt(value interface{}) *Number {
 		return n
 	}
 	if !(n.value > v) {
-		n.checker.Fail("expected number > %v, got %v", v, n.value)
+		n.checker.Fail("expected number > %v, but got %v", v, n.value)
 	}
 	return n
 }
@@ -103,7 +103,7 @@ func (n *Number) Ge(value interface{}) *Number {
 		return n
 	}
 	if !(n.value >= v) {
-		n.checker.Fail("expected number >= %v, got %v", v, n.value)
+		n.checker.Fail("expected number >= %v, but got %v", v, n.value)
 	}
 	return n
 }
@@ -123,7 +123,7 @@ func (n *Number) Lt(value interface{}) *Number {
 		return n
 	}
 	if !(n.value < v) {
-		n.checker.Fail("expected number < %v, got %v", v, n.value)
+		n.checker.Fail("expected number < %v, but got %v", v, n.value)
 	}
 	return n
 }
@@ -143,7 +143,7 @@ func (n *Number) Le(value interface{}) *Number {
 		return n
 	}
 	if !(n.value <= v) {
-		n.checker.Fail("expected number <= %v, got %v", v, n.value)
+		n.checker.Fail("expected number <= %v, but got %v", v, n.value)
 	}
 	return n
 }
@@ -168,7 +168,7 @@ func (n *Number) InRange(min, max interface{}) *Number {
 		return n
 	}
 	if !(n.value >= a && n.value <= b) {
-		n.checker.Fail("expected number in range [%v; %v], got %v", a, b, n.value)
+		n.checker.Fail("expected number in range [%v; %v], but got %v", a, b, n.value)
 	}
 	return n
 }

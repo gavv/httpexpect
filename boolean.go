@@ -35,7 +35,7 @@ func (b *Boolean) Raw() bool {
 //  boolean.Equal(true)
 func (b *Boolean) Equal(v bool) *Boolean {
 	if !(b.value == v) {
-		b.checker.Fail("expected boolean == %v, got %v", v, b.value)
+		b.checker.Fail("expected boolean == %v, but got %v", v, b.value)
 	}
 	return b
 }
@@ -47,7 +47,7 @@ func (b *Boolean) Equal(v bool) *Boolean {
 //  boolean.NotEqual(false)
 func (b *Boolean) NotEqual(v bool) *Boolean {
 	if !(b.value != v) {
-		b.checker.Fail("expected boolean != %v, got %v", v, b.value)
+		b.checker.Fail("expected boolean != %v, but got %v", v, b.value)
 	}
 	return b
 }

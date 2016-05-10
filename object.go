@@ -68,7 +68,8 @@ func (o *Object) Values() *Array {
 func (o *Object) Value(key string) *Value {
 	value, ok := o.value[key]
 	if !ok {
-		o.checker.Fail("expected map containing '%v' key, got %v", key, o.value)
+		o.checker.Fail("expected map containing key '%s', but got:\n%s",
+			key, dumpValue(o.checker, o.value))
 		return NewValue(o.checker.Clone(), nil)
 	}
 	return NewValue(o.checker.Clone(), value)
@@ -138,7 +139,8 @@ func (o *Object) NotEqual(v interface{}) *Object {
 //  object.ContainsKey("foo")
 func (o *Object) ContainsKey(key string) *Object {
 	if !o.containsKey(key) {
-		o.checker.Fail("expected map containing '%v' key, got %v", key, o.value)
+		o.checker.Fail("expected map containing key '%s', but got:\n%s",
+			key, dumpValue(o.checker, o.value))
 	}
 	return o
 }
@@ -150,7 +152,9 @@ func (o *Object) ContainsKey(key string) *Object {
 //  object.NotContainsKey("bar")
 func (o *Object) NotContainsKey(key string) *Object {
 	if o.containsKey(key) {
-		o.checker.Fail("expected map NOT containing '%v' key, got %v", key, o.value)
+		o.checker.Fail(
+			"expected map NOT containing key '%s', but got:\n%s", key,
+			dumpValue(o.checker, o.value))
 	}
 	return o
 }
@@ -187,7 +191,8 @@ func (o *Object) NotContainsKey(key string) *Object {
 //  })
 func (o *Object) ContainsMap(value interface{}) *Object {
 	if !o.containsMap(value) {
-		o.checker.Fail("expected map containing submap %v, got %v", value, o.value)
+		o.checker.Fail("expected map containing submap:\n%s\n\nbut got:\n%s",
+			dumpValue(o.checker, value), dumpValue(o.checker, o.value))
 	}
 	return o
 }
@@ -202,7 +207,8 @@ func (o *Object) ContainsMap(value interface{}) *Object {
 //  object.NotContainsMap(map[string]interface{}{"foo": 123, "bar": "no-no-no"})
 func (o *Object) NotContainsMap(value interface{}) *Object {
 	if o.containsMap(value) {
-		o.checker.Fail("expected map NOT containing submap %v, got %v", value, o.value)
+		o.checker.Fail("expected map NOT containing submap:\n%s\n\nbut got:\n%s",
+			dumpValue(o.checker, value), dumpValue(o.checker, o.value))
 	}
 	return o
 }
@@ -217,7 +223,8 @@ func (o *Object) NotContainsMap(value interface{}) *Object {
 //  object.ValueEqual("foo", 123)
 func (o *Object) ValueEqual(key string, value interface{}) *Object {
 	if !o.containsKey(key) {
-		o.checker.Fail("expected map containing '%v' key, got %v", key, o.value)
+		o.checker.Fail("expected map containing key '%s', but got:\n%s",
+			key, dumpValue(o.checker, o.value))
 		return o
 	}
 	expected, ok := canonValue(o.checker, value)
@@ -241,7 +248,8 @@ func (o *Object) ValueEqual(key string, value interface{}) *Object {
 //  object.ValueNotEqual("bar", "bad value")  // failure! (key is missing)
 func (o *Object) ValueNotEqual(key string, value interface{}) *Object {
 	if !o.containsKey(key) {
-		o.checker.Fail("expected map containing '%v' key, got %v", key, o.value)
+		o.checker.Fail("expected map containing key '%s', but got:\n%s",
+			key, dumpValue(o.checker, o.value))
 		return o
 	}
 	expected, ok := canonValue(o.checker, value)

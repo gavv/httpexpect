@@ -54,7 +54,8 @@ func (a *Array) Length() *Number {
 //  array.Element(1).Number().Equal(123)
 func (a *Array) Element(index int) *Value {
 	if len(a.value) <= index {
-		a.checker.Fail("expected array with length > %d, got %v", index, a.value)
+		a.checker.Fail("expected array with length > %d, but got:\n%s",
+			index, dumpValue(a.checker, a.value))
 		return NewValue(a.checker.Clone(), nil)
 	}
 	return NewValue(a.checker.Clone(), a.value[index])
@@ -141,7 +142,8 @@ func (a *Array) Contains(v ...interface{}) *Array {
 	}
 	for _, e := range elements {
 		if !a.containsElement(e) {
-			a.checker.Fail("expected array containing %v, got %v", e, a.value)
+			a.checker.Fail("expected array containing element:\n%s\n\nbut got:\n%s",
+				dumpValue(a.checker, e), dumpValue(a.checker, a.value))
 		}
 	}
 	return a
@@ -161,7 +163,8 @@ func (a *Array) NotContains(v ...interface{}) *Array {
 	}
 	for _, e := range elements {
 		if a.containsElement(e) {
-			a.checker.Fail("expected array NOT containing %v, got %v", e, a.value)
+			a.checker.Fail("expected array NOT containing element:\n%s\n\nbut got:\n%s",
+				dumpValue(a.checker, e), dumpValue(a.checker, a.value))
 		}
 	}
 	return a
@@ -183,12 +186,13 @@ func (a *Array) ContainsOnly(v ...interface{}) *Array {
 		return a
 	}
 	if len(elements) != len(a.value) {
-		a.checker.Fail("expected array len == %d, got %d", len(elements), len(a.value))
+		a.checker.Fail("expected array len == %d, but got %d", len(elements), len(a.value))
 		return a
 	}
 	for _, e := range elements {
 		if !a.containsElement(e) {
-			a.checker.Fail("expected array containing %v, got %v", e, a.value)
+			a.checker.Fail("expected array containing element:\n%s\n\nbut got:\n%s",
+				dumpValue(a.checker, e), dumpValue(a.checker, a.value))
 		}
 	}
 	return a
