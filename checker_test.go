@@ -5,12 +5,6 @@ import (
 	"testing"
 )
 
-func testCheckerCompare(t *testing.T, checker Checker) {
-	assert.True(t, checker.Compare(123, 123))
-	assert.False(t, checker.Compare(123, 456))
-	assert.False(t, checker.Failed())
-}
-
 func testCheckerFail(t *testing.T, checker Checker) {
 	assert.False(t, checker.Failed())
 
@@ -61,7 +55,6 @@ func testCheckerNotEqual(t *testing.T, checker Checker) {
 }
 
 func testCheckerType(t *testing.T, checker func() Checker) {
-	testCheckerCompare(t, checker())
 	testCheckerFail(t, checker())
 	testCheckerClone(t, checker())
 	testCheckerEqual(t, checker())
@@ -82,10 +75,6 @@ func TestMockChecker(t *testing.T) {
 
 func TestRequireChecker(t *testing.T) {
 	checker := NewRequireChecker(t)
-
-	assert.True(t, checker.Compare(123, 123))
-	assert.False(t, checker.Compare(123, 456))
-	assert.False(t, checker.Failed())
 
 	checker.Equal(123, 123)
 	assert.False(t, checker.Failed())

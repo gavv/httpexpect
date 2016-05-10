@@ -1,5 +1,9 @@
 package httpexpect
 
+import (
+	"reflect"
+)
+
 // Array provides methods to inspect attached []interface{} object
 // (Go representation of JSON array).
 type Array struct {
@@ -67,9 +71,7 @@ func (a *Array) Element(index int) *Value {
 //  array := NewArray(checker, []interface{}{})
 //  array.Empty()
 func (a *Array) Empty() *Array {
-	expected := []interface{}{}
-	a.checker.Equal(expected, a.value)
-	return a
+	return a.Equal([]interface{}{})
 }
 
 // NotEmpty succeedes if array is non-empty.
@@ -78,9 +80,7 @@ func (a *Array) Empty() *Array {
 //  array := NewArray(checker, []interface{}{"foo", 123})
 //  array.NotEmpty()
 func (a *Array) NotEmpty() *Array {
-	expected := []interface{}{}
-	a.checker.NotEqual(expected, a.value)
-	return a
+	return a.NotEqual([]interface{}{})
 }
 
 // Equal succeedes if array is equal to another array.
@@ -200,7 +200,7 @@ func (a *Array) ContainsOnly(v ...interface{}) *Array {
 
 func (a *Array) containsElement(expected interface{}) bool {
 	for _, e := range a.value {
-		if a.checker.Compare(expected, e) {
+		if reflect.DeepEqual(expected, e) {
 			return true
 		}
 	}

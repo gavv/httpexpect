@@ -27,11 +27,6 @@ func (c *AssertChecker) Clone() Checker {
 	return &copy
 }
 
-// Compare implements Checker.Compare.
-func (c *AssertChecker) Compare(a, b interface{}) bool {
-	return assert.ObjectsAreEqual(a, b)
-}
-
 // Failed implements Checker.Failed.
 func (c *AssertChecker) Failed() bool {
 	return c.failed
@@ -82,11 +77,6 @@ func NewRequireChecker(t *testing.T) *RequireChecker {
 // Clone implements Checker.Clone.
 func (c *RequireChecker) Clone() Checker {
 	return c
-}
-
-// Compare implements Checker.Compare.
-func (c *RequireChecker) Compare(a, b interface{}) bool {
-	return assert.ObjectsAreEqual(a, b)
 }
 
 // Failed implements Checker.Failed.

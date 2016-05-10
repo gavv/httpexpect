@@ -57,10 +57,6 @@ func (c *mockChecker) Clone() Checker {
 	return &copy
 }
 
-func (c *mockChecker) Compare(a, b interface{}) bool {
-	return assert.ObjectsAreEqual(a, b)
-}
-
 func (c *mockChecker) Failed() bool {
 	return c.failed
 }
@@ -71,14 +67,14 @@ func (c *mockChecker) Fail(message string, args ...interface{}) {
 }
 
 func (c *mockChecker) Equal(expected, actual interface{}) {
-	if !c.Compare(expected, actual) {
+	if !assert.ObjectsAreEqual(expected, actual) {
 		c.testing.Logf("Equal: `%v` (expected) != `%v` (actual)", expected, actual)
 		c.failed = true
 	}
 }
 
 func (c *mockChecker) NotEqual(expected, actual interface{}) {
-	if c.Compare(expected, actual) {
+	if assert.ObjectsAreEqual(expected, actual) {
 		c.testing.Logf("NotEqual: `%v` (expected) == `%v` (actual)", expected, actual)
 		c.failed = true
 	}

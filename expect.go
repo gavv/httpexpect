@@ -101,12 +101,6 @@ type Checker interface {
 	// other copies.
 	Clone() Checker
 
-	// Compare checks if two values are absolutely equal, including their types
-	// (binary-equal values of different types are not treated as equal).
-	//
-	// Compare doesn't report any failures.
-	Compare(a, b interface{}) bool
-
 	// Failed checks if some previous check was failed. Clones inherit their
 	// failed state from original instance. However, if a clone becomes failed
 	// later, it doesn't affect original instance.
