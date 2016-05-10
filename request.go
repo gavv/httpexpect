@@ -124,10 +124,6 @@ func (r *Request) sendRequest() *http.Response {
 		return nil
 	}
 
-	if r.config.Logger != nil {
-		r.config.Logger.LogRequest(r.method, r.url)
-	}
-
 	req, err := http.NewRequest(r.method, r.url, r.body)
 	if err != nil {
 		r.config.Checker.Fail(err.Error())
@@ -138,10 +134,18 @@ func (r *Request) sendRequest() *http.Response {
 		req.Header.Set(k, v)
 	}
 
+	if r.config.Logger != nil {
+		r.config.Logger.Request(req)
+	}
+
 	resp, err := r.config.Client.Do(req)
 	if err != nil {
 		r.config.Checker.Fail(err.Error())
 		return nil
+	}
+
+	if r.config.Logger != nil {
+		r.config.Logger.Response(resp)
 	}
 
 	return resp

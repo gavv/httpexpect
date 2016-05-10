@@ -74,7 +74,8 @@ type Config struct {
 	// Logger is used to report various events.
 	// May be nil.
 	//
-	// You can use DefaultLogger or provide custom implementation.
+	// You can use CompactLogger or DebugLogger, or provide custom
+	// implementation.
 	Logger Logger
 }
 
@@ -124,18 +125,18 @@ type Checker interface {
 
 // Logger is used to report various events.
 type Logger interface {
-	// LogRequest is called when request is sent.
-	LogRequest(method, url string)
+	// Request is called before request is sent.
+	Request(*http.Request)
+
+	// Response is called after response is received.
+	Response(*http.Response)
 }
 
-// DefaultLogger implement Logger. It sends all logs to testing.T instance.
-type DefaultLogger struct {
-	*testing.T
-}
-
-// LogRequest implements Logger.LogRequest.
-func (logger DefaultLogger) LogRequest(method, url string) {
-	logger.T.Logf("[httpexpect] %s %s", method, url)
+// LoggerBackend is log output interface.
+type LoggerBackend interface {
+	// Logf writes message to log.
+	// Note that testing.T implements this interface.
+	Logf(fmt string, args ...interface{})
 }
 
 // New returns a new Expect object.
@@ -145,8 +146,8 @@ func (logger DefaultLogger) LogRequest(method, url string) {
 //
 // New is shorthand for WithConfig. It uses:
 //  - http.DefaultClient as Client
-//  - AssertChecker as Checker (failures are non-fatal, testify/assert is used)
-//  - DefaultLogger as Logger (send logs to testing.T)
+//  - AssertChecker as Checker
+//  - CompactLogger as Logger, with testing.T as LoggerBackend
 //
 // Example:
 //  func TestAPI(t *testing.T) {
@@ -157,7 +158,7 @@ func New(t *testing.T, baseURL string) *Expect {
 	return WithConfig(Config{
 		BaseURL: baseURL,
 		Checker: NewAssertChecker(t),
-		Logger:  DefaultLogger{t},
+		Logger:  NewCompactLogger(t),
 	})
 }
 
@@ -171,7 +172,7 @@ func New(t *testing.T, baseURL string) *Expect {
 //          BaseURL: "http://example.org/",
 //          Client:  http.DefaultClient,
 //          Checker: httpexpect.NewAssertChecker(t),
-//          Logger:  httpexpect.DefaultLogger{t},
+//          Logger:  httpexpect.NewDebugLogger(t),
 //      })
 //      e.GET("/path").Expect().Status(http.StatusOK)
 //  }
