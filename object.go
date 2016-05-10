@@ -1,5 +1,9 @@
 package httpexpect
 
+import (
+	"reflect"
+)
+
 // Object provides methods to inspect attached map[string]interface{} object
 // (Go representation of JSON object).
 type Object struct {
@@ -81,9 +85,7 @@ func (o *Object) Value(key string) *Value {
 //  object := NewObject(checker, map[string]interface{}{})
 //  object.Empty()
 func (o *Object) Empty() *Object {
-	expected := make(map[string]interface{})
-	o.checker.Equal(expected, o.value)
-	return o
+	return o.Equal(map[string]interface{}{})
 }
 
 // NotEmpty succeedes if object is non-empty.
@@ -92,9 +94,7 @@ func (o *Object) Empty() *Object {
 //  object := NewObject(checker, map[string]interface{}{"foo": 123})
 //  object.NotEmpty()
 func (o *Object) NotEmpty() *Object {
-	expected := make(map[string]interface{})
-	o.checker.NotEqual(expected, o.value)
-	return o
+	return o.NotEqual(map[string]interface{}{})
 }
 
 // Equal succeedes if object is equal to another object.
@@ -110,13 +110,17 @@ func (o *Object) Equal(value interface{}) *Object {
 	if !ok {
 		return o
 	}
-	o.checker.Equal(expected, o.value)
+	if !reflect.DeepEqual(expected, o.value) {
+		o.checker.Fail("\nexpected map equal to:\n%s\n\nbut got:\n%s\n\ndiff:\n%s",
+			dumpValue(o.checker, expected),
+			dumpValue(o.checker, o.value),
+			diffMaps(o.checker, expected, o.value))
+	}
 	return o
 }
 
 // NotEqual succeedes if object is not equal to another object.
 // Before comparison, both objects are converted to canonical form.
-//
 //
 // value should map[string]interface{} or struct.
 //
@@ -127,6 +131,10 @@ func (o *Object) NotEqual(v interface{}) *Object {
 	expected, ok := canonMap(o.checker, v)
 	if !ok {
 		return o
+	}
+	if reflect.DeepEqual(expected, o.value) {
+		o.checker.Fail("\nexpected map NOT equal to:\n%s",
+			dumpValue(o.checker, expected))
 	}
 	o.checker.NotEqual(expected, o.value)
 	return o
@@ -191,7 +199,7 @@ func (o *Object) NotContainsKey(key string) *Object {
 //  })
 func (o *Object) ContainsMap(value interface{}) *Object {
 	if !o.containsMap(value) {
-		o.checker.Fail("expected map containing submap:\n%s\n\nbut got:\n%s",
+		o.checker.Fail("\nexpected map containing submap:\n%s\n\nbut got:\n%s",
 			dumpValue(o.checker, value), dumpValue(o.checker, o.value))
 	}
 	return o
@@ -207,7 +215,7 @@ func (o *Object) ContainsMap(value interface{}) *Object {
 //  object.NotContainsMap(map[string]interface{}{"foo": 123, "bar": "no-no-no"})
 func (o *Object) NotContainsMap(value interface{}) *Object {
 	if o.containsMap(value) {
-		o.checker.Fail("expected map NOT containing submap:\n%s\n\nbut got:\n%s",
+		o.checker.Fail("\nexpected map NOT containing submap:\n%s\n\nbut got:\n%s",
 			dumpValue(o.checker, value), dumpValue(o.checker, o.value))
 	}
 	return o
@@ -291,7 +299,7 @@ func checkContainsMap(checker Checker, outer, inner map[string]interface{}) bool
 				continue
 			}
 		}
-		if !checker.Compare(ov, iv) {
+		if !reflect.DeepEqual(ov, iv) {
 			return false
 		}
 	}

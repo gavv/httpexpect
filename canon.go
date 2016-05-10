@@ -1,6 +1,8 @@
 package httpexpect
 
 import (
+	"github.com/yudai/gojsondiff"
+	"github.com/yudai/gojsondiff/formatter"
 	"encoding/json"
 	"reflect"
 )
@@ -63,4 +65,37 @@ func dumpValue(checker Checker, value interface{}) string {
 		checker.Fail(err.Error())
 	}
 	return string(b)
+}
+
+func diffMaps(checker Checker, expected, actual map[string]interface{}) string {
+	be, err := json.Marshal(expected)
+	if err != nil {
+		checker.Fail(err.Error())
+		return ""
+	}
+
+	ba, err := json.Marshal(actual)
+	if err != nil {
+		checker.Fail(err.Error())
+		return ""
+	}
+
+	differ := gojsondiff.New()
+
+	d, err := differ.Compare(be, ba)
+	if err != nil {
+		checker.Fail(err.Error())
+		return ""
+	}
+
+	formatter := formatter.NewAsciiFormatter(expected)
+	formatter.ShowArrayIndex = true
+
+	str, err := formatter.Format(d)
+	if err != nil {
+		checker.Fail(err.Error())
+		return ""
+	}
+
+	return "--- expected\n+++ actual\n" + str
 }
