@@ -41,26 +41,6 @@ func (c *AssertChecker) Fail(message string, args ...interface{}) {
 	c.failed = true
 }
 
-// Equal implements Checker.Equal.
-func (c *AssertChecker) Equal(expected, actual interface{}) {
-	if c.failed {
-		return
-	}
-	if !c.Assertions.Equal(expected, actual) {
-		c.failed = true
-	}
-}
-
-// NotEqual implements Checker.NotEqual.
-func (c *AssertChecker) NotEqual(expected, actual interface{}) {
-	if c.failed {
-		return
-	}
-	if !c.Assertions.NotEqual(expected, actual) {
-		c.failed = true
-	}
-}
-
 // RequireChecker implements Checker interface using `testify/require' package.
 //
 // All failures fatal with this checker. After first failure, Goexit() is called
@@ -87,14 +67,4 @@ func (c *RequireChecker) Failed() bool {
 // Fail implements Checker.Fail.
 func (c *RequireChecker) Fail(message string, args ...interface{}) {
 	c.Assertions.FailNow(fmt.Sprintf(message, args...))
-}
-
-// Equal implements Checker.Equal.
-func (c *RequireChecker) Equal(expected, actual interface{}) {
-	c.Assertions.Equal(expected, actual)
-}
-
-// NotEqual implements Checker.NotEqual.
-func (c *RequireChecker) NotEqual(expected, actual interface{}) {
-	c.Assertions.NotEqual(expected, actual)
 }

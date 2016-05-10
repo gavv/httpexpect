@@ -108,18 +108,6 @@ type Checker interface {
 
 	// Fail reports failure.
 	Fail(message string, args ...interface{})
-
-	// Equal compares two values using Compare and reporst failure if they are
-	// not equal.
-	//
-	// This method exists to allow Checker implementing enhanced failure reporting.
-	Equal(expected, actual interface{})
-
-	// NotEqual compares two values using Compare and reporst failure if they are
-	// equal.
-	//
-	// This method exists to allow Checker implementing enhanced failure reporting.
-	NotEqual(expected, actual interface{})
 }
 
 // Logger is used to report various events.

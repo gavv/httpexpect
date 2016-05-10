@@ -32,33 +32,9 @@ func testCheckerClone(t *testing.T, checker Checker) {
 	assert.True(t, clone.Failed())
 }
 
-func testCheckerEqual(t *testing.T, checker Checker) {
-	checker.Equal(123, 123)
-	assert.False(t, checker.Failed())
-
-	checker.Equal(123, 456)
-	assert.True(t, checker.Failed())
-
-	checker.Equal(123, 123)
-	assert.True(t, checker.Failed())
-}
-
-func testCheckerNotEqual(t *testing.T, checker Checker) {
-	checker.NotEqual(123, 456)
-	assert.False(t, checker.Failed())
-
-	checker.NotEqual(123, 123)
-	assert.True(t, checker.Failed())
-
-	checker.NotEqual(123, 456)
-	assert.True(t, checker.Failed())
-}
-
 func testCheckerType(t *testing.T, checker func() Checker) {
 	testCheckerFail(t, checker())
 	testCheckerClone(t, checker())
-	testCheckerEqual(t, checker())
-	testCheckerNotEqual(t, checker())
 }
 
 func TestAssertChecker(t *testing.T) {
@@ -75,12 +51,6 @@ func TestMockChecker(t *testing.T) {
 
 func TestRequireChecker(t *testing.T) {
 	checker := NewRequireChecker(t)
-
-	checker.Equal(123, 123)
-	assert.False(t, checker.Failed())
-
-	checker.NotEqual(123, 456)
-	assert.False(t, checker.Failed())
 
 	clone := checker.Clone()
 	assert.False(t, clone.Failed())
