@@ -13,6 +13,7 @@
 //  - type aliases are removed
 //  - numeric types are converted to float64
 //  - non-nil interfaces pointing to nil slices and maps are replaced with nil interfaces
+//  - structs are converted to map[string]interface{}
 //
 // This is equivalent to subsequently json.Marshal() and json.Unmarshal() the value.
 //
@@ -76,6 +77,10 @@ type Config struct {
 	//
 	// You can use CompactLogger or DebugLogger, or provide custom
 	// implementation.
+	//
+	// You can also use CompactLogger or DebugLogger with alternative
+	// LoggerBackend if you're happy with log format, but don't want
+	// to send logs to testing.T.
 	Logger Logger
 }
 
