@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"mime"
 	"net/http"
+	"reflect"
+	"strconv"
 	"strings"
 )
 
@@ -41,8 +43,15 @@ func (r *Response) Status(status int) *Response {
 	if r.checker.Failed() {
 		return r
 	}
-	r.checker.Equal(status, r.resp.StatusCode)
+	r.checkEqual("status", statusText(status), statusText(r.resp.StatusCode))
 	return r
+}
+
+func statusText(code int) string {
+	if s := http.StatusText(code); s != "" {
+		return strconv.Itoa(code) + " " + s
+	}
+	return strconv.Itoa(code)
 }
 
 // Headers succeedes if response has exactly given headers map.
@@ -56,7 +65,7 @@ func (r *Response) Headers(headers map[string][]string) *Response {
 	if r.checker.Failed() {
 		return r
 	}
-	r.checker.Equal(headers, map[string][]string(r.resp.Header))
+	r.checkEqual("headers", headers, map[string][]string(r.resp.Header))
 	return r
 }
 
@@ -69,7 +78,7 @@ func (r *Response) Header(k, v string) *Response {
 	if r.checker.Failed() {
 		return r
 	}
-	r.checker.Equal(v, r.resp.Header.Get(k))
+	r.checkEqual("\"" + k + "\" header", v, r.resp.Header.Get(k))
 	return r
 }
 
@@ -94,8 +103,8 @@ func (r *Response) NoContent() *Response {
 
 	content := string(r.getContent())
 
-	r.checker.Equal("", contentType)
-	r.checker.Equal("", content)
+	r.checkEqual("\"Content-Type\" header", "", contentType)
+	r.checkEqual("body", "", content)
 
 	return r
 }
@@ -174,15 +183,26 @@ func (r *Response) checkJSON() bool {
 	mediaType, params, _ := mime.ParseMediaType(contentType)
 	charset := params["charset"]
 
-	r.checker.Equal("application/json", mediaType)
-	if r.checker.Failed() {
+	if mediaType != "application/json" {
+		r.checker.Fail(
+			"\nexpected \"Content-Type\" header with \"application/json\" media type,\n" +
+				"but got \"" + mediaType + "\"")
 		return false
 	}
 
 	if charset != "" && strings.ToLower(charset) != "utf-8" {
-		r.checker.Fail("bad charset: expected empty or 'utf-8', got '" + charset + "'")
+		r.checker.Fail(
+			"\nexpected \"Content-Type\" header with \"utf-8\" or empty charset,\n" +
+				"but got \"" + charset + "\"")
 		return false
 	}
 
 	return true
+}
+
+func (r *Response) checkEqual(what string, expected, actual interface{}) {
+	if !reflect.DeepEqual(expected, actual) {
+		r.checker.Fail("\nexpected %s:\n%s\n\nbut got:\n%s", what,
+			dumpValue(r.checker, expected), dumpValue(r.checker, actual))
+	}
 }

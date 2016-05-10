@@ -1,8 +1,8 @@
 package httpexpect
 
 import (
-	"github.com/yudai/gojsondiff"
-	"github.com/yudai/gojsondiff/formatter"
+	"github.com/gavv/gojsondiff"
+	"github.com/gavv/gojsondiff/formatter"
 	"encoding/json"
 	"reflect"
 )
@@ -60,38 +60,38 @@ func canonValue(checker Checker, in interface{}) (interface{}, bool) {
 }
 
 func dumpValue(checker Checker, value interface{}) string {
-	b, err := json.MarshalIndent(value, "", "  ")
+	b, err := json.MarshalIndent(value, " ", "  ")
 	if err != nil {
 		checker.Fail(err.Error())
 	}
-	return string(b)
+	return " " + string(b)
 }
 
-func diffMaps(checker Checker, expected, actual map[string]interface{}) string {
-	be, err := json.Marshal(expected)
-	if err != nil {
-		checker.Fail(err.Error())
-		return ""
-	}
-
-	ba, err := json.Marshal(actual)
-	if err != nil {
-		checker.Fail(err.Error())
-		return ""
-	}
-
+func diffValues(checker Checker, expected, actual interface{}) string {
 	differ := gojsondiff.New()
 
-	d, err := differ.Compare(be, ba)
-	if err != nil {
-		checker.Fail(err.Error())
-		return ""
+	var diff gojsondiff.Diff
+
+	if ve, ok := expected.(map[string]interface{}); ok {
+		if va, ok := actual.(map[string]interface{}); ok {
+			diff = differ.CompareObjects(ve, va)
+		} else {
+			return " (unavailable)"
+		}
+	} else if ve, ok := expected.([]interface{}); ok {
+		if va, ok := actual.([]interface{}); ok {
+			diff = differ.CompareArrays(ve, va)
+		} else {
+			return " (unavailable)"
+		}
+	} else {
+		return " (unavailable)"
 	}
 
 	formatter := formatter.NewAsciiFormatter(expected)
 	formatter.ShowArrayIndex = true
 
-	str, err := formatter.Format(d)
+	str, err := formatter.Format(diff)
 	if err != nil {
 		checker.Fail(err.Error())
 		return ""

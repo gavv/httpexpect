@@ -72,7 +72,7 @@ func (o *Object) Values() *Array {
 func (o *Object) Value(key string) *Value {
 	value, ok := o.value[key]
 	if !ok {
-		o.checker.Fail("expected map containing key '%s', but got:\n%s",
+		o.checker.Fail("expected object containing key '%s', but got:\n%s",
 			key, dumpValue(o.checker, o.value))
 		return NewValue(o.checker.Clone(), nil)
 	}
@@ -111,10 +111,10 @@ func (o *Object) Equal(value interface{}) *Object {
 		return o
 	}
 	if !reflect.DeepEqual(expected, o.value) {
-		o.checker.Fail("\nexpected map equal to:\n%s\n\nbut got:\n%s\n\ndiff:\n%s",
+		o.checker.Fail("\nexpected object equal to:\n%s\n\nbut got:\n%s\n\ndiff:\n%s",
 			dumpValue(o.checker, expected),
 			dumpValue(o.checker, o.value),
-			diffMaps(o.checker, expected, o.value))
+			diffValues(o.checker, expected, o.value))
 	}
 	return o
 }
@@ -133,10 +133,9 @@ func (o *Object) NotEqual(v interface{}) *Object {
 		return o
 	}
 	if reflect.DeepEqual(expected, o.value) {
-		o.checker.Fail("\nexpected map NOT equal to:\n%s",
+		o.checker.Fail("\nexpected object NOT equal to:\n%s",
 			dumpValue(o.checker, expected))
 	}
-	o.checker.NotEqual(expected, o.value)
 	return o
 }
 
@@ -147,7 +146,7 @@ func (o *Object) NotEqual(v interface{}) *Object {
 //  object.ContainsKey("foo")
 func (o *Object) ContainsKey(key string) *Object {
 	if !o.containsKey(key) {
-		o.checker.Fail("expected map containing key '%s', but got:\n%s",
+		o.checker.Fail("expected object containing key '%s', but got:\n%s",
 			key, dumpValue(o.checker, o.value))
 	}
 	return o
@@ -161,7 +160,7 @@ func (o *Object) ContainsKey(key string) *Object {
 func (o *Object) NotContainsKey(key string) *Object {
 	if o.containsKey(key) {
 		o.checker.Fail(
-			"expected map NOT containing key '%s', but got:\n%s", key,
+			"expected object NOT containing key '%s', but got:\n%s", key,
 			dumpValue(o.checker, o.value))
 	}
 	return o
@@ -199,7 +198,7 @@ func (o *Object) NotContainsKey(key string) *Object {
 //  })
 func (o *Object) ContainsMap(value interface{}) *Object {
 	if !o.containsMap(value) {
-		o.checker.Fail("\nexpected map containing submap:\n%s\n\nbut got:\n%s",
+		o.checker.Fail("\nexpected object containing sub-object:\n%s\n\nbut got:\n%s",
 			dumpValue(o.checker, value), dumpValue(o.checker, o.value))
 	}
 	return o
@@ -215,7 +214,7 @@ func (o *Object) ContainsMap(value interface{}) *Object {
 //  object.NotContainsMap(map[string]interface{}{"foo": 123, "bar": "no-no-no"})
 func (o *Object) NotContainsMap(value interface{}) *Object {
 	if o.containsMap(value) {
-		o.checker.Fail("\nexpected map NOT containing submap:\n%s\n\nbut got:\n%s",
+		o.checker.Fail("\nexpected object NOT containing sub-object:\n%s\n\nbut got:\n%s",
 			dumpValue(o.checker, value), dumpValue(o.checker, o.value))
 	}
 	return o
@@ -231,7 +230,7 @@ func (o *Object) NotContainsMap(value interface{}) *Object {
 //  object.ValueEqual("foo", 123)
 func (o *Object) ValueEqual(key string, value interface{}) *Object {
 	if !o.containsKey(key) {
-		o.checker.Fail("expected map containing key '%s', but got:\n%s",
+		o.checker.Fail("expected object containing key '%s', but got:\n%s",
 			key, dumpValue(o.checker, o.value))
 		return o
 	}
@@ -239,7 +238,14 @@ func (o *Object) ValueEqual(key string, value interface{}) *Object {
 	if !ok {
 		return o
 	}
-	o.checker.Equal(expected, o.value[key])
+	if !reflect.DeepEqual(expected, o.value[key]) {
+		o.checker.Fail(
+			"\nexpected value for key '%s' equal to:\n%s\n\nbut got:\n%s\n\ndiff:\n%s",
+			key,
+			dumpValue(o.checker, expected),
+			dumpValue(o.checker, o.value[key]),
+			diffValues(o.checker, expected, o.value[key]))
+	}
 	return o
 }
 
@@ -256,7 +262,7 @@ func (o *Object) ValueEqual(key string, value interface{}) *Object {
 //  object.ValueNotEqual("bar", "bad value")  // failure! (key is missing)
 func (o *Object) ValueNotEqual(key string, value interface{}) *Object {
 	if !o.containsKey(key) {
-		o.checker.Fail("expected map containing key '%s', but got:\n%s",
+		o.checker.Fail("expected object containing key '%s', but got:\n%s",
 			key, dumpValue(o.checker, o.value))
 		return o
 	}
@@ -264,7 +270,11 @@ func (o *Object) ValueNotEqual(key string, value interface{}) *Object {
 	if !ok {
 		return o
 	}
-	o.checker.NotEqual(expected, o.value[key])
+	if reflect.DeepEqual(expected, o.value[key]) {
+		o.checker.Fail("\nexpected value for key '%s' NOT equal to:\n%s",
+			key,
+			dumpValue(o.checker, expected))
+	}
 	return o
 }
 

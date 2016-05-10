@@ -94,7 +94,12 @@ func (a *Array) Equal(v []interface{}) *Array {
 	if !ok {
 		return a
 	}
-	a.checker.Equal(expected, a.value)
+	if !reflect.DeepEqual(expected, a.value) {
+		a.checker.Fail("\nexpected array equal to:\n%s\n\nbut got:\n%s\n\ndiff:\n%s",
+			dumpValue(a.checker, expected),
+			dumpValue(a.checker, a.value),
+			diffValues(a.checker, expected, a.value))
+	}
 	return a
 }
 
@@ -109,7 +114,10 @@ func (a *Array) NotEqual(v []interface{}) *Array {
 	if !ok {
 		return a
 	}
-	a.checker.NotEqual(expected, a.value)
+	if reflect.DeepEqual(expected, a.value) {
+		a.checker.Fail("\nexpected array NOT equal to:\n%s",
+			dumpValue(a.checker, expected))
+	}
 	return a
 }
 
