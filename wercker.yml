@@ -1,0 +1,27 @@
+box: golang
+
+build:
+  steps:
+    - setup-go-workspace
+
+    - script:
+        name: go get (tools)
+        code: |
+          go get -v github.com/mattn/goveralls
+          go get -v golang.org/x/tools/cmd/cover
+
+    - script:
+        name: go get (repo)
+        code: |
+          go get -v -t
+
+    - script:
+        name: go test
+        code: |
+          go test -coverprofile profile.cov .
+          go test ./example
+
+    - script:
+        name: coveralls
+        code: |
+          $GOPATH/bin/goveralls -coverprofile profile.cov -service=travis-ci
