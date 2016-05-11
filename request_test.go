@@ -45,6 +45,46 @@ func TestRequestEmpty(t *testing.T) {
 	assert.False(t, req.config.Checker == resp.checker)
 }
 
+func TestRequestURL(t *testing.T) {
+	client := &mockClient{}
+
+	checker := newMockChecker(t)
+
+	config := Config{
+		Client:  client,
+		Checker: checker,
+	}
+
+	req1 := NewRequest(config, "METHOD", "http://example.com")
+	req2 := NewRequest(config, "METHOD", "http://example.com/path")
+	req3 := NewRequest(config, "METHOD", "/path")
+	req4 := NewRequest(config, "METHOD", "path")
+
+	req5 := NewRequest(config, "METHOD", "http://example.com/path").
+		WithQuery("aa", "foo").WithQuery("bb", 123).WithQuery("cc", "*&@")
+
+	req1.Expect()
+	checker.AssertSuccess(t)
+	assert.Equal(t, "http://example.com", client.req.URL.String())
+
+	req2.Expect()
+	checker.AssertSuccess(t)
+	assert.Equal(t, "http://example.com/path", client.req.URL.String())
+
+	req3.Expect()
+	checker.AssertSuccess(t)
+	assert.Equal(t, "/path", client.req.URL.String())
+
+	req4.Expect()
+	checker.AssertSuccess(t)
+	assert.Equal(t, "path", client.req.URL.String())
+
+	req5.Expect()
+	checker.AssertSuccess(t)
+	assert.Equal(t, "http://example.com/path?aa=foo&bb=123&cc=%2A%26%40",
+		client.req.URL.String())
+}
+
 func TestRequestHeaders(t *testing.T) {
 	client := &mockClient{}
 

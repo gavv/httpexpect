@@ -91,16 +91,16 @@ func TestExpectURLConcat(t *testing.T) {
 	reqs[4] = WithConfig(config3).Request("METHOD", "/path")
 
 	for _, req := range reqs {
-		assert.Equal(t, "http://example.com/path", req.url)
+		assert.Equal(t, "http://example.com/path", req.url.String())
 	}
 
 	empty1 := WithConfig(config1).Request("METHOD", "")
 	empty2 := WithConfig(config2).Request("METHOD", "")
 	empty3 := WithConfig(config3).Request("METHOD", "")
 
-	assert.Equal(t, "", empty1.url)
-	assert.Equal(t, "http://example.com", empty2.url)
-	assert.Equal(t, "http://example.com/", empty3.url)
+	assert.Equal(t, "", empty1.url.String())
+	assert.Equal(t, "http://example.com", empty2.url.String())
+	assert.Equal(t, "http://example.com/", empty3.url.String())
 }
 
 func TestExpectURLFormat(t *testing.T) {
@@ -127,7 +127,7 @@ func TestExpectURLFormat(t *testing.T) {
 	reqs[8] = WithConfig(config).DELETE("%s", "/foo/bar")
 
 	for _, req := range reqs {
-		assert.Equal(t, "http://example.com/foo/bar", req.url)
+		assert.Equal(t, "http://example.com/foo/bar", req.url.String())
 	}
 
 	bad := WithConfig(Config{Checker: newMockChecker(t)})

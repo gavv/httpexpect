@@ -3,8 +3,10 @@ package httpexpect
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 )
 
 // Request provides methods to incrementally build http.Request object,
@@ -12,7 +14,7 @@ import (
 type Request struct {
 	config  Config
 	method  string
-	url     string
+	url     *url.URL
 	headers map[string]string
 	body    io.Reader
 }
@@ -24,12 +26,32 @@ type Request struct {
 //
 // Example:
 //  req := NewRequest(config, "PUT", "http://example.org/path")
-func NewRequest(config Config, method, url string) *Request {
+func NewRequest(config Config, method, urlStr string) *Request {
+	urlObj, err := url.Parse(urlStr)
+	if err != nil {
+		config.Checker.Fail(err.Error())
+	}
 	return &Request{
 		config: config,
 		method: method,
-		url:    url,
+		url:    urlObj,
 	}
+}
+
+// WithQuery adds query parameter to request URL.
+//
+// value is converted to string using fmt.Sprint() and urlencoded.
+//
+// Example:
+//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req.WithQuery("foo", 123)
+//  req.WithQuery("bar", "baz")
+//  // URL is now http://example.org/path?foo=123&bar=baz
+func (r *Request) WithQuery(key string, value interface{}) *Request {
+	q := r.url.Query()
+	q.Add(key, fmt.Sprint(value))
+	r.url.RawQuery = q.Encode()
+	return r
 }
 
 // WithHeaders adds given headers to request.
@@ -124,7 +146,7 @@ func (r *Request) sendRequest() *http.Response {
 		return nil
 	}
 
-	req, err := http.NewRequest(r.method, r.url, r.body)
+	req, err := http.NewRequest(r.method, r.url.String(), r.body)
 	if err != nil {
 		r.config.Checker.Fail(err.Error())
 		return nil
