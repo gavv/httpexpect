@@ -58,8 +58,8 @@ func (a *Array) Length() *Number {
 //  array.Element(1).Number().Equal(123)
 func (a *Array) Element(index int) *Value {
 	if len(a.value) <= index {
-		a.checker.Fail("\nexpected array with length > %d, but got:\n%s",
-			index, dumpValue(a.checker, a.value))
+		a.checker.Fail("\nexpected array of length > %d, but got array of length %d:\n%s",
+			index, len(a.value), dumpValue(a.checker, a.value))
 		return NewValue(a.checker.Clone(), nil)
 	}
 	return NewValue(a.checker.Clone(), a.value[index])
@@ -198,13 +198,16 @@ func (a *Array) NotContains(v ...interface{}) *Array {
 // This calls are equivalent:
 //  array.ContainsOnly("a", "b")
 //  array.ContainsOnly("b", "a")
-func (a *Array) ContainsOnly(v ...interface{}) *Array {
-	elements, ok := canonArray(a.checker, v)
+func (a *Array) ContainsOnly(values ...interface{}) *Array {
+	elements, ok := canonArray(a.checker, values)
 	if !ok {
 		return a
 	}
 	if len(elements) != len(a.value) {
-		a.checker.Fail("expected array len == %d, but got %d", len(elements), len(a.value))
+		a.checker.Fail("\nexpected array of length == %d:%s\n\n, "+
+			"but got array of length %d:\n%s",
+			len(elements), dumpValue(a.checker, elements),
+			len(a.value), dumpValue(a.checker, a.value))
 		return a
 	}
 	for _, e := range elements {
