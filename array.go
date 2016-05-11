@@ -86,11 +86,19 @@ func (a *Array) NotEmpty() *Array {
 // Equal succeedes if array is equal to another array.
 // Before comparison, both arrays are converted to canonical form.
 //
+// value should be slice of any type.
+//
 // Example:
 //  array := NewArray(checker, []interface{}{"foo", 123})
 //  array.Equal([]interface{}{"foo", 123})
-func (a *Array) Equal(v []interface{}) *Array {
-	expected, ok := canonArray(a.checker, v)
+//
+//  array := NewArray(checker, []interface{}{"foo", "bar"})
+//  array.Equal([]string{}{"foo", "bar"})
+//
+//  array := NewArray(checker, []interface{}{123, 456})
+//  array.Equal([]int{}{123, 456})
+func (a *Array) Equal(value interface{}) *Array {
+	expected, ok := canonArray(a.checker, value)
 	if !ok {
 		return a
 	}
@@ -106,11 +114,13 @@ func (a *Array) Equal(v []interface{}) *Array {
 // NotEqual succeedes if array is not equal to another array.
 // Before comparison, both arrays are converted to canonical form.
 //
+// value should be slice of any type.
+//
 // Example:
 //  array := NewArray(checker, []interface{}{"foo", 123})
 //  array.NotEqual([]interface{}{123, "foo"})
-func (a *Array) NotEqual(v []interface{}) *Array {
-	expected, ok := canonArray(a.checker, v)
+func (a *Array) NotEqual(value interface{}) *Array {
+	expected, ok := canonArray(a.checker, value)
 	if !ok {
 		return a
 	}

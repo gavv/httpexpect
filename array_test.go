@@ -139,6 +139,73 @@ func TestArrayEqualNotEmpty(t *testing.T) {
 	checker.Reset()
 }
 
+func TestArrayEqualTypes(t *testing.T) {
+	checker := newMockChecker(t)
+
+	value1 := NewArray(checker, []interface{}{"foo", "bar"})
+	value2 := NewArray(checker, []interface{}{123, 456})
+	value3 := NewArray(checker, []interface{}{
+		map[string]interface{}{
+			"foo": 123,
+		},
+		map[string]interface{}{
+			"foo": 456,
+		},
+	})
+
+	value1.Equal([]string{"foo", "bar"})
+	checker.AssertSuccess(t)
+	checker.Reset()
+
+	value1.Equal([]string{"bar", "foo"})
+	checker.AssertFailed(t)
+	checker.Reset()
+
+	value1.NotEqual([]string{"foo", "bar"})
+	checker.AssertFailed(t)
+	checker.Reset()
+
+	value1.NotEqual([]string{"bar", "foo"})
+	checker.AssertSuccess(t)
+	checker.Reset()
+
+	value2.Equal([]int{123, 456})
+	checker.AssertSuccess(t)
+	checker.Reset()
+
+	value2.Equal([]int{456, 123})
+	checker.AssertFailed(t)
+	checker.Reset()
+
+	value2.NotEqual([]int{123, 456})
+	checker.AssertFailed(t)
+	checker.Reset()
+
+	value2.NotEqual([]int{456, 123})
+	checker.AssertSuccess(t)
+	checker.Reset()
+
+	type S struct {
+		Foo int `json:"foo"`
+	}
+
+	value3.Equal([]S{S{123}, S{456}})
+	checker.AssertSuccess(t)
+	checker.Reset()
+
+	value3.Equal([]S{S{456}, S{123}})
+	checker.AssertFailed(t)
+	checker.Reset()
+
+	value3.NotEqual([]S{S{123}, S{456}})
+	checker.AssertFailed(t)
+	checker.Reset()
+
+	value3.NotEqual([]S{S{456}, S{123}})
+	checker.AssertSuccess(t)
+	checker.Reset()
+}
+
 func TestArrayElements(t *testing.T) {
 	checker := newMockChecker(t)
 
