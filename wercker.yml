@@ -25,4 +25,5 @@ build:
     - script:
         name: coveralls
         code: |
-          $GOPATH/bin/goveralls -coverprofile profile.cov -service=wercker
+          echo ref: refs/heads/${WERCKER_GIT_BRANCH} > .git/HEAD
+          ${GOPATH}/bin/goveralls -coverprofile profile.cov -service=wercker
