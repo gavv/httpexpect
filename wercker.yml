@@ -13,6 +13,7 @@ build:
     - script:
         name: go get (repo)
         code: |
+          go version
           go get -v -t
 
     - script:
@@ -24,4 +25,4 @@ build:
     - script:
         name: coveralls
         code: |
-          $GOPATH/bin/goveralls -coverprofile profile.cov -service=travis-ci
+          $GOPATH/bin/goveralls -coverprofile profile.cov -service=wercker
