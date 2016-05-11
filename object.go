@@ -72,7 +72,7 @@ func (o *Object) Values() *Array {
 func (o *Object) Value(key string) *Value {
 	value, ok := o.value[key]
 	if !ok {
-		o.checker.Fail("expected object containing key '%s', but got:\n%s",
+		o.checker.Fail("\nexpected object containing key '%s', but got:\n%s",
 			key, dumpValue(o.checker, o.value))
 		return NewValue(o.checker.Clone(), nil)
 	}
@@ -146,7 +146,7 @@ func (o *Object) NotEqual(v interface{}) *Object {
 //  object.ContainsKey("foo")
 func (o *Object) ContainsKey(key string) *Object {
 	if !o.containsKey(key) {
-		o.checker.Fail("expected object containing key '%s', but got:\n%s",
+		o.checker.Fail("\nexpected object containing key '%s', but got:\n%s",
 			key, dumpValue(o.checker, o.value))
 	}
 	return o
@@ -160,7 +160,7 @@ func (o *Object) ContainsKey(key string) *Object {
 func (o *Object) NotContainsKey(key string) *Object {
 	if o.containsKey(key) {
 		o.checker.Fail(
-			"expected object NOT containing key '%s', but got:\n%s", key,
+			"\nexpected object NOT containing key '%s', but got:\n%s", key,
 			dumpValue(o.checker, o.value))
 	}
 	return o
@@ -230,7 +230,7 @@ func (o *Object) NotContainsMap(value interface{}) *Object {
 //  object.ValueEqual("foo", 123)
 func (o *Object) ValueEqual(key string, value interface{}) *Object {
 	if !o.containsKey(key) {
-		o.checker.Fail("expected object containing key '%s', but got:\n%s",
+		o.checker.Fail("\nexpected object containing key '%s', but got:\n%s",
 			key, dumpValue(o.checker, o.value))
 		return o
 	}
@@ -262,7 +262,7 @@ func (o *Object) ValueEqual(key string, value interface{}) *Object {
 //  object.ValueNotEqual("bar", "bad value")  // failure! (key is missing)
 func (o *Object) ValueNotEqual(key string, value interface{}) *Object {
 	if !o.containsKey(key) {
-		o.checker.Fail("expected object containing key '%s', but got:\n%s",
+		o.checker.Fail("\nexpected object containing key '%s', but got:\n%s",
 			key, dumpValue(o.checker, o.value))
 		return o
 	}
