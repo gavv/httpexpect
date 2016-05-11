@@ -129,6 +129,11 @@ func TestExpectURLFormat(t *testing.T) {
 	for _, req := range reqs {
 		assert.Equal(t, "http://example.com/foo/bar", req.url)
 	}
+
+	bad := WithConfig(Config{Checker: newMockChecker(t)})
+	bad.Request("GET", "%s", nil)
+
+	assert.True(t, bad.config.Checker.Failed())
 }
 
 func TestExpectTraverse(t *testing.T) {

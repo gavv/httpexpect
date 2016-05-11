@@ -180,6 +180,13 @@ func WithConfig(config Config) *Expect {
 // url and args are passed to fmt.Sprintf().
 // Config.BaseURL is prepended to final url.
 func (e *Expect) Request(method, url string, args ...interface{}) *Request {
+	for _, a := range args {
+		if a == nil {
+			e.config.Checker.Fail(
+				"\nunexpected nil argument for url format string:\n"+
+					"  Request(\"%s\", %v...)", method, args)
+		}
+	}
 	config := e.config
 	config.Checker = config.Checker.Clone()
 	url = concatURLs(config.BaseURL, fmt.Sprintf(url, args...))
