@@ -204,7 +204,7 @@ func (a *Array) ContainsOnly(values ...interface{}) *Array {
 		return a
 	}
 	if len(elements) != len(a.value) {
-		a.checker.Fail("\nexpected array of length == %d:%s\n\n, "+
+		a.checker.Fail("\nexpected array of length == %d:\n%s\n\n"+
 			"but got array of length %d:\n%s",
 			len(elements), dumpValue(a.checker, elements),
 			len(a.value), dumpValue(a.checker, a.value))
