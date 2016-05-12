@@ -6,7 +6,7 @@ import (
 )
 
 func TestArrayFailed(t *testing.T) {
-	chain := makeChain(mockReporter{t})
+	chain := makeChain(newMockReporter(t))
 
 	chain.fail("fail")
 
@@ -31,7 +31,7 @@ func TestArrayFailed(t *testing.T) {
 }
 
 func TestArrayGetters(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value := NewArray(reporter, []interface{}{"foo", 123.0})
 
@@ -48,7 +48,7 @@ func TestArrayGetters(t *testing.T) {
 }
 
 func TestArrayEmpty(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value1 := NewArray(reporter, nil)
 
@@ -78,7 +78,7 @@ func TestArrayEmpty(t *testing.T) {
 }
 
 func TestArrayEqualEmpty(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value := NewArray(reporter, []interface{}{})
 
@@ -102,7 +102,7 @@ func TestArrayEqualEmpty(t *testing.T) {
 }
 
 func TestArrayEqualNotEmpty(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value := NewArray(reporter, []interface{}{"foo", "bar"})
 
@@ -142,7 +142,7 @@ func TestArrayEqualNotEmpty(t *testing.T) {
 }
 
 func TestArrayEqualTypes(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value1 := NewArray(reporter, []interface{}{"foo", "bar"})
 	value2 := NewArray(reporter, []interface{}{123, 456})
@@ -209,7 +209,7 @@ func TestArrayEqualTypes(t *testing.T) {
 }
 
 func TestArrayElements(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value := NewArray(reporter, []interface{}{123, "foo"})
 
@@ -235,7 +235,7 @@ func TestArrayElements(t *testing.T) {
 }
 
 func TestArrayContains(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value := NewArray(reporter, []interface{}{123, "foo"})
 
@@ -285,7 +285,7 @@ func TestArrayContains(t *testing.T) {
 }
 
 func TestArrayContainsOnly(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value := NewArray(reporter, []interface{}{123, "foo"})
 
@@ -316,7 +316,7 @@ func TestArrayConvertEqual(t *testing.T) {
 		myInt   int
 	)
 
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value := NewArray(reporter, []interface{}{123, 456})
 
@@ -352,7 +352,7 @@ func TestArrayConvertElements(t *testing.T) {
 		myInt int
 	)
 
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value := NewArray(reporter, []interface{}{123, 456})
 
@@ -372,7 +372,7 @@ func TestArrayConvertContains(t *testing.T) {
 		myInt int
 	)
 
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value := NewArray(reporter, []interface{}{123, 456})
 

@@ -1,6 +1,7 @@
 package httpexpect
 
 import (
+	"fmt"
 	"encoding/json"
 	"github.com/gavv/gojsondiff"
 	"github.com/gavv/gojsondiff/formatter"
@@ -62,7 +63,7 @@ func canonValue(chain *chain, in interface{}) (interface{}, bool) {
 func dumpValue(value interface{}) string {
 	b, err := json.MarshalIndent(value, " ", "  ")
 	if err != nil {
-		return " (unavailable)"
+		return " " + fmt.Sprintf("%#v", value)
 	}
 	return " " + string(b)
 }

@@ -31,9 +31,15 @@ func (c *mockClient) Do(req *http.Request) (*http.Response, error) {
 }
 
 type mockReporter struct {
-	testing *testing.T
+	testing  *testing.T
+	reported bool
 }
 
-func (r mockReporter) Errorf(message string, args ...interface{}) {
+func newMockReporter(t *testing.T) *mockReporter {
+	return &mockReporter{t, false}
+}
+
+func (r *mockReporter) Errorf(message string, args ...interface{}) {
 	r.testing.Logf("Fail: "+message, args...)
+	r.reported = true
 }

@@ -1,9 +1,5 @@
 package httpexpect
 
-import (
-	"testing"
-)
-
 type chain struct {
 	reporter Reporter
 	failbit  bool
@@ -29,14 +25,14 @@ func (c *chain) reset() {
 	c.failbit = false
 }
 
-func (c *chain) assertFailed(t *testing.T) {
+func (c *chain) assertFailed(r Reporter) {
 	if !c.failbit {
-		t.Errorf("expected chain is failed, but it's ok")
+		r.Errorf("expected chain is failed, but it's ok")
 	}
 }
 
-func (c *chain) assertOK(t *testing.T) {
+func (c *chain) assertOK(r Reporter) {
 	if c.failbit {
-		t.Errorf("expected chain is ok, but it's failed")
+		r.Errorf("expected chain is ok, but it's failed")
 	}
 }

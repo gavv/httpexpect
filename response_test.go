@@ -8,7 +8,7 @@ import (
 )
 
 func TestResponseFailed(t *testing.T) {
-	chain := makeChain(mockReporter{t})
+	chain := makeChain(newMockReporter(t))
 
 	chain.fail("fail")
 
@@ -30,7 +30,7 @@ func TestResponseFailed(t *testing.T) {
 }
 
 func TestResponseHeaders(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	headers := map[string][]string{
 		"First-Header":  {"foo"},
@@ -80,7 +80,7 @@ func TestResponseHeaders(t *testing.T) {
 }
 
 func TestResponseBody(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	httpResp := &http.Response{
 		StatusCode: http.StatusOK,
@@ -95,7 +95,7 @@ func TestResponseBody(t *testing.T) {
 }
 
 func TestResponseNoContentEmpty(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	headers := map[string][]string{
 		"Content-Type": {""},
@@ -127,7 +127,7 @@ func TestResponseNoContentEmpty(t *testing.T) {
 }
 
 func TestResponseNoContentNil(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	headers := map[string][]string{
 		"Content-Type": {""},
@@ -159,7 +159,7 @@ func TestResponseNoContentNil(t *testing.T) {
 }
 
 func TestResponseJson(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	headers := map[string][]string{
 		"Content-Type": {"application/json; charset=utf-8"},
@@ -196,7 +196,7 @@ func TestResponseJson(t *testing.T) {
 }
 
 func TestResponseJsonEncodingEmpty(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	headers := map[string][]string{
 		"Content-Type": {"application/json"},
@@ -229,7 +229,7 @@ func TestResponseJsonEncodingEmpty(t *testing.T) {
 }
 
 func TestResponseJsonEncodingBad(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	headers := map[string][]string{
 		"Content-Type": {"application/json; charset=bad"},

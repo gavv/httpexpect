@@ -10,7 +10,7 @@ func TestCanonNumber(t *testing.T) {
 		myInt int
 	)
 
-	chain := makeChain(mockReporter{t})
+	chain := makeChain(newMockReporter(t))
 
 	d1, ok := canonNumber(&chain, 123)
 	assert.True(t, ok)
@@ -47,7 +47,7 @@ func TestCanonArray(t *testing.T) {
 		myInt   int
 	)
 
-	chain := makeChain(mockReporter{t})
+	chain := makeChain(newMockReporter(t))
 
 	d1, ok := canonArray(&chain, []interface{}{123.0, 456.0})
 	assert.True(t, ok)
@@ -88,7 +88,7 @@ func TestCanonMap(t *testing.T) {
 		myInt int
 	)
 
-	chain := makeChain(mockReporter{t})
+	chain := makeChain(newMockReporter(t))
 
 	d1, ok := canonMap(&chain, map[string]interface{}{"foo": 123.0})
 	assert.True(t, ok)
@@ -121,4 +121,16 @@ func TestCanonMap(t *testing.T) {
 	assert.False(t, ok)
 	chain.assertFailed(t)
 	chain.reset()
+}
+
+func TestDiffErrors(t *testing.T) {
+	na := " (unavailable)"
+
+	assert.Equal(t, na, diffValues(map[string]interface{}{}, []interface{}{}))
+	assert.Equal(t, na, diffValues([]interface{}{}, map[string]interface{}{}))
+	assert.Equal(t, na, diffValues("foo", "bar"))
+	assert.Equal(t, na, diffValues(func(){}, func(){}))
+
+	assert.NotEqual(t, na, diffValues(map[string]interface{}{}, map[string]interface{}{}))
+	assert.NotEqual(t, na, diffValues([]interface{}{}, []interface{}{}))
 }

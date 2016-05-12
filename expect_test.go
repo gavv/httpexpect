@@ -40,86 +40,30 @@ func TestExpectMethods(t *testing.T) {
 	assert.Equal(t, "DELETE", reqs[7].method)
 }
 
-func TestExpectURLConcat(t *testing.T) {
+func TestExpectValue(t *testing.T) {
 	client := &mockClient{}
 
-	reporter := NewAssertReporter(t)
-
-	var reqs [5]*Request
-
-	config1 := Config{
-		BaseURL:  "",
-		Client:   client,
-		Reporter: reporter,
-	}
-
-	reqs[0] = WithConfig(config1).Request("METHOD", "http://example.com/path")
-
-	config2 := Config{
-		BaseURL:  "http://example.com",
-		Client:   client,
-		Reporter: reporter,
-	}
-
-	reqs[1] = WithConfig(config2).Request("METHOD", "path")
-	reqs[2] = WithConfig(config2).Request("METHOD", "/path")
-
-	config3 := Config{
-		BaseURL:  "http://example.com/",
-		Client:   client,
-		Reporter: reporter,
-	}
-
-	reqs[3] = WithConfig(config3).Request("METHOD", "path")
-	reqs[4] = WithConfig(config3).Request("METHOD", "/path")
-
-	for _, req := range reqs {
-		assert.Equal(t, "http://example.com/path", req.url.String())
-	}
-
-	empty1 := WithConfig(config1).Request("METHOD", "")
-	empty2 := WithConfig(config2).Request("METHOD", "")
-	empty3 := WithConfig(config3).Request("METHOD", "")
-
-	assert.Equal(t, "", empty1.url.String())
-	assert.Equal(t, "http://example.com", empty2.url.String())
-	assert.Equal(t, "http://example.com/", empty3.url.String())
-}
-
-func TestExpectURLFormat(t *testing.T) {
-	client := &mockClient{}
-
-	reporter := NewAssertReporter(t)
-
-	var reqs [9]*Request
+	r := NewAssertReporter(t)
 
 	config := Config{
-		BaseURL:  "http://example.com/",
 		Client:   client,
-		Reporter: reporter,
+		Reporter: r,
 	}
 
-	reqs[0] = WithConfig(config).Request("METHOD", "/foo/%s", "bar")
-	reqs[1] = WithConfig(config).Request("METHOD", "%sfoo%s", "/", "/bar")
-	reqs[2] = WithConfig(config).OPTIONS("%s", "/foo/bar")
-	reqs[3] = WithConfig(config).HEAD("%s", "/foo/bar")
-	reqs[4] = WithConfig(config).GET("%s", "/foo/bar")
-	reqs[5] = WithConfig(config).POST("%s", "/foo/bar")
-	reqs[6] = WithConfig(config).PUT("%s", "/foo/bar")
-	reqs[7] = WithConfig(config).PATCH("%s", "/foo/bar")
-	reqs[8] = WithConfig(config).DELETE("%s", "/foo/bar")
+	e := WithConfig(config)
 
-	for _, req := range reqs {
-		assert.Equal(t, "http://example.com/foo/bar", req.url.String())
-	}
+	m := map[string]interface{}{}
+	a := []interface{}{}
+	s := ""
+	n := 0.0
+	b := false
 
-	e := WithConfig(Config{
-		Reporter: mockReporter{t},
-	})
-
-	r := e.Request("GET", "%s", nil)
-
-	r.chain.assertFailed(t)
+	assert.Equal(t, NewValue(r, m), e.Value(m))
+	assert.Equal(t, NewObject(r, m), e.Object(m))
+	assert.Equal(t, NewArray(r, a), e.Array(a))
+	assert.Equal(t, NewString(r, s), e.String(s))
+	assert.Equal(t, NewNumber(r, n), e.Number(n))
+	assert.Equal(t, NewBoolean(r, b), e.Boolean(b))
 }
 
 func TestExpectTraverse(t *testing.T) {
@@ -170,7 +114,7 @@ func TestExpectBranches(t *testing.T) {
 	config := Config{
 		BaseURL:  "http://example.com",
 		Client:   client,
-		Reporter: mockReporter{t},
+		Reporter: newMockReporter(t),
 	}
 
 	data := map[string]interface{}{

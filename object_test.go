@@ -6,7 +6,7 @@ import (
 )
 
 func TestObjectFailed(t *testing.T) {
-	chain := makeChain(mockReporter{t})
+	chain := makeChain(newMockReporter(t))
 
 	chain.fail("fail")
 
@@ -35,7 +35,7 @@ func TestObjectFailed(t *testing.T) {
 }
 
 func TestObjectGetters(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	m := map[string]interface{}{
 		"foo": 123.0,
@@ -83,7 +83,7 @@ func TestObjectGetters(t *testing.T) {
 }
 
 func TestObjectEmpty(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value1 := NewObject(reporter, nil)
 
@@ -113,7 +113,7 @@ func TestObjectEmpty(t *testing.T) {
 }
 
 func TestObjectEqualEmpty(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value := NewObject(reporter, map[string]interface{}{})
 
@@ -137,7 +137,7 @@ func TestObjectEqualEmpty(t *testing.T) {
 }
 
 func TestObjectEqual(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value := NewObject(reporter, map[string]interface{}{"foo": 123.0})
 
@@ -185,7 +185,7 @@ func TestObjectEqual(t *testing.T) {
 }
 
 func TestObjectEqualStruct(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value := NewObject(reporter, map[string]interface{}{
 		"foo": 123,
@@ -230,7 +230,7 @@ func TestObjectEqualStruct(t *testing.T) {
 }
 
 func TestObjectContainsKey(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value := NewObject(reporter, map[string]interface{}{"foo": 123, "bar": ""})
 
@@ -260,7 +260,7 @@ func TestObjectContainsKey(t *testing.T) {
 }
 
 func TestObjectContainsMapSuccess(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value := NewObject(reporter, map[string]interface{}{
 		"foo": 123,
@@ -305,7 +305,7 @@ func TestObjectContainsMapSuccess(t *testing.T) {
 }
 
 func TestObjectContainsMapFailed(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value := NewObject(reporter, map[string]interface{}{
 		"foo": 123,
@@ -371,7 +371,7 @@ func TestObjectContainsMapFailed(t *testing.T) {
 }
 
 func TestObjectContainsMapStruct(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value := NewObject(reporter, map[string]interface{}{
 		"foo": 123,
@@ -426,7 +426,7 @@ func TestObjectContainsMapStruct(t *testing.T) {
 }
 
 func TestObjectValueEqual(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value := NewObject(reporter, map[string]interface{}{
 		"foo": 123,
@@ -478,7 +478,7 @@ func TestObjectValueEqual(t *testing.T) {
 }
 
 func TestObjectValueEqualStruct(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value := NewObject(reporter, map[string]interface{}{
 		"foo": 123,
@@ -532,7 +532,7 @@ func TestObjectConvertEqual(t *testing.T) {
 		myInt int
 	)
 
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value := NewObject(reporter, map[string]interface{}{"foo": 123})
 
@@ -576,7 +576,7 @@ func TestObjectConvertContainsMap(t *testing.T) {
 		myInt   int
 	)
 
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value := NewObject(reporter, map[string]interface{}{
 		"foo": 123,
@@ -607,7 +607,7 @@ func TestObjectConvertValueEqual(t *testing.T) {
 		myInt   int
 	)
 
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value := NewObject(reporter, map[string]interface{}{
 		"foo": 123,

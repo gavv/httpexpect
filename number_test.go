@@ -6,7 +6,7 @@ import (
 )
 
 func TestNumberFailed(t *testing.T) {
-	chain := makeChain(mockReporter{t})
+	chain := makeChain(newMockReporter(t))
 
 	chain.fail("fail")
 
@@ -24,7 +24,7 @@ func TestNumberFailed(t *testing.T) {
 }
 
 func TestNumberEqual(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value := NewNumber(reporter, 1234)
 
@@ -48,7 +48,7 @@ func TestNumberEqual(t *testing.T) {
 }
 
 func TestNumberGreater(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value := NewNumber(reporter, 1234)
 
@@ -74,7 +74,7 @@ func TestNumberGreater(t *testing.T) {
 }
 
 func TestNumberLesser(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value := NewNumber(reporter, 1234)
 
@@ -100,7 +100,7 @@ func TestNumberLesser(t *testing.T) {
 }
 
 func TestNumberInRange(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value := NewNumber(reporter, 1234)
 
@@ -130,7 +130,7 @@ func TestNumberInRange(t *testing.T) {
 }
 
 func TestNumberConvertEqual(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value := NewNumber(reporter, 1234)
 
@@ -160,7 +160,7 @@ func TestNumberConvertEqual(t *testing.T) {
 }
 
 func TestNumberConvertGreater(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value := NewNumber(reporter, 1234)
 
@@ -190,7 +190,7 @@ func TestNumberConvertGreater(t *testing.T) {
 }
 
 func TestNumberConvertLesser(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value := NewNumber(reporter, 1234)
 
@@ -220,7 +220,7 @@ func TestNumberConvertLesser(t *testing.T) {
 }
 
 func TestNumberConvertInRange(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value := NewNumber(reporter, 1234)
 

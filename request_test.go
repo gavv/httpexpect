@@ -12,7 +12,7 @@ import (
 func TestRequestFailed(t *testing.T) {
 	client := &mockClient{}
 
-	chain := makeChain(mockReporter{t})
+	chain := makeChain(newMockReporter(t))
 
 	chain.fail("fail")
 
@@ -36,7 +36,7 @@ func TestRequestFailed(t *testing.T) {
 func TestRequestEmpty(t *testing.T) {
 	client := &mockClient{}
 
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	config := Config{
 		Client:   client,
@@ -54,7 +54,7 @@ func TestRequestEmpty(t *testing.T) {
 func TestRequestURL(t *testing.T) {
 	client := &mockClient{}
 
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	config := Config{
 		Client:   client,
@@ -91,10 +91,86 @@ func TestRequestURL(t *testing.T) {
 		client.req.URL.String())
 }
 
+func TestExpectURLConcat(t *testing.T) {
+	client := &mockClient{}
+
+	reporter := NewAssertReporter(t)
+
+	var reqs [5]*Request
+
+	config1 := Config{
+		BaseURL:  "",
+		Client:   client,
+		Reporter: reporter,
+	}
+
+	reqs[0] = NewRequest(config1, "METHOD", "http://example.com/path")
+
+	config2 := Config{
+		BaseURL:  "http://example.com",
+		Client:   client,
+		Reporter: reporter,
+	}
+
+	reqs[1] = NewRequest(config2, "METHOD", "path")
+	reqs[2] = NewRequest(config2, "METHOD", "/path")
+
+	config3 := Config{
+		BaseURL:  "http://example.com/",
+		Client:   client,
+		Reporter: reporter,
+	}
+
+	reqs[3] = NewRequest(config3, "METHOD", "path")
+	reqs[4] = NewRequest(config3, "METHOD", "/path")
+
+	for _, req := range reqs {
+		assert.Equal(t, "http://example.com/path", req.url.String())
+	}
+
+	empty1 := NewRequest(config1, "METHOD", "")
+	empty2 := NewRequest(config2, "METHOD", "")
+	empty3 := NewRequest(config3, "METHOD", "")
+
+	assert.Equal(t, "", empty1.url.String())
+	assert.Equal(t, "http://example.com", empty2.url.String())
+	assert.Equal(t, "http://example.com/", empty3.url.String())
+}
+
+func TestExpectURLFormat(t *testing.T) {
+	client := &mockClient{}
+
+	reporter := NewAssertReporter(t)
+
+	var reqs [3]*Request
+
+	config1 := Config{
+		BaseURL:  "http://example.com/",
+		Client:   client,
+		Reporter: reporter,
+	}
+
+	reqs[0] = NewRequest(config1, "METHOD", "/foo/%s", "bar")
+	reqs[1] = NewRequest(config1, "METHOD", "%sfoo%s", "/", "/bar")
+	reqs[2] = NewRequest(config1, "%s", "/foo/bar")
+
+	for _, req := range reqs {
+		assert.Equal(t, "http://example.com/foo/bar", req.url.String())
+	}
+
+	config2 := Config{
+		Reporter: newMockReporter(t),
+	}
+
+	r := NewRequest(config2, "GET", "%s", nil)
+
+	r.chain.assertFailed(t)
+}
+
 func TestRequestHeaders(t *testing.T) {
 	client := &mockClient{}
 
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	config := Config{
 		Client:   client,
@@ -129,7 +205,7 @@ func TestRequestHeaders(t *testing.T) {
 func TestRequestBodyReader(t *testing.T) {
 	client := &mockClient{}
 
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	config := Config{
 		Client:   client,
@@ -156,7 +232,7 @@ func TestRequestBodyReader(t *testing.T) {
 func TestRequestBodyBytes(t *testing.T) {
 	client := &mockClient{}
 
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	config := Config{
 		Client:   client,
@@ -183,7 +259,7 @@ func TestRequestBodyBytes(t *testing.T) {
 func TestRequestBodyJSON(t *testing.T) {
 	client := &mockClient{}
 
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	config := Config{
 		Client:   client,
@@ -219,7 +295,7 @@ func TestRequestBodyJSON(t *testing.T) {
 func TestRequestErrorMarshal(t *testing.T) {
 	client := &mockClient{}
 
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	config := Config{
 		Client:   client,
@@ -241,7 +317,7 @@ func TestRequestErrorSend(t *testing.T) {
 		err: errors.New("error"),
 	}
 
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	config := Config{
 		Client:   client,

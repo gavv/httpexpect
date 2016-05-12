@@ -6,7 +6,7 @@ import (
 )
 
 func TestBooleanFailed(t *testing.T) {
-	chain := makeChain(mockReporter{t})
+	chain := makeChain(newMockReporter(t))
 
 	chain.fail("fail")
 
@@ -21,7 +21,7 @@ func TestBooleanFailed(t *testing.T) {
 }
 
 func TestBooleanTrue(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value := NewBoolean(reporter, true)
 
@@ -53,7 +53,7 @@ func TestBooleanTrue(t *testing.T) {
 }
 
 func TestBooleanFalse(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value := NewBoolean(reporter, false)
 

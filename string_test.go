@@ -6,7 +6,7 @@ import (
 )
 
 func TestStringFailed(t *testing.T) {
-	chain := makeChain(mockReporter{t})
+	chain := makeChain(newMockReporter(t))
 
 	chain.fail("fail")
 
@@ -25,7 +25,7 @@ func TestStringFailed(t *testing.T) {
 }
 
 func TestStringEmpty(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value1 := NewString(reporter, "")
 
@@ -49,7 +49,7 @@ func TestStringEmpty(t *testing.T) {
 }
 
 func TestStringEqual(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value := NewString(reporter, "foo")
 
@@ -73,7 +73,7 @@ func TestStringEqual(t *testing.T) {
 }
 
 func TestStringEqualFold(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value := NewString(reporter, "foo")
 
@@ -103,7 +103,7 @@ func TestStringEqualFold(t *testing.T) {
 }
 
 func TestStringContains(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value := NewString(reporter, "11-foo-22")
 
@@ -125,7 +125,7 @@ func TestStringContains(t *testing.T) {
 }
 
 func TestStringContainsFold(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value := NewString(reporter, "11-foo-22")
 

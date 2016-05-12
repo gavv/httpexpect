@@ -6,7 +6,7 @@ import (
 )
 
 func TestValueFailed(t *testing.T) {
-	chain := makeChain(mockReporter{t})
+	chain := makeChain(newMockReporter(t))
 
 	chain.fail("fail")
 
@@ -31,7 +31,7 @@ func TestValueFailed(t *testing.T) {
 }
 
 func TestValueCastNull(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	var data interface{}
 
@@ -45,7 +45,7 @@ func TestValueCastNull(t *testing.T) {
 }
 
 func TestValueCastIndirectNull(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	var data []interface{}
 
@@ -59,7 +59,7 @@ func TestValueCastIndirectNull(t *testing.T) {
 }
 
 func TestValueCastBad(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	data := func() {}
 
@@ -73,7 +73,7 @@ func TestValueCastBad(t *testing.T) {
 }
 
 func TestValueCastObject(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	data := map[string]interface{}{}
 
@@ -87,7 +87,7 @@ func TestValueCastObject(t *testing.T) {
 }
 
 func TestValueCastArray(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	data := []interface{}{}
 
@@ -101,7 +101,7 @@ func TestValueCastArray(t *testing.T) {
 }
 
 func TestValueCastString(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	data := ""
 
@@ -115,7 +115,7 @@ func TestValueCastString(t *testing.T) {
 }
 
 func TestValueCastNumber(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	data := 0.0
 
@@ -129,7 +129,7 @@ func TestValueCastNumber(t *testing.T) {
 }
 
 func TestValueCastBoolean(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	data := false
 
@@ -147,7 +147,7 @@ func TestValueGetObject(t *testing.T) {
 		myMap map[string]interface{}
 	)
 
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	data1 := map[string]interface{}{"foo": 123.0}
 
@@ -173,7 +173,7 @@ func TestValueGetArray(t *testing.T) {
 		myArray []interface{}
 	)
 
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	data1 := []interface{}{"foo", 123.0}
 
@@ -195,7 +195,7 @@ func TestValueGetArray(t *testing.T) {
 }
 
 func TestValueGetString(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value := NewValue(reporter, "foo")
 	inner := value.String()
@@ -210,7 +210,7 @@ func TestValueGetNumber(t *testing.T) {
 		myInt int
 	)
 
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	data1 := 123.0
 
@@ -241,7 +241,7 @@ func TestValueGetNumber(t *testing.T) {
 }
 
 func TestValueGetBoolean(t *testing.T) {
-	reporter := mockReporter{t}
+	reporter := newMockReporter(t)
 
 	value1 := NewValue(reporter, true)
 	inner1 := value1.Boolean()
