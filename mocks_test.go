@@ -2,7 +2,6 @@ package httpexpect
 
 import (
 	"bytes"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"testing"
 )
@@ -31,51 +30,10 @@ func (c *mockClient) Do(req *http.Request) (*http.Response, error) {
 	return nil, c.err
 }
 
-type mockChecker struct {
+type mockReporter struct {
 	testing *testing.T
-	failed  bool
 }
 
-func newMockChecker(t *testing.T) *mockChecker {
-	return &mockChecker{testing: t}
-}
-
-func (c *mockChecker) AssertSuccess(t *testing.T) {
-	assert.False(t, c.failed)
-}
-
-func (c *mockChecker) AssertFailed(t *testing.T) {
-	assert.True(t, c.failed)
-}
-
-func (c *mockChecker) Reset() {
-	c.failed = false
-}
-
-func (c *mockChecker) Clone() Checker {
-	copy := *c
-	return &copy
-}
-
-func (c *mockChecker) Failed() bool {
-	return c.failed
-}
-
-func (c *mockChecker) Fail(message string, args ...interface{}) {
-	c.testing.Logf("Fail: "+message, args...)
-	c.failed = true
-}
-
-func (c *mockChecker) Equal(expected, actual interface{}) {
-	if !assert.ObjectsAreEqual(expected, actual) {
-		c.testing.Logf("Equal: `%v` (expected) != `%v` (actual)", expected, actual)
-		c.failed = true
-	}
-}
-
-func (c *mockChecker) NotEqual(expected, actual interface{}) {
-	if assert.ObjectsAreEqual(expected, actual) {
-		c.testing.Logf("NotEqual: `%v` (expected) == `%v` (actual)", expected, actual)
-		c.failed = true
-	}
+func (r mockReporter) Errorf(message string, args ...interface{}) {
+	r.testing.Logf("Fail: "+message, args...)
 }

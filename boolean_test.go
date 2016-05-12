@@ -6,11 +6,13 @@ import (
 )
 
 func TestBooleanFailed(t *testing.T) {
-	checker := newMockChecker(t)
+	chain := makeChain(mockReporter{t})
 
-	checker.Fail("fail")
+	chain.fail("fail")
 
-	value := NewBoolean(checker, false)
+	value := &Boolean{chain, false}
+
+	value.chain.assertFailed(t)
 
 	value.Equal(false)
 	value.NotEqual(false)
@@ -19,65 +21,65 @@ func TestBooleanFailed(t *testing.T) {
 }
 
 func TestBooleanTrue(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value := NewBoolean(checker, true)
+	value := NewBoolean(reporter, true)
 
 	assert.Equal(t, true, value.Raw())
 
 	value.Equal(true)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.Equal(false)
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.NotEqual(false)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.NotEqual(true)
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.True()
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.False()
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 }
 
 func TestBooleanFalse(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value := NewBoolean(checker, false)
+	value := NewBoolean(reporter, false)
 
 	assert.Equal(t, false, value.Raw())
 
 	value.Equal(true)
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.Equal(false)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.NotEqual(false)
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.NotEqual(true)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.True()
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.False()
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 }

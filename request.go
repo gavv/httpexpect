@@ -6,15 +6,17 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
+	urllib "net/url"
+	"strings"
 )
 
 // Request provides methods to incrementally build http.Request object,
 // send it, and receive response.
 type Request struct {
 	config  Config
+	chain   chain
 	method  string
-	url     *url.URL
+	url     *urllib.URL
 	headers map[string]string
 	body    io.Reader
 }
@@ -22,20 +24,53 @@ type Request struct {
 // NewRequest returns a new Request object.
 //
 // method specifies the HTTP method (GET, POST, PUT, etc.).
-// url specifies absolute URL to access.
+// url and args are passed to fmt.Sprintf(), with url as format string.
+//
+// If Config.BaseURL is non-empty, it is prepended to final url,
+// separated by slash.
 //
 // Example:
 //  req := NewRequest(config, "PUT", "http://example.org/path")
-func NewRequest(config Config, method, urlStr string) *Request {
-	urlObj, err := url.Parse(urlStr)
-	if err != nil {
-		config.Checker.Fail(err.Error())
+func NewRequest(config Config, method, url string, args ...interface{}) *Request {
+	chain := makeChain(config.Reporter)
+
+	for _, a := range args {
+		if a == nil {
+			chain.fail(
+				"\nunexpected nil argument for url format string:\n"+
+					"  Request(\"%s\", %v...)", method, args)
+		}
 	}
+
+	urlStr := concatURLs(config.BaseURL, fmt.Sprintf(url, args...))
+
+	urlObj, err := urllib.Parse(urlStr)
+	if err != nil {
+		chain.fail(err.Error())
+	}
+
 	return &Request{
 		config: config,
+		chain:  chain,
 		method: method,
 		url:    urlObj,
 	}
+}
+
+func concatURLs(a, b string) string {
+	if a == "" {
+		return b
+	}
+	if b == "" {
+		return a
+	}
+	if strings.HasSuffix(a, "/") {
+		a = a[:len(a)-1]
+	}
+	if strings.HasPrefix(b, "/") {
+		b = b[1:]
+	}
+	return a + "/" + b
 }
 
 // WithQuery adds query parameter to request URL.
@@ -116,7 +151,7 @@ func (r *Request) WithBytes(b []byte) *Request {
 func (r *Request) WithJSON(object interface{}) *Request {
 	b, err := json.Marshal(object)
 	if err != nil {
-		r.config.Checker.Fail(err.Error())
+		r.chain.fail(err.Error())
 		return r
 	}
 
@@ -138,17 +173,20 @@ func (r *Request) WithJSON(object interface{}) *Request {
 //  resp.Status(http.StatusOK)
 func (r *Request) Expect() *Response {
 	resp := r.sendRequest()
-	return NewResponse(r.config.Checker.Clone(), resp)
+	return &Response{
+		chain: r.chain,
+		resp:  resp,
+	}
 }
 
 func (r *Request) sendRequest() *http.Response {
-	if r.config.Checker.Failed() {
+	if r.chain.failed() {
 		return nil
 	}
 
 	req, err := http.NewRequest(r.method, r.url.String(), r.body)
 	if err != nil {
-		r.config.Checker.Fail(err.Error())
+		r.chain.fail(err.Error())
 		return nil
 	}
 
@@ -156,18 +194,18 @@ func (r *Request) sendRequest() *http.Response {
 		req.Header.Set(k, v)
 	}
 
-	if r.config.Logger != nil {
-		r.config.Logger.Request(req)
+	if r.config.Printer != nil {
+		r.config.Printer.Request(req)
 	}
 
 	resp, err := r.config.Client.Do(req)
 	if err != nil {
-		r.config.Checker.Fail(err.Error())
+		r.chain.fail(err.Error())
 		return nil
 	}
 
-	if r.config.Logger != nil {
-		r.config.Logger.Response(resp)
+	if r.config.Printer != nil {
+		r.config.Printer.Response(resp)
 	}
 
 	return resp

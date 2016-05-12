@@ -6,11 +6,11 @@ import (
 )
 
 func TestStringFailed(t *testing.T) {
-	checker := newMockChecker(t)
+	chain := makeChain(mockReporter{t})
 
-	checker.Fail("fail")
+	chain.fail("fail")
 
-	value := NewString(checker, "")
+	value := &String{chain, ""}
 
 	value.Empty()
 	value.NotEmpty()
@@ -25,131 +25,131 @@ func TestStringFailed(t *testing.T) {
 }
 
 func TestStringEmpty(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value1 := NewString(checker, "")
+	value1 := NewString(reporter, "")
 
 	value1.Empty()
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value1.chain.assertOK(t)
+	value1.chain.reset()
 
 	value1.NotEmpty()
-	checker.AssertFailed(t)
-	checker.Reset()
+	value1.chain.assertFailed(t)
+	value1.chain.reset()
 
-	value2 := NewString(checker, "a")
+	value2 := NewString(reporter, "a")
 
 	value2.Empty()
-	checker.AssertFailed(t)
-	checker.Reset()
+	value2.chain.assertFailed(t)
+	value2.chain.reset()
 
 	value2.NotEmpty()
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value2.chain.assertOK(t)
+	value2.chain.reset()
 }
 
 func TestStringEqual(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value := NewString(checker, "foo")
+	value := NewString(reporter, "foo")
 
 	assert.Equal(t, "foo", value.Raw())
 
 	value.Equal("foo")
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.Equal("FOO")
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.NotEqual("FOO")
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.NotEqual("foo")
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 }
 
 func TestStringEqualFold(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value := NewString(checker, "foo")
+	value := NewString(reporter, "foo")
 
 	value.EqualFold("foo")
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.EqualFold("FOO")
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.EqualFold("foo2")
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.NotEqualFold("foo")
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.NotEqualFold("FOO")
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.NotEqualFold("foo2")
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 }
 
 func TestStringContains(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value := NewString(checker, "11-foo-22")
+	value := NewString(reporter, "11-foo-22")
 
 	value.Contains("foo")
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.Contains("FOO")
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.NotContains("FOO")
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.NotContains("foo")
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 }
 
 func TestStringContainsFold(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value := NewString(checker, "11-foo-22")
+	value := NewString(reporter, "11-foo-22")
 
 	value.ContainsFold("foo")
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.ContainsFold("FOO")
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.ContainsFold("foo3")
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.NotContainsFold("foo")
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.NotContainsFold("FOO")
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.NotContainsFold("foo3")
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 }

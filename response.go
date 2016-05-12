@@ -12,20 +12,22 @@ import (
 
 // Response provides methods to inspect attached http.Response object.
 type Response struct {
-	checker Checker
+	chain   chain
 	resp    *http.Response
 	content []byte
 }
 
-// NewResponse returns a new Response given a checker used to report failures
+// NewResponse returns a new Response given a reporter used to report failures
 // and http.Response to be inspected.
 //
-// Both checker and response should not be nil. If response is nil, failure is reported.
-func NewResponse(checker Checker, response *http.Response) *Response {
+// Both reporter and response should not be nil. If response is nil, failure
+// is reported.
+func NewResponse(reporter Reporter, response *http.Response) *Response {
+	chain := makeChain(reporter)
 	if response == nil {
-		checker.Fail("expected non-nil response")
+		chain.fail("expected non-nil response")
 	}
-	return &Response{checker, response, nil}
+	return &Response{chain, response, nil}
 }
 
 // Raw returns underlying http.Response object.
@@ -37,10 +39,10 @@ func (r *Response) Raw() *http.Response {
 // Status succeedes if response contains given status code.
 //
 // Example:
-//  resp := NewResponse(checker, response)
+//  resp := NewResponse(t, response)
 //  resp.Status(http.StatusOK)
 func (r *Response) Status(status int) *Response {
-	if r.checker.Failed() {
+	if r.chain.failed() {
 		return r
 	}
 	r.checkEqual("status", statusText(status), statusText(r.resp.StatusCode))
@@ -57,12 +59,12 @@ func statusText(code int) string {
 // Headers succeedes if response has exactly given headers map.
 //
 // Example:
-//  resp := NewResponse(checker, response)
+//  resp := NewResponse(t, response)
 //  resp.Headers(map[string][]string{
 //      "Content-Type": []string{"application-json"},
 //  })
 func (r *Response) Headers(headers map[string][]string) *Response {
-	if r.checker.Failed() {
+	if r.chain.failed() {
 		return r
 	}
 	r.checkEqual("headers", headers, map[string][]string(r.resp.Header))
@@ -72,30 +74,30 @@ func (r *Response) Headers(headers map[string][]string) *Response {
 // Header succeedes if response contains given single header.
 //
 // Example:
-//  resp := NewResponse(checker, response)
+//  resp := NewResponse(t, response)
 //  resp.Header("Content-Type", "application-json")
 func (r *Response) Header(k, v string) *Response {
-	if r.checker.Failed() {
+	if r.chain.failed() {
 		return r
 	}
-	r.checkEqual("\"" + k + "\" header", v, r.resp.Header.Get(k))
+	r.checkEqual("\""+k+"\" header", v, r.resp.Header.Get(k))
 	return r
 }
 
 // Body returns a new String object that may be used to inspect response body.
 //
 // Example:
-//  resp := NewResponse(checker, response)
+//  resp := NewResponse(t, response)
 //  resp.Body().NotEmpty()
 func (r *Response) Body() *String {
 	value := r.getContent()
-	return NewString(r.checker.Clone(), string(value))
+	return &String{r.chain, string(value)}
 }
 
 // NoContent succeedes if response contains empty Content-Type header and
 // empty body.
 func (r *Response) NoContent() *Response {
-	if r.checker.Failed() {
+	if r.chain.failed() {
 		return r
 	}
 
@@ -123,15 +125,15 @@ func (r *Response) ContentTypeJSON() *Response {
 // with empty or "utf-8" charset and if JSON may be decoded from response body.
 //
 // Example:
-//  resp := NewResponse(checker, response)
+//  resp := NewResponse(t, response)
 //  resp.JSON().Array().Elements("foo", "bar")
 func (r *Response) JSON() *Value {
 	value := r.getJSON()
-	return NewValue(r.checker.Clone(), value)
+	return &Value{r.chain, value}
 }
 
 func (r *Response) getContent() []byte {
-	if r.checker.Failed() {
+	if r.chain.failed() {
 		return nil
 	}
 
@@ -145,7 +147,7 @@ func (r *Response) getContent() []byte {
 
 	content, err := ioutil.ReadAll(r.resp.Body)
 	if err != nil {
-		r.checker.Fail(err.Error())
+		r.chain.fail(err.Error())
 		return nil
 	}
 
@@ -154,7 +156,7 @@ func (r *Response) getContent() []byte {
 }
 
 func (r *Response) getJSON() interface{} {
-	if r.checker.Failed() {
+	if r.chain.failed() {
 		return nil
 	}
 
@@ -166,7 +168,7 @@ func (r *Response) getJSON() interface{} {
 
 	var value interface{}
 	if err := json.Unmarshal(content, &value); err != nil {
-		r.checker.Fail(err.Error())
+		r.chain.fail(err.Error())
 		return nil
 	}
 
@@ -174,7 +176,7 @@ func (r *Response) getJSON() interface{} {
 }
 
 func (r *Response) checkJSON() bool {
-	if r.checker.Failed() {
+	if r.chain.failed() {
 		return false
 	}
 
@@ -184,14 +186,14 @@ func (r *Response) checkJSON() bool {
 	charset := params["charset"]
 
 	if mediaType != "application/json" {
-		r.checker.Fail(
+		r.chain.fail(
 			"\nexpected \"Content-Type\" header with \"application/json\" media type,\n" +
 				"but got \"" + mediaType + "\"")
 		return false
 	}
 
 	if charset != "" && strings.ToLower(charset) != "utf-8" {
-		r.checker.Fail(
+		r.chain.fail(
 			"\nexpected \"Content-Type\" header with \"utf-8\" or empty charset,\n" +
 				"but got \"" + charset + "\"")
 		return false
@@ -202,7 +204,7 @@ func (r *Response) checkJSON() bool {
 
 func (r *Response) checkEqual(what string, expected, actual interface{}) {
 	if !reflect.DeepEqual(expected, actual) {
-		r.checker.Fail("\nexpected %s:\n%s\n\nbut got:\n%s", what,
-			dumpValue(r.checker, expected), dumpValue(r.checker, actual))
+		r.chain.fail("\nexpected %s:\n%s\n\nbut got:\n%s", what,
+			dumpValue(expected), dumpValue(actual))
 	}
 }

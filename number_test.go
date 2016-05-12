@@ -6,11 +6,13 @@ import (
 )
 
 func TestNumberFailed(t *testing.T) {
-	checker := newMockChecker(t)
+	chain := makeChain(mockReporter{t})
 
-	checker.Fail("fail")
+	chain.fail("fail")
 
-	value := NewNumber(checker, 0)
+	value := &Number{chain, 0}
+
+	value.chain.assertFailed(t)
 
 	value.Equal(0)
 	value.NotEqual(0)
@@ -22,215 +24,215 @@ func TestNumberFailed(t *testing.T) {
 }
 
 func TestNumberEqual(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value := NewNumber(checker, 1234)
+	value := NewNumber(reporter, 1234)
 
 	assert.Equal(t, 1234, int(value.Raw()))
 
 	value.Equal(1234)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.Equal(4321)
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.NotEqual(4321)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.NotEqual(1234)
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 }
 
 func TestNumberGreater(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value := NewNumber(checker, 1234)
+	value := NewNumber(reporter, 1234)
 
 	value.Gt(1234 - 1)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.Gt(1234)
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.Ge(1234 - 1)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.Ge(1234)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.Ge(1234 + 1)
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 }
 
 func TestNumberLesser(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value := NewNumber(checker, 1234)
+	value := NewNumber(reporter, 1234)
 
 	value.Lt(1234 + 1)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.Lt(1234)
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.Le(1234 + 1)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.Le(1234)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.Le(1234 - 1)
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 }
 
 func TestNumberInRange(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value := NewNumber(checker, 1234)
+	value := NewNumber(reporter, 1234)
 
 	value.InRange(1234, 1234)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.InRange(1234-1, 1234)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.InRange(1234, 1234+1)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.InRange(1234+1, 1234+2)
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.InRange(1234-2, 1234-1)
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.InRange(1234+1, 1234-1)
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 }
 
 func TestNumberConvertEqual(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value := NewNumber(checker, 1234)
+	value := NewNumber(reporter, 1234)
 
 	value.Equal(int64(1234))
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.Equal(float32(1234))
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.Equal("1234")
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.NotEqual(int64(4321))
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.NotEqual(float32(4321))
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.NotEqual("4321")
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 }
 
 func TestNumberConvertGreater(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value := NewNumber(checker, 1234)
+	value := NewNumber(reporter, 1234)
 
 	value.Gt(int64(1233))
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.Gt(float32(1233))
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.Gt("1233")
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.Ge(int64(1233))
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.Ge(float32(1233))
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.Ge("1233")
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 }
 
 func TestNumberConvertLesser(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value := NewNumber(checker, 1234)
+	value := NewNumber(reporter, 1234)
 
 	value.Lt(int64(1235))
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.Lt(float32(1235))
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.Lt("1235")
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.Le(int64(1235))
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.Le(float32(1235))
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.Le("1235")
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 }
 
 func TestNumberConvertInRange(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value := NewNumber(checker, 1234)
+	value := NewNumber(reporter, 1234)
 
 	value.InRange(int64(1233), float32(1235))
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.InRange(int64(1233), "1235")
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.InRange(nil, 1235)
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 }

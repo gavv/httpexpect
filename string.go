@@ -7,26 +7,26 @@ import (
 // String provides methods to inspect attached string value
 // (Go representation of JSON string).
 type String struct {
-	checker Checker
-	value   string
+	chain chain
+	value string
 }
 
-// NewString returns a new String given a checker used to report failures
+// NewString returns a new String given a reporter used to report failures
 // and value to be inspected.
 //
-// checker should not be nil.
+// reporter should not be nil.
 //
 // Example:
-//  str := NewString(NewAssertChecker(t), "Hello")
-func NewString(checker Checker, value string) *String {
-	return &String{checker, value}
+//  str := NewString(t, "Hello")
+func NewString(reporter Reporter, value string) *String {
+	return &String{makeChain(reporter), value}
 }
 
 // Raw returns underlying value attached to Str.
 // This is the value originally passed to NewStr.
 //
 // Example:
-//  str := NewString(checker, "Hello")
+//  str := NewString(t, "Hello")
 //  assert.Equal(t, "Hello", str.Raw())
 func (s *String) Raw() string {
 	return s.value
@@ -35,7 +35,7 @@ func (s *String) Raw() string {
 // Empty succeedes if string is empty.
 //
 // Example:
-//  str := NewString(checker, "")
+//  str := NewString(t, "")
 //  str.Empty()
 func (s *String) Empty() *String {
 	return s.Equal("")
@@ -44,7 +44,7 @@ func (s *String) Empty() *String {
 // NotEmpty succeedes if string is non-empty.
 //
 // Example:
-//  str := NewString(checker, "Hello")
+//  str := NewString(t, "Hello")
 //  str.NotEmpty()
 func (s *String) NotEmpty() *String {
 	return s.NotEqual("")
@@ -53,11 +53,11 @@ func (s *String) NotEmpty() *String {
 // Equal succeedes if string is equal to another str.
 //
 // Example:
-//  str := NewString(checker, "Hello")
+//  str := NewString(t, "Hello")
 //  str.Equal("Hello")
-func (s *String) Equal(v string) *String {
-	if !(s.value == v) {
-		s.checker.Fail("expected string == \"%s\", but got \"%s\"", v, s.value)
+func (s *String) Equal(value string) *String {
+	if !(s.value == value) {
+		s.chain.fail("expected string == \"%s\", but got \"%s\"", value, s.value)
 	}
 	return s
 }
@@ -65,11 +65,11 @@ func (s *String) Equal(v string) *String {
 // NotEqual succeedes if string is not equal to another str.
 //
 // Example:
-//  str := NewString(checker, "Hello")
+//  str := NewString(t, "Hello")
 //  str.NotEqual("Goodbye")
-func (s *String) NotEqual(v string) *String {
-	if !(s.value != v) {
-		s.checker.Fail("expected string != \"%s\", but got \"%s\"", v, s.value)
+func (s *String) NotEqual(value string) *String {
+	if !(s.value != value) {
+		s.chain.fail("expected string != \"%s\", but got \"%s\"", value, s.value)
 	}
 	return s
 }
@@ -78,12 +78,12 @@ func (s *String) NotEqual(v string) *String {
 // (case-insensitive match).
 //
 // Example:
-//  str := NewString(checker, "Hello")
+//  str := NewString(t, "Hello")
 //  str.EqualFold("hELLo")
-func (s *String) EqualFold(v string) *String {
-	if !strings.EqualFold(s.value, v) {
-		s.checker.Fail(
-			"expected string == \"%s\" (case-insensitive), but got \"%s\"", v, s.value)
+func (s *String) EqualFold(value string) *String {
+	if !strings.EqualFold(s.value, value) {
+		s.chain.fail(
+			"expected string == \"%s\" (case-insensitive), but got \"%s\"", value, s.value)
 	}
 	return s
 }
@@ -92,12 +92,12 @@ func (s *String) EqualFold(v string) *String {
 // case-folding (case-insensitive match).
 //
 // Example:
-//  str := NewString(checker, "Hello")
+//  str := NewString(t, "Hello")
 //  str.NotEqualFold("gOODBYe")
-func (s *String) NotEqualFold(v string) *String {
-	if strings.EqualFold(s.value, v) {
-		s.checker.Fail(
-			"expected string != \"%s\" (case-insensitive), but got \"%s\"", v, s.value)
+func (s *String) NotEqualFold(value string) *String {
+	if strings.EqualFold(s.value, value) {
+		s.chain.fail(
+			"expected string != \"%s\" (case-insensitive), but got \"%s\"", value, s.value)
 	}
 	return s
 }
@@ -105,12 +105,12 @@ func (s *String) NotEqualFold(v string) *String {
 // Contains succeedes if string contains given substr.
 //
 // Example:
-//  str := NewString(checker, "Hello")
+//  str := NewString(t, "Hello")
 //  str.Contains("ell")
-func (s *String) Contains(v string) *String {
-	if !strings.Contains(s.value, v) {
-		s.checker.Fail(
-			"expected string containing substring \"%s\", but got \"%s\"", v, s.value)
+func (s *String) Contains(value string) *String {
+	if !strings.Contains(s.value, value) {
+		s.chain.fail(
+			"expected string containing substring \"%s\", but got \"%s\"", value, s.value)
 	}
 	return s
 }
@@ -118,12 +118,13 @@ func (s *String) Contains(v string) *String {
 // NotContains succeedes if string doesn't contain given substr.
 //
 // Example:
-//  str := NewString(checker, "Hello")
+//  str := NewString(t, "Hello")
 //  str.NotContains("bye")
-func (s *String) NotContains(v string) *String {
-	if strings.Contains(s.value, v) {
-		s.checker.Fail(
-			"expected string NOT containing substring \"%s\", but got \"%s\"", v, s.value)
+func (s *String) NotContains(value string) *String {
+	if strings.Contains(s.value, value) {
+		s.chain.fail(
+			"expected string NOT containing substring \"%s\", but got \"%s\"",
+			value, s.value)
 	}
 	return s
 }
@@ -132,13 +133,13 @@ func (s *String) NotContains(v string) *String {
 // (case-insensitive match).
 //
 // Example:
-//  str := NewString(checker, "Hello")
+//  str := NewString(t, "Hello")
 //  str.ContainsFold("ELL")
-func (s *String) ContainsFold(v string) *String {
-	if !strings.Contains(strings.ToLower(s.value), strings.ToLower(v)) {
-		s.checker.Fail(
+func (s *String) ContainsFold(value string) *String {
+	if !strings.Contains(strings.ToLower(s.value), strings.ToLower(value)) {
+		s.chain.fail(
 			"expected string containing substring \"%s\" (case-insensitive), "+
-				"but got \"%s\"", v, s.value)
+				"but got \"%s\"", value, s.value)
 	}
 	return s
 }
@@ -147,13 +148,13 @@ func (s *String) ContainsFold(v string) *String {
 // case-folding (case-insensitive match).
 //
 // Example:
-//  str := NewString(checker, "Hello")
+//  str := NewString(t, "Hello")
 //  str.NotContainsFold("BYE")
-func (s *String) NotContainsFold(v string) *String {
-	if strings.Contains(strings.ToLower(s.value), strings.ToLower(v)) {
-		s.checker.Fail(
+func (s *String) NotContainsFold(value string) *String {
+	if strings.Contains(strings.ToLower(s.value), strings.ToLower(value)) {
+		s.chain.fail(
 			"expected string NOT containing substring \"%s\" (case-insensitive), "+
-				"but got \"%s\"", v, s.value)
+				"but got \"%s\"", value, s.value)
 	}
 	return s
 }

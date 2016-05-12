@@ -4,42 +4,42 @@ package httpexpect
 // (Go representation of arbitrary JSON value) and cast it to
 // concrete type.
 type Value struct {
-	checker Checker
-	value   interface{}
+	chain chain
+	value interface{}
 }
 
-// NewValue returns a new Value given a checker used to report failures
+// NewValue returns a new Value given a reporter used to report failures
 // and value to be inspected.
 //
-// checker should not be nil, but value may be nil.
+// reporter should not be nil, but value may be nil.
 //
 // Example:
-//  value := NewValue(checker, map[string]interface{}{"foo": 123})
+//  value := NewValue(t, map[string]interface{}{"foo": 123})
 //  value.Object()
 //
-//  value := NewValue(checker, []interface{}{"foo", 123})
+//  value := NewValue(t, []interface{}{"foo", 123})
 //  value.Array()
 //
-//  value := NewValue(checker, "foo")
+//  value := NewValue(t, "foo")
 //  value.String()
 //
-//  value := NewValue(checker, 123)
+//  value := NewValue(t, 123)
 //  value.Number()
 //
-//  value := NewValue(checker, true)
+//  value := NewValue(t, true)
 //  value.Boolean()
 //
-//  value := NewValue(checker, nil)
+//  value := NewValue(t, nil)
 //  value.Null()
-func NewValue(checker Checker, value interface{}) *Value {
-	return &Value{checker, value}
+func NewValue(reporter Reporter, value interface{}) *Value {
+	return &Value{makeChain(reporter), value}
 }
 
 // Raw returns underlying value attached to Value.
 // This is the value originally passed to NewValue.
 //
 // Example:
-//  value := NewValue(checker, "foo")
+//  value := NewValue(t, "foo")
 //  assert.Equal(t, "foo", number.Raw().(string))
 func (v *Value) Raw() interface{} {
 	return v.value
@@ -51,15 +51,15 @@ func (v *Value) Raw() interface{} {
 // and empty (but non-nil) value is returned.
 //
 // Example:
-//  value := NewValue(checker, map[string]interface{}{"foo": 123})
+//  value := NewValue(t, map[string]interface{}{"foo": 123})
 //  value.Object().ContainsKey("foo")
 func (v *Value) Object() *Object {
-	data, ok := canonMap(v.checker, v.value)
+	data, ok := canonMap(&v.chain, v.value)
 	if !ok {
-		v.checker.Fail("expected object value (map or struct), but got:\n%s",
-			dumpValue(v.checker, v.value))
+		v.chain.fail("\nexpected object value (map or struct), but got:\n%s",
+			dumpValue(v.value))
 	}
-	return NewObject(v.checker.Clone(), data)
+	return &Object{v.chain, data}
 }
 
 // Array returns a new Array attached to underlying value.
@@ -68,15 +68,15 @@ func (v *Value) Object() *Object {
 // (but non-nil) value is returned.
 //
 // Example:
-//  value := NewValue(checker, []interface{}{"foo", 123})
+//  value := NewValue(t, []interface{}{"foo", 123})
 //  value.Array().Elements("foo", 123)
 func (v *Value) Array() *Array {
-	data, ok := canonArray(v.checker, v.value)
+	data, ok := canonArray(&v.chain, v.value)
 	if !ok {
-		v.checker.Fail("expected array value, but got:\n%s",
-			dumpValue(v.checker, v.value))
+		v.chain.fail("\nexpected array value, but got:\n%s",
+			dumpValue(v.value))
 	}
-	return NewArray(v.checker.Clone(), data)
+	return &Array{v.chain, data}
 }
 
 // String returns a new String attached to underlying value.
@@ -85,15 +85,15 @@ func (v *Value) Array() *Array {
 // value is returned.
 //
 // Example:
-//  value := NewValue(checker, "foo")
+//  value := NewValue(t, "foo")
 //  value.String().EqualFold("FOO")
 func (v *Value) String() *String {
 	data, ok := v.value.(string)
 	if !ok {
-		v.checker.Fail("expected string value, but got:\n%s",
-			dumpValue(v.checker, v.value))
+		v.chain.fail("\nexpected string value, but got:\n%s",
+			dumpValue(v.value))
 	}
-	return NewString(v.checker.Clone(), data)
+	return &String{v.chain, data}
 }
 
 // Number returns a new Number attached to underlying value.
@@ -102,15 +102,15 @@ func (v *Value) String() *String {
 // is reported and empty (but non-nil) value is returned.
 //
 // Example:
-//  value := NewValue(checker, 123)
+//  value := NewValue(t, 123)
 //  value.Number().InRange(100, 200)
 func (v *Value) Number() *Number {
-	data, ok := canonNumber(v.checker, v.value)
+	data, ok := canonNumber(&v.chain, v.value)
 	if !ok {
-		v.checker.Fail("expected numeric value, but got:\n%s",
-			dumpValue(v.checker, v.value))
+		v.chain.fail("\nexpected numeric value, but got:\n%s",
+			dumpValue(v.value))
 	}
-	return NewNumber(v.checker.Clone(), data)
+	return &Number{v.chain, data}
 }
 
 // Boolean returns a new Boolean attached to underlying value.
@@ -119,15 +119,15 @@ func (v *Value) Number() *Number {
 // value is returned.
 //
 // Example:
-//  value := NewValue(checker, true)
+//  value := NewValue(t, true)
 //  value.Boolean().True()
 func (v *Value) Boolean() *Boolean {
 	data, ok := v.value.(bool)
 	if !ok {
-		v.checker.Fail("expected boolean value, but got:\n%s",
-			dumpValue(v.checker, v.value))
+		v.chain.fail("\nexpected boolean value, but got:\n%s",
+			dumpValue(v.value))
 	}
-	return NewBoolean(v.checker.Clone(), data)
+	return &Boolean{v.chain, data}
 }
 
 // Null succeedes if value is nil.
@@ -137,19 +137,19 @@ func (v *Value) Boolean() *Boolean {
 // zero number are not treated as null value.
 //
 // Example:
-//  value := NewValue(checker, nil)
+//  value := NewValue(t, nil)
 //  value.Null()
 //
-//  value := NewValue(checker, []interface{}(nil))
+//  value := NewValue(t, []interface{}(nil))
 //  value.Null()
 func (v *Value) Null() *Value {
-	data, ok := canonValue(v.checker, v.value)
+	data, ok := canonValue(&v.chain, v.value)
 	if !ok {
 		return v
 	}
 	if data != nil {
-		v.checker.Fail("expected nil value, but got:\n%s",
-			dumpValue(v.checker, v.value))
+		v.chain.fail("\nexpected nil value, but got:\n%s",
+			dumpValue(v.value))
 	}
 	return v
 }
@@ -161,19 +161,19 @@ func (v *Value) Null() *Value {
 // zero number are not treated as null value.
 //
 // Example:
-//  value := NewValue(checker, "")
+//  value := NewValue(t, "")
 //  value.NotNull()
 //
-//  value := NewValue(checker, make([]interface{}, 0)
+//  value := NewValue(t, make([]interface{}, 0)
 //  value.Null()
 func (v *Value) NotNull() *Value {
-	data, ok := canonValue(v.checker, v.value)
+	data, ok := canonValue(&v.chain, v.value)
 	if !ok {
 		return v
 	}
 	if data == nil {
-		v.checker.Fail("expected non-nil value, but got:\n%s",
-			dumpValue(v.checker, v.value))
+		v.chain.fail("\nexpected non-nil value, but got:\n%s",
+			dumpValue(v.value))
 	}
 	return v
 }

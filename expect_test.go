@@ -7,31 +7,14 @@ import (
 	"testing"
 )
 
-func TestExpectCheckers(t *testing.T) {
-	checker := NewAssertChecker(t)
-
-	config := Config{
-		Checker: checker,
-	}
-
-	e := WithConfig(config)
-
-	assert.False(t, e.config.Checker == e.Value(nil).checker)
-	assert.False(t, e.config.Checker == e.Object(map[string]interface{}{}).checker)
-	assert.False(t, e.config.Checker == e.Array([]interface{}{}).checker)
-	assert.False(t, e.config.Checker == e.String("").checker)
-	assert.False(t, e.config.Checker == e.Number(0).checker)
-	assert.False(t, e.config.Checker == e.Boolean(false).checker)
-}
-
 func TestExpectMethods(t *testing.T) {
 	client := &mockClient{}
 
-	checker := NewAssertChecker(t)
+	reporter := NewAssertReporter(t)
 
 	config := Config{
-		Client:  client,
-		Checker: checker,
+		Client:   client,
+		Reporter: reporter,
 	}
 
 	var reqs [8]*Request
@@ -60,31 +43,31 @@ func TestExpectMethods(t *testing.T) {
 func TestExpectURLConcat(t *testing.T) {
 	client := &mockClient{}
 
-	checker := NewAssertChecker(t)
+	reporter := NewAssertReporter(t)
 
 	var reqs [5]*Request
 
 	config1 := Config{
-		BaseURL: "",
-		Client:  client,
-		Checker: checker,
+		BaseURL:  "",
+		Client:   client,
+		Reporter: reporter,
 	}
 
 	reqs[0] = WithConfig(config1).Request("METHOD", "http://example.com/path")
 
 	config2 := Config{
-		BaseURL: "http://example.com",
-		Client:  client,
-		Checker: checker,
+		BaseURL:  "http://example.com",
+		Client:   client,
+		Reporter: reporter,
 	}
 
 	reqs[1] = WithConfig(config2).Request("METHOD", "path")
 	reqs[2] = WithConfig(config2).Request("METHOD", "/path")
 
 	config3 := Config{
-		BaseURL: "http://example.com/",
-		Client:  client,
-		Checker: checker,
+		BaseURL:  "http://example.com/",
+		Client:   client,
+		Reporter: reporter,
 	}
 
 	reqs[3] = WithConfig(config3).Request("METHOD", "path")
@@ -106,14 +89,14 @@ func TestExpectURLConcat(t *testing.T) {
 func TestExpectURLFormat(t *testing.T) {
 	client := &mockClient{}
 
-	checker := NewAssertChecker(t)
+	reporter := NewAssertReporter(t)
 
 	var reqs [9]*Request
 
 	config := Config{
-		BaseURL: "http://example.com/",
-		Client:  client,
-		Checker: checker,
+		BaseURL:  "http://example.com/",
+		Client:   client,
+		Reporter: reporter,
 	}
 
 	reqs[0] = WithConfig(config).Request("METHOD", "/foo/%s", "bar")
@@ -130,21 +113,24 @@ func TestExpectURLFormat(t *testing.T) {
 		assert.Equal(t, "http://example.com/foo/bar", req.url.String())
 	}
 
-	bad := WithConfig(Config{Checker: newMockChecker(t)})
-	bad.Request("GET", "%s", nil)
+	e := WithConfig(Config{
+		Reporter: mockReporter{t},
+	})
 
-	assert.True(t, bad.config.Checker.Failed())
+	r := e.Request("GET", "%s", nil)
+
+	r.chain.assertFailed(t)
 }
 
 func TestExpectTraverse(t *testing.T) {
 	client := &mockClient{}
 
-	checker := NewAssertChecker(t)
+	reporter := NewAssertReporter(t)
 
 	config := Config{
-		BaseURL: "http://example.com",
-		Client:  client,
-		Checker: checker,
+		BaseURL:  "http://example.com",
+		Client:   client,
+		Reporter: reporter,
 	}
 
 	data := map[string]interface{}{
@@ -181,12 +167,10 @@ func TestExpectTraverse(t *testing.T) {
 func TestExpectBranches(t *testing.T) {
 	client := &mockClient{}
 
-	checker := newMockChecker(t)
-
 	config := Config{
-		BaseURL: "http://example.com",
-		Client:  client,
-		Checker: checker,
+		BaseURL:  "http://example.com",
+		Client:   client,
+		Reporter: mockReporter{t},
 	}
 
 	data := map[string]interface{}{
@@ -207,13 +191,13 @@ func TestExpectBranches(t *testing.T) {
 
 	e4.Equal("bar")
 
-	assert.True(t, m1.checker.Failed())
-	assert.False(t, m2.checker.Failed())
+	m1.chain.assertFailed(t)
+	m2.chain.assertOK(t)
 
-	assert.True(t, e1.checker.Failed())
-	assert.True(t, e2.checker.Failed())
-	assert.True(t, e3.checker.Failed())
-	assert.False(t, e4.checker.Failed())
+	e1.chain.assertFailed(t)
+	e2.chain.assertFailed(t)
+	e3.chain.assertFailed(t)
+	e4.chain.assertOK(t)
 }
 
 func TestExpectLive(t *testing.T) {

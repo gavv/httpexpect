@@ -12,47 +12,53 @@ import (
 func TestRequestFailed(t *testing.T) {
 	client := &mockClient{}
 
-	checker := newMockChecker(t)
+	chain := makeChain(mockReporter{t})
 
-	checker.Fail("fail")
+	chain.fail("fail")
 
 	config := Config{
-		Client:  client,
-		Checker: checker,
+		Client: client,
 	}
 
-	req := NewRequest(config, "", "")
+	req := &Request{
+		config: config,
+		chain:  chain,
+	}
 
 	resp := req.Expect()
 
 	assert.False(t, resp == nil)
+
+	req.chain.assertFailed(t)
+	resp.chain.assertFailed(t)
 }
 
 func TestRequestEmpty(t *testing.T) {
 	client := &mockClient{}
 
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
 	config := Config{
-		Client:  client,
-		Checker: checker,
+		Client:   client,
+		Reporter: reporter,
 	}
 
 	req := NewRequest(config, "", "")
 
 	resp := req.Expect()
 
-	assert.False(t, req.config.Checker == resp.checker)
+	req.chain.assertOK(t)
+	resp.chain.assertOK(t)
 }
 
 func TestRequestURL(t *testing.T) {
 	client := &mockClient{}
 
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
 	config := Config{
-		Client:  client,
-		Checker: checker,
+		Client:   client,
+		Reporter: reporter,
 	}
 
 	req1 := NewRequest(config, "METHOD", "http://example.com")
@@ -64,23 +70,23 @@ func TestRequestURL(t *testing.T) {
 		WithQuery("aa", "foo").WithQuery("bb", 123).WithQuery("cc", "*&@")
 
 	req1.Expect()
-	checker.AssertSuccess(t)
+	req1.chain.assertOK(t)
 	assert.Equal(t, "http://example.com", client.req.URL.String())
 
 	req2.Expect()
-	checker.AssertSuccess(t)
+	req2.chain.assertOK(t)
 	assert.Equal(t, "http://example.com/path", client.req.URL.String())
 
 	req3.Expect()
-	checker.AssertSuccess(t)
+	req3.chain.assertOK(t)
 	assert.Equal(t, "/path", client.req.URL.String())
 
 	req4.Expect()
-	checker.AssertSuccess(t)
+	req4.chain.assertOK(t)
 	assert.Equal(t, "path", client.req.URL.String())
 
 	req5.Expect()
-	checker.AssertSuccess(t)
+	req5.chain.assertOK(t)
 	assert.Equal(t, "http://example.com/path?aa=foo&bb=123&cc=%2A%26%40",
 		client.req.URL.String())
 }
@@ -88,11 +94,11 @@ func TestRequestURL(t *testing.T) {
 func TestRequestHeaders(t *testing.T) {
 	client := &mockClient{}
 
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
 	config := Config{
-		Client:  client,
-		Checker: checker,
+		Client:   client,
+		Reporter: reporter,
 	}
 
 	req := NewRequest(config, "METHOD", "url")
@@ -111,7 +117,7 @@ func TestRequestHeaders(t *testing.T) {
 	}
 
 	resp := req.Expect()
-	checker.AssertSuccess(t)
+	resp.chain.assertOK(t)
 
 	assert.Equal(t, "METHOD", client.req.Method)
 	assert.Equal(t, "url", client.req.URL.String())
@@ -123,11 +129,11 @@ func TestRequestHeaders(t *testing.T) {
 func TestRequestBodyReader(t *testing.T) {
 	client := &mockClient{}
 
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
 	config := Config{
-		Client:  client,
-		Checker: checker,
+		Client:   client,
+		Reporter: reporter,
 	}
 
 	req := NewRequest(config, "METHOD", "url")
@@ -135,7 +141,7 @@ func TestRequestBodyReader(t *testing.T) {
 	req.WithBody(bytes.NewBufferString("body"))
 
 	resp := req.Expect()
-	checker.AssertSuccess(t)
+	resp.chain.assertOK(t)
 
 	body, _ := ioutil.ReadAll(client.req.Body)
 
@@ -150,11 +156,11 @@ func TestRequestBodyReader(t *testing.T) {
 func TestRequestBodyBytes(t *testing.T) {
 	client := &mockClient{}
 
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
 	config := Config{
-		Client:  client,
-		Checker: checker,
+		Client:   client,
+		Reporter: reporter,
 	}
 
 	req := NewRequest(config, "METHOD", "url")
@@ -162,7 +168,7 @@ func TestRequestBodyBytes(t *testing.T) {
 	req.WithBytes([]byte("body"))
 
 	resp := req.Expect()
-	checker.AssertSuccess(t)
+	resp.chain.assertOK(t)
 
 	body, _ := ioutil.ReadAll(client.req.Body)
 
@@ -177,11 +183,11 @@ func TestRequestBodyBytes(t *testing.T) {
 func TestRequestBodyJSON(t *testing.T) {
 	client := &mockClient{}
 
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
 	config := Config{
-		Client:  client,
-		Checker: checker,
+		Client:   client,
+		Reporter: reporter,
 	}
 
 	expectedHeaders := map[string][]string{
@@ -198,7 +204,7 @@ func TestRequestBodyJSON(t *testing.T) {
 	req.WithJSON(map[string]interface{}{"key": "value"})
 
 	resp := req.Expect()
-	checker.AssertSuccess(t)
+	resp.chain.assertOK(t)
 
 	body, _ := ioutil.ReadAll(client.req.Body)
 
@@ -213,11 +219,11 @@ func TestRequestBodyJSON(t *testing.T) {
 func TestRequestErrorMarshal(t *testing.T) {
 	client := &mockClient{}
 
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
 	config := Config{
-		Client:  client,
-		Checker: checker,
+		Client:   client,
+		Reporter: reporter,
 	}
 
 	req := NewRequest(config, "METHOD", "url")
@@ -225,7 +231,7 @@ func TestRequestErrorMarshal(t *testing.T) {
 	req.WithJSON(func() {})
 
 	resp := req.Expect()
-	checker.AssertFailed(t)
+	resp.chain.assertFailed(t)
 
 	assert.True(t, resp.Raw() == nil)
 }
@@ -235,17 +241,17 @@ func TestRequestErrorSend(t *testing.T) {
 		err: errors.New("error"),
 	}
 
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
 	config := Config{
-		Client:  client,
-		Checker: checker,
+		Client:   client,
+		Reporter: reporter,
 	}
 
 	req := NewRequest(config, "METHOD", "url")
 
 	resp := req.Expect()
-	checker.AssertFailed(t)
+	resp.chain.assertFailed(t)
 
 	assert.True(t, resp.Raw() == nil)
 }

@@ -6,14 +6,19 @@ import (
 )
 
 func TestArrayFailed(t *testing.T) {
-	checker := newMockChecker(t)
+	chain := makeChain(mockReporter{t})
 
-	checker.Fail("fail")
+	chain.fail("fail")
 
-	value := NewArray(checker, nil)
+	value := &Array{chain, nil}
+
+	value.chain.assertFailed(t)
 
 	assert.False(t, value.Length() == nil)
 	assert.False(t, value.Element(0) == nil)
+
+	value.Length().chain.assertFailed(t)
+	value.Element(0).chain.assertFailed(t)
 
 	value.Empty()
 	value.NotEmpty()
@@ -26,125 +31,122 @@ func TestArrayFailed(t *testing.T) {
 }
 
 func TestArrayGetters(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value := NewArray(checker, []interface{}{"foo", 123.0})
+	value := NewArray(reporter, []interface{}{"foo", 123.0})
 
 	assert.Equal(t, 2.0, value.Length().Raw())
 
 	assert.Equal(t, "foo", value.Element(0).Raw().(string))
 	assert.Equal(t, 123.0, value.Element(1).Raw().(float64))
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	assert.Equal(t, nil, value.Element(2).Raw())
-	checker.AssertFailed(t)
-	checker.Reset()
-
-	assert.False(t, value.checker == value.Length().checker)
-	assert.False(t, value.checker == value.Element(0).checker)
+	value.chain.assertFailed(t)
+	value.chain.reset()
 }
 
 func TestArrayEmpty(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value1 := NewArray(checker, nil)
+	value1 := NewArray(reporter, nil)
 
 	_ = value1
-	checker.AssertFailed(t)
-	checker.Reset()
+	value1.chain.assertFailed(t)
+	value1.chain.reset()
 
-	value2 := NewArray(checker, []interface{}{})
+	value2 := NewArray(reporter, []interface{}{})
 
 	value2.Empty()
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value2.chain.assertOK(t)
+	value2.chain.reset()
 
 	value2.NotEmpty()
-	checker.AssertFailed(t)
-	checker.Reset()
+	value2.chain.assertFailed(t)
+	value2.chain.reset()
 
-	value3 := NewArray(checker, []interface{}{""})
+	value3 := NewArray(reporter, []interface{}{""})
 
 	value3.Empty()
-	checker.AssertFailed(t)
-	checker.Reset()
+	value3.chain.assertFailed(t)
+	value3.chain.reset()
 
 	value3.NotEmpty()
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value3.chain.assertOK(t)
+	value3.chain.reset()
 }
 
 func TestArrayEqualEmpty(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value := NewArray(checker, []interface{}{})
+	value := NewArray(reporter, []interface{}{})
 
 	assert.Equal(t, []interface{}{}, value.Raw())
 
 	value.Equal([]interface{}{})
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.NotEqual([]interface{}{})
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.Equal([]interface{}{""})
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.NotEqual([]interface{}{""})
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 }
 
 func TestArrayEqualNotEmpty(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value := NewArray(checker, []interface{}{"foo", "bar"})
+	value := NewArray(reporter, []interface{}{"foo", "bar"})
 
 	assert.Equal(t, []interface{}{"foo", "bar"}, value.Raw())
 
 	value.Equal([]interface{}{})
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.NotEqual([]interface{}{})
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.Equal([]interface{}{"foo"})
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.NotEqual([]interface{}{"foo"})
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.Equal([]interface{}{"bar", "foo"})
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.NotEqual([]interface{}{"bar", "foo"})
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.Equal([]interface{}{"foo", "bar"})
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.NotEqual([]interface{}{"foo", "bar"})
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 }
 
 func TestArrayEqualTypes(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value1 := NewArray(checker, []interface{}{"foo", "bar"})
-	value2 := NewArray(checker, []interface{}{123, 456})
-	value3 := NewArray(checker, []interface{}{
+	value1 := NewArray(reporter, []interface{}{"foo", "bar"})
+	value2 := NewArray(reporter, []interface{}{123, 456})
+	value3 := NewArray(reporter, []interface{}{
 		map[string]interface{}{
 			"foo": 123,
 		},
@@ -154,158 +156,158 @@ func TestArrayEqualTypes(t *testing.T) {
 	})
 
 	value1.Equal([]string{"foo", "bar"})
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value1.chain.assertOK(t)
+	value1.chain.reset()
 
 	value1.Equal([]string{"bar", "foo"})
-	checker.AssertFailed(t)
-	checker.Reset()
+	value1.chain.assertFailed(t)
+	value1.chain.reset()
 
 	value1.NotEqual([]string{"foo", "bar"})
-	checker.AssertFailed(t)
-	checker.Reset()
+	value1.chain.assertFailed(t)
+	value1.chain.reset()
 
 	value1.NotEqual([]string{"bar", "foo"})
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value1.chain.assertOK(t)
+	value1.chain.reset()
 
 	value2.Equal([]int{123, 456})
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value2.chain.assertOK(t)
+	value2.chain.reset()
 
 	value2.Equal([]int{456, 123})
-	checker.AssertFailed(t)
-	checker.Reset()
+	value2.chain.assertFailed(t)
+	value2.chain.reset()
 
 	value2.NotEqual([]int{123, 456})
-	checker.AssertFailed(t)
-	checker.Reset()
+	value2.chain.assertFailed(t)
+	value2.chain.reset()
 
 	value2.NotEqual([]int{456, 123})
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value2.chain.assertOK(t)
+	value2.chain.reset()
 
 	type S struct {
 		Foo int `json:"foo"`
 	}
 
-	value3.Equal([]S{S{123}, S{456}})
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value3.Equal([]S{{123}, {456}})
+	value3.chain.assertOK(t)
+	value3.chain.reset()
 
-	value3.Equal([]S{S{456}, S{123}})
-	checker.AssertFailed(t)
-	checker.Reset()
+	value3.Equal([]S{{456}, {123}})
+	value3.chain.assertFailed(t)
+	value3.chain.reset()
 
-	value3.NotEqual([]S{S{123}, S{456}})
-	checker.AssertFailed(t)
-	checker.Reset()
+	value3.NotEqual([]S{{123}, {456}})
+	value3.chain.assertFailed(t)
+	value3.chain.reset()
 
-	value3.NotEqual([]S{S{456}, S{123}})
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value3.NotEqual([]S{{456}, {123}})
+	value3.chain.assertOK(t)
+	value3.chain.reset()
 }
 
 func TestArrayElements(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value := NewArray(checker, []interface{}{123, "foo"})
+	value := NewArray(reporter, []interface{}{123, "foo"})
 
 	value.Elements(123)
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.Elements("foo")
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.Elements("foo", 123)
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.Elements(123, "foo", "foo")
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.Elements(123, "foo")
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 }
 
 func TestArrayContains(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value := NewArray(checker, []interface{}{123, "foo"})
+	value := NewArray(reporter, []interface{}{123, "foo"})
 
 	value.Contains(123)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.NotContains(123)
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.Contains("foo", 123)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.NotContains("foo", 123)
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.Contains("foo", "foo")
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.NotContains("foo", "foo")
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.Contains(123, "foo", "FOO")
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.NotContains(123, "foo", "FOO")
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.NotContains("FOO")
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.Contains([]interface{}{123, "foo"})
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.NotContains([]interface{}{123, "foo"})
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 }
 
 func TestArrayContainsOnly(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value := NewArray(checker, []interface{}{123, "foo"})
+	value := NewArray(reporter, []interface{}{123, "foo"})
 
 	value.ContainsOnly(123)
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.ContainsOnly("foo")
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.ContainsOnly(123, "foo", "foo")
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.ContainsOnly(123, "foo")
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.ContainsOnly("foo", 123)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 }
 
 func TestArrayConvertEqual(t *testing.T) {
@@ -314,35 +316,35 @@ func TestArrayConvertEqual(t *testing.T) {
 		myInt   int
 	)
 
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value := NewArray(checker, []interface{}{123, 456})
+	value := NewArray(reporter, []interface{}{123, 456})
 
 	assert.Equal(t, []interface{}{123.0, 456.0}, value.Raw())
 
 	value.Equal(myArray{myInt(123), 456.0})
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.NotEqual(myArray{myInt(123), 456.0})
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.Equal([]interface{}{"123", "456"})
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.NotEqual([]interface{}{"123", "456"})
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.Equal(nil)
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.NotEqual(nil)
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 }
 
 func TestArrayConvertElements(t *testing.T) {
@@ -350,19 +352,19 @@ func TestArrayConvertElements(t *testing.T) {
 		myInt int
 	)
 
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value := NewArray(checker, []interface{}{123, 456})
+	value := NewArray(reporter, []interface{}{123, 456})
 
 	assert.Equal(t, []interface{}{123.0, 456.0}, value.Raw())
 
 	value.Elements(myInt(123), 456.0)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.Elements(func() {})
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 }
 
 func TestArrayConvertContains(t *testing.T) {
@@ -370,45 +372,45 @@ func TestArrayConvertContains(t *testing.T) {
 		myInt int
 	)
 
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value := NewArray(checker, []interface{}{123, 456})
+	value := NewArray(reporter, []interface{}{123, 456})
 
 	assert.Equal(t, []interface{}{123.0, 456.0}, value.Raw())
 
 	value.Contains(myInt(123), 456.0)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.NotContains(myInt(123), 456.0)
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.ContainsOnly(myInt(123), 456.0)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.Contains("123")
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.NotContains("123")
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.ContainsOnly("123.0", "456.0")
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.Contains(func() {})
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.NotContains(func() {})
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.ContainsOnly(func() {})
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 }

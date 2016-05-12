@@ -8,23 +8,29 @@ import (
 )
 
 func TestResponseFailed(t *testing.T) {
-	checker := newMockChecker(t)
+	chain := makeChain(mockReporter{t})
 
-	checker.Fail("fail")
+	chain.fail("fail")
 
-	resp := NewResponse(checker, nil)
+	resp := &Response{chain, nil, nil}
+
+	resp.chain.assertFailed(t)
+
+	assert.False(t, resp.Body() == nil)
+	assert.False(t, resp.JSON() == nil)
+
+	resp.Body().chain.assertFailed(t)
+	resp.JSON().chain.assertFailed(t)
 
 	resp.Status(123)
 	resp.Headers(nil)
 	resp.Header("foo", "bar")
-	resp.Body()
 	resp.NoContent()
 	resp.ContentTypeJSON()
-	resp.JSON()
 }
 
 func TestResponseHeaders(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
 	headers := map[string][]string{
 		"First-Header":  {"foo"},
@@ -37,59 +43,59 @@ func TestResponseHeaders(t *testing.T) {
 		Body:       nil,
 	}
 
-	resp := NewResponse(checker, httpResp)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	resp := NewResponse(reporter, httpResp)
+	resp.chain.assertOK(t)
+	resp.chain.reset()
 
 	assert.Equal(t, httpResp, resp.Raw())
 
 	resp.Status(http.StatusOK)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	resp.chain.assertOK(t)
+	resp.chain.reset()
 
 	resp.Status(http.StatusNotFound)
-	checker.AssertFailed(t)
-	checker.Reset()
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
 
 	resp.Headers(headers)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	resp.chain.assertOK(t)
+	resp.chain.reset()
 
 	partialHeaders := make(map[string][]string)
 	partialHeaders["Content-Type"] = headers["Content-Type"]
 
 	resp.Headers(partialHeaders)
-	checker.AssertFailed(t)
-	checker.Reset()
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
 
 	for k, v := range headers {
 		resp.Header(k, v[0])
-		checker.AssertSuccess(t)
-		checker.Reset()
+		resp.chain.assertOK(t)
+		resp.chain.reset()
 	}
 
 	resp.Header("Bad-Header", "noValue")
-	checker.AssertFailed(t)
-	checker.Reset()
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
 }
 
 func TestResponseBody(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
 	httpResp := &http.Response{
 		StatusCode: http.StatusOK,
 		Body:       closingBuffer{bytes.NewBufferString("body")},
 	}
 
-	resp := NewResponse(checker, httpResp)
+	resp := NewResponse(reporter, httpResp)
 
 	assert.Equal(t, "body", resp.Body().Raw())
-	checker.AssertSuccess(t)
-	checker.Reset()
+	resp.chain.assertOK(t)
+	resp.chain.reset()
 }
 
 func TestResponseNoContentEmpty(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
 	headers := map[string][]string{
 		"Content-Type": {""},
@@ -101,27 +107,27 @@ func TestResponseNoContentEmpty(t *testing.T) {
 		Body:       closingBuffer{bytes.NewBufferString("")},
 	}
 
-	resp := NewResponse(checker, httpResp)
+	resp := NewResponse(reporter, httpResp)
 
 	assert.Equal(t, "", resp.Body().Raw())
-	checker.AssertSuccess(t)
-	checker.Reset()
+	resp.chain.assertOK(t)
+	resp.chain.reset()
 
 	resp.NoContent()
-	checker.AssertSuccess(t)
-	checker.Reset()
+	resp.chain.assertOK(t)
+	resp.chain.reset()
 
 	resp.ContentTypeJSON()
-	checker.AssertFailed(t)
-	checker.Reset()
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
 
 	resp.JSON()
-	checker.AssertFailed(t)
-	checker.Reset()
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
 }
 
 func TestResponseNoContentNil(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
 	headers := map[string][]string{
 		"Content-Type": {""},
@@ -133,27 +139,27 @@ func TestResponseNoContentNil(t *testing.T) {
 		Body:       nil,
 	}
 
-	resp := NewResponse(checker, httpResp)
+	resp := NewResponse(reporter, httpResp)
 
 	assert.Equal(t, "", resp.Body().Raw())
-	checker.AssertSuccess(t)
-	checker.Reset()
+	resp.chain.assertOK(t)
+	resp.chain.reset()
 
 	resp.NoContent()
-	checker.AssertSuccess(t)
-	checker.Reset()
+	resp.chain.assertOK(t)
+	resp.chain.reset()
 
 	resp.ContentTypeJSON()
-	checker.AssertFailed(t)
-	checker.Reset()
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
 
 	resp.JSON()
-	checker.AssertFailed(t)
-	checker.Reset()
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
 }
 
 func TestResponseJson(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
 	headers := map[string][]string{
 		"Content-Type": {"application/json; charset=utf-8"},
@@ -167,32 +173,30 @@ func TestResponseJson(t *testing.T) {
 		Body:       closingBuffer{bytes.NewBufferString(body)},
 	}
 
-	resp := NewResponse(checker, httpResp)
+	resp := NewResponse(reporter, httpResp)
 
 	assert.Equal(t, body, resp.Body().Raw())
-	checker.AssertSuccess(t)
-	checker.Reset()
+	resp.chain.assertOK(t)
+	resp.chain.reset()
 
 	resp.NoContent()
-	checker.AssertFailed(t)
-	checker.Reset()
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
 
 	resp.ContentTypeJSON()
-	checker.AssertSuccess(t)
-	checker.Reset()
+	resp.chain.assertOK(t)
+	resp.chain.reset()
 
 	resp.JSON()
-	checker.AssertSuccess(t)
-	checker.Reset()
+	resp.chain.assertOK(t)
+	resp.chain.reset()
 
 	assert.Equal(t,
 		map[string]interface{}{"key": "value"}, resp.JSON().Object().Raw())
-
-	assert.False(t, resp.checker == resp.JSON().checker)
 }
 
 func TestResponseJsonEncodingEmpty(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
 	headers := map[string][]string{
 		"Content-Type": {"application/json"},
@@ -206,26 +210,26 @@ func TestResponseJsonEncodingEmpty(t *testing.T) {
 		Body:       closingBuffer{bytes.NewBufferString(body)},
 	}
 
-	resp := NewResponse(checker, httpResp)
+	resp := NewResponse(reporter, httpResp)
 
 	resp.NoContent()
-	checker.AssertFailed(t)
-	checker.Reset()
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
 
 	resp.ContentTypeJSON()
-	checker.AssertSuccess(t)
-	checker.Reset()
+	resp.chain.assertOK(t)
+	resp.chain.reset()
 
 	resp.JSON()
-	checker.AssertSuccess(t)
-	checker.Reset()
+	resp.chain.assertOK(t)
+	resp.chain.reset()
 
 	assert.Equal(t,
 		map[string]interface{}{"key": "value"}, resp.JSON().Object().Raw())
 }
 
 func TestResponseJsonEncodingBad(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
 	headers := map[string][]string{
 		"Content-Type": {"application/json; charset=bad"},
@@ -239,19 +243,19 @@ func TestResponseJsonEncodingBad(t *testing.T) {
 		Body:       closingBuffer{bytes.NewBufferString(body)},
 	}
 
-	resp := NewResponse(checker, httpResp)
+	resp := NewResponse(reporter, httpResp)
 
 	resp.NoContent()
-	checker.AssertFailed(t)
-	checker.Reset()
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
 
 	resp.ContentTypeJSON()
-	checker.AssertFailed(t)
-	checker.Reset()
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
 
 	resp.JSON()
-	checker.AssertFailed(t)
-	checker.Reset()
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
 
 	assert.Equal(t, nil, resp.JSON().Raw())
 }

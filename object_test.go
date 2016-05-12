@@ -6,15 +6,21 @@ import (
 )
 
 func TestObjectFailed(t *testing.T) {
-	checker := newMockChecker(t)
+	chain := makeChain(mockReporter{t})
 
-	checker.Fail("fail")
+	chain.fail("fail")
 
-	value := NewObject(checker, nil)
+	value := &Object{chain, nil}
+
+	value.chain.assertFailed(t)
 
 	assert.False(t, value.Keys() == nil)
 	assert.False(t, value.Values() == nil)
 	assert.False(t, value.Value("foo") == nil)
+
+	value.Keys().chain.assertFailed(t)
+	value.Values().chain.assertFailed(t)
+	value.Value("foo").chain.assertFailed(t)
 
 	value.Empty()
 	value.NotEmpty()
@@ -29,7 +35,7 @@ func TestObjectFailed(t *testing.T) {
 }
 
 func TestObjectGetters(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
 	m := map[string]interface{}{
 		"foo": 123.0,
@@ -39,7 +45,7 @@ func TestObjectGetters(t *testing.T) {
 		},
 	}
 
-	value := NewObject(checker, m)
+	value := NewObject(reporter, m)
 
 	keys := []interface{}{"foo", "bar", "baz"}
 
@@ -52,140 +58,136 @@ func TestObjectGetters(t *testing.T) {
 	}
 
 	value.Keys().ContainsOnly(keys...)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.Values().ContainsOnly(values...)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	assert.Equal(t, m["foo"], value.Value("foo").Raw())
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	assert.Equal(t, m["bar"], value.Value("bar").Raw())
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	assert.Equal(t, m["baz"], value.Value("baz").Raw())
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	assert.Equal(t, nil, value.Value("BAZ").Raw())
-	checker.AssertFailed(t)
-	checker.Reset()
-
-	assert.False(t, value.checker == value.Keys().checker)
-	assert.False(t, value.checker == value.Values().checker)
-	assert.False(t, value.checker == value.Value("foo").checker)
+	value.chain.assertFailed(t)
+	value.chain.reset()
 }
 
 func TestObjectEmpty(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value1 := NewObject(checker, nil)
+	value1 := NewObject(reporter, nil)
 
 	_ = value1
-	checker.AssertFailed(t)
-	checker.Reset()
+	value1.chain.assertFailed(t)
+	value1.chain.reset()
 
-	value2 := NewObject(checker, map[string]interface{}{})
+	value2 := NewObject(reporter, map[string]interface{}{})
 
 	value2.Empty()
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value2.chain.assertOK(t)
+	value2.chain.reset()
 
 	value2.NotEmpty()
-	checker.AssertFailed(t)
-	checker.Reset()
+	value2.chain.assertFailed(t)
+	value2.chain.reset()
 
-	value3 := NewObject(checker, map[string]interface{}{"": nil})
+	value3 := NewObject(reporter, map[string]interface{}{"": nil})
 
 	value3.Empty()
-	checker.AssertFailed(t)
-	checker.Reset()
+	value3.chain.assertFailed(t)
+	value3.chain.reset()
 
 	value3.NotEmpty()
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value3.chain.assertOK(t)
+	value3.chain.reset()
 }
 
 func TestObjectEqualEmpty(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value := NewObject(checker, map[string]interface{}{})
+	value := NewObject(reporter, map[string]interface{}{})
 
 	assert.Equal(t, map[string]interface{}{}, value.Raw())
 
 	value.Equal(map[string]interface{}{})
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.NotEqual(map[string]interface{}{})
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.Equal(map[string]interface{}{"": nil})
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.NotEqual(map[string]interface{}{"": nil})
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 }
 
 func TestObjectEqual(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value := NewObject(checker, map[string]interface{}{"foo": 123.0})
+	value := NewObject(reporter, map[string]interface{}{"foo": 123.0})
 
 	assert.Equal(t, map[string]interface{}{"foo": 123.0}, value.Raw())
 
 	value.Equal(map[string]interface{}{})
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.NotEqual(map[string]interface{}{})
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.Equal(map[string]interface{}{"FOO": 123.0})
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.NotEqual(map[string]interface{}{"FOO": 123.0})
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.Equal(map[string]interface{}{"foo": 456.0})
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.NotEqual(map[string]interface{}{"foo": 456.0})
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.Equal(map[string]interface{}{"foo": 123.0})
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.NotEqual(map[string]interface{}{"foo": 123.0})
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.Equal(nil)
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.NotEqual(nil)
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 }
 
 func TestObjectEqualStruct(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value := NewObject(checker, map[string]interface{}{
+	value := NewObject(reporter, map[string]interface{}{
 		"foo": 123,
 		"bar": map[string]interface{}{
 			"baz": []interface{}{true, false},
@@ -211,56 +213,56 @@ func TestObjectEqualStruct(t *testing.T) {
 	}
 
 	value.Equal(s)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.NotEqual(s)
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.Equal(S{})
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.NotEqual(S{})
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 }
 
 func TestObjectContainsKey(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value := NewObject(checker, map[string]interface{}{"foo": 123, "bar": ""})
+	value := NewObject(reporter, map[string]interface{}{"foo": 123, "bar": ""})
 
 	value.ContainsKey("foo")
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.NotContainsKey("foo")
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.ContainsKey("bar")
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.NotContainsKey("bar")
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.ContainsKey("BAR")
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.NotContainsKey("BAR")
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 }
 
 func TestObjectContainsMapSuccess(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value := NewObject(checker, map[string]interface{}{
+	value := NewObject(reporter, map[string]interface{}{
 		"foo": 123,
 		"bar": []interface{}{"456", 789},
 		"baz": map[string]interface{}{
@@ -277,12 +279,12 @@ func TestObjectContainsMapSuccess(t *testing.T) {
 	}
 
 	value.ContainsMap(submap1)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.NotContainsMap(submap1)
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	submap2 := map[string]interface{}{
 		"bar": []interface{}{"456", 789},
@@ -294,18 +296,18 @@ func TestObjectContainsMapSuccess(t *testing.T) {
 	}
 
 	value.ContainsMap(submap2)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.NotContainsMap(submap2)
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 }
 
 func TestObjectContainsMapFailed(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value := NewObject(checker, map[string]interface{}{
+	value := NewObject(reporter, map[string]interface{}{
 		"foo": 123,
 		"bar": []interface{}{"456", 789},
 		"baz": map[string]interface{}{
@@ -322,12 +324,12 @@ func TestObjectContainsMapFailed(t *testing.T) {
 	}
 
 	value.ContainsMap(submap1)
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.NotContainsMap(submap1)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	submap2 := map[string]interface{}{
 		"foo": 123,
@@ -335,12 +337,12 @@ func TestObjectContainsMapFailed(t *testing.T) {
 	}
 
 	value.ContainsMap(submap2)
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.NotContainsMap(submap2)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	submap3 := map[string]interface{}{
 		"baz": map[string]interface{}{
@@ -352,26 +354,26 @@ func TestObjectContainsMapFailed(t *testing.T) {
 	}
 
 	value.ContainsMap(submap3)
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.NotContainsMap(submap3)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.ContainsMap(nil)
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.NotContainsMap(nil)
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 }
 
 func TestObjectContainsMapStruct(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value := NewObject(checker, map[string]interface{}{
+	value := NewObject(reporter, map[string]interface{}{
 		"foo": 123,
 		"bar": []interface{}{"456", 789},
 		"baz": map[string]interface{}{
@@ -407,26 +409,26 @@ func TestObjectContainsMapStruct(t *testing.T) {
 	}
 
 	value.ContainsMap(submap)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.NotContainsMap(submap)
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.ContainsMap(S{})
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.NotContainsMap(S{})
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 }
 
 func TestObjectValueEqual(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value := NewObject(checker, map[string]interface{}{
+	value := NewObject(reporter, map[string]interface{}{
 		"foo": 123,
 		"bar": []interface{}{"456", 789},
 		"baz": map[string]interface{}{
@@ -435,50 +437,50 @@ func TestObjectValueEqual(t *testing.T) {
 	})
 
 	value.ValueEqual("foo", 123)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.ValueNotEqual("foo", 123)
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.ValueEqual("bar", []interface{}{"456", 789})
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.ValueNotEqual("bar", []interface{}{"456", 789})
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.ValueEqual("baz", map[string]interface{}{"a": "b"})
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.ValueNotEqual("baz", map[string]interface{}{"a": "b"})
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.ValueEqual("baz", func() {})
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.ValueNotEqual("baz", func() {})
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.ValueEqual("BAZ", 777)
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.ValueNotEqual("BAZ", 777)
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 }
 
 func TestObjectValueEqualStruct(t *testing.T) {
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value := NewObject(checker, map[string]interface{}{
+	value := NewObject(reporter, map[string]interface{}{
 		"foo": 123,
 		"bar": []interface{}{"456", 789},
 		"baz": map[string]interface{}{
@@ -508,20 +510,20 @@ func TestObjectValueEqualStruct(t *testing.T) {
 	}
 
 	value.ValueEqual("baz", baz)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.ValueNotEqual("baz", baz)
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.ValueEqual("baz", Baz{})
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.ValueNotEqual("baz", Baz{})
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 }
 
 func TestObjectConvertEqual(t *testing.T) {
@@ -530,41 +532,41 @@ func TestObjectConvertEqual(t *testing.T) {
 		myInt int
 	)
 
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value := NewObject(checker, map[string]interface{}{"foo": 123})
+	value := NewObject(reporter, map[string]interface{}{"foo": 123})
 
 	value.Equal(map[string]interface{}{"foo": "123"})
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.NotEqual(map[string]interface{}{"foo": "123"})
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.Equal(map[string]interface{}{"foo": 123.0})
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.NotEqual(map[string]interface{}{"foo": 123.0})
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.Equal(map[string]interface{}{"foo": 123})
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.NotEqual(map[string]interface{}{"foo": 123})
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.Equal(myMap{"foo": myInt(123)})
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.NotEqual(myMap{"foo": myInt(123)})
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 }
 
 func TestObjectConvertContainsMap(t *testing.T) {
@@ -574,9 +576,9 @@ func TestObjectConvertContainsMap(t *testing.T) {
 		myInt   int
 	)
 
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value := NewObject(checker, map[string]interface{}{
+	value := NewObject(reporter, map[string]interface{}{
 		"foo": 123,
 		"bar": []interface{}{"456", 789},
 		"baz": map[string]interface{}{
@@ -590,12 +592,12 @@ func TestObjectConvertContainsMap(t *testing.T) {
 	}
 
 	value.ContainsMap(submap)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.NotContainsMap(submap)
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 }
 
 func TestObjectConvertValueEqual(t *testing.T) {
@@ -605,9 +607,9 @@ func TestObjectConvertValueEqual(t *testing.T) {
 		myInt   int
 	)
 
-	checker := newMockChecker(t)
+	reporter := mockReporter{t}
 
-	value := NewObject(checker, map[string]interface{}{
+	value := NewObject(reporter, map[string]interface{}{
 		"foo": 123,
 		"bar": []interface{}{"456", 789},
 		"baz": map[string]interface{}{
@@ -616,18 +618,18 @@ func TestObjectConvertValueEqual(t *testing.T) {
 	})
 
 	value.ValueEqual("bar", myArray{"456", myInt(789)})
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.ValueNotEqual("bar", myArray{"456", myInt(789)})
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.ValueEqual("baz", myMap{"a": "b"})
-	checker.AssertSuccess(t)
-	checker.Reset()
+	value.chain.assertOK(t)
+	value.chain.reset()
 
 	value.ValueNotEqual("baz", myMap{"a": "b"})
-	checker.AssertFailed(t)
-	checker.Reset()
+	value.chain.assertFailed(t)
+	value.chain.reset()
 }

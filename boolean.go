@@ -3,26 +3,26 @@ package httpexpect
 // Boolean provides methods to inspect attached bool value
 // (Go representation of JSON boolean).
 type Boolean struct {
-	checker Checker
-	value   bool
+	chain chain
+	value bool
 }
 
-// NewBoolean returns a new Boolean given a checker used to report failures
-// and value to be inspected.
+// NewBoolean returns a new Boolean given a reporter used to report
+// failures and value to be inspected.
 //
-// checker should not be nil.
+// reporter should not be nil.
 //
 // Example:
-//  boolean := NewBoolean(NewAssertChecker(t), true)
-func NewBoolean(checker Checker, value bool) *Boolean {
-	return &Boolean{checker, value}
+//  boolean := NewBoolean(t, true)
+func NewBoolean(reporter Reporter, value bool) *Boolean {
+	return &Boolean{makeChain(reporter), value}
 }
 
 // Raw returns underlying value attached to Boolean.
 // This is the value originally passed to NewBoolean.
 //
 // Example:
-//  boolean := NewBoolean(checker, true)
+//  boolean := NewBoolean(t, true)
 //  assert.Equal(t, true, boolean.Raw())
 func (b *Boolean) Raw() bool {
 	return b.value
@@ -31,11 +31,11 @@ func (b *Boolean) Raw() bool {
 // Equal succeedes if boolean is equal to given value.
 //
 // Example:
-//  boolean := NewBoolean(checker, true)
+//  boolean := NewBoolean(t, true)
 //  boolean.Equal(true)
-func (b *Boolean) Equal(v bool) *Boolean {
-	if !(b.value == v) {
-		b.checker.Fail("expected boolean == %v, but got %v", v, b.value)
+func (b *Boolean) Equal(value bool) *Boolean {
+	if !(b.value == value) {
+		b.chain.fail("expected boolean == %v, but got %v", value, b.value)
 	}
 	return b
 }
@@ -43,11 +43,11 @@ func (b *Boolean) Equal(v bool) *Boolean {
 // NotEqual succeedes if boolean is not equal to given value.
 //
 // Example:
-//  boolean := NewBoolean(checker, true)
+//  boolean := NewBoolean(t, true)
 //  boolean.NotEqual(false)
-func (b *Boolean) NotEqual(v bool) *Boolean {
-	if !(b.value != v) {
-		b.checker.Fail("expected boolean != %v, but got %v", v, b.value)
+func (b *Boolean) NotEqual(value bool) *Boolean {
+	if !(b.value != value) {
+		b.chain.fail("expected boolean != %v, but got %v", value, b.value)
 	}
 	return b
 }
@@ -55,7 +55,7 @@ func (b *Boolean) NotEqual(v bool) *Boolean {
 // True succeedes if boolean is true.
 //
 // Example:
-//  boolean := NewBoolean(checker, true)
+//  boolean := NewBoolean(t, true)
 //  boolean.True()
 func (b *Boolean) True() *Boolean {
 	return b.Equal(true)
@@ -64,7 +64,7 @@ func (b *Boolean) True() *Boolean {
 // False succeedes if boolean is false.
 //
 // Example:
-//  boolean := NewBoolean(checker, false)
+//  boolean := NewBoolean(t, false)
 //  boolean.False()
 func (b *Boolean) False() *Boolean {
 	return b.Equal(false)

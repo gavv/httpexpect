@@ -10,35 +10,35 @@ func TestCanonNumber(t *testing.T) {
 		myInt int
 	)
 
-	checker := newMockChecker(t)
+	chain := makeChain(mockReporter{t})
 
-	d1, ok := canonNumber(checker, 123)
+	d1, ok := canonNumber(&chain, 123)
 	assert.True(t, ok)
 	assert.Equal(t, 123.0, d1)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	chain.assertOK(t)
+	chain.reset()
 
-	d2, ok := canonNumber(checker, 123.0)
+	d2, ok := canonNumber(&chain, 123.0)
 	assert.True(t, ok)
 	assert.Equal(t, 123.0, d2)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	chain.assertOK(t)
+	chain.reset()
 
-	d3, ok := canonNumber(checker, myInt(123))
+	d3, ok := canonNumber(&chain, myInt(123))
 	assert.True(t, ok)
 	assert.Equal(t, 123.0, d3)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	chain.assertOK(t)
+	chain.reset()
 
-	_, ok = canonNumber(checker, "123")
+	_, ok = canonNumber(&chain, "123")
 	assert.False(t, ok)
-	checker.AssertFailed(t)
-	checker.Reset()
+	chain.assertFailed(t)
+	chain.reset()
 
-	_, ok = canonNumber(checker, nil)
+	_, ok = canonNumber(&chain, nil)
 	assert.False(t, ok)
-	checker.AssertFailed(t)
-	checker.Reset()
+	chain.assertFailed(t)
+	chain.reset()
 }
 
 func TestCanonArray(t *testing.T) {
@@ -47,39 +47,39 @@ func TestCanonArray(t *testing.T) {
 		myInt   int
 	)
 
-	checker := newMockChecker(t)
+	chain := makeChain(mockReporter{t})
 
-	d1, ok := canonArray(checker, []interface{}{123.0, 456.0})
+	d1, ok := canonArray(&chain, []interface{}{123.0, 456.0})
 	assert.True(t, ok)
 	assert.Equal(t, []interface{}{123.0, 456.0}, d1)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	chain.assertOK(t)
+	chain.reset()
 
-	d2, ok := canonArray(checker, myArray{myInt(123), 456.0})
+	d2, ok := canonArray(&chain, myArray{myInt(123), 456.0})
 	assert.True(t, ok)
 	assert.Equal(t, []interface{}{123.0, 456.0}, d2)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	chain.assertOK(t)
+	chain.reset()
 
-	_, ok = canonArray(checker, "123")
+	_, ok = canonArray(&chain, "123")
 	assert.False(t, ok)
-	checker.AssertFailed(t)
-	checker.Reset()
+	chain.assertFailed(t)
+	chain.reset()
 
-	_, ok = canonArray(checker, func() {})
+	_, ok = canonArray(&chain, func() {})
 	assert.False(t, ok)
-	checker.AssertFailed(t)
-	checker.Reset()
+	chain.assertFailed(t)
+	chain.reset()
 
-	_, ok = canonArray(checker, nil)
+	_, ok = canonArray(&chain, nil)
 	assert.False(t, ok)
-	checker.AssertFailed(t)
-	checker.Reset()
+	chain.assertFailed(t)
+	chain.reset()
 
-	_, ok = canonArray(checker, []interface{}(nil))
+	_, ok = canonArray(&chain, []interface{}(nil))
 	assert.False(t, ok)
-	checker.AssertFailed(t)
-	checker.Reset()
+	chain.assertFailed(t)
+	chain.reset()
 }
 
 func TestCanonMap(t *testing.T) {
@@ -88,37 +88,37 @@ func TestCanonMap(t *testing.T) {
 		myInt int
 	)
 
-	checker := newMockChecker(t)
+	chain := makeChain(mockReporter{t})
 
-	d1, ok := canonMap(checker, map[string]interface{}{"foo": 123.0})
+	d1, ok := canonMap(&chain, map[string]interface{}{"foo": 123.0})
 	assert.True(t, ok)
 	assert.Equal(t, map[string]interface{}{"foo": 123.0}, d1)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	chain.assertOK(t)
+	chain.reset()
 
-	d2, ok := canonMap(checker, myMap{"foo": myInt(123)})
+	d2, ok := canonMap(&chain, myMap{"foo": myInt(123)})
 	assert.True(t, ok)
 	assert.Equal(t, map[string]interface{}{"foo": 123.0}, d2)
-	checker.AssertSuccess(t)
-	checker.Reset()
+	chain.assertOK(t)
+	chain.reset()
 
-	_, ok = canonMap(checker, "123")
+	_, ok = canonMap(&chain, "123")
 	assert.False(t, ok)
-	checker.AssertFailed(t)
-	checker.Reset()
+	chain.assertFailed(t)
+	chain.reset()
 
-	_, ok = canonMap(checker, func() {})
+	_, ok = canonMap(&chain, func() {})
 	assert.False(t, ok)
-	checker.AssertFailed(t)
-	checker.Reset()
+	chain.assertFailed(t)
+	chain.reset()
 
-	_, ok = canonMap(checker, nil)
+	_, ok = canonMap(&chain, nil)
 	assert.False(t, ok)
-	checker.AssertFailed(t)
-	checker.Reset()
+	chain.assertFailed(t)
+	chain.reset()
 
-	_, ok = canonMap(checker, map[string]interface{}(nil))
+	_, ok = canonMap(&chain, map[string]interface{}(nil))
 	assert.False(t, ok)
-	checker.AssertFailed(t)
-	checker.Reset()
+	chain.assertFailed(t)
+	chain.reset()
 }

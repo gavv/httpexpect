@@ -1,17 +1,17 @@
 package httpexpect
 
 import (
+	"encoding/json"
 	"github.com/gavv/gojsondiff"
 	"github.com/gavv/gojsondiff/formatter"
-	"encoding/json"
 	"reflect"
 )
 
-func canonNumber(checker Checker, number interface{}) (f float64, ok bool) {
+func canonNumber(chain *chain, number interface{}) (f float64, ok bool) {
 	ok = true
 	defer func() {
 		if err := recover(); err != nil {
-			checker.Fail("%v", err)
+			chain.fail("%v", err)
 			ok = false
 		}
 	}()
@@ -19,55 +19,55 @@ func canonNumber(checker Checker, number interface{}) (f float64, ok bool) {
 	return
 }
 
-func canonArray(checker Checker, in interface{}) ([]interface{}, bool) {
+func canonArray(chain *chain, in interface{}) ([]interface{}, bool) {
 	var out []interface{}
-	data, ok := canonValue(checker, in)
+	data, ok := canonValue(chain, in)
 	if ok {
 		out, ok = data.([]interface{})
 		if !ok {
-			checker.Fail("expected array, got %v", out)
+			chain.fail("expected array, got %v", out)
 		}
 	}
 	return out, ok
 }
 
-func canonMap(checker Checker, in interface{}) (map[string]interface{}, bool) {
+func canonMap(chain *chain, in interface{}) (map[string]interface{}, bool) {
 	var out map[string]interface{}
-	data, ok := canonValue(checker, in)
+	data, ok := canonValue(chain, in)
 	if ok {
 		out, ok = data.(map[string]interface{})
 		if !ok {
-			checker.Fail("expected map, got %v", out)
+			chain.fail("expected map, got %v", out)
 		}
 	}
 	return out, ok
 }
 
-func canonValue(checker Checker, in interface{}) (interface{}, bool) {
+func canonValue(chain *chain, in interface{}) (interface{}, bool) {
 	b, err := json.Marshal(in)
 	if err != nil {
-		checker.Fail(err.Error())
+		chain.fail(err.Error())
 		return nil, false
 	}
 
 	var out interface{}
 	if err := json.Unmarshal(b, &out); err != nil {
-		checker.Fail(err.Error())
+		chain.fail(err.Error())
 		return nil, false
 	}
 
 	return out, true
 }
 
-func dumpValue(checker Checker, value interface{}) string {
+func dumpValue(value interface{}) string {
 	b, err := json.MarshalIndent(value, " ", "  ")
 	if err != nil {
-		checker.Fail(err.Error())
+		return " (unavailable)"
 	}
 	return " " + string(b)
 }
 
-func diffValues(checker Checker, expected, actual interface{}) string {
+func diffValues(expected, actual interface{}) string {
 	differ := gojsondiff.New()
 
 	var diff gojsondiff.Diff
@@ -93,8 +93,7 @@ func diffValues(checker Checker, expected, actual interface{}) string {
 
 	str, err := formatter.Format(diff)
 	if err != nil {
-		checker.Fail(err.Error())
-		return ""
+		return " (unavailable)"
 	}
 
 	return "--- expected\n+++ actual\n" + str
