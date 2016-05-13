@@ -1,5 +1,7 @@
 # httpexpect [![GoDoc](https://godoc.org/github.com/gavv/httpexpect?status.svg)](https://godoc.org/github.com/gavv/httpexpect) [![wercker status](https://app.wercker.com/status/c4b3fecfb38bf268bd5dee93371288ee/s "Wercker")](https://app.wercker.com/project/bykey/c4b3fecfb38bf268bd5dee93371288ee) [![Coveralls](https://coveralls.io/repos/github/gavv/httpexpect/badge.svg?branch=master)](https://coveralls.io/github/gavv/httpexpect?branch=master)
 
+[![Join the chat at https://gitter.im/gavv/httpexpect](https://badges.gitter.im/gavv/httpexpect.svg)](https://gitter.im/gavv/httpexpect?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 *Go module that helps to write nice tests for your HTTP API.*
 
 ## Features
