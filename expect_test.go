@@ -146,7 +146,7 @@ func TestExpectBranches(t *testing.T) {
 	e4.chain.assertOK(t)
 }
 
-func testExpectLive(n int, expect func(url string) *Expect) {
+func createHandler() http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/foo", func(w http.ResponseWriter, _ *http.Request) {
@@ -165,80 +165,108 @@ func testExpectLive(n int, expect func(url string) *Expect) {
 		}
 	})
 
-	server := httptest.NewServer(mux)
-	defer server.Close()
+	return mux
+}
 
-	e := expect(server.URL)
+func testHandler(e *Expect) {
+	e.GET("/foo")
 
-	for i := 0; i < n; i++ {
-		e.GET("/foo")
+	e.GET("/foo").Expect()
 
-		e.GET("/foo").Expect()
+	e.GET("/foo").Expect().Status(http.StatusOK)
 
-		e.GET("/foo").Expect().Status(http.StatusOK)
+	e.GET("/foo").Expect().
+		Status(http.StatusOK).JSON().Object().ValueEqual("foo", 123)
 
-		e.GET("/foo").Expect().
-			Status(http.StatusOK).JSON().Object().ValueEqual("foo", 123)
+	e.GET("/bar").Expect().
+		Status(http.StatusOK).JSON().Array().Elements(true, false)
 
-		e.GET("/bar").Expect().
-			Status(http.StatusOK).JSON().Array().Elements(true, false)
-
-		e.PUT("/bar").Expect().
-			Status(http.StatusNoContent).Body().Empty()
-	}
+	e.PUT("/bar").Expect().
+		Status(http.StatusNoContent).Body().Empty()
 }
 
 func TestExpectLiveDefault(t *testing.T) {
-	testExpectLive(1, func(url string) *Expect {
-		return New(t, url)
-	})
+	handler := createHandler()
+
+	server := httptest.NewServer(handler)
+	defer server.Close()
+
+	testHandler(New(t, server.URL))
 }
 
 func TestExpectLiveDefaultLongRun(t *testing.T) {
 	if testing.Short() {
 		return
 	}
-	testExpectLive(2000, func(url string) *Expect {
-		return New(t, url)
-	})
+
+	handler := createHandler()
+
+	server := httptest.NewServer(handler)
+	defer server.Close()
+
+	e := New(t, server.URL)
+
+	for i := 0; i < 2000; i++ {
+		testHandler(e)
+	}
 }
 
 func TestExpectLiveConfig(t *testing.T) {
-	testExpectLive(1, func(url string) *Expect {
-		return WithConfig(Config{
-			BaseURL:  url,
-			Reporter: NewAssertReporter(t),
-			Printer:  NewDebugPrinter(t, true),
-		})
-	})
+	handler := createHandler()
+
+	server := httptest.NewServer(handler)
+	defer server.Close()
+
+	testHandler(WithConfig(Config{
+		BaseURL:  server.URL,
+		Reporter: NewAssertReporter(t),
+		Printer:  NewDebugPrinter(t, true),
+	}))
 }
 
 func TestExpectLiveFast(t *testing.T) {
-	testExpectLive(1, func(url string) *Expect {
-		return WithConfig(Config{
-			BaseURL:  url,
-			Client:   fasthttpexpect.NewClient(),
-			Reporter: NewAssertReporter(t),
-			Printer:  NewDebugPrinter(t, true),
-		})
-	})
+	handler := createHandler()
+
+	server := httptest.NewServer(handler)
+	defer server.Close()
+
+	testHandler(WithConfig(Config{
+		BaseURL:  server.URL,
+		Client:   fasthttpexpect.NewClient(),
+		Reporter: NewAssertReporter(t),
+		Printer:  NewDebugPrinter(t, true),
+	}))
 }
 
-func BenchmarkExpectStd(b *testing.B) {
-	testExpectLive(b.N, func(url string) *Expect {
-		return WithConfig(Config{
-			BaseURL:  url,
-			Reporter: NewRequireReporter(b),
-		})
+func BenchmarkExpectStandard(b *testing.B) {
+	handler := createHandler()
+
+	server := httptest.NewServer(handler)
+	defer server.Close()
+
+	e := WithConfig(Config{
+		BaseURL:  server.URL,
+		Reporter: NewRequireReporter(b),
 	})
+
+	for i := 0; i < b.N; i++ {
+		testHandler(e)
+	}
 }
 
 func BenchmarkExpectFast(b *testing.B) {
-	testExpectLive(b.N, func(url string) *Expect {
-		return WithConfig(Config{
-			BaseURL:  url,
-			Client:   fasthttpexpect.NewClient(),
-			Reporter: NewRequireReporter(b),
-		})
+	handler := createHandler()
+
+	server := httptest.NewServer(handler)
+	defer server.Close()
+
+	e := WithConfig(Config{
+		BaseURL:  server.URL,
+		Client:   fasthttpexpect.NewClient(),
+		Reporter: NewRequireReporter(b),
 	})
+
+	for i := 0; i < b.N; i++ {
+		testHandler(e)
+	}
 }
