@@ -20,7 +20,13 @@ build:
         name: go test
         code: |
           go test -coverprofile profile.cov .
+          go test ./fasthttpexpect
           go test ./example
+
+    - script:
+        name: go bench
+        code: |
+          go test -bench . .
 
     - script:
         name: coveralls

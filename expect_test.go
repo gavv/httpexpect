@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/gavv/httpexpect/fasthttpexpect"
 )
 
 func TestExpectMethods(t *testing.T) {
@@ -206,4 +208,22 @@ func TestExpectLiveFast(t *testing.T) {
 		})
 	})
 }
+
+func BenchmarkExpectStd(b *testing.B) {
+	testExpectLive(b.N, func(url string) *Expect {
+		return WithConfig(Config{
+			BaseURL:  url,
+			Reporter: NewAssertReporter(b),
+		})
+	})
+}
+
+func BenchmarkExpectFast(b *testing.B) {
+	testExpectLive(b.N, func(url string) *Expect {
+		return WithConfig(Config{
+			BaseURL:  url,
+			Client:   fasthttpexpect.NewClient(),
+			Reporter: NewAssertReporter(b),
+		})
+	})
 }
