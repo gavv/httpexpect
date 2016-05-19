@@ -9,11 +9,13 @@
 * Incrementally build HTTP requests.
 * Inspect HTTP responses.
 * Inspect JSON payload, recursively (supported types: object, array, string, number, boolean, null).
+* Communicate with server via HTTP client or invoke HTTP handler directly.
 
 **Misc.:**
 * By default, uses [`testify`](https://github.com/stretchr/testify/) to report failures (can be configured to use `assert` or `require` package).
 * May use [`httputil`](https://golang.org/pkg/net/http/httputil/) to dump requests and responses, or more compact logger.
 * Produces nice diff on failure, using [`gojsondiff`](https://github.com/yudai/gojsondiff/).
+* Provides integration with [`fasthttp`](https://github.com/valyala/fasthttp/) client and HTTP handler via `fasthttpexpect` module.
 * Configurable (accepts custom implementations of failure reporter, HTTP client, and logger).
 
 ## Documentation
@@ -108,7 +110,7 @@ func TestFruits(t *testing.T) {
 Feel free to report bugs, suggest improvements, and send pull requests! Don't forget to add documentation and tests for new features and run all tests before submitting pull requests:
 
 ```
-$ go test github.com/gavv/httpexpect/...
+$ go test -bench . github.com/gavv/httpexpect/...
 ```
 
 ## License
