@@ -238,7 +238,18 @@ func TestExpectLiveFast(t *testing.T) {
 	}))
 }
 
-func BenchmarkExpectStandard(b *testing.B) {
+func TestExpectBinderStandard(t *testing.T) {
+	handler := createHandler()
+
+	testHandler(WithConfig(Config{
+		BaseURL:  "http://example.com",
+		Client:   NewBinder(handler),
+		Reporter: NewAssertReporter(t),
+		Printer:  NewDebugPrinter(t, true),
+	}))
+}
+
+func BenchmarkExpectLiveStandard(b *testing.B) {
 	handler := createHandler()
 
 	server := httptest.NewServer(handler)
@@ -254,7 +265,7 @@ func BenchmarkExpectStandard(b *testing.B) {
 	}
 }
 
-func BenchmarkExpectFast(b *testing.B) {
+func BenchmarkExpectLiveFast(b *testing.B) {
 	handler := createHandler()
 
 	server := httptest.NewServer(handler)
@@ -263,6 +274,20 @@ func BenchmarkExpectFast(b *testing.B) {
 	e := WithConfig(Config{
 		BaseURL:  server.URL,
 		Client:   fasthttpexpect.NewClient(),
+		Reporter: NewRequireReporter(b),
+	})
+
+	for i := 0; i < b.N; i++ {
+		testHandler(e)
+	}
+}
+
+func BenchmarkExpectBinderStandard(b *testing.B) {
+	handler := createHandler()
+
+	e := WithConfig(Config{
+		BaseURL:  "http://example.com",
+		Client:   NewBinder(handler),
 		Reporter: NewRequireReporter(b),
 	})
 

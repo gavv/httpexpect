@@ -84,7 +84,7 @@ type Config struct {
 }
 
 // Client is used to send http.Request and receive http.Response.
-// Note that http.Client implements this interface.
+// http.Client, Binder, and fasthttpexpect.Binder implement this interface.
 type Client interface {
 	// Do sends request and returns response.
 	Do(*http.Request) (*http.Response, error)
