@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/valyala/fasthttp/fasthttpadaptor"
 	"github.com/gavv/httpexpect/fasthttpexpect"
 )
 
@@ -288,6 +289,20 @@ func BenchmarkExpectBinderStandard(b *testing.B) {
 	e := WithConfig(Config{
 		BaseURL:  "http://example.com",
 		Client:   NewBinder(handler),
+		Reporter: NewRequireReporter(b),
+	})
+
+	for i := 0; i < b.N; i++ {
+		testHandler(e)
+	}
+}
+
+func BenchmarkExpectBinderFast(b *testing.B) {
+	handler := fasthttpadaptor.NewFastHTTPHandler(createHandler())
+
+	e := WithConfig(Config{
+		BaseURL:  "http://example.com",
+		Client:   fasthttpexpect.NewBinder(handler),
 		Reporter: NewRequireReporter(b),
 	})
 

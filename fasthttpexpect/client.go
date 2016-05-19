@@ -1,10 +1,7 @@
-// Package fasthttpexpect provides fasthttp adapter for httpexpect.
 package fasthttpexpect
 
 import (
-	"bytes"
 	"github.com/valyala/fasthttp"
-	"io"
 	"net/http"
 )
 
@@ -37,55 +34,15 @@ func WithClient(backend ClientBackend) ClientAdapter {
 
 // Do implements httpexpect.Client.Do.
 func (adapter ClientAdapter) Do(stdreq *http.Request) (stdresp *http.Response, err error) {
-	fastreq := fasthttp.AcquireRequest()
+	var fastreq fasthttp.Request
 
-	if stdreq.Body != nil {
-		fastreq.SetBodyStream(stdreq.Body, -1)
-	}
-
-	fastreq.SetRequestURI(stdreq.URL.String())
-
-	fastreq.Header.SetMethod(stdreq.Method)
-
-	for k, a := range stdreq.Header {
-		for _, v := range a {
-			fastreq.Header.Add(k, v)
-		}
-	}
+	convertRequest(stdreq, &fastreq)
 
 	var fastresp fasthttp.Response
 
-	if err = adapter.backend.Do(fastreq, &fastresp); err == nil {
-		status := fastresp.Header.StatusCode()
-		body := fastresp.Body()
-
-		stdresp = &http.Response{
-			Request:    stdreq,
-			StatusCode: status,
-			Status:     http.StatusText(status),
-		}
-
-		fastresp.Header.VisitAll(func(k, v []byte) {
-			if stdresp.Header == nil {
-				stdresp.Header = make(http.Header)
-			}
-			stdresp.Header.Add(string(k), string(v))
-		})
-
-		if body != nil {
-			stdresp.Body = readCloserAdapter{bytes.NewReader(body)}
-		}
+	if err = adapter.backend.Do(&fastreq, &fastresp); err == nil {
+		stdresp = convertResponse(stdreq, &fastresp)
 	}
 
-	fasthttp.ReleaseRequest(fastreq)
-
 	return
-}
-
-type readCloserAdapter struct {
-	io.Reader
-}
-
-func (b readCloserAdapter) Close() error {
-	return nil
 }

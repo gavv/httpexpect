@@ -9,6 +9,10 @@ import (
 	"testing"
 )
 
+type testClient interface {
+	Do(*http.Request) (*http.Response, error)
+}
+
 type mockBackend struct {
 	t *testing.T
 }
@@ -24,9 +28,7 @@ func (c mockBackend) Do(req *fasthttp.Request, resp *fasthttp.Response) error {
 	return nil
 }
 
-func TestClientAdapter(t *testing.T) {
-	adapter := WithClient(mockBackend{t})
-
+func runTest(t *testing.T, client testClient) {
 	req, err := http.NewRequest(
 		"GET", "http://example.com", bytes.NewReader([]byte("body")))
 
@@ -34,7 +36,7 @@ func TestClientAdapter(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	resp, err := adapter.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -50,4 +52,20 @@ func TestClientAdapter(t *testing.T) {
 
 	assert.Equal(t, header, resp.Header)
 	assert.Equal(t, `{"hello":"world"}`, string(b))
+}
+
+func TestClientAdapter(t *testing.T) {
+	adapter := WithClient(mockBackend{t})
+
+	runTest(t, adapter)
+}
+
+func TestBinder(t *testing.T) {
+	backend := mockBackend{t}
+
+	binder := NewBinder(func(ctx *fasthttp.RequestCtx) {
+		backend.Do(&ctx.Request, &ctx.Response)
+	})
+
+	runTest(t, binder)
 }
