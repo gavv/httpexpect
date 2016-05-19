@@ -129,7 +129,7 @@ func TestDiffErrors(t *testing.T) {
 	assert.Equal(t, na, diffValues(map[string]interface{}{}, []interface{}{}))
 	assert.Equal(t, na, diffValues([]interface{}{}, map[string]interface{}{}))
 	assert.Equal(t, na, diffValues("foo", "bar"))
-	assert.Equal(t, na, diffValues(func(){}, func(){}))
+	assert.Equal(t, na, diffValues(func() {}, func() {}))
 
 	assert.NotEqual(t, na, diffValues(map[string]interface{}{}, map[string]interface{}{}))
 	assert.NotEqual(t, na, diffValues([]interface{}{}, []interface{}{}))

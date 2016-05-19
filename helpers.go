@@ -1,12 +1,21 @@
 package httpexpect
 
 import (
-	"fmt"
 	"encoding/json"
+	"fmt"
 	"github.com/gavv/gojsondiff"
 	"github.com/gavv/gojsondiff/formatter"
+	"io"
 	"reflect"
 )
+
+type readCloserAdapter struct {
+	io.Reader
+}
+
+func (b readCloserAdapter) Close() error {
+	return nil
+}
 
 func canonNumber(chain *chain, number interface{}) (f float64, ok bool) {
 	ok = true

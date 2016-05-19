@@ -125,16 +125,16 @@ func TestExpectURLConcat(t *testing.T) {
 	reqs[4] = NewRequest(config3, "METHOD", "/path")
 
 	for _, req := range reqs {
-		assert.Equal(t, "http://example.com/path", req.url.String())
+		assert.Equal(t, "http://example.com/path", req.http.URL.String())
 	}
 
 	empty1 := NewRequest(config1, "METHOD", "")
 	empty2 := NewRequest(config2, "METHOD", "")
 	empty3 := NewRequest(config3, "METHOD", "")
 
-	assert.Equal(t, "", empty1.url.String())
-	assert.Equal(t, "http://example.com", empty2.url.String())
-	assert.Equal(t, "http://example.com/", empty3.url.String())
+	assert.Equal(t, "", empty1.http.URL.String())
+	assert.Equal(t, "http://example.com", empty2.http.URL.String())
+	assert.Equal(t, "http://example.com/", empty3.http.URL.String())
 }
 
 func TestExpectURLFormat(t *testing.T) {
@@ -155,7 +155,7 @@ func TestExpectURLFormat(t *testing.T) {
 	reqs[2] = NewRequest(config1, "%s", "/foo/bar")
 
 	for _, req := range reqs {
-		assert.Equal(t, "http://example.com/foo/bar", req.url.String())
+		assert.Equal(t, "http://example.com/foo/bar", req.http.URL.String())
 	}
 
 	config2 := Config{

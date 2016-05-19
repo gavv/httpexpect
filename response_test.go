@@ -84,7 +84,7 @@ func TestResponseBody(t *testing.T) {
 
 	httpResp := &http.Response{
 		StatusCode: http.StatusOK,
-		Body:       closingBuffer{bytes.NewBufferString("body")},
+		Body:       readCloserAdapter{bytes.NewBufferString("body")},
 	}
 
 	resp := NewResponse(reporter, httpResp)
@@ -104,7 +104,7 @@ func TestResponseNoContentEmpty(t *testing.T) {
 	httpResp := &http.Response{
 		StatusCode: http.StatusOK,
 		Header:     http.Header(headers),
-		Body:       closingBuffer{bytes.NewBufferString("")},
+		Body:       readCloserAdapter{bytes.NewBufferString("")},
 	}
 
 	resp := NewResponse(reporter, httpResp)
@@ -170,7 +170,7 @@ func TestResponseJson(t *testing.T) {
 	httpResp := &http.Response{
 		StatusCode: http.StatusOK,
 		Header:     http.Header(headers),
-		Body:       closingBuffer{bytes.NewBufferString(body)},
+		Body:       readCloserAdapter{bytes.NewBufferString(body)},
 	}
 
 	resp := NewResponse(reporter, httpResp)
@@ -207,7 +207,7 @@ func TestResponseJsonEncodingEmpty(t *testing.T) {
 	httpResp := &http.Response{
 		StatusCode: http.StatusOK,
 		Header:     http.Header(headers),
-		Body:       closingBuffer{bytes.NewBufferString(body)},
+		Body:       readCloserAdapter{bytes.NewBufferString(body)},
 	}
 
 	resp := NewResponse(reporter, httpResp)
@@ -240,7 +240,7 @@ func TestResponseJsonEncodingBad(t *testing.T) {
 	httpResp := &http.Response{
 		StatusCode: http.StatusOK,
 		Header:     http.Header(headers),
-		Body:       closingBuffer{bytes.NewBufferString(body)},
+		Body:       readCloserAdapter{bytes.NewBufferString(body)},
 	}
 
 	resp := NewResponse(reporter, httpResp)

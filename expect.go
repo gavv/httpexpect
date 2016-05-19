@@ -108,7 +108,7 @@ type Logger interface {
 }
 
 // Reporter is used to report failures.
-// testing.T implements this interface. AssertReporter or RequireReporter,
+// testing.T implements this interface. AssertReporter and RequireReporter,
 // also implement this interface using testify.
 type Reporter interface {
 	// Errorf reports failure.
@@ -121,7 +121,7 @@ type Reporter interface {
 // baseURL specifies URL to prepended to all request. My be empty. If non-empty,
 // trailing slash is allowed but not required and is appended automatically.
 //
-// New is shorthand for WithConfig. It uses:
+// New is a shorthand for WithConfig. It uses:
 //  - http.DefaultClient as Client
 //  - CompactPrinter as Printer with testing.T as Logger
 //  - AssertReporter as Reporter

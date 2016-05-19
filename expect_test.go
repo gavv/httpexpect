@@ -30,14 +30,14 @@ func TestExpectMethods(t *testing.T) {
 	reqs[6] = e.PATCH("/url")
 	reqs[7] = e.DELETE("/url")
 
-	assert.Equal(t, "METHOD", reqs[0].method)
-	assert.Equal(t, "OPTIONS", reqs[1].method)
-	assert.Equal(t, "HEAD", reqs[2].method)
-	assert.Equal(t, "GET", reqs[3].method)
-	assert.Equal(t, "POST", reqs[4].method)
-	assert.Equal(t, "PUT", reqs[5].method)
-	assert.Equal(t, "PATCH", reqs[6].method)
-	assert.Equal(t, "DELETE", reqs[7].method)
+	assert.Equal(t, "METHOD", reqs[0].http.Method)
+	assert.Equal(t, "OPTIONS", reqs[1].http.Method)
+	assert.Equal(t, "HEAD", reqs[2].http.Method)
+	assert.Equal(t, "GET", reqs[3].http.Method)
+	assert.Equal(t, "POST", reqs[4].http.Method)
+	assert.Equal(t, "PUT", reqs[5].http.Method)
+	assert.Equal(t, "PATCH", reqs[6].http.Method)
+	assert.Equal(t, "DELETE", reqs[7].http.Method)
 }
 
 func TestExpectValue(t *testing.T) {
@@ -144,7 +144,7 @@ func TestExpectBranches(t *testing.T) {
 	e4.chain.assertOK(t)
 }
 
-func TestExpectLive(t *testing.T) {
+func testExpectLive(n int, expect func(url string) *Expect) {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/foo", func(w http.ResponseWriter, _ *http.Request) {
@@ -166,14 +166,44 @@ func TestExpectLive(t *testing.T) {
 	server := httptest.NewServer(mux)
 	defer server.Close()
 
-	e := New(t, server.URL)
+	e := expect(server.URL)
 
-	e.GET("/foo").Expect().
-		Status(http.StatusOK).JSON().Object().ValueEqual("foo", 123)
+	for i := 0; i < n; i++ {
+		e.GET("/foo").Expect().
+			Status(http.StatusOK).JSON().Object().ValueEqual("foo", 123)
 
-	e.GET("/bar").Expect().
-		Status(http.StatusOK).JSON().Array().Elements(true, false)
+		e.GET("/bar").Expect().
+			Status(http.StatusOK).JSON().Array().Elements(true, false)
 
-	e.PUT("/bar").Expect().
-		Status(http.StatusNoContent).NoContent()
+		e.PUT("/bar").Expect().
+			Status(http.StatusNoContent).Body().Empty()
+	}
+}
+
+func TestExpectLiveDefault(t *testing.T) {
+	testExpectLive(1, func(url string) *Expect {
+		return New(t, url)
+	})
+}
+
+func TestExpectLiveConfig(t *testing.T) {
+	testExpectLive(1, func(url string) *Expect {
+		return WithConfig(Config{
+			BaseURL:  url,
+			Reporter: NewAssertReporter(t),
+			Printer:  NewDebugPrinter(t, true),
+		})
+	})
+}
+
+func TestExpectLiveFast(t *testing.T) {
+	testExpectLive(1, func(url string) *Expect {
+		return WithConfig(Config{
+			BaseURL:  url,
+			Client:   fasthttpexpect.NewClient(),
+			Reporter: NewAssertReporter(t),
+			Printer:  NewDebugPrinter(t, true),
+		})
+	})
+}
 }

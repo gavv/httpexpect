@@ -19,7 +19,7 @@ func TestCompactPrinter(t *testing.T) {
 	printer.Request(req2)
 	printer.Request(nil)
 
-	printer.Response(&http.Response{Body: closingBuffer{body2}})
+	printer.Response(&http.Response{Body: readCloserAdapter{body2}})
 	printer.Response(&http.Response{})
 	printer.Response(nil)
 }
@@ -37,7 +37,7 @@ func TestDebugPrinter(t *testing.T) {
 	printer.Request(req2)
 	printer.Request(nil)
 
-	printer.Response(&http.Response{Body: closingBuffer{body2}})
+	printer.Response(&http.Response{Body: readCloserAdapter{body2}})
 	printer.Response(&http.Response{})
 	printer.Response(nil)
 }

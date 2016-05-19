@@ -204,7 +204,7 @@ func (r *Response) checkJSON() bool {
 
 func (r *Response) checkEqual(what string, expected, actual interface{}) {
 	if !reflect.DeepEqual(expected, actual) {
-		r.chain.fail("\nexpected %s:\n%s\n\nbut got:\n%s", what,
+		r.chain.fail("\nexpected %s equal to:\n%s\n\nbut got:\n%s", what,
 			dumpValue(expected), dumpValue(actual))
 	}
 }

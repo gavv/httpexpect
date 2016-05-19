@@ -1,18 +1,9 @@
 package httpexpect
 
 import (
-	"bytes"
 	"net/http"
 	"testing"
 )
-
-type closingBuffer struct {
-	*bytes.Buffer
-}
-
-func (b closingBuffer) Close() error {
-	return nil
-}
 
 type mockClient struct {
 	req  *http.Request

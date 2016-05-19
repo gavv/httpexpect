@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 // AssertReporter implements Reporter interface using `testify/assert'
@@ -14,7 +13,7 @@ type AssertReporter struct {
 }
 
 // NewAssertReporter returns a new AssertReporter object.
-func NewAssertReporter(t *testing.T) *AssertReporter {
+func NewAssertReporter(t assert.TestingT) *AssertReporter {
 	return &AssertReporter{assert.New(t)}
 }
 
@@ -30,7 +29,7 @@ type RequireReporter struct {
 }
 
 // NewRequireReporter returns a new RequireReporter object.
-func NewRequireReporter(t *testing.T) *RequireReporter {
+func NewRequireReporter(t require.TestingT) *RequireReporter {
 	return &RequireReporter{require.New(t)}
 }
 
