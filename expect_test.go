@@ -213,7 +213,7 @@ func BenchmarkExpectStd(b *testing.B) {
 	testExpectLive(b.N, func(url string) *Expect {
 		return WithConfig(Config{
 			BaseURL:  url,
-			Reporter: NewAssertReporter(b),
+			Reporter: NewRequireReporter(b),
 		})
 	})
 }
@@ -223,7 +223,7 @@ func BenchmarkExpectFast(b *testing.B) {
 		return WithConfig(Config{
 			BaseURL:  url,
 			Client:   fasthttpexpect.NewClient(),
-			Reporter: NewAssertReporter(b),
+			Reporter: NewRequireReporter(b),
 		})
 	})
 }

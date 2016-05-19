@@ -219,6 +219,9 @@ func TestRequestBodyReader(t *testing.T) {
 	resp := req.Expect()
 	resp.chain.assertOK(t)
 
+	assert.False(t, client.req.Body == nil)
+	assert.Equal(t, int64(-1), client.req.ContentLength)
+
 	body, _ := ioutil.ReadAll(client.req.Body)
 
 	assert.Equal(t, "METHOD", client.req.Method)
@@ -227,6 +230,27 @@ func TestRequestBodyReader(t *testing.T) {
 	assert.Equal(t, "body", string(body))
 
 	assert.Equal(t, &client.resp, resp.Raw())
+}
+
+func TestRequestBodyReaderNil(t *testing.T) {
+	client := &mockClient{}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		Client:   client,
+		Reporter: reporter,
+	}
+
+	req := NewRequest(config, "METHOD", "url")
+
+	req.WithBody(nil)
+
+	resp := req.Expect()
+	resp.chain.assertOK(t)
+
+	assert.True(t, client.req.Body == nil)
+	assert.Equal(t, int64(0), client.req.ContentLength)
 }
 
 func TestRequestBodyBytes(t *testing.T) {
@@ -246,6 +270,9 @@ func TestRequestBodyBytes(t *testing.T) {
 	resp := req.Expect()
 	resp.chain.assertOK(t)
 
+	assert.False(t, client.req.Body == nil)
+	assert.Equal(t, int64(len("body")), client.req.ContentLength)
+
 	body, _ := ioutil.ReadAll(client.req.Body)
 
 	assert.Equal(t, "METHOD", client.req.Method)
@@ -254,6 +281,27 @@ func TestRequestBodyBytes(t *testing.T) {
 	assert.Equal(t, "body", string(body))
 
 	assert.Equal(t, &client.resp, resp.Raw())
+}
+
+func TestRequestBodyBytesNil(t *testing.T) {
+	client := &mockClient{}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		Client:   client,
+		Reporter: reporter,
+	}
+
+	req := NewRequest(config, "METHOD", "url")
+
+	req.WithBytes(nil)
+
+	resp := req.Expect()
+	resp.chain.assertOK(t)
+
+	assert.True(t, client.req.Body == nil)
+	assert.Equal(t, int64(0), client.req.ContentLength)
 }
 
 func TestRequestBodyJSON(t *testing.T) {
