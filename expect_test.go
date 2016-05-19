@@ -171,6 +171,12 @@ func testExpectLive(n int, expect func(url string) *Expect) {
 	e := expect(server.URL)
 
 	for i := 0; i < n; i++ {
+		e.GET("/foo")
+
+		e.GET("/foo").Expect()
+
+		e.GET("/foo").Expect().Status(http.StatusOK)
+
 		e.GET("/foo").Expect().
 			Status(http.StatusOK).JSON().Object().ValueEqual("foo", 123)
 
@@ -184,6 +190,15 @@ func testExpectLive(n int, expect func(url string) *Expect) {
 
 func TestExpectLiveDefault(t *testing.T) {
 	testExpectLive(1, func(url string) *Expect {
+		return New(t, url)
+	})
+}
+
+func TestExpectLiveDefaultLongRun(t *testing.T) {
+	if testing.Short() {
+		return
+	}
+	testExpectLive(2000, func(url string) *Expect {
 		return New(t, url)
 	})
 }

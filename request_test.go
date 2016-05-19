@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"github.com/stretchr/testify/assert"
-	"io/ioutil"
 	"net/http"
 	"testing"
 )
@@ -222,12 +221,10 @@ func TestRequestBodyReader(t *testing.T) {
 	assert.False(t, client.req.Body == nil)
 	assert.Equal(t, int64(-1), client.req.ContentLength)
 
-	body, _ := ioutil.ReadAll(client.req.Body)
-
 	assert.Equal(t, "METHOD", client.req.Method)
 	assert.Equal(t, "url", client.req.URL.String())
 	assert.Equal(t, make(http.Header), client.req.Header)
-	assert.Equal(t, "body", string(body))
+	assert.Equal(t, "body", string(resp.content))
 
 	assert.Equal(t, &client.resp, resp.Raw())
 }
@@ -273,12 +270,10 @@ func TestRequestBodyBytes(t *testing.T) {
 	assert.False(t, client.req.Body == nil)
 	assert.Equal(t, int64(len("body")), client.req.ContentLength)
 
-	body, _ := ioutil.ReadAll(client.req.Body)
-
 	assert.Equal(t, "METHOD", client.req.Method)
 	assert.Equal(t, "url", client.req.URL.String())
 	assert.Equal(t, make(http.Header), client.req.Header)
-	assert.Equal(t, "body", string(body))
+	assert.Equal(t, "body", string(resp.content))
 
 	assert.Equal(t, &client.resp, resp.Raw())
 }
@@ -330,12 +325,10 @@ func TestRequestBodyJSON(t *testing.T) {
 	resp := req.Expect()
 	resp.chain.assertOK(t)
 
-	body, _ := ioutil.ReadAll(client.req.Body)
-
 	assert.Equal(t, "METHOD", client.req.Method)
 	assert.Equal(t, "url", client.req.URL.String())
 	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
-	assert.Equal(t, `{"key":"value"}`, string(body))
+	assert.Equal(t, `{"key":"value"}`, string(resp.content))
 
 	assert.Equal(t, &client.resp, resp.Raw())
 }

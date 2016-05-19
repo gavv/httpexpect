@@ -184,10 +184,7 @@ func (r *Request) WithJSON(object interface{}) *Request {
 //  resp.Status(http.StatusOK)
 func (r *Request) Expect() *Response {
 	resp := r.sendRequest()
-	return &Response{
-		chain: r.chain,
-		resp:  resp,
-	}
+	return makeResponse(r.chain, resp)
 }
 
 func (r *Request) sendRequest() *http.Response {

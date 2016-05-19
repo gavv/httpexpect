@@ -23,11 +23,37 @@ type Response struct {
 // Both reporter and response should not be nil. If response is nil, failure
 // is reported.
 func NewResponse(reporter Reporter, response *http.Response) *Response {
-	chain := makeChain(reporter)
+	return makeResponse(makeChain(reporter), response)
+}
+
+func makeResponse(chain chain, response *http.Response) *Response {
 	if response == nil {
 		chain.fail("expected non-nil response")
 	}
-	return &Response{chain, response, nil}
+	content := getContent(&chain, response)
+	return &Response{
+		chain:   chain,
+		resp:    response,
+		content: content,
+	}
+}
+
+func getContent(chain* chain, resp *http.Response) []byte {
+	if chain.failed() {
+		return nil
+	}
+
+	if resp.Body == nil {
+		return []byte{}
+	}
+
+	content, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		chain.fail(err.Error())
+		return nil
+	}
+
+	return content
 }
 
 // Raw returns underlying http.Response object.
@@ -90,8 +116,7 @@ func (r *Response) Header(k, v string) *Response {
 //  resp := NewResponse(t, response)
 //  resp.Body().NotEmpty()
 func (r *Response) Body() *String {
-	value := r.getContent()
-	return &String{r.chain, string(value)}
+	return &String{r.chain, string(r.content)}
 }
 
 // NoContent succeedes if response contains empty Content-Type header and
@@ -103,10 +128,8 @@ func (r *Response) NoContent() *Response {
 
 	contentType := r.resp.Header.Get("Content-Type")
 
-	content := string(r.getContent())
-
 	r.checkEqual("\"Content-Type\" header", "", contentType)
-	r.checkEqual("body", "", content)
+	r.checkEqual("body", "", string(r.content))
 
 	return r
 }
@@ -132,29 +155,6 @@ func (r *Response) JSON() *Value {
 	return &Value{r.chain, value}
 }
 
-func (r *Response) getContent() []byte {
-	if r.chain.failed() {
-		return nil
-	}
-
-	if r.content != nil {
-		return r.content
-	}
-
-	if r.resp.Body == nil {
-		return []byte{}
-	}
-
-	content, err := ioutil.ReadAll(r.resp.Body)
-	if err != nil {
-		r.chain.fail(err.Error())
-		return nil
-	}
-
-	r.content = content
-	return r.content
-}
-
 func (r *Response) getJSON() interface{} {
 	if r.chain.failed() {
 		return nil
@@ -164,10 +164,8 @@ func (r *Response) getJSON() interface{} {
 		return nil
 	}
 
-	content := r.getContent()
-
 	var value interface{}
-	if err := json.Unmarshal(content, &value); err != nil {
+	if err := json.Unmarshal(r.content, &value); err != nil {
 		r.chain.fail(err.Error())
 		return nil
 	}
