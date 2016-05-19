@@ -1,10 +1,35 @@
 // Package httpexpect helps to write nice tests for your HTTP API.
 //
-// Usage example
+// Usage examples
 //
 // See example directory:
 //  - https://godoc.org/github.com/gavv/httpexpect/example
 //  - https://github.com/gavv/httpexpect/tree/master/example
+//
+// Communication mode
+//
+// There are two common ways to test API with httpexpect:
+//  - start HTTP server and instruct httpexpect to use HTTP client for communication
+//  - don't start server and instruct httpexpect to invoke http handler directly
+//
+// The second approach works only if the server is a Go module and its handler can
+// be imported in tests.
+//
+// Concrete behaviour is determined by Client implementation passed to Config struct.
+// The following implementations are available out of the box:
+//  1. http.Client - use regular HTTP client from net/http (you should start server)
+//  2. httpexpect.Binder - invoke given http.Handler directly
+//  3. fasthttpexpect.ClientAdapter - use client from fasthttp (you should start server)
+//  4. fasthttpexpect.Binder - invoke given fasthttp.RequestHandler directly
+//
+// Note that http handler can be usually obtained from http framework you're using.
+// E.g., echo framework provides either http.Handler or fasthttp.RequestHandler.
+//
+// You can also provide your own Client implementation and do whatever you want to
+// convert http.Request to http.Response.
+//
+// If you're starting server from tests, it's very handy to use net/http/httptest
+// for that.
 //
 // Value equality
 //
@@ -15,7 +40,8 @@
 //  - non-nil interfaces pointing to nil slices and maps are replaced with nil interfaces
 //  - structs are converted to map[string]interface{}
 //
-// This is equivalent to subsequently json.Marshal() and json.Unmarshal() the value.
+// This is equivalent to subsequently json.Marshal() and json.Unmarshal() the value
+// and currently is implemented so.
 //
 // Failure handling
 //
@@ -84,7 +110,8 @@ type Config struct {
 }
 
 // Client is used to send http.Request and receive http.Response.
-// http.Client, Binder, and fasthttpexpect.Binder implement this interface.
+// http.Client, Binder, fasthttpexpect.ClientAdapter, fasthttpexpect.Binder
+// implement this interface.
 type Client interface {
 	// Do sends request and returns response.
 	Do(*http.Request) (*http.Response, error)
