@@ -9,11 +9,11 @@ import (
 	"testing"
 )
 
-type mockFastClient struct {
+type mockBackend struct {
 	t *testing.T
 }
 
-func (c mockFastClient) Do(req *fasthttp.Request, resp *fasthttp.Response) error {
+func (c mockBackend) Do(req *fasthttp.Request, resp *fasthttp.Response) error {
 	assert.Equal(c.t, "GET", string(req.Header.Method()))
 	assert.Equal(c.t, "http://example.com", string(req.Header.RequestURI()))
 	assert.Equal(c.t, "body", string(req.Body()))
@@ -24,8 +24,8 @@ func (c mockFastClient) Do(req *fasthttp.Request, resp *fasthttp.Response) error
 	return nil
 }
 
-func TestClient(t *testing.T) {
-	adapter := WithClient(mockFastClient{t})
+func TestClientAdapter(t *testing.T) {
+	adapter := WithClient(mockBackend{t})
 
 	req, err := http.NewRequest(
 		"GET", "http://example.com", bytes.NewReader([]byte("body")))

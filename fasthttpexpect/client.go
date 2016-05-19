@@ -8,35 +8,35 @@ import (
 	"net/http"
 )
 
-// FastClient defines interface compatible with various fasthttp clients.
-type FastClient interface {
+// ClientBackend defines interface compatible with various fasthttp clients.
+// fasthttp.Client, fasthttp.HostClient, fasthttp.PipelineClient implement
+// this interface.
+type ClientBackend interface {
 	// Do sends request and returns response.
 	Do(*fasthttp.Request, *fasthttp.Response) error
 }
 
-// FastClientAdapter wraps FastClient to implement httpexpect.Client.
-type FastClientAdapter struct {
-	fastclient FastClient
+// ClientAdapter wraps ClientBackend and implements httpexpect.Client.
+type ClientAdapter struct {
+	backend ClientBackend
 }
 
 var (
-	defaultFastClient fasthttp.Client
+	defaultBackend fasthttp.Client
 )
 
 // NewClient returns a new adapater for default fasthttp.Client.
-func NewClient() FastClientAdapter {
-	return WithClient(&defaultFastClient)
+func NewClient() ClientAdapter {
+	return WithClient(&defaultBackend)
 }
 
 // WithClient returns a new adapter for custom fasthttp.Client.
-func WithClient(fastclient FastClient) FastClientAdapter {
-	return FastClientAdapter{fastclient}
+func WithClient(backend ClientBackend) ClientAdapter {
+	return ClientAdapter{backend}
 }
 
 // Do implements httpexpect.Client.Do.
-func (adapter FastClientAdapter) Do(
-	stdreq *http.Request) (stdresp *http.Response, err error) {
-
+func (adapter ClientAdapter) Do(stdreq *http.Request) (stdresp *http.Response, err error) {
 	fastreq := fasthttp.AcquireRequest()
 
 	if stdreq.Body != nil {
@@ -55,7 +55,7 @@ func (adapter FastClientAdapter) Do(
 
 	var fastresp fasthttp.Response
 
-	if err = adapter.fastclient.Do(fastreq, &fastresp); err == nil {
+	if err = adapter.backend.Do(fastreq, &fastresp); err == nil {
 		status := fastresp.Header.StatusCode()
 		body := fastresp.Body()
 
