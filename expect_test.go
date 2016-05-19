@@ -6,8 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/valyala/fasthttp/fasthttpadaptor"
 	"github.com/gavv/httpexpect/fasthttpexpect"
+	"github.com/valyala/fasthttp/fasthttpadaptor"
 )
 
 func TestExpectMethods(t *testing.T) {

@@ -38,7 +38,7 @@ func makeResponse(chain chain, response *http.Response) *Response {
 	}
 }
 
-func getContent(chain* chain, resp *http.Response) []byte {
+func getContent(chain *chain, resp *http.Response) []byte {
 	if chain.failed() {
 		return nil
 	}

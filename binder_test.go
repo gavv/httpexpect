@@ -2,8 +2,8 @@ package httpexpect
 
 import (
 	"bytes"
-	"io/ioutil"
 	"github.com/stretchr/testify/assert"
+	"io/ioutil"
 	"net/http"
 	"testing"
 )
