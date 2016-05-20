@@ -18,6 +18,10 @@
 * Provides integration with [`fasthttp`](https://github.com/valyala/fasthttp/) client and HTTP handler via `fasthttpexpect` module.
 * Configurable (accepts custom implementations of failure reporter, HTTP client, and logger).
 
+## Status
+
+First stable release (v1) is planned soon. Prior to this, API may be changing slightly.
+
 ## Documentation
 
 Documentation is available on [GoDoc](https://godoc.org/github.com/gavv/httpexpect). It contains an overview and reference.
