@@ -1,18 +1,14 @@
-package fruits
+package example
 
 import (
 	"github.com/gavv/httpexpect"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
-func TestFruits(t *testing.T) {
-	server := httptest.NewServer(FruitServer())
-	defer server.Close()
-
-	e := httpexpect.New(t, server.URL)
-
+func runFruitsTests(e *httpexpect.Expect) {
 	e.GET("/fruits").
 		Expect().
 		Status(http.StatusOK).JSON().Array().Empty()
@@ -62,4 +58,55 @@ func TestFruits(t *testing.T) {
 	e.GET("/fruits/melon").
 		Expect().
 		Status(http.StatusNotFound)
+}
+
+func TestFruits_DefaultClient(t *testing.T) {
+	// create http.Handler
+	handler := FruitServer()
+
+	// start server using httptest
+	server := httptest.NewServer(handler)
+	defer server.Close()
+
+	// create httpexpect instance using http.DefaultClient
+	e := httpexpect.New(t, server.URL)
+
+	// run tests
+	runFruitsTests(e)
+}
+
+func TestFruits_CustomClientAndConfig(t *testing.T) {
+	// create http.Handler
+	handler := FruitServer()
+
+	// start server using httptest
+	server := httptest.NewServer(handler)
+	defer server.Close()
+
+	// create httpexpect instance using custom config
+	e := httpexpect.WithConfig(httpexpect.Config{
+		BaseURL:  server.URL,
+		Printer:  httpexpect.NewDebugPrinter(t, true),
+		Reporter: httpexpect.NewAssertReporter(t),
+		Client: &http.Client{
+			Timeout: time.Second * 30,
+		},
+	})
+
+	// run tests
+	runFruitsTests(e)
+}
+
+func TestFruits_UseHandlerDirectly(t *testing.T) {
+	// create http.Handler
+	handler := FruitServer()
+
+	// create httpexpect instance that will call htpp.Handler directly
+	e := httpexpect.WithConfig(httpexpect.Config{
+		Reporter: httpexpect.NewAssertReporter(t),
+		Client:   httpexpect.NewBinder(handler),
+	})
+
+	// run tests
+	runFruitsTests(e)
 }

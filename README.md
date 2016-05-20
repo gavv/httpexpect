@@ -20,7 +20,7 @@
 
 ## Documentation
 
-Documentation is available on [GoDoc](https://godoc.org/github.com/gavv/httpexpect).
+Documentation is available on [GoDoc](https://godoc.org/github.com/gavv/httpexpect). It contains an overview and reference.
 
 ## Installation
 
@@ -28,9 +28,21 @@ Documentation is available on [GoDoc](https://godoc.org/github.com/gavv/httpexpe
 $ go get github.com/gavv/httpexpect
 ```
 
-## Example
+## Examples
 
-See [`example`](example) directory for complete sources of fruits server and test.
+See [`example`](example) directory for various usage examples.
+
+* [`fruits_test.go`](example/fruits_test.go)
+
+  Using httpexpect with default and custom config. Communicating with server via HTTP client or invoking `http.Handler` directly.
+
+* [`echo_test.go`](example/echo_test.go)
+
+  Using httpexpect with two http handlers obtained with [`echo`](https://github.com/labstack/echo/) framework: `http.Handler` and `fasthttp.RequestHandler`.
+
+## Quick start
+
+Here is a complete example of end-to-end test for [`FruitServer`](example/fruits.go).
 
 ```go
 import (

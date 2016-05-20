@@ -1,5 +1,4 @@
-// Package fruits is usage example for httpexpect.
-package fruits
+package example
 
 import (
 	"encoding/json"
@@ -7,8 +6,8 @@ import (
 	"path"
 )
 
-var (
-	fruits = make(map[string]interface{})
+type (
+	fruitmap map[string]interface{}
 )
 
 // FruitServer creates http.Handler for fruits server.
@@ -18,15 +17,22 @@ var (
 //  GET /fruits/{name}    get fruit
 //  PUT /fruits/{name}    add or update fruit
 func FruitServer() http.Handler {
+	fruits := fruitmap{}
+
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/fruits", handleFruitList)
-	mux.HandleFunc("/fruits/", handleFruit)
+	mux.HandleFunc("/fruits", func(w http.ResponseWriter, r *http.Request) {
+		handleFruitList(fruits, w, r)
+	})
+
+	mux.HandleFunc("/fruits/", func(w http.ResponseWriter, r *http.Request) {
+		handleFruit(fruits, w, r)
+	})
 
 	return mux
 }
 
-func handleFruitList(w http.ResponseWriter, r *http.Request) {
+func handleFruitList(fruits fruitmap, w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
 		ret := []string{}
@@ -47,7 +53,7 @@ func handleFruitList(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handleFruit(w http.ResponseWriter, r *http.Request) {
+func handleFruit(fruits fruitmap, w http.ResponseWriter, r *http.Request) {
 	_, name := path.Split(r.URL.Path)
 
 	switch r.Method {

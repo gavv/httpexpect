@@ -14,7 +14,7 @@ build:
         name: go get (repo)
         code: |
           go version
-          go get -v -t
+          go get -v -t ./...
 
     - script:
         name: go test
