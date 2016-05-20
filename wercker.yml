@@ -33,3 +33,4 @@ build:
         code: |
           echo ref: refs/heads/${WERCKER_GIT_BRANCH} > .git/HEAD
           ${GOPATH}/bin/goveralls -coverprofile profile.cov -service=wercker
+          echo ${WERCKER_GIT_COMMIT} > .git/HEAD
