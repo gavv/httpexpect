@@ -9,14 +9,16 @@
 * Incrementally build HTTP requests.
 * Inspect HTTP responses.
 * Inspect JSON payload, recursively (supported types: object, array, string, number, boolean, null).
-* Communicate with server via HTTP client or invoke HTTP handler directly.
 
 **Misc.:**
+* Can communicate with server via HTTP client or invoke HTTP handler directly.
+* Configurable (accepts custom implementations of failure reporter, HTTP client, and logger).
+
+**Integrations:**
 * By default, uses [`testify`](https://github.com/stretchr/testify/) to report failures (can be configured to use `assert` or `require` package).
 * May use [`httputil`](https://golang.org/pkg/net/http/httputil/) to dump requests and responses, or more compact logger.
 * Produces nice diff on failure, using [`gojsondiff`](https://github.com/yudai/gojsondiff/).
 * Provides integration with [`fasthttp`](https://github.com/valyala/fasthttp/) client and HTTP handler via `fasthttpexpect` module.
-* Configurable (accepts custom implementations of failure reporter, HTTP client, and logger).
 
 ## Status
 
@@ -42,7 +44,11 @@ See [`example`](example) directory for various usage examples.
 
 * [`echo_test.go`](example/echo_test.go)
 
-  Using httpexpect with two http handlers obtained with [`echo`](https://github.com/labstack/echo/) framework: `http.Handler` and `fasthttp.RequestHandler`.
+  Using httpexpect with two http handlers created using [`echo`](https://github.com/labstack/echo/) framework: `http.Handler` and `fasthttp.RequestHandler`.
+
+* [`iris_test.go`](example/iris_test.go)
+
+  Using httpexpect with `fasthttp.RequestHandler` created using [`iris`](https://github.com/kataras/iris) framework.
 
 ## Quick start
 
