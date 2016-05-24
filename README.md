@@ -44,11 +44,11 @@ See [`example`](example) directory for various usage examples.
 
 * [`echo_test.go`](example/echo_test.go)
 
-  Using httpexpect with two http handlers created using [`echo`](https://github.com/labstack/echo/) framework: `http.Handler` and `fasthttp.RequestHandler`.
+  Using httpexpect with two http handlers created with [`echo`](https://github.com/labstack/echo/) framework: `http.Handler` and `fasthttp.RequestHandler`.
 
 * [`iris_test.go`](example/iris_test.go)
 
-  Using httpexpect with `fasthttp.RequestHandler` created using [`iris`](https://github.com/kataras/iris) framework.
+  Using httpexpect with `fasthttp.RequestHandler` created with [`iris`](https://github.com/kataras/iris) framework.
 
 ## Quick start
 
