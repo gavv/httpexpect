@@ -31,6 +31,6 @@ build:
     - script:
         name: coveralls
         code: |
+          git branch --track ${WERCKER_GIT_BRANCH} origin/${WERCKER_GIT_BRANCH} || true
           echo ref: refs/heads/${WERCKER_GIT_BRANCH} > .git/HEAD
           ${GOPATH}/bin/goveralls -coverprofile profile.cov -service=wercker
-          echo ${WERCKER_GIT_COMMIT} > .git/HEAD
