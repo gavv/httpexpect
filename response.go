@@ -82,32 +82,30 @@ func statusText(code int) string {
 	return strconv.Itoa(code)
 }
 
-// Headers succeedes if response has exactly given headers map.
+// Header returns a new Object that may be used to inspect header map.
 //
 // Example:
 //  resp := NewResponse(t, response)
-//  resp.Headers(map[string][]string{
-//      "Content-Type": []string{"application-json"},
-//  })
-func (r *Response) Headers(headers map[string][]string) *Response {
-	if r.chain.failed() {
-		return r
+//  resp.Headers().Value("Content-Type").Contains("application-json")
+func (r *Response) Headers() *Object {
+	var value map[string]interface{}
+	if !r.chain.failed() {
+		value, _ = canonMap(&r.chain, r.resp.Header)
 	}
-	r.checkEqual("headers", headers, map[string][]string(r.resp.Header))
-	return r
+	return &Object{r.chain, value}
 }
 
-// Header succeedes if response contains given single header.
+// Header returns a new String object that may be used to inspect given header.
 //
 // Example:
 //  resp := NewResponse(t, response)
-//  resp.Header("Content-Type", "application-json")
-func (r *Response) Header(k, v string) *Response {
-	if r.chain.failed() {
-		return r
+//  resp.Header("Content-Type").Contains("application-json")
+func (r *Response) Header(header string) *String {
+	value := ""
+	if !r.chain.failed() {
+		value = r.resp.Header.Get(header)
 	}
-	r.checkEqual("\""+k+"\" header", v, r.resp.Header.Get(k))
-	return r
+	return &String{r.chain, value}
 }
 
 // Body returns a new String object that may be used to inspect response body.

@@ -16,15 +16,17 @@ func TestResponseFailed(t *testing.T) {
 
 	resp.chain.assertFailed(t)
 
+	assert.False(t, resp.Headers() == nil)
+	assert.False(t, resp.Header("foo") == nil)
 	assert.False(t, resp.Body() == nil)
 	assert.False(t, resp.JSON() == nil)
 
+	resp.Headers().chain.assertFailed(t)
+	resp.Header("foo").chain.assertFailed(t)
 	resp.Body().chain.assertFailed(t)
 	resp.JSON().chain.assertFailed(t)
 
 	resp.Status(123)
-	resp.Headers(nil)
-	resp.Header("foo", "bar")
 	resp.NoContent()
 	resp.ContentTypeJSON()
 }
@@ -57,26 +59,13 @@ func TestResponseHeaders(t *testing.T) {
 	resp.chain.assertFailed(t)
 	resp.chain.reset()
 
-	resp.Headers(headers)
-	resp.chain.assertOK(t)
-	resp.chain.reset()
-
-	partialHeaders := make(map[string][]string)
-	partialHeaders["Content-Type"] = headers["Content-Type"]
-
-	resp.Headers(partialHeaders)
-	resp.chain.assertFailed(t)
-	resp.chain.reset()
+	resp.Headers().Equal(headers).chain.assertOK(t)
 
 	for k, v := range headers {
-		resp.Header(k, v[0])
-		resp.chain.assertOK(t)
-		resp.chain.reset()
+		resp.Header(k).Equal(v[0]).chain.assertOK(t)
 	}
 
-	resp.Header("Bad-Header", "noValue")
-	resp.chain.assertFailed(t)
-	resp.chain.reset()
+	resp.Header("Bad-Header").Empty().chain.assertOK(t)
 }
 
 func TestResponseBody(t *testing.T) {
