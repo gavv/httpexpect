@@ -1,6 +1,7 @@
 package httpexpect
 
 import (
+	"strconv"
 	"strings"
 )
 
@@ -57,7 +58,8 @@ func (s *String) NotEmpty() *String {
 //  str.Equal("Hello")
 func (s *String) Equal(value string) *String {
 	if !(s.value == value) {
-		s.chain.fail("expected string == \"%s\", but got \"%s\"", value, s.value)
+		s.chain.fail("\nexpected string equal to:\n  %s\n\nbut got:\n  %s",
+			strconv.Quote(value), strconv.Quote(s.value))
 	}
 	return s
 }
@@ -69,7 +71,7 @@ func (s *String) Equal(value string) *String {
 //  str.NotEqual("Goodbye")
 func (s *String) NotEqual(value string) *String {
 	if !(s.value != value) {
-		s.chain.fail("expected string != \"%s\", but got \"%s\"", value, s.value)
+		s.chain.fail("\nexpected string NOT equal to:\n  %s", strconv.Quote(value))
 	}
 	return s
 }
@@ -83,7 +85,8 @@ func (s *String) NotEqual(value string) *String {
 func (s *String) EqualFold(value string) *String {
 	if !strings.EqualFold(s.value, value) {
 		s.chain.fail(
-			"expected string == \"%s\" (case-insensitive), but got \"%s\"", value, s.value)
+			"\nexpected string equal to (case-insensitive):\n  %s\n\nbut got:\n  %s",
+			strconv.Quote(value), strconv.Quote(s.value))
 	}
 	return s
 }
@@ -97,7 +100,8 @@ func (s *String) EqualFold(value string) *String {
 func (s *String) NotEqualFold(value string) *String {
 	if strings.EqualFold(s.value, value) {
 		s.chain.fail(
-			"expected string != \"%s\" (case-insensitive), but got \"%s\"", value, s.value)
+			"\nexpected string NOT equal to (case-insensitive):\n  %s\n\nbut got:\n  %s",
+			strconv.Quote(value), strconv.Quote(s.value))
 	}
 	return s
 }
@@ -110,7 +114,8 @@ func (s *String) NotEqualFold(value string) *String {
 func (s *String) Contains(value string) *String {
 	if !strings.Contains(s.value, value) {
 		s.chain.fail(
-			"expected string containing substring \"%s\", but got \"%s\"", value, s.value)
+			"\nexpected string containing substring:\n  %s\n\nbut got:\n  %s",
+			strconv.Quote(value), strconv.Quote(s.value))
 	}
 	return s
 }
@@ -123,8 +128,8 @@ func (s *String) Contains(value string) *String {
 func (s *String) NotContains(value string) *String {
 	if strings.Contains(s.value, value) {
 		s.chain.fail(
-			"expected string NOT containing substring \"%s\", but got \"%s\"",
-			value, s.value)
+			"\nexpected string NOT containing substring:\n  %s\n\nbut got:\n  %s",
+			strconv.Quote(value), strconv.Quote(s.value))
 	}
 	return s
 }
@@ -138,8 +143,9 @@ func (s *String) NotContains(value string) *String {
 func (s *String) ContainsFold(value string) *String {
 	if !strings.Contains(strings.ToLower(s.value), strings.ToLower(value)) {
 		s.chain.fail(
-			"expected string containing substring \"%s\" (case-insensitive), "+
-				"but got \"%s\"", value, s.value)
+			"\nexpected string containing substring (case-insensitive):\n%s"+
+				"\n\nbut got:\n  %s",
+			strconv.Quote(value), strconv.Quote(s.value))
 	}
 	return s
 }
@@ -153,8 +159,9 @@ func (s *String) ContainsFold(value string) *String {
 func (s *String) NotContainsFold(value string) *String {
 	if strings.Contains(strings.ToLower(s.value), strings.ToLower(value)) {
 		s.chain.fail(
-			"expected string NOT containing substring \"%s\" (case-insensitive), "+
-				"but got \"%s\"", value, s.value)
+			"\nexpected string NOT containing substring (case-insensitive):\n  %s"+
+				"\n\nbut got:\n  %s",
+			strconv.Quote(value), strconv.Quote(s.value))
 	}
 	return s
 }
