@@ -1,6 +1,7 @@
 package httpexpect
 
 import (
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 )
@@ -33,7 +34,7 @@ func (binder *Binder) Do(req *http.Request) (*http.Response, error) {
 	}
 
 	if recorder.Body != nil {
-		resp.Body = readCloserAdapter{recorder.Body}
+		resp.Body = ioutil.NopCloser(recorder.Body)
 	}
 
 	return &resp, nil

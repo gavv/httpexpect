@@ -3,6 +3,7 @@ package httpexpect
 import (
 	"bytes"
 	"github.com/stretchr/testify/assert"
+	"io/ioutil"
 	"net/http"
 	"testing"
 )
@@ -73,7 +74,7 @@ func TestResponseBody(t *testing.T) {
 
 	httpResp := &http.Response{
 		StatusCode: http.StatusOK,
-		Body:       readCloserAdapter{bytes.NewBufferString("body")},
+		Body:       ioutil.NopCloser(bytes.NewBufferString("body")),
 	}
 
 	resp := NewResponse(reporter, httpResp)
@@ -93,7 +94,7 @@ func TestResponseNoContentEmpty(t *testing.T) {
 	httpResp := &http.Response{
 		StatusCode: http.StatusOK,
 		Header:     http.Header(headers),
-		Body:       readCloserAdapter{bytes.NewBufferString("")},
+		Body:       ioutil.NopCloser(bytes.NewBufferString("")),
 	}
 
 	resp := NewResponse(reporter, httpResp)
@@ -159,7 +160,7 @@ func TestResponseJson(t *testing.T) {
 	httpResp := &http.Response{
 		StatusCode: http.StatusOK,
 		Header:     http.Header(headers),
-		Body:       readCloserAdapter{bytes.NewBufferString(body)},
+		Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
 	}
 
 	resp := NewResponse(reporter, httpResp)
@@ -196,7 +197,7 @@ func TestResponseJsonEncodingEmpty(t *testing.T) {
 	httpResp := &http.Response{
 		StatusCode: http.StatusOK,
 		Header:     http.Header(headers),
-		Body:       readCloserAdapter{bytes.NewBufferString(body)},
+		Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
 	}
 
 	resp := NewResponse(reporter, httpResp)
@@ -229,7 +230,7 @@ func TestResponseJsonEncodingBad(t *testing.T) {
 	httpResp := &http.Response{
 		StatusCode: http.StatusOK,
 		Header:     http.Header(headers),
-		Body:       readCloserAdapter{bytes.NewBufferString(body)},
+		Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
 	}
 
 	resp := NewResponse(reporter, httpResp)

@@ -3,7 +3,7 @@ package fasthttpexpect
 import (
 	"bytes"
 	"github.com/valyala/fasthttp"
-	"io"
+	"io/ioutil"
 	"net/http"
 )
 
@@ -41,16 +41,8 @@ func convertResponse(stdreq *http.Request, fastresp *fasthttp.Response) *http.Re
 	})
 
 	if body != nil {
-		stdresp.Body = readCloserAdapter{bytes.NewReader(body)}
+		stdresp.Body = ioutil.NopCloser(bytes.NewReader(body))
 	}
 
 	return stdresp
-}
-
-type readCloserAdapter struct {
-	io.Reader
-}
-
-func (b readCloserAdapter) Close() error {
-	return nil
 }

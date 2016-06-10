@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -130,7 +131,7 @@ func (r *Request) WithBody(reader io.Reader) *Request {
 		r.http.Body = nil
 		r.http.ContentLength = 0
 	} else {
-		r.http.Body = readCloserAdapter{reader}
+		r.http.Body = ioutil.NopCloser(reader)
 		r.http.ContentLength = -1
 	}
 	return r
@@ -147,7 +148,7 @@ func (r *Request) WithBytes(b []byte) *Request {
 		r.http.Body = nil
 		r.http.ContentLength = 0
 	} else {
-		r.http.Body = readCloserAdapter{bytes.NewReader(b)}
+		r.http.Body = ioutil.NopCloser(bytes.NewReader(b))
 		r.http.ContentLength = int64(len(b))
 	}
 	return r
