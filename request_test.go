@@ -183,6 +183,7 @@ func TestRequestHeaders(t *testing.T) {
 	req.WithHeaders(map[string]string{
 		"Second-Header": "bar",
 		"Third-Header":  "baz",
+		"Host":          "example.com",
 	})
 
 	expectedHeaders := map[string][]string{
@@ -195,6 +196,7 @@ func TestRequestHeaders(t *testing.T) {
 	resp.chain.assertOK(t)
 
 	assert.Equal(t, "METHOD", client.req.Method)
+	assert.Equal(t, "example.com", client.req.Host)
 	assert.Equal(t, "url", client.req.URL.String())
 	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
 

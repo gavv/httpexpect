@@ -103,7 +103,7 @@ func (r *Request) WithQuery(key string, value interface{}) *Request {
 //  })
 func (r *Request) WithHeaders(headers map[string]string) *Request {
 	for k, v := range headers {
-		r.http.Header.Add(k, v)
+		r.WithHeader(k, v)
 	}
 	return r
 }
@@ -114,7 +114,11 @@ func (r *Request) WithHeaders(headers map[string]string) *Request {
 //  req := NewRequest(config, "PUT", "http://example.org/path")
 //  req.WithHeader("Content-Type": "application/json")
 func (r *Request) WithHeader(k, v string) *Request {
-	r.http.Header.Add(k, v)
+	if k == "Host" {
+		r.http.Host = v
+	} else {
+		r.http.Header.Add(k, v)
+	}
 	return r
 }
 
