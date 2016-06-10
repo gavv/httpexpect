@@ -221,7 +221,10 @@ func TestExpectLiveConfig(t *testing.T) {
 	testHandler(WithConfig(Config{
 		BaseURL:  server.URL,
 		Reporter: NewAssertReporter(t),
-		Printer:  NewDebugPrinter(t, true),
+		Printers: []Printer{
+			NewCurlPrinter(t),
+			NewDebugPrinter(t, true),
+		},
 	}))
 }
 
@@ -235,7 +238,6 @@ func TestExpectLiveFast(t *testing.T) {
 		BaseURL:  server.URL,
 		Client:   fasthttpexpect.NewClient(),
 		Reporter: NewAssertReporter(t),
-		Printer:  NewDebugPrinter(t, true),
 	}))
 }
 
@@ -246,7 +248,6 @@ func TestExpectBinderStandard(t *testing.T) {
 		BaseURL:  "http://example.com",
 		Client:   NewBinder(handler),
 		Reporter: NewAssertReporter(t),
-		Printer:  NewDebugPrinter(t, true),
 	}))
 }
 

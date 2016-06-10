@@ -1,6 +1,7 @@
 package httpexpect
 
 import (
+	"github.com/moul/http2curl"
 	"net/http"
 	"net/http/httputil"
 )
@@ -59,4 +60,30 @@ func (p DebugPrinter) Response(resp *http.Response) {
 		}
 		p.logger.Logf("%s", dump)
 	}
+}
+
+// CurlPrinter implements Printer. Uses http2curl to dump requests as
+// curl commands.
+type CurlPrinter struct {
+	logger Logger
+}
+
+// NewCurlPrinter returns a new CurlPrinter given a logger.
+func NewCurlPrinter(logger Logger) CurlPrinter {
+	return CurlPrinter{logger}
+}
+
+// Request implements Printer.Request.
+func (p CurlPrinter) Request(req *http.Request) {
+	if req != nil {
+		cmd, err := http2curl.GetCurlCommand(req)
+		if err != nil {
+			panic(err)
+		}
+		p.logger.Logf("%s", cmd.String())
+	}
+}
+
+// Response implements Printer.Response.
+func (CurlPrinter) Response(*http.Response) {
 }

@@ -85,11 +85,14 @@ func TestFruits_CustomClientAndConfig(t *testing.T) {
 
 	// create httpexpect instance using custom config
 	e := httpexpect.WithConfig(httpexpect.Config{
-		BaseURL:  server.URL,
-		Printer:  httpexpect.NewDebugPrinter(t, true),
-		Reporter: httpexpect.NewAssertReporter(t),
+		BaseURL: server.URL,
 		Client: &http.Client{
 			Timeout: time.Second * 30,
+		},
+		Reporter: httpexpect.NewAssertReporter(t),
+		Printers: []httpexpect.Printer{
+			httpexpect.NewCurlPrinter(t),
+			httpexpect.NewDebugPrinter(t, true),
 		},
 	})
 

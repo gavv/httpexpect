@@ -16,7 +16,7 @@
 
 **Integrations:**
 * By default, uses [`testify`](https://github.com/stretchr/testify/) to report failures (can be configured to use `assert` or `require` package).
-* May use [`httputil`](https://golang.org/pkg/net/http/httputil/) to dump requests and responses, or more compact logger.
+* May dump requests and responses in various formats, using [`httputil`](https://golang.org/pkg/net/http/httputil/), [`http2curl`](https://github.com/moul/http2curl), or simple compact logger.
 * Produces nice diff on failure, using [`gojsondiff`](https://github.com/yudai/gojsondiff/).
 * Provides integration with [`fasthttp`](https://github.com/valyala/fasthttp/) client and HTTP handler via `fasthttpexpect` module.
 

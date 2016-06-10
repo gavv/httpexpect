@@ -90,7 +90,14 @@ type Config struct {
 	// custom implementation.
 	Client Client
 
-	// Printer is used to print requests and responses.
+	// Reporter is used to report failures.
+	// Should not be nil.
+	//
+	// You can use AssertReporter, RequireReporter (they use testify),
+	// or testing.T, or provide custom implementation.
+	Reporter Reporter
+
+	// Printers are used to print requests and responses.
 	// May be nil.
 	//
 	// You can use CompactPrinter or DebugPrinter, or provide custom
@@ -99,14 +106,7 @@ type Config struct {
 	// You can also use CompactPrinter or DebugPrinter with alternative
 	// Logger if you're happy with their format, but want to send logs
 	// somewhere else instead of testing.T.
-	Printer Printer
-
-	// Reporter is used to report failures.
-	// Should not be nil.
-	//
-	// You can use AssertReporter, RequireReporter (they use testify),
-	// or testing.T, or provide custom implementation.
-	Reporter Reporter
+	Printers []Printer
 }
 
 // Client is used to send http.Request and receive http.Response.
@@ -162,7 +162,7 @@ func New(t *testing.T, baseURL string) *Expect {
 	return WithConfig(Config{
 		BaseURL:  baseURL,
 		Reporter: NewAssertReporter(t),
-		Printer:  NewCompactPrinter(t),
+		Printers: []Printer{NewCompactPrinter(t)},
 	})
 }
 
@@ -175,8 +175,11 @@ func New(t *testing.T, baseURL string) *Expect {
 //      e := httpexpect.WithConfig(httpexpect.Config{
 //          BaseURL:  "http://example.org/",
 //          Client:   http.DefaultClient,
-//          Printer:  httpexpect.NewDebugPrinter(t),
 //          Reporter: httpexpect.NewAssertReporter(t),
+//          Printers: []httpexpect.Printer{
+//              httpexpect.NewCurlPrinter(t),
+//              httpexpect.NewDebugPrinter(t, true)
+//          },
 //      })
 //      e.GET("/path").Expect().Status(http.StatusOK)
 //  }

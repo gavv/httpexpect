@@ -197,8 +197,8 @@ func (r *Request) sendRequest() *http.Response {
 		r.http.URL.RawQuery = r.query.Encode()
 	}
 
-	if r.config.Printer != nil {
-		r.config.Printer.Request(&r.http)
+	for _, printer := range r.config.Printers {
+		printer.Request(&r.http)
 	}
 
 	resp, err := r.config.Client.Do(&r.http)
@@ -207,8 +207,8 @@ func (r *Request) sendRequest() *http.Response {
 		return nil
 	}
 
-	if r.config.Printer != nil {
-		r.config.Printer.Response(resp)
+	for _, printer := range r.config.Printers {
+		printer.Response(resp)
 	}
 
 	return resp
