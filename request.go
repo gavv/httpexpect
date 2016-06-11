@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/ajg/form"
+	"github.com/google/go-querystring/query"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"reflect"
 	"strings"
 )
 
@@ -84,14 +86,56 @@ func concatURLs(a, b string) string {
 //
 // Example:
 //  req := NewRequest(config, "PUT", "http://example.org/path")
-//  req.WithQuery("foo", 123)
-//  req.WithQuery("bar", "baz")
-//  // URL is now http://example.org/path?foo=123&bar=baz
+//  req.WithQuery("a", 123)
+//  req.WithQuery("b", "foo")
+//  // URL is now http://example.org/path?a=123&b=foo
 func (r *Request) WithQuery(key string, value interface{}) *Request {
 	if r.query == nil {
 		r.query = r.http.URL.Query()
 	}
 	r.query.Add(key, fmt.Sprint(value))
+	return r
+}
+
+// WithQueryObject sets query parameters of request URL.
+//
+// object is converted to query string using github.com/google/go-querystring
+// if it's a struct or pointer to struct, or github.com/ajg/form otherwise.
+//
+// Various object types are supported. Structs may contain "url" struct tag,
+// similar to "json" struct tag for json.Marshal().
+//
+// Note that WithQueryObject overwrites all previously set query parameters.
+//
+// Example:
+//  type MyURL struct {
+//      A int    `url:"a"`
+//      B string `url:"b"`
+//  }
+//
+//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req.WithQueryObject(MyURL{A: 123, B: "foo"})
+//  // URL is now http://example.org/path?a=123&b=foo
+//
+//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req.WithQueryObject(map[string]interface{}{"a": 123, "b": "foo"})
+//  // URL is now http://example.org/path?a=123&b=foo
+func (r *Request) WithQueryObject(object interface{}) *Request {
+	if reflect.Indirect(reflect.ValueOf(object)).Kind() == reflect.Struct {
+		q, err := query.Values(object)
+		if err != nil {
+			r.chain.fail(err.Error())
+			return r
+		}
+		r.query = q
+	} else {
+		q, err := form.EncodeToValues(object)
+		if err != nil {
+			r.chain.fail(err.Error())
+			return r
+		}
+		r.query = q
+	}
 	return r
 }
 
@@ -180,6 +224,13 @@ func (r *Request) WithText(s string) *Request {
 // See https://github.com/ajg/form for details.
 //
 // Example:
+//  type MyForm struct {
+//      Foo int `form:"foo"`
+//  }
+//
+//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req.WithForm(MyForm{Foo: 123})
+//
 //  req := NewRequest(config, "PUT", "http://example.org/path")
 //  req.WithForm(map[string]interface{}{"foo": 123})
 func (r *Request) WithForm(object interface{}) *Request {
@@ -199,6 +250,13 @@ func (r *Request) WithForm(object interface{}) *Request {
 // and sets body to object, marshaled using json.Marshal().
 //
 // Example:
+//  type MyJSON struct {
+//      Foo int `json:"foo"`
+//  }
+//
+//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req.WithJSON(MyJSON{Foo: 123})
+//
 //  req := NewRequest(config, "PUT", "http://example.org/path")
 //  req.WithJSON(map[string]interface{}{"foo": 123})
 func (r *Request) WithJSON(object interface{}) *Request {

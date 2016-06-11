@@ -65,9 +65,6 @@ func TestRequestURL(t *testing.T) {
 	req3 := NewRequest(config, "METHOD", "/path")
 	req4 := NewRequest(config, "METHOD", "path")
 
-	req5 := NewRequest(config, "METHOD", "http://example.com/path").
-		WithQuery("aa", "foo").WithQuery("bb", 123).WithQuery("cc", "*&@")
-
 	req1.Expect()
 	req1.chain.assertOK(t)
 	assert.Equal(t, "http://example.com", client.req.URL.String())
@@ -83,11 +80,51 @@ func TestRequestURL(t *testing.T) {
 	req4.Expect()
 	req4.chain.assertOK(t)
 	assert.Equal(t, "path", client.req.URL.String())
+}
 
-	req5.Expect()
-	req5.chain.assertOK(t)
-	assert.Equal(t, "http://example.com/path?aa=foo&bb=123&cc=%2A%26%40",
-		client.req.URL.String())
+func TestRequestURLQuery(t *testing.T) {
+	client := &mockClient{}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		Client:   client,
+		Reporter: reporter,
+	}
+
+	req1 := NewRequest(config, "METHOD", "http://example.com/path").
+		WithQuery("aa", "foo").WithQuery("bb", 123).WithQuery("cc", "*&@")
+
+	q := map[string]interface{}{
+		"bb": 123,
+		"cc": "*&@",
+	}
+
+	req2 := NewRequest(config, "METHOD", "http://example.com/path").
+		WithQueryObject(q).
+		WithQuery("aa", "foo")
+
+	type S struct {
+		Aa string `url:"aa"`
+		Bb int    `url:"bb"`
+		Cc string `url:"cc"`
+		Dd string `url:"-"`
+	}
+
+	req3 := NewRequest(config, "METHOD", "http://example.com/path").
+		WithQueryObject(S{"foo", 123, "*&@", "dummy"})
+
+	req4 := NewRequest(config, "METHOD", "http://example.com/path").
+		WithQueryObject(&S{"foo", 123, "*&@", "dummy"})
+
+	for _, req := range []*Request{req1, req2, req3, req4} {
+		client.req = nil
+
+		req.Expect()
+		req.chain.assertOK(t)
+		assert.Equal(t, "http://example.com/path?aa=foo&bb=123&cc=%2A%26%40",
+			client.req.URL.String())
+	}
 }
 
 func TestExpectURLConcat(t *testing.T) {

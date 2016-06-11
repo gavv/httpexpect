@@ -265,7 +265,7 @@ func (r *Response) checkContentType(expectedType string, expectedCharset ...stri
 	if len(expectedCharset) == 0 {
 		if charset != "" && !strings.EqualFold(charset, "utf-8") {
 			r.chain.fail(
-				"\nexpected \"Content-Type\" header with \"utf-8\" or empty charset," +
+				"\nexpected \"Content-Type\" header with \"utf-8\" or empty charset,"+
 					"\nbut got %s",
 				strconv.Quote(charset))
 			return false
