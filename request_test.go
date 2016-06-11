@@ -125,6 +125,17 @@ func TestRequestURLQuery(t *testing.T) {
 		assert.Equal(t, "http://example.com/path?aa=foo&bb=123&cc=%2A%26%40",
 			client.req.URL.String())
 	}
+
+	req5 := NewRequest(config, "METHOD", "http://example.com/path").
+		WithQuery("foo", "bar").
+		WithQueryObject(nil)
+
+	req5.Expect()
+	req5.chain.assertOK(t)
+	assert.Equal(t, "http://example.com/path", client.req.URL.String())
+
+	NewRequest(config, "METHOD", "http://example.com/path").
+		WithQueryObject(func() {}).chain.assertFailed(t)
 }
 
 func TestExpectURLConcat(t *testing.T) {

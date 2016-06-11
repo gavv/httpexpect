@@ -366,6 +366,54 @@ func TestResponseForm(t *testing.T) {
 	assert.Equal(t, expected, resp.Form().Raw())
 }
 
+func TestResponseFormBadBody(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	headers := map[string][]string{
+		"Content-Type": {"application/x-www-form-urlencoded"},
+	}
+
+	body := "%"
+
+	httpResp := &http.Response{
+		StatusCode: http.StatusOK,
+		Header:     http.Header(headers),
+		Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+	}
+
+	resp := NewResponse(reporter, httpResp)
+
+	resp.Form()
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
+
+	assert.True(t, resp.Form().Raw() == nil)
+}
+
+func TestResponseFormBadType(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	headers := map[string][]string{
+		"Content-Type": {"bad"},
+	}
+
+	body := "foo=bar"
+
+	httpResp := &http.Response{
+		StatusCode: http.StatusOK,
+		Header:     http.Header(headers),
+		Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+	}
+
+	resp := NewResponse(reporter, httpResp)
+
+	resp.Form()
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
+
+	assert.True(t, resp.Form().Raw() == nil)
+}
+
 func TestResponseJSON(t *testing.T) {
 	reporter := newMockReporter(t)
 
@@ -419,7 +467,31 @@ func TestResponseJSON(t *testing.T) {
 		map[string]interface{}{"key": "value"}, resp.JSON().Object().Raw())
 }
 
-func TestResponseJSONEncodingEmpty(t *testing.T) {
+func TestResponseJSONBadBody(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	headers := map[string][]string{
+		"Content-Type": {"application/json"},
+	}
+
+	body := "{"
+
+	httpResp := &http.Response{
+		StatusCode: http.StatusOK,
+		Header:     http.Header(headers),
+		Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+	}
+
+	resp := NewResponse(reporter, httpResp)
+
+	resp.JSON()
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
+
+	assert.True(t, resp.JSON().Raw() == nil)
+}
+
+func TestResponseJSONCharsetEmpty(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	headers := map[string][]string{
@@ -448,7 +520,7 @@ func TestResponseJSONEncodingEmpty(t *testing.T) {
 		map[string]interface{}{"key": "value"}, resp.JSON().Object().Raw())
 }
 
-func TestResponseJSONEncodingBad(t *testing.T) {
+func TestResponseJSONCharsetBad(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	headers := map[string][]string{

@@ -121,7 +121,9 @@ func (r *Request) WithQuery(key string, value interface{}) *Request {
 //  req.WithQueryObject(map[string]interface{}{"a": 123, "b": "foo"})
 //  // URL is now http://example.org/path?a=123&b=foo
 func (r *Request) WithQueryObject(object interface{}) *Request {
-	if reflect.Indirect(reflect.ValueOf(object)).Kind() == reflect.Struct {
+	if object == nil {
+		r.query = url.Values{}
+	} else if reflect.Indirect(reflect.ValueOf(object)).Kind() == reflect.Struct {
 		q, err := query.Values(object)
 		if err != nil {
 			r.chain.fail(err.Error())
