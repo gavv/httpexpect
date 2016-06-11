@@ -213,20 +213,11 @@ func (r *Response) checkContentType(expectedType string, expectedCharset ...stri
 	}
 
 	if len(expectedCharset) == 0 {
-		if expectedType == "" {
-			if charset != "" {
-				r.chain.fail(
-					"\nexpected \"Content-Type\" header with empty charset," +
-						"\nbut got \"" + charset + "\"")
-				return false
-			}
-		} else {
-			if charset != "" && !strings.EqualFold(charset, "utf-8") {
-				r.chain.fail(
-					"\nexpected \"Content-Type\" header with \"utf-8\" or empty charset," +
-						"\nbut got \"" + charset + "\"")
-				return false
-			}
+		if charset != "" && !strings.EqualFold(charset, "utf-8") {
+			r.chain.fail(
+				"\nexpected \"Content-Type\" header with \"utf-8\" or empty charset," +
+					"\nbut got \"" + charset + "\"")
+			return false
 		}
 	} else {
 		if !strings.EqualFold(charset, expectedCharset[0]) {
