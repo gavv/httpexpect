@@ -97,15 +97,13 @@ func (r *Request) WithQuery(key string, value interface{}) *Request {
 	return r
 }
 
-// WithQueryObject sets query parameters of request URL.
+// WithQueryObject adds multiple query parameters to request URL.
 //
 // object is converted to query string using github.com/google/go-querystring
 // if it's a struct or pointer to struct, or github.com/ajg/form otherwise.
 //
 // Various object types are supported. Structs may contain "url" struct tag,
 // similar to "json" struct tag for json.Marshal().
-//
-// Note that WithQueryObject overwrites all previously set query parameters.
 //
 // Example:
 //  type MyURL struct {
@@ -122,21 +120,30 @@ func (r *Request) WithQuery(key string, value interface{}) *Request {
 //  // URL is now http://example.org/path?a=123&b=foo
 func (r *Request) WithQueryObject(object interface{}) *Request {
 	if object == nil {
-		r.query = url.Values{}
-	} else if reflect.Indirect(reflect.ValueOf(object)).Kind() == reflect.Struct {
-		q, err := query.Values(object)
+		return r
+	}
+	var (
+		q   url.Values
+		err error
+	)
+	if reflect.Indirect(reflect.ValueOf(object)).Kind() == reflect.Struct {
+		q, err = query.Values(object)
 		if err != nil {
 			r.chain.fail(err.Error())
 			return r
 		}
-		r.query = q
 	} else {
-		q, err := form.EncodeToValues(object)
+		q, err = form.EncodeToValues(object)
 		if err != nil {
 			r.chain.fail(err.Error())
 			return r
 		}
-		r.query = q
+	}
+	if r.query == nil {
+		r.query = r.http.URL.Query()
+	}
+	for k, v := range q {
+		r.query[k] = append(r.query[k], v...)
 	}
 	return r
 }

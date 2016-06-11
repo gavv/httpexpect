@@ -101,21 +101,20 @@ func TestRequestURLQuery(t *testing.T) {
 	}
 
 	req2 := NewRequest(config, "METHOD", "http://example.com/path").
-		WithQueryObject(q).
-		WithQuery("aa", "foo")
+		WithQuery("aa", "foo").
+		WithQueryObject(q)
 
 	type S struct {
-		Aa string `url:"aa"`
 		Bb int    `url:"bb"`
 		Cc string `url:"cc"`
 		Dd string `url:"-"`
 	}
 
-	req3 := NewRequest(config, "METHOD", "http://example.com/path").
-		WithQueryObject(S{"foo", 123, "*&@", "dummy"})
+	req3 := NewRequest(config, "METHOD", "http://example.com/path?aa=foo").
+		WithQueryObject(S{123, "*&@", "dummy"})
 
-	req4 := NewRequest(config, "METHOD", "http://example.com/path").
-		WithQueryObject(&S{"foo", 123, "*&@", "dummy"})
+	req4 := NewRequest(config, "METHOD", "http://example.com/path?aa=foo").
+		WithQueryObject(&S{123, "*&@", "dummy"})
 
 	for _, req := range []*Request{req1, req2, req3, req4} {
 		client.req = nil
@@ -132,7 +131,7 @@ func TestRequestURLQuery(t *testing.T) {
 
 	req5.Expect()
 	req5.chain.assertOK(t)
-	assert.Equal(t, "http://example.com/path", client.req.URL.String())
+	assert.Equal(t, "http://example.com/path?foo=bar", client.req.URL.String())
 
 	NewRequest(config, "METHOD", "http://example.com/path").
 		WithQueryObject(func() {}).chain.assertFailed(t)
