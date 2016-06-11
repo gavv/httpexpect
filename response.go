@@ -132,11 +132,35 @@ func (r *Response) NoContent() *Response {
 	return r
 }
 
-// ContentTypeJSON succeedes if response contains "application/json" Content-Type
-// header with empty or "utf-8" charset
-func (r *Response) ContentTypeJSON() *Response {
-	r.checkJSON()
+// ContentType succeedes if response contains Content-Type header with given
+// media type and charset.
+//
+// If charset is omitted, and mediaType is non-empty, Content-Type header
+// should contain empty or utf-8 charset.
+//
+// If charset is omitted, and mediaType is also empty, Content-Type header
+// should contain no charset.
+func (r *Response) ContentType(mediaType string, charset ...string) *Response {
+	r.checkContentType(mediaType, charset...)
 	return r
+}
+
+// Text returns a new String object that may be used to inspect response body.
+//
+// Text succeedes if response contains "text/plain" Content-Type header
+// with empty or "utf-8" charset.
+//
+// Example:
+//  resp := NewResponse(t, response)
+//  resp.Text().Equal("hello, world!")
+func (r *Response) Text() *String {
+	var content string
+
+	if !r.chain.failed() && r.checkContentType("text/plain") {
+		content = string(r.content)
+	}
+
+	return &String{r.chain, content}
 }
 
 // JSON returns a new Value object that may be used to inspect JSON contents
@@ -158,7 +182,7 @@ func (r *Response) getJSON() interface{} {
 		return nil
 	}
 
-	if !r.checkJSON() {
+	if !r.checkContentType("application/json") {
 		return nil
 	}
 
@@ -171,7 +195,7 @@ func (r *Response) getJSON() interface{} {
 	return value
 }
 
-func (r *Response) checkJSON() bool {
+func (r *Response) checkContentType(expectedType string, expectedCharset ...string) bool {
 	if r.chain.failed() {
 		return false
 	}
@@ -181,18 +205,36 @@ func (r *Response) checkJSON() bool {
 	mediaType, params, _ := mime.ParseMediaType(contentType)
 	charset := params["charset"]
 
-	if mediaType != "application/json" {
+	if mediaType != expectedType {
 		r.chain.fail(
-			"\nexpected \"Content-Type\" header with \"application/json\" media type,\n" +
-				"but got \"" + mediaType + "\"")
+			"\nexpected \"Content-Type\" header with \"" + expectedType +
+				"\" media type,\nbut got \"" + mediaType + "\"")
 		return false
 	}
 
-	if charset != "" && strings.ToLower(charset) != "utf-8" {
-		r.chain.fail(
-			"\nexpected \"Content-Type\" header with \"utf-8\" or empty charset,\n" +
-				"but got \"" + charset + "\"")
-		return false
+	if len(expectedCharset) == 0 {
+		if expectedType == "" {
+			if charset != "" {
+				r.chain.fail(
+					"\nexpected \"Content-Type\" header with empty charset," +
+						"\nbut got \"" + charset + "\"")
+				return false
+			}
+		} else {
+			if charset != "" && !strings.EqualFold(charset, "utf-8") {
+				r.chain.fail(
+					"\nexpected \"Content-Type\" header with \"utf-8\" or empty charset," +
+						"\nbut got \"" + charset + "\"")
+				return false
+			}
+		}
+	} else {
+		if !strings.EqualFold(charset, expectedCharset[0]) {
+			r.chain.fail(
+				"\nexpected \"Content-Type\" header with \"" + expectedCharset[0] +
+					"\" charset,\nbut got \"" + charset + "\"")
+			return false
+		}
 	}
 
 	return true

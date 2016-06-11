@@ -162,7 +162,9 @@ func New(t *testing.T, baseURL string) *Expect {
 	return WithConfig(Config{
 		BaseURL:  baseURL,
 		Reporter: NewAssertReporter(t),
-		Printers: []Printer{NewCompactPrinter(t)},
+		Printers: []Printer{
+			NewCompactPrinter(t),
+		},
 	})
 }
 

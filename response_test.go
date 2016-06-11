@@ -25,11 +25,12 @@ func TestResponseFailed(t *testing.T) {
 	resp.Headers().chain.assertFailed(t)
 	resp.Header("foo").chain.assertFailed(t)
 	resp.Body().chain.assertFailed(t)
+	resp.Text().chain.assertFailed(t)
 	resp.JSON().chain.assertFailed(t)
 
 	resp.Status(123)
 	resp.NoContent()
-	resp.ContentTypeJSON()
+	resp.ContentType("", "")
 }
 
 func TestResponseHeaders(t *testing.T) {
@@ -107,7 +108,11 @@ func TestResponseNoContentEmpty(t *testing.T) {
 	resp.chain.assertOK(t)
 	resp.chain.reset()
 
-	resp.ContentTypeJSON()
+	resp.ContentType("")
+	resp.chain.assertOK(t)
+	resp.chain.reset()
+
+	resp.Text()
 	resp.chain.assertFailed(t)
 	resp.chain.reset()
 
@@ -139,13 +144,65 @@ func TestResponseNoContentNil(t *testing.T) {
 	resp.chain.assertOK(t)
 	resp.chain.reset()
 
-	resp.ContentTypeJSON()
+	resp.ContentType("")
+	resp.chain.assertOK(t)
+	resp.chain.reset()
+
+	resp.Text()
 	resp.chain.assertFailed(t)
 	resp.chain.reset()
 
 	resp.JSON()
 	resp.chain.assertFailed(t)
 	resp.chain.reset()
+}
+
+func TestResponseText(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	headers := map[string][]string{
+		"Content-Type": {"text/plain; charset=utf-8"},
+	}
+
+	body := `hello, world!`
+
+	httpResp := &http.Response{
+		StatusCode: http.StatusOK,
+		Header:     http.Header(headers),
+		Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+	}
+
+	resp := NewResponse(reporter, httpResp)
+
+	assert.Equal(t, body, resp.Body().Raw())
+	resp.chain.assertOK(t)
+	resp.chain.reset()
+
+	resp.NoContent()
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
+
+	resp.ContentType("text/plain")
+	resp.chain.assertOK(t)
+	resp.chain.reset()
+
+	resp.ContentType("text/plain", "UTF-8")
+	resp.chain.assertOK(t)
+	resp.chain.reset()
+
+	resp.ContentType("application/json")
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
+
+	resp.Text()
+	resp.chain.assertOK(t)
+	resp.chain.reset()
+
+	resp.JSON()
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
+
+	assert.Equal(t, "hello, world!", resp.Text().Raw())
 }
 
 func TestResponseJson(t *testing.T) {
@@ -173,8 +230,20 @@ func TestResponseJson(t *testing.T) {
 	resp.chain.assertFailed(t)
 	resp.chain.reset()
 
-	resp.ContentTypeJSON()
+	resp.ContentType("application/json")
 	resp.chain.assertOK(t)
+	resp.chain.reset()
+
+	resp.ContentType("application/json", "UTF-8")
+	resp.chain.assertOK(t)
+	resp.chain.reset()
+
+	resp.ContentType("text/plain")
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
+
+	resp.Text()
+	resp.chain.assertFailed(t)
 	resp.chain.reset()
 
 	resp.JSON()
@@ -206,10 +275,6 @@ func TestResponseJsonEncodingEmpty(t *testing.T) {
 	resp.chain.assertFailed(t)
 	resp.chain.reset()
 
-	resp.ContentTypeJSON()
-	resp.chain.assertOK(t)
-	resp.chain.reset()
-
 	resp.JSON()
 	resp.chain.assertOK(t)
 	resp.chain.reset()
@@ -236,10 +301,6 @@ func TestResponseJsonEncodingBad(t *testing.T) {
 	resp := NewResponse(reporter, httpResp)
 
 	resp.NoContent()
-	resp.chain.assertFailed(t)
-	resp.chain.reset()
-
-	resp.ContentTypeJSON()
 	resp.chain.assertFailed(t)
 	resp.chain.reset()
 
