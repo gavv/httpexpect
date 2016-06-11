@@ -301,6 +301,40 @@ func TestRequestBodyBytesNil(t *testing.T) {
 	assert.Equal(t, int64(0), client.req.ContentLength)
 }
 
+func TestRequestBodyText(t *testing.T) {
+	client := &mockClient{}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		Client:   client,
+		Reporter: reporter,
+	}
+
+	expectedHeaders := map[string][]string{
+		"Content-Type": {"text/plain; charset=utf-8"},
+		"Some-Header":  {"foo"},
+	}
+
+	req := NewRequest(config, "METHOD", "url")
+
+	req.WithHeaders(map[string]string{
+		"Some-Header": "foo",
+	})
+
+	req.WithText("some text")
+
+	resp := req.Expect()
+	resp.chain.assertOK(t)
+
+	assert.Equal(t, "METHOD", client.req.Method)
+	assert.Equal(t, "url", client.req.URL.String())
+	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
+	assert.Equal(t, "some text", string(resp.content))
+
+	assert.Equal(t, &client.resp, resp.Raw())
+}
+
 func TestRequestBodyJSON(t *testing.T) {
 	client := &mockClient{}
 

@@ -158,8 +158,21 @@ func (r *Request) WithBytes(b []byte) *Request {
 	return r
 }
 
-// WithJSON sets Content-Type header to "application/json" and sets body to
-// marshaled object.
+// WithText sets Content-Type header to "text/plain; charset=utf-8" and
+// sets body to given string.
+//
+// Example:
+//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req.WithText("hello, world!")
+func (r *Request) WithText(s string) *Request {
+	r.WithHeader("Content-Type", "text/plain; charset=utf-8")
+	r.WithBody(strings.NewReader(s))
+
+	return r
+}
+
+// WithJSON sets Content-Type header to "application/json; charset=utf-8"
+// and sets body to object, marshaled using json.Marshal().
 //
 // Example:
 //  req := NewRequest(config, "PUT", "http://example.org/path")
