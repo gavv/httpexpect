@@ -157,6 +157,90 @@ func TestResponseNoContentNil(t *testing.T) {
 	resp.chain.reset()
 }
 
+func TestResponseContentType(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	headers := map[string][]string{
+		"Content-Type": {"text/plain; charset=utf-8"},
+	}
+
+	resp := NewResponse(reporter, &http.Response{
+		Header: http.Header(headers),
+	})
+
+	resp.ContentType("text/plain")
+	resp.chain.assertOK(t)
+	resp.chain.reset()
+
+	resp.ContentType("text/plain", "utf-8")
+	resp.chain.assertOK(t)
+	resp.chain.reset()
+
+	resp.ContentType("text/plain", "UTF-8")
+	resp.chain.assertOK(t)
+	resp.chain.reset()
+
+	resp.ContentType("bad")
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
+
+	resp.ContentType("text/plain", "bad")
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
+
+	resp.ContentType("")
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
+
+	resp.ContentType("text/plain", "")
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
+}
+
+func TestResponseContentTypeEmptyCharset(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	headers := map[string][]string{
+		"Content-Type": {"text/plain"},
+	}
+
+	resp := NewResponse(reporter, &http.Response{
+		Header: http.Header(headers),
+	})
+
+	resp.ContentType("text/plain")
+	resp.chain.assertOK(t)
+	resp.chain.reset()
+
+	resp.ContentType("text/plain", "")
+	resp.chain.assertOK(t)
+	resp.chain.reset()
+
+	resp.ContentType("text/plain", "utf-8")
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
+}
+
+func TestResponseContentTypeEmptyType(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	headers := map[string][]string{
+		"Content-Type": {"charset=utf-8"},
+	}
+
+	resp := NewResponse(reporter, &http.Response{
+		Header: http.Header(headers),
+	})
+
+	resp.ContentType("")
+	resp.chain.assertOK(t)
+	resp.chain.reset()
+
+	resp.ContentType("", "")
+	resp.chain.assertOK(t)
+	resp.chain.reset()
+}
+
 func TestResponseText(t *testing.T) {
 	reporter := newMockReporter(t)
 
@@ -186,7 +270,7 @@ func TestResponseText(t *testing.T) {
 	resp.chain.assertOK(t)
 	resp.chain.reset()
 
-	resp.ContentType("text/plain", "UTF-8")
+	resp.ContentType("text/plain", "utf-8")
 	resp.chain.assertOK(t)
 	resp.chain.reset()
 
@@ -234,7 +318,7 @@ func TestResponseJson(t *testing.T) {
 	resp.chain.assertOK(t)
 	resp.chain.reset()
 
-	resp.ContentType("application/json", "UTF-8")
+	resp.ContentType("application/json", "utf-8")
 	resp.chain.assertOK(t)
 	resp.chain.reset()
 
