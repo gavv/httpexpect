@@ -221,24 +221,40 @@ func TestResponseContentTypeEmptyCharset(t *testing.T) {
 	resp.chain.reset()
 }
 
-func TestResponseContentTypeEmptyType(t *testing.T) {
+func TestResponseContentTypeInvalid(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	headers := map[string][]string{
+	headers1 := map[string][]string{
+		"Content-Type": {";"},
+	}
+
+	headers2 := map[string][]string{
 		"Content-Type": {"charset=utf-8"},
 	}
 
-	resp := NewResponse(reporter, &http.Response{
-		Header: http.Header(headers),
+	resp1 := NewResponse(reporter, &http.Response{
+		Header: http.Header(headers1),
 	})
 
-	resp.ContentType("")
-	resp.chain.assertOK(t)
-	resp.chain.reset()
+	resp2 := NewResponse(reporter, &http.Response{
+		Header: http.Header(headers2),
+	})
 
-	resp.ContentType("", "")
-	resp.chain.assertOK(t)
-	resp.chain.reset()
+	resp1.ContentType("")
+	resp1.chain.assertFailed(t)
+	resp1.chain.reset()
+
+	resp1.ContentType("", "")
+	resp1.chain.assertFailed(t)
+	resp1.chain.reset()
+
+	resp2.ContentType("")
+	resp2.chain.assertFailed(t)
+	resp2.chain.reset()
+
+	resp2.ContentType("", "")
+	resp2.chain.assertFailed(t)
+	resp2.chain.reset()
 }
 
 func TestResponseText(t *testing.T) {

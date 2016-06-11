@@ -202,28 +202,43 @@ func (r *Response) checkContentType(expectedType string, expectedCharset ...stri
 
 	contentType := r.resp.Header.Get("Content-Type")
 
-	mediaType, params, _ := mime.ParseMediaType(contentType)
-	charset := params["charset"]
+	if expectedType == "" && len(expectedCharset) == 0 {
+		if contentType == "" {
+			return true
+		}
+	}
+
+	mediaType, params, err := mime.ParseMediaType(contentType)
+	if err != nil {
+		r.chain.fail("\ngot invalid \"Content-Type\" header %s",
+			strconv.Quote(contentType))
+		return false
+	}
 
 	if mediaType != expectedType {
 		r.chain.fail(
-			"\nexpected \"Content-Type\" header with \"" + expectedType +
-				"\" media type,\nbut got \"" + mediaType + "\"")
+			"\nexpected \"Content-Type\" header with %s media type,"+
+				"\nbut got %s",
+			strconv.Quote(expectedType), strconv.Quote(mediaType))
 		return false
 	}
+
+	charset := params["charset"]
 
 	if len(expectedCharset) == 0 {
 		if charset != "" && !strings.EqualFold(charset, "utf-8") {
 			r.chain.fail(
 				"\nexpected \"Content-Type\" header with \"utf-8\" or empty charset," +
-					"\nbut got \"" + charset + "\"")
+					"\nbut got %s",
+				strconv.Quote(charset))
 			return false
 		}
 	} else {
 		if !strings.EqualFold(charset, expectedCharset[0]) {
 			r.chain.fail(
-				"\nexpected \"Content-Type\" header with \"" + expectedCharset[0] +
-					"\" charset,\nbut got \"" + charset + "\"")
+				"\nexpected \"Content-Type\" header with %s charset,"+
+					"\nbut got %s",
+				strconv.Quote(expectedCharset[0]), strconv.Quote(charset))
 			return false
 		}
 	}
