@@ -1,7 +1,9 @@
 package httpexpect
 
 import (
+	"bytes"
 	"encoding/json"
+	"github.com/ajg/form"
 	"io/ioutil"
 	"mime"
 	"net/http"
@@ -161,6 +163,41 @@ func (r *Response) Text() *String {
 	}
 
 	return &String{r.chain, content}
+}
+
+// Form returns a new Object that may be used to inspect form contents
+// of response.
+//
+// Form succeedes if response contains "application/x-www-form-urlencoded"
+// Content-Type header and if form may be decoded from response body.
+// Decoding is performed using https://github.com/ajg/form.
+//
+// Example:
+//  resp := NewResponse(t, response)
+//  resp.Form().Value("foo").Equal("bar")
+func (r *Response) Form() *Object {
+	object := r.getForm()
+	return &Object{r.chain, object}
+}
+
+func (r *Response) getForm() map[string]interface{} {
+	if r.chain.failed() {
+		return nil
+	}
+
+	if !r.checkContentType("application/x-www-form-urlencoded", "") {
+		return nil
+	}
+
+	decoder := form.NewDecoder(bytes.NewReader(r.content))
+
+	var object map[string]interface{}
+	if err := decoder.Decode(&object); err != nil {
+		r.chain.fail(err.Error())
+		return nil
+	}
+
+	return object
 }
 
 // JSON returns a new Value object that may be used to inspect JSON contents

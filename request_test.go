@@ -335,6 +335,78 @@ func TestRequestBodyText(t *testing.T) {
 	assert.Equal(t, &client.resp, resp.Raw())
 }
 
+func TestRequestBodyForm(t *testing.T) {
+	client := &mockClient{}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		Client:   client,
+		Reporter: reporter,
+	}
+
+	expectedHeaders := map[string][]string{
+		"Content-Type": {"application/x-www-form-urlencoded"},
+		"Some-Header":  {"foo"},
+	}
+
+	req := NewRequest(config, "METHOD", "url")
+
+	req.WithHeaders(map[string]string{
+		"Some-Header": "foo",
+	})
+
+	req.WithForm(map[string]interface{}{
+		"a": 1,
+		"b": "2",
+	})
+
+	resp := req.Expect()
+	resp.chain.assertOK(t)
+
+	assert.Equal(t, "METHOD", client.req.Method)
+	assert.Equal(t, "url", client.req.URL.String())
+	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
+	assert.Equal(t, `a=1&b=2`, string(resp.content))
+
+	assert.Equal(t, &client.resp, resp.Raw())
+}
+
+func TestRequestBodyFormStruct(t *testing.T) {
+	client := &mockClient{}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		Client:   client,
+		Reporter: reporter,
+	}
+
+	expectedHeaders := map[string][]string{
+		"Content-Type": {"application/x-www-form-urlencoded"},
+	}
+
+	req := NewRequest(config, "METHOD", "url")
+
+	type S struct {
+		A string `form:"a"`
+		B int    `form:"b"`
+		C int    `form:"-"`
+	}
+
+	req.WithForm(S{"1", 2, 3})
+
+	resp := req.Expect()
+	resp.chain.assertOK(t)
+
+	assert.Equal(t, "METHOD", client.req.Method)
+	assert.Equal(t, "url", client.req.URL.String())
+	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
+	assert.Equal(t, `a=1&b=2`, string(resp.content))
+
+	assert.Equal(t, &client.resp, resp.Raw())
+}
+
 func TestRequestBodyJSON(t *testing.T) {
 	client := &mockClient{}
 
@@ -369,7 +441,27 @@ func TestRequestBodyJSON(t *testing.T) {
 	assert.Equal(t, &client.resp, resp.Raw())
 }
 
-func TestRequestErrorMarshal(t *testing.T) {
+func TestRequestErrorMarshalForm(t *testing.T) {
+	client := &mockClient{}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		Client:   client,
+		Reporter: reporter,
+	}
+
+	req := NewRequest(config, "METHOD", "url")
+
+	req.WithForm(func() {})
+
+	resp := req.Expect()
+	resp.chain.assertFailed(t)
+
+	assert.True(t, resp.Raw() == nil)
+}
+
+func TestRequestErrorMarshalJSON(t *testing.T) {
 	client := &mockClient{}
 
 	reporter := newMockReporter(t)

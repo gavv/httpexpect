@@ -298,6 +298,10 @@ func TestResponseText(t *testing.T) {
 	resp.chain.assertOK(t)
 	resp.chain.reset()
 
+	resp.Form()
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
+
 	resp.JSON()
 	resp.chain.assertFailed(t)
 	resp.chain.reset()
@@ -305,7 +309,64 @@ func TestResponseText(t *testing.T) {
 	assert.Equal(t, "hello, world!", resp.Text().Raw())
 }
 
-func TestResponseJson(t *testing.T) {
+func TestResponseForm(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	headers := map[string][]string{
+		"Content-Type": {"application/x-www-form-urlencoded"},
+	}
+
+	body := `a=1&b=2`
+
+	httpResp := &http.Response{
+		StatusCode: http.StatusOK,
+		Header:     http.Header(headers),
+		Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+	}
+
+	resp := NewResponse(reporter, httpResp)
+
+	assert.Equal(t, body, resp.Body().Raw())
+	resp.chain.assertOK(t)
+	resp.chain.reset()
+
+	resp.NoContent()
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
+
+	resp.ContentType("application/x-www-form-urlencoded")
+	resp.chain.assertOK(t)
+	resp.chain.reset()
+
+	resp.ContentType("application/x-www-form-urlencoded", "")
+	resp.chain.assertOK(t)
+	resp.chain.reset()
+
+	resp.ContentType("text/plain")
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
+
+	resp.Text()
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
+
+	resp.JSON()
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
+
+	resp.Form()
+	resp.chain.assertOK(t)
+	resp.chain.reset()
+
+	expected := map[string]interface{}{
+		"a": "1",
+		"b": "2",
+	}
+
+	assert.Equal(t, expected, resp.Form().Raw())
+}
+
+func TestResponseJSON(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	headers := map[string][]string{
@@ -346,6 +407,10 @@ func TestResponseJson(t *testing.T) {
 	resp.chain.assertFailed(t)
 	resp.chain.reset()
 
+	resp.Form()
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
+
 	resp.JSON()
 	resp.chain.assertOK(t)
 	resp.chain.reset()
@@ -354,7 +419,7 @@ func TestResponseJson(t *testing.T) {
 		map[string]interface{}{"key": "value"}, resp.JSON().Object().Raw())
 }
 
-func TestResponseJsonEncodingEmpty(t *testing.T) {
+func TestResponseJSONEncodingEmpty(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	headers := map[string][]string{
@@ -383,7 +448,7 @@ func TestResponseJsonEncodingEmpty(t *testing.T) {
 		map[string]interface{}{"key": "value"}, resp.JSON().Object().Raw())
 }
 
-func TestResponseJsonEncodingBad(t *testing.T) {
+func TestResponseJSONEncodingBad(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	headers := map[string][]string{

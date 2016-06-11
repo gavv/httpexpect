@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/ajg/form"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -166,6 +167,29 @@ func (r *Request) WithBytes(b []byte) *Request {
 //  req.WithText("hello, world!")
 func (r *Request) WithText(s string) *Request {
 	r.WithHeader("Content-Type", "text/plain; charset=utf-8")
+	r.WithBody(strings.NewReader(s))
+
+	return r
+}
+
+// WithForm sets Content-Type header to "application/x-www-form-urlencoded"
+// and sets body to object, marshaled using github.com/ajg/form module.
+//
+// Various object types are supported, including maps and structs. Structs may
+// contain "form" struct tag, similar to "json" struct tag for json.Marshal().
+// See https://github.com/ajg/form for details.
+//
+// Example:
+//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req.WithForm(map[string]interface{}{"foo": 123})
+func (r *Request) WithForm(object interface{}) *Request {
+	s, err := form.EncodeToString(object)
+	if err != nil {
+		r.chain.fail(err.Error())
+		return r
+	}
+
+	r.WithHeader("Content-Type", "application/x-www-form-urlencoded")
 	r.WithBody(strings.NewReader(s))
 
 	return r
