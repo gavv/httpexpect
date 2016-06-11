@@ -10,14 +10,16 @@
 * Inspect HTTP responses.
 * Inspect JSON or form payload, recursively (supported types: object, array, string, number, boolean, null).
 
-**Misc.:**
+**Tuning:**
 * Can communicate with server via HTTP client or invoke HTTP handler directly.
 * Configurable (accepts custom implementations of failure reporter, HTTP client, and logger).
 
-**Integrations:**
+**Pretty printing:**
 * By default, uses [`testify`](https://github.com/stretchr/testify/) to report failures (can be configured to use `assert` or `require` package).
 * May dump requests and responses in various formats, using [`httputil`](https://golang.org/pkg/net/http/httputil/), [`http2curl`](https://github.com/moul/http2curl), or simple compact logger.
 * Produces nice diff on failure, using [`gojsondiff`](https://github.com/yudai/gojsondiff/).
+
+**Integrations:**
 * Uses [`form`](https://github.com/ajg/form) and [`go-querystring`](https://github.com/google/go-querystring) packages to encode and decode forms and URL parameters.
 * Provides integration with [`fasthttp`](https://github.com/valyala/fasthttp/) client and HTTP handler via `fasthttpexpect` module.
 
