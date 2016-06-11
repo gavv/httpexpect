@@ -100,12 +100,12 @@ type Config struct {
 	// Printers are used to print requests and responses.
 	// May be nil.
 	//
-	// You can use CompactPrinter or DebugPrinter, or provide custom
-	// implementation.
+	// You can use CompactPrinter, DebugPrinter, CurlPrinter, or provide
+	// custom implementation.
 	//
-	// You can also use CompactPrinter or DebugPrinter with alternative
-	// Logger if you're happy with their format, but want to send logs
-	// somewhere else instead of testing.T.
+	// You can also use builtin printers with alternative Logger if
+	// you're happy with their format, but want to send logs somewhere
+	// else instead of testing.T.
 	Printers []Printer
 }
 
@@ -118,7 +118,7 @@ type Client interface {
 }
 
 // Printer is used to print requests and responses.
-// CompactPrinter and DebugPrinter implement this interface.
+// CompactPrinter, DebugPrinter, and CurlPrinter implement this interface.
 type Printer interface {
 	// Request is called before request is sent.
 	Request(*http.Request)
