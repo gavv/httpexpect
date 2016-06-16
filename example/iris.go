@@ -2,7 +2,6 @@ package example
 
 import (
 	"github.com/kataras/iris"
-	"github.com/kataras/iris/config"
 	"github.com/valyala/fasthttp"
 )
 
@@ -15,6 +14,6 @@ func IrisHandler() fasthttp.RequestHandler {
 		ctx.SetStatusCode(iris.StatusOK)
 		ctx.SetBodyString("hello, world!")
 	})
-	
+
 	return iris.NoListen().Handler
 }
