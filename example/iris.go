@@ -11,13 +11,10 @@ import (
 // Implemented API:
 //  GET /hello            print "hello, world"
 func IrisHandler() fasthttp.RequestHandler {
-	api := iris.New()
-	// define the api
-	api.Get("/hello", func(ctx *iris.Context) {
+	iris.Get("/hello", func(ctx *iris.Context) {
 		ctx.SetStatusCode(iris.StatusOK)
 		ctx.SetBodyString("hello, world!")
 	})
-
-	api.PreListen(config.Server{ListeningAddr: ""})
-	return api.ServeRequest
+	
+	return iris.NoListen().Handler
 }
