@@ -1,4 +1,4 @@
-# httpexpect [![GoDoc](https://godoc.org/github.com/gavv/httpexpect?status.svg)](https://godoc.org/github.com/gavv/httpexpect) [![Gitter](https://badges.gitter.im/gavv/httpexpect.svg)](https://gitter.im/gavv/httpexpect?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Travis](https://travis-ci.org/gavv/httpexpect.svg?branch=master)](https://travis-ci.org/gavv/httpexpect) [![Coveralls](https://coveralls.io/repos/github/gavv/httpexpect/badge.svg?branch=master)](https://coveralls.io/github/gavv/httpexpect?branch=master)
+# httpexpect [![GoDoc](https://godoc.org/github.com/gavv/httpexpect?status.svg)](https://godoc.org/github.com/gavv/httpexpect) [![Gitter](https://badges.gitter.im/gavv/httpexpect.svg)](https://gitter.im/gavv/httpexpect?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Travis](https://img.shields.io/travis/gavv/httpexpect.svg)](https://travis-ci.org/gavv/httpexpect) [![Coveralls](https://coveralls.io/repos/github/gavv/httpexpect/badge.svg?branch=master)](https://coveralls.io/github/gavv/httpexpect?branch=master)
 
 *Go module that helps to write nice tests for your HTTP API.*
 
