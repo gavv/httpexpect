@@ -68,6 +68,7 @@ package httpexpect
 import (
 	"net/http"
 	"testing"
+	"time"
 )
 
 // Expect is a toplevel object that contains user Config and allows
@@ -124,7 +125,7 @@ type Printer interface {
 	Request(*http.Request)
 
 	// Response is called after response is received.
-	Response(*http.Response)
+	Response(*http.Response, time.Duration)
 }
 
 // Logger is used as output backend for Printer.

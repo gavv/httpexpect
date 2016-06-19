@@ -4,6 +4,8 @@ import (
 	"github.com/moul/http2curl"
 	"net/http"
 	"net/http/httputil"
+	"strings"
+	"time"
 )
 
 // CompactPrinter implements Printer. It prints requests in compact form.
@@ -23,8 +25,8 @@ func (p CompactPrinter) Request(req *http.Request) {
 	}
 }
 
-// Response implements Logger.Response.
-func (CompactPrinter) Response(*http.Response) {
+// Response implements Printer.Response.
+func (CompactPrinter) Response(*http.Response, time.Duration) {
 }
 
 // DebugPrinter implements Printer. Uses net/http/httputil to dump
@@ -42,24 +44,32 @@ func NewDebugPrinter(logger Logger, body bool) DebugPrinter {
 
 // Request implements Printer.Request.
 func (p DebugPrinter) Request(req *http.Request) {
-	if req != nil {
-		dump, err := httputil.DumpRequestOut(req, p.body)
-		if err != nil {
-			panic(err)
-		}
-		p.logger.Logf("%s", dump)
+	if req == nil {
+		return
 	}
+
+	dump, err := httputil.DumpRequestOut(req, p.body)
+	if err != nil {
+		panic(err)
+	}
+	p.logger.Logf("%s", dump)
 }
 
 // Response implements Printer.Response.
-func (p DebugPrinter) Response(resp *http.Response) {
-	if resp != nil {
-		dump, err := httputil.DumpResponse(resp, p.body)
-		if err != nil {
-			panic(err)
-		}
-		p.logger.Logf("%s", dump)
+func (p DebugPrinter) Response(resp *http.Response, duration time.Duration) {
+	if resp == nil {
+		return
 	}
+
+	dump, err := httputil.DumpResponse(resp, p.body)
+	if err != nil {
+		panic(err)
+	}
+
+	text := strings.Replace(string(dump), "\r\n", "\n", -1)
+	lines := strings.SplitN(text, "\n", 2)
+
+	p.logger.Logf("%s %s\n%s", lines[0], duration, lines[1])
 }
 
 // CurlPrinter implements Printer. Uses http2curl to dump requests as
@@ -85,5 +95,5 @@ func (p CurlPrinter) Request(req *http.Request) {
 }
 
 // Response implements Printer.Response.
-func (CurlPrinter) Response(*http.Response) {
+func (CurlPrinter) Response(*http.Response, time.Duration) {
 }

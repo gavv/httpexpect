@@ -323,7 +323,7 @@ func (r *Request) sendRequest() (resp *http.Response, elapsed time.Duration) {
 	}
 
 	for _, printer := range r.config.Printers {
-		printer.Response(resp)
+		printer.Response(resp, elapsed)
 	}
 
 	return resp, elapsed
