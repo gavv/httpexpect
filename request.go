@@ -9,9 +9,12 @@ import (
 	"github.com/google/go-querystring/query"
 	"io"
 	"io/ioutil"
+	"mime/multipart"
 	"net/http"
 	"net/url"
+	"os"
 	"reflect"
+	"sort"
 	"strings"
 	"time"
 )
@@ -19,11 +22,12 @@ import (
 // Request provides methods to incrementally build http.Request object,
 // send it, and receive response.
 type Request struct {
-	config Config
-	chain  chain
-	http   http.Request
-	query  url.Values
-	form   url.Values
+	config    Config
+	chain     chain
+	http      http.Request
+	query     url.Values
+	form      url.Values
+	multipart *multipart.Writer
 }
 
 // NewRequest returns a new Request object.
@@ -254,15 +258,16 @@ func (r *Request) WithJSON(object interface{}) *Request {
 	return r
 }
 
-// WithForm sets Content-Type header to "application/x-www-form-urlencoded",
-// converts object to url.Values using github.com/ajg/form and adds them
-// to request body.
+// WithForm sets Content-Type header to "application/x-www-form-urlencoded"
+// or (if WithMultipart() was called) "multipart/form-data", converts given
+// object to url.Values using github.com/ajg/form and adds it to request body.
 //
 // Various object types are supported, including maps and structs. Structs may
 // contain "form" struct tag, similar to "json" struct tag for json.Marshal().
 // See https://github.com/ajg/form for details.
 //
-// Multiple WithForm() and WithField() calls may be combined.
+// Multiple WithForm(), WithField(), and WithFile() calls may be combined.
+// If WithMultipart() is called, it should be called first.
 //
 // Example:
 //  type MyForm struct {
@@ -280,28 +285,143 @@ func (r *Request) WithForm(object interface{}) *Request {
 		r.chain.fail(err.Error())
 		return r
 	}
-	if r.form == nil {
-		r.form = make(url.Values)
+
+	if r.multipart != nil {
+		var keys []string
+		for k := range f {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for _, k := range keys {
+			if err := r.multipart.WriteField(k, f[k][0]); err != nil {
+				r.chain.fail(err.Error())
+				return r
+			}
+		}
+	} else {
+		if r.form == nil {
+			r.form = make(url.Values)
+		}
+		for k, v := range f {
+			r.form[k] = append(r.form[k], v...)
+		}
 	}
-	for k, v := range f {
-		r.form[k] = append(r.form[k], v...)
-	}
+
 	return r
 }
 
-// WithField sets Content-Type header to "application/x-www-form-urlencoded",
-// converts values to string using fmt.Sprint() and adds it to request body.
+// WithField sets Content-Type header to "application/x-www-form-urlencoded"
+// or (if WithMultipart() was called) "multipart/form-data", converts given
+// value to string using fmt.Sprint() and adds it to request body.
 //
-// Multiple WithForm() and WithField() calls may be combined.
+// Multiple WithForm(), WithField(), and WithFile() calls may be combined.
+// If WithMultipart() is called, it should be called first.
 //
 // Example:
 //  req := NewRequest(config, "PUT", "http://example.org/path")
 //  req.WithField("foo", 123)
 func (r *Request) WithField(key string, value interface{}) *Request {
-	if r.form == nil {
-		r.form = make(url.Values)
+	if r.multipart != nil {
+		err := r.multipart.WriteField(key, fmt.Sprint(value))
+		if err != nil {
+			r.chain.fail(err.Error())
+			return r
+		}
+	} else {
+		if r.form == nil {
+			r.form = make(url.Values)
+		}
+		r.form[key] = append(r.form[key], fmt.Sprint(value))
 	}
-	r.form[key] = append(r.form[key], fmt.Sprint(value))
+	return r
+}
+
+// WithFile sets Content-Type header to "multipart/form-data", reads given
+// file and adds its contents to request body.
+//
+// If reader is given, it's used to read file contents. Otherwise, os.Open()
+// is used to read a file with given path.
+//
+// Multiple WithForm(), WithField(), and WithFile() calls may be combined.
+// WithMultipart() should be called before WithFile(), otherwise WithFile()
+// fails.
+//
+// Example:
+//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req.WithFile("avatar", "./john.png")
+//
+//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  fh, _ := os.Open("./john.png")
+//  req.WithMultipart().
+//      WithFile("avatar", "john.png", fh)
+//  fh.Close()
+func (r *Request) WithFile(key, path string, reader ...io.Reader) *Request {
+	if r.multipart == nil {
+		r.chain.fail("WithFile requires WithMultipart to be called first")
+		return r
+	}
+
+	wr, err := r.multipart.CreateFormFile(key, path)
+	if err != nil {
+		r.chain.fail(err.Error())
+		return r
+	}
+
+	var rd io.Reader
+	if len(reader) != 0 && reader[0] != nil {
+		rd = reader[0]
+	} else {
+		f, err := os.Open(path)
+		if err != nil {
+			r.chain.fail(err.Error())
+			return r
+		}
+		rd = f
+		defer f.Close()
+	}
+
+	if _, err := io.Copy(wr, rd); err != nil {
+		r.chain.fail(err.Error())
+		return r
+	}
+
+	return r
+}
+
+// WithFileBytes is like WithFile, but uses given slice of bytes as the
+// file contents.
+//
+// Example:
+//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  fh, _ := os.Open("./john.png")
+//  b, _ := ioutil.ReadAll(fh)
+//  req.WithMultipart().
+//      WithFileBytes("avatar", "john.png", b)
+//  fh.Close()
+func (r *Request) WithFileBytes(key, path string, data []byte) *Request {
+	return r.WithFile(key, path, bytes.NewReader(data))
+}
+
+// WithMultipart sets Content-Type header to "multipart/form-data".
+//
+// After this call, WithForm() and WithField() switch to multipart form
+// instead of urlencoded form.
+//
+// If WithMultipart() is called, it should be called before WithForm()
+// or WithField().
+//
+// WithFile() always requires WithMultipart() to be called first.
+//
+// Example:
+//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req.WithMultipart().
+//      WithForm(map[string]interface{}{"foo": 123})
+func (r *Request) WithMultipart() *Request {
+	if r.multipart == nil {
+		var buf bytes.Buffer
+		r.WithBody(&buf)
+		r.multipart = multipart.NewWriter(&buf)
+	}
 	return r
 }
 
@@ -316,18 +436,29 @@ func (r *Request) WithField(key string, value interface{}) *Request {
 //  resp := req.Expect()
 //  resp.Status(http.StatusOK)
 func (r *Request) Expect() *Response {
-	if r.query != nil {
-		r.http.URL.RawQuery = r.query.Encode()
-	}
-
-	if r.form != nil {
-		r.WithHeader("Content-Type", "application/x-www-form-urlencoded")
-		r.WithBody(strings.NewReader(r.form.Encode()))
-	}
+	r.encodeRequest()
 
 	resp, elapsed := r.sendRequest()
 
 	return makeResponse(r.chain, resp, elapsed)
+}
+
+func (r *Request) encodeRequest() {
+	if r.query != nil {
+		r.http.URL.RawQuery = r.query.Encode()
+	}
+
+	if r.multipart != nil {
+		r.WithHeader("Content-Type", r.multipart.FormDataContentType())
+
+		if err := r.multipart.Close(); err != nil {
+			r.chain.fail(err.Error())
+			return
+		}
+	} else if r.form != nil {
+		r.WithHeader("Content-Type", "application/x-www-form-urlencoded")
+		r.WithBody(strings.NewReader(r.form.Encode()))
+	}
 }
 
 func (r *Request) sendRequest() (resp *http.Response, elapsed time.Duration) {
@@ -354,5 +485,5 @@ func (r *Request) sendRequest() (resp *http.Response, elapsed time.Duration) {
 		printer.Response(resp, elapsed)
 	}
 
-	return resp, elapsed
+	return
 }

@@ -4,7 +4,12 @@ import (
 	"bytes"
 	"errors"
 	"github.com/stretchr/testify/assert"
+	"io/ioutil"
+	"mime"
+	"mime/multipart"
 	"net/http"
+	"os"
+	"strings"
 	"testing"
 )
 
@@ -539,6 +544,124 @@ func TestRequestBodyFormCombined(t *testing.T) {
 	assert.Equal(t, `a=1&b=2&c=3`, string(resp.content))
 
 	assert.Equal(t, &client.resp, resp.Raw())
+}
+
+func TestRequestBodyMultipart(t *testing.T) {
+	client := &mockClient{}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		Client:   client,
+		Reporter: reporter,
+	}
+
+	req := NewRequest(config, "POST", "url")
+
+	req.WithMultipart()
+	req.WithForm(map[string]string{"b": "1", "c": "2"})
+	req.WithField("a", 3)
+
+	resp := req.Expect()
+	resp.chain.assertOK(t)
+
+	assert.Equal(t, "POST", client.req.Method)
+	assert.Equal(t, "url", client.req.URL.String())
+
+	mediatype, params, err := mime.ParseMediaType(client.req.Header.Get("Content-Type"))
+
+	assert.True(t, err == nil)
+	assert.Equal(t, "multipart/form-data", mediatype)
+	assert.True(t, params["boundary"] != "")
+
+	reader := multipart.NewReader(bytes.NewReader(resp.content), params["boundary"])
+
+	part1, _ := reader.NextPart()
+	assert.Equal(t, "b", part1.FormName())
+	assert.Equal(t, "", part1.FileName())
+	b1, _ := ioutil.ReadAll(part1)
+	assert.Equal(t, "1", string(b1))
+
+	part2, _ := reader.NextPart()
+	assert.Equal(t, "c", part2.FormName())
+	assert.Equal(t, "", part2.FileName())
+	b2, _ := ioutil.ReadAll(part2)
+	assert.Equal(t, "2", string(b2))
+
+	part3, _ := reader.NextPart()
+	assert.Equal(t, "a", part3.FormName())
+	assert.Equal(t, "", part3.FileName())
+	b3, _ := ioutil.ReadAll(part3)
+	assert.Equal(t, "3", string(b3))
+
+	eof, _ := reader.NextPart()
+	assert.True(t, eof == nil)
+}
+
+func TestRequestBodyMultipartFile(t *testing.T) {
+	client := &mockClient{}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		Client:   client,
+		Reporter: reporter,
+	}
+
+	req := NewRequest(config, "POST", "url")
+
+	fh, _ := ioutil.TempFile("", "httpexpect")
+	filename2 := fh.Name()
+	fh.WriteString("2")
+	fh.Close()
+	defer os.Remove(filename2)
+
+	req.WithMultipart()
+	req.WithForm(map[string]string{"a": "1"})
+	req.WithFile("b", filename2)
+	req.WithFile("c", "filename3", strings.NewReader("3"))
+	req.WithFileBytes("d", "filename4", []byte("4"))
+
+	resp := req.Expect()
+	resp.chain.assertOK(t)
+
+	assert.Equal(t, "POST", client.req.Method)
+	assert.Equal(t, "url", client.req.URL.String())
+
+	mediatype, params, err := mime.ParseMediaType(client.req.Header.Get("Content-Type"))
+
+	assert.True(t, err == nil)
+	assert.Equal(t, "multipart/form-data", mediatype)
+	assert.True(t, params["boundary"] != "")
+
+	reader := multipart.NewReader(bytes.NewReader(resp.content), params["boundary"])
+
+	part1, _ := reader.NextPart()
+	assert.Equal(t, "a", part1.FormName())
+	assert.Equal(t, "", part1.FileName())
+	b1, _ := ioutil.ReadAll(part1)
+	assert.Equal(t, "1", string(b1))
+
+	part2, _ := reader.NextPart()
+	assert.Equal(t, "b", part2.FormName())
+	assert.Equal(t, filename2, part2.FileName())
+	b2, _ := ioutil.ReadAll(part2)
+	assert.Equal(t, "2", string(b2))
+
+	part3, _ := reader.NextPart()
+	assert.Equal(t, "c", part3.FormName())
+	assert.Equal(t, "filename3", part3.FileName())
+	b3, _ := ioutil.ReadAll(part3)
+	assert.Equal(t, "3", string(b3))
+
+	part4, _ := reader.NextPart()
+	assert.Equal(t, "d", part4.FormName())
+	assert.Equal(t, "filename4", part4.FileName())
+	b4, _ := ioutil.ReadAll(part4)
+	assert.Equal(t, "4", string(b4))
+
+	eof, _ := reader.NextPart()
+	assert.True(t, eof == nil)
 }
 
 func TestRequestBodyJSON(t *testing.T) {
