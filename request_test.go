@@ -436,6 +436,41 @@ func TestRequestBodyForm(t *testing.T) {
 	assert.Equal(t, &client.resp, resp.Raw())
 }
 
+func TestRequestBodyField(t *testing.T) {
+	client := &mockClient{}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		Client:   client,
+		Reporter: reporter,
+	}
+
+	expectedHeaders := map[string][]string{
+		"Content-Type": {"application/x-www-form-urlencoded"},
+		"Some-Header":  {"foo"},
+	}
+
+	req := NewRequest(config, "METHOD", "url")
+
+	req.WithHeaders(map[string]string{
+		"Some-Header": "foo",
+	})
+
+	req.WithField("a", 1)
+	req.WithField("b", "2")
+
+	resp := req.Expect()
+	resp.chain.assertOK(t)
+
+	assert.Equal(t, "METHOD", client.req.Method)
+	assert.Equal(t, "url", client.req.URL.String())
+	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
+	assert.Equal(t, `a=1&b=2`, string(resp.content))
+
+	assert.Equal(t, &client.resp, resp.Raw())
+}
+
 func TestRequestBodyFormStruct(t *testing.T) {
 	client := &mockClient{}
 
@@ -493,6 +528,7 @@ func TestRequestBodyFormCombined(t *testing.T) {
 
 	req.WithForm(S{A: 1})
 	req.WithForm(map[string]string{"b": "2"})
+	req.WithField("c", 3)
 
 	resp := req.Expect()
 	resp.chain.assertOK(t)
@@ -500,7 +536,7 @@ func TestRequestBodyFormCombined(t *testing.T) {
 	assert.Equal(t, "METHOD", client.req.Method)
 	assert.Equal(t, "url", client.req.URL.String())
 	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
-	assert.Equal(t, `a=1&b=2`, string(resp.content))
+	assert.Equal(t, `a=1&b=2&c=3`, string(resp.content))
 
 	assert.Equal(t, &client.resp, resp.Raw())
 }

@@ -254,12 +254,15 @@ func (r *Request) WithJSON(object interface{}) *Request {
 	return r
 }
 
-// WithForm sets Content-Type header to "application/x-www-form-urlencoded"
-// and sets body to object, marshaled using github.com/ajg/form module.
+// WithForm sets Content-Type header to "application/x-www-form-urlencoded",
+// converts object to url.Values using github.com/ajg/form and adds them
+// to request body.
 //
 // Various object types are supported, including maps and structs. Structs may
 // contain "form" struct tag, similar to "json" struct tag for json.Marshal().
 // See https://github.com/ajg/form for details.
+//
+// Multiple WithForm() and WithField() calls may be combined.
 //
 // Example:
 //  type MyForm struct {
@@ -283,6 +286,22 @@ func (r *Request) WithForm(object interface{}) *Request {
 	for k, v := range f {
 		r.form[k] = append(r.form[k], v...)
 	}
+	return r
+}
+
+// WithField sets Content-Type header to "application/x-www-form-urlencoded",
+// converts values to string using fmt.Sprint() and adds it to request body.
+//
+// Multiple WithForm() and WithField() calls may be combined.
+//
+// Example:
+//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req.WithField("foo", 123)
+func (r *Request) WithField(key string, value interface{}) *Request {
+	if r.form == nil {
+		r.form = make(url.Values)
+	}
+	r.form[key] = append(r.form[key], fmt.Sprint(value))
 	return r
 }
 
