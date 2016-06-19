@@ -20,9 +20,9 @@ func TestCompactPrinter(t *testing.T) {
 	printer.Request(req2)
 	printer.Request(nil)
 
-	printer.Response(&http.Response{Body: ioutil.NopCloser(body2)})
-	printer.Response(&http.Response{})
-	printer.Response(nil)
+	printer.Response(&http.Response{Body: ioutil.NopCloser(body2)}, 0)
+	printer.Response(&http.Response{}, 0)
+	printer.Response(nil, 0)
 }
 
 func TestDebugPrinter(t *testing.T) {
@@ -38,7 +38,7 @@ func TestDebugPrinter(t *testing.T) {
 	printer.Request(req2)
 	printer.Request(nil)
 
-	printer.Response(&http.Response{Body: ioutil.NopCloser(body2)})
-	printer.Response(&http.Response{})
-	printer.Response(nil)
+	printer.Response(&http.Response{Body: ioutil.NopCloser(body2)}, 0)
+	printer.Response(&http.Response{}, 0)
+	printer.Response(nil, 0)
 }
