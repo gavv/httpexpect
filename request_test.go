@@ -50,6 +50,23 @@ func TestRequestEmpty(t *testing.T) {
 	resp.chain.assertOK(t)
 }
 
+func TestRequestTime(t *testing.T) {
+	client := &mockClient{}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		Client:   client,
+		Reporter: reporter,
+	}
+
+	for n := 0; n < 10; n++ {
+		req := NewRequest(config, "", "")
+		resp := req.Expect()
+		assert.True(t, resp.time >= 0)
+	}
+}
+
 func TestRequestURL(t *testing.T) {
 	client := &mockClient{}
 

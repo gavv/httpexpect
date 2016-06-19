@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/ajg/form"
+	"github.com/gavv/monotime"
 	"github.com/google/go-querystring/query"
 	"io"
 	"io/ioutil"
@@ -12,6 +13,7 @@ import (
 	"net/url"
 	"reflect"
 	"strings"
+	"time"
 )
 
 // Request provides methods to incrementally build http.Request object,
@@ -292,13 +294,13 @@ func (r *Request) WithJSON(object interface{}) *Request {
 //  resp := req.Expect()
 //  resp.Status(http.StatusOK)
 func (r *Request) Expect() *Response {
-	resp := r.sendRequest()
-	return makeResponse(r.chain, resp)
+	resp, elapsed := r.sendRequest()
+	return makeResponse(r.chain, resp, elapsed)
 }
 
-func (r *Request) sendRequest() *http.Response {
+func (r *Request) sendRequest() (resp *http.Response, elapsed time.Duration) {
 	if r.chain.failed() {
-		return nil
+		return
 	}
 
 	if r.query != nil {
@@ -309,15 +311,20 @@ func (r *Request) sendRequest() *http.Response {
 		printer.Request(&r.http)
 	}
 
+	start := monotime.Now()
+
 	resp, err := r.config.Client.Do(&r.http)
+
+	elapsed = monotime.Since(start)
+
 	if err != nil {
 		r.chain.fail(err.Error())
-		return nil
+		return
 	}
 
 	for _, printer := range r.config.Printers {
 		printer.Response(resp)
 	}
 
-	return resp
+	return resp, elapsed
 }

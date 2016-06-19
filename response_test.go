@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"testing"
+	"time"
 )
 
 func TestResponseFailed(t *testing.T) {
@@ -13,10 +14,11 @@ func TestResponseFailed(t *testing.T) {
 
 	chain.fail("fail")
 
-	resp := &Response{chain, nil, nil}
+	resp := &Response{chain, nil, nil, 0}
 
 	resp.chain.assertFailed(t)
 
+	assert.False(t, resp.Time() == nil)
 	assert.False(t, resp.Headers() == nil)
 	assert.False(t, resp.Header("foo") == nil)
 	assert.False(t, resp.Body() == nil)
@@ -31,6 +33,23 @@ func TestResponseFailed(t *testing.T) {
 	resp.Status(123)
 	resp.NoContent()
 	resp.ContentType("", "")
+}
+
+func TestResponseTime(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	duration := time.Duration(10000000)
+
+	resp := NewResponse(reporter, &http.Response{}, duration)
+	resp.chain.assertOK(t)
+	resp.chain.reset()
+
+	rt := resp.Time()
+
+	assert.Equal(t, float64(duration), rt.Raw())
+
+	rt.Equal(10 * time.Millisecond)
+	rt.chain.assertOK(t)
 }
 
 func TestResponseHeaders(t *testing.T) {

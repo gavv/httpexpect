@@ -10,6 +10,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Response provides methods to inspect attached http.Response object.
@@ -17,6 +18,7 @@ type Response struct {
 	chain   chain
 	resp    *http.Response
 	content []byte
+	time    time.Duration
 }
 
 // NewResponse returns a new Response given a reporter used to report failures
@@ -24,11 +26,18 @@ type Response struct {
 //
 // Both reporter and response should not be nil. If response is nil, failure
 // is reported.
-func NewResponse(reporter Reporter, response *http.Response) *Response {
-	return makeResponse(makeChain(reporter), response)
+//
+// If duration, it defines response time to be reported by response.Time().
+func NewResponse(
+	reporter Reporter, response *http.Response, duration ...time.Duration) *Response {
+	var dr time.Duration
+	if len(duration) > 0 {
+		dr = duration[0]
+	}
+	return makeResponse(makeChain(reporter), response, dr)
 }
 
-func makeResponse(chain chain, response *http.Response) *Response {
+func makeResponse(chain chain, response *http.Response, duration time.Duration) *Response {
 	if response == nil {
 		chain.fail("expected non-nil response")
 	}
@@ -37,6 +46,7 @@ func makeResponse(chain chain, response *http.Response) *Response {
 		chain:   chain,
 		resp:    response,
 		content: content,
+		time:    duration,
 	}
 }
 
@@ -62,6 +72,16 @@ func getContent(chain *chain, resp *http.Response) []byte {
 // This is the value originally passed to NewResponse.
 func (r *Response) Raw() *http.Response {
 	return r.resp
+}
+
+// Time returns a new Number object that may be used to inspect response time,
+// in nanoseconds.
+//
+// Example:
+//  resp := NewResponse(t, response, time.Duration(10000000))
+//  resp.Time().Equal(10 * time.Millisecond)
+func (r *Response) Time() *Number {
+	return &Number{r.chain, float64(r.time)}
 }
 
 // Status succeedes if response contains given status code.
