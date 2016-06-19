@@ -23,6 +23,7 @@ type Request struct {
 	chain  chain
 	http   http.Request
 	query  url.Values
+	form   url.Values
 }
 
 // NewRequest returns a new Request object.
@@ -227,36 +228,6 @@ func (r *Request) WithText(s string) *Request {
 	return r
 }
 
-// WithForm sets Content-Type header to "application/x-www-form-urlencoded"
-// and sets body to object, marshaled using github.com/ajg/form module.
-//
-// Various object types are supported, including maps and structs. Structs may
-// contain "form" struct tag, similar to "json" struct tag for json.Marshal().
-// See https://github.com/ajg/form for details.
-//
-// Example:
-//  type MyForm struct {
-//      Foo int `form:"foo"`
-//  }
-//
-//  req := NewRequest(config, "PUT", "http://example.org/path")
-//  req.WithForm(MyForm{Foo: 123})
-//
-//  req := NewRequest(config, "PUT", "http://example.org/path")
-//  req.WithForm(map[string]interface{}{"foo": 123})
-func (r *Request) WithForm(object interface{}) *Request {
-	s, err := form.EncodeToString(object)
-	if err != nil {
-		r.chain.fail(err.Error())
-		return r
-	}
-
-	r.WithHeader("Content-Type", "application/x-www-form-urlencoded")
-	r.WithBody(strings.NewReader(s))
-
-	return r
-}
-
 // WithJSON sets Content-Type header to "application/json; charset=utf-8"
 // and sets body to object, marshaled using json.Marshal().
 //
@@ -283,6 +254,38 @@ func (r *Request) WithJSON(object interface{}) *Request {
 	return r
 }
 
+// WithForm sets Content-Type header to "application/x-www-form-urlencoded"
+// and sets body to object, marshaled using github.com/ajg/form module.
+//
+// Various object types are supported, including maps and structs. Structs may
+// contain "form" struct tag, similar to "json" struct tag for json.Marshal().
+// See https://github.com/ajg/form for details.
+//
+// Example:
+//  type MyForm struct {
+//      Foo int `form:"foo"`
+//  }
+//
+//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req.WithForm(MyForm{Foo: 123})
+//
+//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req.WithForm(map[string]interface{}{"foo": 123})
+func (r *Request) WithForm(object interface{}) *Request {
+	f, err := form.EncodeToValues(object)
+	if err != nil {
+		r.chain.fail(err.Error())
+		return r
+	}
+	if r.form == nil {
+		r.form = make(url.Values)
+	}
+	for k, v := range f {
+		r.form[k] = append(r.form[k], v...)
+	}
+	return r
+}
+
 // Expect constructs http.Request, sends it, receives http.Response, and
 // returns a new Response object to inspect received response.
 //
@@ -294,17 +297,23 @@ func (r *Request) WithJSON(object interface{}) *Request {
 //  resp := req.Expect()
 //  resp.Status(http.StatusOK)
 func (r *Request) Expect() *Response {
+	if r.query != nil {
+		r.http.URL.RawQuery = r.query.Encode()
+	}
+
+	if r.form != nil {
+		r.WithHeader("Content-Type", "application/x-www-form-urlencoded")
+		r.WithBody(strings.NewReader(r.form.Encode()))
+	}
+
 	resp, elapsed := r.sendRequest()
+
 	return makeResponse(r.chain, resp, elapsed)
 }
 
 func (r *Request) sendRequest() (resp *http.Response, elapsed time.Duration) {
 	if r.chain.failed() {
 		return
-	}
-
-	if r.query != nil {
-		r.http.URL.RawQuery = r.query.Encode()
 	}
 
 	for _, printer := range r.config.Printers {

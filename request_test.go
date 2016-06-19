@@ -471,6 +471,40 @@ func TestRequestBodyFormStruct(t *testing.T) {
 	assert.Equal(t, &client.resp, resp.Raw())
 }
 
+func TestRequestBodyFormCombined(t *testing.T) {
+	client := &mockClient{}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		Client:   client,
+		Reporter: reporter,
+	}
+
+	expectedHeaders := map[string][]string{
+		"Content-Type": {"application/x-www-form-urlencoded"},
+	}
+
+	req := NewRequest(config, "METHOD", "url")
+
+	type S struct {
+		A int `form:"a"`
+	}
+
+	req.WithForm(S{A: 1})
+	req.WithForm(map[string]string{"b": "2"})
+
+	resp := req.Expect()
+	resp.chain.assertOK(t)
+
+	assert.Equal(t, "METHOD", client.req.Method)
+	assert.Equal(t, "url", client.req.URL.String())
+	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
+	assert.Equal(t, `a=1&b=2`, string(resp.content))
+
+	assert.Equal(t, &client.resp, resp.Raw())
+}
+
 func TestRequestBodyJSON(t *testing.T) {
 	client := &mockClient{}
 
