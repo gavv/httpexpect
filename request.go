@@ -15,6 +15,7 @@ import (
 	"os"
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -22,12 +23,14 @@ import (
 // Request provides methods to incrementally build http.Request object,
 // send it, and receive response.
 type Request struct {
-	config    Config
-	chain     chain
-	http      http.Request
-	query     url.Values
-	form      url.Values
-	multipart *multipart.Writer
+	config     Config
+	chain      chain
+	http       http.Request
+	query      url.Values
+	form       url.Values
+	multipart  *multipart.Writer
+	typesetter string
+	bodysetter string
 }
 
 // NewRequest returns a new Request object.
@@ -176,10 +179,13 @@ func (r *Request) WithHeaders(headers map[string]string) *Request {
 //  req.WithHeader("Content-Type": "application/json")
 func (r *Request) WithHeader(k, v string) *Request {
 	switch strings.ToLower(k) {
-	case "content-type":
-		r.setType(v)
 	case "host":
 		r.http.Host = v
+	case "content-type":
+		if r.typesetter == "" {
+			r.typesetter = "WithHeader"
+		}
+		r.http.Header.Add(k, v)
 	default:
 		r.http.Header.Add(k, v)
 	}
@@ -195,7 +201,7 @@ func (r *Request) WithHeader(k, v string) *Request {
 //  req.WithHeader("Content-Type": "application/json")
 //  req.WithBody(bytes.NewBufferString(`{"foo": 123}`))
 func (r *Request) WithBody(reader io.Reader) *Request {
-	r.setBody(reader, -1)
+	r.setBody("WithBody", reader, -1)
 	return r
 }
 
@@ -207,9 +213,9 @@ func (r *Request) WithBody(reader io.Reader) *Request {
 //  req.WithBytes([]byte(`{"foo": 123}`))
 func (r *Request) WithBytes(b []byte) *Request {
 	if b == nil {
-		r.setBody(nil, 0)
+		r.setBody("WithBytes", nil, 0)
 	} else {
-		r.setBody(bytes.NewReader(b), len(b))
+		r.setBody("WithBytes", bytes.NewReader(b), len(b))
 	}
 	return r
 }
@@ -221,8 +227,8 @@ func (r *Request) WithBytes(b []byte) *Request {
 //  req := NewRequest(config, "PUT", "http://example.org/path")
 //  req.WithText("hello, world!")
 func (r *Request) WithText(s string) *Request {
-	r.setType("text/plain; charset=utf-8")
-	r.setBody(strings.NewReader(s), -1)
+	r.setType("WithText", "text/plain; charset=utf-8")
+	r.setBody("WithText", strings.NewReader(s), -1)
 	return r
 }
 
@@ -246,8 +252,8 @@ func (r *Request) WithJSON(object interface{}) *Request {
 		return r
 	}
 
-	r.setType("application/json; charset=utf-8")
-	r.setBody(bytes.NewReader(b), len(b))
+	r.setType("WithJSON", "application/json; charset=utf-8")
+	r.setBody("WithJSON", bytes.NewReader(b), len(b))
 
 	return r
 }
@@ -281,6 +287,8 @@ func (r *Request) WithForm(object interface{}) *Request {
 	}
 
 	if r.multipart != nil {
+		r.setType("WithForm", "multipart/form-data")
+
 		var keys []string
 		for k := range f {
 			keys = append(keys, k)
@@ -293,6 +301,8 @@ func (r *Request) WithForm(object interface{}) *Request {
 			}
 		}
 	} else {
+		r.setType("WithForm", "application/x-www-form-urlencoded")
+
 		if r.form == nil {
 			r.form = make(url.Values)
 		}
@@ -316,12 +326,16 @@ func (r *Request) WithForm(object interface{}) *Request {
 //  req.WithField("foo", 123)
 func (r *Request) WithField(key string, value interface{}) *Request {
 	if r.multipart != nil {
+		r.setType("WithField", "multipart/form-data")
+
 		err := r.multipart.WriteField(key, fmt.Sprint(value))
 		if err != nil {
 			r.chain.fail(err.Error())
 			return r
 		}
 	} else {
+		r.setType("WithField", "application/x-www-form-urlencoded")
+
 		if r.form == nil {
 			r.form = make(url.Values)
 		}
@@ -350,6 +364,8 @@ func (r *Request) WithField(key string, value interface{}) *Request {
 //      WithFile("avatar", "john.png", fh)
 //  fh.Close()
 func (r *Request) WithFile(key, path string, reader ...io.Reader) *Request {
+	r.setType("WithFile", "multipart/form-data")
+
 	if r.multipart == nil {
 		r.chain.fail("WithFile requires WithMultipart to be called first")
 		return r
@@ -411,11 +427,14 @@ func (r *Request) WithFileBytes(key, path string, data []byte) *Request {
 //  req.WithMultipart().
 //      WithForm(map[string]interface{}{"foo": 123})
 func (r *Request) WithMultipart() *Request {
+	r.setType("WithMultipart", "multipart/form-data")
+
 	if r.multipart == nil {
 		var buf bytes.Buffer
 		r.multipart = multipart.NewWriter(&buf)
-		r.setBody(&buf, -1)
+		r.setBody("WithMultipart", &buf, -1)
 	}
+
 	return r
 }
 
@@ -437,11 +456,30 @@ func (r *Request) Expect() *Response {
 	return makeResponse(r.chain, resp, elapsed)
 }
 
-func (r *Request) setType(contentType string) {
-	r.http.Header.Add("Content-Type", contentType)
+func (r *Request) setType(newSetter, newType string) {
+	previousType := r.http.Header.Get("Content-Type")
+
+	if previousType != "" && previousType != newType {
+		r.chain.fail(
+			"\nambiguous request \"Content-Type\" header values:\n  %s (set by %s)\n\n"+
+				"and:\n  %s (wanted by %s)",
+			strconv.Quote(previousType), r.typesetter,
+			strconv.Quote(newType), newSetter)
+		return
+	}
+
+	r.typesetter = newSetter
+	r.http.Header["Content-Type"] = []string{newType}
 }
 
-func (r *Request) setBody(reader io.Reader, len int) {
+func (r *Request) setBody(setter string, reader io.Reader, len int) {
+	if r.bodysetter != "" {
+		r.chain.fail(
+			"\nambiguous request body contents:\n  set by %s\n  overwritten by %s",
+			r.bodysetter, setter)
+		return
+	}
+
 	if reader == nil {
 		r.http.Body = nil
 		r.http.ContentLength = 0
@@ -449,6 +487,8 @@ func (r *Request) setBody(reader io.Reader, len int) {
 		r.http.Body = ioutil.NopCloser(reader)
 		r.http.ContentLength = int64(len)
 	}
+
+	r.bodysetter = setter
 }
 
 func (r *Request) encodeRequest() {
@@ -457,15 +497,17 @@ func (r *Request) encodeRequest() {
 	}
 
 	if r.multipart != nil {
-		r.setType(r.multipart.FormDataContentType())
+		r.http.Header["Content-Type"] = []string{
+			r.multipart.FormDataContentType(),
+		}
 
 		if err := r.multipart.Close(); err != nil {
 			r.chain.fail(err.Error())
 			return
 		}
 	} else if r.form != nil {
-		r.setType("application/x-www-form-urlencoded")
-		r.setBody(strings.NewReader(r.form.Encode()), -1)
+		r.setBody("WithForm or WithField",
+			strings.NewReader(r.form.Encode()), -1)
 	}
 }
 

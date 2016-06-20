@@ -757,3 +757,114 @@ func TestRequestErrorSend(t *testing.T) {
 
 	assert.True(t, resp.Raw() == nil)
 }
+
+func TestRequestErrorConflictBody(t *testing.T) {
+	client := &mockClient{
+		err: errors.New("error"),
+	}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		Client:   client,
+		Reporter: reporter,
+	}
+
+	req1 := NewRequest(config, "METHOD", "url")
+	req1.WithBody(nil)
+	req1.WithBody(nil)
+	req1.chain.assertFailed(t)
+
+	req2 := NewRequest(config, "METHOD", "url")
+	req2.WithBody(nil)
+	req2.WithBytes(nil)
+	req2.chain.assertFailed(t)
+
+	req3 := NewRequest(config, "METHOD", "url")
+	req3.WithBody(nil)
+	req3.WithText("")
+	req3.chain.assertFailed(t)
+
+	req4 := NewRequest(config, "METHOD", "url")
+	req4.WithBody(nil)
+	req4.WithJSON(map[string]interface{}{"a": "b"})
+	req4.chain.assertFailed(t)
+
+	req5 := NewRequest(config, "METHOD", "url")
+	req5.WithBody(nil)
+	req5.WithForm(map[string]interface{}{"a": "b"})
+	req5.Expect()
+	req5.chain.assertFailed(t)
+
+	req6 := NewRequest(config, "METHOD", "url")
+	req6.WithBody(nil)
+	req6.WithField("a", "b")
+	req6.Expect()
+	req6.chain.assertFailed(t)
+
+	req7 := NewRequest(config, "METHOD", "url")
+	req7.WithBody(nil)
+	req7.WithMultipart()
+	req7.chain.assertFailed(t)
+}
+
+func TestRequestErrorConflictType(t *testing.T) {
+	client := &mockClient{
+		err: errors.New("error"),
+	}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		Client:   client,
+		Reporter: reporter,
+	}
+
+	req1 := NewRequest(config, "METHOD", "url")
+	req1.WithText("")
+	req1.WithJSON(map[string]interface{}{"a": "b"})
+	req1.chain.assertFailed(t)
+
+	req2 := NewRequest(config, "METHOD", "url")
+	req2.WithText("")
+	req2.WithForm(map[string]interface{}{"a": "b"})
+	req2.chain.assertFailed(t)
+
+	req3 := NewRequest(config, "METHOD", "url")
+	req3.WithText("")
+	req3.WithField("a", "b")
+	req3.chain.assertFailed(t)
+
+	req4 := NewRequest(config, "METHOD", "url")
+	req4.WithText("")
+	req4.WithMultipart()
+	req4.chain.assertFailed(t)
+}
+
+func TestRequestErrorConflictMultipart(t *testing.T) {
+	client := &mockClient{
+		err: errors.New("error"),
+	}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		Client:   client,
+		Reporter: reporter,
+	}
+
+	req1 := NewRequest(config, "METHOD", "url")
+	req1.WithForm(map[string]interface{}{"a": "b"})
+	req1.WithMultipart()
+	req1.chain.assertFailed(t)
+
+	req2 := NewRequest(config, "METHOD", "url")
+	req2.WithField("a", "b")
+	req2.WithMultipart()
+	req2.chain.assertFailed(t)
+
+	req3 := NewRequest(config, "METHOD", "url")
+	req3.WithFileBytes("a", "a", []byte("a"))
+	req3.WithMultipart()
+	req3.chain.assertFailed(t)
+}
