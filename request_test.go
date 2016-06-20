@@ -159,7 +159,7 @@ func TestRequestURLQuery(t *testing.T) {
 		WithQueryObject(func() {}).chain.assertFailed(t)
 }
 
-func TestExpectURLConcat(t *testing.T) {
+func TestRequestURLConcat(t *testing.T) {
 	client := &mockClient{}
 
 	reporter := NewAssertReporter(t)
@@ -205,7 +205,7 @@ func TestExpectURLConcat(t *testing.T) {
 	assert.Equal(t, "http://example.com/", empty3.http.URL.String())
 }
 
-func TestExpectURLFormat(t *testing.T) {
+func TestRequestURLFormat(t *testing.T) {
 	client := &mockClient{}
 
 	reporter := NewAssertReporter(t)
@@ -251,14 +251,14 @@ func TestRequestHeaders(t *testing.T) {
 
 	req.WithHeaders(map[string]string{
 		"Second-Header": "bar",
-		"Third-Header":  "baz",
+		"Content-Type":  "baz",
 		"Host":          "example.com",
 	})
 
 	expectedHeaders := map[string][]string{
 		"First-Header":  {"foo"},
 		"Second-Header": {"bar"},
-		"Third-Header":  {"baz"},
+		"Content-Type":  {"baz"},
 	}
 
 	resp := req.Expect()
@@ -731,6 +731,29 @@ func TestRequestErrorMarshalJSON(t *testing.T) {
 	req := NewRequest(config, "METHOD", "url")
 
 	req.WithJSON(func() {})
+
+	resp := req.Expect()
+	resp.chain.assertFailed(t)
+
+	assert.True(t, resp.Raw() == nil)
+}
+
+func TestRequestErrorReadFile(t *testing.T) {
+	client := &mockClient{
+		err: errors.New("error"),
+	}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		Client:   client,
+		Reporter: reporter,
+	}
+
+	req := NewRequest(config, "METHOD", "url")
+
+	req.WithMultipart()
+	req.WithFile("", "")
 
 	resp := req.Expect()
 	resp.chain.assertFailed(t)
