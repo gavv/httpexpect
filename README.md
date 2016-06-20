@@ -6,9 +6,9 @@
 
 **Essential:**
 
-* Incrementally build HTTP requests.
-* Inspect HTTP responses.
-* Inspect JSON or form payload, recursively (supported types: object, array, string, number, boolean, null).
+* Incrementally build HTTP requests (query parameters, headers, payload: JSON, urlencoded/multipart forms, text, binary).
+* Inspect HTTP responses (status, headers, response time).
+* Inspect response payload recursively (JSON, forms, text; supported types: object, array, string, number, boolean, null).
 
 **Tuning:**
 * Can communicate with server via HTTP client or invoke HTTP handler directly.
