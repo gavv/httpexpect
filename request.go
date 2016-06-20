@@ -175,9 +175,12 @@ func (r *Request) WithHeaders(headers map[string]string) *Request {
 //  req := NewRequest(config, "PUT", "http://example.org/path")
 //  req.WithHeader("Content-Type": "application/json")
 func (r *Request) WithHeader(k, v string) *Request {
-	if k == "Host" {
+	switch strings.ToLower(k) {
+	case "content-type":
+		r.setType(v)
+	case "host":
 		r.http.Host = v
-	} else {
+	default:
 		r.http.Header.Add(k, v)
 	}
 	return r
@@ -192,13 +195,7 @@ func (r *Request) WithHeader(k, v string) *Request {
 //  req.WithHeader("Content-Type": "application/json")
 //  req.WithBody(bytes.NewBufferString(`{"foo": 123}`))
 func (r *Request) WithBody(reader io.Reader) *Request {
-	if reader == nil {
-		r.http.Body = nil
-		r.http.ContentLength = 0
-	} else {
-		r.http.Body = ioutil.NopCloser(reader)
-		r.http.ContentLength = -1
-	}
+	r.setBody(reader, -1)
 	return r
 }
 
@@ -210,11 +207,9 @@ func (r *Request) WithBody(reader io.Reader) *Request {
 //  req.WithBytes([]byte(`{"foo": 123}`))
 func (r *Request) WithBytes(b []byte) *Request {
 	if b == nil {
-		r.http.Body = nil
-		r.http.ContentLength = 0
+		r.setBody(nil, 0)
 	} else {
-		r.http.Body = ioutil.NopCloser(bytes.NewReader(b))
-		r.http.ContentLength = int64(len(b))
+		r.setBody(bytes.NewReader(b), len(b))
 	}
 	return r
 }
@@ -226,9 +221,8 @@ func (r *Request) WithBytes(b []byte) *Request {
 //  req := NewRequest(config, "PUT", "http://example.org/path")
 //  req.WithText("hello, world!")
 func (r *Request) WithText(s string) *Request {
-	r.WithHeader("Content-Type", "text/plain; charset=utf-8")
-	r.WithBody(strings.NewReader(s))
-
+	r.setType("text/plain; charset=utf-8")
+	r.setBody(strings.NewReader(s), -1)
 	return r
 }
 
@@ -252,8 +246,8 @@ func (r *Request) WithJSON(object interface{}) *Request {
 		return r
 	}
 
-	r.WithHeader("Content-Type", "application/json; charset=utf-8")
-	r.WithBytes(b)
+	r.setType("application/json; charset=utf-8")
+	r.setBody(bytes.NewReader(b), len(b))
 
 	return r
 }
@@ -419,8 +413,8 @@ func (r *Request) WithFileBytes(key, path string, data []byte) *Request {
 func (r *Request) WithMultipart() *Request {
 	if r.multipart == nil {
 		var buf bytes.Buffer
-		r.WithBody(&buf)
 		r.multipart = multipart.NewWriter(&buf)
+		r.setBody(&buf, -1)
 	}
 	return r
 }
@@ -443,21 +437,35 @@ func (r *Request) Expect() *Response {
 	return makeResponse(r.chain, resp, elapsed)
 }
 
+func (r *Request) setType(contentType string) {
+	r.http.Header.Add("Content-Type", contentType)
+}
+
+func (r *Request) setBody(reader io.Reader, len int) {
+	if reader == nil {
+		r.http.Body = nil
+		r.http.ContentLength = 0
+	} else {
+		r.http.Body = ioutil.NopCloser(reader)
+		r.http.ContentLength = int64(len)
+	}
+}
+
 func (r *Request) encodeRequest() {
 	if r.query != nil {
 		r.http.URL.RawQuery = r.query.Encode()
 	}
 
 	if r.multipart != nil {
-		r.WithHeader("Content-Type", r.multipart.FormDataContentType())
+		r.setType(r.multipart.FormDataContentType())
 
 		if err := r.multipart.Close(); err != nil {
 			r.chain.fail(err.Error())
 			return
 		}
 	} else if r.form != nil {
-		r.WithHeader("Content-Type", "application/x-www-form-urlencoded")
-		r.WithBody(strings.NewReader(r.form.Encode()))
+		r.setType("application/x-www-form-urlencoded")
+		r.setBody(strings.NewReader(r.form.Encode()), -1)
 	}
 }
 
