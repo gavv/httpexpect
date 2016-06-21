@@ -698,6 +698,51 @@ func TestRequestBodyJSON(t *testing.T) {
 	assert.Equal(t, &client.resp, resp.Raw())
 }
 
+func TestRequestOverwriteContentType(t *testing.T) {
+	client := &mockClient{}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		Client:   client,
+		Reporter: reporter,
+	}
+
+	req1 := NewRequest(config, "METHOD", "url")
+	req1.WithText("hello")
+	req1.WithHeader("Content-Type", "foo")
+	req1.Expect().chain.assertOK(t)
+	assert.Equal(t, http.Header{"Content-Type": {"foo"}}, client.req.Header)
+
+	req2 := NewRequest(config, "METHOD", "url")
+	req2.WithHeader("Content-Type", "foo")
+	req2.WithText("hello")
+	req2.Expect().chain.assertOK(t)
+	assert.Equal(t, http.Header{"Content-Type": {"foo"}}, client.req.Header)
+
+	req3 := NewRequest(config, "METHOD", "url")
+	req3.WithJSON(map[string]interface{}{"a": "b"})
+	req3.WithHeader("Content-Type", "foo")
+	req3.WithHeader("Content-Type", "bar")
+	req3.Expect().chain.assertOK(t)
+	assert.Equal(t, http.Header{"Content-Type": {"foo", "bar"}}, client.req.Header)
+
+	req4 := NewRequest(config, "METHOD", "url")
+	req4.WithForm(map[string]interface{}{"a": "b"})
+	req4.WithHeader("Content-Type", "foo")
+	req4.WithHeader("Content-Type", "bar")
+	req4.Expect().chain.assertOK(t)
+	assert.Equal(t, http.Header{"Content-Type": {"foo", "bar"}}, client.req.Header)
+
+	req5 := NewRequest(config, "METHOD", "url")
+	req5.WithMultipart()
+	req5.WithForm(map[string]interface{}{"a": "b"})
+	req5.WithHeader("Content-Type", "foo")
+	req5.WithHeader("Content-Type", "bar")
+	req5.Expect().chain.assertOK(t)
+	assert.Equal(t, http.Header{"Content-Type": {"foo", "bar"}}, client.req.Header)
+}
+
 func TestRequestErrorMarshalForm(t *testing.T) {
 	client := &mockClient{}
 

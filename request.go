@@ -29,6 +29,7 @@ type Request struct {
 	query      url.Values
 	form       url.Values
 	multipart  *multipart.Writer
+	forcetype  bool
 	typesetter string
 	bodysetter string
 }
@@ -182,9 +183,11 @@ func (r *Request) WithHeader(k, v string) *Request {
 	case "host":
 		r.http.Host = v
 	case "content-type":
-		if r.typesetter == "" {
-			r.typesetter = "WithHeader"
+		if !r.forcetype {
+			delete(r.http.Header, "Content-Type")
 		}
+		r.forcetype = true
+		r.typesetter = "WithHeader"
 		r.http.Header.Add(k, v)
 	default:
 		r.http.Header.Add(k, v)
@@ -227,7 +230,7 @@ func (r *Request) WithBytes(b []byte) *Request {
 //  req := NewRequest(config, "PUT", "http://example.org/path")
 //  req.WithText("hello, world!")
 func (r *Request) WithText(s string) *Request {
-	r.setType("WithText", "text/plain; charset=utf-8")
+	r.setType("WithText", "text/plain; charset=utf-8", false)
 	r.setBody("WithText", strings.NewReader(s), -1)
 	return r
 }
@@ -252,7 +255,7 @@ func (r *Request) WithJSON(object interface{}) *Request {
 		return r
 	}
 
-	r.setType("WithJSON", "application/json; charset=utf-8")
+	r.setType("WithJSON", "application/json; charset=utf-8", false)
 	r.setBody("WithJSON", bytes.NewReader(b), len(b))
 
 	return r
@@ -287,7 +290,7 @@ func (r *Request) WithForm(object interface{}) *Request {
 	}
 
 	if r.multipart != nil {
-		r.setType("WithForm", "multipart/form-data")
+		r.setType("WithForm", "multipart/form-data", false)
 
 		var keys []string
 		for k := range f {
@@ -301,7 +304,7 @@ func (r *Request) WithForm(object interface{}) *Request {
 			}
 		}
 	} else {
-		r.setType("WithForm", "application/x-www-form-urlencoded")
+		r.setType("WithForm", "application/x-www-form-urlencoded", false)
 
 		if r.form == nil {
 			r.form = make(url.Values)
@@ -326,7 +329,7 @@ func (r *Request) WithForm(object interface{}) *Request {
 //  req.WithField("foo", 123)
 func (r *Request) WithField(key string, value interface{}) *Request {
 	if r.multipart != nil {
-		r.setType("WithField", "multipart/form-data")
+		r.setType("WithField", "multipart/form-data", false)
 
 		err := r.multipart.WriteField(key, fmt.Sprint(value))
 		if err != nil {
@@ -334,7 +337,7 @@ func (r *Request) WithField(key string, value interface{}) *Request {
 			return r
 		}
 	} else {
-		r.setType("WithField", "application/x-www-form-urlencoded")
+		r.setType("WithField", "application/x-www-form-urlencoded", false)
 
 		if r.form == nil {
 			r.form = make(url.Values)
@@ -364,7 +367,7 @@ func (r *Request) WithField(key string, value interface{}) *Request {
 //      WithFile("avatar", "john.png", fh)
 //  fh.Close()
 func (r *Request) WithFile(key, path string, reader ...io.Reader) *Request {
-	r.setType("WithFile", "multipart/form-data")
+	r.setType("WithFile", "multipart/form-data", false)
 
 	if r.multipart == nil {
 		r.chain.fail("WithFile requires WithMultipart to be called first")
@@ -427,7 +430,7 @@ func (r *Request) WithFileBytes(key, path string, data []byte) *Request {
 //  req.WithMultipart().
 //      WithForm(map[string]interface{}{"foo": 123})
 func (r *Request) WithMultipart() *Request {
-	r.setType("WithMultipart", "multipart/form-data")
+	r.setType("WithMultipart", "multipart/form-data", false)
 
 	if r.multipart == nil {
 		var buf bytes.Buffer
@@ -456,16 +459,22 @@ func (r *Request) Expect() *Response {
 	return makeResponse(r.chain, resp, elapsed)
 }
 
-func (r *Request) setType(newSetter, newType string) {
-	previousType := r.http.Header.Get("Content-Type")
-
-	if previousType != "" && previousType != newType {
-		r.chain.fail(
-			"\nambiguous request \"Content-Type\" header values:\n  %s (set by %s)\n\n"+
-				"and:\n  %s (wanted by %s)",
-			strconv.Quote(previousType), r.typesetter,
-			strconv.Quote(newType), newSetter)
+func (r *Request) setType(newSetter, newType string, overwrite bool) {
+	if r.forcetype {
 		return
+	}
+
+	if !overwrite {
+		previousType := r.http.Header.Get("Content-Type")
+
+		if previousType != "" && previousType != newType {
+			r.chain.fail(
+				"\nambiguous request \"Content-Type\" header values:\n  %s (set by %s)\n\n"+
+					"and:\n  %s (wanted by %s)",
+				strconv.Quote(previousType), r.typesetter,
+				strconv.Quote(newType), newSetter)
+			return
+		}
 	}
 
 	r.typesetter = newSetter
@@ -497,9 +506,7 @@ func (r *Request) encodeRequest() {
 	}
 
 	if r.multipart != nil {
-		r.http.Header["Content-Type"] = []string{
-			r.multipart.FormDataContentType(),
-		}
+		r.setType("Expect", r.multipart.FormDataContentType(), true)
 
 		if err := r.multipart.Close(); err != nil {
 			r.chain.fail(err.Error())
