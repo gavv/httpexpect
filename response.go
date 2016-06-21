@@ -104,7 +104,7 @@ func statusText(code int) string {
 	return strconv.Itoa(code)
 }
 
-// Header returns a new Object that may be used to inspect header map.
+// Headers returns a new Object that may be used to inspect header map.
 //
 // Example:
 //  resp := NewResponse(t, response)
