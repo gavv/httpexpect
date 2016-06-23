@@ -66,7 +66,9 @@
 package httpexpect
 
 import (
+	"golang.org/x/net/publicsuffix"
 	"net/http"
+	"net/http/cookiejar"
 	"testing"
 	"time"
 )
@@ -171,13 +173,13 @@ func New(t *testing.T, baseURL string) *Expect {
 
 // WithConfig returns a new Expect object with given config.
 //
-// If Config.Client is nil, http.DefaultClient is used.
+// If Config.Client is nil, httpexpect.DefaultClient() is used.
 //
 // Example:
 //  func TestAPI(t *testing.T) {
 //      e := httpexpect.WithConfig(httpexpect.Config{
 //          BaseURL:  "http://example.org/",
-//          Client:   http.DefaultClient,
+//          Client:   &http.Client{},
 //          Reporter: httpexpect.NewAssertReporter(t),
 //          Printers: []httpexpect.Printer{
 //              httpexpect.NewCurlPrinter(t),
@@ -188,12 +190,33 @@ func New(t *testing.T, baseURL string) *Expect {
 //  }
 func WithConfig(config Config) *Expect {
 	if config.Client == nil {
-		config.Client = http.DefaultClient
+		config.Client = DefaultClient()
 	}
 	if config.Reporter == nil {
 		panic("config.Reporter is nil")
 	}
 	return &Expect{config}
+}
+
+// DefaultClient returns a new http.Client object with non-nil cookie jar.
+// Created jar uses golang.org/x/net/publicsuffix.
+//
+// With this client, requests contain cookies from jar and responses stores
+// cookies to jar, so that cookies are preserved between requests of the
+// same Expext instance.
+//
+// If you don't want this behaviour, use client with nil jar, e.g.
+// &http.Client{} or http.DefaultClient instead of httpexpect.DefaultClient().
+func DefaultClient() *http.Client {
+	jar, err := cookiejar.New(&cookiejar.Options{
+		PublicSuffixList: publicsuffix.List,
+	})
+	if err != nil {
+		panic(err)
+	}
+	return &http.Client{
+		Jar: jar,
+	}
 }
 
 // Request is a shorthand for NewRequest(config, method, url, args...).

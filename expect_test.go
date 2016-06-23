@@ -311,3 +311,46 @@ func BenchmarkExpectBinderFast(b *testing.B) {
 		testHandler(e)
 	}
 }
+
+func TestExpectCookies(t *testing.T) {
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/set", func(w http.ResponseWriter, r *http.Request) {
+		http.SetCookie(w, &http.Cookie{
+			Name:  "myname",
+			Value: "myvalue",
+		})
+		w.WriteHeader(http.StatusNoContent)
+	})
+
+	mux.HandleFunc("/get", func(w http.ResponseWriter, r *http.Request) {
+		cookie, err := r.Cookie("myname")
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+		} else {
+			w.Header().Set("Content-Type", "text/plain")
+			w.Write([]byte(cookie.Value))
+		}
+	})
+
+	server := httptest.NewServer(mux)
+	defer server.Close()
+
+	e1 := WithConfig(Config{
+		BaseURL:  server.URL,
+		Client:   http.DefaultClient,
+		Reporter: NewAssertReporter(t),
+	})
+
+	e1.PUT("/set").Expect().Status(http.StatusNoContent)
+	e1.GET("/get").Expect().Status(http.StatusBadRequest)
+
+	e2 := WithConfig(Config{
+		BaseURL:  server.URL,
+		Client:   DefaultClient(),
+		Reporter: NewAssertReporter(t),
+	})
+
+	e2.PUT("/set").Expect().Status(http.StatusNoContent)
+	e2.GET("/get").Expect().Status(http.StatusOK).Text().Equal("myvalue")
+}
