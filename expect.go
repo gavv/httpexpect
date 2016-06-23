@@ -208,15 +208,23 @@ func WithConfig(config Config) *Expect {
 // If you don't want this behaviour, use client with nil jar, e.g.
 // &http.Client{} or http.DefaultClient instead of httpexpect.DefaultClient().
 func DefaultClient() *http.Client {
+	return &http.Client{
+		Jar: DefaultJar(),
+	}
+}
+
+// DefaultJar returns a new http.CookieJar.
+//
+// Jar is implemented using net/http/cookiejar. PublicSuffixList is implemented
+// using golang.org/x/net/publicsuffix.
+func DefaultJar() http.CookieJar {
 	jar, err := cookiejar.New(&cookiejar.Options{
 		PublicSuffixList: publicsuffix.List,
 	})
 	if err != nil {
 		panic(err)
 	}
-	return &http.Client{
-		Jar: jar,
-	}
+	return jar
 }
 
 // Request is a shorthand for NewRequest(config, method, url, args...).

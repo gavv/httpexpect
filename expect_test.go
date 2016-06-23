@@ -312,7 +312,7 @@ func BenchmarkExpectBinderFast(b *testing.B) {
 	}
 }
 
-func TestExpectCookies(t *testing.T) {
+func createCookieHandler() http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/set", func(w http.ResponseWriter, r *http.Request) {
@@ -333,24 +333,73 @@ func TestExpectCookies(t *testing.T) {
 		}
 	})
 
-	server := httptest.NewServer(mux)
+	return mux
+}
+
+func testCookies(e *Expect, working bool) {
+	e.PUT("/set").Expect().Status(http.StatusNoContent)
+
+	if working {
+		e.GET("/get").Expect().Status(http.StatusOK).Text().Equal("myvalue")
+	} else {
+		e.GET("/get").Expect().Status(http.StatusBadRequest)
+	}
+
+}
+
+func TestExpectCookiesClientDisabled(t *testing.T) {
+	handler := createCookieHandler()
+
+	server := httptest.NewServer(handler)
 	defer server.Close()
 
-	e1 := WithConfig(Config{
+	e := WithConfig(Config{
 		BaseURL:  server.URL,
 		Client:   http.DefaultClient,
 		Reporter: NewAssertReporter(t),
 	})
 
-	e1.PUT("/set").Expect().Status(http.StatusNoContent)
-	e1.GET("/get").Expect().Status(http.StatusBadRequest)
+	testCookies(e, false)
+}
 
-	e2 := WithConfig(Config{
+func TestExpectCookiesClientEnabled(t *testing.T) {
+	handler := createCookieHandler()
+
+	server := httptest.NewServer(handler)
+	defer server.Close()
+
+	e := WithConfig(Config{
 		BaseURL:  server.URL,
 		Client:   DefaultClient(),
 		Reporter: NewAssertReporter(t),
 	})
 
-	e2.PUT("/set").Expect().Status(http.StatusNoContent)
-	e2.GET("/get").Expect().Status(http.StatusOK).Text().Equal("myvalue")
+	testCookies(e, true)
+}
+
+func TestExpectCookiesBinderStandardDisabled(t *testing.T) {
+	handler := createCookieHandler()
+
+	e := WithConfig(Config{
+		BaseURL:  "http://example.com",
+		Reporter: NewAssertReporter(t),
+		Client:   &Binder{
+			Handler: handler,
+			Jar:     nil,
+		},
+	})
+
+	testCookies(e, false)
+}
+
+func TestExpectCookiesBinderStandardEnabled(t *testing.T) {
+	handler := createCookieHandler()
+
+	e := WithConfig(Config{
+		BaseURL:  "http://example.com",
+		Reporter: NewAssertReporter(t),
+		Client:   NewBinder(handler),
+	})
+
+	testCookies(e, true)
 }
