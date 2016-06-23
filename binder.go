@@ -22,7 +22,7 @@ type Binder struct {
 }
 
 // NewBinder returns a new Binder given http.Handler.
-// It uses DefaultJar() as jar.
+// It uses DefaultJar() as cookie jar.
 func NewBinder(handler http.Handler) *Binder {
 	return &Binder{
 		Handler: handler,

@@ -10,16 +10,32 @@ import (
 // FastBinder implements networkless Client attached directly to
 // fasthttp.RequestHandler.
 type FastBinder struct {
-	handler fasthttp.RequestHandler
+	// Handler specifies the function to be invoked.
+	Handler fasthttp.RequestHandler
+
+	// Jar specifies the cookie jar.
+	// If Jar is nil, cookies are not sent in requests and ignored
+	// in responses.
+	Jar http.CookieJar
 }
 
 // NewFastBinder returns a new FastBinder given a fasthttp.RequestHandler.
+// It uses DefaultJar() as cookie jar.
 func NewFastBinder(handler fasthttp.RequestHandler) *FastBinder {
-	return &FastBinder{handler}
+	return &FastBinder{
+		Handler: handler,
+		Jar:     DefaultJar(),
+	}
 }
 
 // Do implements Client.Do.
 func (binder *FastBinder) Do(stdreq *http.Request) (*http.Response, error) {
+	if binder.Jar != nil {
+		for _, cookie := range binder.Jar.Cookies(stdreq.URL) {
+			stdreq.AddCookie(cookie)
+		}
+	}
+
 	var fastreq fasthttp.Request
 
 	convertRequest(stdreq, &fastreq)
@@ -32,9 +48,17 @@ func (binder *FastBinder) Do(stdreq *http.Request) (*http.Response, error) {
 		ctx.Request.SetBodyStream(stdreq.Body, -1)
 	}
 
-	binder.handler(&ctx)
+	binder.Handler(&ctx)
 
-	return convertResponse(stdreq, &ctx.Response), nil
+	stdresp := convertResponse(stdreq, &ctx.Response)
+
+	if binder.Jar != nil {
+		if rc := stdresp.Cookies(); len(rc) > 0 {
+			binder.Jar.SetCookies(stdreq.URL, rc)
+		}
+	}
+
+	return stdresp, nil
 }
 
 func convertRequest(stdreq *http.Request, fastreq *fasthttp.Request) {

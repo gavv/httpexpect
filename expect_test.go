@@ -338,3 +338,30 @@ func TestExpectCookiesBinderStandardEnabled(t *testing.T) {
 
 	testCookies(e, true)
 }
+
+func TestExpectCookiesBinderFastDisabled(t *testing.T) {
+	handler := fasthttpadaptor.NewFastHTTPHandler(createCookieHandler())
+
+	e := WithConfig(Config{
+		BaseURL:  "http://example.com",
+		Reporter: NewAssertReporter(t),
+		Client: &FastBinder{
+			Handler: handler,
+			Jar:     nil,
+		},
+	})
+
+	testCookies(e, false)
+}
+
+func TestExpectCookiesBinderFastEnabled(t *testing.T) {
+	handler := fasthttpadaptor.NewFastHTTPHandler(createCookieHandler())
+
+	e := WithConfig(Config{
+		BaseURL:  "http://example.com",
+		Reporter: NewAssertReporter(t),
+		Client:   NewFastBinder(handler),
+	})
+
+	testCookies(e, true)
+}
