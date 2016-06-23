@@ -228,19 +228,6 @@ func TestExpectLiveConfig(t *testing.T) {
 	}))
 }
 
-func TestExpectLiveFast(t *testing.T) {
-	handler := createHandler()
-
-	server := httptest.NewServer(handler)
-	defer server.Close()
-
-	testHandler(WithConfig(Config{
-		BaseURL:  server.URL,
-		Client:   fasthttpexpect.NewClient(),
-		Reporter: NewAssertReporter(t),
-	}))
-}
-
 func TestExpectBinderStandard(t *testing.T) {
 	handler := createHandler()
 
@@ -251,65 +238,14 @@ func TestExpectBinderStandard(t *testing.T) {
 	}))
 }
 
-func BenchmarkExpectLiveStandard(b *testing.B) {
-	handler := createHandler()
-
-	server := httptest.NewServer(handler)
-	defer server.Close()
-
-	e := WithConfig(Config{
-		BaseURL:  server.URL,
-		Reporter: NewRequireReporter(b),
-	})
-
-	for i := 0; i < b.N; i++ {
-		testHandler(e)
-	}
-}
-
-func BenchmarkExpectLiveFast(b *testing.B) {
-	handler := createHandler()
-
-	server := httptest.NewServer(handler)
-	defer server.Close()
-
-	e := WithConfig(Config{
-		BaseURL:  server.URL,
-		Client:   fasthttpexpect.NewClient(),
-		Reporter: NewRequireReporter(b),
-	})
-
-	for i := 0; i < b.N; i++ {
-		testHandler(e)
-	}
-}
-
-func BenchmarkExpectBinderStandard(b *testing.B) {
-	handler := createHandler()
-
-	e := WithConfig(Config{
-		BaseURL:  "http://example.com",
-		Client:   NewBinder(handler),
-		Reporter: NewRequireReporter(b),
-	})
-
-	for i := 0; i < b.N; i++ {
-		testHandler(e)
-	}
-}
-
-func BenchmarkExpectBinderFast(b *testing.B) {
+func TestExpectBinderFast(t *testing.T) {
 	handler := fasthttpadaptor.NewFastHTTPHandler(createHandler())
 
-	e := WithConfig(Config{
+	testHandler(WithConfig(Config{
 		BaseURL:  "http://example.com",
 		Client:   fasthttpexpect.NewBinder(handler),
-		Reporter: NewRequireReporter(b),
-	})
-
-	for i := 0; i < b.N; i++ {
-		testHandler(e)
-	}
+		Reporter: NewAssertReporter(t),
+	}))
 }
 
 func createCookieHandler() http.Handler {
