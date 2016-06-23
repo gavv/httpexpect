@@ -195,6 +195,34 @@ func (r *Request) WithHeader(k, v string) *Request {
 	return r
 }
 
+// WithCookies adds given cookies to request.
+//
+// Example:
+//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req.WithCookies(map[string]string{
+//      "foo": "aa",
+//      "bar": "bb",
+//  })
+func (r *Request) WithCookies(cookies map[string]string) *Request {
+	for k, v := range cookies {
+		r.WithCookie(k, v)
+	}
+	return r
+}
+
+// WithCookie adds given single cookie to request.
+//
+// Example:
+//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req.WithCookie("name", "value")
+func (r *Request) WithCookie(k, v string) *Request {
+	r.http.AddCookie(&http.Cookie{
+		Name:  k,
+		Value: v,
+	})
+	return r
+}
+
 // WithBody set given reader for request body.
 //
 // Expect() will read all available data from this reader.

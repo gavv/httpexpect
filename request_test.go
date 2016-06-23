@@ -272,6 +272,39 @@ func TestRequestHeaders(t *testing.T) {
 	assert.Equal(t, &client.resp, resp.Raw())
 }
 
+func TestRequestCookies(t *testing.T) {
+	client := &mockClient{}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		Client:   client,
+		Reporter: reporter,
+	}
+
+	req := NewRequest(config, "METHOD", "url")
+
+	req.WithCookie("foo", "1")
+
+	req.WithCookies(map[string]string{
+		"bar": "2",
+		"baz": " 3",
+	})
+
+	expectedHeaders := map[string][]string{
+		"Cookie": {`foo=1; bar=2; baz=" 3"`},
+	}
+
+	resp := req.Expect()
+	resp.chain.assertOK(t)
+
+	assert.Equal(t, "METHOD", client.req.Method)
+	assert.Equal(t, "url", client.req.URL.String())
+	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
+
+	assert.Equal(t, &client.resp, resp.Raw())
+}
+
 func TestRequestBodyReader(t *testing.T) {
 	client := &mockClient{}
 
