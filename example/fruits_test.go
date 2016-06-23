@@ -1,11 +1,12 @@
 package example
 
 import (
-	"github.com/gavv/httpexpect"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/gavv/httpexpect"
 )
 
 func runFruitsTests(e *httpexpect.Expect) {

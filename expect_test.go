@@ -6,7 +6,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gavv/httpexpect/fasthttpexpect"
 	"github.com/valyala/fasthttp/fasthttpadaptor"
 )
 
@@ -243,7 +242,7 @@ func TestExpectBinderFast(t *testing.T) {
 
 	testHandler(WithConfig(Config{
 		BaseURL:  "http://example.com",
-		Client:   fasthttpexpect.NewBinder(handler),
+		Client:   NewFastBinder(handler),
 		Reporter: NewAssertReporter(t),
 	}))
 }
@@ -319,7 +318,7 @@ func TestExpectCookiesBinderStandardDisabled(t *testing.T) {
 	e := WithConfig(Config{
 		BaseURL:  "http://example.com",
 		Reporter: NewAssertReporter(t),
-		Client:   &Binder{
+		Client: &Binder{
 			Handler: handler,
 			Jar:     nil,
 		},

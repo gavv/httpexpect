@@ -1,10 +1,10 @@
 package example
 
 import (
-	"github.com/gavv/httpexpect"
-	"github.com/gavv/httpexpect/fasthttpexpect"
 	"net/http"
 	"testing"
+
+	"github.com/gavv/httpexpect"
 )
 
 func TestEcho_Standard(t *testing.T) {
@@ -30,7 +30,7 @@ func TestEcho_Fast(t *testing.T) {
 	// create httpexpect instance that will call fasthtpp.RequestHandler directly
 	e := httpexpect.WithConfig(httpexpect.Config{
 		Reporter: httpexpect.NewAssertReporter(t),
-		Client:   fasthttpexpect.NewBinder(handler),
+		Client:   httpexpect.NewFastBinder(handler),
 	})
 
 	// run tests

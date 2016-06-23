@@ -1,4 +1,4 @@
-package fasthttpexpect
+package httpexpect
 
 import (
 	"bytes"
@@ -7,19 +7,19 @@ import (
 	"net/http"
 )
 
-// Binder implements networkless httpexpect.Client attached directly to
+// FastBinder implements networkless Client attached directly to
 // fasthttp.RequestHandler.
-type Binder struct {
+type FastBinder struct {
 	handler fasthttp.RequestHandler
 }
 
-// NewBinder returns a new Binder given fasthttp.RequestHandler.
-func NewBinder(handler fasthttp.RequestHandler) *Binder {
-	return &Binder{handler}
+// NewFastBinder returns a new FastBinder given a fasthttp.RequestHandler.
+func NewFastBinder(handler fasthttp.RequestHandler) *FastBinder {
+	return &FastBinder{handler}
 }
 
-// Do implements httpexpect.Client.Do.
-func (binder *Binder) Do(stdreq *http.Request) (*http.Response, error) {
+// Do implements Client.Do.
+func (binder *FastBinder) Do(stdreq *http.Request) (*http.Response, error) {
 	var fastreq fasthttp.Request
 
 	convertRequest(stdreq, &fastreq)

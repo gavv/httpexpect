@@ -19,8 +19,7 @@
 // The following implementations are available out of the box:
 //  1. http.Client - use regular HTTP client from net/http (you should start server)
 //  2. httpexpect.Binder - invoke given http.Handler directly
-//  3. fasthttpexpect.ClientAdapter - use client from fasthttp (you should start server)
-//  4. fasthttpexpect.Binder - invoke given fasthttp.RequestHandler directly
+//  4. httpexpect.FastBinder - invoke given fasthttp.RequestHandler directly
 //
 // Note that http handler can be usually obtained from http framework you're using.
 // E.g., echo framework provides either http.Handler or fasthttp.RequestHandler.
@@ -113,8 +112,7 @@ type Config struct {
 }
 
 // Client is used to send http.Request and receive http.Response.
-// http.Client, Binder, fasthttpexpect.ClientAdapter, fasthttpexpect.Binder
-// implement this interface.
+// http.Client, Binder, and FastBinder implement this interface.
 type Client interface {
 	// Do sends request and returns response.
 	Do(*http.Request) (*http.Response, error)

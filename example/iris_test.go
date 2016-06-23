@@ -5,18 +5,16 @@ import (
 	"testing"
 
 	"github.com/gavv/httpexpect"
-	"github.com/gavv/httpexpect/fasthttpexpect"
 )
 
 func TestIris(t *testing.T) {
 	// create fasthttp.RequestHandler
-
 	handler := IrisHandler()
 
 	// create httpexpect instance that will call fasthtpp.RequestHandler directly
 	e := httpexpect.WithConfig(httpexpect.Config{
 		Reporter: httpexpect.NewAssertReporter(t),
-		Client:   fasthttpexpect.NewBinder(handler),
+		Client:   httpexpect.NewFastBinder(handler),
 	})
 
 	// run tests

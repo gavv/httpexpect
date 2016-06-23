@@ -21,7 +21,7 @@
 
 **Integrations:**
 * Uses [`form`](https://github.com/ajg/form) and [`go-querystring`](https://github.com/google/go-querystring) packages to encode and decode forms and URL parameters.
-* Provides integration with [`fasthttp`](https://github.com/valyala/fasthttp/) client and HTTP handler via `fasthttpexpect` module.
+* Provides integration with [`fasthttp`](https://github.com/valyala/fasthttp/) HTTP handler.
 
 ## Status
 
@@ -135,7 +135,7 @@ func TestFruits(t *testing.T) {
 Feel free to report bugs, suggest improvements, and send pull requests! Don't forget to add documentation and tests for new features and run all tests before submitting pull requests:
 
 ```
-$ go test -bench . github.com/gavv/httpexpect/...
+$ go test github.com/gavv/httpexpect/...
 ```
 
 ## License

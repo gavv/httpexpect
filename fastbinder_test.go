@@ -1,4 +1,4 @@
-package fasthttpexpect
+package httpexpect
 
 import (
 	"bytes"
@@ -9,8 +9,8 @@ import (
 	"testing"
 )
 
-func TestBinder(t *testing.T) {
-	binder := NewBinder(func(ctx *fasthttp.RequestCtx) {
+func TestFastBinder(t *testing.T) {
+	binder := NewFastBinder(func(ctx *fasthttp.RequestCtx) {
 		assert.Equal(t, "GET", string(ctx.Request.Header.Method()))
 		assert.Equal(t, "http://example.com", string(ctx.Request.Header.RequestURI()))
 		assert.Equal(t, "body", string(ctx.Request.Body()))
