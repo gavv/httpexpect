@@ -150,7 +150,7 @@ type Reporter interface {
 // trailing slash is allowed but not required and is appended automatically.
 //
 // New is a shorthand for WithConfig. It uses:
-//  - http.DefaultClient as Client
+//  - DefaultClient() as Client
 //  - CompactPrinter as Printer with testing.T as Logger
 //  - AssertReporter as Reporter
 //
@@ -171,7 +171,7 @@ func New(t *testing.T, baseURL string) *Expect {
 
 // WithConfig returns a new Expect object with given config.
 //
-// If Config.Client is nil, httpexpect.DefaultClient() is used.
+// If Config.Client is nil, DefaultClient() is used.
 //
 // Example:
 //  func TestAPI(t *testing.T) {
@@ -196,8 +196,8 @@ func WithConfig(config Config) *Expect {
 	return &Expect{config}
 }
 
-// DefaultClient returns a new http.Client object with non-nil cookie jar.
-// Created jar uses golang.org/x/net/publicsuffix.
+// DefaultClient returns a new http.Client object.
+// It uses DefaultJar() as cookie jar.
 //
 // With this client, requests contain cookies from jar and responses stores
 // cookies to jar, so that cookies are preserved between requests of the
@@ -215,6 +215,8 @@ func DefaultClient() *http.Client {
 //
 // Jar is implemented using net/http/cookiejar. PublicSuffixList is implemented
 // using golang.org/x/net/publicsuffix.
+//
+// Note that this jar ignores cookies when request url is empty.
 func DefaultJar() http.CookieJar {
 	jar, err := cookiejar.New(&cookiejar.Options{
 		PublicSuffixList: publicsuffix.List,
