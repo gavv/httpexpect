@@ -285,14 +285,14 @@ func TestRequestCookies(t *testing.T) {
 	req := NewRequest(config, "METHOD", "url")
 
 	req.WithCookie("foo", "1")
+	req.WithCookie("bar", "2 ")
 
 	req.WithCookies(map[string]string{
-		"bar": "2",
 		"baz": " 3",
 	})
 
 	expectedHeaders := map[string][]string{
-		"Cookie": {`foo=1; bar=2; baz=" 3"`},
+		"Cookie": {`foo=1; bar="2 "; baz=" 3"`},
 	}
 
 	resp := req.Expect()
