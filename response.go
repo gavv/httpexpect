@@ -108,7 +108,7 @@ func statusText(code int) string {
 //
 // Example:
 //  resp := NewResponse(t, response)
-//  resp.Headers().Value("Content-Type").Contains("application-json")
+//  resp.Headers().Value("Content-Type").String().Equal("application-json")
 func (r *Response) Headers() *Object {
 	var value map[string]interface{}
 	if !r.chain.failed() {
@@ -121,7 +121,7 @@ func (r *Response) Headers() *Object {
 //
 // Example:
 //  resp := NewResponse(t, response)
-//  resp.Header("Content-Type").Contains("application-json")
+//  resp.Header("Content-Type").Equal("application-json")
 func (r *Response) Header(header string) *String {
 	value := ""
 	if !r.chain.failed() {
