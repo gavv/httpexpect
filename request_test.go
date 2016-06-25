@@ -495,8 +495,8 @@ func TestRequestBodyField(t *testing.T) {
 		"Some-Header": "foo",
 	})
 
-	req.WithField("a", 1)
-	req.WithField("b", "2")
+	req.WithFormField("a", 1)
+	req.WithFormField("b", "2")
 
 	resp := req.Expect()
 	resp.chain.assertOK(t)
@@ -566,7 +566,7 @@ func TestRequestBodyFormCombined(t *testing.T) {
 
 	req.WithForm(S{A: 1})
 	req.WithForm(map[string]string{"b": "2"})
-	req.WithField("c", 3)
+	req.WithFormField("c", 3)
 
 	resp := req.Expect()
 	resp.chain.assertOK(t)
@@ -593,7 +593,7 @@ func TestRequestBodyMultipart(t *testing.T) {
 
 	req.WithMultipart()
 	req.WithForm(map[string]string{"b": "1", "c": "2"})
-	req.WithField("a", 3)
+	req.WithFormField("a", 3)
 
 	resp := req.Expect()
 	resp.chain.assertOK(t)
@@ -899,7 +899,7 @@ func TestRequestErrorConflictBody(t *testing.T) {
 
 	req6 := NewRequest(config, "METHOD", "url")
 	req6.WithBody(nil)
-	req6.WithField("a", "b")
+	req6.WithFormField("a", "b")
 	req6.Expect()
 	req6.chain.assertFailed(t)
 
@@ -933,7 +933,7 @@ func TestRequestErrorConflictType(t *testing.T) {
 
 	req3 := NewRequest(config, "METHOD", "url")
 	req3.WithText("")
-	req3.WithField("a", "b")
+	req3.WithFormField("a", "b")
 	req3.chain.assertFailed(t)
 
 	req4 := NewRequest(config, "METHOD", "url")
@@ -960,7 +960,7 @@ func TestRequestErrorConflictMultipart(t *testing.T) {
 	req1.chain.assertFailed(t)
 
 	req2 := NewRequest(config, "METHOD", "url")
-	req2.WithField("a", "b")
+	req2.WithFormField("a", "b")
 	req2.WithMultipart()
 	req2.chain.assertFailed(t)
 

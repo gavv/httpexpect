@@ -291,13 +291,13 @@ func (r *Request) WithJSON(object interface{}) *Request {
 
 // WithForm sets Content-Type header to "application/x-www-form-urlencoded"
 // or (if WithMultipart() was called) "multipart/form-data", converts given
-// object to url.Values using github.com/ajg/form and adds it to request body.
+// object to url.Values using github.com/ajg/form, and adds it to request body.
 //
 // Various object types are supported, including maps and structs. Structs may
 // contain "form" struct tag, similar to "json" struct tag for json.Marshal().
 // See https://github.com/ajg/form for details.
 //
-// Multiple WithForm(), WithField(), and WithFile() calls may be combined.
+// Multiple WithForm(), WithFormField(), and WithFile() calls may be combined.
 // If WithMultipart() is called, it should be called first.
 //
 // Example:
@@ -345,19 +345,20 @@ func (r *Request) WithForm(object interface{}) *Request {
 	return r
 }
 
-// WithField sets Content-Type header to "application/x-www-form-urlencoded"
+// WithFormField sets Content-Type header to "application/x-www-form-urlencoded"
 // or (if WithMultipart() was called) "multipart/form-data", converts given
-// value to string using fmt.Sprint() and adds it to request body.
+// value to string using fmt.Sprint(), and adds it to request body.
 //
-// Multiple WithForm(), WithField(), and WithFile() calls may be combined.
+// Multiple WithForm(), WithFormField(), and WithFile() calls may be combined.
 // If WithMultipart() is called, it should be called first.
 //
 // Example:
 //  req := NewRequest(config, "PUT", "http://example.org/path")
-//  req.WithField("foo", 123)
-func (r *Request) WithField(key string, value interface{}) *Request {
+//  req.WithFormField("foo", 123).
+//      WithFormField("bar", 456)
+func (r *Request) WithFormField(key string, value interface{}) *Request {
 	if r.multipart != nil {
-		r.setType("WithField", "multipart/form-data", false)
+		r.setType("WithFormField", "multipart/form-data", false)
 
 		err := r.multipart.WriteField(key, fmt.Sprint(value))
 		if err != nil {
@@ -365,7 +366,7 @@ func (r *Request) WithField(key string, value interface{}) *Request {
 			return r
 		}
 	} else {
-		r.setType("WithField", "application/x-www-form-urlencoded", false)
+		r.setType("WithFormField", "application/x-www-form-urlencoded", false)
 
 		if r.form == nil {
 			r.form = make(url.Values)
@@ -381,7 +382,7 @@ func (r *Request) WithField(key string, value interface{}) *Request {
 // If reader is given, it's used to read file contents. Otherwise, os.Open()
 // is used to read a file with given path.
 //
-// Multiple WithForm(), WithField(), and WithFile() calls may be combined.
+// Multiple WithForm(), WithFormField(), and WithFile() calls may be combined.
 // WithMultipart() should be called before WithFile(), otherwise WithFile()
 // fails.
 //
@@ -445,11 +446,11 @@ func (r *Request) WithFileBytes(key, path string, data []byte) *Request {
 
 // WithMultipart sets Content-Type header to "multipart/form-data".
 //
-// After this call, WithForm() and WithField() switch to multipart form
-// instead of urlencoded form.
+// After this call, WithForm() and WithFormField() switch to multipart
+// form instead of urlencoded form.
 //
-// If WithMultipart() is called, it should be called before WithForm()
-// or WithField().
+// If WithMultipart() is called, it should be called before WithForm(),
+// WithFormField(), and WithFile().
 //
 // WithFile() always requires WithMultipart() to be called first.
 //
@@ -541,7 +542,7 @@ func (r *Request) encodeRequest() {
 			return
 		}
 	} else if r.form != nil {
-		r.setBody("WithForm or WithField",
+		r.setBody("WithForm or WithFormField",
 			strings.NewReader(r.form.Encode()), -1)
 	}
 }
