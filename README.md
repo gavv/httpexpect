@@ -127,8 +127,9 @@ func TestFruits(t *testing.T) {
 
 * [`gorequest`](https://github.com/parnurzeal/gorequest)
 * [`gabs`](https://github.com/Jeffail/gabs)
-* [`go-json-rest/rest/test`](https://godoc.org/github.com/ant0ine/go-json-rest/rest/test)
+* [`forest`](https://github.com/emicklei/forest)
 * [`http-test`](https://github.com/vsco/http-test)
+* [`go-json-rest/rest/test`](https://godoc.org/github.com/ant0ine/go-json-rest/rest/test)
 
 ## Contributing
 
