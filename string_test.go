@@ -153,3 +153,14 @@ func TestStringContainsFold(t *testing.T) {
 	value.chain.assertOK(t)
 	value.chain.reset()
 }
+
+func TestStringLength(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewString(reporter, "1234567")
+
+	num := value.Length()
+	value.chain.assertOK(t)
+	num.chain.assertOK(t)
+	assert.Equal(t, 7.0, num.Raw())
+}

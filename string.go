@@ -33,6 +33,15 @@ func (s *String) Raw() string {
 	return s.value
 }
 
+// Length returns a new Number object that may be used to inspect string length.
+//
+// Example:
+//  str := NewString(t, "Hello")
+//  str.Length().Equal(5)
+func (s *String) Length() *Number {
+	return &Number{s.chain, float64(len(s.value))}
+}
+
 // Empty succeedes if string is empty.
 //
 // Example:

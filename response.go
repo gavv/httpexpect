@@ -135,6 +135,7 @@ func (r *Response) Header(header string) *String {
 // Example:
 //  resp := NewResponse(t, response)
 //  resp.Body().NotEmpty()
+//  resp.Body().Length().Equal(100)
 func (r *Response) Body() *String {
 	return &String{r.chain, string(r.content)}
 }
