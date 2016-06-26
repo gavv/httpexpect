@@ -2,7 +2,6 @@ package httpexpect
 
 import (
 	"regexp"
-	"strconv"
 	"strings"
 )
 
@@ -68,8 +67,8 @@ func (s *String) NotEmpty() *String {
 //  str.Equal("Hello")
 func (s *String) Equal(value string) *String {
 	if !(s.value == value) {
-		s.chain.fail("\nexpected string equal to:\n  %s\n\nbut got:\n  %s",
-			strconv.Quote(value), strconv.Quote(s.value))
+		s.chain.fail("\nexpected string equal to:\n %q\n\nbut got:\n %q",
+			value, s.value)
 	}
 	return s
 }
@@ -81,7 +80,7 @@ func (s *String) Equal(value string) *String {
 //  str.NotEqual("Goodbye")
 func (s *String) NotEqual(value string) *String {
 	if !(s.value != value) {
-		s.chain.fail("\nexpected string NOT equal to:\n  %s", strconv.Quote(value))
+		s.chain.fail("\nexpected string not equal to:\n %q", value)
 	}
 	return s
 }
@@ -95,8 +94,8 @@ func (s *String) NotEqual(value string) *String {
 func (s *String) EqualFold(value string) *String {
 	if !strings.EqualFold(s.value, value) {
 		s.chain.fail(
-			"\nexpected string equal to (case-insensitive):\n  %s\n\nbut got:\n  %s",
-			strconv.Quote(value), strconv.Quote(s.value))
+			"\nexpected string equal to (case-insensitive):\n %q\n\nbut got:\n %q",
+			value, s.value)
 	}
 	return s
 }
@@ -110,8 +109,8 @@ func (s *String) EqualFold(value string) *String {
 func (s *String) NotEqualFold(value string) *String {
 	if strings.EqualFold(s.value, value) {
 		s.chain.fail(
-			"\nexpected string NOT equal to (case-insensitive):\n  %s\n\nbut got:\n  %s",
-			strconv.Quote(value), strconv.Quote(s.value))
+			"\nexpected string not equal to (case-insensitive):\n %q\n\nbut got:\n %q",
+			value, s.value)
 	}
 	return s
 }
@@ -124,8 +123,8 @@ func (s *String) NotEqualFold(value string) *String {
 func (s *String) Contains(value string) *String {
 	if !strings.Contains(s.value, value) {
 		s.chain.fail(
-			"\nexpected string containing substring:\n  %s\n\nbut got:\n  %s",
-			strconv.Quote(value), strconv.Quote(s.value))
+			"\nexpected string containing substring:\n %q\n\nbut got:\n %q",
+			value, s.value)
 	}
 	return s
 }
@@ -138,8 +137,8 @@ func (s *String) Contains(value string) *String {
 func (s *String) NotContains(value string) *String {
 	if strings.Contains(s.value, value) {
 		s.chain.fail(
-			"\nexpected string NOT containing substring:\n  %s\n\nbut got:\n  %s",
-			strconv.Quote(value), strconv.Quote(s.value))
+			"\nexpected string not containing substring:\n %q\n\nbut got:\n %q",
+			value, s.value)
 	}
 	return s
 }
@@ -153,9 +152,8 @@ func (s *String) NotContains(value string) *String {
 func (s *String) ContainsFold(value string) *String {
 	if !strings.Contains(strings.ToLower(s.value), strings.ToLower(value)) {
 		s.chain.fail(
-			"\nexpected string containing substring (case-insensitive):\n%s"+
-				"\n\nbut got:\n  %s",
-			strconv.Quote(value), strconv.Quote(s.value))
+			"\nexpected string containing substring (case-insensitive):\n %q"+
+				"\n\nbut got:\n %q", value, s.value)
 	}
 	return s
 }
@@ -169,9 +167,8 @@ func (s *String) ContainsFold(value string) *String {
 func (s *String) NotContainsFold(value string) *String {
 	if strings.Contains(strings.ToLower(s.value), strings.ToLower(value)) {
 		s.chain.fail(
-			"\nexpected string NOT containing substring (case-insensitive):\n  %s"+
-				"\n\nbut got:\n  %s",
-			strconv.Quote(value), strconv.Quote(s.value))
+			"\nexpected string not containing substring (case-insensitive):\n %q"+
+				"\n\nbut got:\n %q", value, s.value)
 	}
 	return s
 }
@@ -205,8 +202,8 @@ func (s *String) Match(re string) *Match {
 
 	m := r.FindStringSubmatch(s.value)
 	if m == nil {
-		s.chain.fail("\nexpected string matching regexp:\n  %s\n\nbut got:\n  %s",
-			re, strconv.Quote(s.value))
+		s.chain.fail("\nexpected string matching regexp:\n `%s`\n\nbut got:\n %q",
+			re, s.value)
 		return makeMatch(s.chain, nil, nil)
 	}
 
@@ -237,8 +234,8 @@ func (s *String) MatchAll(re string) []Match {
 
 	matches := r.FindAllStringSubmatch(s.value, -1)
 	if matches == nil {
-		s.chain.fail("\nexpected string matching regexp:\n  %s\n\nbut got:\n  %s",
-			re, strconv.Quote(s.value))
+		s.chain.fail("\nexpected string matching regexp:\n `%s`\n\nbut got:\n %q",
+			re, s.value)
 		return []Match{}
 	}
 
@@ -269,8 +266,8 @@ func (s *String) NotMatch(re string) *String {
 	}
 
 	if r.MatchString(s.value) {
-		s.chain.fail("\nexpected string NOT matching regexp:\n  %s\n\nbut got:\n  %s",
-			re, strconv.Quote(s.value))
+		s.chain.fail("\nexpected string not matching regexp:\n `%s`\n\nbut got:\n %q",
+			re, s.value)
 		return s
 	}
 

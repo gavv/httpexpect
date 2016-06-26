@@ -135,7 +135,7 @@ func (o *Object) NotEqual(v interface{}) *Object {
 		return o
 	}
 	if reflect.DeepEqual(expected, o.value) {
-		o.chain.fail("\nexpected object NOT equal to:\n%s",
+		o.chain.fail("\nexpected object not equal to:\n%s",
 			dumpValue(expected))
 	}
 	return o
@@ -162,7 +162,7 @@ func (o *Object) ContainsKey(key string) *Object {
 func (o *Object) NotContainsKey(key string) *Object {
 	if o.containsKey(key) {
 		o.chain.fail(
-			"\nexpected object NOT containing key '%s', but got:\n%s", key,
+			"\nexpected object not containing key '%s', but got:\n%s", key,
 			dumpValue(o.value))
 	}
 	return o
@@ -216,7 +216,7 @@ func (o *Object) ContainsMap(value interface{}) *Object {
 //  object.NotContainsMap(map[string]interface{}{"foo": 123, "bar": "no-no-no"})
 func (o *Object) NotContainsMap(value interface{}) *Object {
 	if o.containsMap(value) {
-		o.chain.fail("\nexpected object NOT containing sub-object:\n%s\n\nbut got:\n%s",
+		o.chain.fail("\nexpected object not containing sub-object:\n%s\n\nbut got:\n%s",
 			dumpValue(value), dumpValue(o.value))
 	}
 	return o
@@ -273,7 +273,7 @@ func (o *Object) ValueNotEqual(key string, value interface{}) *Object {
 		return o
 	}
 	if reflect.DeepEqual(expected, o.value[key]) {
-		o.chain.fail("\nexpected value for key '%s' NOT equal to:\n%s",
+		o.chain.fail("\nexpected value for key '%s' not equal to:\n%s",
 			key, dumpValue(expected))
 	}
 	return o

@@ -143,15 +143,12 @@ func (r *Response) StatusClass(class StatusClass) *Response {
 
 	if actual == "" || actual != expected {
 		if actual == "" {
-			r.chain.fail("\nexpected status belongs to class:\n  %s\n\nbut got:\n  %s",
-				strconv.Quote(expected),
-				strconv.Quote(status))
+			r.chain.fail("\nexpected status belongs to class:\n %q\n\nbut got:\n %q",
+				expected, status)
 		} else {
 			r.chain.fail(
-				"\nexpected status belongs to class:\n  %s\n\nbut got:\n  %s (%s)",
-				strconv.Quote(expected),
-				strconv.Quote(actual),
-				strconv.Quote(status))
+				"\nexpected status belongs to class:\n %q\n\nbut got:\n %q (%q)",
+				expected, actual, status)
 		}
 	}
 
@@ -346,16 +343,14 @@ func (r *Response) checkContentType(expectedType string, expectedCharset ...stri
 
 	mediaType, params, err := mime.ParseMediaType(contentType)
 	if err != nil {
-		r.chain.fail("\ngot invalid \"Content-Type\" header %s",
-			strconv.Quote(contentType))
+		r.chain.fail("\ngot invalid \"Content-Type\" header %q", contentType)
 		return false
 	}
 
 	if mediaType != expectedType {
 		r.chain.fail(
-			"\nexpected \"Content-Type\" header with %s media type,"+
-				"\nbut got %s",
-			strconv.Quote(expectedType), strconv.Quote(mediaType))
+			"\nexpected \"Content-Type\" header with %q media type,"+
+				"\nbut got %q", expectedType, mediaType)
 		return false
 	}
 
@@ -365,16 +360,14 @@ func (r *Response) checkContentType(expectedType string, expectedCharset ...stri
 		if charset != "" && !strings.EqualFold(charset, "utf-8") {
 			r.chain.fail(
 				"\nexpected \"Content-Type\" header with \"utf-8\" or empty charset,"+
-					"\nbut got %s",
-				strconv.Quote(charset))
+					"\nbut got %q", charset)
 			return false
 		}
 	} else {
 		if !strings.EqualFold(charset, expectedCharset[0]) {
 			r.chain.fail(
-				"\nexpected \"Content-Type\" header with %s charset,"+
-					"\nbut got %s",
-				strconv.Quote(expectedCharset[0]), strconv.Quote(charset))
+				"\nexpected \"Content-Type\" header with %q charset,"+
+					"\nbut got %q", expectedCharset[0], charset)
 			return false
 		}
 	}

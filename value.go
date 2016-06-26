@@ -249,7 +249,7 @@ func (v *Value) NotEqual(value interface{}) *Value {
 		return v
 	}
 	if reflect.DeepEqual(expected, v.value) {
-		v.chain.fail("\nexpected value NOT equal to:\n%s",
+		v.chain.fail("\nexpected value not equal to:\n%s",
 			dumpValue(expected))
 	}
 	return v

@@ -15,7 +15,6 @@ import (
 	"os"
 	"reflect"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -498,10 +497,10 @@ func (r *Request) setType(newSetter, newType string, overwrite bool) {
 
 		if previousType != "" && previousType != newType {
 			r.chain.fail(
-				"\nambiguous request \"Content-Type\" header values:\n  %s (set by %s)\n\n"+
-					"and:\n  %s (wanted by %s)",
-				strconv.Quote(previousType), r.typesetter,
-				strconv.Quote(newType), newSetter)
+				"\nambiguous request \"Content-Type\" header values:\n %q (set by %s)\n\n"+
+					"and:\n %q (wanted by %s)",
+				previousType, r.typesetter,
+				newType, newSetter)
 			return
 		}
 	}

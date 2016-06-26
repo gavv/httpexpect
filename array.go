@@ -150,7 +150,7 @@ func (a *Array) NotEqual(value interface{}) *Array {
 		return a
 	}
 	if reflect.DeepEqual(expected, a.value) {
-		a.chain.fail("\nexpected array NOT equal to:\n%s",
+		a.chain.fail("\nexpected array not equal to:\n%s",
 			dumpValue(expected))
 	}
 	return a
@@ -206,7 +206,7 @@ func (a *Array) NotContains(values ...interface{}) *Array {
 	}
 	for _, e := range elements {
 		if a.containsElement(e) {
-			a.chain.fail("\nexpected array NOT containing element:\n%s\n\nbut got:\n%s",
+			a.chain.fail("\nexpected array not containing element:\n%s\n\nbut got:\n%s",
 				dumpValue(e), dumpValue(a.value))
 		}
 	}

@@ -2,7 +2,6 @@ package httpexpect
 
 import (
 	"reflect"
-	"strconv"
 )
 
 // Match provides methods to inspect attached regexp match results.
@@ -113,8 +112,8 @@ func (m *Match) Name(name string) *String {
 	index, ok := m.names[name]
 	if !ok {
 		m.chain.fail(
-			"\nsubmatch name not found:\n  %s\n\n  available names:\n %s",
-			strconv.Quote(name),
+			"\nsubmatch name not found:\n %q\n\navailable names:\n%s",
+			name,
 			dumpValue(m.names))
 		return &String{m.chain, ""}
 	}
@@ -185,7 +184,7 @@ func (m *Match) NotValues(values ...string) *Match {
 		values = []string{}
 	}
 	if reflect.DeepEqual(values, m.getValues()) {
-		m.chain.fail("\nexpected submatches NOT equal to:\n%s",
+		m.chain.fail("\nexpected submatches not equal to:\n%s",
 			dumpValue(values))
 	}
 	return m
