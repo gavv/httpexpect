@@ -97,11 +97,103 @@ func (r *Response) Status(status int) *Response {
 	return r
 }
 
+// StatusClass succeedes if response status belongs to one of given classes.
+//
+// Supported classes:
+//  - "1xx" - Informational
+//  - "2xx" - Success
+//  - "3xx" - Redirection
+//  - "4xx" - Client Error
+//  - "5xx" - Server Error
+//
+// See https://en.wikipedia.org/wiki/List_of_HTTP_status_codes.
+//
+// Example:
+//  resp := NewResponse(t, response)
+//  resp.StatusClass("4xx")
+//  resp.StatusClass("4xx", "5xx")
+func (r *Response) StatusClass(classes ...string) *Response {
+	if r.chain.failed() {
+		return r
+	}
+
+	status := statusText(r.resp.StatusCode)
+	actual := statusClass(r.resp.StatusCode)
+
+	expected := make([]string, 0, len(classes))
+	for _, c := range classes {
+		canon := statusClassCanon(c)
+		if canon == "" {
+			r.chain.fail(
+				"\nbad status class %s, expected one of:\n"+
+					"  \"1xx\", \"2xx\", \"3xx\", \"4xx\", \"5xx\"",
+				strconv.Quote(c))
+			return r
+		}
+		expected = append(expected, canon)
+	}
+
+	for _, e := range expected {
+		if e == actual {
+			return r
+		}
+	}
+
+	msg := "\nexpected status class to be one of:"
+	for _, e := range expected {
+		msg += "\n  \"" + e + "\""
+	}
+
+	msg += "\n\nbut got:\n  "
+	if actual == "" {
+		msg += "\"" + status + "\""
+	} else {
+		msg += "\"" + actual + "\" (\"" + status + "\")"
+	}
+
+	r.chain.fail("%s", msg)
+	return r
+}
+
 func statusText(code int) string {
 	if s := http.StatusText(code); s != "" {
 		return strconv.Itoa(code) + " " + s
 	}
 	return strconv.Itoa(code)
+}
+
+func statusClass(code int) string {
+	switch {
+	case code >= 100 && code < 200:
+		return statusClassCanon("1xx")
+	case code >= 200 && code < 300:
+		return statusClassCanon("2xx")
+	case code >= 300 && code < 400:
+		return statusClassCanon("3xx")
+	case code >= 400 && code < 500:
+		return statusClassCanon("4xx")
+	case code >= 500 && code < 600:
+		return statusClassCanon("5xx")
+	default:
+		return ""
+	}
+}
+
+func statusClassCanon(class string) string {
+	switch class {
+	case "1xx":
+		return "1xx Informational"
+	case "2xx":
+		return "2xx Success"
+	case "3xx":
+		return "3xx Redirection"
+	case "4xx":
+		return "4xx Client Error"
+	case "5xx":
+		return "5xx Server Error"
+	default:
+		return ""
+	}
 }
 
 // Headers returns a new Object that may be used to inspect header map.

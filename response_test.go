@@ -31,6 +31,7 @@ func TestResponseFailed(t *testing.T) {
 	resp.JSON().chain.assertFailed(t)
 
 	resp.Status(123)
+	resp.StatusClass("2xx")
 	resp.NoContent()
 	resp.ContentType("", "")
 }
@@ -50,6 +51,51 @@ func TestResponseTime(t *testing.T) {
 
 	rt.Equal(10 * time.Millisecond)
 	rt.chain.assertOK(t)
+}
+
+func TestResponseStatusClass(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	check := func(status int, match bool, classes ...string) {
+		resp := NewResponse(reporter, &http.Response{
+			StatusCode: status,
+		})
+
+		resp.StatusClass(classes...)
+
+		if match {
+			resp.chain.assertOK(t)
+		} else {
+			resp.chain.assertFailed(t)
+		}
+	}
+
+	cases := []struct {
+		Status int
+		Class  string
+	}{
+		{99, "99"},
+		{100, "1xx"},
+		{199, "1xx"},
+		{200, "2xx"},
+		{299, "2xx"},
+		{300, "3xx"},
+		{399, "3xx"},
+		{400, "4xx"},
+		{499, "4xx"},
+		{500, "5xx"},
+		{599, "5xx"},
+		{600, "600"},
+	}
+
+	for _, test := range cases {
+		for _, class := range []string{"1xx", "2xx", "3xx", "4xx", "5xx"} {
+			check(test.Status, test.Class == class, class)
+		}
+	}
+
+	check(300, true, "3xx", "4xx")
+	check(300, false, "2xx", "4xx")
 }
 
 func TestResponseHeaders(t *testing.T) {
