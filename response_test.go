@@ -5,6 +5,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 )
@@ -129,7 +130,9 @@ func TestResponseHeaders(t *testing.T) {
 	resp.Headers().Equal(headers).chain.assertOK(t)
 
 	for k, v := range headers {
-		resp.Header(k).Equal(v[0]).chain.assertOK(t)
+		for _, h := range []string{k, strings.ToLower(k), strings.ToUpper(k)} {
+			resp.Header(h).Equal(v[0]).chain.assertOK(t)
+		}
 	}
 
 	resp.Header("Bad-Header").Empty().chain.assertOK(t)

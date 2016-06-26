@@ -247,12 +247,12 @@ func TestRequestHeaders(t *testing.T) {
 
 	req := NewRequest(config, "METHOD", "url")
 
-	req.WithHeader("First-Header", "foo")
+	req.WithHeader("first-header", "foo")
 
 	req.WithHeaders(map[string]string{
 		"Second-Header": "bar",
-		"Content-Type":  "baz",
-		"Host":          "example.com",
+		"content-Type":  "baz",
+		"HOST":          "example.com",
 	})
 
 	expectedHeaders := map[string][]string{
