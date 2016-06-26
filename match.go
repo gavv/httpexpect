@@ -71,10 +71,8 @@ func (m *Match) Length() *Number {
 // Index returns a new String object that may be used to inspect submatch
 // with given index.
 //
-// Note that submatch with index 0 contains the whole match.
-//
-// If index is out of bounds, Index reports failure and returns empty
-// (but non-nil) value.
+// Note that submatch with index 0 contains the whole match. If index is out
+// of bounds, Index reports failure and returns empty (but non-nil) value.
 //
 // Example:
 //   s := "http://example.com/users/john"
@@ -196,7 +194,6 @@ func (m *Match) NotValues(values ...string) *Match {
 func (m *Match) getValues() []string {
 	if len(m.submatches) > 1 {
 		return m.submatches[1:]
-	} else {
-		return []string{}
 	}
+	return []string{}
 }

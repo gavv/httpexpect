@@ -180,10 +180,8 @@ func (s *String) NotContainsFold(value string) *String {
 // with found submatches.
 //
 // If regexp is invalid or string doesn't match regexp, Match fails and returns
-// empty (but non-nil) object.
-//
-// regexp.Compile is used to construct regexp, and Regexp.FindStringSubmatch
-// is used to construct matches.
+// empty (but non-nil) object. regexp.Compile is used to construct regexp, and
+// Regexp.FindStringSubmatch is used to construct matches.
 //
 // Example:
 //   s := NewString(t, "http://example.com/users/john")
@@ -219,10 +217,8 @@ func (s *String) Match(re string) *Match {
 // of found matches.
 //
 // If regexp is invalid or string doesn't match regexp, MatchAll fails and
-// returns empty (but non-nil) slice.
-//
-// regexp.Compile is used to construct regexp, and Regexp.FindAllStringSubmatch
-// is used to find matches.
+// returns empty (but non-nil) slice. regexp.Compile is used to construct
+// regexp, and Regexp.FindAllStringSubmatch is used to find matches.
 //
 // Example:
 //   s := NewString(t,
@@ -257,7 +253,7 @@ func (s *String) MatchAll(re string) []Match {
 	return ret
 }
 
-// Match succeedes if the string doesn't match to given regexp.
+// NotMatch succeedes if the string doesn't match to given regexp.
 //
 // regexp.Compile is used to construct regexp, and Regexp.MatchString
 // is used to perform match.
