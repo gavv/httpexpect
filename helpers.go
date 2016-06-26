@@ -8,6 +8,17 @@ import (
 	"reflect"
 )
 
+func toString(str interface{}) (s string, ok bool) {
+	ok = true
+	defer func() {
+		if err := recover(); err != nil {
+			ok = false
+		}
+	}()
+	s = reflect.ValueOf(str).Convert(reflect.TypeOf("")).String()
+	return
+}
+
 func canonNumber(chain *chain, number interface{}) (f float64, ok bool) {
 	ok = true
 	defer func() {

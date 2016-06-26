@@ -1,7 +1,10 @@
 package httpexpect
 
 import (
+	"encoding/json"
 	"github.com/stretchr/testify/assert"
+	"io/ioutil"
+	"os"
 	"testing"
 )
 
@@ -365,4 +368,54 @@ func TestValuePathError(t *testing.T) {
 		assert.True(t, bad.Raw() == nil)
 		value.chain.assertFailed(t)
 	}
+}
+
+func TestValueSchema(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	schema := `{
+		"type": "object",
+		"properties": {
+			"foo": {
+				"type": "string"
+			},
+			"bar": {
+				"type": "integer"
+			}
+		},
+		"require": ["foo", "bar"]
+	}`
+
+	data1 := map[string]interface{}{
+		"foo": "a",
+		"bar": 1,
+	}
+
+	data2 := map[string]interface{}{
+		"foo": "a",
+		"bar": "b",
+	}
+
+	NewValue(reporter, data1).Schema(schema).chain.assertOK(t)
+	NewValue(reporter, data2).Schema(schema).chain.assertFailed(t)
+
+	NewValue(reporter, data1).Schema([]byte(schema)).chain.assertOK(t)
+	NewValue(reporter, data2).Schema([]byte(schema)).chain.assertFailed(t)
+
+	var b interface{}
+	json.Unmarshal([]byte(schema), &b)
+
+	NewValue(reporter, data1).Schema(b).chain.assertOK(t)
+	NewValue(reporter, data2).Schema(b).chain.assertFailed(t)
+
+	tmp, _ := ioutil.TempFile("", "httpexpect")
+	defer os.Remove(tmp.Name())
+
+	tmp.Write([]byte(schema))
+	tmp.Close()
+
+	url := "file://" + tmp.Name()
+
+	NewValue(reporter, data1).Schema(url).chain.assertOK(t)
+	NewValue(reporter, data2).Schema(url).chain.assertFailed(t)
 }

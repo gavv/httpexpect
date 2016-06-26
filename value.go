@@ -1,8 +1,11 @@
 package httpexpect
 
 import (
+	"fmt"
+	"github.com/xeipuuv/gojsonschema"
 	"github.com/yalp/jsonpath"
 	"reflect"
+	"regexp"
 )
 
 // Value provides methods to inspect attached interface{} object
@@ -252,5 +255,94 @@ func (v *Value) NotEqual(value interface{}) *Value {
 		v.chain.fail("\nexpected value not equal to:\n%s",
 			dumpValue(expected))
 	}
+	return v
+}
+
+// Schema succeedes if value matches given JSON Schema.
+//
+// JSON Schema specifies a JSON-based format to define the structure of
+// JSON data. See http://json-schema.org/.
+// We use https://github.com/xeipuuv/gojsonschema implementation.
+//
+// schema should be one of the following:
+//  - go value that can be json.Marshal-ed to a valid schema
+//  - type convertible to string containing valid schema
+//  - type convertible to string containing valid http:// or file:// URI,
+//    pointing to reachable and valid schema
+//
+// Example 1:
+//   schema := `{
+//     "type": "object",
+//     "properties": {
+//        "foo": {
+//            "type": "string"
+//        },
+//        "bar": {
+//            "type": "integer"
+//        }
+//    },
+//    "require": ["foo", "bar"]
+//  }`
+//
+//  value := NewValue(t, map[string]interface{}{
+//      "foo": "a",
+//      "bar": 1,
+//  })
+//
+//  value.Schema(schema)
+//
+// Example 2:
+//  value := NewValue(t, data)
+//  value.Schema("http://example.com/schema.json")
+func (v *Value) Schema(schema interface{}) *Value {
+	if v.chain.failed() {
+		return v
+	}
+
+	var schemaLoader gojsonschema.JSONLoader
+
+	if str, ok := toString(schema); ok {
+		if ok, _ := regexp.MatchString(`^\w+://`, str); ok {
+			schemaLoader = gojsonschema.NewReferenceLoader(str)
+		} else {
+			schemaLoader = gojsonschema.NewStringLoader(str)
+		}
+	} else {
+		schemaLoader = gojsonschema.NewGoLoader(schema)
+	}
+
+	if schemaLoader == nil {
+		v.chain.fail("\ninvalid json schema:\n%s", dumpValue(schema))
+		return v
+	}
+
+	valueLoader := gojsonschema.NewGoLoader(v.value)
+	if valueLoader == nil {
+		v.chain.fail("\ninvalid json value:\n%s", dumpValue(v.value))
+		return v
+	}
+
+	result, err := gojsonschema.Validate(schemaLoader, valueLoader)
+	if err != nil {
+		v.chain.fail("\n%s\n\nschema:\n%v\n\nvalue:\n%s",
+			err.Error(), schema, dumpValue(v.value))
+		return v
+	}
+
+	if !result.Valid() {
+		errors := ""
+		for _, err := range result.Errors() {
+			errors += fmt.Sprintf(" %s\n", err)
+		}
+
+		v.chain.fail(
+			"\njson schema validation failed, schema:\n%s\n\nvalue:%s\n\nerrors:\n%s",
+			dumpValue(schema),
+			dumpValue(v.value),
+			errors)
+
+		return v
+	}
+
 	return v
 }
