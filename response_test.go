@@ -32,7 +32,7 @@ func TestResponseFailed(t *testing.T) {
 	resp.JSON().chain.assertFailed(t)
 
 	resp.Status(123)
-	resp.StatusClass("2xx")
+	resp.StatusClass(Status2xx)
 	resp.NoContent()
 	resp.ContentType("", "")
 }
@@ -57,46 +57,47 @@ func TestResponseTime(t *testing.T) {
 func TestResponseStatusClass(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	check := func(status int, match bool, classes ...string) {
-		resp := NewResponse(reporter, &http.Response{
-			StatusCode: status,
-		})
-
-		resp.StatusClass(classes...)
-
-		if match {
-			resp.chain.assertOK(t)
-		} else {
-			resp.chain.assertFailed(t)
-		}
+	classes := []StatusClass{
+		Status1xx,
+		Status2xx,
+		Status3xx,
+		Status4xx,
+		Status5xx,
 	}
 
 	cases := []struct {
 		Status int
-		Class  string
+		Class  StatusClass
 	}{
-		{99, "99"},
-		{100, "1xx"},
-		{199, "1xx"},
-		{200, "2xx"},
-		{299, "2xx"},
-		{300, "3xx"},
-		{399, "3xx"},
-		{400, "4xx"},
-		{499, "4xx"},
-		{500, "5xx"},
-		{599, "5xx"},
-		{600, "600"},
+		{99, StatusClass(-1)},
+		{100, Status1xx},
+		{199, Status1xx},
+		{200, Status2xx},
+		{299, Status2xx},
+		{300, Status3xx},
+		{399, Status3xx},
+		{400, Status4xx},
+		{499, Status4xx},
+		{500, Status5xx},
+		{599, Status5xx},
+		{600, StatusClass(-1)},
 	}
 
 	for _, test := range cases {
-		for _, class := range []string{"1xx", "2xx", "3xx", "4xx", "5xx"} {
-			check(test.Status, test.Class == class, class)
+		for _, class := range classes {
+			resp := NewResponse(reporter, &http.Response{
+				StatusCode: test.Status,
+			})
+
+			resp.StatusClass(class)
+
+			if test.Class == class {
+				resp.chain.assertOK(t)
+			} else {
+				resp.chain.assertFailed(t)
+			}
 		}
 	}
-
-	check(300, true, "3xx", "4xx")
-	check(300, false, "2xx", "4xx")
 }
 
 func TestResponseHeaders(t *testing.T) {
