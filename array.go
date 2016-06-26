@@ -59,9 +59,12 @@ func (a *Array) Length() *Number {
 //  array.Element(0).String().Equal("foo")
 //  array.Element(1).Number().Equal(123)
 func (a *Array) Element(index int) *Value {
-	if len(a.value) <= index {
-		a.chain.fail("\nexpected array of length > %d, but got array of length %d:\n%s",
-			index, len(a.value), dumpValue(a.value))
+	if index < 0 || index >= len(a.value) {
+		a.chain.fail(
+			"\narray index out of bounds:\n  index %d\n\n  bounds [%d; %d)",
+			index,
+			0,
+			len(a.value))
 		return &Value{a.chain, nil}
 	}
 	return &Value{a.chain, a.value[index]}

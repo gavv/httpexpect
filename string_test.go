@@ -164,3 +164,78 @@ func TestStringLength(t *testing.T) {
 	num.chain.assertOK(t)
 	assert.Equal(t, 7.0, num.Raw())
 }
+
+func TestStringMatchOne(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewString(reporter, "http://example.com/users/john")
+
+	m1 := value.Match(`http://(?P<host>.+)/users/(?P<user>.+)`)
+	m1.chain.assertOK(t)
+
+	assert.Equal(t,
+		[]string{"http://example.com/users/john", "example.com", "john"},
+		m1.submatches)
+
+	m2 := value.Match(`http://(.+)/users/(.+)`)
+	m2.chain.assertOK(t)
+
+	assert.Equal(t,
+		[]string{"http://example.com/users/john", "example.com", "john"},
+		m2.submatches)
+}
+
+func TestStringMatchAll(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewString(reporter,
+		"http://example.com/users/john http://example.com/users/bob")
+
+	m := value.MatchAll(`http://(\S+)/users/(\S+)`)
+
+	assert.Equal(t, 2, len(m))
+
+	m[0].chain.assertOK(t)
+	m[1].chain.assertOK(t)
+
+	assert.Equal(t,
+		[]string{"http://example.com/users/john", "example.com", "john"},
+		m[0].submatches)
+
+	assert.Equal(t,
+		[]string{"http://example.com/users/bob", "example.com", "bob"},
+		m[1].submatches)
+}
+
+func TestStringMatchStatus(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewString(reporter, "a")
+
+	value.Match(`a`)
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.MatchAll(`a`)
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.NotMatch(`a`)
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.Match(`[^a]`)
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.MatchAll(`[^a]`)
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.NotMatch(`[^a]`)
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	assert.Equal(t, []string{}, value.Match(`[^a]`).submatches)
+	assert.Equal(t, []Match{}, value.MatchAll(`[^a]`))
+}
