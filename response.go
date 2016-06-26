@@ -97,15 +97,24 @@ func (r *Response) Status(status int) *Response {
 	return r
 }
 
-// Response status class.
+// StatusClass is enum for response status classes.
 type StatusClass int
 
 const (
-	Status1xx StatusClass = 100 // Informational
-	Status2xx StatusClass = 200 // Success
-	Status3xx StatusClass = 300 // Redirection
-	Status4xx StatusClass = 400 // Client Error
-	Status5xx StatusClass = 500 // Server Error
+	// Status1xx is informational status class.
+	Status1xx StatusClass = 100
+
+	// Status2xx is success status class.
+	Status2xx StatusClass = 200
+
+	// Status3xx is redirection status class.
+	Status3xx StatusClass = 300
+
+	// Status4xx is client error status class.
+	Status4xx StatusClass = 400
+
+	// Status5xx is server error status class.
+	Status5xx StatusClass = 500
 )
 
 // StatusClass succeedes if response status belongs to given class.
