@@ -36,11 +36,15 @@ type Value struct {
 //  value := NewValue(t, nil)
 //  value.Null()
 func NewValue(reporter Reporter, value interface{}) *Value {
-	return &Value{makeChain(reporter), value}
+	chain := makeChain(reporter)
+	if value != nil {
+		value, _ = canonValue(&chain, value)
+	}
+	return &Value{chain, value}
 }
 
 // Raw returns underlying value attached to Value.
-// This is the value originally passed to NewValue.
+// This is the value originally passed to NewValue, converted to canonical form.
 //
 // Example:
 //  value := NewValue(t, "foo")
@@ -58,7 +62,7 @@ func (v *Value) Raw() interface{} {
 //  value := NewValue(t, map[string]interface{}{"foo": 123})
 //  value.Object().ContainsKey("foo")
 func (v *Value) Object() *Object {
-	data, ok := canonMap(&v.chain, v.value)
+	data, ok := v.value.(map[string]interface{})
 	if !ok {
 		v.chain.fail("\nexpected object value (map or struct), but got:\n%s",
 			dumpValue(v.value))
@@ -75,7 +79,7 @@ func (v *Value) Object() *Object {
 //  value := NewValue(t, []interface{}{"foo", 123})
 //  value.Array().Elements("foo", 123)
 func (v *Value) Array() *Array {
-	data, ok := canonArray(&v.chain, v.value)
+	data, ok := v.value.([]interface{})
 	if !ok {
 		v.chain.fail("\nexpected array value, but got:\n%s",
 			dumpValue(v.value))
@@ -109,7 +113,7 @@ func (v *Value) String() *String {
 //  value := NewValue(t, 123)
 //  value.Number().InRange(100, 200)
 func (v *Value) Number() *Number {
-	data, ok := canonNumber(&v.chain, v.value)
+	data, ok := v.value.(float64)
 	if !ok {
 		v.chain.fail("\nexpected numeric value, but got:\n%s",
 			dumpValue(v.value))
@@ -132,54 +136,6 @@ func (v *Value) Boolean() *Boolean {
 			dumpValue(v.value))
 	}
 	return &Boolean{v.chain, data}
-}
-
-// Null succeedes if value is nil.
-//
-// Note that non-nil interface{} that points to nil value (e.g. nil slice or map)
-// is also treated as null value. Empty (non-nil) slice or map, empty string, and
-// zero number are not treated as null value.
-//
-// Example:
-//  value := NewValue(t, nil)
-//  value.Null()
-//
-//  value := NewValue(t, []interface{}(nil))
-//  value.Null()
-func (v *Value) Null() *Value {
-	data, ok := canonValue(&v.chain, v.value)
-	if !ok {
-		return v
-	}
-	if data != nil {
-		v.chain.fail("\nexpected nil value, but got:\n%s",
-			dumpValue(v.value))
-	}
-	return v
-}
-
-// NotNull succeedes if value is not nil.
-//
-// Note that non-nil interface{} that points to nil value (e.g. nil slice or map)
-// is also treated as null value. Empty (non-nil) slice or map, empty string, and
-// zero number are not treated as null value.
-//
-// Example:
-//  value := NewValue(t, "")
-//  value.NotNull()
-//
-//  value := NewValue(t, make([]interface{}, 0)
-//  value.Null()
-func (v *Value) NotNull() *Value {
-	data, ok := canonValue(&v.chain, v.value)
-	if !ok {
-		return v
-	}
-	if data == nil {
-		v.chain.fail("\nexpected non-nil value, but got:\n%s",
-			dumpValue(v.value))
-	}
-	return v
 }
 
 // Path returns a new Value object for child object(s) matching given
@@ -218,4 +174,44 @@ func (v *Value) Path(path string) *Value {
 	}
 
 	return &Value{v.chain, result}
+}
+
+// Null succeedes if value is nil.
+//
+// Note that non-nil interface{} that points to nil value (e.g. nil slice or map)
+// is also treated as null value. Empty (non-nil) slice or map, empty string, and
+// zero number are not treated as null value.
+//
+// Example:
+//  value := NewValue(t, nil)
+//  value.Null()
+//
+//  value := NewValue(t, []interface{}(nil))
+//  value.Null()
+func (v *Value) Null() *Value {
+	if v.value != nil {
+		v.chain.fail("\nexpected nil value, but got:\n%s",
+			dumpValue(v.value))
+	}
+	return v
+}
+
+// NotNull succeedes if value is not nil.
+//
+// Note that non-nil interface{} that points to nil value (e.g. nil slice or map)
+// is also treated as null value. Empty (non-nil) slice or map, empty string, and
+// zero number are not treated as null value.
+//
+// Example:
+//  value := NewValue(t, "")
+//  value.NotNull()
+//
+//  value := NewValue(t, make([]interface{}, 0)
+//  value.Null()
+func (v *Value) NotNull() *Value {
+	if v.value == nil {
+		v.chain.fail("\nexpected non-nil value, but got:\n%s",
+			dumpValue(v.value))
+	}
+	return v
 }
