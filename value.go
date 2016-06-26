@@ -299,6 +299,8 @@ func (v *Value) Schema(schema interface{}) *Value {
 		return v
 	}
 
+	valueLoader := gojsonschema.NewGoLoader(v.value)
+
 	var schemaLoader gojsonschema.JSONLoader
 
 	if str, ok := toString(schema); ok {
@@ -309,17 +311,6 @@ func (v *Value) Schema(schema interface{}) *Value {
 		}
 	} else {
 		schemaLoader = gojsonschema.NewGoLoader(schema)
-	}
-
-	if schemaLoader == nil {
-		v.chain.fail("\ninvalid json schema:\n%s", dumpValue(schema))
-		return v
-	}
-
-	valueLoader := gojsonschema.NewGoLoader(v.value)
-	if valueLoader == nil {
-		v.chain.fail("\ninvalid json value:\n%s", dumpValue(v.value))
-		return v
 	}
 
 	result, err := gojsonschema.Validate(schemaLoader, valueLoader)
