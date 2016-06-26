@@ -21,6 +21,7 @@
 
 **Integrations:**
 * Allows to perform simple json queries using [`jsonpath`](https://github.com/yalp/jsonpath) package which implements a subset of [JSONPath](http://goessner.net/articles/JsonPath/).
+* Allows to perform [JSON Schema](http://json-schema.org/) validation using [`gojsonschema`](https://github.com/xeipuuv/gojsonschema) package.
 * Uses [`form`](https://github.com/ajg/form) and [`go-querystring`](https://github.com/google/go-querystring) packages to encode and decode forms and URL parameters.
 * Provides integration with [`fasthttp`](https://github.com/valyala/fasthttp/) HTTP handler.
 
