@@ -179,10 +179,10 @@ func (r *Request) WithHeaders(headers map[string]string) *Request {
 //  req := NewRequest(config, "PUT", "http://example.org/path")
 //  req.WithHeader("Content-Type": "application/json")
 func (r *Request) WithHeader(k, v string) *Request {
-	switch strings.ToLower(k) {
-	case "host":
+	switch http.CanonicalHeaderKey(k) {
+	case "Host":
 		r.http.Host = v
-	case "content-type":
+	case "Content-Type":
 		if !r.forcetype {
 			delete(r.http.Header, "Content-Type")
 		}
