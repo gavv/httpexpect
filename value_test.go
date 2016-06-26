@@ -33,6 +33,11 @@ func TestValueFailed(t *testing.T) {
 
 	value.Null()
 	value.NotNull()
+
+	value.Equal(nil)
+	value.NotEqual(nil)
+
+	value.Schema("")
 }
 
 func TestValueCastNull(t *testing.T) {
@@ -285,6 +290,9 @@ func TestValueEqual(t *testing.T) {
 
 	NewValue(reporter, nil).Equal(map[string]interface{}(nil)).chain.assertOK(t)
 	NewValue(reporter, nil).Equal(map[string]interface{}{}).chain.assertFailed(t)
+
+	NewValue(reporter, data1).Equal(func() {}).chain.assertFailed(t)
+	NewValue(reporter, data1).NotEqual(func() {}).chain.assertFailed(t)
 }
 
 func TestValuePathObject(t *testing.T) {
@@ -418,4 +426,7 @@ func TestValueSchema(t *testing.T) {
 
 	NewValue(reporter, data1).Schema(url).chain.assertOK(t)
 	NewValue(reporter, data2).Schema(url).chain.assertFailed(t)
+
+	NewValue(reporter, data1).Schema("file:///bad/path").chain.assertFailed(t)
+	NewValue(reporter, data1).Schema("{ bad json").chain.assertFailed(t)
 }
