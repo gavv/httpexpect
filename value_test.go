@@ -260,6 +260,30 @@ func TestValueGetBoolean(t *testing.T) {
 	assert.Equal(t, false, inner2.Raw())
 }
 
+func TestValueEqual(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	data1 := map[string]interface{}{"foo": "bar"}
+	data2 := "baz"
+
+	NewValue(reporter, data1).Equal(data1).chain.assertOK(t)
+	NewValue(reporter, data2).Equal(data2).chain.assertOK(t)
+
+	NewValue(reporter, data1).NotEqual(data1).chain.assertFailed(t)
+	NewValue(reporter, data2).NotEqual(data2).chain.assertFailed(t)
+
+	NewValue(reporter, data1).Equal(data2).chain.assertFailed(t)
+	NewValue(reporter, data2).Equal(data1).chain.assertFailed(t)
+
+	NewValue(reporter, data1).NotEqual(data2).chain.assertOK(t)
+	NewValue(reporter, data2).NotEqual(data1).chain.assertOK(t)
+
+	NewValue(reporter, nil).Equal(nil).chain.assertOK(t)
+
+	NewValue(reporter, nil).Equal(map[string]interface{}(nil)).chain.assertOK(t)
+	NewValue(reporter, nil).Equal(map[string]interface{}{}).chain.assertFailed(t)
+}
+
 func TestValuePathObject(t *testing.T) {
 	reporter := newMockReporter(t)
 

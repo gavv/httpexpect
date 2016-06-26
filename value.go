@@ -2,6 +2,7 @@ package httpexpect
 
 import (
 	"github.com/yalp/jsonpath"
+	"reflect"
 )
 
 // Value provides methods to inspect attached interface{} object
@@ -146,7 +147,7 @@ func (v *Value) Boolean() *Boolean {
 //
 // We currently use https://github.com/yalp/jsonpath, which implements
 // only a subset of JSONPath, yet useful for simple queries. It doesn't
-// support expressions and requires double quotes for strings.
+// support filters and requires double quotes for strings.
 //
 // Example 1:
 //  json := `{"users": [{"name": "john"}, {"name": "bob"}]}`
@@ -212,6 +213,44 @@ func (v *Value) NotNull() *Value {
 	if v.value == nil {
 		v.chain.fail("\nexpected non-nil value, but got:\n%s",
 			dumpValue(v.value))
+	}
+	return v
+}
+
+// Equal succeedes if value is equal to another value.
+// Before comparison, both values are converted to canonical form.
+//
+// Example:
+//  value := NewValue(t, "foo")
+//  value.Equal("foo")
+func (v *Value) Equal(value interface{}) *Value {
+	expected, ok := canonValue(&v.chain, value)
+	if !ok {
+		return v
+	}
+	if !reflect.DeepEqual(expected, v.value) {
+		v.chain.fail("\nexpected value equal to:\n%s\n\nbut got:\n%s\n\ndiff:\n%s",
+			dumpValue(expected),
+			dumpValue(v.value),
+			diffValues(expected, v.value))
+	}
+	return v
+}
+
+// NotEqual succeedes if value is not equal to another value.
+// Before comparison, both values are converted to canonical form.
+//
+// Example:
+//  value := NewValue(t, "foo")
+//  value.NorEqual("bar")
+func (v *Value) NotEqual(value interface{}) *Value {
+	expected, ok := canonValue(&v.chain, value)
+	if !ok {
+		return v
+	}
+	if reflect.DeepEqual(expected, v.value) {
+		v.chain.fail("\nexpected value NOT equal to:\n%s",
+			dumpValue(expected))
 	}
 	return v
 }
