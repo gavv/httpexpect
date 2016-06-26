@@ -19,12 +19,14 @@ func TestValueFailed(t *testing.T) {
 	assert.False(t, value.String() == nil)
 	assert.False(t, value.Number() == nil)
 	assert.False(t, value.Boolean() == nil)
+	assert.False(t, value.Path("/") == nil)
 
 	value.Object().chain.assertFailed(t)
 	value.Array().chain.assertFailed(t)
 	value.String().chain.assertFailed(t)
 	value.Number().chain.assertFailed(t)
 	value.Boolean().chain.assertFailed(t)
+	value.Path("$").chain.assertFailed(t)
 
 	value.Null()
 	value.NotNull()
@@ -256,4 +258,87 @@ func TestValueGetBoolean(t *testing.T) {
 	inner2.chain.assertOK(t)
 	inner2.chain.reset()
 	assert.Equal(t, false, inner2.Raw())
+}
+
+func TestValuePathObject(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	user0 := map[string]interface{}{"name": "john"}
+	user1 := map[string]interface{}{"name": "bob"}
+
+	data := map[string]interface{}{
+		"users": []interface{}{
+			user0,
+			user1,
+		},
+	}
+
+	value := NewValue(reporter, data)
+
+	assert.Equal(t, data, value.Path("$").Raw())
+	assert.Equal(t, data["users"], value.Path("$.users").Raw())
+	assert.Equal(t, user0, value.Path("$.users[0]").Raw())
+	assert.Equal(t, "john", value.Path("$.users[0].name").Raw())
+	assert.Equal(t, []interface{}{"john", "bob"}, value.Path("$.users[*].name").Raw())
+	assert.Equal(t, []interface{}{"john", "bob"}, value.Path("$..name").Raw())
+	value.chain.assertOK(t)
+
+	names := value.Path("$..name").Array().Iter()
+	value.chain.assertOK(t)
+	names[0].String().Equal("john").chain.assertOK(t)
+	names[1].String().Equal("bob").chain.assertOK(t)
+
+	for _, key := range []string{"$.bad", "!"} {
+		bad := value.Path(key)
+		assert.True(t, bad != nil)
+		assert.True(t, bad.Raw() == nil)
+		value.chain.assertFailed(t)
+	}
+}
+
+func TestValuePathArray(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	user0 := map[string]interface{}{"name": "john"}
+	user1 := map[string]interface{}{"name": "bob"}
+
+	data := []interface{}{
+		user0,
+		user1,
+	}
+
+	value := NewValue(reporter, data)
+
+	assert.Equal(t, data, value.Path("$").Raw())
+	assert.Equal(t, user0, value.Path("$[0]").Raw())
+	assert.Equal(t, "john", value.Path("$[0].name").Raw())
+	assert.Equal(t, []interface{}{"john", "bob"}, value.Path("$[*].name").Raw())
+	assert.Equal(t, []interface{}{"john", "bob"}, value.Path("$..name").Raw())
+	value.chain.assertOK(t)
+}
+
+func TestValuePathString(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	data := "foo"
+
+	value := NewValue(reporter, data)
+
+	assert.Equal(t, data, value.Path("$").Raw())
+	value.chain.assertOK(t)
+}
+
+func TestValuePathError(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	data := "foo"
+
+	value := NewValue(reporter, data)
+
+	for _, key := range []string{"$.bad", "!"} {
+		bad := value.Path(key)
+		assert.True(t, bad != nil)
+		assert.True(t, bad.Raw() == nil)
+		value.chain.assertFailed(t)
+	}
 }

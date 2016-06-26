@@ -1,5 +1,9 @@
 package httpexpect
 
+import (
+	"github.com/yalp/jsonpath"
+)
+
 // Value provides methods to inspect attached interface{} object
 // (Go representation of arbitrary JSON value) and cast it to
 // concrete type.
@@ -176,4 +180,42 @@ func (v *Value) NotNull() *Value {
 			dumpValue(v.value))
 	}
 	return v
+}
+
+// Path returns a new Value object for child object(s) matching given
+// JSONPath expression.
+//
+// JSONPath is a simple XPath-like query language.
+// See http://goessner.net/articles/JsonPath/.
+//
+// We currently use https://github.com/yalp/jsonpath, which implements
+// only a subset of JSONPath, yet useful for simple queries. It doesn't
+// support expressions and requires double quotes for strings.
+//
+// Example 1:
+//  json := `{"users": [{"name": "john"}, {"name": "bob"}]}`
+//  value := NewValue(t, json)
+//
+//  value.Path("$.users[0].name").String().Equal("john")
+//  value.Path("$.users[1].name").String().Equal("bob")
+//
+// Example 2:
+//  json := `{"yfGH2a": {"user": "john"}, "f7GsDd": {"user": "john"}}`
+//  value := NewValue(t, json)
+//
+//  for _, user := range value.Path("$..user").Array().Iter() {
+//      user.String().Equal("john")
+//  }
+func (v *Value) Path(path string) *Value {
+	if v.chain.failed() {
+		return &Value{v.chain, nil}
+	}
+
+	result, err := jsonpath.Read(v.value, path)
+	if err != nil {
+		v.chain.fail(err.Error())
+		return &Value{v.chain, nil}
+	}
+
+	return &Value{v.chain, result}
 }
