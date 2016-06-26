@@ -70,6 +70,26 @@ func (a *Array) Element(index int) *Value {
 	return &Value{a.chain, a.value[index]}
 }
 
+// Iter returns a new slice of Values attached to array elements.
+//
+// Example:
+//  strings := []interface{}{"foo", "bar"}
+//  array := NewArray(t, strings)
+//
+//  for n, val := range array.Iter() {
+//      val.String().Equal(strings[n])
+//  }
+func (a *Array) Iter() []Value {
+	if a.chain.failed() {
+		return []Value{}
+	}
+	ret := []Value{}
+	for n := range a.value {
+		ret = append(ret, Value{a.chain, a.value[n]})
+	}
+	return ret
+}
+
 // Empty succeedes if array is empty.
 //
 // Example:
