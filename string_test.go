@@ -239,3 +239,21 @@ func TestStringMatchStatus(t *testing.T) {
 	assert.Equal(t, []string{}, value.Match(`[^a]`).submatches)
 	assert.Equal(t, []Match{}, value.MatchAll(`[^a]`))
 }
+
+func TestStringMatchInvalid(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewString(reporter, "a")
+
+	value.Match(`[`)
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.MatchAll(`[`)
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.NotMatch(`[`)
+	value.chain.assertFailed(t)
+	value.chain.reset()
+}
