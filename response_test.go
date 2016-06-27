@@ -32,7 +32,7 @@ func TestResponseFailed(t *testing.T) {
 	resp.JSON().chain.assertFailed(t)
 
 	resp.Status(123)
-	resp.StatusClass(Status2xx)
+	resp.StatusRange(Status2xx)
 	resp.NoContent()
 	resp.ContentType("", "")
 }
@@ -54,10 +54,10 @@ func TestResponseTime(t *testing.T) {
 	rt.chain.assertOK(t)
 }
 
-func TestResponseStatusClass(t *testing.T) {
+func TestResponseStatusRange(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	classes := []StatusClass{
+	ranges := []StatusRange{
 		Status1xx,
 		Status2xx,
 		Status3xx,
@@ -67,9 +67,9 @@ func TestResponseStatusClass(t *testing.T) {
 
 	cases := []struct {
 		Status int
-		Class  StatusClass
+		Range  StatusRange
 	}{
-		{99, StatusClass(-1)},
+		{99, StatusRange(-1)},
 		{100, Status1xx},
 		{199, Status1xx},
 		{200, Status2xx},
@@ -80,18 +80,18 @@ func TestResponseStatusClass(t *testing.T) {
 		{499, Status4xx},
 		{500, Status5xx},
 		{599, Status5xx},
-		{600, StatusClass(-1)},
+		{600, StatusRange(-1)},
 	}
 
 	for _, test := range cases {
-		for _, class := range classes {
+		for _, r := range ranges {
 			resp := NewResponse(reporter, &http.Response{
 				StatusCode: test.Status,
 			})
 
-			resp.StatusClass(class)
+			resp.StatusRange(r)
 
-			if test.Class == class {
+			if test.Range == r {
 				resp.chain.assertOK(t)
 			} else {
 				resp.chain.assertFailed(t)

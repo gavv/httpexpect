@@ -13,6 +13,26 @@ import (
 	"time"
 )
 
+// StatusRange is enum for response status ranges.
+type StatusRange int
+
+const (
+	// Status1xx defines "Informational" status codes.
+	Status1xx StatusRange = 100
+
+	// Status2xx defines "Success" status codes.
+	Status2xx StatusRange = 200
+
+	// Status3xx defines "Redirection" status codes.
+	Status3xx StatusRange = 300
+
+	// Status4xx defines "Client Error" status codes.
+	Status4xx StatusRange = 400
+
+	// Status5xx defines "Server Error" status codes.
+	Status5xx StatusRange = 500
+)
+
 // Response provides methods to inspect attached http.Response object.
 type Response struct {
 	chain   chain
@@ -93,61 +113,41 @@ func (r *Response) Status(status int) *Response {
 	if r.chain.failed() {
 		return r
 	}
-	r.checkEqual("status", statusText(status), statusText(r.resp.StatusCode))
+	r.checkEqual("status", statusCodeText(status), statusCodeText(r.resp.StatusCode))
 	return r
 }
 
-// StatusClass is enum for response status classes.
-type StatusClass int
-
-const (
-	// Status1xx is informational status class.
-	Status1xx StatusClass = 100
-
-	// Status2xx is success status class.
-	Status2xx StatusClass = 200
-
-	// Status3xx is redirection status class.
-	Status3xx StatusClass = 300
-
-	// Status4xx is client error status class.
-	Status4xx StatusClass = 400
-
-	// Status5xx is server error status class.
-	Status5xx StatusClass = 500
-)
-
-// StatusClass succeedes if response status belongs to given class.
+// StatusRange succeedes if response status belongs to given range.
 //
-// Supported classes:
-//  - httpexpect.Status1xx - Informational
-//  - httpexpect.Status2xx - Success
-//  - httpexpect.Status3xx - Redirection
-//  - httpexpect.Status4xx - Client Error
-//  - httpexpect.Status5xx - Server Error
+// Supported ranges:
+//  - Status1xx - Informational
+//  - Status2xx - Success
+//  - Status3xx - Redirection
+//  - Status4xx - Client Error
+//  - Status5xx - Server Error
 //
 // See https://en.wikipedia.org/wiki/List_of_HTTP_status_codes.
 //
 // Example:
 //  resp := NewResponse(t, response)
-//  resp.StatusClass(Status2xx)
-func (r *Response) StatusClass(class StatusClass) *Response {
+//  resp.StatusRange(Status2xx)
+func (r *Response) StatusRange(rn StatusRange) *Response {
 	if r.chain.failed() {
 		return r
 	}
 
-	status := statusText(r.resp.StatusCode)
+	status := statusCodeText(r.resp.StatusCode)
 
-	actual := statusClass(r.resp.StatusCode)
-	expected := statusClass(int(class))
+	actual := statusRangeText(r.resp.StatusCode)
+	expected := statusRangeText(int(rn))
 
 	if actual == "" || actual != expected {
 		if actual == "" {
-			r.chain.fail("\nexpected status belongs to class:\n %q\n\nbut got:\n %q",
+			r.chain.fail("\nexpected status from range:\n %q\n\nbut got:\n %q",
 				expected, status)
 		} else {
 			r.chain.fail(
-				"\nexpected status belongs to class:\n %q\n\nbut got:\n %q (%q)",
+				"\nexpected status from range:\n %q\n\nbut got:\n %q (%q)",
 				expected, actual, status)
 		}
 	}
@@ -155,14 +155,14 @@ func (r *Response) StatusClass(class StatusClass) *Response {
 	return r
 }
 
-func statusText(code int) string {
+func statusCodeText(code int) string {
 	if s := http.StatusText(code); s != "" {
 		return strconv.Itoa(code) + " " + s
 	}
 	return strconv.Itoa(code)
 }
 
-func statusClass(code int) string {
+func statusRangeText(code int) string {
 	switch {
 	case code >= 100 && code < 200:
 		return "1xx Informational"
