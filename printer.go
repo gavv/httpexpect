@@ -48,7 +48,7 @@ func (p DebugPrinter) Request(req *http.Request) {
 		return
 	}
 
-	dump, err := httputil.DumpRequestOut(req, p.body)
+	dump, err := httputil.DumpRequest(req, p.body)
 	if err != nil {
 		panic(err)
 	}
