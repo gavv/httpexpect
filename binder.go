@@ -102,7 +102,10 @@ func (binder *FastBinder) Do(stdreq *http.Request) (*http.Response, error) {
 	ctx.Init(&fastreq, nil, nil)
 
 	if stdreq.Body != nil {
-		ctx.Request.SetBodyStream(stdreq.Body, -1)
+		b, err := ioutil.ReadAll(stdreq.Body)
+		if err == nil {
+			ctx.Request.SetBody(b)
+		}
 	}
 
 	binder.Handler(&ctx)
@@ -119,17 +122,17 @@ func (binder *FastBinder) Do(stdreq *http.Request) (*http.Response, error) {
 }
 
 func convertRequest(stdreq *http.Request, fastreq *fasthttp.Request) {
-	if stdreq.Body != nil {
-		fastreq.SetBodyStream(stdreq.Body, -1)
-	}
-
 	fastreq.SetRequestURI(stdreq.URL.String())
 
 	fastreq.Header.SetMethod(stdreq.Method)
 
 	for k, a := range stdreq.Header {
-		for _, v := range a {
-			fastreq.Header.Add(k, v)
+		for n, v := range a {
+			if n == 0 {
+				fastreq.Header.Set(k, v)
+			} else {
+				fastreq.Header.Add(k, v)
+			}
 		}
 	}
 }
