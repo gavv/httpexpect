@@ -60,8 +60,22 @@ func TestFastBinder(t *testing.T) {
 	binder := NewFastBinder(func(ctx *fasthttp.RequestCtx) {
 		assert.Equal(t, "POST", string(ctx.Request.Header.Method()))
 		assert.Equal(t, "http://example.com", string(ctx.Request.Header.RequestURI()))
+
 		assert.Equal(t, "application/x-www-form-urlencoded",
 			string(ctx.Request.Header.ContentType()))
+
+		headers := map[string][]string{}
+
+		ctx.Request.Header.VisitAll(func(k, v []byte) {
+			headers[string(k)] = append(headers[string(k)], string(v))
+		})
+
+		expected := map[string][]string{
+			"Content-Type": {"application/x-www-form-urlencoded"},
+			"Some-Header":  {"foo", "bar"},
+		}
+
+		assert.Equal(t, expected, headers)
 
 		assert.Equal(t, "bar", string(ctx.FormValue("foo")))
 		assert.Equal(t, "foo=bar", string(ctx.Request.Body()))
@@ -78,6 +92,8 @@ func TestFastBinder(t *testing.T) {
 	}
 
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("Some-Header", "foo")
+	req.Header.Add("Some-Header", "bar")
 
 	resp, err := binder.Do(req)
 	if err != nil {
