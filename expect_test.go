@@ -1,12 +1,13 @@
 package httpexpect
 
 import (
+	"encoding/json"
 	"github.com/stretchr/testify/assert"
+	"github.com/valyala/fasthttp/fasthttpadaptor"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"github.com/valyala/fasthttp/fasthttpadaptor"
+	"time"
 )
 
 func TestExpectMethods(t *testing.T) {
@@ -155,13 +156,27 @@ func createHandler() http.Handler {
 	})
 
 	mux.HandleFunc("/bar", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
+		w.Write([]byte(`field1=` + r.FormValue("field1")))
+		w.Write([]byte(`&field2=` + r.PostFormValue("field2")))
+	})
+
+	mux.HandleFunc("/baz", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case "GET":
 			w.Header().Set("Content-Type", "application/json")
 			w.Write([]byte(`[true, false]`))
 
 		case "PUT":
-			w.WriteHeader(http.StatusNoContent)
+			decoder := json.NewDecoder(r.Body)
+			var m map[string]interface{}
+			if err := decoder.Decode(&m); err != nil {
+				w.WriteHeader(http.StatusBadRequest)
+			} else if m["test"] != "ok" {
+				w.WriteHeader(http.StatusBadRequest)
+			} else {
+				w.WriteHeader(http.StatusNoContent)
+			}
 		}
 	})
 
@@ -178,10 +193,17 @@ func testHandler(e *Expect) {
 	e.GET("/foo").Expect().
 		Status(http.StatusOK).JSON().Object().ValueEqual("foo", 123)
 
-	e.GET("/bar").Expect().
+	e.PUT("/bar").WithQuery("field1", "hello").WithFormField("field2", "world").
+		Expect().
+		Status(http.StatusOK).
+		Form().ValueEqual("field1", "hello").ValueEqual("field2", "world")
+
+	e.GET("/baz").
+		Expect().
 		Status(http.StatusOK).JSON().Array().Elements(true, false)
 
-	e.PUT("/bar").Expect().
+	e.PUT("/baz").WithJSON(map[string]string{"test": "ok"}).
+		Expect().
 		Status(http.StatusNoContent).Body().Empty()
 }
 
@@ -206,7 +228,7 @@ func TestExpectLiveDefaultLongRun(t *testing.T) {
 
 	e := New(t, server.URL)
 
-	for i := 0; i < 2000; i++ {
+	for i := 0; i < 2; i++ {
 		testHandler(e)
 	}
 }
@@ -252,8 +274,10 @@ func createCookieHandler() http.Handler {
 
 	mux.HandleFunc("/set", func(w http.ResponseWriter, r *http.Request) {
 		http.SetCookie(w, &http.Cookie{
-			Name:  "myname",
-			Value: "myvalue",
+			Name:    "myname",
+			Value:   "myvalue",
+			Path:    "/",
+			Expires: time.Date(3000, 0, 0, 0, 0, 0, 0, time.UTC),
 		})
 		w.WriteHeader(http.StatusNoContent)
 	})
@@ -272,14 +296,19 @@ func createCookieHandler() http.Handler {
 }
 
 func testCookies(e *Expect, working bool) {
-	e.PUT("/set").Expect().Status(http.StatusNoContent)
+	r := e.PUT("/set").Expect().Status(http.StatusNoContent)
+
+	r.Cookies().ContainsOnly("myname")
+	c := r.Cookie("myname")
+	c.Value().Equal("myvalue")
+	c.Path().Equal("/")
+	c.Expires().Equal(time.Date(3000, 0, 0, 0, 0, 0, 0, time.UTC))
 
 	if working {
 		e.GET("/get").Expect().Status(http.StatusOK).Text().Equal("myvalue")
 	} else {
 		e.GET("/get").Expect().Status(http.StatusBadRequest)
 	}
-
 }
 
 func TestExpectCookiesClientDisabled(t *testing.T) {

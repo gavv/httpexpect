@@ -317,7 +317,7 @@ func TestRequestBodyReader(t *testing.T) {
 
 	req := NewRequest(config, "METHOD", "url")
 
-	req.WithBody(bytes.NewBufferString("body"))
+	req.WithChunked(bytes.NewBufferString("body"))
 
 	resp := req.Expect()
 	resp.chain.assertOK(t)
@@ -345,7 +345,7 @@ func TestRequestBodyReaderNil(t *testing.T) {
 
 	req := NewRequest(config, "METHOD", "url")
 
-	req.WithBody(nil)
+	req.WithChunked(nil)
 
 	resp := req.Expect()
 	resp.chain.assertOK(t)
@@ -872,39 +872,39 @@ func TestRequestErrorConflictBody(t *testing.T) {
 	}
 
 	req1 := NewRequest(config, "METHOD", "url")
-	req1.WithBody(nil)
-	req1.WithBody(nil)
+	req1.WithChunked(nil)
+	req1.WithChunked(nil)
 	req1.chain.assertFailed(t)
 
 	req2 := NewRequest(config, "METHOD", "url")
-	req2.WithBody(nil)
+	req2.WithChunked(nil)
 	req2.WithBytes(nil)
 	req2.chain.assertFailed(t)
 
 	req3 := NewRequest(config, "METHOD", "url")
-	req3.WithBody(nil)
+	req3.WithChunked(nil)
 	req3.WithText("")
 	req3.chain.assertFailed(t)
 
 	req4 := NewRequest(config, "METHOD", "url")
-	req4.WithBody(nil)
+	req4.WithChunked(nil)
 	req4.WithJSON(map[string]interface{}{"a": "b"})
 	req4.chain.assertFailed(t)
 
 	req5 := NewRequest(config, "METHOD", "url")
-	req5.WithBody(nil)
+	req5.WithChunked(nil)
 	req5.WithForm(map[string]interface{}{"a": "b"})
 	req5.Expect()
 	req5.chain.assertFailed(t)
 
 	req6 := NewRequest(config, "METHOD", "url")
-	req6.WithBody(nil)
+	req6.WithChunked(nil)
 	req6.WithFormField("a", "b")
 	req6.Expect()
 	req6.chain.assertFailed(t)
 
 	req7 := NewRequest(config, "METHOD", "url")
-	req7.WithBody(nil)
+	req7.WithChunked(nil)
 	req7.WithMultipart()
 	req7.chain.assertFailed(t)
 }

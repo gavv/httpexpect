@@ -27,6 +27,7 @@ type Request struct {
 	http       http.Request
 	query      url.Values
 	form       url.Values
+	formbuf    *bytes.Buffer
 	multipart  *multipart.Writer
 	forcetype  bool
 	typesetter string
@@ -222,20 +223,23 @@ func (r *Request) WithCookie(k, v string) *Request {
 	return r
 }
 
-// WithBody set given reader for request body.
+// WithChunked sets reader for request body and enables chunked encoding.
 //
-// Expect() will read all available data from this reader.
+// Expect() will read all available data from given reader. Content-Length
+// is not set, and "chunked" Transfer-Encoding is used.
 //
 // Example:
-//  req := NewRequest(config, "PUT", "http://example.org/path")
-//  req.WithHeader("Content-Type": "application/json")
-//  req.WithBody(bytes.NewBufferString(`{"foo": 123}`))
-func (r *Request) WithBody(reader io.Reader) *Request {
-	r.setBody("WithBody", reader, -1)
+//  req := NewRequest(config, "PUT", "http://example.org/upload")
+//  fh, _ := os.Open("data")
+//  defer fh.Close()
+//  req.WithHeader("Content-Type": "application/octet-stream")
+//  req.WithChunked(fh)
+func (r *Request) WithChunked(reader io.Reader) *Request {
+	r.setBody("WithChunked", reader, -1, false)
 	return r
 }
 
-// WithBytes is like WithBody, but gets body as a slice of bytes.
+// WithBytes sets request body to given slice of bytes.
 //
 // Example:
 //  req := NewRequest(config, "PUT", "http://example.org/path")
@@ -243,9 +247,9 @@ func (r *Request) WithBody(reader io.Reader) *Request {
 //  req.WithBytes([]byte(`{"foo": 123}`))
 func (r *Request) WithBytes(b []byte) *Request {
 	if b == nil {
-		r.setBody("WithBytes", nil, 0)
+		r.setBody("WithBytes", nil, 0, false)
 	} else {
-		r.setBody("WithBytes", bytes.NewReader(b), len(b))
+		r.setBody("WithBytes", bytes.NewReader(b), len(b), false)
 	}
 	return r
 }
@@ -258,7 +262,7 @@ func (r *Request) WithBytes(b []byte) *Request {
 //  req.WithText("hello, world!")
 func (r *Request) WithText(s string) *Request {
 	r.setType("WithText", "text/plain; charset=utf-8", false)
-	r.setBody("WithText", strings.NewReader(s), -1)
+	r.setBody("WithText", strings.NewReader(s), len(s), false)
 	return r
 }
 
@@ -283,7 +287,7 @@ func (r *Request) WithJSON(object interface{}) *Request {
 	}
 
 	r.setType("WithJSON", "application/json; charset=utf-8", false)
-	r.setBody("WithJSON", bytes.NewReader(b), len(b))
+	r.setBody("WithJSON", bytes.NewReader(b), len(b), false)
 
 	return r
 }
@@ -461,9 +465,9 @@ func (r *Request) WithMultipart() *Request {
 	r.setType("WithMultipart", "multipart/form-data", false)
 
 	if r.multipart == nil {
-		var buf bytes.Buffer
-		r.multipart = multipart.NewWriter(&buf)
-		r.setBody("WithMultipart", &buf, -1)
+		r.formbuf = new(bytes.Buffer)
+		r.multipart = multipart.NewWriter(r.formbuf)
+		r.setBody("WithMultipart", r.formbuf, 0, false)
 	}
 
 	return r
@@ -509,12 +513,16 @@ func (r *Request) setType(newSetter, newType string, overwrite bool) {
 	r.http.Header["Content-Type"] = []string{newType}
 }
 
-func (r *Request) setBody(setter string, reader io.Reader, len int) {
-	if r.bodysetter != "" {
+func (r *Request) setBody(setter string, reader io.Reader, len int, overwrite bool) {
+	if !overwrite && r.bodysetter != "" {
 		r.chain.fail(
 			"\nambiguous request body contents:\n  set by %s\n  overwritten by %s",
 			r.bodysetter, setter)
 		return
+	}
+
+	if len > 0 && reader == nil {
+		panic("invalid length")
 	}
 
 	if reader == nil {
@@ -534,15 +542,16 @@ func (r *Request) encodeRequest() {
 	}
 
 	if r.multipart != nil {
-		r.setType("Expect", r.multipart.FormDataContentType(), true)
-
 		if err := r.multipart.Close(); err != nil {
 			r.chain.fail(err.Error())
 			return
 		}
+
+		r.setType("Expect", r.multipart.FormDataContentType(), true)
+		r.setBody("Expect", r.formbuf, r.formbuf.Len(), true)
 	} else if r.form != nil {
-		r.setBody("WithForm or WithFormField",
-			strings.NewReader(r.form.Encode()), -1)
+		s := r.form.Encode()
+		r.setBody("WithForm or WithFormField", strings.NewReader(s), len(s), false)
 	}
 }
 

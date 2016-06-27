@@ -34,6 +34,10 @@ func NewBinder(handler http.Handler) *Binder {
 
 // Do implements Client.Do.
 func (binder *Binder) Do(req *http.Request) (*http.Response, error) {
+	if req.Body == nil {
+		req.Body = ioutil.NopCloser(bytes.NewReader(nil))
+	}
+
 	if binder.Jar != nil {
 		for _, cookie := range binder.Jar.Cookies(req.URL) {
 			req.AddCookie(cookie)
