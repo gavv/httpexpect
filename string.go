@@ -1,8 +1,10 @@
 package httpexpect
 
 import (
+	"net/http"
 	"regexp"
 	"strings"
+	"time"
 )
 
 // String provides methods to inspect attached string value
@@ -40,6 +42,38 @@ func (s *String) Raw() string {
 //  str.Length().Equal(5)
 func (s *String) Length() *Number {
 	return &Number{s.chain, float64(len(s.value))}
+}
+
+// DateTime parses date/time from string an returns a new DateTime object.
+//
+// If layout is given, DateTime() uses time.Parse() with given layout.
+// Otherwise, it uses http.ParseTime(). If pasing error occured,
+// DateTime reports failure and returns empty (but non-nil) object.
+//
+// Example:
+//   str := NewString(t, "Tue, 15 Nov 1994 08:12:31 GMT")
+//   str.DateTime().Lt(time.Now())
+//
+//   str := NewString(t, "15 Nov 94 08:12 GMT")
+//   str.DateTime(time.RFC822).Lt(time.Now())
+func (s *String) DateTime(layout ...string) *DateTime {
+	if s.chain.failed() {
+		return &DateTime{s.chain, time.Unix(0, 0)}
+	}
+	var (
+		t   time.Time
+		err error
+	)
+	if len(layout) != 0 {
+		t, err = time.Parse(layout[0], s.value)
+	} else {
+		t, err = http.ParseTime(s.value)
+	}
+	if err != nil {
+		s.chain.fail(err.Error())
+		return &DateTime{s.chain, time.Unix(0, 0)}
+	}
+	return &DateTime{s.chain, t}
 }
 
 // Empty succeedes if string is empty.

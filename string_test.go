@@ -3,6 +3,7 @@ package httpexpect
 import (
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 )
 
 func TestStringFailed(t *testing.T) {
@@ -12,6 +13,7 @@ func TestStringFailed(t *testing.T) {
 
 	value := &String{chain, ""}
 
+	value.DateTime()
 	value.Empty()
 	value.NotEmpty()
 	value.Equal("")
@@ -163,6 +165,28 @@ func TestStringLength(t *testing.T) {
 	value.chain.assertOK(t)
 	num.chain.assertOK(t)
 	assert.Equal(t, 7.0, num.Raw())
+}
+
+func TestStringDateTime(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value1 := NewString(reporter, "Tue, 15 Nov 1994 08:12:31 GMT")
+	dt1 := value1.DateTime()
+	value1.chain.assertOK(t)
+	dt1.chain.assertOK(t)
+	assert.True(t, time.Date(1994, 11, 15, 8, 12, 31, 0, time.UTC).Equal(dt1.Raw()))
+
+	value2 := NewString(reporter, "15 Nov 94 08:12 GMT")
+	dt2 := value2.DateTime(time.RFC822)
+	value2.chain.assertOK(t)
+	dt2.chain.assertOK(t)
+	assert.True(t, time.Date(1994, 11, 15, 8, 12, 0, 0, time.UTC).Equal(dt2.Raw()))
+
+	value3 := NewString(reporter, "bad")
+	dt3 := value3.DateTime()
+	value3.chain.assertFailed(t)
+	dt3.chain.assertFailed(t)
+	assert.True(t, time.Unix(0, 0).Equal(dt3.Raw()))
 }
 
 func TestStringMatchOne(t *testing.T) {

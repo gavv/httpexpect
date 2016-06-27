@@ -201,6 +201,7 @@ func (r *Response) Headers() *Object {
 // Example:
 //  resp := NewResponse(t, response)
 //  resp.Header("Content-Type").Equal("application-json")
+//  resp.Header("Date").DateTime().Le(time.Now())
 func (r *Response) Header(header string) *String {
 	value := ""
 	if !r.chain.failed() {

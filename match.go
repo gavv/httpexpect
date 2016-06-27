@@ -11,8 +11,8 @@ type Match struct {
 	names      map[string]int
 }
 
-// NewMatch returns a new Match given a reporter used to report failures
-// and submatches to be inspected.
+// NewMatch returns a new Match object given a reporter used to report
+// failures and submatches to be inspected.
 //
 // reporter should not be nil. submatches and names may be nil.
 //
