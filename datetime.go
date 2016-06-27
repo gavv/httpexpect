@@ -11,7 +11,7 @@ type DateTime struct {
 }
 
 // NewDateTime returns a new DateTime object given a reporter used to report
-// failures time.Time value to be inspected.
+// failures and time.Time value to be inspected.
 //
 // reporter should not be nil.
 //

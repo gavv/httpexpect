@@ -38,6 +38,7 @@ type Response struct {
 	chain   chain
 	resp    *http.Response
 	content []byte
+	cookies []*http.Cookie
 	time    time.Duration
 }
 
@@ -58,23 +59,24 @@ func NewResponse(
 }
 
 func makeResponse(chain chain, response *http.Response, duration time.Duration) *Response {
-	if response == nil {
+	var content []byte
+	var cookies []*http.Cookie
+	if response != nil {
+		content = getContent(&chain, response)
+		cookies = response.Cookies()
+	} else {
 		chain.fail("expected non-nil response")
 	}
-	content := getContent(&chain, response)
 	return &Response{
 		chain:   chain,
 		resp:    response,
 		content: content,
+		cookies: cookies,
 		time:    duration,
 	}
 }
 
 func getContent(chain *chain, resp *http.Response) []byte {
-	if chain.failed() {
-		return nil
-	}
-
 	if resp.Body == nil {
 		return []byte{}
 	}
@@ -208,6 +210,44 @@ func (r *Response) Header(header string) *String {
 		value = r.resp.Header.Get(header)
 	}
 	return &String{r.chain, value}
+}
+
+// Cookies returns a new Array object with all available cookie names.
+// Returned Array contains a String value for every cookie name.
+//
+// Example:
+//  resp := NewResponse(t, response)
+//  resp.Cookies().Contains("session")
+func (r *Response) Cookies() *Array {
+	if r.chain.failed() {
+		return &Array{r.chain, nil}
+	}
+	names := []interface{}{}
+	for _, c := range r.cookies {
+		names = append(names, c.Name)
+	}
+	return &Array{r.chain, names}
+}
+
+// Cookie returns a new Cookie object that may be used to inspect given cookie.
+//
+// Example:
+//  resp := NewResponse(t, response)
+//  resp.Cookie("session").Domain().Equal("example.com")
+func (r *Response) Cookie(name string) *Cookie {
+	if r.chain.failed() {
+		return &Cookie{r.chain, nil}
+	}
+	names := []string{}
+	for _, c := range r.cookies {
+		if c.Name == name {
+			return &Cookie{r.chain, c}
+		}
+		names = append(names, c.Name)
+	}
+	r.chain.fail("\nexpected response with cookie:\n %q\n\nbut got only cookies:\n%s",
+		name, dumpValue(names))
+	return &Cookie{r.chain, nil}
 }
 
 // Body returns a new String object that may be used to inspect response body.

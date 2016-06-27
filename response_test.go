@@ -15,18 +15,22 @@ func TestResponseFailed(t *testing.T) {
 
 	chain.fail("fail")
 
-	resp := &Response{chain, nil, nil, 0}
+	resp := &Response{chain, nil, nil, nil, 0}
 
 	resp.chain.assertFailed(t)
 
 	assert.False(t, resp.Duration() == nil)
 	assert.False(t, resp.Headers() == nil)
 	assert.False(t, resp.Header("foo") == nil)
+	assert.False(t, resp.Cookies() == nil)
+	assert.False(t, resp.Cookie("foo") == nil)
 	assert.False(t, resp.Body() == nil)
 	assert.False(t, resp.JSON() == nil)
 
 	resp.Headers().chain.assertFailed(t)
 	resp.Header("foo").chain.assertFailed(t)
+	resp.Cookies().chain.assertFailed(t)
+	resp.Cookie("foo").chain.assertFailed(t)
 	resp.Body().chain.assertFailed(t)
 	resp.Text().chain.assertFailed(t)
 	resp.JSON().chain.assertFailed(t)
@@ -137,6 +141,74 @@ func TestResponseHeaders(t *testing.T) {
 	}
 
 	resp.Header("Bad-Header").Empty().chain.assertOK(t)
+}
+
+func TestResponseCookies(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	headers := map[string][]string{
+		"Set-Cookie": {
+			"foo=aaa",
+			"bar=bbb; expires=Fri, 31 Dec 2010 23:59:59 GMT; " +
+				"path=/xxx; domain=example.com",
+		},
+	}
+
+	httpResp := &http.Response{
+		StatusCode: http.StatusOK,
+		Header:     http.Header(headers),
+		Body:       nil,
+	}
+
+	resp := NewResponse(reporter, httpResp)
+	resp.chain.assertOK(t)
+	resp.chain.reset()
+
+	assert.Equal(t, []interface{}{"foo", "bar"}, resp.Cookies().Raw())
+	resp.chain.assertOK(t)
+
+	c1 := resp.Cookie("foo")
+	resp.chain.assertOK(t)
+	assert.Equal(t, "foo", c1.Raw().Name)
+	assert.Equal(t, "aaa", c1.Raw().Value)
+	assert.Equal(t, "", c1.Raw().Domain)
+	assert.Equal(t, "", c1.Raw().Path)
+
+	c2 := resp.Cookie("bar")
+	resp.chain.assertOK(t)
+	assert.Equal(t, "bar", c2.Raw().Name)
+	assert.Equal(t, "bbb", c2.Raw().Value)
+	assert.Equal(t, "example.com", c2.Raw().Domain)
+	assert.Equal(t, "/xxx", c2.Raw().Path)
+	assert.True(t, time.Date(2010, 12, 31, 23, 59, 59, 0, time.UTC).
+		Equal(c2.Raw().Expires))
+
+	c3 := resp.Cookie("baz")
+	resp.chain.assertFailed(t)
+	c3.chain.assertFailed(t)
+	assert.True(t, c3.Raw() == nil)
+}
+
+func TestResponseNoCookies(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	httpResp := &http.Response{
+		StatusCode: http.StatusOK,
+		Header:     nil,
+		Body:       nil,
+	}
+
+	resp := NewResponse(reporter, httpResp)
+	resp.chain.assertOK(t)
+	resp.chain.reset()
+
+	assert.Equal(t, []interface{}{}, resp.Cookies().Raw())
+	resp.chain.assertOK(t)
+
+	c := resp.Cookie("foo")
+	resp.chain.assertFailed(t)
+	c.chain.assertFailed(t)
+	assert.True(t, c.Raw() == nil)
 }
 
 func TestResponseBody(t *testing.T) {
