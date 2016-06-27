@@ -94,13 +94,13 @@ func (r *Response) Raw() *http.Response {
 	return r.resp
 }
 
-// Time returns a new Number object that may be used to inspect response time,
-// in nanoseconds.
+// Duration returns a new Number object that may be used to inspect
+// response time, in nanoseconds.
 //
 // Example:
 //  resp := NewResponse(t, response, time.Duration(10000000))
-//  resp.Time().Equal(10 * time.Millisecond)
-func (r *Response) Time() *Number {
+//  resp.Duration().Equal(10 * time.Millisecond)
+func (r *Response) Duration() *Number {
 	return &Number{r.chain, float64(r.time)}
 }
 

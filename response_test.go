@@ -19,7 +19,7 @@ func TestResponseFailed(t *testing.T) {
 
 	resp.chain.assertFailed(t)
 
-	assert.False(t, resp.Time() == nil)
+	assert.False(t, resp.Duration() == nil)
 	assert.False(t, resp.Headers() == nil)
 	assert.False(t, resp.Header("foo") == nil)
 	assert.False(t, resp.Body() == nil)
@@ -37,7 +37,7 @@ func TestResponseFailed(t *testing.T) {
 	resp.ContentType("", "")
 }
 
-func TestResponseTime(t *testing.T) {
+func TestResponseDuration(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	duration := time.Duration(10000000)
@@ -46,7 +46,7 @@ func TestResponseTime(t *testing.T) {
 	resp.chain.assertOK(t)
 	resp.chain.reset()
 
-	rt := resp.Time()
+	rt := resp.Duration()
 
 	assert.Equal(t, float64(duration), rt.Raw())
 
