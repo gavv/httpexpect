@@ -97,6 +97,10 @@ func (r *Response) Raw() *http.Response {
 // Duration returns a new Number object that may be used to inspect
 // response time, in nanoseconds.
 //
+// Response time is a time interval starting just before request is sent
+// and ending right after response is received, retreived from monotonic
+// clock source.
+//
 // Example:
 //  resp := NewResponse(t, response, time.Duration(10000000))
 //  resp.Duration().Equal(10 * time.Millisecond)
