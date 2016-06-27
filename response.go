@@ -100,7 +100,7 @@ func (r *Response) Raw() *http.Response {
 // response time, in nanoseconds.
 //
 // Response time is a time interval starting just before request is sent
-// and ending right after response is received, retreived from monotonic
+// and ending right after response is received, retrieved from monotonic
 // clock source.
 //
 // Example:

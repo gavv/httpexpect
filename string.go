@@ -47,7 +47,7 @@ func (s *String) Length() *Number {
 // DateTime parses date/time from string an returns a new DateTime object.
 //
 // If layout is given, DateTime() uses time.Parse() with given layout.
-// Otherwise, it uses http.ParseTime(). If pasing error occured,
+// Otherwise, it uses http.ParseTime(). If pasing error occurred,
 // DateTime reports failure and returns empty (but non-nil) object.
 //
 // Example:
