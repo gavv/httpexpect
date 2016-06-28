@@ -42,13 +42,14 @@ type Response struct {
 	time    time.Duration
 }
 
-// NewResponse returns a new Response given a reporter used to report failures
-// and http.Response to be inspected.
+// NewResponse returns a new Response given a reporter used to report
+// failures and http.Response to be inspected.
 //
-// Both reporter and response should not be nil. If response is nil, failure
-// is reported.
+// Both reporter and response should not be nil. If response is nil,
+// failure is reported.
 //
-// If duration, it defines response time to be reported by response.Time().
+// If duration is given, it defines response time to be reported by
+// response.Duration().
 func NewResponse(
 	reporter Reporter, response *http.Response, duration ...time.Duration) *Response {
 	var dr time.Duration
