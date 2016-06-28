@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/ajg/form"
+	"github.com/fatih/structs"
 	"github.com/gavv/monotime"
 	"github.com/google/go-querystring/query"
+	"github.com/imkira/go-interpol"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
@@ -25,6 +27,7 @@ type Request struct {
 	config     Config
 	chain      chain
 	http       http.Request
+	path       string
 	query      url.Values
 	form       url.Values
 	formbuf    *bytes.Buffer
@@ -36,59 +39,157 @@ type Request struct {
 
 // NewRequest returns a new Request object.
 //
-// method specifies the HTTP method (GET, POST, PUT, etc.).
-// urlfmt and args are passed to fmt.Sprintf(), with url as format string.
+// method defines the HTTP method (GET, POST, PUT, etc.).
 //
-// If Config.BaseURL is non-empty, it is prepended to final url,
-// separated by slash.
+// path defines url path. Simple interpolation is allowed for {named} parameters
+// in path:
+//  - if pathargs is given, it's used to substitute first len(pathargs)
+//    parameters, regardless of their names
+//  - if WithPath() or WithPathObject() is called, it's used to substitute
+//    to substitute given parameters by name
 //
-// Example:
-//  req := NewRequest(config, "PUT", "http://example.org/path")
-func NewRequest(config Config, method, urlfmt string, args ...interface{}) *Request {
+// For example:
+//  req := NewRequest(config, "POST", "/repos/{user}/{repo}", "gavv", "httpexpect")
+//  // path will be "/repos/gavv/httpexpect"
+//
+// Or:
+//  req := NewRequest(config, "POST", "/repos/{user}/{repo}")
+//  req.WithPath("user", "gavv")
+//  req.WithPath("repo", "httpexpect")
+//  // path will be "/repos/gavv/httpexpect"
+//
+// After interpolation, path is urlencoded and appended to Config.BaseURL,
+// separated by slash. If BaseURL ends with a slash and path (after interpolation)
+// starts with a slash, only single slash is inserted.
+func NewRequest(config Config, method, path string, pathargs ...interface{}) *Request {
 	chain := makeChain(config.Reporter)
 
-	for _, a := range args {
-		if a == nil {
-			chain.fail(
-				"\nunexpected nil argument for url format string:\n"+
-					"  Request(\"%s\", %v...)", method, args)
+	n := 0
+	path, err := interpol.WithFunc(path, func(k string, w io.Writer) error {
+		if n < len(pathargs) {
+			if pathargs[n] == nil {
+				chain.fail(
+					"\nunexpected nil argument for url path format string:\n"+
+						" Request(\"%s\", %v...)", method, pathargs)
+			} else {
+				w.Write([]byte(fmt.Sprint(pathargs[n])))
+			}
+		} else {
+			w.Write([]byte("{"))
+			w.Write([]byte(k))
+			w.Write([]byte("}"))
 		}
-	}
-
-	us := concatURLs(config.BaseURL, fmt.Sprintf(urlfmt, args...))
-
-	u, err := url.Parse(us)
+		n++
+		return nil
+	})
 	if err != nil {
 		chain.fail(err.Error())
 	}
 
-	req := Request{
+	return &Request{
 		config: config,
 		chain:  chain,
+		path:   path,
 		http: http.Request{
 			Method: method,
-			URL:    u,
 			Header: make(http.Header),
 		},
 	}
-
-	return &req
 }
 
-func concatURLs(a, b string) string {
-	if a == "" {
-		return b
+// WithPath substitutes named parameters in url path.
+//
+// value is converted to string using fmt.Sprint(). If there is no named
+// parameter '{key}' in url path, failure is reported.
+//
+// Named parameters are case-insensitive.
+//
+// Example:
+//  req := NewRequest(config, "POST", "/repos/{user}/{repo}")
+//  req.WithPath("user", "gavv")
+//  req.WithPath("repo", "httpexpect")
+//  // path will be "/repos/gavv/httpexpect"
+func (r *Request) WithPath(key string, value interface{}) *Request {
+	ok := false
+	path, err := interpol.WithFunc(r.path, func(k string, w io.Writer) error {
+		if strings.EqualFold(k, key) {
+			if value == nil {
+				r.chain.fail(
+					"\nunexpected nil argument for url path format string:\n"+
+						" WithPath(\"%s\", %v)", key, value)
+			} else {
+				w.Write([]byte(fmt.Sprint(value)))
+				ok = true
+			}
+		} else {
+			w.Write([]byte("{"))
+			w.Write([]byte(k))
+			w.Write([]byte("}"))
+		}
+		return nil
+	})
+	if err == nil {
+		r.path = path
+	} else {
+		r.chain.fail(err.Error())
+		return r
 	}
-	if b == "" {
-		return a
+	if !ok {
+		r.chain.fail("\nunexpected key for url path format string:\n"+
+			" WithPath(\"%s\", %v)\n\npath:\n %q",
+			key, value, r.path)
+		return r
 	}
-	if strings.HasSuffix(a, "/") {
-		a = a[:len(a)-1]
+	return r
+}
+
+// WithPathObject substitutes multiple named parameters in url path.
+//
+// object should be map or struct. If object is struct, it's converted
+// to map using https://github.com/fatih/structs. Structs may contain
+// "path" struct tag, similar to "json" struct tag for json.Marshal().
+//
+// Each map value is converted to string using fmt.Sprint(). If there
+// is no named parameter for some map '{key}' in url path, failure is
+// reported.
+//
+// Named parameters are case-insensitive.
+//
+// Example:
+//  type MyPath struct {
+//      Login string `path:"user"`
+//      Repo  string
+//  }
+//
+//  req := NewRequest(config, "POST", "/repos/{user}/{repo}")
+//  req.WithPathObject(MyPath{"gavv", "httpexpect"})
+//  // path will be "/repos/gavv/httpexpect"
+//
+//  req := NewRequest(config, "POST", "/repos/{user}/{repo}")
+//  req.WithPathObject(map[string]string{"user": "gavv", "repo": "httpexpect"})
+//  // path will be "/repos/gavv/httpexpect"
+func (r *Request) WithPathObject(object interface{}) *Request {
+	if object == nil {
+		return r
 	}
-	if strings.HasPrefix(b, "/") {
-		b = b[1:]
+	var (
+		m  map[string]interface{}
+		ok bool
+	)
+	if reflect.Indirect(reflect.ValueOf(object)).Kind() == reflect.Struct {
+		s := structs.New(object)
+		s.TagName = "path"
+		m = s.Map()
+	} else {
+		m, ok = canonMap(&r.chain, object)
+		if !ok {
+			return r
+		}
 	}
-	return a + "/" + b
+	for k, v := range m {
+		r.WithPath(k, v)
+	}
+	return r
 }
 
 // WithQuery adds query parameter to request URL.
@@ -102,7 +203,7 @@ func concatURLs(a, b string) string {
 //  // URL is now http://example.org/path?a=123&b=foo
 func (r *Request) WithQuery(key string, value interface{}) *Request {
 	if r.query == nil {
-		r.query = r.http.URL.Query()
+		r.query = make(url.Values)
 	}
 	r.query.Add(key, fmt.Sprint(value))
 	return r
@@ -151,7 +252,7 @@ func (r *Request) WithQueryObject(object interface{}) *Request {
 		}
 	}
 	if r.query == nil {
-		r.query = r.http.URL.Query()
+		r.query = make(url.Values)
 	}
 	for k, v := range q {
 		r.query[k] = append(r.query[k], v...)
@@ -492,6 +593,15 @@ func (r *Request) Expect() *Response {
 }
 
 func (r *Request) encodeRequest() {
+	if u, err := url.Parse(r.config.BaseURL); err == nil {
+		r.http.URL = u
+	} else {
+		r.chain.fail(err.Error())
+		return
+	}
+
+	r.http.URL.Path = concatPaths(r.http.URL.Path, r.path)
+
 	if r.query != nil {
 		r.http.URL.RawQuery = r.query.Encode()
 	}
@@ -580,4 +690,20 @@ func (r *Request) setBody(setter string, reader io.Reader, len int, overwrite bo
 	}
 
 	r.bodysetter = setter
+}
+
+func concatPaths(a, b string) string {
+	if a == "" {
+		return b
+	}
+	if b == "" {
+		return a
+	}
+	if strings.HasSuffix(a, "/") {
+		a = a[:len(a)-1]
+	}
+	if strings.HasPrefix(b, "/") {
+		b = b[1:]
+	}
+	return a + "/" + b
 }

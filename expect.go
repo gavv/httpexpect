@@ -156,7 +156,7 @@ type Reporter interface {
 //
 // Example:
 //  func TestAPI(t *testing.T) {
-//      e := httpexpect.New(t, "http://example.org/")
+//      e := httpexpect.New(t, "http://example.com/")
 //      e.GET("/path").Expect().Status(http.StatusOK)
 //  }
 func New(t *testing.T, baseURL string) *Expect {
@@ -176,7 +176,7 @@ func New(t *testing.T, baseURL string) *Expect {
 // Example:
 //  func TestAPI(t *testing.T) {
 //      e := httpexpect.WithConfig(httpexpect.Config{
-//          BaseURL:  "http://example.org/",
+//          BaseURL:  "http://example.com/",
 //          Client:   &http.Client{},
 //          Reporter: httpexpect.NewAssertReporter(t),
 //          Printers: []httpexpect.Printer{
