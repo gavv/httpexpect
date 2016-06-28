@@ -2,6 +2,7 @@ package httpexpect
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
@@ -731,7 +732,56 @@ func TestRequestBodyJSON(t *testing.T) {
 	assert.Equal(t, &client.resp, resp.Raw())
 }
 
-func TestRequestOverwriteContentType(t *testing.T) {
+func TestRequestContentLength(t *testing.T) {
+	client := &mockClient{}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		Client:   client,
+		Reporter: reporter,
+	}
+
+	req1 := NewRequest(config, "METHOD", "url")
+	req1.WithChunked(bytes.NewReader([]byte("12345")))
+	req1.Expect().chain.assertOK(t)
+	assert.Equal(t, int64(-1), client.req.ContentLength)
+
+	req2 := NewRequest(config, "METHOD", "url")
+	req2.WithBytes([]byte("12345"))
+	req2.Expect().chain.assertOK(t)
+	assert.Equal(t, int64(5), client.req.ContentLength)
+
+	req3 := NewRequest(config, "METHOD", "url")
+	req3.WithText("12345")
+	req3.Expect().chain.assertOK(t)
+	assert.Equal(t, int64(5), client.req.ContentLength)
+
+	j, _ := json.Marshal(map[string]string{"a": "b"})
+	req4 := NewRequest(config, "METHOD", "url")
+	req4.WithJSON(map[string]string{"a": "b"})
+	req4.Expect().chain.assertOK(t)
+	assert.Equal(t, int64(len(j)), client.req.ContentLength)
+
+	f := `a=b`
+	req5 := NewRequest(config, "METHOD", "url")
+	req5.WithForm(map[string]string{"a": "b"})
+	req5.Expect().chain.assertOK(t)
+	assert.Equal(t, int64(len(f)), client.req.ContentLength)
+
+	req6 := NewRequest(config, "METHOD", "url")
+	req6.WithFormField("a", "b")
+	req6.Expect().chain.assertOK(t)
+	assert.Equal(t, int64(len(f)), client.req.ContentLength)
+
+	req7 := NewRequest(config, "METHOD", "url")
+	req7.WithMultipart()
+	req7.WithFileBytes("a", "b", []byte("12345"))
+	req7.Expect().chain.assertOK(t)
+	assert.True(t, client.req.ContentLength > 0)
+}
+
+func TestRequestContentTypeOverwrite(t *testing.T) {
 	client := &mockClient{}
 
 	reporter := newMockReporter(t)
@@ -873,38 +923,45 @@ func TestRequestErrorConflictBody(t *testing.T) {
 
 	req1 := NewRequest(config, "METHOD", "url")
 	req1.WithChunked(nil)
+	req1.chain.assertOK(t)
 	req1.WithChunked(nil)
 	req1.chain.assertFailed(t)
 
 	req2 := NewRequest(config, "METHOD", "url")
 	req2.WithChunked(nil)
+	req2.chain.assertOK(t)
 	req2.WithBytes(nil)
 	req2.chain.assertFailed(t)
 
 	req3 := NewRequest(config, "METHOD", "url")
 	req3.WithChunked(nil)
+	req3.chain.assertOK(t)
 	req3.WithText("")
 	req3.chain.assertFailed(t)
 
 	req4 := NewRequest(config, "METHOD", "url")
 	req4.WithChunked(nil)
+	req4.chain.assertOK(t)
 	req4.WithJSON(map[string]interface{}{"a": "b"})
 	req4.chain.assertFailed(t)
 
 	req5 := NewRequest(config, "METHOD", "url")
 	req5.WithChunked(nil)
+	req5.chain.assertOK(t)
 	req5.WithForm(map[string]interface{}{"a": "b"})
 	req5.Expect()
 	req5.chain.assertFailed(t)
 
 	req6 := NewRequest(config, "METHOD", "url")
 	req6.WithChunked(nil)
+	req6.chain.assertOK(t)
 	req6.WithFormField("a", "b")
 	req6.Expect()
 	req6.chain.assertFailed(t)
 
 	req7 := NewRequest(config, "METHOD", "url")
 	req7.WithChunked(nil)
+	req7.chain.assertOK(t)
 	req7.WithMultipart()
 	req7.chain.assertFailed(t)
 }
@@ -923,21 +980,25 @@ func TestRequestErrorConflictType(t *testing.T) {
 
 	req1 := NewRequest(config, "METHOD", "url")
 	req1.WithText("")
+	req1.chain.assertOK(t)
 	req1.WithJSON(map[string]interface{}{"a": "b"})
 	req1.chain.assertFailed(t)
 
 	req2 := NewRequest(config, "METHOD", "url")
 	req2.WithText("")
+	req2.chain.assertOK(t)
 	req2.WithForm(map[string]interface{}{"a": "b"})
 	req2.chain.assertFailed(t)
 
 	req3 := NewRequest(config, "METHOD", "url")
 	req3.WithText("")
+	req3.chain.assertOK(t)
 	req3.WithFormField("a", "b")
 	req3.chain.assertFailed(t)
 
 	req4 := NewRequest(config, "METHOD", "url")
 	req4.WithText("")
+	req4.chain.assertOK(t)
 	req4.WithMultipart()
 	req4.chain.assertFailed(t)
 }
@@ -956,16 +1017,17 @@ func TestRequestErrorConflictMultipart(t *testing.T) {
 
 	req1 := NewRequest(config, "METHOD", "url")
 	req1.WithForm(map[string]interface{}{"a": "b"})
+	req1.chain.assertOK(t)
 	req1.WithMultipart()
 	req1.chain.assertFailed(t)
 
 	req2 := NewRequest(config, "METHOD", "url")
 	req2.WithFormField("a", "b")
+	req2.chain.assertOK(t)
 	req2.WithMultipart()
 	req2.chain.assertFailed(t)
 
 	req3 := NewRequest(config, "METHOD", "url")
 	req3.WithFileBytes("a", "a", []byte("a"))
-	req3.WithMultipart()
 	req3.chain.assertFailed(t)
 }

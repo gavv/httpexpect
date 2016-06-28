@@ -491,51 +491,6 @@ func (r *Request) Expect() *Response {
 	return makeResponse(r.chain, resp, elapsed)
 }
 
-func (r *Request) setType(newSetter, newType string, overwrite bool) {
-	if r.forcetype {
-		return
-	}
-
-	if !overwrite {
-		previousType := r.http.Header.Get("Content-Type")
-
-		if previousType != "" && previousType != newType {
-			r.chain.fail(
-				"\nambiguous request \"Content-Type\" header values:\n %q (set by %s)\n\n"+
-					"and:\n %q (wanted by %s)",
-				previousType, r.typesetter,
-				newType, newSetter)
-			return
-		}
-	}
-
-	r.typesetter = newSetter
-	r.http.Header["Content-Type"] = []string{newType}
-}
-
-func (r *Request) setBody(setter string, reader io.Reader, len int, overwrite bool) {
-	if !overwrite && r.bodysetter != "" {
-		r.chain.fail(
-			"\nambiguous request body contents:\n  set by %s\n  overwritten by %s",
-			r.bodysetter, setter)
-		return
-	}
-
-	if len > 0 && reader == nil {
-		panic("invalid length")
-	}
-
-	if reader == nil {
-		r.http.Body = nil
-		r.http.ContentLength = 0
-	} else {
-		r.http.Body = ioutil.NopCloser(reader)
-		r.http.ContentLength = int64(len)
-	}
-
-	r.bodysetter = setter
-}
-
 func (r *Request) encodeRequest() {
 	if r.query != nil {
 		r.http.URL.RawQuery = r.query.Encode()
@@ -580,4 +535,49 @@ func (r *Request) sendRequest() (resp *http.Response, elapsed time.Duration) {
 	}
 
 	return
+}
+
+func (r *Request) setType(newSetter, newType string, overwrite bool) {
+	if r.forcetype {
+		return
+	}
+
+	if !overwrite {
+		previousType := r.http.Header.Get("Content-Type")
+
+		if previousType != "" && previousType != newType {
+			r.chain.fail(
+				"\nambiguous request \"Content-Type\" header values:\n %q (set by %s)\n\n"+
+					"and:\n %q (wanted by %s)",
+				previousType, r.typesetter,
+				newType, newSetter)
+			return
+		}
+	}
+
+	r.typesetter = newSetter
+	r.http.Header["Content-Type"] = []string{newType}
+}
+
+func (r *Request) setBody(setter string, reader io.Reader, len int, overwrite bool) {
+	if !overwrite && r.bodysetter != "" {
+		r.chain.fail(
+			"\nambiguous request body contents:\n  set by %s\n  overwritten by %s",
+			r.bodysetter, setter)
+		return
+	}
+
+	if len > 0 && reader == nil {
+		panic("invalid length")
+	}
+
+	if reader == nil {
+		r.http.Body = nil
+		r.http.ContentLength = 0
+	} else {
+		r.http.Body = ioutil.NopCloser(reader)
+		r.http.ContentLength = int64(len)
+	}
+
+	r.bodysetter = setter
 }
