@@ -15,7 +15,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path"
 	"reflect"
 	"sort"
 	"strings"
@@ -600,7 +599,7 @@ func (r *Request) encodeRequest() {
 		return
 	}
 
-	r.http.URL.Path = path.Join(r.http.URL.Path, r.path)
+	r.http.URL.Path = concatPaths(r.http.URL.Path, r.path)
 
 	if r.query != nil {
 		r.http.URL.RawQuery = r.query.Encode()
@@ -690,4 +689,20 @@ func (r *Request) setBody(setter string, reader io.Reader, len int, overwrite bo
 	}
 
 	r.bodysetter = setter
+}
+
+func concatPaths(a, b string) string {
+	if a == "" {
+		return b
+	}
+	if b == "" {
+		return a
+	}
+	if strings.HasSuffix(a, "/") {
+		a = a[:len(a)-1]
+	}
+	if strings.HasPrefix(b, "/") {
+		b = b[1:]
+	}
+	return a + "/" + b
 }
