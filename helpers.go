@@ -81,6 +81,9 @@ func checkSchema(chain *chain, value, schema interface{}) {
 }
 
 func dumpSchema(schema interface{}) string {
+	if s, ok := toString(schema); ok {
+		schema = s
+	}
 	return regexp.MustCompile(`(?m:^)`).
 		ReplaceAllString(fmt.Sprintf("%v", schema), " ")
 }
