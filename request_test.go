@@ -138,6 +138,7 @@ func TestRequestURLPath(t *testing.T) {
 	r3 := NewRequest(config, "METHOD", "/{arg1}.{arg2}.{arg3}")
 	r3.WithPath("arg2", "bar")
 	r3.WithPathObject(map[string]string{"ARG1": "foo", "arg3": "baz"})
+	r3.WithPathObject(nil)
 	r3.Expect().chain.assertOK(t)
 	assert.Equal(t, "http://example.com/foo.bar.baz",
 		client.req.URL.String())
@@ -170,6 +171,16 @@ func TestRequestURLPath(t *testing.T) {
 	r8.chain.assertOK(t)
 	r8.WithPath("bad", "value")
 	r8.chain.assertFailed(t)
+
+	r9 := NewRequest(config, "GET", "{arg")
+	r9.chain.assertFailed(t)
+	r9.WithPath("arg", "foo")
+	r9.chain.assertFailed(t)
+
+	r10 := NewRequest(config, "GET", "{arg}")
+	r10.chain.assertOK(t)
+	r10.WithPathObject(func() {})
+	r10.chain.assertFailed(t)
 }
 
 func TestRequestURLQuery(t *testing.T) {

@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"reflect"
 	"sort"
 	"strings"
@@ -39,14 +40,13 @@ type Request struct {
 
 // NewRequest returns a new Request object.
 //
-// method defines the HTTP method (GET, POST, PUT, etc.).
+// method defines the HTTP method (GET, POST, PUT, etc.). path defines url path.
 //
-// path defines url path. Simple interpolation is allowed for {named} parameters
-// in path:
-//  - if pathargs is given, it's used to substitute first len(pathargs)
-//    parameters, regardless of their names
-//  - if WithPath() or WithPathObject() is called, it's used to substitute
-//    to substitute given parameters by name
+// Simple interpolation is allowed for {named} parameters in path:
+//  - if pathargs is given, it's used to substitute first len(pathargs) parameters,
+//    regardless of their names
+//  - if WithPath() or WithPathObject() is called, it's used to substitute given
+//    parameters by name
 //
 // For example:
 //  req := NewRequest(config, "POST", "/repos/{user}/{repo}", "gavv", "httpexpect")
@@ -600,7 +600,7 @@ func (r *Request) encodeRequest() {
 		return
 	}
 
-	r.http.URL.Path = concatPaths(r.http.URL.Path, r.path)
+	r.http.URL.Path = path.Join(r.http.URL.Path, r.path)
 
 	if r.query != nil {
 		r.http.URL.RawQuery = r.query.Encode()
@@ -690,20 +690,4 @@ func (r *Request) setBody(setter string, reader io.Reader, len int, overwrite bo
 	}
 
 	r.bodysetter = setter
-}
-
-func concatPaths(a, b string) string {
-	if a == "" {
-		return b
-	}
-	if b == "" {
-		return a
-	}
-	if strings.HasSuffix(a, "/") {
-		a = a[:len(a)-1]
-	}
-	if strings.HasPrefix(b, "/") {
-		b = b[1:]
-	}
-	return a + "/" + b
 }
