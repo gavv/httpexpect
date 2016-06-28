@@ -39,6 +39,17 @@ func (o *Object) Raw() map[string]interface{} {
 	return o.value
 }
 
+// Path is similar to Value.Path.
+func (o *Object) Path(path string) *Value {
+	return getPath(&o.chain, o.value, path)
+}
+
+// Schema is similar to Value.Schema.
+func (o *Object) Schema(schema interface{}) *Object {
+	checkSchema(&o.chain, o.value, schema)
+	return o
+}
+
 // Keys returns a new Array object that may be used to inspect objects keys.
 //
 // Example:

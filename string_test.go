@@ -13,6 +13,9 @@ func TestStringFailed(t *testing.T) {
 
 	value := &String{chain, ""}
 
+	value.Path("$").chain.assertFailed(t)
+	value.Schema("")
+
 	value.DateTime()
 	value.Empty()
 	value.NotEmpty()
@@ -24,6 +27,28 @@ func TestStringFailed(t *testing.T) {
 	value.NotContains("")
 	value.ContainsFold("")
 	value.NotContainsFold("")
+}
+
+func TestStringGetters(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewString(reporter, "foo")
+
+	assert.Equal(t, "foo", value.Raw())
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	assert.Equal(t, "foo", value.Path("$").Raw())
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.Schema(`{"type": "string"}`)
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.Schema(`{"type": "object"}`)
+	value.chain.assertFailed(t)
+	value.chain.reset()
 }
 
 func TestStringEmpty(t *testing.T) {

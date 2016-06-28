@@ -14,6 +14,9 @@ func TestNumberFailed(t *testing.T) {
 
 	value.chain.assertFailed(t)
 
+	value.Path("$").chain.assertFailed(t)
+	value.Schema("")
+
 	value.Equal(0)
 	value.NotEqual(0)
 	value.Gt(0)
@@ -21,6 +24,28 @@ func TestNumberFailed(t *testing.T) {
 	value.Lt(0)
 	value.Le(0)
 	value.InRange(0, 0)
+}
+
+func TestNumberGetters(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewNumber(reporter, 123.0)
+
+	assert.Equal(t, 123.0, value.Raw())
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	assert.Equal(t, 123.0, value.Path("$").Raw())
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.Schema(`{"type": "number"}`)
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.Schema(`{"type": "object"}`)
+	value.chain.assertFailed(t)
+	value.chain.reset()
 }
 
 func TestNumberEqual(t *testing.T) {

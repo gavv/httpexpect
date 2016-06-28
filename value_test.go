@@ -17,6 +17,9 @@ func TestValueFailed(t *testing.T) {
 
 	value.chain.assertFailed(t)
 
+	value.Path("$").chain.assertFailed(t)
+	value.Schema("")
+
 	assert.False(t, value.Object() == nil)
 	assert.False(t, value.Array() == nil)
 	assert.False(t, value.String() == nil)
@@ -29,15 +32,12 @@ func TestValueFailed(t *testing.T) {
 	value.String().chain.assertFailed(t)
 	value.Number().chain.assertFailed(t)
 	value.Boolean().chain.assertFailed(t)
-	value.Path("$").chain.assertFailed(t)
 
 	value.Null()
 	value.NotNull()
 
 	value.Equal(nil)
 	value.NotEqual(nil)
-
-	value.Schema("")
 }
 
 func TestValueCastNull(t *testing.T) {
@@ -319,15 +319,16 @@ func TestValuePathObject(t *testing.T) {
 	value.chain.assertOK(t)
 
 	names := value.Path("$..name").Array().Iter()
-	value.chain.assertOK(t)
 	names[0].String().Equal("john").chain.assertOK(t)
 	names[1].String().Equal("bob").chain.assertOK(t)
+	value.chain.assertOK(t)
 
 	for _, key := range []string{"$.bad", "!"} {
 		bad := value.Path(key)
 		assert.True(t, bad != nil)
 		assert.True(t, bad.Raw() == nil)
 		value.chain.assertFailed(t)
+		value.chain.reset()
 	}
 }
 
@@ -360,6 +361,37 @@ func TestValuePathString(t *testing.T) {
 	value := NewValue(reporter, data)
 
 	assert.Equal(t, data, value.Path("$").Raw())
+	value.chain.assertOK(t)
+}
+
+func TestValuePathNumber(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	data := 123
+
+	value := NewValue(reporter, data)
+
+	assert.Equal(t, float64(data), value.Path("$").Raw())
+	value.chain.assertOK(t)
+}
+
+func TestValuePathBoolean(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	data := true
+
+	value := NewValue(reporter, data)
+
+	assert.Equal(t, data, value.Path("$").Raw())
+	value.chain.assertOK(t)
+}
+
+func TestValuePathNull(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewValue(reporter, nil)
+
+	assert.Equal(t, nil, value.Path("$").Raw())
 	value.chain.assertOK(t)
 }
 

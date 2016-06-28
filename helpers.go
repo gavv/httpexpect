@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"github.com/gavv/gojsondiff"
 	"github.com/gavv/gojsondiff/formatter"
+	"github.com/xeipuuv/gojsonschema"
+	"github.com/yalp/jsonpath"
 	"reflect"
+	"regexp"
 )
 
 func toString(str interface{}) (s string, ok bool) {
@@ -17,6 +20,69 @@ func toString(str interface{}) (s string, ok bool) {
 	}()
 	s = reflect.ValueOf(str).Convert(reflect.TypeOf("")).String()
 	return
+}
+
+func getPath(chain *chain, value interface{}, path string) *Value {
+	if chain.failed() {
+		return &Value{*chain, nil}
+	}
+
+	result, err := jsonpath.Read(value, path)
+	if err != nil {
+		chain.fail(err.Error())
+		return &Value{*chain, nil}
+	}
+
+	return &Value{*chain, result}
+}
+
+func checkSchema(chain *chain, value, schema interface{}) {
+	if chain.failed() {
+		return
+	}
+
+	valueLoader := gojsonschema.NewGoLoader(value)
+
+	var schemaLoader gojsonschema.JSONLoader
+
+	if str, ok := toString(schema); ok {
+		if ok, _ := regexp.MatchString(`^\w+://`, str); ok {
+			schemaLoader = gojsonschema.NewReferenceLoader(str)
+		} else {
+			schemaLoader = gojsonschema.NewStringLoader(str)
+		}
+	} else {
+		schemaLoader = gojsonschema.NewGoLoader(schema)
+	}
+
+	result, err := gojsonschema.Validate(schemaLoader, valueLoader)
+	if err != nil {
+		chain.fail("\n%s\n\nschema:\n%s\n\nvalue:\n%s",
+			err.Error(),
+			dumpSchema(schema),
+			dumpValue(value))
+		return
+	}
+
+	if !result.Valid() {
+		errors := ""
+		for _, err := range result.Errors() {
+			errors += fmt.Sprintf(" %s\n", err)
+		}
+
+		chain.fail(
+			"\njson schema validation failed, schema:\n%s\n\nvalue:%s\n\nerrors:\n%s",
+			dumpSchema(schema),
+			dumpValue(value),
+			errors)
+
+		return
+	}
+}
+
+func dumpSchema(schema interface{}) string {
+	return regexp.MustCompile(`(?m:^)`).
+		ReplaceAllString(fmt.Sprintf("%v", schema), " ")
 }
 
 func canonNumber(chain *chain, number interface{}) (f float64, ok bool) {

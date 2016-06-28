@@ -35,6 +35,17 @@ func (s *String) Raw() string {
 	return s.value
 }
 
+// Path is similar to Value.Path.
+func (s *String) Path(path string) *Value {
+	return getPath(&s.chain, s.value, path)
+}
+
+// Schema is similar to Value.Schema.
+func (s *String) Schema(schema interface{}) *String {
+	checkSchema(&s.chain, s.value, schema)
+	return s
+}
+
 // Length returns a new Number object that may be used to inspect string length.
 //
 // Example:

@@ -39,6 +39,17 @@ func (a *Array) Raw() []interface{} {
 	return a.value
 }
 
+// Path is similar to Value.Path.
+func (a *Array) Path(path string) *Value {
+	return getPath(&a.chain, a.value, path)
+}
+
+// Schema is similar to Value.Schema.
+func (a *Array) Schema(schema interface{}) *Array {
+	checkSchema(&a.chain, a.value, schema)
+	return a
+}
+
 // Length returns a new Number object that may be used to inspect array length.
 //
 // Example:

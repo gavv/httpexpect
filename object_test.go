@@ -14,6 +14,9 @@ func TestObjectFailed(t *testing.T) {
 
 	value.chain.assertFailed(t)
 
+	value.Path("$").chain.assertFailed(t)
+	value.Schema("")
+
 	assert.False(t, value.Keys() == nil)
 	assert.False(t, value.Values() == nil)
 	assert.False(t, value.Value("foo") == nil)
@@ -56,6 +59,22 @@ func TestObjectGetters(t *testing.T) {
 			"a": "b",
 		},
 	}
+
+	assert.Equal(t, m, value.Raw())
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	assert.Equal(t, m, value.Path("$").Raw())
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.Schema(`{"type": "object"}`)
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.Schema(`{"type": "array"}`)
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	value.Keys().ContainsOnly(keys...)
 	value.chain.assertOK(t)

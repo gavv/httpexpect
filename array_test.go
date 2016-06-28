@@ -14,6 +14,9 @@ func TestArrayFailed(t *testing.T) {
 
 	value.chain.assertFailed(t)
 
+	value.Path("$").chain.assertFailed(t)
+	value.Schema("")
+
 	assert.False(t, value.Length() == nil)
 	assert.False(t, value.Element(0) == nil)
 	assert.False(t, value.Iter() == nil)
@@ -35,7 +38,25 @@ func TestArrayFailed(t *testing.T) {
 func TestArrayGetters(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	value := NewArray(reporter, []interface{}{"foo", 123.0})
+	a := []interface{}{"foo", 123.0}
+
+	value := NewArray(reporter, a)
+
+	assert.Equal(t, a, value.Raw())
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	assert.Equal(t, a, value.Path("$").Raw())
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.Schema(`{"type": "array"}`)
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.Schema(`{"type": "object"}`)
+	value.chain.assertFailed(t)
+	value.chain.reset()
 
 	assert.Equal(t, 2.0, value.Length().Raw())
 

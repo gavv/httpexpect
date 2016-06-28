@@ -28,6 +28,17 @@ func (b *Boolean) Raw() bool {
 	return b.value
 }
 
+// Path is similar to Value.Path.
+func (b *Boolean) Path(path string) *Value {
+	return getPath(&b.chain, b.value, path)
+}
+
+// Schema is similar to Value.Schema.
+func (b *Boolean) Schema(schema interface{}) *Boolean {
+	checkSchema(&b.chain, b.value, schema)
+	return b
+}
+
 // Equal succeedes if boolean is equal to given value.
 //
 // Example:

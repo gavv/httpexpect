@@ -28,6 +28,17 @@ func (n *Number) Raw() float64 {
 	return n.value
 }
 
+// Path is similar to Value.Path.
+func (n *Number) Path(path string) *Value {
+	return getPath(&n.chain, n.value, path)
+}
+
+// Schema is similar to Value.Schema.
+func (n *Number) Schema(schema interface{}) *Number {
+	checkSchema(&n.chain, n.value, schema)
+	return n
+}
+
 // Equal succeedes if number is equal to given value.
 //
 // value should have numeric type convertible to float64. Before comparison,

@@ -1,11 +1,7 @@
 package httpexpect
 
 import (
-	"fmt"
-	"github.com/xeipuuv/gojsonschema"
-	"github.com/yalp/jsonpath"
 	"reflect"
-	"regexp"
 )
 
 // Value provides methods to inspect attached interface{} object
@@ -55,6 +51,75 @@ func NewValue(reporter Reporter, value interface{}) *Value {
 //  assert.Equal(t, "foo", number.Raw().(string))
 func (v *Value) Raw() interface{} {
 	return v.value
+}
+
+// Path returns a new Value object for child object(s) matching given
+// JSONPath expression.
+//
+// JSONPath is a simple XPath-like query language.
+// See http://goessner.net/articles/JsonPath/.
+//
+// We currently use https://github.com/yalp/jsonpath, which implements
+// only a subset of JSONPath, yet useful for simple queries. It doesn't
+// support filters and requires double quotes for strings.
+//
+// Example 1:
+//  json := `{"users": [{"name": "john"}, {"name": "bob"}]}`
+//  value := NewValue(t, json)
+//
+//  value.Path("$.users[0].name").String().Equal("john")
+//  value.Path("$.users[1].name").String().Equal("bob")
+//
+// Example 2:
+//  json := `{"yfGH2a": {"user": "john"}, "f7GsDd": {"user": "john"}}`
+//  value := NewValue(t, json)
+//
+//  for _, user := range value.Path("$..user").Array().Iter() {
+//      user.String().Equal("john")
+//  }
+func (v *Value) Path(path string) *Value {
+	return getPath(&v.chain, v.value, path)
+}
+
+// Schema succeedes if value matches given JSON Schema.
+//
+// JSON Schema specifies a JSON-based format to define the structure of
+// JSON data. See http://json-schema.org/.
+// We use https://github.com/xeipuuv/gojsonschema implementation.
+//
+// schema should be one of the following:
+//  - go value that can be json.Marshal-ed to a valid schema
+//  - type convertible to string containing valid schema
+//  - type convertible to string containing valid http:// or file:// URI,
+//    pointing to reachable and valid schema
+//
+// Example 1:
+//   schema := `{
+//     "type": "object",
+//     "properties": {
+//        "foo": {
+//            "type": "string"
+//        },
+//        "bar": {
+//            "type": "integer"
+//        }
+//    },
+//    "require": ["foo", "bar"]
+//  }`
+//
+//  value := NewValue(t, map[string]interface{}{
+//      "foo": "a",
+//      "bar": 1,
+//  })
+//
+//  value.Schema(schema)
+//
+// Example 2:
+//  value := NewValue(t, data)
+//  value.Schema("http://example.com/schema.json")
+func (v *Value) Schema(schema interface{}) *Value {
+	checkSchema(&v.chain, v.value, schema)
+	return v
 }
 
 // Object returns a new Object attached to underlying value.
@@ -142,44 +207,6 @@ func (v *Value) Boolean() *Boolean {
 	return &Boolean{v.chain, data}
 }
 
-// Path returns a new Value object for child object(s) matching given
-// JSONPath expression.
-//
-// JSONPath is a simple XPath-like query language.
-// See http://goessner.net/articles/JsonPath/.
-//
-// We currently use https://github.com/yalp/jsonpath, which implements
-// only a subset of JSONPath, yet useful for simple queries. It doesn't
-// support filters and requires double quotes for strings.
-//
-// Example 1:
-//  json := `{"users": [{"name": "john"}, {"name": "bob"}]}`
-//  value := NewValue(t, json)
-//
-//  value.Path("$.users[0].name").String().Equal("john")
-//  value.Path("$.users[1].name").String().Equal("bob")
-//
-// Example 2:
-//  json := `{"yfGH2a": {"user": "john"}, "f7GsDd": {"user": "john"}}`
-//  value := NewValue(t, json)
-//
-//  for _, user := range value.Path("$..user").Array().Iter() {
-//      user.String().Equal("john")
-//  }
-func (v *Value) Path(path string) *Value {
-	if v.chain.failed() {
-		return &Value{v.chain, nil}
-	}
-
-	result, err := jsonpath.Read(v.value, path)
-	if err != nil {
-		v.chain.fail(err.Error())
-		return &Value{v.chain, nil}
-	}
-
-	return &Value{v.chain, result}
-}
-
 // Null succeedes if value is nil.
 //
 // Note that non-nil interface{} that points to nil value (e.g. nil slice or map)
@@ -255,85 +282,5 @@ func (v *Value) NotEqual(value interface{}) *Value {
 		v.chain.fail("\nexpected value not equal to:\n%s",
 			dumpValue(expected))
 	}
-	return v
-}
-
-// Schema succeedes if value matches given JSON Schema.
-//
-// JSON Schema specifies a JSON-based format to define the structure of
-// JSON data. See http://json-schema.org/.
-// We use https://github.com/xeipuuv/gojsonschema implementation.
-//
-// schema should be one of the following:
-//  - go value that can be json.Marshal-ed to a valid schema
-//  - type convertible to string containing valid schema
-//  - type convertible to string containing valid http:// or file:// URI,
-//    pointing to reachable and valid schema
-//
-// Example 1:
-//   schema := `{
-//     "type": "object",
-//     "properties": {
-//        "foo": {
-//            "type": "string"
-//        },
-//        "bar": {
-//            "type": "integer"
-//        }
-//    },
-//    "require": ["foo", "bar"]
-//  }`
-//
-//  value := NewValue(t, map[string]interface{}{
-//      "foo": "a",
-//      "bar": 1,
-//  })
-//
-//  value.Schema(schema)
-//
-// Example 2:
-//  value := NewValue(t, data)
-//  value.Schema("http://example.com/schema.json")
-func (v *Value) Schema(schema interface{}) *Value {
-	if v.chain.failed() {
-		return v
-	}
-
-	valueLoader := gojsonschema.NewGoLoader(v.value)
-
-	var schemaLoader gojsonschema.JSONLoader
-
-	if str, ok := toString(schema); ok {
-		if ok, _ := regexp.MatchString(`^\w+://`, str); ok {
-			schemaLoader = gojsonschema.NewReferenceLoader(str)
-		} else {
-			schemaLoader = gojsonschema.NewStringLoader(str)
-		}
-	} else {
-		schemaLoader = gojsonschema.NewGoLoader(schema)
-	}
-
-	result, err := gojsonschema.Validate(schemaLoader, valueLoader)
-	if err != nil {
-		v.chain.fail("\n%s\n\nschema:\n%v\n\nvalue:\n%s",
-			err.Error(), schema, dumpValue(v.value))
-		return v
-	}
-
-	if !result.Valid() {
-		errors := ""
-		for _, err := range result.Errors() {
-			errors += fmt.Sprintf(" %s\n", err)
-		}
-
-		v.chain.fail(
-			"\njson schema validation failed, schema:\n%s\n\nvalue:%s\n\nerrors:\n%s",
-			dumpValue(schema),
-			dumpValue(v.value),
-			errors)
-
-		return v
-	}
-
 	return v
 }
