@@ -1,6 +1,6 @@
 # httpexpect [![GoDoc](https://godoc.org/github.com/gavv/httpexpect?status.svg)](https://godoc.org/github.com/gavv/httpexpect) [![Gitter](https://badges.gitter.im/gavv/httpexpect.svg)](https://gitter.im/gavv/httpexpect?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Travis](https://img.shields.io/travis/gavv/httpexpect.svg)](https://travis-ci.org/gavv/httpexpect) [![Coveralls](https://coveralls.io/repos/github/gavv/httpexpect/badge.svg?branch=master)](https://coveralls.io/github/gavv/httpexpect?branch=master)
 
-Concise, declarative, and simple end-to-end HTTP and REST API testing for Go (golang).
+Concise, declarative, and easy to use end-to-end HTTP and REST API testing for Go (golang).
 
 Basically, httpexpect is a set of chainable *builders* for HTTP requests and *assertions* for HTTP responses and payload, on top of net/http and several utility packages.
 
@@ -317,7 +317,7 @@ func TestFruits(t *testing.T) {
 	})
 ```
 
-## Similar modules
+## Similar packages
 
 * [`gorequest`](https://github.com/parnurzeal/gorequest)
 * [`gabs`](https://github.com/Jeffail/gabs)
