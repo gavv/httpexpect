@@ -39,6 +39,7 @@ func TestResponseFailed(t *testing.T) {
 	resp.StatusRange(Status2xx)
 	resp.NoContent()
 	resp.ContentType("", "")
+	resp.TransferEncoding("")
 }
 
 func TestResponseDuration(t *testing.T) {
@@ -334,6 +335,26 @@ func TestResponseContentType(t *testing.T) {
 	resp.chain.reset()
 
 	resp.ContentType("text/plain", "")
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
+}
+
+func TestResponseTransferEncoding(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	resp := NewResponse(reporter, &http.Response{
+		TransferEncoding: []string{"foo", "bar"},
+	})
+
+	resp.TransferEncoding("foo", "bar")
+	resp.chain.assertOK(t)
+	resp.chain.reset()
+
+	resp.TransferEncoding("foo")
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
+
+	resp.TransferEncoding()
 	resp.chain.assertFailed(t)
 	resp.chain.reset()
 }

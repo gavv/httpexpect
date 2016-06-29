@@ -289,6 +289,16 @@ func (r *Response) ContentType(mediaType string, charset ...string) *Response {
 	return r
 }
 
+// TransferEncoding succeedes if response contains given Transfer-Encoding list.
+// Common values are empty, "chunked" and "identity".
+func (r *Response) TransferEncoding(encoding ...string) *Response {
+	if r.chain.failed() {
+		return r
+	}
+	r.checkEqual("\"Transfer-Encoding\" header", encoding, r.resp.TransferEncoding)
+	return r
+}
+
 // Text returns a new String object that may be used to inspect response body.
 //
 // Text succeedes if response contains "text/plain" Content-Type header

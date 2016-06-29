@@ -1,8 +1,10 @@
 package httpexpect
 
 import (
+	"bufio"
 	"encoding/json"
 	"github.com/stretchr/testify/assert"
+	"github.com/valyala/fasthttp"
 	"github.com/valyala/fasthttp/fasthttpadaptor"
 	"net/http"
 	"net/http/httptest"
@@ -44,7 +46,7 @@ func TestExpectMethods(t *testing.T) {
 	assert.Equal(t, "DELETE", reqs[7].http.Method)
 }
 
-func TestExpectValue(t *testing.T) {
+func TestExpectValues(t *testing.T) {
 	client := &mockClient{}
 
 	r := NewAssertReporter(t)
@@ -148,7 +150,7 @@ func TestExpectBranches(t *testing.T) {
 	e4.chain.assertOK(t)
 }
 
-func createHandler() http.Handler {
+func createBasicHandler() http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/foo", func(w http.ResponseWriter, _ *http.Request) {
@@ -162,7 +164,7 @@ func createHandler() http.Handler {
 		w.Write([]byte(`&field2=` + r.PostFormValue("field2")))
 	})
 
-	mux.HandleFunc("/baz", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/baz/qux", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case "GET":
 			w.Header().Set("Content-Type", "application/json")
@@ -181,23 +183,10 @@ func createHandler() http.Handler {
 		}
 	})
 
-	mux.HandleFunc("/qux/wee", func(w http.ResponseWriter, r *http.Request) {
-		if r.Proto != "HTTP/1.1" {
-			w.WriteHeader(http.StatusBadRequest)
-			// TODO: fix fasthttpadaptor
-			//} else if len(r.TransferEncoding) != 1 || r.TransferEncoding[0] != "chunked" {
-			//	w.WriteHeader(http.StatusBadRequest)
-		} else if r.PostFormValue("key") != "value" {
-			w.WriteHeader(http.StatusBadRequest)
-		} else {
-			w.WriteHeader(http.StatusNoContent)
-		}
-	})
-
 	return mux
 }
 
-func testHandler(e *Expect) {
+func testBasicHandler(e *Expect) {
 	e.GET("/foo")
 
 	e.GET("/foo").Expect()
@@ -212,36 +201,33 @@ func testHandler(e *Expect) {
 		Status(http.StatusOK).
 		Form().ValueEqual("field1", "hello").ValueEqual("field2", "world")
 
-	e.GET("/baz").
+	e.GET("/{a}/{b}", "baz", "qux").
 		Expect().
 		Status(http.StatusOK).JSON().Array().Elements(true, false)
 
-	e.PUT("/baz").WithJSON(map[string]string{"test": "ok"}).
+	e.PUT("/{a}/{b}").
+		WithPath("a", "baz").
+		WithPath("b", "qux").
+		WithJSON(map[string]string{"test": "ok"}).
 		Expect().
 		Status(http.StatusNoContent).Body().Empty()
-
-	e.PUT("/{arg}/{arg}", "qux", "wee").
-		WithHeader("Content-Type", "application/x-www-form-urlencoded").
-		WithChunked(strings.NewReader("key=value")).
-		Expect().
-		Status(http.StatusNoContent)
 }
 
-func TestExpectLiveDefault(t *testing.T) {
-	handler := createHandler()
+func TestExpectBasicHandlerLiveDefault(t *testing.T) {
+	handler := createBasicHandler()
 
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
-	testHandler(New(t, server.URL))
+	testBasicHandler(New(t, server.URL))
 }
 
-func TestExpectLiveDefaultLongRun(t *testing.T) {
+func TestExpectBasicHandlerLiveDefaultLongRun(t *testing.T) {
 	if testing.Short() {
 		return
 	}
 
-	handler := createHandler()
+	handler := createBasicHandler()
 
 	server := httptest.NewServer(handler)
 	defer server.Close()
@@ -249,17 +235,17 @@ func TestExpectLiveDefaultLongRun(t *testing.T) {
 	e := New(t, server.URL)
 
 	for i := 0; i < 2; i++ {
-		testHandler(e)
+		testBasicHandler(e)
 	}
 }
 
-func TestExpectLiveConfig(t *testing.T) {
-	handler := createHandler()
+func TestExpectBasicHandlerLiveConfig(t *testing.T) {
+	handler := createBasicHandler()
 
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
-	testHandler(WithConfig(Config{
+	testBasicHandler(WithConfig(Config{
 		BaseURL:  server.URL,
 		Reporter: NewAssertReporter(t),
 		Printers: []Printer{
@@ -269,20 +255,103 @@ func TestExpectLiveConfig(t *testing.T) {
 	}))
 }
 
-func TestExpectBinderStandard(t *testing.T) {
-	handler := createHandler()
+func TestExpectBasicHandlerBinderStandard(t *testing.T) {
+	handler := createBasicHandler()
 
-	testHandler(WithConfig(Config{
+	testBasicHandler(WithConfig(Config{
 		BaseURL:  "http://example.com",
 		Client:   NewBinder(handler),
 		Reporter: NewAssertReporter(t),
 	}))
 }
 
-func TestExpectBinderFast(t *testing.T) {
-	handler := fasthttpadaptor.NewFastHTTPHandler(createHandler())
+func TestExpectBasicHandlerBinderFast(t *testing.T) {
+	handler := fasthttpadaptor.NewFastHTTPHandler(createBasicHandler())
 
-	testHandler(WithConfig(Config{
+	testBasicHandler(WithConfig(Config{
+		BaseURL:  "http://example.com",
+		Client:   NewFastBinder(handler),
+		Reporter: NewAssertReporter(t),
+	}))
+}
+
+func createChunkedHandler() http.Handler {
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.Proto != "HTTP/1.1" {
+			w.WriteHeader(http.StatusBadRequest)
+		} else if len(r.TransferEncoding) != 1 || r.TransferEncoding[0] != "chunked" {
+			w.WriteHeader(http.StatusBadRequest)
+		} else if r.PostFormValue("key") != "value" {
+			w.WriteHeader(http.StatusBadRequest)
+		} else {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`[1, `))
+			w.(http.Flusher).Flush()
+			w.Write([]byte(`2]`))
+		}
+	})
+
+	return mux
+}
+
+func createChunkedFastHandler(t *testing.T) fasthttp.RequestHandler {
+	return func(ctx *fasthttp.RequestCtx) {
+		headers := map[string][]string{}
+
+		ctx.Request.Header.VisitAll(func(k, v []byte) {
+			headers[string(k)] = append(headers[string(k)], string(v))
+		})
+
+		assert.Equal(t, []string{"chunked"}, headers["Transfer-Encoding"])
+		assert.Equal(t, "value", string(ctx.FormValue("key")))
+		assert.Equal(t, "key=value", string(ctx.Request.Body()))
+
+		ctx.Response.Header.Set("Content-Type", "application/json")
+		ctx.Response.SetBodyStreamWriter(func(w *bufio.Writer) {
+			w.WriteString(`[1, `)
+			w.Flush()
+			w.WriteString(`2]`)
+		})
+	}
+}
+
+func testChunkedHandler(e *Expect) {
+	e.PUT("/").
+		WithHeader("Content-Type", "application/x-www-form-urlencoded").
+		WithChunked(strings.NewReader("key=value")).
+		Expect().
+		Status(http.StatusOK).
+		ContentType("application/json").
+		TransferEncoding("chunked").
+		JSON().Array().Elements(1, 2)
+}
+
+func TestExpectChunkedHandlerLive(t *testing.T) {
+	handler := createChunkedHandler()
+
+	server := httptest.NewServer(handler)
+	defer server.Close()
+
+	testChunkedHandler(New(t, server.URL))
+}
+
+func TestExpectChunkedHandlerBinderStandard(t *testing.T) {
+	handler := createChunkedHandler()
+
+	testChunkedHandler(WithConfig(Config{
+		BaseURL:  "http://example.com",
+		Client:   NewBinder(handler),
+		Reporter: NewAssertReporter(t),
+	}))
+}
+
+func TestExpectChunkedHandlerBinderFast(t *testing.T) {
+	handler := createChunkedFastHandler(t)
+
+	testChunkedHandler(WithConfig(Config{
 		BaseURL:  "http://example.com",
 		Client:   NewFastBinder(handler),
 		Reporter: NewAssertReporter(t),
@@ -315,7 +384,7 @@ func createCookieHandler() http.Handler {
 	return mux
 }
 
-func testCookies(e *Expect, working bool) {
+func testCookieHandler(e *Expect, enabled bool) {
 	r := e.PUT("/set").Expect().Status(http.StatusNoContent)
 
 	r.Cookies().ContainsOnly("myname")
@@ -324,14 +393,14 @@ func testCookies(e *Expect, working bool) {
 	c.Path().Equal("/")
 	c.Expires().Equal(time.Date(3000, 0, 0, 0, 0, 0, 0, time.UTC))
 
-	if working {
+	if enabled {
 		e.GET("/get").Expect().Status(http.StatusOK).Text().Equal("myvalue")
 	} else {
 		e.GET("/get").Expect().Status(http.StatusBadRequest)
 	}
 }
 
-func TestExpectCookiesClientDisabled(t *testing.T) {
+func TestExpectCookieHandlerLiveDisabled(t *testing.T) {
 	handler := createCookieHandler()
 
 	server := httptest.NewServer(handler)
@@ -343,10 +412,10 @@ func TestExpectCookiesClientDisabled(t *testing.T) {
 		Reporter: NewAssertReporter(t),
 	})
 
-	testCookies(e, false)
+	testCookieHandler(e, false)
 }
 
-func TestExpectCookiesClientEnabled(t *testing.T) {
+func TestExpecCookieHandlerLiveEnabled(t *testing.T) {
 	handler := createCookieHandler()
 
 	server := httptest.NewServer(handler)
@@ -358,10 +427,10 @@ func TestExpectCookiesClientEnabled(t *testing.T) {
 		Reporter: NewAssertReporter(t),
 	})
 
-	testCookies(e, true)
+	testCookieHandler(e, true)
 }
 
-func TestExpectCookiesBinderStandardDisabled(t *testing.T) {
+func TestExpectCookieHandlerBinderStandardDisabled(t *testing.T) {
 	handler := createCookieHandler()
 
 	e := WithConfig(Config{
@@ -373,10 +442,10 @@ func TestExpectCookiesBinderStandardDisabled(t *testing.T) {
 		},
 	})
 
-	testCookies(e, false)
+	testCookieHandler(e, false)
 }
 
-func TestExpectCookiesBinderStandardEnabled(t *testing.T) {
+func TestExpectCookieHandlerBinderStandardEnabled(t *testing.T) {
 	handler := createCookieHandler()
 
 	e := WithConfig(Config{
@@ -385,10 +454,10 @@ func TestExpectCookiesBinderStandardEnabled(t *testing.T) {
 		Client:   NewBinder(handler),
 	})
 
-	testCookies(e, true)
+	testCookieHandler(e, true)
 }
 
-func TestExpectCookiesBinderFastDisabled(t *testing.T) {
+func TestExpectCookieHandlerBinderFastDisabled(t *testing.T) {
 	handler := fasthttpadaptor.NewFastHTTPHandler(createCookieHandler())
 
 	e := WithConfig(Config{
@@ -400,10 +469,10 @@ func TestExpectCookiesBinderFastDisabled(t *testing.T) {
 		},
 	})
 
-	testCookies(e, false)
+	testCookieHandler(e, false)
 }
 
-func TestExpectCookiesBinderFastEnabled(t *testing.T) {
+func TestExpectCookieHandlerBinderFastEnabled(t *testing.T) {
 	handler := fasthttpadaptor.NewFastHTTPHandler(createCookieHandler())
 
 	e := WithConfig(Config{
@@ -412,5 +481,5 @@ func TestExpectCookiesBinderFastEnabled(t *testing.T) {
 		Client:   NewFastBinder(handler),
 	})
 
-	testCookies(e, true)
+	testCookieHandler(e, true)
 }

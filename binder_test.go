@@ -1,6 +1,7 @@
 package httpexpect
 
 import (
+	"bufio"
 	"bytes"
 	"github.com/stretchr/testify/assert"
 	"github.com/valyala/fasthttp"
@@ -10,7 +11,8 @@ import (
 )
 
 type mockHandler struct {
-	t *testing.T
+	t       *testing.T
+	chunked bool
 }
 
 func (c mockHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
@@ -27,12 +29,15 @@ func (c mockHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_, err = w.Write([]byte(`{"hello":"world"}`))
+	if c.chunked {
+		w.(http.Flusher).Flush()
+	}
 
 	assert.True(c.t, err == nil)
 }
 
 func TestBinder(t *testing.T) {
-	binder := NewBinder(mockHandler{t})
+	binder := NewBinder(mockHandler{t, false})
 
 	req, err := http.NewRequest(
 		"GET", "http://example.com", bytes.NewReader([]byte("body")))
@@ -61,10 +66,12 @@ func TestBinder(t *testing.T) {
 
 	assert.Equal(t, header, resp.Header)
 	assert.Equal(t, `{"hello":"world"}`, string(b))
+
+	assert.Equal(t, []string(nil), resp.TransferEncoding)
 }
 
 func TestBinderChunked(t *testing.T) {
-	binder := NewBinder(mockHandler{t})
+	binder := NewBinder(mockHandler{t, true})
 
 	req, err := http.NewRequest(
 		"GET", "http://example.com", bytes.NewReader([]byte("body")))
@@ -79,12 +86,13 @@ func TestBinderChunked(t *testing.T) {
 
 	req.ContentLength = -1
 
-	_, err = binder.Do(req)
+	resp, err := binder.Do(req)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	assert.Equal(t, []string{"chunked"}, req.TransferEncoding)
+	assert.Equal(t, []string{"chunked"}, resp.TransferEncoding)
 }
 
 func TestFastBinder(t *testing.T) {
@@ -143,6 +151,8 @@ func TestFastBinder(t *testing.T) {
 
 	assert.Equal(t, header, resp.Header)
 	assert.Equal(t, `{"hello":"world"}`, string(b))
+
+	assert.Equal(t, []string(nil), resp.TransferEncoding)
 }
 
 func TestFastBinderChunked(t *testing.T) {
@@ -168,6 +178,13 @@ func TestFastBinderChunked(t *testing.T) {
 
 		assert.Equal(t, "bar", string(ctx.FormValue("foo")))
 		assert.Equal(t, "foo=bar", string(ctx.Request.Body()))
+
+		ctx.Response.Header.Set("Content-Type", "application/json")
+		ctx.Response.SetBodyStreamWriter(func(w *bufio.Writer) {
+			w.WriteString(`[1, `)
+			w.Flush()
+			w.WriteString(`2]`)
+		})
 	})
 
 	req, err := http.NewRequest(
@@ -181,8 +198,10 @@ func TestFastBinderChunked(t *testing.T) {
 
 	req.ContentLength = -1
 
-	_, err = binder.Do(req)
+	resp, err := binder.Do(req)
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	assert.Equal(t, []string{"chunked"}, resp.TransferEncoding)
 }

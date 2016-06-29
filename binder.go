@@ -64,6 +64,10 @@ func (binder *Binder) Do(req *http.Request) (*http.Response, error) {
 		Header:     recorder.HeaderMap,
 	}
 
+	if recorder.Flushed {
+		resp.TransferEncoding = []string{"chunked"}
+	}
+
 	if recorder.Body != nil {
 		resp.Body = ioutil.NopCloser(recorder.Body)
 	}
@@ -174,6 +178,10 @@ func convertResponse(stdreq *http.Request, fastresp *fasthttp.Response) *http.Re
 		}
 		stdresp.Header.Add(sk, sv)
 	})
+
+	if fastresp.Header.ContentLength() == -1 {
+		stdresp.TransferEncoding = []string{"chunked"}
+	}
 
 	if body != nil {
 		stdresp.Body = ioutil.NopCloser(bytes.NewReader(body))
