@@ -393,6 +393,25 @@ func TestRequestCookies(t *testing.T) {
 	assert.Equal(t, &client.resp, resp.Raw())
 }
 
+func TestRequestBasicAuth(t *testing.T) {
+	client := &mockClient{}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		Client:   client,
+		Reporter: reporter,
+	}
+
+	req := NewRequest(config, "METHOD", "url")
+
+	req.WithBasicAuth("Aladdin", "open sesame")
+	req.chain.assertOK(t)
+
+	assert.Equal(t, "Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==",
+		req.http.Header.Get("Authorization"))
+}
+
 func TestRequestBodyChunked(t *testing.T) {
 	client := &mockClient{}
 

@@ -183,14 +183,22 @@ func createBasicHandler() http.Handler {
 		}
 	})
 
+	mux.HandleFunc("/wee", func(w http.ResponseWriter, r *http.Request) {
+		if u, p, ok := r.BasicAuth(); ok {
+			w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
+			w.Write([]byte(`username=` + u))
+			w.Write([]byte(`&password=` + p))
+		} else {
+			w.WriteHeader(http.StatusBadRequest)
+		}
+	})
+
 	return mux
 }
 
 func testBasicHandler(e *Expect) {
 	e.GET("/foo")
-
 	e.GET("/foo").Expect()
-
 	e.GET("/foo").Expect().Status(http.StatusOK)
 
 	e.GET("/foo").Expect().
@@ -211,6 +219,11 @@ func testBasicHandler(e *Expect) {
 		WithJSON(map[string]string{"test": "ok"}).
 		Expect().
 		Status(http.StatusNoContent).Body().Empty()
+
+	e.PUT("/wee").WithBasicAuth("john", "secret").
+		Expect().
+		Status(http.StatusOK).
+		Form().ValueEqual("username", "john").ValueEqual("password", "secret")
 }
 
 func TestExpectBasicHandlerLiveDefault(t *testing.T) {

@@ -345,6 +345,20 @@ func (r *Request) WithCookie(k, v string) *Request {
 	return r
 }
 
+// WithBasicAuth sets the request's Authorization header to use HTTP
+// Basic Authentication with the provided username and password.
+//
+// With HTTP Basic Authentication the provided username and password
+// are not encrypted.
+//
+// Example:
+//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req.WithBasicAuth("john", "secret")
+func (r *Request) WithBasicAuth(username, password string) *Request {
+	r.http.SetBasicAuth(username, password)
+	return r
+}
+
 // WithChunked enables chunked encoding and sets request body reader.
 //
 // Expect() will read all available data from given reader. Content-Length
