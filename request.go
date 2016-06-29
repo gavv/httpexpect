@@ -90,8 +90,10 @@ func NewRequest(config Config, method, path string, pathargs ...interface{}) *Re
 		chain:  chain,
 		path:   path,
 		http: http.Request{
-			Method: method,
-			Header: make(http.Header),
+			ProtoMajor: 1,
+			ProtoMinor: 1,
+			Method:     method,
+			Header:     make(http.Header),
 		},
 	}
 }
@@ -259,6 +261,26 @@ func (r *Request) WithQueryObject(object interface{}) *Request {
 	return r
 }
 
+// WithProto sets HTTP protocol version.
+//
+// proto should have form of "HTTP/{major}.{minor}", e.g. "HTTP/1.1".
+//
+// Example:
+//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req.WithProto("HTTP/2.0")
+func (r *Request) WithProto(proto string) *Request {
+	major, minor, ok := http.ParseHTTPVersion(proto)
+	if !ok {
+		r.chain.fail(
+			"\nunexpected protocol version %q, expected \"HTTP/{major}.{minor}\"",
+			proto)
+		return r
+	}
+	r.http.ProtoMajor = major
+	r.http.ProtoMinor = minor
+	return r
+}
+
 // WithHeaders adds given headers to request.
 //
 // Example:
@@ -323,10 +345,13 @@ func (r *Request) WithCookie(k, v string) *Request {
 	return r
 }
 
-// WithChunked sets reader for request body and enables chunked encoding.
+// WithChunked enables chunked encoding and sets request body reader.
 //
 // Expect() will read all available data from given reader. Content-Length
 // is not set, and "chunked" Transfer-Encoding is used.
+//
+// If protocol version is not at least HTTP/1.1 (required for chunked
+// encoding), failure is reported.
 //
 // Example:
 //  req := NewRequest(config, "PUT", "http://example.org/upload")
@@ -335,6 +360,11 @@ func (r *Request) WithCookie(k, v string) *Request {
 //  req.WithHeader("Content-Type": "application/octet-stream")
 //  req.WithChunked(fh)
 func (r *Request) WithChunked(reader io.Reader) *Request {
+	if !r.http.ProtoAtLeast(1, 1) {
+		r.chain.fail("chunked Transfer-Encoding requires at least \"HTTP/1.1\","+
+			"but \"HTTP/%d.%d\" is enabled", r.http.ProtoMajor, r.http.ProtoMinor)
+		return r
+	}
 	r.setBody("WithChunked", reader, -1, false)
 	return r
 }

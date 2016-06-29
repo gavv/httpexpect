@@ -2,6 +2,7 @@ package httpexpect
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/valyala/fasthttp"
 	"io/ioutil"
 	"net/http"
@@ -34,7 +35,15 @@ func NewBinder(handler http.Handler) *Binder {
 
 // Do implements Client.Do.
 func (binder *Binder) Do(req *http.Request) (*http.Response, error) {
-	if req.Body == nil {
+	if req.Proto == "" {
+		req.Proto = fmt.Sprintf("HTTP/%d.%d", req.ProtoMajor, req.ProtoMinor)
+	}
+
+	if req.Body != nil {
+		if req.ContentLength == -1 {
+			req.TransferEncoding = []string{"chunked"}
+		}
+	} else {
 		req.Body = ioutil.NopCloser(bytes.NewReader(nil))
 	}
 
@@ -105,6 +114,12 @@ func (binder *FastBinder) Do(stdreq *http.Request) (*http.Response, error) {
 
 	ctx.Init(&fastreq, nil, nil)
 
+	if stdreq.ContentLength >= 0 {
+		ctx.Request.Header.SetContentLength(int(stdreq.ContentLength))
+	} else {
+		ctx.Request.Header.Add("Transfer-Encoding", "chunked")
+	}
+
 	if stdreq.Body != nil {
 		b, err := ioutil.ReadAll(stdreq.Body)
 		if err == nil {
@@ -152,10 +167,12 @@ func convertResponse(stdreq *http.Request, fastresp *fasthttp.Response) *http.Re
 	}
 
 	fastresp.Header.VisitAll(func(k, v []byte) {
+		sk := string(k)
+		sv := string(v)
 		if stdresp.Header == nil {
 			stdresp.Header = make(http.Header)
 		}
-		stdresp.Header.Add(string(k), string(v))
+		stdresp.Header.Add(sk, sv)
 	})
 
 	if body != nil {

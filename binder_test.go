@@ -17,6 +17,9 @@ func (c mockHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	body, err := ioutil.ReadAll(req.Body)
 	assert.True(c.t, err == nil)
 
+	assert.Equal(c.t, "HTTP/1.0", req.Proto)
+	assert.Equal(c.t, 1, req.ProtoMajor)
+	assert.Equal(c.t, 0, req.ProtoMinor)
 	assert.Equal(c.t, "GET", req.Method)
 	assert.Equal(c.t, "http://example.com", req.URL.String())
 	assert.Equal(c.t, "body", string(body))
@@ -38,6 +41,10 @@ func TestBinder(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	req.ProtoMajor = 1
+	req.ProtoMinor = 0
+	req.Proto = ""
+
 	resp, err := binder.Do(req)
 	if err != nil {
 		t.Fatal(err)
@@ -56,6 +63,30 @@ func TestBinder(t *testing.T) {
 	assert.Equal(t, `{"hello":"world"}`, string(b))
 }
 
+func TestBinderChunked(t *testing.T) {
+	binder := NewBinder(mockHandler{t})
+
+	req, err := http.NewRequest(
+		"GET", "http://example.com", bytes.NewReader([]byte("body")))
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req.ProtoMajor = 1
+	req.ProtoMinor = 0
+	req.Proto = ""
+
+	req.ContentLength = -1
+
+	_, err = binder.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal(t, []string{"chunked"}, req.TransferEncoding)
+}
+
 func TestFastBinder(t *testing.T) {
 	binder := NewFastBinder(func(ctx *fasthttp.RequestCtx) {
 		assert.Equal(t, "POST", string(ctx.Request.Header.Method()))
@@ -71,8 +102,9 @@ func TestFastBinder(t *testing.T) {
 		})
 
 		expected := map[string][]string{
-			"Content-Type": {"application/x-www-form-urlencoded"},
-			"Some-Header":  {"foo", "bar"},
+			"Content-Type":   {"application/x-www-form-urlencoded"},
+			"Content-Length": {"7"},
+			"Some-Header":    {"foo", "bar"},
 		}
 
 		assert.Equal(t, expected, headers)
@@ -111,4 +143,46 @@ func TestFastBinder(t *testing.T) {
 
 	assert.Equal(t, header, resp.Header)
 	assert.Equal(t, `{"hello":"world"}`, string(b))
+}
+
+func TestFastBinderChunked(t *testing.T) {
+	binder := NewFastBinder(func(ctx *fasthttp.RequestCtx) {
+		assert.Equal(t, "POST", string(ctx.Request.Header.Method()))
+		assert.Equal(t, "http://example.com", string(ctx.Request.Header.RequestURI()))
+
+		assert.Equal(t, "application/x-www-form-urlencoded",
+			string(ctx.Request.Header.ContentType()))
+
+		headers := map[string][]string{}
+
+		ctx.Request.Header.VisitAll(func(k, v []byte) {
+			headers[string(k)] = append(headers[string(k)], string(v))
+		})
+
+		expected := map[string][]string{
+			"Content-Type":      {"application/x-www-form-urlencoded"},
+			"Transfer-Encoding": {"chunked"},
+		}
+
+		assert.Equal(t, expected, headers)
+
+		assert.Equal(t, "bar", string(ctx.FormValue("foo")))
+		assert.Equal(t, "foo=bar", string(ctx.Request.Body()))
+	})
+
+	req, err := http.NewRequest(
+		"POST", "http://example.com", bytes.NewReader([]byte("foo=bar")))
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	req.ContentLength = -1
+
+	_, err = binder.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
 }

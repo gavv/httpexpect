@@ -6,6 +6,7 @@ import (
 	"github.com/valyala/fasthttp/fasthttpadaptor"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 )
@@ -180,6 +181,19 @@ func createHandler() http.Handler {
 		}
 	})
 
+	mux.HandleFunc("/qux/wee", func(w http.ResponseWriter, r *http.Request) {
+		if r.Proto != "HTTP/1.1" {
+			w.WriteHeader(http.StatusBadRequest)
+			// TODO: fix fasthttpadaptor
+			//} else if len(r.TransferEncoding) != 1 || r.TransferEncoding[0] != "chunked" {
+			//	w.WriteHeader(http.StatusBadRequest)
+		} else if r.PostFormValue("key") != "value" {
+			w.WriteHeader(http.StatusBadRequest)
+		} else {
+			w.WriteHeader(http.StatusNoContent)
+		}
+	})
+
 	return mux
 }
 
@@ -205,6 +219,12 @@ func testHandler(e *Expect) {
 	e.PUT("/baz").WithJSON(map[string]string{"test": "ok"}).
 		Expect().
 		Status(http.StatusNoContent).Body().Empty()
+
+	e.PUT("/{arg}/{arg}", "qux", "wee").
+		WithHeader("Content-Type", "application/x-www-form-urlencoded").
+		WithChunked(strings.NewReader("key=value")).
+		Expect().
+		Status(http.StatusNoContent)
 }
 
 func TestExpectLiveDefault(t *testing.T) {

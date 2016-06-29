@@ -73,6 +73,38 @@ func TestRequestTime(t *testing.T) {
 	}
 }
 
+func TestRequestProto(t *testing.T) {
+	client := &mockClient{}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		Client:   client,
+		Reporter: reporter,
+	}
+
+	req := NewRequest(config, "METHOD", "http://example.com")
+
+	assert.Equal(t, 1, req.http.ProtoMajor)
+	assert.Equal(t, 1, req.http.ProtoMinor)
+
+	req.WithProto("HTTP/2.0")
+
+	assert.Equal(t, 2, req.http.ProtoMajor)
+	assert.Equal(t, 0, req.http.ProtoMinor)
+
+	req.WithProto("HTTP/1.0")
+
+	assert.Equal(t, 1, req.http.ProtoMajor)
+	assert.Equal(t, 0, req.http.ProtoMinor)
+
+	req.WithProto("bad")
+	req.chain.assertFailed(t)
+
+	assert.Equal(t, 1, req.http.ProtoMajor)
+	assert.Equal(t, 0, req.http.ProtoMinor)
+}
+
 func TestRequestURLSimple(t *testing.T) {
 	client := &mockClient{}
 
@@ -361,7 +393,7 @@ func TestRequestCookies(t *testing.T) {
 	assert.Equal(t, &client.resp, resp.Raw())
 }
 
-func TestRequestBodyReader(t *testing.T) {
+func TestRequestBodyChunked(t *testing.T) {
 	client := &mockClient{}
 
 	reporter := newMockReporter(t)
@@ -389,7 +421,7 @@ func TestRequestBodyReader(t *testing.T) {
 	assert.Equal(t, &client.resp, resp.Raw())
 }
 
-func TestRequestBodyReaderNil(t *testing.T) {
+func TestRequestBodyChunkedNil(t *testing.T) {
 	client := &mockClient{}
 
 	reporter := newMockReporter(t)
@@ -408,6 +440,36 @@ func TestRequestBodyReaderNil(t *testing.T) {
 
 	assert.True(t, client.req.Body == nil)
 	assert.Equal(t, int64(0), client.req.ContentLength)
+}
+
+func TestRequestBodyChunkedProto(t *testing.T) {
+	client := &mockClient{}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		Client:   client,
+		Reporter: reporter,
+	}
+
+	req1 := NewRequest(config, "METHOD", "url")
+
+	req1.WithProto("HTTP/1.0")
+	assert.Equal(t, 1, req1.http.ProtoMajor)
+	assert.Equal(t, 0, req1.http.ProtoMinor)
+
+	req1.WithChunked(bytes.NewBufferString("body"))
+	req1.chain.assertFailed(t)
+
+	req2 := NewRequest(config, "METHOD", "url")
+
+	req2.WithProto("HTTP/2.0")
+	assert.Equal(t, 2, req2.http.ProtoMajor)
+	assert.Equal(t, 0, req2.http.ProtoMinor)
+
+	req2.WithChunked(bytes.NewBufferString("body"))
+	assert.Equal(t, 2, req2.http.ProtoMajor)
+	assert.Equal(t, 0, req2.http.ProtoMinor)
 }
 
 func TestRequestBodyBytes(t *testing.T) {
