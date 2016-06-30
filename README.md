@@ -358,7 +358,9 @@ func TestFruits(t *testing.T) {
 * [`gabs`](https://github.com/Jeffail/gabs)
 * [`gofight`](https://github.com/appleboy/gofight)
 * [`baloo`](https://github.com/h2non/baloo)
+* [`frisby`](https://github.com/verdverm/frisby)
 * [`forest`](https://github.com/emicklei/forest)
+* [`restit`](https://github.com/go-restit/restit)
 * [`http-test`](https://github.com/vsco/http-test)
 * [`go-json-rest/rest/test`](https://godoc.org/github.com/ant0ine/go-json-rest/rest/test)
 

@@ -16,16 +16,17 @@
 // be imported in tests.
 //
 // Concrete behaviour is determined by Client implementation passed to Config struct.
-// The following implementations are available out of the box:
-//  1. http.Client - use regular HTTP client from net/http (you should start server)
+// If you're using http.Client, set its Transport field (http.RoundTriper) to one of
+// the following:
+//  1. default (nil) - use regular HTTP transport from net/http (you should start server)
 //  2. httpexpect.Binder - invoke given http.Handler directly
 //  4. httpexpect.FastBinder - invoke given fasthttp.RequestHandler directly
 //
 // Note that http handler can be usually obtained from http framework you're using.
 // E.g., echo framework provides either http.Handler or fasthttp.RequestHandler.
 //
-// You can also provide your own Client implementation and do whatever you want to
-// convert http.Request to http.Response.
+// You can also provide your own Client or http.RoundTriper implementation and do
+// whatever you want to convert http.Request to http.Response.
 //
 // If you're starting server from tests, it's very handy to use net/http/httptest
 // for that.
