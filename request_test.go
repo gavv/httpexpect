@@ -253,7 +253,11 @@ func TestRequestURLQuery(t *testing.T) {
 		WithQuery("bb", 123).
 		WithQueryString("aa=foo&cc=%2A%26%40")
 
-	for _, req := range []*Request{req1, req2, req3, req4, req5} {
+	req6 := NewRequest(config, "METHOD", "http://example.com/path").
+		WithQueryString("aa=foo&cc=%2A%26%40").
+		WithQuery("bb", 123)
+
+	for _, req := range []*Request{req1, req2, req3, req4, req5, req6} {
 		client.req = nil
 		req.Expect()
 		req.chain.assertOK(t)
@@ -261,12 +265,12 @@ func TestRequestURLQuery(t *testing.T) {
 			client.req.URL.String())
 	}
 
-	req6 := NewRequest(config, "METHOD", "http://example.com/path").
+	req7 := NewRequest(config, "METHOD", "http://example.com/path").
 		WithQuery("foo", "bar").
 		WithQueryObject(nil)
 
-	req6.Expect()
-	req6.chain.assertOK(t)
+	req7.Expect()
+	req7.chain.assertOK(t)
 	assert.Equal(t, "http://example.com/path?foo=bar", client.req.URL.String())
 
 	NewRequest(config, "METHOD", "http://example.com/path").
