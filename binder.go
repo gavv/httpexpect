@@ -154,6 +154,8 @@ func convertResponse(stdreq *http.Request, fastresp *fasthttp.Response) *http.Re
 
 	if body != nil {
 		stdresp.Body = ioutil.NopCloser(bytes.NewReader(body))
+	} else {
+		stdresp.Body = ioutil.NopCloser(bytes.NewReader(nil))
 	}
 
 	return stdresp

@@ -221,3 +221,30 @@ func TestFastBinderChunked(t *testing.T) {
 
 	assert.Equal(t, []string{"chunked"}, resp.TransferEncoding)
 }
+
+func TestFastBinderEmptyResponse(t *testing.T) {
+	handler := func(*fasthttp.RequestCtx) {}
+
+	client := &http.Client{
+		Transport: NewFastBinder(handler),
+	}
+
+	req, err := http.NewRequest("POST", "http://example.com", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.False(t, resp.Body == nil)
+
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal(t, "", string(b))
+}

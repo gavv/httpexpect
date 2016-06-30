@@ -178,7 +178,8 @@ func createBasicHandler() http.Handler {
 			} else if m["test"] != "ok" {
 				w.WriteHeader(http.StatusBadRequest)
 			} else {
-				w.WriteHeader(http.StatusNoContent)
+				w.WriteHeader(http.StatusOK)
+				w.Write([]byte(`ok`))
 			}
 		}
 	})
@@ -218,7 +219,7 @@ func testBasicHandler(e *Expect) {
 		WithPath("b", "qux").
 		WithJSON(map[string]string{"test": "ok"}).
 		Expect().
-		Status(http.StatusNoContent).Body().Empty()
+		Status(http.StatusOK).Body().Equal("ok")
 
 	e.PUT("/wee").WithBasicAuth("john", "secret").
 		Expect().
@@ -284,6 +285,71 @@ func TestExpectBasicHandlerBinderFast(t *testing.T) {
 	handler := fasthttpadaptor.NewFastHTTPHandler(createBasicHandler())
 
 	testBasicHandler(WithConfig(Config{
+		BaseURL:  "http://example.com",
+		Reporter: NewAssertReporter(t),
+		Client: &http.Client{
+			Transport: NewFastBinder(handler),
+		},
+	}))
+}
+
+func createRedirectHandler() http.Handler {
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/foo", func(w http.ResponseWriter, _ *http.Request) {
+		w.Write([]byte(`hello`))
+	})
+
+	mux.HandleFunc("/bar", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/foo", http.StatusFound)
+	})
+
+	return mux
+}
+
+func createRedirectFastHandler() fasthttp.RequestHandler {
+	return func(ctx *fasthttp.RequestCtx) {
+		switch string(ctx.Path()) {
+		case "/foo":
+			ctx.SetBody([]byte(`hello`))
+
+		case "/bar":
+			ctx.Redirect("/foo", http.StatusFound)
+		}
+	}
+}
+
+func testRedirectHandler(e *Expect) {
+	e.POST("/bar").
+		Expect().
+		Status(http.StatusOK).Body().Equal(`hello`)
+}
+
+func TestExpectRedirectHandlerLive(t *testing.T) {
+	handler := createRedirectHandler()
+
+	server := httptest.NewServer(handler)
+	defer server.Close()
+
+	testRedirectHandler(New(t, server.URL))
+}
+
+func TestExpectRedirectHandlerBinderStandard(t *testing.T) {
+	handler := createRedirectHandler()
+
+	testRedirectHandler(WithConfig(Config{
+		BaseURL:  "http://example.com",
+		Reporter: NewAssertReporter(t),
+		Client: &http.Client{
+			Transport: NewBinder(handler),
+		},
+	}))
+}
+
+func TestExpectRedirectHandlerBinderFast(t *testing.T) {
+	handler := createRedirectFastHandler()
+
+	testRedirectHandler(WithConfig(Config{
 		BaseURL:  "http://example.com",
 		Reporter: NewAssertReporter(t),
 		Client: &http.Client{
