@@ -4,13 +4,13 @@ Concise, declarative, and easy to use end-to-end HTTP and REST API testing for G
 
 Basically, httpexpect is a set of chainable *builders* for HTTP requests and *assertions* for HTTP responses and payload, on top of net/http and several utility packages.
 
-## Features
-
-**Workflow**
+Workflow:
 
 * Incrementally build HTTP requests.
 * Inspect HTTP responses.
 * Inspect response payload recursively.
+
+## Features
 
 **Request builder**
 
