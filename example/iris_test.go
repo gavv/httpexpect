@@ -2,6 +2,7 @@ package example
 
 import (
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/gavv/httpexpect"
@@ -65,7 +66,7 @@ func TestIrisParams(t *testing.T) {
 	}
 
 	// GET /params/xxx/yyy?q=qqq
-	//  p1=P1&p2=P2
+	// Form: p1=P1&p2=P2
 
 	r := e.GET("/params/{x}/{y}", "xxx", "yyy").
 		WithQuery("q", "qqq").WithForm(Form{P1: "P1", P2: "P2"}).
@@ -110,4 +111,19 @@ func TestIrisSession(t *testing.T) {
 	r.Equal(map[string]string{
 		"name": "test",
 	})
+}
+
+func TestIrisStream(t *testing.T) {
+	e := irisTester(t)
+
+	e.GET("/stream").
+		Expect().
+		Status(http.StatusOK).
+		TransferEncoding("chunked"). // ensure server sent chunks
+		Body().Equal("0123456789")
+
+	// send chunks to server
+	e.POST("/stream").WithChunked(strings.NewReader("<long text>")).
+		Expect().
+		Status(http.StatusOK).Body().Equal("<long text>")
 }

@@ -1,6 +1,8 @@
 package example
 
 import (
+	"bufio"
+	"fmt"
 	"github.com/iris-contrib/middleware/basicauth"
 	"github.com/kataras/iris"
 	"github.com/valyala/fasthttp"
@@ -62,6 +64,22 @@ func IrisHandler() fasthttp.RequestHandler {
 		c.JSON(iris.StatusOK, iris.Map{
 			"name": name,
 		})
+	})
+
+	api.Get("/stream", func(c *iris.Context) {
+		c.StreamWriter(func(w *bufio.Writer) {
+			for i := 0; i < 10; i++ {
+				fmt.Fprintf(w, "%d", i)
+
+				if err := w.Flush(); err != nil {
+					return
+				}
+			}
+		})
+	})
+
+	api.Post("/stream", func(c *iris.Context) {
+		c.Write(string(c.Request.Body()))
 	})
 
 	return api.NoListen().Handler
