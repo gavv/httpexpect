@@ -30,6 +30,10 @@ func IrisHandler() fasthttp.RequestHandler {
 		})
 	})
 
+	api.Post("/redirect", func(c *iris.Context) {
+		c.Redirect("/things", iris.StatusFound)
+	})
+
 	api.Get("/params/:x/:y", func(c *iris.Context) {
 		c.JSON(iris.StatusOK, iris.Map{
 			"x":  c.Param("x"),

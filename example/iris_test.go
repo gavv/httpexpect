@@ -57,6 +57,19 @@ func TestIrisThings(t *testing.T) {
 	}
 }
 
+func TestIrisRedirect(t *testing.T) {
+	e := irisTester(t)
+
+	things := e.POST("/redirect").
+		Expect().
+		Status(http.StatusOK).JSON().Array()
+
+	things.Length().Equal(2)
+
+	things.Element(0).Object().ValueEqual("name", "foo")
+	things.Element(1).Object().ValueEqual("name", "bar")
+}
+
 func TestIrisParams(t *testing.T) {
 	e := irisTester(t)
 
