@@ -26,7 +26,7 @@ Workflow:
 
 **Payload assertions**
 
-* Various assertions, supported types: object, array, string, number, boolean, null.
+* Type-specific assertions, supported types: object, array, string, number, boolean, null.
 * Regular expressions.
 * Simple JSON queries (using subset of [JSONPath](http://goessner.net/articles/JsonPath/)), provided by [`jsonpath`](https://github.com/yalp/jsonpath) package.
 * [JSON Schema](http://json-schema.org/) validation, provided by [`gojsonschema`](https://github.com/xeipuuv/gojsonschema) package.
@@ -162,7 +162,7 @@ func TestFruits(t *testing.T) {
 	repos := e.GET("/repos/octocat").
 		Expect().
 		Status(http.StatusOK).JSON()
-		
+
 	// validate JSON schema
 	repos.Schema(schema)
 
@@ -283,15 +283,16 @@ func TestFruits(t *testing.T) {
 		// prepend this url to all requests
 		BaseURL: "http://example.com",
 
-		// use http.Client with timeout
-		Client:  &http.Client{
+		// use http.Client with a cookie jar and timeout
+		Client: &http.Client{
+			Jar:     httpexpect.NewJar(),
 			Timeout: time.Second * 30,
 		},
 
-		// failures are fatal
+		// use fatal failures
 		Reporter: httpexpect.NewRequireReporter(t),
 
-		// verbose logging
+		// use verbose logging
 		Printers: []httpexpect.Printer{
 			httpexpect.NewCurlPrinter(t),
 			httpexpect.NewDebugPrinter(t, true),
@@ -299,23 +300,47 @@ func TestFruits(t *testing.T) {
 	})
 ```
 
+**Session support**
+
+```go
+	// cookie jar is used to store cookies from server
+	e := httpexpect.WithConfig(httpexpect.Config{
+		Client: &http.Client{
+			Jar: httpexpect.NewJar(), // used by default if Client is nil
+		},
+	})
+
+	// cookies are disabled
+	e := httpexpect.WithConfig(httpexpect.Config{
+		Client: &http.Client{
+			Jar: nil,
+		},
+	})
+```
+
 **Use HTTP handler directly**
 
 ```go
-	// use http.Handler directly instead of http.Client
+	// invoke http.Handler directly using httpexpect.Binder
 	var handler http.Handler = myHandler()
 
 	e := httpexpect.WithConfig(httpexpect.Config{
 		Reporter: httpexpect.NewAssertReporter(t),
-		Client:   httpexpect.NewBinder(handler),
+		Client: &http.Client{
+			Transport: httpexpect.NewBinder(handler),
+			Jar:       httpexpect.NewJar(),
+		},
 	})
 
-	// use fasthttp.RequestHandler directly instead of http.Client
+	// invoke fasthttp.RequestHandler directly using httpexpect.FastBinder
 	var handler fasthttp.RequestHandler = myHandler()
 
 	e := httpexpect.WithConfig(httpexpect.Config{
 		Reporter: httpexpect.NewAssertReporter(t),
-		Client:   httpexpect.NewFastBinder(handler),
+		Client: &http.Client{
+			Transport: httpexpect.NewFastBinder(handler),
+			Jar:       httpexpect.NewJar(),
+		},
 	})
 ```
 

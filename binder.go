@@ -9,32 +9,28 @@ import (
 	"net/http/httptest"
 )
 
-// Binder implements networkless Client attached directly to http.Handler.
+// Binder implements networkless http.RoundTripper attached directly to
+// http.Handler.
 //
-// Binder emulates network communication by invoking given http.Handler. It
-// passes httptest.ResponseRecorder as http.ResponseWriter to the handler,
-// and then constructs http.Response from recorded data.
+// Binder emulates network communication by invoking given http.Handler
+// directly. It passes httptest.ResponseRecorder as http.ResponseWriter
+// to the handler, and then constructs http.Response from recorded data.
 type Binder struct {
-	// Handler specifies the function to be invoked.
-	Handler http.Handler
-
-	// Jar specifies the cookie jar.
-	// If Jar is nil, cookies are not sent in requests and ignored
-	// in responses.
-	Jar http.CookieJar
+	handler http.Handler
 }
 
-// NewBinder returns a new Binder given http.Handler.
-// It uses DefaultJar() as cookie jar.
-func NewBinder(handler http.Handler) *Binder {
-	return &Binder{
-		Handler: handler,
-		Jar:     DefaultJar(),
-	}
+// NewBinder returns a new Binder given a http.Handler.
+//
+// Example:
+//   client := &http.Client{
+//       Transport: NewBinder(handler),
+//   }
+func NewBinder(handler http.Handler) Binder {
+	return Binder{handler}
 }
 
-// Do implements Client.Do.
-func (binder *Binder) Do(req *http.Request) (*http.Response, error) {
+// RoundTrip implements http.RoundTripper.RoundTrip.
+func (binder Binder) RoundTrip(req *http.Request) (*http.Response, error) {
 	if req.Proto == "" {
 		req.Proto = fmt.Sprintf("HTTP/%d.%d", req.ProtoMajor, req.ProtoMinor)
 	}
@@ -47,15 +43,9 @@ func (binder *Binder) Do(req *http.Request) (*http.Response, error) {
 		req.Body = ioutil.NopCloser(bytes.NewReader(nil))
 	}
 
-	if binder.Jar != nil {
-		for _, cookie := range binder.Jar.Cookies(req.URL) {
-			req.AddCookie(cookie)
-		}
-	}
-
 	recorder := httptest.NewRecorder()
 
-	binder.Handler.ServeHTTP(recorder, req)
+	binder.handler.ServeHTTP(recorder, req)
 
 	resp := http.Response{
 		Request:    req,
@@ -72,44 +62,31 @@ func (binder *Binder) Do(req *http.Request) (*http.Response, error) {
 		resp.Body = ioutil.NopCloser(recorder.Body)
 	}
 
-	if binder.Jar != nil {
-		if rc := resp.Cookies(); len(rc) > 0 {
-			binder.Jar.SetCookies(req.URL, rc)
-		}
-	}
-
 	return &resp, nil
 }
 
-// FastBinder implements networkless Client attached directly to
-// fasthttp.RequestHandler.
+// FastBinder implements networkless http.RoundTripper attached directly
+// to fasthttp.RequestHandler.
+//
+// FastBinder emulates network communication by invoking given http.Handler
+// directly. It passes converts http.Request to fasthttp.Request, invokes
+// handler, and then converts fasthttp.Response to http.Response.
 type FastBinder struct {
-	// Handler specifies the function to be invoked.
-	Handler fasthttp.RequestHandler
-
-	// Jar specifies the cookie jar.
-	// If Jar is nil, cookies are not sent in requests and ignored
-	// in responses.
-	Jar http.CookieJar
+	handler fasthttp.RequestHandler
 }
 
 // NewFastBinder returns a new FastBinder given a fasthttp.RequestHandler.
-// It uses DefaultJar() as cookie jar.
-func NewFastBinder(handler fasthttp.RequestHandler) *FastBinder {
-	return &FastBinder{
-		Handler: handler,
-		Jar:     DefaultJar(),
-	}
+//
+// Example:
+//   client := &http.Client{
+//       Transport: NewFastBinder(fasthandler),
+//   }
+func NewFastBinder(handler fasthttp.RequestHandler) FastBinder {
+	return FastBinder{handler}
 }
 
-// Do implements Client.Do.
-func (binder *FastBinder) Do(stdreq *http.Request) (*http.Response, error) {
-	if binder.Jar != nil {
-		for _, cookie := range binder.Jar.Cookies(stdreq.URL) {
-			stdreq.AddCookie(cookie)
-		}
-	}
-
+// RoundTrip implements http.RoundTripper.RoundTrip.
+func (binder FastBinder) RoundTrip(stdreq *http.Request) (*http.Response, error) {
 	var fastreq fasthttp.Request
 
 	convertRequest(stdreq, &fastreq)
@@ -131,17 +108,9 @@ func (binder *FastBinder) Do(stdreq *http.Request) (*http.Response, error) {
 		}
 	}
 
-	binder.Handler(&ctx)
+	binder.handler(&ctx)
 
-	stdresp := convertResponse(stdreq, &ctx.Response)
-
-	if binder.Jar != nil {
-		if rc := stdresp.Cookies(); len(rc) > 0 {
-			binder.Jar.SetCookies(stdreq.URL, rc)
-		}
-	}
-
-	return stdresp, nil
+	return convertResponse(stdreq, &ctx.Response), nil
 }
 
 func convertRequest(stdreq *http.Request, fastreq *fasthttp.Request) {

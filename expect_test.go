@@ -273,8 +273,10 @@ func TestExpectBasicHandlerBinderStandard(t *testing.T) {
 
 	testBasicHandler(WithConfig(Config{
 		BaseURL:  "http://example.com",
-		Client:   NewBinder(handler),
 		Reporter: NewAssertReporter(t),
+		Client: &http.Client{
+			Transport: NewBinder(handler),
+		},
 	}))
 }
 
@@ -283,8 +285,10 @@ func TestExpectBasicHandlerBinderFast(t *testing.T) {
 
 	testBasicHandler(WithConfig(Config{
 		BaseURL:  "http://example.com",
-		Client:   NewFastBinder(handler),
 		Reporter: NewAssertReporter(t),
+		Client: &http.Client{
+			Transport: NewFastBinder(handler),
+		},
 	}))
 }
 
@@ -356,8 +360,10 @@ func TestExpectChunkedHandlerBinderStandard(t *testing.T) {
 
 	testChunkedHandler(WithConfig(Config{
 		BaseURL:  "http://example.com",
-		Client:   NewBinder(handler),
 		Reporter: NewAssertReporter(t),
+		Client: &http.Client{
+			Transport: NewBinder(handler),
+		},
 	}))
 }
 
@@ -366,8 +372,10 @@ func TestExpectChunkedHandlerBinderFast(t *testing.T) {
 
 	testChunkedHandler(WithConfig(Config{
 		BaseURL:  "http://example.com",
-		Client:   NewFastBinder(handler),
 		Reporter: NewAssertReporter(t),
+		Client: &http.Client{
+			Transport: NewFastBinder(handler),
+		},
 	}))
 }
 
@@ -421,8 +429,10 @@ func TestExpectCookieHandlerLiveDisabled(t *testing.T) {
 
 	e := WithConfig(Config{
 		BaseURL:  server.URL,
-		Client:   http.DefaultClient,
 		Reporter: NewAssertReporter(t),
+		Client: &http.Client{
+			Jar: nil,
+		},
 	})
 
 	testCookieHandler(e, false)
@@ -436,8 +446,10 @@ func TestExpecCookieHandlerLiveEnabled(t *testing.T) {
 
 	e := WithConfig(Config{
 		BaseURL:  server.URL,
-		Client:   DefaultClient(),
 		Reporter: NewAssertReporter(t),
+		Client: &http.Client{
+			Jar: NewJar(),
+		},
 	})
 
 	testCookieHandler(e, true)
@@ -449,9 +461,9 @@ func TestExpectCookieHandlerBinderStandardDisabled(t *testing.T) {
 	e := WithConfig(Config{
 		BaseURL:  "http://example.com",
 		Reporter: NewAssertReporter(t),
-		Client: &Binder{
-			Handler: handler,
-			Jar:     nil,
+		Client: &http.Client{
+			Transport: NewBinder(handler),
+			Jar:       nil,
 		},
 	})
 
@@ -464,7 +476,10 @@ func TestExpectCookieHandlerBinderStandardEnabled(t *testing.T) {
 	e := WithConfig(Config{
 		BaseURL:  "http://example.com",
 		Reporter: NewAssertReporter(t),
-		Client:   NewBinder(handler),
+		Client: &http.Client{
+			Transport: NewBinder(handler),
+			Jar:       NewJar(),
+		},
 	})
 
 	testCookieHandler(e, true)
@@ -476,9 +491,9 @@ func TestExpectCookieHandlerBinderFastDisabled(t *testing.T) {
 	e := WithConfig(Config{
 		BaseURL:  "http://example.com",
 		Reporter: NewAssertReporter(t),
-		Client: &FastBinder{
-			Handler: handler,
-			Jar:     nil,
+		Client: &http.Client{
+			Transport: NewFastBinder(handler),
+			Jar:       nil,
 		},
 	})
 
@@ -491,7 +506,10 @@ func TestExpectCookieHandlerBinderFastEnabled(t *testing.T) {
 	e := WithConfig(Config{
 		BaseURL:  "http://example.com",
 		Reporter: NewAssertReporter(t),
-		Client:   NewFastBinder(handler),
+		Client: &http.Client{
+			Transport: NewFastBinder(handler),
+			Jar:       NewJar(),
+		},
 	})
 
 	testCookieHandler(e, true)

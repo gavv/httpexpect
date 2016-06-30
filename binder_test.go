@@ -37,7 +37,11 @@ func (c mockHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 func TestBinder(t *testing.T) {
-	binder := NewBinder(mockHandler{t, false})
+	handler := mockHandler{t, false}
+
+	client := &http.Client{
+		Transport: NewBinder(handler),
+	}
 
 	req, err := http.NewRequest(
 		"GET", "http://example.com", bytes.NewReader([]byte("body")))
@@ -50,7 +54,7 @@ func TestBinder(t *testing.T) {
 	req.ProtoMinor = 0
 	req.Proto = ""
 
-	resp, err := binder.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -71,7 +75,11 @@ func TestBinder(t *testing.T) {
 }
 
 func TestBinderChunked(t *testing.T) {
-	binder := NewBinder(mockHandler{t, true})
+	handler := mockHandler{t, true}
+
+	client := &http.Client{
+		Transport: NewBinder(handler),
+	}
 
 	req, err := http.NewRequest(
 		"GET", "http://example.com", bytes.NewReader([]byte("body")))
@@ -86,7 +94,7 @@ func TestBinderChunked(t *testing.T) {
 
 	req.ContentLength = -1
 
-	resp, err := binder.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -96,7 +104,7 @@ func TestBinderChunked(t *testing.T) {
 }
 
 func TestFastBinder(t *testing.T) {
-	binder := NewFastBinder(func(ctx *fasthttp.RequestCtx) {
+	handler := func(ctx *fasthttp.RequestCtx) {
 		assert.Equal(t, "POST", string(ctx.Request.Header.Method()))
 		assert.Equal(t, "http://example.com", string(ctx.Request.Header.RequestURI()))
 
@@ -122,7 +130,11 @@ func TestFastBinder(t *testing.T) {
 
 		ctx.Response.Header.Set("Content-Type", "application/json")
 		ctx.Response.SetBody([]byte(`{"hello":"world"}`))
-	})
+	}
+
+	client := &http.Client{
+		Transport: NewFastBinder(handler),
+	}
 
 	req, err := http.NewRequest(
 		"POST", "http://example.com", bytes.NewReader([]byte("foo=bar")))
@@ -135,7 +147,7 @@ func TestFastBinder(t *testing.T) {
 	req.Header.Add("Some-Header", "foo")
 	req.Header.Add("Some-Header", "bar")
 
-	resp, err := binder.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -156,7 +168,7 @@ func TestFastBinder(t *testing.T) {
 }
 
 func TestFastBinderChunked(t *testing.T) {
-	binder := NewFastBinder(func(ctx *fasthttp.RequestCtx) {
+	handler := func(ctx *fasthttp.RequestCtx) {
 		assert.Equal(t, "POST", string(ctx.Request.Header.Method()))
 		assert.Equal(t, "http://example.com", string(ctx.Request.Header.RequestURI()))
 
@@ -185,7 +197,11 @@ func TestFastBinderChunked(t *testing.T) {
 			w.Flush()
 			w.WriteString(`2]`)
 		})
-	})
+	}
+
+	client := &http.Client{
+		Transport: NewFastBinder(handler),
+	}
 
 	req, err := http.NewRequest(
 		"POST", "http://example.com", bytes.NewReader([]byte("foo=bar")))
@@ -198,7 +214,7 @@ func TestFastBinderChunked(t *testing.T) {
 
 	req.ContentLength = -1
 
-	resp, err := binder.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		t.Fatal(err)
 	}

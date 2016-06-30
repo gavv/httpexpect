@@ -150,14 +150,21 @@ type Reporter interface {
 // trailing slash is allowed but not required and is appended automatically.
 //
 // New is a shorthand for WithConfig. It uses:
-//  - DefaultClient() as Client
 //  - CompactPrinter as Printer with testing.T as Logger
 //  - AssertReporter as Reporter
 //
+// Client is set to default client with non-nil Jar:
+//  &http.Client{
+//      Jar: httpexpect.NewJar(),
+//  }
+//
 // Example:
-//  func TestAPI(t *testing.T) {
+//  func TestSomething(t *testing.T) {
 //      e := httpexpect.New(t, "http://example.com/")
-//      e.GET("/path").Expect().Status(http.StatusOK)
+//
+//      e.GET("/path").
+//          Expect().
+//          Status(http.StatusOK)
 //  }
 func New(t *testing.T, baseURL string) *Expect {
 	return WithConfig(Config{
@@ -171,53 +178,51 @@ func New(t *testing.T, baseURL string) *Expect {
 
 // WithConfig returns a new Expect object with given config.
 //
-// If Config.Client is nil, DefaultClient() is used.
+// Reporter should not be nil.
+//
+// If Client is nil, it's set to default client with non-nil Jar:
+//  &http.Client{
+//      Jar: httpexpect.NewJar(),
+//  }
 //
 // Example:
-//  func TestAPI(t *testing.T) {
+//  func TestSomething(t *testing.T) {
 //      e := httpexpect.WithConfig(httpexpect.Config{
 //          BaseURL:  "http://example.com/",
-//          Client:   &http.Client{},
+//          Client:   &http.Client{
+//              Transport: httpexpect.NewBinder(myHandler()),
+//              Jar:       httpexpect.NewJar(),
+//          },
 //          Reporter: httpexpect.NewAssertReporter(t),
 //          Printers: []httpexpect.Printer{
 //              httpexpect.NewCurlPrinter(t),
 //              httpexpect.NewDebugPrinter(t, true)
 //          },
 //      })
-//      e.GET("/path").Expect().Status(http.StatusOK)
+//
+//      e.GET("/path").
+//          Expect().
+//          Status(http.StatusOK)
 //  }
 func WithConfig(config Config) *Expect {
-	if config.Client == nil {
-		config.Client = DefaultClient()
-	}
 	if config.Reporter == nil {
 		panic("config.Reporter is nil")
+	}
+	if config.Client == nil {
+		config.Client = &http.Client{
+			Jar: NewJar(),
+		}
 	}
 	return &Expect{config}
 }
 
-// DefaultClient returns a new http.Client object.
-// It uses DefaultJar() as cookie jar.
+// NewJar returns a new http.CookieJar.
 //
-// With this client, requests contain cookies from jar and responses stores
-// cookies to jar, so that cookies are preserved between requests of the
-// same Expext instance.
-//
-// If you don't want this behaviour, use client with nil jar, e.g.
-// &http.Client{} or http.DefaultClient instead of httpexpect.DefaultClient().
-func DefaultClient() *http.Client {
-	return &http.Client{
-		Jar: DefaultJar(),
-	}
-}
-
-// DefaultJar returns a new http.CookieJar.
-//
-// Jar is implemented using net/http/cookiejar. PublicSuffixList is implemented
-// using golang.org/x/net/publicsuffix.
+// Returned jar is implemented in net/http/cookiejar. PublicSuffixList is
+// implemented in golang.org/x/net/publicsuffix.
 //
 // Note that this jar ignores cookies when request url is empty.
-func DefaultJar() http.CookieJar {
+func NewJar() http.CookieJar {
 	jar, err := cookiejar.New(&cookiejar.Options{
 		PublicSuffixList: publicsuffix.List,
 	})

@@ -7,14 +7,17 @@ import (
 	"github.com/gavv/httpexpect"
 )
 
-func TestEcho_Standard(t *testing.T) {
+func TestEchoStandard(t *testing.T) {
 	// create http.Handler
 	handler := EchoHandlerStandard()
 
 	// create httpexpect instance that will call htpp.Handler directly
 	e := httpexpect.WithConfig(httpexpect.Config{
 		Reporter: httpexpect.NewAssertReporter(t),
-		Client:   httpexpect.NewBinder(handler),
+		Client: &http.Client{
+			Transport: httpexpect.NewBinder(handler),
+			Jar:       httpexpect.NewJar(),
+		},
 	})
 
 	// run tests
@@ -23,14 +26,17 @@ func TestEcho_Standard(t *testing.T) {
 		Status(http.StatusOK).Body().Equal("hello, world!")
 }
 
-func TestEcho_Fast(t *testing.T) {
+func TestEchoFast(t *testing.T) {
 	// create fasthttp.RequestHandler
 	handler := EchoHandlerFast()
 
 	// create httpexpect instance that will call fasthtpp.RequestHandler directly
 	e := httpexpect.WithConfig(httpexpect.Config{
 		Reporter: httpexpect.NewAssertReporter(t),
-		Client:   httpexpect.NewFastBinder(handler),
+		Client: &http.Client{
+			Transport: httpexpect.NewFastBinder(handler),
+			Jar:       httpexpect.NewJar(),
+		},
 	})
 
 	// run tests
