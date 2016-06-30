@@ -261,23 +261,25 @@ func (r *Request) WithQueryObject(object interface{}) *Request {
 	return r
 }
 
-// WithProto sets HTTP protocol version.
-//
-// proto should have form of "HTTP/{major}.{minor}", e.g. "HTTP/1.1".
+// WithQueryString parses given query string and adds it to request URL.
 //
 // Example:
 //  req := NewRequest(config, "PUT", "http://example.org/path")
-//  req.WithProto("HTTP/2.0")
-func (r *Request) WithProto(proto string) *Request {
-	major, minor, ok := http.ParseHTTPVersion(proto)
-	if !ok {
-		r.chain.fail(
-			"\nunexpected protocol version %q, expected \"HTTP/{major}.{minor}\"",
-			proto)
+//  req.WithQuery("a", 11)
+//  req.WithQueryString("b=22&c=33")
+//  // URL is now http://example.org/path?a=11&bb=22&c=33
+func (r *Request) WithQueryString(query string) *Request {
+	v, err := url.ParseQuery(query)
+	if err != nil {
+		r.chain.fail(err.Error())
 		return r
 	}
-	r.http.ProtoMajor = major
-	r.http.ProtoMinor = minor
+	if r.query == nil {
+		r.query = make(url.Values)
+	}
+	for k, v := range v {
+		r.query[k] = append(r.query[k], v...)
+	}
 	return r
 }
 
@@ -356,6 +358,26 @@ func (r *Request) WithCookie(k, v string) *Request {
 //  req.WithBasicAuth("john", "secret")
 func (r *Request) WithBasicAuth(username, password string) *Request {
 	r.http.SetBasicAuth(username, password)
+	return r
+}
+
+// WithProto sets HTTP protocol version.
+//
+// proto should have form of "HTTP/{major}.{minor}", e.g. "HTTP/1.1".
+//
+// Example:
+//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req.WithProto("HTTP/2.0")
+func (r *Request) WithProto(proto string) *Request {
+	major, minor, ok := http.ParseHTTPVersion(proto)
+	if !ok {
+		r.chain.fail(
+			"\nunexpected protocol version %q, expected \"HTTP/{major}.{minor}\"",
+			proto)
+		return r
+	}
+	r.http.ProtoMajor = major
+	r.http.ProtoMinor = minor
 	return r
 }
 

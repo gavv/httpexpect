@@ -249,7 +249,11 @@ func TestRequestURLQuery(t *testing.T) {
 	req4 := NewRequest(config, "METHOD", "http://example.com/path").
 		WithQueryObject(&S{123, "*&@", "dummy"}).WithQuery("aa", "foo")
 
-	for _, req := range []*Request{req1, req2, req3, req4} {
+	req5 := NewRequest(config, "METHOD", "http://example.com/path").
+		WithQuery("bb", 123).
+		WithQueryString("aa=foo&cc=%2A%26%40")
+
+	for _, req := range []*Request{req1, req2, req3, req4, req5} {
 		client.req = nil
 		req.Expect()
 		req.chain.assertOK(t)
@@ -257,16 +261,19 @@ func TestRequestURLQuery(t *testing.T) {
 			client.req.URL.String())
 	}
 
-	req5 := NewRequest(config, "METHOD", "http://example.com/path").
+	req6 := NewRequest(config, "METHOD", "http://example.com/path").
 		WithQuery("foo", "bar").
 		WithQueryObject(nil)
 
-	req5.Expect()
-	req5.chain.assertOK(t)
+	req6.Expect()
+	req6.chain.assertOK(t)
 	assert.Equal(t, "http://example.com/path?foo=bar", client.req.URL.String())
 
 	NewRequest(config, "METHOD", "http://example.com/path").
 		WithQueryObject(func() {}).chain.assertFailed(t)
+
+	NewRequest(config, "METHOD", "http://example.com/path").
+		WithQueryString("%").chain.assertFailed(t)
 }
 
 func TestRequestURLConcat(t *testing.T) {
