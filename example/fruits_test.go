@@ -9,10 +9,8 @@ import (
 )
 
 func TestFruits(t *testing.T) {
-	// create http.Handler
 	handler := FruitServer()
 
-	// start HTTP server using httptest
 	server := httptest.NewServer(handler)
 	defer server.Close()
 

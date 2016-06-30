@@ -2,45 +2,97 @@ package example
 
 import (
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/gavv/httpexpect"
 )
 
-func TestEchoStandard(t *testing.T) {
-	// create http.Handler
-	handler := EchoHandlerStandard()
+// Echo JWT token authentication tests.
+//
+// The same tests are used when testing EchoServer() in three modes:
+//  - via http client
+//  - via http.Handler
+//  - via fasthttp.RequestHandler
+func testEcho(e *httpexpect.Expect) {
+	type Login struct {
+		Username string `form:"username"`
+		Password string `form:"password"`
+	}
 
-	// create httpexpect instance that will call htpp.Handler directly
-	e := httpexpect.WithConfig(httpexpect.Config{
-		Reporter: httpexpect.NewAssertReporter(t),
-		Client: &http.Client{
-			Transport: httpexpect.NewBinder(handler),
-			Jar:       httpexpect.NewJar(),
-		},
-	})
+	e.POST("/login").WithForm(Login{"ford", "<bad password>"}).
+		Expect().
+		Status(http.StatusUnauthorized)
 
-	// run tests
-	e.GET("/hello").
+	r := e.POST("/login").WithForm(Login{"ford", "betelgeuse7"}).
+		Expect().
+		Status(http.StatusOK).JSON().Object()
+
+	r.Keys().ContainsOnly("token")
+
+	token := r.Value("token").String().Raw()
+
+	e.GET("/restricted/hello").
+		Expect().
+		Status(http.StatusBadRequest)
+
+	e.GET("/restricted/hello").WithHeader("Authorization", "Bearer <bad token>").
+		Expect().
+		Status(http.StatusUnauthorized)
+
+	e.GET("/restricted/hello").WithHeader("Authorization", "Bearer "+token).
 		Expect().
 		Status(http.StatusOK).Body().Equal("hello, world!")
 }
 
-func TestEchoFast(t *testing.T) {
-	// create fasthttp.RequestHandler
+func TestEchoClient(t *testing.T) {
+	handler := EchoHandlerStandard()
+
+	server := httptest.NewServer(handler)
+	defer server.Close()
+
+	e := httpexpect.WithConfig(httpexpect.Config{
+		BaseURL:  server.URL,
+		Reporter: httpexpect.NewAssertReporter(t),
+		Printers: []httpexpect.Printer{
+			httpexpect.NewDebugPrinter(t, true),
+		},
+	})
+
+	testEcho(e)
+
+}
+
+func TestEchoHandlerStandard(t *testing.T) {
+	handler := EchoHandlerStandard()
+
+	e := httpexpect.WithConfig(httpexpect.Config{
+		Client: &http.Client{
+			Transport: httpexpect.NewBinder(handler),
+			Jar:       httpexpect.NewJar(),
+		},
+		Reporter: httpexpect.NewAssertReporter(t),
+		Printers: []httpexpect.Printer{
+			httpexpect.NewDebugPrinter(t, true),
+		},
+	})
+
+	testEcho(e)
+}
+
+func TestEchoHandlerFast(t *testing.T) {
 	handler := EchoHandlerFast()
 
-	// create httpexpect instance that will call fasthtpp.RequestHandler directly
 	e := httpexpect.WithConfig(httpexpect.Config{
-		Reporter: httpexpect.NewAssertReporter(t),
 		Client: &http.Client{
 			Transport: httpexpect.NewFastBinder(handler),
 			Jar:       httpexpect.NewJar(),
 		},
+		Reporter: httpexpect.NewAssertReporter(t),
+		Printers: []httpexpect.Printer{
+			httpexpect.NewDebugPrinter(t, true),
+		},
 	})
 
-	// run tests
-	e.GET("/hello").
-		Expect().
-		Status(http.StatusOK).Body().Equal("hello, world!")
+	testEcho(e)
 }

@@ -60,19 +60,19 @@ go get github.com/gavv/httpexpect
 
 ## Examples
 
-See [`example/`](example) directory for complete usage examples.
+See [`example/`](example) directory for complete standalone examples.
 
 * [`fruits_test.go`](example/fruits_test.go)
 
-    Complete server and tests.
+    Testing simple CRUD written on bare `net/http`.
 
 * [`echo_test.go`](example/echo_test.go)
 
-    Using httpexpect with `http.Handler` or `fasthttp.RequestHandler` provided by [`echo`](https://github.com/labstack/echo/) framework.
+    JWT token authentication using [`echo`](https://github.com/labstack/echo/) framework. Running tests via http client, `http.Handler`, or `fasthttp.RequestHandler`.
 
 * [`iris_test.go`](example/iris_test.go)
 
-    Using httpexpect with `fasthttp.RequestHandler` provided by [`iris`](https://github.com/kataras/iris/) framework.
+    Various examples using [`iris`](https://github.com/kataras/iris/) framework: json queries and validation, url parameters, forms, sessions, basic auth.
 
 ## Quick start
 
