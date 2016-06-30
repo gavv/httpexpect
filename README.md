@@ -323,6 +323,7 @@ func TestFruits(t *testing.T) {
 
 * [`gorequest`](https://github.com/parnurzeal/gorequest)
 * [`gabs`](https://github.com/Jeffail/gabs)
+* [`gofight`](https://github.com/appleboy/gofight)
 * [`baloo`](https://github.com/h2non/baloo)
 * [`forest`](https://github.com/emicklei/forest)
 * [`http-test`](https://github.com/vsco/http-test)
@@ -333,7 +334,7 @@ func TestFruits(t *testing.T) {
 Feel free to report bugs, suggest improvements, and send pull requests! Don't forget to add documentation and tests for new features and run all tests before submitting pull requests:
 
 ```
-$ go test github.com/gavv/httpexpect/...
+go test github.com/gavv/httpexpect/...
 ```
 
 ## License
