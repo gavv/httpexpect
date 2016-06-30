@@ -64,15 +64,15 @@ See [`example/`](example) directory for complete standalone examples.
 
 * [`fruits_test.go`](example/fruits_test.go)
 
-    Testing simple CRUD written on bare `net/http`.
+    Testing simple CRUD written using bare `net/http`.
 
 * [`iris_test.go`](example/iris_test.go)
 
-    Various examples using [`iris`](https://github.com/kataras/iris/) framework: json queries and validation, url and form parameters, basic auth, sessions, streams.
+    Testing various examples written using [`iris`](https://github.com/kataras/iris/) web framework: JSON queries and validation, url and form parameters, basic auth, sessions, streaming.
 
 * [`echo_test.go`](example/echo_test.go)
 
-    JWT token authentication using [`echo`](https://github.com/labstack/echo/) framework. Running tests via http client, `http.Handler`, or `fasthttp.RequestHandler`.
+    Testing JWT token authentication written using [`echo`](https://github.com/labstack/echo/) web framework. Running tests via http client, `http.Handler`, or `fasthttp.RequestHandler`.
 
 ## Quick start
 
