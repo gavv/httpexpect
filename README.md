@@ -159,10 +159,12 @@ func TestFruits(t *testing.T) {
 		}
 	}`
 
-	// validate JSON schema
 	repos := e.GET("/repos/octocat").
 		Expect().
-		Status(http.StatusOK).JSON().Schema(schema)
+		Status(http.StatusOK).JSON()
+		
+	// validate JSON schema
+	repos.Schema(schema)
 
 	// run JSONPath query and iterate results
 	for _, private := range repos.Path("$..private").Array().Iter() {
@@ -261,7 +263,7 @@ func TestFruits(t *testing.T) {
 		Header("Location").
 		Match("http://(.+)/users/(.+)").Values("example.com", "john")
 
-	// check subexpressions by index or name
+	// check capture groups by index or name
 	m := e.GET("/users/john").
 		Expect().
 		Header("Location").Match("http://(?P<host>.+)/users/(?P<user>.+)")
