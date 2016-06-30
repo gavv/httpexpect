@@ -12,33 +12,33 @@ Workflow:
 
 ## Features
 
-**Request builder**
+##### Request builder
 
 * URL path construction, with simple string interpolation provided by [`go-interpol`](https://github.com/imkira/go-interpol) package.
 * URL query parameters (encoding using [`go-querystring`](https://github.com/google/go-querystring) package).
 * Headers, cookies, payload: JSON,  urlencoded or multipart forms (encoding using [`form`](https://github.com/ajg/form) package), plain text.
 
-**Response assertions**
+##### Response assertions
 
 * Response status, predefined status ranges.
 * Headers, cookies, payload: JSON, forms, text.
 * Round-trip time.
 
-**Payload assertions**
+##### Payload assertions
 
 * Type-specific assertions, supported types: object, array, string, number, boolean, null.
 * Regular expressions.
 * Simple JSON queries (using subset of [JSONPath](http://goessner.net/articles/JsonPath/)), provided by [`jsonpath`](https://github.com/yalp/jsonpath) package.
 * [JSON Schema](http://json-schema.org/) validation, provided by [`gojsonschema`](https://github.com/xeipuuv/gojsonschema) package.
 
-**Pretty printing**
+##### Pretty printing
 
 * Verbose error messages.
 * JSON diff is produced on failure using [`gojsondiff`](https://github.com/yudai/gojsondiff/) package.
 * Failures are reported using [`testify`](https://github.com/stretchr/testify/) (`assert` or `require` package) or standard `testing` package.
 * Dumping requests and responses in various formats, using [`httputil`](https://golang.org/pkg/net/http/httputil/), [`http2curl`](https://github.com/moul/http2curl), or simple compact logger.
 
-**Tuning**
+##### Tuning
 
 * Tests can communicate with server via HTTP client or invoke HTTP handler (Go function) directly.
 * Integration with [`fasthttp`](https://github.com/valyala/fasthttp/) HTTP handler is available too.
