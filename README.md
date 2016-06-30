@@ -76,7 +76,7 @@ See [`example/`](example) directory for complete usage examples.
 
 ## Quick start
 
-**Hello, world!**
+##### Hello, world!
 
 ```go
 package example
@@ -107,7 +107,7 @@ func TestFruits(t *testing.T) {
 }
 ```
 
-**JSON**
+##### JSON
 
 ```go
 	orange := map[string]interface{}{
@@ -143,7 +143,7 @@ func TestFruits(t *testing.T) {
 	obj.Value("colors").Array().Element(1).String().Equal("red")
 ```
 
-**JSON Schema and JSON Path**
+##### JSON Schema and JSON Path
 
 ```go
 	schema := `{
@@ -172,7 +172,7 @@ func TestFruits(t *testing.T) {
 	}
 ```
 
-**Forms**
+##### Forms
 
 ```go
 	// post form encoded from struct or map
@@ -192,7 +192,7 @@ func TestFruits(t *testing.T) {
 		Status(http.StatusOK)
 ```
 
-**URL construction**
+##### URL construction
 
 ```go
 	// construct path using ordered parameters
@@ -212,7 +212,7 @@ func TestFruits(t *testing.T) {
 		Status(http.StatusOK)    // "/repos/octocat?sort=asc"
 ```
 
-**Headers**
+##### Headers
 
 ```go
 	// set If-Match
@@ -233,7 +233,7 @@ func TestFruits(t *testing.T) {
 		Status(http.StatusOK).Header("Date").DateTime().InRange(t, time.Now())
 ```
 
-**Cookies**
+##### Cookies
 
 ```go
 	// set cookie
@@ -254,7 +254,7 @@ func TestFruits(t *testing.T) {
 	c.Expires().InRange(t, t.Add(time.Hour * 24))
 ```
 
-**Regular expressions**
+##### Regular expressions
 
 ```go
 	// simple match
@@ -276,7 +276,7 @@ func TestFruits(t *testing.T) {
 	m.Name("user").Equal("john")
 ```
 
-**Custom config**
+##### Custom config
 
 ```go
 	e := httpexpect.WithConfig(httpexpect.Config{
@@ -300,11 +300,12 @@ func TestFruits(t *testing.T) {
 	})
 ```
 
-**Session support**
+##### Session support
 
 ```go
 	// cookie jar is used to store cookies from server
 	e := httpexpect.WithConfig(httpexpect.Config{
+		Reporter: httpexpect.NewAssertReporter(t),
 		Client: &http.Client{
 			Jar: httpexpect.NewJar(), // used by default if Client is nil
 		},
@@ -312,13 +313,14 @@ func TestFruits(t *testing.T) {
 
 	// cookies are disabled
 	e := httpexpect.WithConfig(httpexpect.Config{
+		Reporter: httpexpect.NewAssertReporter(t),
 		Client: &http.Client{
 			Jar: nil,
 		},
 	})
 ```
 
-**Use HTTP handler directly**
+##### Use HTTP handler directly
 
 ```go
 	// invoke http.Handler directly using httpexpect.Binder
