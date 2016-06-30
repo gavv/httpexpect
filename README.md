@@ -46,17 +46,23 @@ Workflow:
 
 ## Status
 
-First stable release (v1) is planned soon. Prior to this, API may be changing slightly.
+Stable branches are available on [`gopkg.in`](http://labix.org/gopkg.in) and will not contain backward-incompatible changes.
+
+Current stable branch is [`v1`](http://gopkg.in/gavv/httpexpect.v1):
+
+```go
+import "gopkg.in/gavv/httpexpect.v1"
+```
+
+Development is done in `master` branch on github:
+
+```go
+import "github.com/gavv/httpexpect"
+```
 
 ## Documentation
 
 Documentation is available on [GoDoc](https://godoc.org/github.com/gavv/httpexpect). It contains an overview and reference.
-
-## Installation
-
-```
-go get github.com/gavv/httpexpect
-```
 
 ## Examples
 
