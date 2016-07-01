@@ -26,7 +26,7 @@ Workflow:
 
 ##### Payload assertions
 
-* Type-specific assertions, supported types: object, array, string, number, boolean, null.
+* Type-specific assertions, supported types: object, array, string, number, boolean, null, datetime.
 * Regular expressions.
 * Simple JSON queries (using subset of [JSONPath](http://goessner.net/articles/JsonPath/)), provided by [`jsonpath`](https://github.com/yalp/jsonpath) package.
 * [JSON Schema](http://json-schema.org/) validation, provided by [`gojsonschema`](https://github.com/xeipuuv/gojsonschema) package.
@@ -46,7 +46,7 @@ Workflow:
 
 ## Status
 
-Stable branches are available on [`gopkg.in`](http://labix.org/gopkg.in) and will not contain backward-incompatible changes.
+Stable branches are available on [`gopkg.in`](http://labix.org/gopkg.in) and will not introduce backward-incompatible changes.
 
 Current stable branch is [`v1`](http://gopkg.in/gavv/httpexpect.v1):
 
