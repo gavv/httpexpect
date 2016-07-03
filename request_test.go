@@ -83,7 +83,7 @@ func TestRequestProto(t *testing.T) {
 		Reporter: reporter,
 	}
 
-	req := NewRequest(config, "METHOD", "http://example.com")
+	req := NewRequest(config, "METHOD", "/")
 
 	assert.Equal(t, 1, req.http.ProtoMajor)
 	assert.Equal(t, 1, req.http.ProtoMinor)
@@ -105,35 +105,91 @@ func TestRequestProto(t *testing.T) {
 	assert.Equal(t, 0, req.http.ProtoMinor)
 }
 
-func TestRequestURLSimple(t *testing.T) {
+func TestRequestURLConcatenate(t *testing.T) {
 	client := &mockClient{}
 
-	reporter := newMockReporter(t)
+	reporter := NewAssertReporter(t)
 
-	config := Config{
+	config1 := Config{
+		BaseURL:  "",
 		Client:   client,
 		Reporter: reporter,
 	}
 
-	req1 := NewRequest(config, "METHOD", "http://example.com")
-	req2 := NewRequest(config, "METHOD", "http://example.com/path")
-	req3 := NewRequest(config, "METHOD", "/path")
-	req4 := NewRequest(config, "METHOD", "path")
+	config2 := Config{
+		BaseURL:  "http://example.com",
+		Client:   client,
+		Reporter: reporter,
+	}
 
-	req1.Expect().chain.assertOK(t)
-	assert.Equal(t, "http://example.com", client.req.URL.String())
+	config3 := Config{
+		BaseURL:  "http://example.com/",
+		Client:   client,
+		Reporter: reporter,
+	}
 
-	req2.Expect().chain.assertOK(t)
-	assert.Equal(t, "http://example.com/path", client.req.URL.String())
+	reqs := []*Request{
+		NewRequest(config2, "METHOD", "path"),
+		NewRequest(config2, "METHOD", "/path"),
+		NewRequest(config3, "METHOD", "path"),
+		NewRequest(config3, "METHOD", "/path"),
+		NewRequest(config3, "METHOD", "{arg}", "/path"),
+		NewRequest(config3, "METHOD", "{arg}").WithPath("arg", "/path"),
+	}
 
-	req3.Expect().chain.assertOK(t)
-	assert.Equal(t, "/path", client.req.URL.String())
+	for _, req := range reqs {
+		req.Expect().chain.assertOK(t)
+		assert.Equal(t, "http://example.com/path", client.req.URL.String())
+	}
 
-	req4.Expect().chain.assertOK(t)
-	assert.Equal(t, "path", client.req.URL.String())
+	empty1 := NewRequest(config1, "METHOD", "")
+	empty2 := NewRequest(config2, "METHOD", "")
+	empty3 := NewRequest(config3, "METHOD", "")
+
+	empty1.Expect().chain.assertOK(t)
+	empty2.Expect().chain.assertOK(t)
+	empty3.Expect().chain.assertOK(t)
+
+	assert.Equal(t, "", empty1.http.URL.String())
+	assert.Equal(t, "http://example.com", empty2.http.URL.String())
+	assert.Equal(t, "http://example.com/", empty3.http.URL.String())
 }
 
-func TestRequestURLPath(t *testing.T) {
+func TestRequestURLOverwrite(t *testing.T) {
+	client := &mockClient{}
+
+	reporter := NewAssertReporter(t)
+
+	config1 := Config{
+		BaseURL:  "",
+		Client:   client,
+		Reporter: reporter,
+	}
+
+	config2 := Config{
+		BaseURL:  "http://foobar.com",
+		Client:   client,
+		Reporter: reporter,
+	}
+
+	reqs := []*Request{
+		NewRequest(config1, "METHOD", "/path").WithURL("http://example.com"),
+		NewRequest(config1, "METHOD", "path").WithURL("http://example.com"),
+		NewRequest(config1, "METHOD", "/path").WithURL("http://example.com/"),
+		NewRequest(config1, "METHOD", "path").WithURL("http://example.com/"),
+		NewRequest(config2, "METHOD", "/path").WithURL("http://example.com"),
+		NewRequest(config2, "METHOD", "path").WithURL("http://example.com"),
+		NewRequest(config2, "METHOD", "/path").WithURL("http://example.com/"),
+		NewRequest(config2, "METHOD", "path").WithURL("http://example.com/"),
+	}
+
+	for _, req := range reqs {
+		req.Expect().chain.assertOK(t)
+		assert.Equal(t, "http://example.com/path", client.req.URL.String())
+	}
+}
+
+func TestRequestURLInterpolate(t *testing.T) {
 	client := &mockClient{}
 
 	reporter := newMockReporter(t)
@@ -278,60 +334,6 @@ func TestRequestURLQuery(t *testing.T) {
 
 	NewRequest(config, "METHOD", "http://example.com/path").
 		WithQueryString("%").chain.assertFailed(t)
-}
-
-func TestRequestURLConcat(t *testing.T) {
-	client := &mockClient{}
-
-	reporter := NewAssertReporter(t)
-
-	var reqs [7]*Request
-
-	config1 := Config{
-		BaseURL:  "",
-		Client:   client,
-		Reporter: reporter,
-	}
-
-	reqs[0] = NewRequest(config1, "METHOD", "http://example.com/path")
-
-	config2 := Config{
-		BaseURL:  "http://example.com",
-		Client:   client,
-		Reporter: reporter,
-	}
-
-	reqs[1] = NewRequest(config2, "METHOD", "path")
-	reqs[2] = NewRequest(config2, "METHOD", "/path")
-
-	config3 := Config{
-		BaseURL:  "http://example.com/",
-		Client:   client,
-		Reporter: reporter,
-	}
-
-	reqs[3] = NewRequest(config3, "METHOD", "path")
-	reqs[4] = NewRequest(config3, "METHOD", "/path")
-
-	reqs[5] = NewRequest(config3, "METHOD", "{arg}", "/path")
-	reqs[6] = NewRequest(config3, "METHOD", "{arg}").WithPath("arg", "/path")
-
-	for _, req := range reqs {
-		req.Expect().chain.assertOK(t)
-		assert.Equal(t, "http://example.com/path", client.req.URL.String())
-	}
-
-	empty1 := NewRequest(config1, "METHOD", "")
-	empty2 := NewRequest(config2, "METHOD", "")
-	empty3 := NewRequest(config3, "METHOD", "")
-
-	empty1.Expect().chain.assertOK(t)
-	empty2.Expect().chain.assertOK(t)
-	empty3.Expect().chain.assertOK(t)
-
-	assert.Equal(t, "", empty1.http.URL.String())
-	assert.Equal(t, "http://example.com", empty2.http.URL.String())
-	assert.Equal(t, "http://example.com/", empty3.http.URL.String())
 }
 
 func TestRequestHeaders(t *testing.T) {

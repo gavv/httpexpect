@@ -283,6 +283,20 @@ func (r *Request) WithQueryString(query string) *Request {
 	return r
 }
 
+// WithURL sets request URL.
+//
+// This URL overwrites Config.BaseURL. Request path passed to NewRequest()
+// is appended to this URL, separated by slash if necessary.
+//
+// Example:
+//  req := NewRequest(config, "PUT", "/path")
+//  req.WithURL("http://example.com")
+//  // URL is now http://example.com/path
+func (r *Request) WithURL(url string) *Request {
+	r.config.BaseURL = url
+	return r
+}
+
 // WithHeaders adds given headers to request.
 //
 // Example:
