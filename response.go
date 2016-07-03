@@ -8,6 +8,7 @@ import (
 	"mime"
 	"net/http"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -377,6 +378,56 @@ func (r *Response) getJSON() interface{} {
 
 	var value interface{}
 	if err := json.Unmarshal(r.content, &value); err != nil {
+		r.chain.fail(err.Error())
+		return nil
+	}
+
+	return value
+}
+
+// JSONP returns a new Value object that may be used to inspect JSONP contents
+// of response.
+//
+// JSONP succeedes if response contains "application/javascript" Content-Type
+// header with empty or "utf-8" charset and reponse body of the following form:
+//  callback(<valid json>);
+// or:
+//  callback(<valid json>)
+//
+// Whitespaces are allowed.
+//
+// Example:
+//  resp := NewResponse(t, response)
+//  resp.JSONP("myCallback").Array().Elements("foo", "bar")
+func (r *Response) JSONP(callback string) *Value {
+	value := r.getJSONP(callback)
+	return &Value{r.chain, value}
+}
+
+var (
+	jsonp = regexp.MustCompile(`^\s*([^\s(]+)\s*\((.*)\)\s*;*\s*$`)
+)
+
+func (r *Response) getJSONP(callback string) interface{} {
+	if r.chain.failed() {
+		return nil
+	}
+
+	if !r.checkContentType("application/javascript") {
+		return nil
+	}
+
+	m := jsonp.FindSubmatch(r.content)
+	if len(m) != 3 || string(m[1]) != callback {
+		r.chain.fail(
+			"\nexpected JSONP body in form of:\n \"%s(<valid json>)\"\n\nbut got:\n %q\n",
+			callback,
+			string(r.content))
+		return nil
+	}
+
+	var value interface{}
+	if err := json.Unmarshal(m[2], &value); err != nil {
 		r.chain.fail(err.Error())
 		return nil
 	}

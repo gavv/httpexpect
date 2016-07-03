@@ -26,6 +26,7 @@ func TestResponseFailed(t *testing.T) {
 	assert.False(t, resp.Cookie("foo") == nil)
 	assert.False(t, resp.Body() == nil)
 	assert.False(t, resp.JSON() == nil)
+	assert.False(t, resp.JSONP("") == nil)
 
 	resp.Headers().chain.assertFailed(t)
 	resp.Header("foo").chain.assertFailed(t)
@@ -34,6 +35,7 @@ func TestResponseFailed(t *testing.T) {
 	resp.Body().chain.assertFailed(t)
 	resp.Text().chain.assertFailed(t)
 	resp.JSON().chain.assertFailed(t)
+	resp.JSONP("").chain.assertFailed(t)
 
 	resp.Status(123)
 	resp.StatusRange(Status2xx)
@@ -258,7 +260,15 @@ func TestResponseNoContentEmpty(t *testing.T) {
 	resp.chain.assertFailed(t)
 	resp.chain.reset()
 
+	resp.Form()
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
+
 	resp.JSON()
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
+
+	resp.JSONP("")
 	resp.chain.assertFailed(t)
 	resp.chain.reset()
 }
@@ -294,7 +304,41 @@ func TestResponseNoContentNil(t *testing.T) {
 	resp.chain.assertFailed(t)
 	resp.chain.reset()
 
+	resp.Form()
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
+
 	resp.JSON()
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
+
+	resp.JSONP("")
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
+}
+
+func TestResponseNoContentFailed(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	headers := map[string][]string{
+		"Content-Type": {"text/plain; charset=utf-8"},
+	}
+
+	body := ``
+
+	httpResp := &http.Response{
+		StatusCode: http.StatusOK,
+		Header:     http.Header(headers),
+		Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+	}
+
+	resp := NewResponse(reporter, httpResp)
+
+	assert.Equal(t, body, resp.Body().Raw())
+	resp.chain.assertOK(t)
+	resp.chain.reset()
+
+	resp.NoContent()
 	resp.chain.assertFailed(t)
 	resp.chain.reset()
 }
@@ -440,10 +484,6 @@ func TestResponseText(t *testing.T) {
 	resp.chain.assertOK(t)
 	resp.chain.reset()
 
-	resp.NoContent()
-	resp.chain.assertFailed(t)
-	resp.chain.reset()
-
 	resp.ContentType("text/plain")
 	resp.chain.assertOK(t)
 	resp.chain.reset()
@@ -458,14 +498,6 @@ func TestResponseText(t *testing.T) {
 
 	resp.Text()
 	resp.chain.assertOK(t)
-	resp.chain.reset()
-
-	resp.Form()
-	resp.chain.assertFailed(t)
-	resp.chain.reset()
-
-	resp.JSON()
-	resp.chain.assertFailed(t)
 	resp.chain.reset()
 
 	assert.Equal(t, "hello, world!", resp.Text().Raw())
@@ -492,10 +524,6 @@ func TestResponseForm(t *testing.T) {
 	resp.chain.assertOK(t)
 	resp.chain.reset()
 
-	resp.NoContent()
-	resp.chain.assertFailed(t)
-	resp.chain.reset()
-
 	resp.ContentType("application/x-www-form-urlencoded")
 	resp.chain.assertOK(t)
 	resp.chain.reset()
@@ -505,14 +533,6 @@ func TestResponseForm(t *testing.T) {
 	resp.chain.reset()
 
 	resp.ContentType("text/plain")
-	resp.chain.assertFailed(t)
-	resp.chain.reset()
-
-	resp.Text()
-	resp.chain.assertFailed(t)
-	resp.chain.reset()
-
-	resp.JSON()
 	resp.chain.assertFailed(t)
 	resp.chain.reset()
 
@@ -597,10 +617,6 @@ func TestResponseJSON(t *testing.T) {
 	resp.chain.assertOK(t)
 	resp.chain.reset()
 
-	resp.NoContent()
-	resp.chain.assertFailed(t)
-	resp.chain.reset()
-
 	resp.ContentType("application/json")
 	resp.chain.assertOK(t)
 	resp.chain.reset()
@@ -610,14 +626,6 @@ func TestResponseJSON(t *testing.T) {
 	resp.chain.reset()
 
 	resp.ContentType("text/plain")
-	resp.chain.assertFailed(t)
-	resp.chain.reset()
-
-	resp.Text()
-	resp.chain.assertFailed(t)
-	resp.chain.reset()
-
-	resp.Form()
 	resp.chain.assertFailed(t)
 	resp.chain.reset()
 
@@ -633,7 +641,7 @@ func TestResponseJSONBadBody(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	headers := map[string][]string{
-		"Content-Type": {"application/json"},
+		"Content-Type": {"application/json; charset=utf-8"},
 	}
 
 	body := "{"
@@ -670,10 +678,6 @@ func TestResponseJSONCharsetEmpty(t *testing.T) {
 
 	resp := NewResponse(reporter, httpResp)
 
-	resp.NoContent()
-	resp.chain.assertFailed(t)
-	resp.chain.reset()
-
 	resp.JSON()
 	resp.chain.assertOK(t)
 	resp.chain.reset()
@@ -699,13 +703,140 @@ func TestResponseJSONCharsetBad(t *testing.T) {
 
 	resp := NewResponse(reporter, httpResp)
 
-	resp.NoContent()
-	resp.chain.assertFailed(t)
-	resp.chain.reset()
-
 	resp.JSON()
 	resp.chain.assertFailed(t)
 	resp.chain.reset()
 
 	assert.Equal(t, nil, resp.JSON().Raw())
+}
+
+func TestResponseJSONP(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	headers := map[string][]string{
+		"Content-Type": {"application/javascript; charset=utf-8"},
+	}
+
+	body1 := `foo({"key": "value"})`
+	body2 := `foo({"key": "value"});`
+	body3 := ` foo ( {"key": "value"} ) ; `
+
+	for _, body := range []string{body1, body2, body3} {
+		httpResp := &http.Response{
+			StatusCode: http.StatusOK,
+			Header:     http.Header(headers),
+			Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+		}
+
+		resp := NewResponse(reporter, httpResp)
+
+		assert.Equal(t, body, resp.Body().Raw())
+		resp.chain.assertOK(t)
+		resp.chain.reset()
+
+		resp.ContentType("application/javascript")
+		resp.chain.assertOK(t)
+		resp.chain.reset()
+
+		resp.ContentType("application/javascript", "utf-8")
+		resp.chain.assertOK(t)
+		resp.chain.reset()
+
+		resp.ContentType("text/plain")
+		resp.chain.assertFailed(t)
+		resp.chain.reset()
+
+		resp.JSONP("foo")
+		resp.chain.assertOK(t)
+		resp.chain.reset()
+
+		assert.Equal(t,
+			map[string]interface{}{"key": "value"}, resp.JSONP("foo").Object().Raw())
+
+		resp.JSONP("fo")
+		resp.chain.assertFailed(t)
+		resp.chain.reset()
+
+		resp.JSONP("")
+		resp.chain.assertFailed(t)
+		resp.chain.reset()
+	}
+}
+
+func TestResponseJSONPBadBody(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	headers := map[string][]string{
+		"Content-Type": {"application/javascript; charset=utf-8"},
+	}
+
+	body1 := `foo`
+	body2 := `foo();`
+	body3 := `foo(`
+	body4 := `foo({);`
+
+	for _, body := range []string{body1, body2, body3, body4} {
+		httpResp := &http.Response{
+			StatusCode: http.StatusOK,
+			Header:     http.Header(headers),
+			Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+		}
+
+		resp := NewResponse(reporter, httpResp)
+
+		resp.JSONP("foo")
+		resp.chain.assertFailed(t)
+		resp.chain.reset()
+
+		assert.True(t, resp.JSONP("foo").Raw() == nil)
+	}
+}
+
+func TestResponseJSONPCharsetEmpty(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	headers := map[string][]string{
+		"Content-Type": {"application/javascript"},
+	}
+
+	body := `foo({"key": "value"})`
+
+	httpResp := &http.Response{
+		StatusCode: http.StatusOK,
+		Header:     http.Header(headers),
+		Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+	}
+
+	resp := NewResponse(reporter, httpResp)
+
+	resp.JSONP("foo")
+	resp.chain.assertOK(t)
+	resp.chain.reset()
+
+	assert.Equal(t,
+		map[string]interface{}{"key": "value"}, resp.JSONP("foo").Object().Raw())
+}
+
+func TestResponseJSONPCharsetBad(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	headers := map[string][]string{
+		"Content-Type": {"application/javascript; charset=bad"},
+	}
+
+	body := `foo({"key": "value"})`
+
+	httpResp := &http.Response{
+		StatusCode: http.StatusOK,
+		Header:     http.Header(headers),
+		Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+	}
+
+	resp := NewResponse(reporter, httpResp)
+
+	resp.JSONP("foo")
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
+
+	assert.Equal(t, nil, resp.JSONP("foo").Raw())
 }
