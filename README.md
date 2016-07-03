@@ -21,7 +21,7 @@ Workflow:
 ##### Response assertions
 
 * Response status, predefined status ranges.
-* Headers, cookies, payload: JSON, forms, text.
+* Headers, cookies, payload: JSON, JSONP, forms, text.
 * Round-trip time.
 
 ##### Payload assertions
