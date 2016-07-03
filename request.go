@@ -198,10 +198,10 @@ func (r *Request) WithPathObject(object interface{}) *Request {
 // value is converted to string using fmt.Sprint() and urlencoded.
 //
 // Example:
-//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req := NewRequest(config, "PUT", "http://example.com/path")
 //  req.WithQuery("a", 123)
 //  req.WithQuery("b", "foo")
-//  // URL is now http://example.org/path?a=123&b=foo
+//  // URL is now http://example.com/path?a=123&b=foo
 func (r *Request) WithQuery(key string, value interface{}) *Request {
 	if r.query == nil {
 		r.query = make(url.Values)
@@ -224,13 +224,13 @@ func (r *Request) WithQuery(key string, value interface{}) *Request {
 //      B string `url:"b"`
 //  }
 //
-//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req := NewRequest(config, "PUT", "http://example.com/path")
 //  req.WithQueryObject(MyURL{A: 123, B: "foo"})
-//  // URL is now http://example.org/path?a=123&b=foo
+//  // URL is now http://example.com/path?a=123&b=foo
 //
-//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req := NewRequest(config, "PUT", "http://example.com/path")
 //  req.WithQueryObject(map[string]interface{}{"a": 123, "b": "foo"})
-//  // URL is now http://example.org/path?a=123&b=foo
+//  // URL is now http://example.com/path?a=123&b=foo
 func (r *Request) WithQueryObject(object interface{}) *Request {
 	if object == nil {
 		return r
@@ -264,10 +264,10 @@ func (r *Request) WithQueryObject(object interface{}) *Request {
 // WithQueryString parses given query string and adds it to request URL.
 //
 // Example:
-//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req := NewRequest(config, "PUT", "http://example.com/path")
 //  req.WithQuery("a", 11)
 //  req.WithQueryString("b=22&c=33")
-//  // URL is now http://example.org/path?a=11&bb=22&c=33
+//  // URL is now http://example.com/path?a=11&bb=22&c=33
 func (r *Request) WithQueryString(query string) *Request {
 	v, err := url.ParseQuery(query)
 	if err != nil {
@@ -300,7 +300,7 @@ func (r *Request) WithURL(url string) *Request {
 // WithHeaders adds given headers to request.
 //
 // Example:
-//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req := NewRequest(config, "PUT", "http://example.com/path")
 //  req.WithHeaders(map[string]string{
 //      "Content-Type": "application/json",
 //  })
@@ -314,7 +314,7 @@ func (r *Request) WithHeaders(headers map[string]string) *Request {
 // WithHeader adds given single header to request.
 //
 // Example:
-//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req := NewRequest(config, "PUT", "http://example.com/path")
 //  req.WithHeader("Content-Type": "application/json")
 func (r *Request) WithHeader(k, v string) *Request {
 	switch http.CanonicalHeaderKey(k) {
@@ -336,7 +336,7 @@ func (r *Request) WithHeader(k, v string) *Request {
 // WithCookies adds given cookies to request.
 //
 // Example:
-//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req := NewRequest(config, "PUT", "http://example.com/path")
 //  req.WithCookies(map[string]string{
 //      "foo": "aa",
 //      "bar": "bb",
@@ -351,7 +351,7 @@ func (r *Request) WithCookies(cookies map[string]string) *Request {
 // WithCookie adds given single cookie to request.
 //
 // Example:
-//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req := NewRequest(config, "PUT", "http://example.com/path")
 //  req.WithCookie("name", "value")
 func (r *Request) WithCookie(k, v string) *Request {
 	r.http.AddCookie(&http.Cookie{
@@ -368,7 +368,7 @@ func (r *Request) WithCookie(k, v string) *Request {
 // are not encrypted.
 //
 // Example:
-//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req := NewRequest(config, "PUT", "http://example.com/path")
 //  req.WithBasicAuth("john", "secret")
 func (r *Request) WithBasicAuth(username, password string) *Request {
 	r.http.SetBasicAuth(username, password)
@@ -380,7 +380,7 @@ func (r *Request) WithBasicAuth(username, password string) *Request {
 // proto should have form of "HTTP/{major}.{minor}", e.g. "HTTP/1.1".
 //
 // Example:
-//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req := NewRequest(config, "PUT", "http://example.com/path")
 //  req.WithProto("HTTP/2.0")
 func (r *Request) WithProto(proto string) *Request {
 	major, minor, ok := http.ParseHTTPVersion(proto)
@@ -404,7 +404,7 @@ func (r *Request) WithProto(proto string) *Request {
 // encoding), failure is reported.
 //
 // Example:
-//  req := NewRequest(config, "PUT", "http://example.org/upload")
+//  req := NewRequest(config, "PUT", "http://example.com/upload")
 //  fh, _ := os.Open("data")
 //  defer fh.Close()
 //  req.WithHeader("Content-Type": "application/octet-stream")
@@ -422,7 +422,7 @@ func (r *Request) WithChunked(reader io.Reader) *Request {
 // WithBytes sets request body to given slice of bytes.
 //
 // Example:
-//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req := NewRequest(config, "PUT", "http://example.com/path")
 //  req.WithHeader("Content-Type": "application/json")
 //  req.WithBytes([]byte(`{"foo": 123}`))
 func (r *Request) WithBytes(b []byte) *Request {
@@ -438,7 +438,7 @@ func (r *Request) WithBytes(b []byte) *Request {
 // sets body to given string.
 //
 // Example:
-//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req := NewRequest(config, "PUT", "http://example.com/path")
 //  req.WithText("hello, world!")
 func (r *Request) WithText(s string) *Request {
 	r.setType("WithText", "text/plain; charset=utf-8", false)
@@ -454,10 +454,10 @@ func (r *Request) WithText(s string) *Request {
 //      Foo int `json:"foo"`
 //  }
 //
-//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req := NewRequest(config, "PUT", "http://example.com/path")
 //  req.WithJSON(MyJSON{Foo: 123})
 //
-//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req := NewRequest(config, "PUT", "http://example.com/path")
 //  req.WithJSON(map[string]interface{}{"foo": 123})
 func (r *Request) WithJSON(object interface{}) *Request {
 	b, err := json.Marshal(object)
@@ -488,10 +488,10 @@ func (r *Request) WithJSON(object interface{}) *Request {
 //      Foo int `form:"foo"`
 //  }
 //
-//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req := NewRequest(config, "PUT", "http://example.com/path")
 //  req.WithForm(MyForm{Foo: 123})
 //
-//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req := NewRequest(config, "PUT", "http://example.com/path")
 //  req.WithForm(map[string]interface{}{"foo": 123})
 func (r *Request) WithForm(object interface{}) *Request {
 	f, err := form.EncodeToValues(object)
@@ -536,7 +536,7 @@ func (r *Request) WithForm(object interface{}) *Request {
 // If WithMultipart() is called, it should be called first.
 //
 // Example:
-//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req := NewRequest(config, "PUT", "http://example.com/path")
 //  req.WithFormField("foo", 123).
 //      WithFormField("bar", 456)
 func (r *Request) WithFormField(key string, value interface{}) *Request {
@@ -570,10 +570,10 @@ func (r *Request) WithFormField(key string, value interface{}) *Request {
 // fails.
 //
 // Example:
-//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req := NewRequest(config, "PUT", "http://example.com/path")
 //  req.WithFile("avatar", "./john.png")
 //
-//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req := NewRequest(config, "PUT", "http://example.com/path")
 //  fh, _ := os.Open("./john.png")
 //  req.WithMultipart().
 //      WithFile("avatar", "john.png", fh)
@@ -617,7 +617,7 @@ func (r *Request) WithFile(key, path string, reader ...io.Reader) *Request {
 // file contents.
 //
 // Example:
-//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req := NewRequest(config, "PUT", "http://example.com/path")
 //  fh, _ := os.Open("./john.png")
 //  b, _ := ioutil.ReadAll(fh)
 //  req.WithMultipart().
@@ -638,7 +638,7 @@ func (r *Request) WithFileBytes(key, path string, data []byte) *Request {
 // WithFile() always requires WithMultipart() to be called first.
 //
 // Example:
-//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req := NewRequest(config, "PUT", "http://example.com/path")
 //  req.WithMultipart().
 //      WithForm(map[string]interface{}{"foo": 123})
 func (r *Request) WithMultipart() *Request {
@@ -659,7 +659,7 @@ func (r *Request) WithMultipart() *Request {
 // Request is sent using Config.Client interface.
 //
 // Example:
-//  req := NewRequest(config, "PUT", "http://example.org/path")
+//  req := NewRequest(config, "PUT", "http://example.com/path")
 //  req.WithJSON(map[string]interface{}{"foo": 123})
 //  resp := req.Expect()
 //  resp.Status(http.StatusOK)
