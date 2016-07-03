@@ -585,8 +585,6 @@ func TestExpectCookieHandlerBinderFastEnabled(t *testing.T) {
 }
 
 func TestExpectStaticFastBinder(t *testing.T) {
-	t.Skip("waiting for fix in fasthttp")
-
 	tempdir, err := ioutil.TempDir("", "httpexpect")
 	if err != nil {
 		t.Fatal(err)
@@ -618,6 +616,5 @@ func TestExpectStaticFastBinder(t *testing.T) {
 	e.GET("/hello").
 		Expect().
 		Status(http.StatusOK).
-		ContentType("text/plain").
-		Body().Equal("hello, world!")
+		Text().Equal("hello, world!")
 }
