@@ -133,6 +133,18 @@ func TestNumberEqualNaN(t *testing.T) {
 	v5 := NewNumber(reporter, 1234.5)
 	v5.EqualDelta(1234.5, math.NaN())
 	v5.chain.assertFailed(t)
+
+	v6 := NewNumber(reporter, math.NaN())
+	v6.NotEqualDelta(1234.0, 0.1)
+	v6.chain.assertFailed(t)
+
+	v7 := NewNumber(reporter, 1234.5)
+	v7.NotEqualDelta(math.NaN(), 0.1)
+	v7.chain.assertFailed(t)
+
+	v8 := NewNumber(reporter, 1234.5)
+	v8.NotEqualDelta(1234.5, math.NaN())
+	v8.chain.assertFailed(t)
 }
 
 func TestNumberGreater(t *testing.T) {

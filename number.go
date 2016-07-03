@@ -112,8 +112,8 @@ func (n *Number) EqualDelta(value, delta float64) *Number {
 //  number := NewNumber(t, 123.0)
 //  number.NotEqualDelta(123.2, 0.1)
 func (n *Number) NotEqualDelta(value, delta float64) *Number {
-	if math.IsNaN(n.value) || math.IsNaN(value) {
-		n.chain.fail("expected number == %f (delta %f), but got %f",
+	if math.IsNaN(n.value) || math.IsNaN(value) || math.IsNaN(delta) {
+		n.chain.fail("expected number != %f (delta %f), but got %f",
 			value, delta, n.value)
 		return n
 	}
