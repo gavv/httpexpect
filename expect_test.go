@@ -6,8 +6,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/valyala/fasthttp"
 	"github.com/valyala/fasthttp/fasthttpadaptor"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path"
 	"strings"
 	"testing"
 	"time"
@@ -579,4 +582,42 @@ func TestExpectCookieHandlerBinderFastEnabled(t *testing.T) {
 	})
 
 	testCookieHandler(e, true)
+}
+
+func TestExpectStaticFastBinder(t *testing.T) {
+	t.Skip("waiting for fix in fasthttp")
+
+	tempdir, err := ioutil.TempDir("", "httpexpect")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tempdir)
+
+	if err := ioutil.WriteFile(
+		path.Join(tempdir, "hello"), []byte("hello, world!"), 0666); err != nil {
+		t.Fatal(err)
+	}
+
+	fs := &fasthttp.FS{
+		Root: tempdir,
+	}
+
+	handler := fs.NewRequestHandler()
+
+	e := WithConfig(Config{
+		Client: &http.Client{
+			Transport: NewFastBinder(handler),
+			Jar:       NewJar(),
+		},
+		Reporter: NewAssertReporter(t),
+		Printers: []Printer{
+			NewDebugPrinter(t, true),
+		},
+	})
+
+	e.GET("/hello").
+		Expect().
+		Status(http.StatusOK).
+		ContentType("text/plain").
+		Body().Equal("hello, world!")
 }
