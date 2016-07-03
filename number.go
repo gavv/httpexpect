@@ -1,5 +1,9 @@
 package httpexpect
 
+import (
+	"math"
+)
+
 // Number provides methods to inspect attached float64 value
 // (Go representation of JSON number).
 type Number struct {
@@ -76,6 +80,52 @@ func (n *Number) NotEqual(value interface{}) *Number {
 	if !(n.value != v) {
 		n.chain.fail("expected number != %v, but got %v", v, n.value)
 	}
+	return n
+}
+
+// EqualDelta succeedes if two numerals are within delta of each other.
+//
+// Example:
+//  number := NewNumber(t, 123.0)
+//  number.EqualDelta(123.2, 0.3)
+func (n *Number) EqualDelta(value, delta float64) *Number {
+	if math.IsNaN(n.value) || math.IsNaN(value) || math.IsNaN(delta) {
+		n.chain.fail("expected number == %f (delta %f), but got %f",
+			value, delta, n.value)
+		return n
+	}
+
+	diff := (n.value - value)
+
+	if diff < -delta || diff > delta {
+		n.chain.fail("expected number == %f (delta %f), but got %f",
+			value, delta, n.value)
+		return n
+	}
+
+	return n
+}
+
+// NotEqualDelta succeedes if two numerals are not within delta of each other.
+//
+// Example:
+//  number := NewNumber(t, 123.0)
+//  number.NotEqualDelta(123.2, 0.1)
+func (n *Number) NotEqualDelta(value, delta float64) *Number {
+	if math.IsNaN(n.value) || math.IsNaN(value) {
+		n.chain.fail("expected number == %f (delta %f), but got %f",
+			value, delta, n.value)
+		return n
+	}
+
+	diff := (n.value - value)
+
+	if !(diff < -delta || diff > delta) {
+		n.chain.fail("expected number != %f (delta %f), but got %f",
+			value, delta, n.value)
+		return n
+	}
+
 	return n
 }
 

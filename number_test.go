@@ -2,6 +2,7 @@ package httpexpect
 
 import (
 	"github.com/stretchr/testify/assert"
+	"math"
 	"testing"
 )
 
@@ -70,6 +71,68 @@ func TestNumberEqual(t *testing.T) {
 	value.NotEqual(1234)
 	value.chain.assertFailed(t)
 	value.chain.reset()
+}
+
+func TestNumberEqualDelta(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewNumber(reporter, 1234.5)
+
+	value.EqualDelta(1234.3, 0.3)
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.EqualDelta(1234.7, 0.3)
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.EqualDelta(1234.3, 0.1)
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.EqualDelta(1234.7, 0.1)
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.NotEqualDelta(1234.3, 0.3)
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.NotEqualDelta(1234.7, 0.3)
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.NotEqualDelta(1234.3, 0.1)
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.NotEqualDelta(1234.7, 0.1)
+	value.chain.assertOK(t)
+	value.chain.reset()
+}
+
+func TestNumberEqualNaN(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	v1 := NewNumber(reporter, math.NaN())
+	v1.Equal(1234.5)
+	v1.chain.assertFailed(t)
+
+	v2 := NewNumber(reporter, 1234.5)
+	v2.Equal(math.NaN())
+	v2.chain.assertFailed(t)
+
+	v3 := NewNumber(reporter, math.NaN())
+	v3.EqualDelta(1234.0, 0.1)
+	v3.chain.assertFailed(t)
+
+	v4 := NewNumber(reporter, 1234.5)
+	v4.EqualDelta(math.NaN(), 0.1)
+	v4.chain.assertFailed(t)
+
+	v5 := NewNumber(reporter, 1234.5)
+	v5.EqualDelta(1234.5, math.NaN())
+	v5.chain.assertFailed(t)
 }
 
 func TestNumberGreater(t *testing.T) {
