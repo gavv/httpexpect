@@ -9,11 +9,6 @@ import (
 )
 
 // IrisHandler creates fasthttp.RequestHandler using Iris web framework.
-//
-// Implemented API:
-//  POST   /session  set session parameters
-//  GET    /session  get session parameters
-//  DELETE /session  delete session
 func IrisHandler() fasthttp.RequestHandler {
 	api := iris.New()
 

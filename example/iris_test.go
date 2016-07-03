@@ -25,6 +25,8 @@ func irisTester(t *testing.T) *httpexpect.Expect {
 }
 
 func TestIrisThings(t *testing.T) {
+	e := irisTester(t)
+
 	schema := `{
 		"type": "array",
 		"items": {
@@ -36,8 +38,6 @@ func TestIrisThings(t *testing.T) {
 			"required": ["name", "description"]
 		}
 	}`
-
-	e := irisTester(t)
 
 	things := e.GET("/things").
 		Expect().
