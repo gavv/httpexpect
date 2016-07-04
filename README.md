@@ -283,6 +283,18 @@ func TestFruits(t *testing.T) {
 	m.Name("user").Equal("john")
 ```
 
+##### Subdomains and per-request URL
+
+```go
+	e.GET("/path").WithURL("http://example.com").
+	   Expect().
+	   Status(http.StatusOK)
+
+	e.GET("/path").WithURL("http://subdomain.example.com").
+	   Expect().
+	   Status(http.StatusOK)
+```
+
 ##### Reusable builders
 
 ```go
