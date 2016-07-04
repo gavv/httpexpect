@@ -76,7 +76,8 @@ import (
 // Expect is a toplevel object that contains user Config and allows
 // to construct Request objects.
 type Expect struct {
-	config Config
+	config   Config
+	builders []func(*Request)
 }
 
 // Config contains various settings.
@@ -214,7 +215,10 @@ func WithConfig(config Config) *Expect {
 			Jar: NewJar(),
 		}
 	}
-	return &Expect{config}
+	return &Expect{
+		config:   config,
+		builders: nil,
+	}
 }
 
 // NewJar returns a new http.CookieJar.
@@ -233,72 +237,105 @@ func NewJar() http.CookieJar {
 	return jar
 }
 
-// Request is a shorthand for NewRequest(config, method, url, args...).
-func (e *Expect) Request(method, url string, args ...interface{}) *Request {
-	return NewRequest(e.config, method, url, args...)
+// Builder returns a copy of Expect instance with given builder attached to it.
+// Returned copy contains all previously attached builders plus a new one.
+// Builders are invoked from Request method, after constructing every new request.
+//
+// Example:
+//  e := httpexpect.New(t, "http://example.com")
+//
+//  token := e.POST("/login").WithForm(Login{"ford", "betelgeuse7"}).
+//      Expect().
+//      Status(http.StatusOK).JSON().Object().Value("token").String().Raw()
+//
+//  auth := e.Builder(func (req *httpexpect.Request) {
+//      req.WithHeader("Authorization", "Bearer "+token)
+//  })
+//
+//  auth.GET("/restricted").
+//     Expect().
+//     Status(http.StatusOK)
+func (e *Expect) Builder(builder func(*Request)) *Expect {
+	ret := *e
+	ret.builders = append(e.builders, builder)
+	return &ret
 }
 
-// OPTIONS is a shorthand for NewRequest(config, "OPTIONS", url, args...).
-func (e *Expect) OPTIONS(url string, args ...interface{}) *Request {
-	return NewRequest(e.config, "OPTIONS", url, args...)
+// Request returns a new Request object.
+// Arguments a similar to NewRequest.
+// After creating request, all builders attached to Expect object are invoked.
+// See Builder.
+func (e *Expect) Request(method, path string, pathargs ...interface{}) *Request {
+	req := NewRequest(e.config, method, path, pathargs...)
+
+	for _, builder := range e.builders {
+		builder(req)
+	}
+
+	return req
 }
 
-// HEAD is a shorthand for NewRequest(config, "HEAD", url, args...).
-func (e *Expect) HEAD(url string, args ...interface{}) *Request {
-	return NewRequest(e.config, "HEAD", url, args...)
+// OPTIONS is a shorthand for e.Request("OPTIONS", path, pathargs...).
+func (e *Expect) OPTIONS(path string, pathargs ...interface{}) *Request {
+	return e.Request("OPTIONS", path, pathargs...)
 }
 
-// GET is a shorthand for NewRequest(config, "GET", url, args...).
-func (e *Expect) GET(url string, args ...interface{}) *Request {
-	return NewRequest(e.config, "GET", url, args...)
+// HEAD is a shorthand for e.Request("HEAD", path, pathargs...).
+func (e *Expect) HEAD(path string, pathargs ...interface{}) *Request {
+	return e.Request("HEAD", path, pathargs...)
 }
 
-// POST is a shorthand for NewRequest(config, "POST", url, args...).
-func (e *Expect) POST(url string, args ...interface{}) *Request {
-	return NewRequest(e.config, "POST", url, args...)
+// GET is a shorthand for e.Request("GET", path, pathargs...).
+func (e *Expect) GET(path string, pathargs ...interface{}) *Request {
+	return e.Request("GET", path, pathargs...)
 }
 
-// PUT is a shorthand for NewRequest(config, "PUT", url, args...).
-func (e *Expect) PUT(url string, args ...interface{}) *Request {
-	return NewRequest(e.config, "PUT", url, args...)
+// POST is a shorthand for e.Request("POST", path, pathargs...).
+func (e *Expect) POST(path string, pathargs ...interface{}) *Request {
+	return e.Request("POST", path, pathargs...)
 }
 
-// PATCH is a shorthand for NewRequest(config, "PATCH", url, args...).
-func (e *Expect) PATCH(url string, args ...interface{}) *Request {
-	return NewRequest(e.config, "PATCH", url, args...)
+// PUT is a shorthand for e.Request("PUT", path, pathargs...).
+func (e *Expect) PUT(path string, pathargs ...interface{}) *Request {
+	return e.Request("PUT", path, pathargs...)
 }
 
-// DELETE is a shorthand for NewRequest(config, "DELETE", url, args...).
-func (e *Expect) DELETE(url string, args ...interface{}) *Request {
-	return NewRequest(e.config, "DELETE", url, args...)
+// PATCH is a shorthand for e.Request("PATCH", path, pathargs...).
+func (e *Expect) PATCH(path string, pathargs ...interface{}) *Request {
+	return e.Request("PATCH", path, pathargs...)
 }
 
-// Value is a shorthand for NewValue(Config.Reporter, value).
+// DELETE is a shorthand for e.Request("DELETE", path, pathargs...).
+func (e *Expect) DELETE(path string, pathargs ...interface{}) *Request {
+	return e.Request("DELETE", path, pathargs...)
+}
+
+// Value is a shorthand for NewValue(e.config.Reporter, value).
 func (e *Expect) Value(value interface{}) *Value {
 	return NewValue(e.config.Reporter, value)
 }
 
-// Object is a shorthand for NewObject(Config.Reporter, value).
+// Object is a shorthand for NewObject(e.config.Reporter, value).
 func (e *Expect) Object(value map[string]interface{}) *Object {
 	return NewObject(e.config.Reporter, value)
 }
 
-// Array is a shorthand for NewArray(Config.Reporter, value).
+// Array is a shorthand for NewArray(e.config.Reporter, value).
 func (e *Expect) Array(value []interface{}) *Array {
 	return NewArray(e.config.Reporter, value)
 }
 
-// String is a shorthand for NewString(Config.Reporter, value).
+// String is a shorthand for NewString(e.config.Reporter, value).
 func (e *Expect) String(value string) *String {
 	return NewString(e.config.Reporter, value)
 }
 
-// Number is a shorthand for NewNumber(Config.Reporter, value).
+// Number is a shorthand for NewNumber(e.config.Reporter, value).
 func (e *Expect) Number(value float64) *Number {
 	return NewNumber(e.config.Reporter, value)
 }
 
-// Boolean is a shorthand for NewBoolean(Config.Reporter, value).
+// Boolean is a shorthand for NewBoolean(e.config.Reporter, value).
 func (e *Expect) Boolean(value bool) *Boolean {
 	return NewBoolean(e.config.Reporter, value)
 }

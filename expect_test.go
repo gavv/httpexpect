@@ -49,6 +49,43 @@ func TestExpectMethods(t *testing.T) {
 	assert.Equal(t, "DELETE", reqs[7].http.Method)
 }
 
+func TestExpectBuilders(t *testing.T) {
+	client := &mockClient{}
+
+	reporter := NewAssertReporter(t)
+
+	config := Config{
+		Client:   client,
+		Reporter: reporter,
+	}
+
+	e := WithConfig(config)
+
+	var reqs1 []*Request
+
+	e1 := e.Builder(func(r *Request) {
+		reqs1 = append(reqs1, r)
+	})
+
+	var reqs2 []*Request
+
+	e2 := e1.Builder(func(r *Request) {
+		reqs2 = append(reqs2, r)
+	})
+
+	e.Request("METHOD", "/url")
+
+	r1 := e1.Request("METHOD", "/url")
+	r2 := e2.Request("METHOD", "/url")
+
+	assert.Equal(t, 2, int(len(reqs1)))
+	assert.Equal(t, 1, int(len(reqs2)))
+
+	assert.Equal(t, r1, reqs1[0])
+	assert.Equal(t, r2, reqs1[1])
+	assert.Equal(t, r1, reqs2[0])
+}
+
 func TestExpectValues(t *testing.T) {
 	client := &mockClient{}
 
@@ -224,7 +261,11 @@ func testBasicHandler(e *Expect) {
 		Expect().
 		Status(http.StatusOK).Body().Equal("ok")
 
-	e.PUT("/wee").WithBasicAuth("john", "secret").
+	auth := e.Builder(func(req *Request) {
+		req.WithBasicAuth("john", "secret")
+	})
+
+	auth.PUT("/wee").
 		Expect().
 		Status(http.StatusOK).
 		Form().ValueEqual("username", "john").ValueEqual("password", "secret")

@@ -144,7 +144,11 @@ func TestIrisStream(t *testing.T) {
 func TestIrisSubdomain(t *testing.T) {
 	e := irisTester(t)
 
-	e.GET("/get").WithURL("http://subdomain.127.0.0.1").
+	sub := e.Builder(func(req *httpexpect.Request) {
+		req.WithURL("http://subdomain.127.0.0.1")
+	})
+
+	sub.GET("/get").
 		Expect().
 		Status(http.StatusOK).
 		Body().Equal("hello from subdomain")

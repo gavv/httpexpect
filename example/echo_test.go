@@ -43,6 +43,14 @@ func testEcho(e *httpexpect.Expect) {
 	e.GET("/restricted/hello").WithHeader("Authorization", "Bearer "+token).
 		Expect().
 		Status(http.StatusOK).Body().Equal("hello, world!")
+
+	auth := e.Builder(func(req *httpexpect.Request) {
+		req.WithHeader("Authorization", "Bearer "+token)
+	})
+
+	auth.GET("/restricted/hello").
+		Expect().
+		Status(http.StatusOK).Body().Equal("hello, world!")
 }
 
 func TestEchoClient(t *testing.T) {
