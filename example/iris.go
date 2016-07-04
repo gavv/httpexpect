@@ -81,8 +81,14 @@ func IrisHandler() fasthttp.RequestHandler {
 		c.Write(string(c.Request.Body()))
 	})
 
-	api.Party("subdomain.").Get("/get", func(c *iris.Context) {
-		c.Write("hello from subdomain")
+	sub := api.Party("subdomain.")
+
+	sub.Post("/set", func(c *iris.Context) {
+		c.Session().Set("message", "hello from subdomain")
+	})
+
+	sub.Get("/get", func(c *iris.Context) {
+		c.Write(c.Session().GetString("message"))
 	})
 
 	return api.NoListen().Handler

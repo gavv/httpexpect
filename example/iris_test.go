@@ -148,6 +148,10 @@ func TestIrisSubdomain(t *testing.T) {
 		req.WithURL("http://subdomain.127.0.0.1")
 	})
 
+	sub.POST("/set").
+		Expect().
+		Status(http.StatusOK)
+
 	sub.GET("/get").
 		Expect().
 		Status(http.StatusOK).
