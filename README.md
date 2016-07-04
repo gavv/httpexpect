@@ -17,6 +17,7 @@ Workflow:
 * URL path construction, with simple string interpolation provided by [`go-interpol`](https://github.com/imkira/go-interpol) package.
 * URL query parameters (encoding using [`go-querystring`](https://github.com/google/go-querystring) package).
 * Headers, cookies, payload: JSON,  urlencoded or multipart forms (encoding using [`form`](https://github.com/ajg/form) package), plain text.
+* Create custom [request builders](https://github.com/gavv/httpexpect#reusable-builders) that can be reused.
 
 ##### Response assertions
 
@@ -280,6 +281,30 @@ func TestFruits(t *testing.T) {
 
 	m.Name("host").Equal("example.com")
 	m.Name("user").Equal("john")
+```
+
+##### Reusable builders
+
+```go
+	e := httpexpect.New(t, "http://example.com")
+
+	r := e.POST("/login").WithForm(Login{"ford", "betelgeuse7"}).
+		Expect().
+		Status(http.StatusOK).JSON().Object()
+
+	token := r.Value("token").String().Raw()
+
+	auth := e.Builder(func (req *httpexpect.Request) {
+		req.WithHeader("Authorization", "Bearer "+token)
+	})
+
+	auth.GET("/restricted").
+	   Expect().
+	   Status(http.StatusOK)
+
+	e.GET("/restricted").
+	   Expect().
+	   Status(http.StatusUnauthorized)
 ```
 
 ##### Custom config
