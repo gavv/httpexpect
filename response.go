@@ -214,8 +214,12 @@ func (r *Response) Header(header string) *String {
 	return &String{r.chain, value}
 }
 
-// Cookies returns a new Array object with all available cookie names.
+// Cookies returns a new Array object with all cookie names set by this response.
 // Returned Array contains a String value for every cookie name.
+//
+// Note that this returns only cookies set by Set-Cookie headers of this response.
+// It doesn't return session cookies from previous responses, which may be stored
+// in a cookie jar.
 //
 // Example:
 //  resp := NewResponse(t, response)
@@ -231,7 +235,12 @@ func (r *Response) Cookies() *Array {
 	return &Array{r.chain, names}
 }
 
-// Cookie returns a new Cookie object that may be used to inspect given cookie.
+// Cookie returns a new Cookie object that may be used to inspect given cookie
+// set by this response.
+//
+// Note that this returns only cookies set by Set-Cookie headers of this response.
+// It doesn't return session cookies from previous responses, which may be stored
+// in a cookie jar.
 //
 // Example:
 //  resp := NewResponse(t, response)
