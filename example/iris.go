@@ -91,5 +91,5 @@ func IrisHandler() fasthttp.RequestHandler {
 		c.Write(c.Session().GetString("message"))
 	})
 
-	return api.NoListen().Handler
+	return api.ListenVirtual().Handler
 }
