@@ -34,8 +34,8 @@ func IrisHandler() fasthttp.RequestHandler {
 			"x":  c.Param("x"),
 			"y":  c.Param("y"),
 			"q":  c.URLParam("q"),
-			"p1": c.PostFormValue("p1"),
-			"p2": c.PostFormValue("p2"),
+			"p1": c.FormValueString("p1"),
+			"p2": c.FormValueString("p2"),
 		})
 	})
 
