@@ -1,4 +1,4 @@
-// Package httpexpect helps to write nice tests for your HTTP API.
+// Package httpexpect helps with end-to-end HTTP and REST API testing.
 //
 // Usage examples
 //
