@@ -3,7 +3,6 @@ package httpexpect
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/ajg/form"
 	"io/ioutil"
 	"mime"
 	"net/http"
@@ -12,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/ajg/form"
 )
 
 // StatusRange is enum for response status ranges.

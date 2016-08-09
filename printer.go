@@ -1,11 +1,12 @@
 package httpexpect
 
 import (
-	"github.com/moul/http2curl"
 	"net/http"
 	"net/http/httputil"
 	"strings"
 	"time"
+
+	"github.com/moul/http2curl"
 )
 
 // CompactPrinter implements Printer. It prints requests in compact form.

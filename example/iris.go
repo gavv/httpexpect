@@ -3,6 +3,7 @@ package example
 import (
 	"bufio"
 	"fmt"
+
 	"github.com/iris-contrib/middleware/basicauth"
 	"github.com/kataras/iris"
 	"github.com/valyala/fasthttp"

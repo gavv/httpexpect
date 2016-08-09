@@ -3,12 +3,13 @@ package httpexpect
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
+	"regexp"
+
 	"github.com/gavv/gojsondiff"
 	"github.com/gavv/gojsondiff/formatter"
 	"github.com/xeipuuv/gojsonschema"
 	"github.com/yalp/jsonpath"
-	"reflect"
-	"regexp"
 )
 
 func toString(str interface{}) (s string, ok bool) {

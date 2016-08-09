@@ -1,13 +1,14 @@
 package example
 
 import (
+	"net/http"
+
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	echofasthttp "github.com/labstack/echo/engine/fasthttp"
 	echostandard "github.com/labstack/echo/engine/standard"
 	"github.com/labstack/echo/middleware"
 	"github.com/valyala/fasthttp"
-	"net/http"
 )
 
 // EchoServer creates HTTP server using echo framework.

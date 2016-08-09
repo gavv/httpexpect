@@ -66,10 +66,11 @@
 package httpexpect
 
 import (
-	"golang.org/x/net/publicsuffix"
 	"net/http"
 	"net/http/cookiejar"
 	"time"
+
+	"golang.org/x/net/publicsuffix"
 )
 
 // Expect is a toplevel object that contains user Config and allows

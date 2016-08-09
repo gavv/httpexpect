@@ -3,10 +3,11 @@ package httpexpect
 import (
 	"bytes"
 	"fmt"
-	"github.com/valyala/fasthttp"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+
+	"github.com/valyala/fasthttp"
 )
 
 // Binder implements networkless http.RoundTripper attached directly to

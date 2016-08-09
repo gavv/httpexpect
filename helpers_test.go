@@ -1,8 +1,9 @@
 package httpexpect
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestCanonNumber(t *testing.T) {

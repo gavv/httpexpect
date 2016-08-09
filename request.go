@@ -4,11 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/ajg/form"
-	"github.com/fatih/structs"
-	"github.com/gavv/monotime"
-	"github.com/google/go-querystring/query"
-	"github.com/imkira/go-interpol"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
@@ -19,6 +14,12 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/ajg/form"
+	"github.com/fatih/structs"
+	"github.com/gavv/monotime"
+	"github.com/google/go-querystring/query"
+	"github.com/imkira/go-interpol"
 )
 
 // Request provides methods to incrementally build http.Request object,

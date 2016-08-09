@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"mime"
 	"mime/multipart"
@@ -12,6 +11,8 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestRequestFailed(t *testing.T) {

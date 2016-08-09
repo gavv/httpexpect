@@ -3,11 +3,12 @@ package httpexpect
 import (
 	"bufio"
 	"bytes"
-	"github.com/stretchr/testify/assert"
-	"github.com/valyala/fasthttp"
 	"io/ioutil"
 	"net/http"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/valyala/fasthttp"
 )
 
 type mockHandler struct {

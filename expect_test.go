@@ -3,9 +3,6 @@ package httpexpect
 import (
 	"bufio"
 	"encoding/json"
-	"github.com/stretchr/testify/assert"
-	"github.com/valyala/fasthttp"
-	"github.com/valyala/fasthttp/fasthttpadaptor"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -14,6 +11,10 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/valyala/fasthttp"
+	"github.com/valyala/fasthttp/fasthttpadaptor"
 )
 
 func TestExpectMethods(t *testing.T) {
