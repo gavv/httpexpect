@@ -69,7 +69,6 @@ import (
 	"golang.org/x/net/publicsuffix"
 	"net/http"
 	"net/http/cookiejar"
-	"testing"
 	"time"
 )
 
@@ -146,6 +145,12 @@ type Reporter interface {
 	Errorf(message string, args ...interface{})
 }
 
+// LoggerReporter combines Logger and Reporter interfaces.
+type LoggerReporter interface {
+	Logger
+	Reporter
+}
+
 // New returns a new Expect object.
 //
 // baseURL specifies URL to prepended to all request. My be empty. If non-empty,
@@ -168,7 +173,7 @@ type Reporter interface {
 //          Expect().
 //          Status(http.StatusOK)
 //  }
-func New(t *testing.T, baseURL string) *Expect {
+func New(t LoggerReporter, baseURL string) *Expect {
 	return WithConfig(Config{
 		BaseURL:  baseURL,
 		Reporter: NewAssertReporter(t),
