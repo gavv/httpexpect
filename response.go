@@ -399,7 +399,7 @@ func (r *Response) getJSON() interface{} {
 // of response.
 //
 // JSONP succeedes if response contains "application/javascript" Content-Type
-// header with empty or "utf-8" charset and reponse body of the following form:
+// header with empty or "utf-8" charset and response body of the following form:
 //  callback(<valid json>);
 // or:
 //  callback(<valid json>)
