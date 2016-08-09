@@ -190,6 +190,12 @@ func TestExpectBranches(t *testing.T) {
 	e4.chain.assertOK(t)
 }
 
+func TestExpectStdCompat(_ *testing.T) {
+	New(&testing.T{}, "")
+	New(&testing.B{}, "")
+	New(testing.TB(&testing.T{}), "")
+}
+
 func createBasicHandler() http.Handler {
 	mux := http.NewServeMux()
 
