@@ -2,6 +2,7 @@ package httpexpect
 
 import (
 	"bufio"
+	"crypto/tls"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -287,23 +288,6 @@ func TestExpectBasicHandlerLiveDefault(t *testing.T) {
 	testBasicHandler(New(t, server.URL))
 }
 
-func TestExpectBasicHandlerLiveDefaultLongRun(t *testing.T) {
-	if testing.Short() {
-		return
-	}
-
-	handler := createBasicHandler()
-
-	server := httptest.NewServer(handler)
-	defer server.Close()
-
-	e := New(t, server.URL)
-
-	for i := 0; i < 2; i++ {
-		testBasicHandler(e)
-	}
-}
-
 func TestExpectBasicHandlerLiveConfig(t *testing.T) {
 	handler := createBasicHandler()
 
@@ -318,6 +302,42 @@ func TestExpectBasicHandlerLiveConfig(t *testing.T) {
 			NewDebugPrinter(t, true),
 		},
 	}))
+}
+
+func TestExpectBasicHandlerLiveTLS(t *testing.T) {
+	handler := createBasicHandler()
+
+	server := httptest.NewTLSServer(handler)
+	defer server.Close()
+
+	testBasicHandler(WithConfig(Config{
+		BaseURL:  server.URL,
+		Reporter: NewAssertReporter(t),
+		Client: &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					InsecureSkipVerify: true,
+				},
+			},
+		},
+	}))
+}
+
+func TestExpectBasicHandlerLiveLongRun(t *testing.T) {
+	if testing.Short() {
+		return
+	}
+
+	handler := createBasicHandler()
+
+	server := httptest.NewServer(handler)
+	defer server.Close()
+
+	e := New(t, server.URL)
+
+	for i := 0; i < 2; i++ {
+		testBasicHandler(e)
+	}
 }
 
 func TestExpectBasicHandlerBinderStandard(t *testing.T) {
