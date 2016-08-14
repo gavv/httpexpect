@@ -429,49 +429,58 @@ func TestExpectRedirectHandlerBinderFast(t *testing.T) {
 	}))
 }
 
-func createAutoTLSHandlerHttp(https string) http.Handler {
+func createAutoTLSHandler(https string) http.Handler {
 	mux := http.NewServeMux()
+
+	mux.HandleFunc("/tls", func(w http.ResponseWriter, r *http.Request) {
+		if r.TLS == nil {
+			w.Write([]byte(`no`))
+		} else {
+			w.Write([]byte(`yes`))
+		}
+	})
 
 	mux.HandleFunc("/protected", func(w http.ResponseWriter, r *http.Request) {
 		if r.TLS == nil {
 			http.Redirect(w, r, https+r.RequestURI, http.StatusFound)
 		} else {
-			w.WriteHeader(http.StatusBadRequest)
-		}
-	})
-
-	return mux
-}
-
-func createAutoTLSHandlerHttps() http.Handler {
-	mux := http.NewServeMux()
-
-	mux.HandleFunc("/protected", func(w http.ResponseWriter, r *http.Request) {
-		if r.TLS != nil {
 			w.Write([]byte(`hello`))
-		} else {
-			w.WriteHeader(http.StatusBadRequest)
 		}
 	})
 
 	return mux
 }
 
-func testAutoTLSHandler(e *Expect) {
+func testAutoTLSHandler(config Config) {
+	e := WithConfig(config)
+
+	tls := e.POST("/tls").
+		Expect().
+		Status(http.StatusOK).Body()
+
+	if strings.HasPrefix(config.BaseURL, "https://") {
+		tls.Equal(`yes`)
+	} else {
+		tls.Equal(`no`)
+	}
+
 	e.POST("/protected").
 		Expect().
 		Status(http.StatusOK).Body().Equal(`hello`)
 }
 
 func TestExpectAutoTLSHandlerLive(t *testing.T) {
-	httpsServ := httptest.NewTLSServer(createAutoTLSHandlerHttps())
+	httpsServ := httptest.NewTLSServer(createAutoTLSHandler(""))
 	defer httpsServ.Close()
 
-	httpServ := httptest.NewServer(createAutoTLSHandlerHttp(httpsServ.URL))
+	httpServ := httptest.NewServer(createAutoTLSHandler(httpsServ.URL))
 	defer httpServ.Close()
 
+	assert.True(t, strings.HasPrefix(httpsServ.URL, "https://"))
+	assert.True(t, strings.HasPrefix(httpServ.URL, "http://"))
+
 	for _, url := range []string{httpsServ.URL, httpServ.URL} {
-		testAutoTLSHandler(WithConfig(Config{
+		testAutoTLSHandler(Config{
 			BaseURL:  url,
 			Reporter: NewRequireReporter(t),
 			Printers: []Printer{
@@ -484,7 +493,7 @@ func TestExpectAutoTLSHandlerLive(t *testing.T) {
 					},
 				},
 			},
-		}))
+		})
 	}
 }
 
