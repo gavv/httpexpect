@@ -429,6 +429,65 @@ func TestExpectRedirectHandlerBinderFast(t *testing.T) {
 	}))
 }
 
+func createAutoTLSHandlerHttp(https string) http.Handler {
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/protected", func(w http.ResponseWriter, r *http.Request) {
+		if r.TLS == nil {
+			http.Redirect(w, r, https+r.RequestURI, http.StatusFound)
+		} else {
+			w.WriteHeader(http.StatusBadRequest)
+		}
+	})
+
+	return mux
+}
+
+func createAutoTLSHandlerHttps() http.Handler {
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/protected", func(w http.ResponseWriter, r *http.Request) {
+		if r.TLS != nil {
+			w.Write([]byte(`hello`))
+		} else {
+			w.WriteHeader(http.StatusBadRequest)
+		}
+	})
+
+	return mux
+}
+
+func testAutoTLSHandler(e *Expect) {
+	e.POST("/protected").
+		Expect().
+		Status(http.StatusOK).Body().Equal(`hello`)
+}
+
+func TestExpectAutoTLSHandlerLive(t *testing.T) {
+	httpsServ := httptest.NewTLSServer(createAutoTLSHandlerHttps())
+	defer httpsServ.Close()
+
+	httpServ := httptest.NewServer(createAutoTLSHandlerHttp(httpsServ.URL))
+	defer httpServ.Close()
+
+	for _, url := range []string{httpsServ.URL, httpServ.URL} {
+		testAutoTLSHandler(WithConfig(Config{
+			BaseURL:  url,
+			Reporter: NewRequireReporter(t),
+			Printers: []Printer{
+				NewDebugPrinter(t, true),
+			},
+			Client: &http.Client{
+				Transport: &http.Transport{
+					TLSClientConfig: &tls.Config{
+						InsecureSkipVerify: true,
+					},
+				},
+			},
+		}))
+	}
+}
+
 func createChunkedHandler() http.Handler {
 	mux := http.NewServeMux()
 
