@@ -148,6 +148,8 @@ func TestFruits(t *testing.T) {
 	obj.Value("colors").Array().Elements("green", "red")
 	obj.Value("colors").Array().Element(0).String().Equal("green")
 	obj.Value("colors").Array().Element(1).String().Equal("red")
+	obj.Value("colors").Array().First().String().Equal("green")
+	obj.Value("colors").Array().Last().String().Equal("red")
 ```
 
 ##### JSON Schema and JSON Path

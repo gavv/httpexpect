@@ -25,6 +25,8 @@ func TestArrayFailed(t *testing.T) {
 
 	value.Length().chain.assertFailed(t)
 	value.Element(0).chain.assertFailed(t)
+	value.First().chain.assertFailed(t)
+	value.Last().chain.assertFailed(t)
 
 	value.Empty()
 	value.NotEmpty()
@@ -74,6 +76,11 @@ func TestArrayGetters(t *testing.T) {
 	assert.Equal(t, 2, len(it))
 	assert.Equal(t, "foo", it[0].Raw())
 	assert.Equal(t, 123.0, it[1].Raw())
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	assert.Equal(t, "foo", value.First().Raw())
+	assert.Equal(t, 123.0, value.Last().Raw())
 	value.chain.assertOK(t)
 	value.chain.reset()
 }
