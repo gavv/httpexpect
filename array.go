@@ -81,6 +81,40 @@ func (a *Array) Element(index int) *Value {
 	return &Value{a.chain, a.value[index]}
 }
 
+// First returns a new Value object that may be used to inspect first element
+// of given array.
+//
+// If given array is empty, First reports failure and returns empty
+// (but non-nil) value.
+//
+// Example:
+//  array := NewArray(t, []interface{}{"foo", 123})
+//  array.First().String().Equal("foo")
+func (a *Array) First() *Value {
+	if len(a.value) < 1 {
+		a.chain.fail("\narray is empty")
+		return &Value{a.chain, nil}
+	}
+	return &Value{a.chain, a.value[0]}
+}
+
+// Last returns a new Value object that may be used to inspect last element
+// of given array.
+//
+// If given array is empty, Last reports failure and returns empty
+// (but non-nil) value.
+//
+// Example:
+//  array := NewArray(t, []interface{}{"foo", 123})
+//  array.Last().Number().Equal(123)
+func (a *Array) Last() *Value {
+	if len(a.value) < 1 {
+		a.chain.fail("\narray is empty")
+		return &Value{a.chain, nil}
+	}
+	return &Value{a.chain, a.value[len(a.value)-1]}
+}
+
 // Iter returns a new slice of Values attached to array elements.
 //
 // Example:
