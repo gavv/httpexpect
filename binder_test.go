@@ -2,9 +2,10 @@ package httpexpect
 
 import (
 	"bufio"
-	"bytes"
+	"crypto/tls"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,18 +14,32 @@ import (
 
 type mockHandler struct {
 	t       *testing.T
+	https   bool
+	http10  bool
 	chunked bool
 }
 
-func (c mockHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+func (c *mockHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	body, err := ioutil.ReadAll(req.Body)
 	assert.True(c.t, err == nil)
 
-	assert.Equal(c.t, "HTTP/1.0", req.Proto)
-	assert.Equal(c.t, 1, req.ProtoMajor)
-	assert.Equal(c.t, 0, req.ProtoMinor)
+	if c.http10 {
+		assert.Equal(c.t, "HTTP/1.0", req.Proto)
+		assert.Equal(c.t, 1, req.ProtoMajor)
+		assert.Equal(c.t, 0, req.ProtoMinor)
+	} else {
+		assert.Equal(c.t, "HTTP/1.1", req.Proto)
+		assert.Equal(c.t, 1, req.ProtoMajor)
+		assert.Equal(c.t, 1, req.ProtoMinor)
+	}
+	if c.https {
+		assert.Equal(c.t, "https://example.com/path", req.URL.String())
+	} else {
+		assert.Equal(c.t, "http://example.com/path", req.URL.String())
+	}
+	assert.Equal(c.t, "/path", req.URL.RequestURI())
+	assert.Equal(c.t, "/path", req.RequestURI)
 	assert.Equal(c.t, "GET", req.Method)
-	assert.Equal(c.t, "http://example.com", req.URL.String())
 	assert.Equal(c.t, "body", string(body))
 
 	w.Header().Set("Content-Type", "application/json")
@@ -38,15 +53,17 @@ func (c mockHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 func TestBinder(t *testing.T) {
-	handler := mockHandler{t, false}
+	handler := &mockHandler{
+		t:       t,
+		http10:  true,
+		chunked: false,
+	}
 
 	client := &http.Client{
 		Transport: NewBinder(handler),
 	}
 
-	req, err := http.NewRequest(
-		"GET", "http://example.com", bytes.NewReader([]byte("body")))
-
+	req, err := http.NewRequest("GET", "http://example.com/path", strings.NewReader("body"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -75,23 +92,69 @@ func TestBinder(t *testing.T) {
 	assert.Equal(t, []string(nil), resp.TransferEncoding)
 }
 
+func TestBinderTLS(t *testing.T) {
+	handler := &mockHandler{t: t}
+
+	httpClient := &http.Client{
+		Transport: &Binder{
+			Handler: handler,
+			TLS:     nil,
+		},
+	}
+
+	tlsState := &tls.ConnectionState{}
+
+	httpsClient := &http.Client{
+		Transport: &Binder{
+			Handler: handler,
+			TLS:     tlsState,
+		},
+	}
+
+	handler.https = false
+	req, _ := http.NewRequest("GET", "http://example.com/path", strings.NewReader("body"))
+	resp, err := httpClient.Do(req)
+	assert.Nil(t, err)
+	assert.NotNil(t, resp)
+	assert.Nil(t, req.TLS)
+
+	handler.https = true
+	req, _ = http.NewRequest("GET", "https://example.com/path", strings.NewReader("body"))
+	resp, err = httpClient.Do(req)
+	assert.Nil(t, err)
+	assert.NotNil(t, resp)
+	assert.Nil(t, req.TLS)
+
+	handler.https = false
+	req, _ = http.NewRequest("GET", "http://example.com/path", strings.NewReader("body"))
+	resp, err = httpsClient.Do(req)
+	assert.Nil(t, err)
+	assert.NotNil(t, resp)
+	assert.Nil(t, req.TLS)
+
+	handler.https = true
+	req, _ = http.NewRequest("GET", "https://example.com/path", strings.NewReader("body"))
+	resp, err = httpsClient.Do(req)
+	assert.Nil(t, err)
+	assert.NotNil(t, resp)
+	assert.NotNil(t, req.TLS)
+	assert.Equal(t, tlsState, req.TLS)
+}
+
 func TestBinderChunked(t *testing.T) {
-	handler := mockHandler{t, true}
+	handler := &mockHandler{
+		t:       t,
+		chunked: true,
+	}
 
 	client := &http.Client{
 		Transport: NewBinder(handler),
 	}
 
-	req, err := http.NewRequest(
-		"GET", "http://example.com", bytes.NewReader([]byte("body")))
-
+	req, err := http.NewRequest("GET", "http://example.com/path", strings.NewReader("body"))
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	req.ProtoMajor = 1
-	req.ProtoMinor = 0
-	req.Proto = ""
 
 	req.ContentLength = -1
 
@@ -107,7 +170,7 @@ func TestBinderChunked(t *testing.T) {
 func TestFastBinder(t *testing.T) {
 	handler := func(ctx *fasthttp.RequestCtx) {
 		assert.Equal(t, "POST", string(ctx.Request.Header.Method()))
-		assert.Equal(t, "http://example.com", string(ctx.Request.Header.RequestURI()))
+		assert.Equal(t, "http://example.com/path", string(ctx.Request.Header.RequestURI()))
 
 		assert.Equal(t, "application/x-www-form-urlencoded",
 			string(ctx.Request.Header.ContentType()))
@@ -137,9 +200,7 @@ func TestFastBinder(t *testing.T) {
 		Transport: NewFastBinder(handler),
 	}
 
-	req, err := http.NewRequest(
-		"POST", "http://example.com", bytes.NewReader([]byte("foo=bar")))
-
+	req, err := http.NewRequest("POST", "http://example.com/path", strings.NewReader("foo=bar"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -171,7 +232,7 @@ func TestFastBinder(t *testing.T) {
 func TestFastBinderChunked(t *testing.T) {
 	handler := func(ctx *fasthttp.RequestCtx) {
 		assert.Equal(t, "POST", string(ctx.Request.Header.Method()))
-		assert.Equal(t, "http://example.com", string(ctx.Request.Header.RequestURI()))
+		assert.Equal(t, "http://example.com/path", string(ctx.Request.Header.RequestURI()))
 
 		assert.Equal(t, "application/x-www-form-urlencoded",
 			string(ctx.Request.Header.ContentType()))
@@ -204,9 +265,7 @@ func TestFastBinderChunked(t *testing.T) {
 		Transport: NewFastBinder(handler),
 	}
 
-	req, err := http.NewRequest(
-		"POST", "http://example.com", bytes.NewReader([]byte("foo=bar")))
-
+	req, err := http.NewRequest("POST", "http://example.com/path", strings.NewReader("foo=bar"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -230,7 +289,7 @@ func TestFastBinderEmptyResponse(t *testing.T) {
 		Transport: NewFastBinder(handler),
 	}
 
-	req, err := http.NewRequest("POST", "http://example.com", nil)
+	req, err := http.NewRequest("POST", "http://example.com/path", nil)
 	if err != nil {
 		t.Fatal(err)
 	}

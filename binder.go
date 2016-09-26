@@ -2,6 +2,7 @@ package httpexpect
 
 import (
 	"bytes"
+	"crypto/tls"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -17,7 +18,10 @@ import (
 // directly. It passes httptest.ResponseRecorder as http.ResponseWriter
 // to the handler, and then constructs http.Response from recorded data.
 type Binder struct {
-	handler http.Handler
+	// HTTP handler invoked for every request.
+	Handler http.Handler
+	// TLS connection state used for https:// requests.
+	TLS *tls.ConnectionState
 }
 
 // NewBinder returns a new Binder given a http.Handler.
@@ -27,7 +31,7 @@ type Binder struct {
 //       Transport: NewBinder(handler),
 //   }
 func NewBinder(handler http.Handler) Binder {
-	return Binder{handler}
+	return Binder{Handler: handler}
 }
 
 // RoundTrip implements http.RoundTripper.RoundTrip.
@@ -44,9 +48,17 @@ func (binder Binder) RoundTrip(req *http.Request) (*http.Response, error) {
 		req.Body = ioutil.NopCloser(bytes.NewReader(nil))
 	}
 
+	if req.URL != nil && req.URL.Scheme == "https" {
+		req.TLS = binder.TLS
+	}
+
+	if req.RequestURI == "" {
+		req.RequestURI = req.URL.RequestURI()
+	}
+
 	recorder := httptest.NewRecorder()
 
-	binder.handler.ServeHTTP(recorder, req)
+	binder.Handler.ServeHTTP(recorder, req)
 
 	resp := http.Response{
 		Request:    req,

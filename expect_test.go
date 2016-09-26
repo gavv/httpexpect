@@ -497,6 +497,26 @@ func TestExpectAutoTLSHandlerLive(t *testing.T) {
 	}
 }
 
+func TestExpectAutoTLSHandlerBinderStandard(t *testing.T) {
+	handler := createAutoTLSHandler("https://example.com")
+
+	for _, url := range []string{"https://example.com", "http://example.com"} {
+		testAutoTLSHandler(Config{
+			BaseURL:  url,
+			Reporter: NewRequireReporter(t),
+			Printers: []Printer{
+				NewDebugPrinter(t, true),
+			},
+			Client: &http.Client{
+				Transport: &Binder{
+					Handler: handler,
+					TLS:     &tls.ConnectionState{},
+				},
+			},
+		})
+	}
+}
+
 func createChunkedHandler() http.Handler {
 	mux := http.NewServeMux()
 
