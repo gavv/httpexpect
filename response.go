@@ -113,7 +113,7 @@ func (r *Response) Duration() *Number {
 	return &Number{r.chain, float64(r.time)}
 }
 
-// Status succeedes if response contains given status code.
+// Status succeeds if response contains given status code.
 //
 // Example:
 //  resp := NewResponse(t, response)
@@ -126,7 +126,7 @@ func (r *Response) Status(status int) *Response {
 	return r
 }
 
-// StatusRange succeedes if response status belongs to given range.
+// StatusRange succeeds if response status belongs to given range.
 //
 // Supported ranges:
 //  - Status1xx - Informational
@@ -272,7 +272,7 @@ func (r *Response) Body() *String {
 	return &String{r.chain, string(r.content)}
 }
 
-// NoContent succeedes if response contains empty Content-Type header and
+// NoContent succeeds if response contains empty Content-Type header and
 // empty body.
 func (r *Response) NoContent() *Response {
 	if r.chain.failed() {
@@ -287,7 +287,7 @@ func (r *Response) NoContent() *Response {
 	return r
 }
 
-// ContentType succeedes if response contains Content-Type header with given
+// ContentType succeeds if response contains Content-Type header with given
 // media type and charset.
 //
 // If charset is omitted, and mediaType is non-empty, Content-Type header
@@ -300,7 +300,7 @@ func (r *Response) ContentType(mediaType string, charset ...string) *Response {
 	return r
 }
 
-// TransferEncoding succeedes if response contains given Transfer-Encoding list.
+// TransferEncoding succeeds if response contains given Transfer-Encoding list.
 // Common values are empty, "chunked" and "identity".
 func (r *Response) TransferEncoding(encoding ...string) *Response {
 	if r.chain.failed() {
@@ -312,7 +312,7 @@ func (r *Response) TransferEncoding(encoding ...string) *Response {
 
 // Text returns a new String object that may be used to inspect response body.
 //
-// Text succeedes if response contains "text/plain" Content-Type header
+// Text succeeds if response contains "text/plain" Content-Type header
 // with empty or "utf-8" charset.
 //
 // Example:
@@ -331,7 +331,7 @@ func (r *Response) Text() *String {
 // Form returns a new Object that may be used to inspect form contents
 // of response.
 //
-// Form succeedes if response contains "application/x-www-form-urlencoded"
+// Form succeeds if response contains "application/x-www-form-urlencoded"
 // Content-Type header and if form may be decoded from response body.
 // Decoding is performed using https://github.com/ajg/form.
 //
@@ -366,7 +366,7 @@ func (r *Response) getForm() map[string]interface{} {
 // JSON returns a new Value object that may be used to inspect JSON contents
 // of response.
 //
-// JSON succeedes if response contains "application/json" Content-Type header
+// JSON succeeds if response contains "application/json" Content-Type header
 // with empty or "utf-8" charset and if JSON may be decoded from response body.
 //
 // Example:
@@ -398,7 +398,7 @@ func (r *Response) getJSON() interface{} {
 // JSONP returns a new Value object that may be used to inspect JSONP contents
 // of response.
 //
-// JSONP succeedes if response contains "application/javascript" Content-Type
+// JSONP succeeds if response contains "application/javascript" Content-Type
 // header with empty or "utf-8" charset and response body of the following form:
 //  callback(<valid json>);
 // or:

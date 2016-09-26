@@ -43,7 +43,7 @@ func (n *Number) Schema(schema interface{}) *Number {
 	return n
 }
 
-// Equal succeedes if number is equal to given value.
+// Equal succeeds if number is equal to given value.
 //
 // value should have numeric type convertible to float64. Before comparison,
 // it is converted to float64.
@@ -64,7 +64,7 @@ func (n *Number) Equal(value interface{}) *Number {
 	return n
 }
 
-// NotEqual succeedes if number is not equal to given value.
+// NotEqual succeeds if number is not equal to given value.
 //
 // value should have numeric type convertible to float64. Before comparison,
 // it is converted to float64.
@@ -85,7 +85,7 @@ func (n *Number) NotEqual(value interface{}) *Number {
 	return n
 }
 
-// EqualDelta succeedes if two numerals are within delta of each other.
+// EqualDelta succeeds if two numerals are within delta of each other.
 //
 // Example:
 //  number := NewNumber(t, 123.0)
@@ -108,7 +108,7 @@ func (n *Number) EqualDelta(value, delta float64) *Number {
 	return n
 }
 
-// NotEqualDelta succeedes if two numerals are not within delta of each other.
+// NotEqualDelta succeeds if two numerals are not within delta of each other.
 //
 // Example:
 //  number := NewNumber(t, 123.0)
@@ -133,7 +133,7 @@ func (n *Number) NotEqualDelta(value, delta float64) *Number {
 	return n
 }
 
-// Gt succeedes if number is greater than given value.
+// Gt succeeds if number is greater than given value.
 //
 // value should have numeric type convertible to float64. Before comparison,
 // it is converted to float64.
@@ -154,7 +154,7 @@ func (n *Number) Gt(value interface{}) *Number {
 	return n
 }
 
-// Ge succeedes if number is greater than or equal to given value.
+// Ge succeeds if number is greater than or equal to given value.
 //
 // value should have numeric type convertible to float64. Before comparison,
 // it is converted to float64.
@@ -175,7 +175,7 @@ func (n *Number) Ge(value interface{}) *Number {
 	return n
 }
 
-// Lt succeedes if number is lesser than given value.
+// Lt succeeds if number is lesser than given value.
 //
 // value should have numeric type convertible to float64. Before comparison,
 // it is converted to float64.
@@ -196,7 +196,7 @@ func (n *Number) Lt(value interface{}) *Number {
 	return n
 }
 
-// Le succeedes if number is lesser than or equal to given value.
+// Le succeeds if number is lesser than or equal to given value.
 //
 // value should have numeric type convertible to float64. Before comparison,
 // it is converted to float64.
@@ -217,7 +217,7 @@ func (n *Number) Le(value interface{}) *Number {
 	return n
 }
 
-// InRange succeedes if number is in given range [min; max].
+// InRange succeeds if number is in given range [min; max].
 //
 // min and max should have numeric type convertible to float64. Before comparison,
 // they are converted to float64.

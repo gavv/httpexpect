@@ -120,7 +120,7 @@ func (m *Match) Name(name string) *String {
 	return m.Index(index)
 }
 
-// Empty succeedes if submatches array is empty.
+// Empty succeeds if submatches array is empty.
 //
 // Example:
 //  m := NewMatch(t, submatches, names)
@@ -133,7 +133,7 @@ func (m *Match) Empty() *Match {
 	return m
 }
 
-// NotEmpty succeedes if submatches array is non-empty.
+// NotEmpty succeeds if submatches array is non-empty.
 //
 // Example:
 //  m := NewMatch(t, submatches, names)
@@ -145,7 +145,7 @@ func (m *Match) NotEmpty() *Match {
 	return m
 }
 
-// Values succeedes if submatches array, starting from index 1, is equal to
+// Values succeeds if submatches array, starting from index 1, is equal to
 // given array.
 //
 // Note that submatch with index 0 contains the whole match and is not
@@ -168,7 +168,7 @@ func (m *Match) Values(values ...string) *Match {
 	return m
 }
 
-// NotValues succeedes if submatches array, starting from index 1, is not
+// NotValues succeeds if submatches array, starting from index 1, is not
 // equal to given array.
 //
 // Note that submatch with index 0 contains the whole match and is not

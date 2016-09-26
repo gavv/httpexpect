@@ -35,7 +35,7 @@ func (dt *DateTime) Raw() time.Time {
 	return dt.value
 }
 
-// Equal succeedes if DateTime is equal to given value.
+// Equal succeeds if DateTime is equal to given value.
 //
 // Example:
 //  dt := NewDateTime(t, time.Unix(0, 1))
@@ -48,7 +48,7 @@ func (dt *DateTime) Equal(value time.Time) *DateTime {
 	return dt
 }
 
-// NotEqual succeedes if DateTime is not equal to given value.
+// NotEqual succeeds if DateTime is not equal to given value.
 //
 // Example:
 //  dt := NewDateTime(t, time.Unix(0, 1))
@@ -60,7 +60,7 @@ func (dt *DateTime) NotEqual(value time.Time) *DateTime {
 	return dt
 }
 
-// Gt succeedes if DateTime is greater than given value.
+// Gt succeeds if DateTime is greater than given value.
 //
 // Example:
 //  dt := NewDateTime(t, time.Unix(0, 2))
@@ -73,7 +73,7 @@ func (dt *DateTime) Gt(value time.Time) *DateTime {
 	return dt
 }
 
-// Ge succeedes if DateTime is greater than or equal to given value.
+// Ge succeeds if DateTime is greater than or equal to given value.
 //
 // Example:
 //  dt := NewDateTime(t, time.Unix(0, 2))
@@ -86,7 +86,7 @@ func (dt *DateTime) Ge(value time.Time) *DateTime {
 	return dt
 }
 
-// Lt succeedes if DateTime is lesser than given value.
+// Lt succeeds if DateTime is lesser than given value.
 //
 // Example:
 //  dt := NewDateTime(t, time.Unix(0, 1))
@@ -99,7 +99,7 @@ func (dt *DateTime) Lt(value time.Time) *DateTime {
 	return dt
 }
 
-// Le succeedes if DateTime is lesser than or equal to given value.
+// Le succeeds if DateTime is lesser than or equal to given value.
 //
 // Example:
 //  dt := NewDateTime(t, time.Unix(0, 1))
@@ -112,7 +112,7 @@ func (dt *DateTime) Le(value time.Time) *DateTime {
 	return dt
 }
 
-// InRange succeedes if DateTime is in given range [min; max].
+// InRange succeeds if DateTime is in given range [min; max].
 //
 // Example:
 //  dt := NewDateTime(t, time.Unix(0, 2))

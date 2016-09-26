@@ -135,7 +135,7 @@ func (a *Array) Iter() []Value {
 	return ret
 }
 
-// Empty succeedes if array is empty.
+// Empty succeeds if array is empty.
 //
 // Example:
 //  array := NewArray(t, []interface{}{})
@@ -144,7 +144,7 @@ func (a *Array) Empty() *Array {
 	return a.Equal([]interface{}{})
 }
 
-// NotEmpty succeedes if array is non-empty.
+// NotEmpty succeeds if array is non-empty.
 //
 // Example:
 //  array := NewArray(t, []interface{}{"foo", 123})
@@ -153,7 +153,7 @@ func (a *Array) NotEmpty() *Array {
 	return a.NotEqual([]interface{}{})
 }
 
-// Equal succeedes if array is equal to another array.
+// Equal succeeds if array is equal to another array.
 // Before comparison, both arrays are converted to canonical form.
 //
 // value should be slice of any type.
@@ -181,7 +181,7 @@ func (a *Array) Equal(value interface{}) *Array {
 	return a
 }
 
-// NotEqual succeedes if array is not equal to another array.
+// NotEqual succeeds if array is not equal to another array.
 // Before comparison, both arrays are converted to canonical form.
 //
 // value should be slice of any type.
@@ -201,7 +201,7 @@ func (a *Array) NotEqual(value interface{}) *Array {
 	return a
 }
 
-// Elements succeedes if array contains all given elements, in given order, and only them.
+// Elements succeeds if array contains all given elements, in given order, and only them.
 // Before comparison, array and all elements are converted to canonical form.
 //
 // For partial or unordered comparison, see Contains and ContainsOnly.
@@ -217,7 +217,7 @@ func (a *Array) Elements(values ...interface{}) *Array {
 	return a.Equal(values)
 }
 
-// Contains succeedes if array contains all given elements (in any order).
+// Contains succeeds if array contains all given elements (in any order).
 // Before comparison, array and all elements are converted to canonical form.
 //
 // Example:
@@ -237,7 +237,7 @@ func (a *Array) Contains(values ...interface{}) *Array {
 	return a
 }
 
-// NotContains succeedes if array contains none of given elements.
+// NotContains succeeds if array contains none of given elements.
 // Before comparison, array and all elements are converted to canonical form.
 //
 // Example:
@@ -258,7 +258,7 @@ func (a *Array) NotContains(values ...interface{}) *Array {
 	return a
 }
 
-// ContainsOnly succeedes if array contains all given elements, in any order, and only
+// ContainsOnly succeeds if array contains all given elements, in any order, and only
 // them. Before comparison, array and all elements are converted to canonical form.
 //
 // Example:

@@ -39,7 +39,7 @@ func (b *Boolean) Schema(schema interface{}) *Boolean {
 	return b
 }
 
-// Equal succeedes if boolean is equal to given value.
+// Equal succeeds if boolean is equal to given value.
 //
 // Example:
 //  boolean := NewBoolean(t, true)
@@ -51,7 +51,7 @@ func (b *Boolean) Equal(value bool) *Boolean {
 	return b
 }
 
-// NotEqual succeedes if boolean is not equal to given value.
+// NotEqual succeeds if boolean is not equal to given value.
 //
 // Example:
 //  boolean := NewBoolean(t, true)
@@ -63,7 +63,7 @@ func (b *Boolean) NotEqual(value bool) *Boolean {
 	return b
 }
 
-// True succeedes if boolean is true.
+// True succeeds if boolean is true.
 //
 // Example:
 //  boolean := NewBoolean(t, true)
@@ -72,7 +72,7 @@ func (b *Boolean) True() *Boolean {
 	return b.Equal(true)
 }
 
-// False succeedes if boolean is false.
+// False succeeds if boolean is false.
 //
 // Example:
 //  boolean := NewBoolean(t, false)

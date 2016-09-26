@@ -81,7 +81,7 @@ func (v *Value) Path(path string) *Value {
 	return getPath(&v.chain, v.value, path)
 }
 
-// Schema succeedes if value matches given JSON Schema.
+// Schema succeeds if value matches given JSON Schema.
 //
 // JSON Schema specifies a JSON-based format to define the structure of
 // JSON data. See http://json-schema.org/.
@@ -207,7 +207,7 @@ func (v *Value) Boolean() *Boolean {
 	return &Boolean{v.chain, data}
 }
 
-// Null succeedes if value is nil.
+// Null succeeds if value is nil.
 //
 // Note that non-nil interface{} that points to nil value (e.g. nil slice or map)
 // is also treated as null value. Empty (non-nil) slice or map, empty string, and
@@ -227,7 +227,7 @@ func (v *Value) Null() *Value {
 	return v
 }
 
-// NotNull succeedes if value is not nil.
+// NotNull succeeds if value is not nil.
 //
 // Note that non-nil interface{} that points to nil value (e.g. nil slice or map)
 // is also treated as null value. Empty (non-nil) slice or map, empty string, and
@@ -247,7 +247,7 @@ func (v *Value) NotNull() *Value {
 	return v
 }
 
-// Equal succeedes if value is equal to another value.
+// Equal succeeds if value is equal to another value.
 // Before comparison, both values are converted to canonical form.
 //
 // Example:
@@ -267,7 +267,7 @@ func (v *Value) Equal(value interface{}) *Value {
 	return v
 }
 
-// NotEqual succeedes if value is not equal to another value.
+// NotEqual succeeds if value is not equal to another value.
 // Before comparison, both values are converted to canonical form.
 //
 // Example:

@@ -87,7 +87,7 @@ func (s *String) DateTime(layout ...string) *DateTime {
 	return &DateTime{s.chain, t}
 }
 
-// Empty succeedes if string is empty.
+// Empty succeeds if string is empty.
 //
 // Example:
 //  str := NewString(t, "")
@@ -96,7 +96,7 @@ func (s *String) Empty() *String {
 	return s.Equal("")
 }
 
-// NotEmpty succeedes if string is non-empty.
+// NotEmpty succeeds if string is non-empty.
 //
 // Example:
 //  str := NewString(t, "Hello")
@@ -105,7 +105,7 @@ func (s *String) NotEmpty() *String {
 	return s.NotEqual("")
 }
 
-// Equal succeedes if string is equal to another str.
+// Equal succeeds if string is equal to another str.
 //
 // Example:
 //  str := NewString(t, "Hello")
@@ -118,7 +118,7 @@ func (s *String) Equal(value string) *String {
 	return s
 }
 
-// NotEqual succeedes if string is not equal to another str.
+// NotEqual succeeds if string is not equal to another str.
 //
 // Example:
 //  str := NewString(t, "Hello")
@@ -130,7 +130,7 @@ func (s *String) NotEqual(value string) *String {
 	return s
 }
 
-// EqualFold succeedes if string is equal to another string under Unicode case-folding
+// EqualFold succeeds if string is equal to another string under Unicode case-folding
 // (case-insensitive match).
 //
 // Example:
@@ -145,7 +145,7 @@ func (s *String) EqualFold(value string) *String {
 	return s
 }
 
-// NotEqualFold succeedes if string is not equal to another string under Unicode
+// NotEqualFold succeeds if string is not equal to another string under Unicode
 // case-folding (case-insensitive match).
 //
 // Example:
@@ -160,7 +160,7 @@ func (s *String) NotEqualFold(value string) *String {
 	return s
 }
 
-// Contains succeedes if string contains given substr.
+// Contains succeeds if string contains given substr.
 //
 // Example:
 //  str := NewString(t, "Hello")
@@ -174,7 +174,7 @@ func (s *String) Contains(value string) *String {
 	return s
 }
 
-// NotContains succeedes if string doesn't contain given substr.
+// NotContains succeeds if string doesn't contain given substr.
 //
 // Example:
 //  str := NewString(t, "Hello")
@@ -188,7 +188,7 @@ func (s *String) NotContains(value string) *String {
 	return s
 }
 
-// ContainsFold succeedes if string contains given substring under Unicode case-folding
+// ContainsFold succeeds if string contains given substring under Unicode case-folding
 // (case-insensitive match).
 //
 // Example:
@@ -203,7 +203,7 @@ func (s *String) ContainsFold(value string) *String {
 	return s
 }
 
-// NotContainsFold succeedes if string doesn't contain given substring under Unicode
+// NotContainsFold succeeds if string doesn't contain given substring under Unicode
 // case-folding (case-insensitive match).
 //
 // Example:
@@ -295,7 +295,7 @@ func (s *String) MatchAll(re string) []Match {
 	return ret
 }
 
-// NotMatch succeedes if the string doesn't match to given regexp.
+// NotMatch succeeds if the string doesn't match to given regexp.
 //
 // regexp.Compile is used to construct regexp, and Regexp.MatchString
 // is used to perform match.
