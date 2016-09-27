@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/http/httptest"
 
@@ -48,7 +49,7 @@ func (binder Binder) RoundTrip(req *http.Request) (*http.Response, error) {
 		req.Body = ioutil.NopCloser(bytes.NewReader(nil))
 	}
 
-	if req.URL != nil && req.URL.Scheme == "https" {
+	if req.URL != nil && req.URL.Scheme == "https" && binder.TLS != nil {
 		req.TLS = binder.TLS
 	}
 
@@ -87,6 +88,8 @@ func (binder Binder) RoundTrip(req *http.Request) (*http.Response, error) {
 type FastBinder struct {
 	// FastHTTP handler invoked for every request.
 	Handler fasthttp.RequestHandler
+	// TLS connection state used for https:// requests.
+	TLS *tls.ConnectionState
 }
 
 // NewFastBinder returns a new FastBinder given a fasthttp.RequestHandler.
@@ -103,8 +106,16 @@ func NewFastBinder(handler fasthttp.RequestHandler) FastBinder {
 func (binder FastBinder) RoundTrip(stdreq *http.Request) (*http.Response, error) {
 	fastreq := std2fast(stdreq)
 
+	var conn net.Conn
+	if stdreq.URL != nil && stdreq.URL.Scheme == "https" && binder.TLS != nil {
+		conn = connTLS{state: binder.TLS}
+	} else {
+		conn = connNonTLS{}
+	}
+
 	ctx := fasthttp.RequestCtx{}
-	ctx.Init(fastreq, nil, nil)
+	ctx.Init2(conn, fastLogger{}, true)
+	fastreq.CopyTo(&ctx.Request)
 
 	if stdreq.ContentLength >= 0 {
 		ctx.Request.Header.SetContentLength(int(stdreq.ContentLength))
@@ -173,4 +184,31 @@ func fast2std(stdreq *http.Request, fastresp *fasthttp.Response) *http.Response 
 	}
 
 	return stdresp
+}
+
+type fastLogger struct{}
+
+func (fastLogger) Printf(format string, args ...interface{}) {
+	_, _ = format, args
+}
+
+type connNonTLS struct {
+	net.Conn
+}
+
+func (connNonTLS) RemoteAddr() net.Addr {
+	return &net.TCPAddr{IP: net.IPv4zero}
+}
+
+func (connNonTLS) LocalAddr() net.Addr {
+	return &net.TCPAddr{IP: net.IPv4zero}
+}
+
+type connTLS struct {
+	connNonTLS
+	state *tls.ConnectionState
+}
+
+func (c connTLS) ConnectionState() tls.ConnectionState {
+	return *c.state
 }

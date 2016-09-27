@@ -229,6 +229,61 @@ func TestFastBinder(t *testing.T) {
 	assert.Equal(t, []string(nil), resp.TransferEncoding)
 }
 
+func TestFastBinderTLS(t *testing.T) {
+	var isHTTPS, isTLS bool
+
+	tlsState := &tls.ConnectionState{}
+
+	handler := func(ctx *fasthttp.RequestCtx) {
+		isHTTPS = strings.HasPrefix(string(ctx.Request.Header.RequestURI()), "https://")
+		isTLS = ctx.IsTLS()
+		if isTLS {
+			assert.Equal(t, *tlsState, *ctx.TLSConnectionState())
+		}
+	}
+
+	httpClient := &http.Client{
+		Transport: &FastBinder{
+			Handler: handler,
+			TLS:     nil,
+		},
+	}
+
+	httpsClient := &http.Client{
+		Transport: &FastBinder{
+			Handler: handler,
+			TLS:     tlsState,
+		},
+	}
+
+	req, _ := http.NewRequest("GET", "http://example.com/path", strings.NewReader("body"))
+	resp, err := httpClient.Do(req)
+	assert.Nil(t, err)
+	assert.False(t, isHTTPS)
+	assert.False(t, isTLS)
+
+	req, _ = http.NewRequest("GET", "https://example.com/path", strings.NewReader("body"))
+	resp, err = httpClient.Do(req)
+	assert.Nil(t, err)
+	assert.NotNil(t, resp)
+	assert.True(t, isHTTPS)
+	assert.False(t, isTLS)
+
+	req, _ = http.NewRequest("GET", "http://example.com/path", strings.NewReader("body"))
+	resp, err = httpsClient.Do(req)
+	assert.Nil(t, err)
+	assert.NotNil(t, resp)
+	assert.False(t, isHTTPS)
+	assert.False(t, isTLS)
+
+	req, _ = http.NewRequest("GET", "https://example.com/path", strings.NewReader("body"))
+	resp, err = httpsClient.Do(req)
+	assert.Nil(t, err)
+	assert.NotNil(t, resp)
+	assert.True(t, isHTTPS)
+	assert.True(t, isTLS)
+}
+
 func TestFastBinderChunked(t *testing.T) {
 	handler := func(ctx *fasthttp.RequestCtx) {
 		assert.Equal(t, "POST", string(ctx.Request.Header.Method()))
