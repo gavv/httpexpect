@@ -81,11 +81,12 @@ func (binder Binder) RoundTrip(req *http.Request) (*http.Response, error) {
 // FastBinder implements networkless http.RoundTripper attached directly
 // to fasthttp.RequestHandler.
 //
-// FastBinder emulates network communication by invoking given http.Handler
-// directly. It passes converts http.Request to fasthttp.Request, invokes
-// handler, and then converts fasthttp.Response to http.Response.
+// FastBinder emulates network communication by invoking given fasthttp.RequestHandler
+// directly. It converts http.Request to fasthttp.Request, invokes handler, and then
+// converts fasthttp.Response to http.Response.
 type FastBinder struct {
-	handler fasthttp.RequestHandler
+	// FastHTTP handler invoked for every request.
+	Handler fasthttp.RequestHandler
 }
 
 // NewFastBinder returns a new FastBinder given a fasthttp.RequestHandler.
@@ -95,18 +96,15 @@ type FastBinder struct {
 //       Transport: NewFastBinder(fasthandler),
 //   }
 func NewFastBinder(handler fasthttp.RequestHandler) FastBinder {
-	return FastBinder{handler}
+	return FastBinder{Handler: handler}
 }
 
 // RoundTrip implements http.RoundTripper.RoundTrip.
 func (binder FastBinder) RoundTrip(stdreq *http.Request) (*http.Response, error) {
-	var fastreq fasthttp.Request
+	fastreq := std2fast(stdreq)
 
-	convertRequest(stdreq, &fastreq)
-
-	var ctx fasthttp.RequestCtx
-
-	ctx.Init(&fastreq, nil, nil)
+	ctx := fasthttp.RequestCtx{}
+	ctx.Init(fastreq, nil, nil)
 
 	if stdreq.ContentLength >= 0 {
 		ctx.Request.Header.SetContentLength(int(stdreq.ContentLength))
@@ -121,12 +119,13 @@ func (binder FastBinder) RoundTrip(stdreq *http.Request) (*http.Response, error)
 		}
 	}
 
-	binder.handler(&ctx)
+	binder.Handler(&ctx)
 
-	return convertResponse(stdreq, &ctx.Response), nil
+	return fast2std(stdreq, &ctx.Response), nil
 }
 
-func convertRequest(stdreq *http.Request, fastreq *fasthttp.Request) {
+func std2fast(stdreq *http.Request) *fasthttp.Request {
+	fastreq := &fasthttp.Request{}
 	fastreq.SetRequestURI(stdreq.URL.String())
 
 	fastreq.Header.SetMethod(stdreq.Method)
@@ -140,9 +139,11 @@ func convertRequest(stdreq *http.Request, fastreq *fasthttp.Request) {
 			}
 		}
 	}
+
+	return fastreq
 }
 
-func convertResponse(stdreq *http.Request, fastresp *fasthttp.Response) *http.Response {
+func fast2std(stdreq *http.Request, fastresp *fasthttp.Response) *http.Response {
 	status := fastresp.Header.StatusCode()
 	body := fastresp.Body()
 
