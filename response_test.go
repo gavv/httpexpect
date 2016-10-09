@@ -43,6 +43,7 @@ func TestResponseFailed(t *testing.T) {
 	resp.NoContent()
 	resp.ContentType("", "")
 	resp.TransferEncoding("")
+	resp.ContentEncoding("")
 }
 
 func TestResponseDuration(t *testing.T) {
@@ -400,6 +401,26 @@ func TestResponseTransferEncoding(t *testing.T) {
 	resp.chain.reset()
 
 	resp.TransferEncoding()
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
+}
+
+func TestResponseContentEncoding(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	headers := map[string][]string{
+		"Content-Encoding": {"gzip"},
+	}
+
+	resp := NewResponse(reporter, &http.Response{
+		Header: http.Header(headers),
+	})
+
+	resp.ContentEncoding("gzip")
+	resp.chain.assertOK(t)
+	resp.chain.reset()
+
+	resp.ContentEncoding()
 	resp.chain.assertFailed(t)
 	resp.chain.reset()
 }

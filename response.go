@@ -310,6 +310,16 @@ func (r *Response) TransferEncoding(encoding ...string) *Response {
 	return r
 }
 
+// ContentEncoding succeeds if response contains given Content-Encoding list.
+// Common values are empty and "gzip".
+func (r *Response) ContentEncoding(encoding ...string) *Response {
+	if r.chain.failed() {
+		return r
+	}
+	r.checkEqual("\"Content-Encoding\" header", encoding, r.resp.Header["Content-Encoding"])
+	return r
+}
+
 // Text returns a new String object that may be used to inspect response body.
 //
 // Text succeeds if response contains "text/plain" Content-Type header
