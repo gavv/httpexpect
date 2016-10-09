@@ -300,6 +300,16 @@ func (r *Response) ContentType(mediaType string, charset ...string) *Response {
 	return r
 }
 
+// ContentEncoding succeeds if response has exactly given Content-Encoding list.
+// Common values are empty, "gzip", "compress", "deflate", "identity" and "br".
+func (r *Response) ContentEncoding(encoding ...string) *Response {
+	if r.chain.failed() {
+		return r
+	}
+	r.checkEqual("\"Content-Encoding\" header", encoding, r.resp.Header["Content-Encoding"])
+	return r
+}
+
 // TransferEncoding succeeds if response contains given Transfer-Encoding list.
 // Common values are empty, "chunked" and "identity".
 func (r *Response) TransferEncoding(encoding ...string) *Response {
@@ -307,16 +317,6 @@ func (r *Response) TransferEncoding(encoding ...string) *Response {
 		return r
 	}
 	r.checkEqual("\"Transfer-Encoding\" header", encoding, r.resp.TransferEncoding)
-	return r
-}
-
-// ContentEncoding succeeds if response contains given Content-Encoding list.
-// Common values are empty, "gzip", "compress", "deflate", "identity" and "br".
-func (r *Response) ContentEncoding(encoding ...string) *Response {
-	if r.chain.failed() {
-		return r
-	}
-	r.checkEqual("\"Content-Encoding\" header", encoding, r.resp.Header["Content-Encoding"])
 	return r
 }
 

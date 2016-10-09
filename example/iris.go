@@ -91,7 +91,7 @@ func IrisHandler() fasthttp.RequestHandler {
 	sub.Get("/get", func(c *iris.Context) {
 		c.Write(c.Session().GetString("message"))
 	})
-	
+
 	api.Build()
 	return api.Router
 }
