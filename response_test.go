@@ -42,8 +42,8 @@ func TestResponseFailed(t *testing.T) {
 	resp.StatusRange(Status2xx)
 	resp.NoContent()
 	resp.ContentType("", "")
-	resp.TransferEncoding("")
 	resp.ContentEncoding("")
+	resp.TransferEncoding("")
 }
 
 func TestResponseDuration(t *testing.T) {
@@ -385,46 +385,6 @@ func TestResponseContentType(t *testing.T) {
 	resp.chain.reset()
 }
 
-func TestResponseTransferEncoding(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	resp := NewResponse(reporter, &http.Response{
-		TransferEncoding: []string{"foo", "bar"},
-	})
-
-	resp.TransferEncoding("foo", "bar")
-	resp.chain.assertOK(t)
-	resp.chain.reset()
-
-	resp.TransferEncoding("foo")
-	resp.chain.assertFailed(t)
-	resp.chain.reset()
-
-	resp.TransferEncoding()
-	resp.chain.assertFailed(t)
-	resp.chain.reset()
-}
-
-func TestResponseContentEncoding(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	headers := map[string][]string{
-		"Content-Encoding": {"gzip"},
-	}
-
-	resp := NewResponse(reporter, &http.Response{
-		Header: http.Header(headers),
-	})
-
-	resp.ContentEncoding("gzip")
-	resp.chain.assertOK(t)
-	resp.chain.reset()
-
-	resp.ContentEncoding()
-	resp.chain.assertFailed(t)
-	resp.chain.reset()
-}
-
 func TestResponseContentTypeEmptyCharset(t *testing.T) {
 	reporter := newMockReporter(t)
 
@@ -483,6 +443,54 @@ func TestResponseContentTypeInvalid(t *testing.T) {
 	resp2.ContentType("", "")
 	resp2.chain.assertFailed(t)
 	resp2.chain.reset()
+}
+
+func TestResponseContentEncoding(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	headers := map[string][]string{
+		"Content-Encoding": {"gzip", "deflate"},
+	}
+
+	resp := NewResponse(reporter, &http.Response{
+		Header: http.Header(headers),
+	})
+
+	resp.ContentEncoding("gzip", "deflate")
+	resp.chain.assertOK(t)
+	resp.chain.reset()
+
+	resp.ContentEncoding("deflate", "gzip")
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
+
+	resp.ContentEncoding("gzip")
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
+
+	resp.ContentEncoding()
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
+}
+
+func TestResponseTransferEncoding(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	resp := NewResponse(reporter, &http.Response{
+		TransferEncoding: []string{"foo", "bar"},
+	})
+
+	resp.TransferEncoding("foo", "bar")
+	resp.chain.assertOK(t)
+	resp.chain.reset()
+
+	resp.TransferEncoding("foo")
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
+
+	resp.TransferEncoding()
+	resp.chain.assertFailed(t)
+	resp.chain.reset()
 }
 
 func TestResponseText(t *testing.T) {
