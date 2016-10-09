@@ -311,7 +311,7 @@ func (r *Response) TransferEncoding(encoding ...string) *Response {
 }
 
 // ContentEncoding succeeds if response contains given Content-Encoding list.
-// Common values are empty and "gzip".
+// Common values are empty, "gzip", "compress", "deflate", "identity" and "br".
 func (r *Response) ContentEncoding(encoding ...string) *Response {
 	if r.chain.failed() {
 		return r
