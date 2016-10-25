@@ -9,7 +9,8 @@ before_install:
   - go get golang.org/x/tools/cmd/cover
 
 script:
-  - go get -v -t ./...
+  - go get -v -t .
+  - go get -v -t ./_examples
   - go test -coverprofile profile.cov .
-  - go test ./example
+  - go test ./_examples
   - ${GOPATH}/bin/goveralls -coverprofile profile.cov -service=travis-ci
