@@ -5,18 +5,15 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
-	echofasthttp "github.com/labstack/echo/engine/fasthttp"
-	echostandard "github.com/labstack/echo/engine/standard"
 	"github.com/labstack/echo/middleware"
-	"github.com/valyala/fasthttp"
 )
 
-// EchoServer creates HTTP server using echo framework.
+// EchoHandler creates http.Handler using echo framework.
 //
 // Implemented API:
 //  GET /login             authenticate user and return JWT token
 //  GET /restricted/hello  return "hello, world!" (requires authentication)
-func EchoServer() *echo.Echo {
+func EchoHandler() http.Handler {
 	e := echo.New()
 
 	e.POST("/login", func(ctx echo.Context) error {
@@ -49,20 +46,4 @@ func EchoServer() *echo.Echo {
 	})
 
 	return e
-}
-
-// EchoHandlerStandard creates http.Handler for EchoServer().
-func EchoHandlerStandard() http.Handler {
-	server := echostandard.New("")
-	server.SetHandler(EchoServer())
-	return http.Handler(server)
-}
-
-// EchoHandlerFast creates fasthttp.RequestHandler for EchoServer().
-func EchoHandlerFast() fasthttp.RequestHandler {
-	server := echofasthttp.New("")
-	server.SetHandler(EchoServer())
-	return func(ctx *fasthttp.RequestCtx) {
-		server.ServeHTTP(ctx)
-	}
 }

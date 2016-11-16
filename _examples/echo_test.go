@@ -54,7 +54,7 @@ func testEcho(e *httpexpect.Expect) {
 }
 
 func TestEchoClient(t *testing.T) {
-	handler := EchoHandlerStandard()
+	handler := EchoHandler()
 
 	server := httptest.NewServer(handler)
 	defer server.Close()
@@ -71,29 +71,12 @@ func TestEchoClient(t *testing.T) {
 
 }
 
-func TestEchoHandlerStandard(t *testing.T) {
-	handler := EchoHandlerStandard()
+func TestEchoHandler(t *testing.T) {
+	handler := EchoHandler()
 
 	e := httpexpect.WithConfig(httpexpect.Config{
 		Client: &http.Client{
 			Transport: httpexpect.NewBinder(handler),
-			Jar:       httpexpect.NewJar(),
-		},
-		Reporter: httpexpect.NewAssertReporter(t),
-		Printers: []httpexpect.Printer{
-			httpexpect.NewDebugPrinter(t, true),
-		},
-	})
-
-	testEcho(e)
-}
-
-func TestEchoHandlerFast(t *testing.T) {
-	handler := EchoHandlerFast()
-
-	e := httpexpect.WithConfig(httpexpect.Config{
-		Client: &http.Client{
-			Transport: httpexpect.NewFastBinder(handler),
 			Jar:       httpexpect.NewJar(),
 		},
 		Reporter: httpexpect.NewAssertReporter(t),
