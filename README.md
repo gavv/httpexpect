@@ -75,11 +75,11 @@ See [`_examples`](_examples) directory for complete standalone examples.
 
 * [`iris_test.go`](_examples/iris_test.go)
 
-    Testing various examples written using [`iris`](https://github.com/kataras/iris/) framework: JSON queries and validation, url and form parameters, basic auth, sessions, streaming.
+    Testing various examples written using [`iris`](https://github.com/kataras/iris/) framework: JSON queries and validation, url and form parameters, basic auth, sessions, streaming. Running tests via `fasthttp.RequestHandler`.
 
 * [`echo_test.go`](_examples/echo_test.go)
 
-    Testing JWT authentication implemented with [`echo`](https://github.com/labstack/echo/) framework. Running tests via http client, `http.Handler`, or `fasthttp.RequestHandler`.
+    Testing JWT authentication implemented with [`echo`](https://github.com/labstack/echo/) framework. Running tests via http client or `http.Handler`.
 
 ## Quick start
 
