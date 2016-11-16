@@ -67,7 +67,7 @@ Documentation is available on [GoDoc](https://godoc.org/github.com/gavv/httpexpe
 
 ## Examples
 
-See [`_examples/`](_examples) directory for complete standalone examples.
+See [`_examples`](_examples) directory for complete standalone examples.
 
 * [`fruits_test.go`](_examples/fruits_test.go)
 

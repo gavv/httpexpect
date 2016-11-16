@@ -1,2 +1,2 @@
-// Package example is usage example for httpexpect.
-package example
+// Package examples demonstrates httpexpect usage.
+package examples
