@@ -67,17 +67,17 @@ Documentation is available on [GoDoc](https://godoc.org/github.com/gavv/httpexpe
 
 ## Examples
 
-See [`example/`](example) directory for complete standalone examples.
+See [`example/`](_examples) directory for complete standalone examples.
 
-* [`fruits_test.go`](example/fruits_test.go)
+* [`fruits_test.go`](_examples/fruits_test.go)
 
     Testing simple CRUD server written using bare `net/http`.
 
-* [`iris_test.go`](example/iris_test.go)
+* [`iris_test.go`](_examples/iris_test.go)
 
     Testing various examples written using [`iris`](https://github.com/kataras/iris/) framework: JSON queries and validation, url and form parameters, basic auth, sessions, streaming.
 
-* [`echo_test.go`](example/echo_test.go)
+* [`echo_test.go`](_examples/echo_test.go)
 
     Testing JWT authentication implemented with [`echo`](https://github.com/labstack/echo/) framework. Running tests via http client, `http.Handler`, or `fasthttp.RequestHandler`.
 
