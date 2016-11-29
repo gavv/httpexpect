@@ -6,10 +6,10 @@ import (
 	"reflect"
 	"regexp"
 
-	"github.com/gavv/gojsondiff"
-	"github.com/gavv/gojsondiff/formatter"
 	"github.com/xeipuuv/gojsonschema"
 	"github.com/yalp/jsonpath"
+	"github.com/yudai/gojsondiff"
+	"github.com/yudai/gojsondiff/formatter"
 )
 
 func toString(str interface{}) (s string, ok bool) {
