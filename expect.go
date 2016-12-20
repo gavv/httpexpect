@@ -71,6 +71,7 @@ import (
 	"time"
 
 	"golang.org/x/net/publicsuffix"
+	"google.golang.org/appengine/aetest"
 )
 
 // Expect is a toplevel object that contains user Config and allows
@@ -111,6 +112,8 @@ type Config struct {
 	// you're happy with their format, but want to send logs somewhere
 	// else instead of testing.TB.
 	Printers []Printer
+
+	GaeTestInstance aetest.Instance
 }
 
 // Client is used to send http.Request and receive http.Response.

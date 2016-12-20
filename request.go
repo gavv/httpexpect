@@ -86,16 +86,27 @@ func NewRequest(config Config, method, path string, pathargs ...interface{}) *Re
 		chain.fail(err.Error())
 	}
 
-	return &Request{
-		config: config,
-		chain:  chain,
-		path:   path,
-		http: http.Request{
+	var h http.Request
+	if config.GaeTestInstance != nil {
+		foo, err := config.GaeTestInstance.NewRequest(method, path, nil)
+		if err != nil {
+			panic(err)
+		}
+		h = *foo
+	} else {
+		h = http.Request{
 			ProtoMajor: 1,
 			ProtoMinor: 1,
 			Method:     method,
 			Header:     make(http.Header),
-		},
+		}
+	}
+
+	return &Request{
+		config: config,
+		chain:  chain,
+		path:   path,
+		http:   h,
 	}
 }
 
