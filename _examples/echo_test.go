@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gavv/httpexpect"
+	"github.com/mattes/httpexpect"
 )
 
 // Echo JWT token authentication tests.
