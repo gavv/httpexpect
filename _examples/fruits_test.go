@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gavv/httpexpect"
+	"github.com/mattes/httpexpect"
 )
 
 func TestFruits(t *testing.T) {

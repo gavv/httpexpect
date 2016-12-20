@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/gavv/httpexpect"
+	"github.com/mattes/httpexpect"
 )
 
 func irisTester(t *testing.T) *httpexpect.Expect {
