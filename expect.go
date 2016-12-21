@@ -18,9 +18,9 @@
 // Concrete behaviour is determined by Client implementation passed to Config struct.
 // If you're using http.Client, set its Transport field (http.RoundTriper) to one of
 // the following:
-//  1. default (nil) - use regular HTTP transport from net/http (you should start server)
+//  1. default (nil) - use HTTP transport from net/http (you should start server)
 //  2. httpexpect.Binder - invoke given http.Handler directly
-//  4. httpexpect.FastBinder - invoke given fasthttp.RequestHandler directly
+//  3. httpexpect.FastBinder - invoke given fasthttp.RequestHandler directly
 //
 // Note that http handler can be usually obtained from http framework you're using.
 // E.g., echo framework provides either http.Handler or fasthttp.RequestHandler.
@@ -34,10 +34,11 @@
 //
 // Whenever values are checked for equality in httpexpect, they are converted
 // to "canonical form":
+//  - structs are converted to map[string]interface{}
 //  - type aliases are removed
 //  - numeric types are converted to float64
-//  - non-nil interfaces pointing to nil slices and maps are replaced with nil interfaces
-//  - structs are converted to map[string]interface{}
+//  - non-nil interfaces pointing to nil slices and maps are replaced with
+//    nil interfaces
 //
 // This is equivalent to subsequently json.Marshal() and json.Unmarshal() the value
 // and currently is implemented so.
