@@ -58,11 +58,11 @@
 //  e0 := array.Element(0)  // success
 //  e1 := array.Element(1)  // success
 //
-//  s0 := e0.String()       // success
-//  s1 := e1.String()       // failure; e1 and s1 are marked as failed, e0 and s0 are not
+//  s0 := e0.String()  // success
+//  s1 := e1.String()  // failure; e1 and s1 are marked as failed, e0 and s0 are not
 //
-//  s0.Equal("foo")         // success
-//  s1.Equal("bar")         // this check is ignored because s1 is marked as failed
+//  s0.Equal("foo")    // success
+//  s1.Equal("bar")    // this check is ignored because s1 is marked as failed
 package httpexpect
 
 import (
