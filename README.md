@@ -18,7 +18,6 @@ Workflow:
 * URL query parameters (encoding using [`go-querystring`](https://github.com/google/go-querystring) package).
 * Headers, cookies, payload: JSON,  urlencoded or multipart forms (encoding using [`form`](https://github.com/ajg/form) package), plain text.
 * Create custom [request builders](#reusable-builders) that can be reused.
-* Create requests for Google App Engine testing with `RequestFactory`.
 
 ##### Response assertions
 
@@ -43,6 +42,7 @@ Workflow:
 ##### Tuning
 
 * Tests can communicate with server via HTTP client or invoke HTTP handler (Go function) directly.
+* Custom request factory can be provided, e.g. from the Google App Engine testing.
 * Integration with [`fasthttp`](https://github.com/valyala/fasthttp/) HTTP handler is available too.
 * Custom HTTP client, logger, and failure reporter may be provided by user.
 
