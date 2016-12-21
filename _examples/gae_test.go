@@ -33,10 +33,10 @@ func GaeHandler() http.Handler {
 	return m
 }
 
-// GaeInstance is our global dev_appserver instance
+// GaeInstance is our global dev_appserver instance.
 var GaeInstance aetest.Instance
 
-// TestMain is called first to create the GaeInstance
+// TestMain is called first to create the GaeInstance.
 func TestMain(m *testing.M) {
 	// INFO: Remove the return to actually run the tests.
 	// Requires installed Google Appengine SDK.
@@ -54,7 +54,7 @@ func TestMain(m *testing.M) {
 	os.Exit(c)
 }
 
-// newHttpExpect returns a new Expect instance for testing
+// newHttpExpect returns a new Expect instance for testing.
 func newHttpExpect(t *testing.T) *httpexpect.Expect {
 	return httpexpect.WithConfig(httpexpect.Config{
 		RequestFactory: GaeInstance,
