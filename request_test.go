@@ -29,11 +29,32 @@ func TestRequestFailed(t *testing.T) {
 	req := &Request{
 		config: config,
 		chain:  chain,
-		http:   &http.Request{},
+		http:   nil,
 	}
 
-	resp := req.Expect()
+	req.WithPath("foo", "bar")
+	req.WithPathObject(map[string]interface{}{"foo": "bar"})
+	req.WithQuery("foo", "bar")
+	req.WithQueryObject(map[string]interface{}{"foo": "bar"})
+	req.WithQueryString("foo=bar")
+	req.WithURL("http://example.com")
+	req.WithHeaders(map[string]string{"foo": "bar"})
+	req.WithHeader("foo", "bar")
+	req.WithCookies(map[string]string{"foo": "bar"})
+	req.WithCookie("foo", "bar")
+	req.WithBasicAuth("foo", "bar")
+	req.WithProto("HTTP/1.1")
+	req.WithChunked(strings.NewReader("foo"))
+	req.WithBytes([]byte("foo"))
+	req.WithText("foo")
+	req.WithJSON(map[string]string{"foo": "bar"})
+	req.WithForm(map[string]string{"foo": "bar"})
+	req.WithFormField("foo", "bar")
+	req.WithFile("foo", "bar", strings.NewReader("baz"))
+	req.WithFileBytes("foo", "bar", []byte("baz"))
+	req.WithMultipart()
 
+	resp := req.Expect()
 	assert.False(t, resp == nil)
 
 	req.chain.assertFailed(t)
@@ -41,13 +62,16 @@ func TestRequestFailed(t *testing.T) {
 }
 
 func TestRequestEmpty(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
 	client := &mockClient{}
 
 	reporter := newMockReporter(t)
 
 	config := Config{
-		Client:   client,
-		Reporter: reporter,
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
 	}
 
 	req := NewRequest(config, "", "")
@@ -59,13 +83,16 @@ func TestRequestEmpty(t *testing.T) {
 }
 
 func TestRequestTime(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
 	client := &mockClient{}
 
 	reporter := newMockReporter(t)
 
 	config := Config{
-		Client:   client,
-		Reporter: reporter,
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
 	}
 
 	for n := 0; n < 10; n++ {
@@ -76,13 +103,16 @@ func TestRequestTime(t *testing.T) {
 }
 
 func TestRequestProto(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
 	client := &mockClient{}
 
 	reporter := newMockReporter(t)
 
 	config := Config{
-		Client:   client,
-		Reporter: reporter,
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
 	}
 
 	req := NewRequest(config, "METHOD", "/")
@@ -108,26 +138,31 @@ func TestRequestProto(t *testing.T) {
 }
 
 func TestRequestURLConcatenate(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
 	client := &mockClient{}
 
 	reporter := NewAssertReporter(t)
 
 	config1 := Config{
-		BaseURL:  "",
-		Client:   client,
-		Reporter: reporter,
+		RequestFactory: factory,
+		BaseURL:        "",
+		Client:         client,
+		Reporter:       reporter,
 	}
 
 	config2 := Config{
-		BaseURL:  "http://example.com",
-		Client:   client,
-		Reporter: reporter,
+		RequestFactory: factory,
+		BaseURL:        "http://example.com",
+		Client:         client,
+		Reporter:       reporter,
 	}
 
 	config3 := Config{
-		BaseURL:  "http://example.com/",
-		Client:   client,
-		Reporter: reporter,
+		RequestFactory: factory,
+		BaseURL:        "http://example.com/",
+		Client:         client,
+		Reporter:       reporter,
 	}
 
 	reqs := []*Request{
@@ -158,20 +193,24 @@ func TestRequestURLConcatenate(t *testing.T) {
 }
 
 func TestRequestURLOverwrite(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
 	client := &mockClient{}
 
 	reporter := NewAssertReporter(t)
 
 	config1 := Config{
-		BaseURL:  "",
-		Client:   client,
-		Reporter: reporter,
+		RequestFactory: factory,
+		BaseURL:        "",
+		Client:         client,
+		Reporter:       reporter,
 	}
 
 	config2 := Config{
-		BaseURL:  "http://foobar.com",
-		Client:   client,
-		Reporter: reporter,
+		RequestFactory: factory,
+		BaseURL:        "http://foobar.com",
+		Client:         client,
+		Reporter:       reporter,
 	}
 
 	reqs := []*Request{
@@ -192,6 +231,8 @@ func TestRequestURLOverwrite(t *testing.T) {
 }
 
 func TestRequestURLInterpolate(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
 	client := &mockClient{}
 
 	reporter := newMockReporter(t)
@@ -199,9 +240,10 @@ func TestRequestURLInterpolate(t *testing.T) {
 	var reqs [3]*Request
 
 	config := Config{
-		BaseURL:  "http://example.com/",
-		Client:   client,
-		Reporter: reporter,
+		RequestFactory: factory,
+		BaseURL:        "http://example.com/",
+		Client:         client,
+		Reporter:       reporter,
 	}
 
 	reqs[0] = NewRequest(config, "METHOD", "/foo/{arg}", "bar")
@@ -274,13 +316,16 @@ func TestRequestURLInterpolate(t *testing.T) {
 }
 
 func TestRequestURLQuery(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
 	client := &mockClient{}
 
 	reporter := newMockReporter(t)
 
 	config := Config{
-		Client:   client,
-		Reporter: reporter,
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
 	}
 
 	req1 := NewRequest(config, "METHOD", "http://example.com/path").
@@ -339,13 +384,16 @@ func TestRequestURLQuery(t *testing.T) {
 }
 
 func TestRequestHeaders(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
 	client := &mockClient{}
 
 	reporter := newMockReporter(t)
 
 	config := Config{
-		Client:   client,
-		Reporter: reporter,
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
 	}
 
 	req := NewRequest(config, "METHOD", "url")
@@ -376,13 +424,16 @@ func TestRequestHeaders(t *testing.T) {
 }
 
 func TestRequestCookies(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
 	client := &mockClient{}
 
 	reporter := newMockReporter(t)
 
 	config := Config{
-		Client:   client,
-		Reporter: reporter,
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
 	}
 
 	req := NewRequest(config, "METHOD", "url")
@@ -409,13 +460,16 @@ func TestRequestCookies(t *testing.T) {
 }
 
 func TestRequestBasicAuth(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
 	client := &mockClient{}
 
 	reporter := newMockReporter(t)
 
 	config := Config{
-		Client:   client,
-		Reporter: reporter,
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
 	}
 
 	req := NewRequest(config, "METHOD", "url")
@@ -428,13 +482,16 @@ func TestRequestBasicAuth(t *testing.T) {
 }
 
 func TestRequestBodyChunked(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
 	client := &mockClient{}
 
 	reporter := newMockReporter(t)
 
 	config := Config{
-		Client:   client,
-		Reporter: reporter,
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
 	}
 
 	req := NewRequest(config, "METHOD", "url")
@@ -456,13 +513,16 @@ func TestRequestBodyChunked(t *testing.T) {
 }
 
 func TestRequestBodyChunkedNil(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
 	client := &mockClient{}
 
 	reporter := newMockReporter(t)
 
 	config := Config{
-		Client:   client,
-		Reporter: reporter,
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
 	}
 
 	req := NewRequest(config, "METHOD", "url")
@@ -477,13 +537,16 @@ func TestRequestBodyChunkedNil(t *testing.T) {
 }
 
 func TestRequestBodyChunkedProto(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
 	client := &mockClient{}
 
 	reporter := newMockReporter(t)
 
 	config := Config{
-		Client:   client,
-		Reporter: reporter,
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
 	}
 
 	req1 := NewRequest(config, "METHOD", "url")
@@ -507,13 +570,16 @@ func TestRequestBodyChunkedProto(t *testing.T) {
 }
 
 func TestRequestBodyBytes(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
 	client := &mockClient{}
 
 	reporter := newMockReporter(t)
 
 	config := Config{
-		Client:   client,
-		Reporter: reporter,
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
 	}
 
 	req := NewRequest(config, "METHOD", "url")
@@ -535,13 +601,16 @@ func TestRequestBodyBytes(t *testing.T) {
 }
 
 func TestRequestBodyBytesNil(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
 	client := &mockClient{}
 
 	reporter := newMockReporter(t)
 
 	config := Config{
-		Client:   client,
-		Reporter: reporter,
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
 	}
 
 	req := NewRequest(config, "METHOD", "url")
@@ -556,13 +625,16 @@ func TestRequestBodyBytesNil(t *testing.T) {
 }
 
 func TestRequestBodyText(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
 	client := &mockClient{}
 
 	reporter := newMockReporter(t)
 
 	config := Config{
-		Client:   client,
-		Reporter: reporter,
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
 	}
 
 	expectedHeaders := map[string][]string{
@@ -590,13 +662,16 @@ func TestRequestBodyText(t *testing.T) {
 }
 
 func TestRequestBodyForm(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
 	client := &mockClient{}
 
 	reporter := newMockReporter(t)
 
 	config := Config{
-		Client:   client,
-		Reporter: reporter,
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
 	}
 
 	expectedHeaders := map[string][]string{
@@ -627,13 +702,16 @@ func TestRequestBodyForm(t *testing.T) {
 }
 
 func TestRequestBodyField(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
 	client := &mockClient{}
 
 	reporter := newMockReporter(t)
 
 	config := Config{
-		Client:   client,
-		Reporter: reporter,
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
 	}
 
 	expectedHeaders := map[string][]string{
@@ -662,13 +740,16 @@ func TestRequestBodyField(t *testing.T) {
 }
 
 func TestRequestBodyFormStruct(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
 	client := &mockClient{}
 
 	reporter := newMockReporter(t)
 
 	config := Config{
-		Client:   client,
-		Reporter: reporter,
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
 	}
 
 	expectedHeaders := map[string][]string{
@@ -697,13 +778,16 @@ func TestRequestBodyFormStruct(t *testing.T) {
 }
 
 func TestRequestBodyFormCombined(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
 	client := &mockClient{}
 
 	reporter := newMockReporter(t)
 
 	config := Config{
-		Client:   client,
-		Reporter: reporter,
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
 	}
 
 	expectedHeaders := map[string][]string{
@@ -732,13 +816,16 @@ func TestRequestBodyFormCombined(t *testing.T) {
 }
 
 func TestRequestBodyMultipart(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
 	client := &mockClient{}
 
 	reporter := newMockReporter(t)
 
 	config := Config{
-		Client:   client,
-		Reporter: reporter,
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
 	}
 
 	req := NewRequest(config, "POST", "url")
@@ -784,13 +871,16 @@ func TestRequestBodyMultipart(t *testing.T) {
 }
 
 func TestRequestBodyMultipartFile(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
 	client := &mockClient{}
 
 	reporter := newMockReporter(t)
 
 	config := Config{
-		Client:   client,
-		Reporter: reporter,
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
 	}
 
 	req := NewRequest(config, "POST", "url")
@@ -850,13 +940,16 @@ func TestRequestBodyMultipartFile(t *testing.T) {
 }
 
 func TestRequestBodyJSON(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
 	client := &mockClient{}
 
 	reporter := newMockReporter(t)
 
 	config := Config{
-		Client:   client,
-		Reporter: reporter,
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
 	}
 
 	expectedHeaders := map[string][]string{
@@ -884,13 +977,16 @@ func TestRequestBodyJSON(t *testing.T) {
 }
 
 func TestRequestContentLength(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
 	client := &mockClient{}
 
 	reporter := newMockReporter(t)
 
 	config := Config{
-		Client:   client,
-		Reporter: reporter,
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
 	}
 
 	req1 := NewRequest(config, "METHOD", "url")
@@ -933,13 +1029,16 @@ func TestRequestContentLength(t *testing.T) {
 }
 
 func TestRequestContentTypeOverwrite(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
 	client := &mockClient{}
 
 	reporter := newMockReporter(t)
 
 	config := Config{
-		Client:   client,
-		Reporter: reporter,
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
 	}
 
 	req1 := NewRequest(config, "METHOD", "url")
@@ -978,13 +1077,16 @@ func TestRequestContentTypeOverwrite(t *testing.T) {
 }
 
 func TestRequestErrorMarshalForm(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
 	client := &mockClient{}
 
 	reporter := newMockReporter(t)
 
 	config := Config{
-		Client:   client,
-		Reporter: reporter,
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
 	}
 
 	req := NewRequest(config, "METHOD", "url")
@@ -998,13 +1100,16 @@ func TestRequestErrorMarshalForm(t *testing.T) {
 }
 
 func TestRequestErrorMarshalJSON(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
 	client := &mockClient{}
 
 	reporter := newMockReporter(t)
 
 	config := Config{
-		Client:   client,
-		Reporter: reporter,
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
 	}
 
 	req := NewRequest(config, "METHOD", "url")
@@ -1018,6 +1123,8 @@ func TestRequestErrorMarshalJSON(t *testing.T) {
 }
 
 func TestRequestErrorReadFile(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
 	client := &mockClient{
 		err: errors.New("error"),
 	}
@@ -1025,8 +1132,9 @@ func TestRequestErrorReadFile(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	config := Config{
-		Client:   client,
-		Reporter: reporter,
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
 	}
 
 	req := NewRequest(config, "METHOD", "url")
@@ -1041,6 +1149,8 @@ func TestRequestErrorReadFile(t *testing.T) {
 }
 
 func TestRequestErrorSend(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
 	client := &mockClient{
 		err: errors.New("error"),
 	}
@@ -1048,8 +1158,9 @@ func TestRequestErrorSend(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	config := Config{
-		Client:   client,
-		Reporter: reporter,
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
 	}
 
 	req := NewRequest(config, "METHOD", "url")
@@ -1061,6 +1172,8 @@ func TestRequestErrorSend(t *testing.T) {
 }
 
 func TestRequestErrorConflictBody(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
 	client := &mockClient{
 		err: errors.New("error"),
 	}
@@ -1068,8 +1181,9 @@ func TestRequestErrorConflictBody(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	config := Config{
-		Client:   client,
-		Reporter: reporter,
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
 	}
 
 	req1 := NewRequest(config, "METHOD", "url")
@@ -1118,6 +1232,8 @@ func TestRequestErrorConflictBody(t *testing.T) {
 }
 
 func TestRequestErrorConflictType(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
 	client := &mockClient{
 		err: errors.New("error"),
 	}
@@ -1125,8 +1241,9 @@ func TestRequestErrorConflictType(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	config := Config{
-		Client:   client,
-		Reporter: reporter,
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
 	}
 
 	req1 := NewRequest(config, "METHOD", "url")
@@ -1155,6 +1272,8 @@ func TestRequestErrorConflictType(t *testing.T) {
 }
 
 func TestRequestErrorConflictMultipart(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
 	client := &mockClient{
 		err: errors.New("error"),
 	}
@@ -1162,8 +1281,9 @@ func TestRequestErrorConflictMultipart(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	config := Config{
-		Client:   client,
-		Reporter: reporter,
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
 	}
 
 	req1 := NewRequest(config, "METHOD", "url")

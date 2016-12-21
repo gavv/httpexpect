@@ -25,6 +25,7 @@ func TestExpectMethods(t *testing.T) {
 	reporter := NewAssertReporter(t)
 
 	config := Config{
+		BaseURL:  "http://example.com",
 		Client:   client,
 		Reporter: reporter,
 	}
@@ -197,6 +198,31 @@ func TestExpectStdCompat(_ *testing.T) {
 	New(&testing.T{}, "")
 	New(&testing.B{}, "")
 	New(testing.TB(&testing.T{}), "")
+}
+
+type testRequestFactory struct{}
+
+func (testRequestFactory) NewRequest(method, urlStr string, body io.Reader) (*http.Request, error) {
+	r := httptest.NewRequest(method, urlStr, body)
+	r.Header.Add("X-TestRequestFactory", "TestRequestFactory")
+	return r, nil
+}
+
+func TestExpectRequestFactory(t *testing.T) {
+	e1 := WithConfig(Config{
+		BaseURL:  "http://example.com",
+		Reporter: NewAssertReporter(t),
+	})
+	r1 := e1.Request("GET", "/")
+	assert.Equal(t, "", r1.http.Header.Get("X-TestRequestFactory"))
+
+	e2 := WithConfig(Config{
+		BaseURL:        "http://example.com",
+		Reporter:       NewAssertReporter(t),
+		RequestFactory: testRequestFactory{},
+	})
+	r2 := e2.Request("GET", "/")
+	assert.Equal(t, "TestRequestFactory", r2.http.Header.Get("X-TestRequestFactory"))
 }
 
 func createBasicHandler() http.Handler {
@@ -814,20 +840,4 @@ func TestExpectStaticFastBinder(t *testing.T) {
 		Expect().
 		Status(http.StatusOK).
 		Text().Equal("hello, world!")
-}
-
-type testRequestFactory struct{}
-
-func (*testRequestFactory) NewRequest(method, urlStr string, body io.Reader) (*http.Request, error) {
-	r := httptest.NewRequest(method, urlStr, body)
-	r.Header.Add("X-TestRequestFactory", "TestRequestFactory")
-	return r, nil
-}
-
-func TestRequestFactoryConfig(t *testing.T) {
-	r1 := NewRequest(Config{}, "GET", "/")
-	assert.NotNil(t, r1, "RequestFactory == nil should create default *http.Request")
-
-	r2 := NewRequest(Config{RequestFactory: &testRequestFactory{}}, "GET", "/")
-	assert.Equal(t, "TestRequestFactory", r2.http.Header.Get("X-TestRequestFactory"))
 }

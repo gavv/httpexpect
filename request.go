@@ -62,6 +62,14 @@ type Request struct {
 // separated by slash. If BaseURL ends with a slash and path (after interpolation)
 // starts with a slash, only single slash is inserted.
 func NewRequest(config Config, method, path string, pathargs ...interface{}) *Request {
+	if config.RequestFactory == nil {
+		panic("config.RequestFactory == nil")
+	}
+
+	if config.Client == nil {
+		panic("config.Client == nil")
+	}
+
 	chain := makeChain(config.Reporter)
 
 	n := 0
@@ -86,27 +94,16 @@ func NewRequest(config Config, method, path string, pathargs ...interface{}) *Re
 		chain.fail(err.Error())
 	}
 
-	// If config.RequestFactory is specified, use it to create *http.Request
-	var httpReq *http.Request
-	if config.RequestFactory != nil {
-		httpReq, err = config.RequestFactory.NewRequest(method, path, nil)
-		if err != nil {
-			chain.fail(err.Error())
-		}
-	} else {
-		httpReq = &http.Request{
-			ProtoMajor: 1,
-			ProtoMinor: 1,
-			Method:     method,
-			Header:     make(http.Header),
-		}
+	hr, err := config.RequestFactory.NewRequest(method, config.BaseURL, nil)
+	if err != nil {
+		chain.fail(err.Error())
 	}
 
 	return &Request{
 		config: config,
 		chain:  chain,
 		path:   path,
-		http:   httpReq,
+		http:   hr,
 	}
 }
 
@@ -123,6 +120,9 @@ func NewRequest(config Config, method, path string, pathargs ...interface{}) *Re
 //  req.WithPath("repo", "httpexpect")
 //  // path will be "/repos/gavv/httpexpect"
 func (r *Request) WithPath(key string, value interface{}) *Request {
+	if r.chain.failed() {
+		return r
+	}
 	ok := false
 	path, err := interpol.WithFunc(r.path, func(k string, w io.Writer) error {
 		if strings.EqualFold(k, key) {
@@ -182,6 +182,9 @@ func (r *Request) WithPath(key string, value interface{}) *Request {
 //  req.WithPathObject(map[string]string{"user": "gavv", "repo": "httpexpect"})
 //  // path will be "/repos/gavv/httpexpect"
 func (r *Request) WithPathObject(object interface{}) *Request {
+	if r.chain.failed() {
+		return r
+	}
 	if object == nil {
 		return r
 	}
@@ -215,6 +218,9 @@ func (r *Request) WithPathObject(object interface{}) *Request {
 //  req.WithQuery("b", "foo")
 //  // URL is now http://example.com/path?a=123&b=foo
 func (r *Request) WithQuery(key string, value interface{}) *Request {
+	if r.chain.failed() {
+		return r
+	}
 	if r.query == nil {
 		r.query = make(url.Values)
 	}
@@ -244,6 +250,9 @@ func (r *Request) WithQuery(key string, value interface{}) *Request {
 //  req.WithQueryObject(map[string]interface{}{"a": 123, "b": "foo"})
 //  // URL is now http://example.com/path?a=123&b=foo
 func (r *Request) WithQueryObject(object interface{}) *Request {
+	if r.chain.failed() {
+		return r
+	}
 	if object == nil {
 		return r
 	}
@@ -281,6 +290,9 @@ func (r *Request) WithQueryObject(object interface{}) *Request {
 //  req.WithQueryString("b=22&c=33")
 //  // URL is now http://example.com/path?a=11&bb=22&c=33
 func (r *Request) WithQueryString(query string) *Request {
+	if r.chain.failed() {
+		return r
+	}
 	v, err := url.ParseQuery(query)
 	if err != nil {
 		r.chain.fail(err.Error())
@@ -304,8 +316,15 @@ func (r *Request) WithQueryString(query string) *Request {
 //  req := NewRequest(config, "PUT", "/path")
 //  req.WithURL("http://example.com")
 //  // URL is now http://example.com/path
-func (r *Request) WithURL(url string) *Request {
-	r.config.BaseURL = url
+func (r *Request) WithURL(urlStr string) *Request {
+	if r.chain.failed() {
+		return r
+	}
+	if u, err := url.Parse(urlStr); err == nil {
+		r.http.URL = u
+	} else {
+		r.chain.fail(err.Error())
+	}
 	return r
 }
 
@@ -317,6 +336,9 @@ func (r *Request) WithURL(url string) *Request {
 //      "Content-Type": "application/json",
 //  })
 func (r *Request) WithHeaders(headers map[string]string) *Request {
+	if r.chain.failed() {
+		return r
+	}
 	for k, v := range headers {
 		r.WithHeader(k, v)
 	}
@@ -329,6 +351,9 @@ func (r *Request) WithHeaders(headers map[string]string) *Request {
 //  req := NewRequest(config, "PUT", "http://example.com/path")
 //  req.WithHeader("Content-Type": "application/json")
 func (r *Request) WithHeader(k, v string) *Request {
+	if r.chain.failed() {
+		return r
+	}
 	switch http.CanonicalHeaderKey(k) {
 	case "Host":
 		r.http.Host = v
@@ -354,6 +379,9 @@ func (r *Request) WithHeader(k, v string) *Request {
 //      "bar": "bb",
 //  })
 func (r *Request) WithCookies(cookies map[string]string) *Request {
+	if r.chain.failed() {
+		return r
+	}
 	for k, v := range cookies {
 		r.WithCookie(k, v)
 	}
@@ -366,6 +394,9 @@ func (r *Request) WithCookies(cookies map[string]string) *Request {
 //  req := NewRequest(config, "PUT", "http://example.com/path")
 //  req.WithCookie("name", "value")
 func (r *Request) WithCookie(k, v string) *Request {
+	if r.chain.failed() {
+		return r
+	}
 	r.http.AddCookie(&http.Cookie{
 		Name:  k,
 		Value: v,
@@ -383,6 +414,9 @@ func (r *Request) WithCookie(k, v string) *Request {
 //  req := NewRequest(config, "PUT", "http://example.com/path")
 //  req.WithBasicAuth("john", "secret")
 func (r *Request) WithBasicAuth(username, password string) *Request {
+	if r.chain.failed() {
+		return r
+	}
 	r.http.SetBasicAuth(username, password)
 	return r
 }
@@ -395,6 +429,9 @@ func (r *Request) WithBasicAuth(username, password string) *Request {
 //  req := NewRequest(config, "PUT", "http://example.com/path")
 //  req.WithProto("HTTP/2.0")
 func (r *Request) WithProto(proto string) *Request {
+	if r.chain.failed() {
+		return r
+	}
 	major, minor, ok := http.ParseHTTPVersion(proto)
 	if !ok {
 		r.chain.fail(
@@ -422,6 +459,9 @@ func (r *Request) WithProto(proto string) *Request {
 //  req.WithHeader("Content-Type": "application/octet-stream")
 //  req.WithChunked(fh)
 func (r *Request) WithChunked(reader io.Reader) *Request {
+	if r.chain.failed() {
+		return r
+	}
 	if !r.http.ProtoAtLeast(1, 1) {
 		r.chain.fail("chunked Transfer-Encoding requires at least \"HTTP/1.1\","+
 			"but \"HTTP/%d.%d\" is enabled", r.http.ProtoMajor, r.http.ProtoMinor)
@@ -438,6 +478,9 @@ func (r *Request) WithChunked(reader io.Reader) *Request {
 //  req.WithHeader("Content-Type": "application/json")
 //  req.WithBytes([]byte(`{"foo": 123}`))
 func (r *Request) WithBytes(b []byte) *Request {
+	if r.chain.failed() {
+		return r
+	}
 	if b == nil {
 		r.setBody("WithBytes", nil, 0, false)
 	} else {
@@ -453,6 +496,9 @@ func (r *Request) WithBytes(b []byte) *Request {
 //  req := NewRequest(config, "PUT", "http://example.com/path")
 //  req.WithText("hello, world!")
 func (r *Request) WithText(s string) *Request {
+	if r.chain.failed() {
+		return r
+	}
 	r.setType("WithText", "text/plain; charset=utf-8", false)
 	r.setBody("WithText", strings.NewReader(s), len(s), false)
 	return r
@@ -472,6 +518,9 @@ func (r *Request) WithText(s string) *Request {
 //  req := NewRequest(config, "PUT", "http://example.com/path")
 //  req.WithJSON(map[string]interface{}{"foo": 123})
 func (r *Request) WithJSON(object interface{}) *Request {
+	if r.chain.failed() {
+		return r
+	}
 	b, err := json.Marshal(object)
 	if err != nil {
 		r.chain.fail(err.Error())
@@ -506,6 +555,10 @@ func (r *Request) WithJSON(object interface{}) *Request {
 //  req := NewRequest(config, "PUT", "http://example.com/path")
 //  req.WithForm(map[string]interface{}{"foo": 123})
 func (r *Request) WithForm(object interface{}) *Request {
+	if r.chain.failed() {
+		return r
+	}
+
 	f, err := form.EncodeToValues(object)
 	if err != nil {
 		r.chain.fail(err.Error())
@@ -552,6 +605,9 @@ func (r *Request) WithForm(object interface{}) *Request {
 //  req.WithFormField("foo", 123).
 //      WithFormField("bar", 456)
 func (r *Request) WithFormField(key string, value interface{}) *Request {
+	if r.chain.failed() {
+		return r
+	}
 	if r.multipart != nil {
 		r.setType("WithFormField", "multipart/form-data", false)
 
@@ -591,6 +647,10 @@ func (r *Request) WithFormField(key string, value interface{}) *Request {
 //      WithFile("avatar", "john.png", fh)
 //  fh.Close()
 func (r *Request) WithFile(key, path string, reader ...io.Reader) *Request {
+	if r.chain.failed() {
+		return r
+	}
+
 	r.setType("WithFile", "multipart/form-data", false)
 
 	if r.multipart == nil {
@@ -636,6 +696,9 @@ func (r *Request) WithFile(key, path string, reader ...io.Reader) *Request {
 //      WithFileBytes("avatar", "john.png", b)
 //  fh.Close()
 func (r *Request) WithFileBytes(key, path string, data []byte) *Request {
+	if r.chain.failed() {
+		return r
+	}
 	return r.WithFile(key, path, bytes.NewReader(data))
 }
 
@@ -654,6 +717,10 @@ func (r *Request) WithFileBytes(key, path string, data []byte) *Request {
 //  req.WithMultipart().
 //      WithForm(map[string]interface{}{"foo": 123})
 func (r *Request) WithMultipart() *Request {
+	if r.chain.failed() {
+		return r
+	}
+
 	r.setType("WithMultipart", "multipart/form-data", false)
 
 	if r.multipart == nil {
@@ -684,10 +751,7 @@ func (r *Request) Expect() *Response {
 }
 
 func (r *Request) encodeRequest() {
-	if u, err := url.Parse(r.config.BaseURL); err == nil {
-		r.http.URL = u
-	} else {
-		r.chain.fail(err.Error())
+	if r.chain.failed() {
 		return
 	}
 

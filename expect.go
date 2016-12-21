@@ -25,11 +25,10 @@
 // Note that http handler can be usually obtained from http framework you're using.
 // E.g., echo framework provides either http.Handler or fasthttp.RequestHandler.
 //
-// You can also provide your own Client or http.RoundTriper implementation and do
-// whatever you want to convert http.Request to http.Response.
+// You can also provide your own implementation of RequestFactory (creates http.Request),
+// or Client (gets http.Request and returns http.Response).
 //
-// If you're starting server from tests, it's very handy to use net/http/httptest
-// for that.
+// If you're starting server from tests, it's very handy to use net/http/httptest.
 //
 // Value equality
 //
@@ -88,6 +87,13 @@ type Config struct {
 	// appended automatically.
 	BaseURL string
 
+	// RequestFactory is used to pass in a custom *http.Request generation func.
+	// May be nil.
+	//
+	// You can use DefaultRequestFactory, or provide custom implementation.
+	// Useful for Google App Engine testing for example.
+	RequestFactory RequestFactory
+
 	// Client is used to send http.Request and receive http.Response.
 	// Should not be nil.
 	//
@@ -112,10 +118,12 @@ type Config struct {
 	// you're happy with their format, but want to send logs somewhere
 	// else instead of testing.TB.
 	Printers []Printer
+}
 
-	// RequestFactory is used to pass in a custom *http.Request generation func.
-	// Useful for Google App Engine testing for example. May be nil.
-	RequestFactory RequestFactory
+// RequestFactory is used to create all http.Request objects.
+// aetest.Instance from the Google App Engine implements this interface.
+type RequestFactory interface {
+	NewRequest(method, urlStr string, body io.Reader) (*http.Request, error)
 }
 
 // Client is used to send http.Request and receive http.Response.
@@ -143,8 +151,7 @@ type Logger interface {
 }
 
 // Reporter is used to report failures.
-// testing.TB implements this interface. AssertReporter and RequireReporter,
-// also implement this interface using testify.
+// testing.TB, AssertReporter, and RequireReporter implement this interface.
 type Reporter interface {
 	// Errorf reports failure.
 	// Allowed to return normally or terminate test using t.FailNow().
@@ -157,10 +164,12 @@ type LoggerReporter interface {
 	Reporter
 }
 
-// RequestFactory can be used for custom http requests
-// i.e. Google App Engine test http requests
-type RequestFactory interface {
-	NewRequest(method, urlStr string, body io.Reader) (*http.Request, error)
+// DefaultRequestFactory is the default RequestFactory implementation which just calls http.NewRequest.
+type DefaultRequestFactory struct{}
+
+// NewRequest implements RequestFactory.NewRequest.
+func (DefaultRequestFactory) NewRequest(method, urlStr string, body io.Reader) (*http.Request, error) {
+	return http.NewRequest(method, urlStr, body)
 }
 
 // New returns a new Expect object.
@@ -169,10 +178,11 @@ type RequestFactory interface {
 // trailing slash is allowed but not required and is appended automatically.
 //
 // New is a shorthand for WithConfig. It uses:
-//  - CompactPrinter as Printer with testing.TB as Logger
+//  - CompactPrinter as Printer, with testing.TB as Logger
 //  - AssertReporter as Reporter
+//  - DefaultRequestFactory as RequestFactory
 //
-// Client is set to default client with non-nil Jar:
+// Client is set to a default client with a non-nil Jar:
 //  &http.Client{
 //      Jar: httpexpect.NewJar(),
 //  }
@@ -199,7 +209,9 @@ func New(t LoggerReporter, baseURL string) *Expect {
 //
 // Reporter should not be nil.
 //
-// If Client is nil, it's set to default client with non-nil Jar:
+// If RequestFactory is nil, it's set to a DefaultRequestFactory instance.
+//
+// If Client is nil, it's set to a default client with a non-nil Jar:
 //  &http.Client{
 //      Jar: httpexpect.NewJar(),
 //  }
@@ -226,6 +238,9 @@ func New(t LoggerReporter, baseURL string) *Expect {
 func WithConfig(config Config) *Expect {
 	if config.Reporter == nil {
 		panic("config.Reporter is nil")
+	}
+	if config.RequestFactory == nil {
+		config.RequestFactory = DefaultRequestFactory{}
 	}
 	if config.Client == nil {
 		config.Client = &http.Client{
