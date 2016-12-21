@@ -82,6 +82,10 @@ See [`_examples`](_examples) directory for complete standalone examples.
 
     Testing JWT authentication implemented with [`echo`](https://github.com/labstack/echo/) framework. Running tests via http client or `http.Handler`.
 
+* [`gae_test.go`](_examples/gae_test.go)
+
+    Testing an application running in Google App Engine.
+
 ## Quick start
 
 ##### Hello, world!
