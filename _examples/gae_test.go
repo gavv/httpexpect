@@ -1,12 +1,14 @@
 package examples
 
 import (
-	"github.com/gavv/httpexpect"
-	"google.golang.org/appengine"
-	"google.golang.org/appengine/aetest"
 	"net/http"
 	"os"
 	"testing"
+
+	"google.golang.org/appengine"
+	"google.golang.org/appengine/aetest"
+
+	"github.com/gavv/httpexpect"
 )
 
 // init is used by GAE to start serving the app
