@@ -10,7 +10,7 @@ import (
 
 // EchoHandler creates http.Handler using echo framework.
 //
-// Implemented API:
+// Routes:
 //  GET /login             authenticate user and return JWT token
 //  GET /restricted/hello  return "hello, world!" (requires authentication)
 func EchoHandler() http.Handler {

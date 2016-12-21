@@ -11,13 +11,18 @@ import (
 	"github.com/gavv/httpexpect"
 )
 
-// init is used by GAE to start serving the app
+// init() is used by GAE to start serving the app
 // added here for illustration purposes
+//
 // func init() {
-// 	http.Handle("/", Router())
+//     http.Handle("/", GaeHandler())
 // }
 
-func Router() http.Handler {
+// GaeHandler creates http.Handler to run in the Google App Engine.
+//
+// Routes:
+//  GET /ping   return "pong"
+func GaeHandler() http.Handler {
 	m := http.NewServeMux()
 
 	m.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
@@ -33,7 +38,6 @@ var GaeInstance aetest.Instance
 
 // TestMain is called first to create the GaeInstance
 func TestMain(m *testing.M) {
-
 	// INFO: Remove the return to actually run the tests.
 	// Requires installed Google Appengine SDK.
 	// https://cloud.google.com/appengine/downloads
@@ -53,12 +57,12 @@ func TestMain(m *testing.M) {
 // newHttpExpect returns a new Expect instance for testing
 func newHttpExpect(t *testing.T) *httpexpect.Expect {
 	return httpexpect.WithConfig(httpexpect.Config{
+		RequestFactory: GaeInstance,
 		Client: &http.Client{
-			Transport: httpexpect.NewBinder(Router()),
+			Transport: httpexpect.NewBinder(GaeHandler()),
 			Jar:       httpexpect.NewJar(),
 		},
-		Reporter:       httpexpect.NewAssertReporter(t),
-		RequestFactory: GaeInstance,
+		Reporter: httpexpect.NewAssertReporter(t),
 	})
 }
 
