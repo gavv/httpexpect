@@ -25,7 +25,7 @@ func EchoHandler() http.Handler {
 			token := jwt.New(jwt.SigningMethodHS256)
 
 			// generate encoded token and send it as response
-			t, err := token.SignedString([]byte("seret"))
+			t, err := token.SignedString([]byte("secret"))
 			if err != nil {
 				return err
 			}
@@ -39,7 +39,7 @@ func EchoHandler() http.Handler {
 
 	r := e.Group("/restricted")
 
-	r.Use(middleware.JWT([]byte("seret")))
+	r.Use(middleware.JWT([]byte("secret")))
 
 	r.GET("/hello", func(ctx echo.Context) error {
 		return ctx.String(http.StatusOK, "hello, world!")
