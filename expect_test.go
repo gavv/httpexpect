@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"crypto/tls"
 	"encoding/json"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -813,4 +814,20 @@ func TestExpectStaticFastBinder(t *testing.T) {
 		Expect().
 		Status(http.StatusOK).
 		Text().Equal("hello, world!")
+}
+
+type testRequestFactory struct{}
+
+func (*testRequestFactory) NewRequest(method, urlStr string, body io.Reader) (*http.Request, error) {
+	r := httptest.NewRequest(method, urlStr, body)
+	r.Header.Add("X-TestRequestFactory", "TestRequestFactory")
+	return r, nil
+}
+
+func TestRequestFactoryConfig(t *testing.T) {
+	r1 := NewRequest(Config{}, "GET", "/")
+	assert.NotNil(t, r1, "RequestFactory == nil should create default *http.Request")
+
+	r2 := NewRequest(Config{RequestFactory: &testRequestFactory{}}, "GET", "/")
+	assert.Equal(t, "TestRequestFactory", r2.http.Header.Get("X-TestRequestFactory"))
 }

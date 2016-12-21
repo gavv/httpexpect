@@ -18,6 +18,7 @@ Workflow:
 * URL query parameters (encoding using [`go-querystring`](https://github.com/google/go-querystring) package).
 * Headers, cookies, payload: JSON,  urlencoded or multipart forms (encoding using [`form`](https://github.com/ajg/form) package), plain text.
 * Create custom [request builders](#reusable-builders) that can be reused.
+* Create requests for Google App Engine testing with `RequestFactory`.
 
 ##### Response assertions
 

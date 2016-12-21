@@ -66,6 +66,7 @@
 package httpexpect
 
 import (
+	"io"
 	"net/http"
 	"net/http/cookiejar"
 	"time"
@@ -111,6 +112,10 @@ type Config struct {
 	// you're happy with their format, but want to send logs somewhere
 	// else instead of testing.TB.
 	Printers []Printer
+
+	// RequestFactory is used to pass in a custom *http.Request generation func.
+	// Useful for Google App Engine testing for example. May be nil.
+	RequestFactory RequestFactory
 }
 
 // Client is used to send http.Request and receive http.Response.
@@ -150,6 +155,12 @@ type Reporter interface {
 type LoggerReporter interface {
 	Logger
 	Reporter
+}
+
+// RequestFactory can be used for custom http requests
+// i.e. Google App Engine test http requests
+type RequestFactory interface {
+	NewRequest(method, urlStr string, body io.Reader) (*http.Request, error)
 }
 
 // New returns a new Expect object.

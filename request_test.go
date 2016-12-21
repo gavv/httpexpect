@@ -29,6 +29,7 @@ func TestRequestFailed(t *testing.T) {
 	req := &Request{
 		config: config,
 		chain:  chain,
+		http:   &http.Request{},
 	}
 
 	resp := req.Expect()

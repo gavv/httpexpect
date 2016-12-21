@@ -27,7 +27,7 @@ import (
 type Request struct {
 	config     Config
 	chain      chain
-	http       http.Request
+	http       *http.Request
 	path       string
 	query      url.Values
 	form       url.Values
@@ -86,16 +86,27 @@ func NewRequest(config Config, method, path string, pathargs ...interface{}) *Re
 		chain.fail(err.Error())
 	}
 
-	return &Request{
-		config: config,
-		chain:  chain,
-		path:   path,
-		http: http.Request{
+	// If config.RequestFactory is specified, use it to create *http.Request
+	var httpReq *http.Request
+	if config.RequestFactory != nil {
+		httpReq, err = config.RequestFactory.NewRequest(method, path, nil)
+		if err != nil {
+			chain.fail(err.Error())
+		}
+	} else {
+		httpReq = &http.Request{
 			ProtoMajor: 1,
 			ProtoMinor: 1,
 			Method:     method,
 			Header:     make(http.Header),
-		},
+		}
+	}
+
+	return &Request{
+		config: config,
+		chain:  chain,
+		path:   path,
+		http:   httpReq,
 	}
 }
 
@@ -706,12 +717,12 @@ func (r *Request) sendRequest() (resp *http.Response, elapsed time.Duration) {
 	}
 
 	for _, printer := range r.config.Printers {
-		printer.Request(&r.http)
+		printer.Request(r.http)
 	}
 
 	start := monotime.Now()
 
-	resp, err := r.config.Client.Do(&r.http)
+	resp, err := r.config.Client.Do(r.http)
 
 	elapsed = monotime.Since(start)
 
