@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -200,12 +201,17 @@ func TestExpectStdCompat(_ *testing.T) {
 	New(testing.TB(&testing.T{}), "")
 }
 
-type testRequestFactory struct{}
+type testRequestFactory struct {
+	lastreq *http.Request
+	fail    bool
+}
 
-func (testRequestFactory) NewRequest(method, urlStr string, body io.Reader) (*http.Request, error) {
-	r := httptest.NewRequest(method, urlStr, body)
-	r.Header.Add("X-TestRequestFactory", "TestRequestFactory")
-	return r, nil
+func (f *testRequestFactory) NewRequest(method, urlStr string, body io.Reader) (*http.Request, error) {
+	if f.fail {
+		return nil, errors.New("testRequestFactory")
+	}
+	f.lastreq = httptest.NewRequest(method, urlStr, body)
+	return f.lastreq, nil
 }
 
 func TestExpectRequestFactory(t *testing.T) {
@@ -214,15 +220,31 @@ func TestExpectRequestFactory(t *testing.T) {
 		Reporter: NewAssertReporter(t),
 	})
 	r1 := e1.Request("GET", "/")
-	assert.Equal(t, "", r1.http.Header.Get("X-TestRequestFactory"))
+	r1.chain.assertOK(t)
+	assert.NotNil(t, r1.http)
 
+	f2 := &testRequestFactory{}
 	e2 := WithConfig(Config{
 		BaseURL:        "http://example.com",
 		Reporter:       NewAssertReporter(t),
-		RequestFactory: testRequestFactory{},
+		RequestFactory: f2,
 	})
 	r2 := e2.Request("GET", "/")
-	assert.Equal(t, "TestRequestFactory", r2.http.Header.Get("X-TestRequestFactory"))
+	r2.chain.assertOK(t)
+	assert.NotNil(t, f2.lastreq)
+	assert.True(t, f2.lastreq == r2.http)
+
+	f3 := &testRequestFactory{
+		fail: true,
+	}
+	e3 := WithConfig(Config{
+		BaseURL:        "http://example.com",
+		Reporter:       newMockReporter(t),
+		RequestFactory: f3,
+	})
+	r3 := e3.Request("GET", "/")
+	r3.chain.assertFailed(t)
+	assert.Nil(t, f3.lastreq)
 }
 
 func createBasicHandler() http.Handler {
