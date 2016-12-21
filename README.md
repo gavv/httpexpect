@@ -84,7 +84,7 @@ See [`_examples`](_examples) directory for complete standalone examples.
 
 * [`gae_test.go`](_examples/gae_test.go)
 
-    Testing an application running in Google App Engine.
+    Testing an application running in [Google App Engine](https://ru.wikipedia.org/wiki/Google_App_Engine).
 
 ## Quick start
 
