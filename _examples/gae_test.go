@@ -5,7 +5,6 @@ import (
 	"os"
 	"testing"
 
-	"google.golang.org/appengine"
 	"google.golang.org/appengine/aetest"
 
 	"github.com/gavv/httpexpect"
@@ -18,25 +17,10 @@ import (
 //     http.Handle("/", GaeHandler())
 // }
 
-// GaeHandler creates http.Handler to run in the Google App Engine.
-//
-// Routes:
-//  GET /ping   return "pong"
-func GaeHandler() http.Handler {
-	m := http.NewServeMux()
+// gaeInstance is our global dev_appserver instance.
+var gaeInstance aetest.Instance
 
-	m.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
-		_ = appengine.NewContext(r)
-		w.Write([]byte("pong"))
-	})
-
-	return m
-}
-
-// GaeInstance is our global dev_appserver instance.
-var GaeInstance aetest.Instance
-
-// TestMain is called first to create the GaeInstance.
+// TestMain is called first to create the gaeInstance.
 func TestMain(m *testing.M) {
 	// INFO: Remove the return to actually run the tests.
 	// Requires installed Google Appengine SDK.
@@ -44,29 +28,35 @@ func TestMain(m *testing.M) {
 	return
 
 	var err error
-	GaeInstance, err = aetest.NewInstance(nil)
+	gaeInstance, err = aetest.NewInstance(nil)
 	if err != nil {
 		panic(err)
 	}
 
 	c := m.Run() // call all actual tests
-	GaeInstance.Close()
+	gaeInstance.Close()
 	os.Exit(c)
 }
 
 // newHttpExpect returns a new Expect instance for testing.
 func newHttpExpect(t *testing.T) *httpexpect.Expect {
 	return httpexpect.WithConfig(httpexpect.Config{
-		RequestFactory: GaeInstance,
+		// Use gaeInstance to create requests.
+		// aetest.Instance is compatible with httpexpect.RequestFactory.
+		RequestFactory: gaeInstance,
+
+		// Pass requests directly to GaeHandler.
 		Client: &http.Client{
 			Transport: httpexpect.NewBinder(GaeHandler()),
 			Jar:       httpexpect.NewJar(),
 		},
+
+		// Report errors using testify.
 		Reporter: httpexpect.NewAssertReporter(t),
 	})
 }
 
-// TestPing is an actual tests, using the global GaeInstance
+// TestPing is an actual tests, using the global gaeInstance
 func TestPing(t *testing.T) {
 	e := newHttpExpect(t)
 	e.GET("/ping").Expect().Status(200)
