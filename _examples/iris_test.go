@@ -1,3 +1,8 @@
+// This example is for Iris v6(HTTP/2).
+// The only httpexpect change-> from: httpexpect.NewFastBinder(handler) to: httpexpect.NewBinder(handler).
+//
+// For Iris v5(fasthttp) example look here:
+// https://github.com/gavv/httpexpect/blob/cccd8d0064fdfdafa29a83f7304fb9747f0b29e5/_examples/iris_test.go
 package examples
 
 import (
@@ -14,7 +19,7 @@ func irisTester(t *testing.T) *httpexpect.Expect {
 	return httpexpect.WithConfig(httpexpect.Config{
 		BaseURL: "http://example.com",
 		Client: &http.Client{
-			Transport: httpexpect.NewFastBinder(handler),
+			Transport: httpexpect.NewBinder(handler),
 			Jar:       httpexpect.NewJar(),
 		},
 		Reporter: httpexpect.NewAssertReporter(t),
@@ -78,10 +83,10 @@ func TestIrisParams(t *testing.T) {
 		P2 string `form:"p2"`
 	}
 
-	// GET /params/xxx/yyy?q=qqq
+	// POST /params/xxx/yyy?q=qqq
 	// Form: p1=P1&p2=P2
 
-	r := e.GET("/params/{x}/{y}", "xxx", "yyy").
+	r := e.POST("/params/{x}/{y}", "xxx", "yyy").
 		WithQuery("q", "qqq").WithForm(Form{P1: "P1", P2: "P2"}).
 		Expect().
 		Status(http.StatusOK).JSON().Object()
