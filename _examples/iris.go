@@ -6,6 +6,9 @@
 package examples
 
 import (
+	"fmt"
+	"io"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/iris-contrib/middleware/basicauth"
@@ -73,6 +76,28 @@ func IrisHandler() http.Handler {
 		c.JSON(iris.StatusOK, iris.Map{
 			"name": name,
 		})
+	})
+
+	api.Get("/stream", func(c *iris.Context) {
+		// return true to continue, return false to stop and flush
+		c.StreamWriter(func(w io.Writer) bool {
+			for i := 0; i < 10; i++ {
+				fmt.Fprintf(w, "%d", i)
+			}
+			return false
+		})
+		// if we had to write here then the StreamWriter callback should return true.
+	})
+
+	api.Post("/stream", func(c *iris.Context) {
+		// Optional: Limit the request body size by c.SetMaxRequestBodySize(20 << 10)
+		// or by middleware api.Post("/stream", iris.LimitRequestBodySize(20 << 10), func(c *iris.Context){...})
+		body, err := ioutil.ReadAll(c.Request.Body)
+		if err != nil {
+			c.EmitError(iris.StatusBadRequest)
+			return
+		}
+		c.Write(body)
 	})
 
 	sub := api.Party("subdomain.")
