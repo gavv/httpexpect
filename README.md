@@ -41,10 +41,9 @@ Workflow:
 
 ##### Tuning
 
-* Tests can communicate with server via HTTP client or invoke HTTP handler (Go function) directly.
-* Custom request factory can be provided, e.g. from the Google App Engine testing.
-* Integration with [`fasthttp`](https://github.com/valyala/fasthttp/) HTTP handler is available too.
-* Custom HTTP client, logger, and failure reporter may be provided by user.
+* Tests can communicate with server via real HTTP client or invoke `net/http` or [`fasthttp`](https://github.com/valyala/fasthttp/) handler directly.
+* Custom HTTP client, logger, printer, and failure reporter may be provided by user.
+* Custom HTTP request factory may be provided, e.g. from the Google App Engine testing.
 
 ## Status
 
@@ -72,19 +71,23 @@ See [`_examples`](_examples) directory for complete standalone examples.
 
 * [`fruits_test.go`](_examples/fruits_test.go)
 
-    Testing simple CRUD server written using bare `net/http`.
+    Testing a simple CRUD server made with bare `net/http`.
 
 * [`iris_test.go`](_examples/iris_test.go)
 
-    Testing various examples written using [`iris`](https://github.com/kataras/iris/) framework: JSON queries and validation, url and form parameters, basic auth, sessions, streaming. Running tests via `fasthttp.RequestHandler`.
+    Testing a server made with [`iris`](https://github.com/kataras/iris/) framework. Example includes JSON queries and validation, URL and form parameters, basic auth, sessions, and streaming. Tests invoke the `http.Handler` directly.
 
 * [`echo_test.go`](_examples/echo_test.go)
 
-    Testing JWT authentication implemented with [`echo`](https://github.com/labstack/echo/) framework. Running tests via http client or `http.Handler`.
+    Testing a server with JWT authentication made with [`echo`](https://github.com/labstack/echo/) framework. Tests use either HTTP client or invoke the `http.Handler` directly.
+
+* [`fasthttp_test.go`](_examples/fasthttp_test.go)
+
+    Testing a server made with [`fasthttp`](https://github.com/valyala/fasthttp) package. Tests invoke the `fasthttp.RequestHandler` directly.
 
 * [`gae_test.go`](_examples/gae_test.go)
 
-    Testing an application running in [Google App Engine](https://ru.wikipedia.org/wiki/Google_App_Engine).
+    Testing a server running under the [Google App Engine](https://ru.wikipedia.org/wiki/Google_App_Engine).
 
 ## Quick start
 
