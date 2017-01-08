@@ -170,8 +170,10 @@ func diffValues(expected, actual interface{}) string {
 		return " (unavailable)"
 	}
 
-	formatter := formatter.NewAsciiFormatter(expected)
-	formatter.ShowArrayIndex = true
+	config := formatter.AsciiFormatterConfig{
+		ShowArrayIndex: true,
+	}
+	formatter := formatter.NewAsciiFormatter(expected, config)
 
 	str, err := formatter.Format(diff)
 	if err != nil {
