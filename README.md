@@ -106,7 +106,7 @@ import (
 
 func TestFruits(t *testing.T) {
 	// create http.Handler
-	handler := MyServer()
+	handler := FruitsHandler()
 
 	// run server using httptest
 	server := httptest.NewServer(handler)
@@ -116,7 +116,7 @@ func TestFruits(t *testing.T) {
 	e := httpexpect.New(t, server.URL)
 
 	// is it working?
-	e.GET("/endpoint").
+	e.GET("/fruits").
 		Expect().
 		Status(http.StatusOK).JSON().Array().Empty()
 }
