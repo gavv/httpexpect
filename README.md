@@ -413,11 +413,37 @@ e := httpexpect.WithConfig(httpexpect.Config{
 
 ## Contributing
 
-Feel free to report bugs, suggest improvements, and send pull requests! Don't forget to add documentation and tests for new features and run all tests before submitting pull requests:
+Feel free to report bugs, suggest improvements, and send pull requests! Please add documentation and tests for new features.
+
+Build with up-to-date dependencies:
 
 ```
-go test github.com/gavv/httpexpect
-go test github.com/gavv/httpexpect/_examples
+$ go get -u -t . ./_examples
+```
+
+Run tests:
+
+```
+$ go test . ./_examples
+```
+
+Format code:
+
+```
+$ gofmt -s -w . ./_examples
+```
+
+Install linters:
+
+```
+$ go get github.com/alecthomas/gometalinter
+$ gometalinter --install
+```
+
+Run linters:
+
+```
+$ gometalinter --config .gometalinter
 ```
 
 ## License
