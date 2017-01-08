@@ -1,8 +1,3 @@
-// This example is for Iris v6(HTTP/2).
-// The only httpexpect change-> from: httpexpect.NewFastBinder(handler) to: httpexpect.NewBinder(handler).
-//
-// For Iris v5(fasthttp) example look here:
-// https://github.com/gavv/httpexpect/blob/cccd8d0064fdfdafa29a83f7304fb9747f0b29e5/_examples/iris_test.go
 package examples
 
 import (

@@ -5,9 +5,8 @@ import (
 	"os"
 	"testing"
 
-	"google.golang.org/appengine/aetest"
-
 	"github.com/gavv/httpexpect"
+	"google.golang.org/appengine/aetest"
 )
 
 // init() is used by GAE to start serving the app
@@ -38,8 +37,8 @@ func TestMain(m *testing.M) {
 	os.Exit(c)
 }
 
-// newHttpExpect returns a new Expect instance for testing.
-func newHttpExpect(t *testing.T) *httpexpect.Expect {
+// gaeTester returns a new Expect instance to test GaeHandler().
+func gaeTester(t *testing.T) *httpexpect.Expect {
 	return httpexpect.WithConfig(httpexpect.Config{
 		// Use gaeInstance to create requests.
 		// aetest.Instance is compatible with httpexpect.RequestFactory.
@@ -56,8 +55,10 @@ func newHttpExpect(t *testing.T) *httpexpect.Expect {
 	})
 }
 
-// TestPing is an actual tests, using the global gaeInstance
-func TestPing(t *testing.T) {
-	e := newHttpExpect(t)
-	e.GET("/ping").Expect().Status(200)
+func TestGae(t *testing.T) {
+	e := gaeTester(t)
+
+	e.GET("/ping").Expect().
+		Status(200).
+		Text().Equal("pong")
 }

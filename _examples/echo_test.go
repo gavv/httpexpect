@@ -10,10 +10,9 @@ import (
 
 // Echo JWT token authentication tests.
 //
-// The same tests are used when testing EchoServer() in three modes:
+// This test is executed for the EchoHandler() in two modes:
 //  - via http client
 //  - via http.Handler
-//  - via fasthttp.RequestHandler
 func testEcho(e *httpexpect.Expect) {
 	type Login struct {
 		Username string `form:"username"`
@@ -68,7 +67,6 @@ func TestEchoClient(t *testing.T) {
 	})
 
 	testEcho(e)
-
 }
 
 func TestEchoHandler(t *testing.T) {

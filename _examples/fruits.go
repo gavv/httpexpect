@@ -7,7 +7,7 @@ import (
 )
 
 type (
-	fruitmap map[string]interface{}
+	fruitMap map[string]interface{}
 )
 
 // FruitServer creates http.Handler for the fruits server.
@@ -16,8 +16,8 @@ type (
 //  GET /fruits           get fruit list
 //  GET /fruits/{name}    get fruit
 //  PUT /fruits/{name}    add or update fruit
-func FruitServer() http.Handler {
-	fruits := fruitmap{}
+func FruitsHandler() http.Handler {
+	fruits := fruitMap{}
 
 	mux := http.NewServeMux()
 
@@ -32,7 +32,7 @@ func FruitServer() http.Handler {
 	return mux
 }
 
-func handleFruitList(fruits fruitmap, w http.ResponseWriter, r *http.Request) {
+func handleFruitList(fruits fruitMap, w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "GET":
 		ret := []string{}
@@ -53,7 +53,7 @@ func handleFruitList(fruits fruitmap, w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func handleFruit(fruits fruitmap, w http.ResponseWriter, r *http.Request) {
+func handleFruit(fruits fruitMap, w http.ResponseWriter, r *http.Request) {
 	_, name := path.Split(r.URL.Path)
 
 	switch r.Method {
