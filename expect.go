@@ -165,11 +165,13 @@ type LoggerReporter interface {
 	Reporter
 }
 
-// DefaultRequestFactory is the default RequestFactory implementation which just calls http.NewRequest.
+// DefaultRequestFactory is the default RequestFactory implementation which just
+// calls http.NewRequest.
 type DefaultRequestFactory struct{}
 
 // NewRequest implements RequestFactory.NewRequest.
-func (DefaultRequestFactory) NewRequest(method, urlStr string, body io.Reader) (*http.Request, error) {
+func (DefaultRequestFactory) NewRequest(
+	method, urlStr string, body io.Reader) (*http.Request, error) {
 	return http.NewRequest(method, urlStr, body)
 }
 

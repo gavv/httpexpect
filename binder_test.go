@@ -200,7 +200,9 @@ func TestFastBinder(t *testing.T) {
 		Transport: NewFastBinder(handler),
 	}
 
-	req, err := http.NewRequest("POST", "http://example.com/path", strings.NewReader("foo=bar"))
+	req, err := http.NewRequest(
+		"POST", "http://example.com/path", strings.NewReader("foo=bar"))
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -259,6 +261,7 @@ func TestFastBinderTLS(t *testing.T) {
 	req, _ := http.NewRequest("GET", "http://example.com/path", strings.NewReader("body"))
 	resp, err := httpClient.Do(req)
 	assert.Nil(t, err)
+	assert.NotNil(t, resp)
 	assert.False(t, isHTTPS)
 	assert.False(t, isTLS)
 
@@ -320,7 +323,9 @@ func TestFastBinderChunked(t *testing.T) {
 		Transport: NewFastBinder(handler),
 	}
 
-	req, err := http.NewRequest("POST", "http://example.com/path", strings.NewReader("foo=bar"))
+	req, err := http.NewRequest(
+		"POST", "http://example.com/path", strings.NewReader("foo=bar"))
+
 	if err != nil {
 		t.Fatal(err)
 	}

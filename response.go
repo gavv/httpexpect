@@ -61,7 +61,8 @@ func NewResponse(
 	return makeResponse(makeChain(reporter), response, dr)
 }
 
-func makeResponse(chain chain, response *http.Response, duration time.Duration) *Response {
+func makeResponse(
+	chain chain, response *http.Response, duration time.Duration) *Response {
 	var content []byte
 	var cookies []*http.Cookie
 	if response != nil {

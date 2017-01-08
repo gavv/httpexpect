@@ -854,11 +854,7 @@ func concatPaths(a, b string) string {
 	if b == "" {
 		return a
 	}
-	if strings.HasSuffix(a, "/") {
-		a = a[:len(a)-1]
-	}
-	if strings.HasPrefix(b, "/") {
-		b = b[1:]
-	}
+	a = strings.TrimSuffix(a, "/")
+	b = strings.TrimPrefix(b, "/")
 	return a + "/" + b
 }

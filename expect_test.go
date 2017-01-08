@@ -206,7 +206,8 @@ type testRequestFactory struct {
 	fail    bool
 }
 
-func (f *testRequestFactory) NewRequest(method, urlStr string, body io.Reader) (*http.Request, error) {
+func (f *testRequestFactory) NewRequest(
+	method, urlStr string, body io.Reader) (*http.Request, error) {
 	if f.fail {
 		return nil, errors.New("testRequestFactory")
 	}

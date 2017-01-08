@@ -10,7 +10,7 @@ type (
 	fruitMap map[string]interface{}
 )
 
-// FruitServer creates http.Handler for the fruits server.
+// FruitsHandler creates http.Handler for the fruits server.
 //
 // Routes:
 //  GET /fruits           get fruit list
