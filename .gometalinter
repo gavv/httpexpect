@@ -1,5 +1,5 @@
 {
-  "Deadline": 30000000000,
+  "Deadline": "30s",
   "LineLength": 90,
   "Enable": [
     "gotype",
