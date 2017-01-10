@@ -408,6 +408,7 @@ e := httpexpect.WithConfig(httpexpect.Config{
 * [`frisby`](https://github.com/verdverm/frisby)
 * [`forest`](https://github.com/emicklei/forest)
 * [`restit`](https://github.com/go-restit/restit)
+* [`supertest`](https://github.com/haoxins/supertest)
 * [`http-test`](https://github.com/vsco/http-test)
 * [`go-json-rest/rest/test`](https://godoc.org/github.com/ant0ine/go-json-rest/rest/test)
 
