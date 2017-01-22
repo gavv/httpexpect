@@ -9,7 +9,7 @@ import (
 	"github.com/xeipuuv/gojsonschema"
 	"github.com/yalp/jsonpath"
 	"github.com/yudai/gojsondiff"
-	"github.com/yudai/gojsondiff/formatter"
+	"gopkg.in/yudai/gojsondiff.v1/formatter"
 )
 
 func toString(str interface{}) (s string, ok bool) {
