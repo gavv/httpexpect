@@ -416,35 +416,16 @@ e := httpexpect.WithConfig(httpexpect.Config{
 
 Feel free to report bugs, suggest improvements, and send pull requests! Please add documentation and tests for new features.
 
-Build with up-to-date dependencies:
+Update dependencies, build code, and run tests and linters:
 
 ```
-$ go get -u -t . ./_examples
-```
-
-Run tests:
-
-```
-$ go test . ./_examples
+$ make
 ```
 
 Format code:
 
 ```
-$ gofmt -s -w . ./_examples
-```
-
-Install linters:
-
-```
-$ go get github.com/alecthomas/gometalinter
-$ gometalinter --install
-```
-
-Run linters:
-
-```
-$ gometalinter --config .gometalinter
+$ make fmt
 ```
 
 ## License
