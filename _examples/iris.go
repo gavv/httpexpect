@@ -1,3 +1,5 @@
+// +build go1.8
+
 package examples
 
 import (
@@ -6,15 +8,21 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/iris-contrib/middleware/basicauth"
-	"github.com/kataras/iris"
+	"gopkg.in/kataras/iris.v6"
+	"gopkg.in/kataras/iris.v6/adaptors/httprouter"
+	"gopkg.in/kataras/iris.v6/adaptors/sessions"
+	"gopkg.in/kataras/iris.v6/middleware/basicauth"
 )
 
-// IrisHandler creates fasthttp.RequestHandler using Iris (v6+) web framework.
+// IrisHandler tests iris v6's handler
 func IrisHandler() http.Handler {
-	api := iris.New()
+	app := iris.New(iris.Configuration{VHost: "example.com"})
 
-	api.Get("/things", func(c *iris.Context) {
+	app.Adapt(iris.DevLogger())
+	app.Adapt(httprouter.New())
+	app.Adapt(sessions.New(sessions.Config{Cookie: "irissessionid"}))
+
+	app.Get("/things", func(c *iris.Context) {
 		c.JSON(iris.StatusOK, []interface{}{
 			iris.Map{
 				"name":        "foo",
@@ -27,11 +35,11 @@ func IrisHandler() http.Handler {
 		})
 	})
 
-	api.Post("/redirect", func(c *iris.Context) {
+	app.Post("/redirect", func(c *iris.Context) {
 		c.Redirect("/things", iris.StatusFound)
 	})
 
-	api.Post("/params/:x/:y", func(c *iris.Context) {
+	app.Post("/params/:x/:y", func(c *iris.Context) {
 		c.JSON(iris.StatusOK, iris.Map{
 			"x":  c.Param("x"),
 			"y":  c.Param("y"),
@@ -45,11 +53,11 @@ func IrisHandler() http.Handler {
 		"ford": "betelgeuse7",
 	})
 
-	api.Get("/auth", auth, func(c *iris.Context) {
+	app.Get("/auth", auth, func(c *iris.Context) {
 		c.Writef("authenticated!")
 	})
 
-	api.Post("/session/set", func(c *iris.Context) {
+	app.Post("/session/set", func(c *iris.Context) {
 		sess := iris.Map{}
 
 		if err := c.ReadJSON(&sess); err != nil {
@@ -59,7 +67,7 @@ func IrisHandler() http.Handler {
 		c.Session().Set("name", sess["name"])
 	})
 
-	api.Get("/session/get", func(c *iris.Context) {
+	app.Get("/session/get", func(c *iris.Context) {
 		name := c.Session().GetString("name")
 
 		c.JSON(iris.StatusOK, iris.Map{
@@ -67,7 +75,7 @@ func IrisHandler() http.Handler {
 		})
 	})
 
-	api.Get("/stream", func(c *iris.Context) {
+	app.Get("/stream", func(c *iris.Context) {
 		c.StreamWriter(func(w io.Writer) bool {
 			for i := 0; i < 10; i++ {
 				fmt.Fprintf(w, "%d", i)
@@ -79,7 +87,7 @@ func IrisHandler() http.Handler {
 		// return true
 	})
 
-	api.Post("/stream", func(c *iris.Context) {
+	app.Post("/stream", func(c *iris.Context) {
 		body, err := ioutil.ReadAll(c.Request.Body)
 		if err != nil {
 			c.EmitError(iris.StatusBadRequest)
@@ -88,7 +96,7 @@ func IrisHandler() http.Handler {
 		c.Write(body)
 	})
 
-	sub := api.Party("subdomain.")
+	sub := app.Party("subdomain.")
 
 	sub.Post("/set", func(c *iris.Context) {
 		c.Session().Set("message", "hello from subdomain")
@@ -98,6 +106,6 @@ func IrisHandler() http.Handler {
 		c.Writef(c.Session().GetString("message"))
 	})
 
-	api.Build()
-	return api.Router
+	app.Boot()
+	return app.Router
 }
