@@ -9,7 +9,7 @@ import (
 	"github.com/xeipuuv/gojsonschema"
 	"github.com/yalp/jsonpath"
 	"github.com/yudai/gojsondiff"
-	"gopkg.in/yudai/gojsondiff.v1/formatter"
+	"github.com/yudai/gojsondiff/formatter"
 )
 
 func toString(str interface{}) (s string, ok bool) {
@@ -173,9 +173,9 @@ func diffValues(expected, actual interface{}) string {
 	config := formatter.AsciiFormatterConfig{
 		ShowArrayIndex: true,
 	}
-	formatter := formatter.NewAsciiFormatter(expected, config)
+	f := formatter.NewAsciiFormatter(expected, config)
 
-	str, err := formatter.Format(diff)
+	str, err := f.Format(diff)
 	if err != nil {
 		return " (unavailable)"
 	}
