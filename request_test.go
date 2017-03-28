@@ -326,9 +326,10 @@ func TestRequestURLQuery(t *testing.T) {
 		RequestFactory: factory,
 		Client:         client,
 		Reporter:       reporter,
+		BaseURL:        "http://example.com",
 	}
 
-	req1 := NewRequest(config, "METHOD", "http://example.com/path").
+	req1 := NewRequest(config, "METHOD", "/path").
 		WithQuery("aa", "foo").WithQuery("bb", 123).WithQuery("cc", "*&@")
 
 	q := map[string]interface{}{
@@ -336,7 +337,7 @@ func TestRequestURLQuery(t *testing.T) {
 		"cc": "*&@",
 	}
 
-	req2 := NewRequest(config, "METHOD", "http://example.com/path").
+	req2 := NewRequest(config, "METHOD", "/path").
 		WithQuery("aa", "foo").
 		WithQueryObject(q)
 
@@ -346,17 +347,17 @@ func TestRequestURLQuery(t *testing.T) {
 		Dd string `url:"-"`
 	}
 
-	req3 := NewRequest(config, "METHOD", "http://example.com/path").
+	req3 := NewRequest(config, "METHOD", "/path").
 		WithQueryObject(S{123, "*&@", "dummy"}).WithQuery("aa", "foo")
 
-	req4 := NewRequest(config, "METHOD", "http://example.com/path").
+	req4 := NewRequest(config, "METHOD", "/path").
 		WithQueryObject(&S{123, "*&@", "dummy"}).WithQuery("aa", "foo")
 
-	req5 := NewRequest(config, "METHOD", "http://example.com/path").
+	req5 := NewRequest(config, "METHOD", "/path").
 		WithQuery("bb", 123).
 		WithQueryString("aa=foo&cc=%2A%26%40")
 
-	req6 := NewRequest(config, "METHOD", "http://example.com/path").
+	req6 := NewRequest(config, "METHOD", "/path").
 		WithQueryString("aa=foo&cc=%2A%26%40").
 		WithQuery("bb", 123)
 
@@ -368,7 +369,7 @@ func TestRequestURLQuery(t *testing.T) {
 			client.req.URL.String())
 	}
 
-	req7 := NewRequest(config, "METHOD", "http://example.com/path").
+	req7 := NewRequest(config, "METHOD", "/path").
 		WithQuery("foo", "bar").
 		WithQueryObject(nil)
 
@@ -376,10 +377,10 @@ func TestRequestURLQuery(t *testing.T) {
 	req7.chain.assertOK(t)
 	assert.Equal(t, "http://example.com/path?foo=bar", client.req.URL.String())
 
-	NewRequest(config, "METHOD", "http://example.com/path").
+	NewRequest(config, "METHOD", "/path").
 		WithQueryObject(func() {}).chain.assertFailed(t)
 
-	NewRequest(config, "METHOD", "http://example.com/path").
+	NewRequest(config, "METHOD", "/path").
 		WithQueryString("%").chain.assertFailed(t)
 }
 
@@ -582,7 +583,7 @@ func TestRequestBodyBytes(t *testing.T) {
 		Reporter:       reporter,
 	}
 
-	req := NewRequest(config, "METHOD", "url")
+	req := NewRequest(config, "METHOD", "/path")
 
 	req.WithBytes([]byte("body"))
 
@@ -593,7 +594,7 @@ func TestRequestBodyBytes(t *testing.T) {
 	assert.Equal(t, int64(len("body")), client.req.ContentLength)
 
 	assert.Equal(t, "METHOD", client.req.Method)
-	assert.Equal(t, "url", client.req.URL.String())
+	assert.Equal(t, "/path", client.req.URL.String())
 	assert.Equal(t, make(http.Header), client.req.Header)
 	assert.Equal(t, "body", string(resp.content))
 
