@@ -399,6 +399,28 @@ e := httpexpect.WithConfig(httpexpect.Config{
 })
 ```
 
+##### Per-request client or handler
+
+```go
+e := httpexpect.New(t, server.URL)
+
+client := &http.Client{
+	Transport: &http.Transport{
+		DisableCompression: true,
+	},
+}
+
+// overwrite client
+e.GET("/path").WithClient(client).
+	Expect().
+	Status(http.StatusOK)
+
+// construct client that invokes a handler directly and overwrite client
+e.GET("/path").WithHandler(handler).
+	Expect().
+	Status(http.StatusOK)
+```
+
 ## Similar packages
 
 * [`gorequest`](https://github.com/parnurzeal/gorequest)

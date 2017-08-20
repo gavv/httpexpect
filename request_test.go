@@ -32,6 +32,8 @@ func TestRequestFailed(t *testing.T) {
 		http:   nil,
 	}
 
+	req.WithClient(&http.Client{})
+	req.WithHandler(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
 	req.WithPath("foo", "bar")
 	req.WithPathObject(map[string]interface{}{"foo": "bar"})
 	req.WithQuery("foo", "bar")
@@ -100,6 +102,88 @@ func TestRequestTime(t *testing.T) {
 		resp := req.Expect()
 		assert.True(t, resp.time >= 0)
 	}
+}
+
+func TestRequestClient(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
+	client1 := &mockClient{}
+	client2 := &mockClient{}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		RequestFactory: factory,
+		Reporter:       reporter,
+		Client:         client1,
+	}
+
+	req1 := NewRequest(config, "METHOD", "/")
+	req1.Expect().chain.assertOK(t)
+	assert.NotNil(t, client1.req)
+
+	req2 := NewRequest(config, "METHOD", "/")
+	req2.WithClient(client2)
+	req2.Expect().chain.assertOK(t)
+	assert.NotNil(t, client2.req)
+}
+
+func TestRequestHandler(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
+	var hr1 *http.Request
+	handler1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hr1 = r
+	})
+
+	var hr2 *http.Request
+	handler2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hr2 = r
+	})
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		RequestFactory: factory,
+		Reporter:       reporter,
+		Client: &http.Client{
+			Transport: NewBinder(handler1),
+		},
+	}
+
+	req1 := NewRequest(config, "METHOD", "/")
+	req1.Expect().chain.assertOK(t)
+	assert.NotNil(t, hr1)
+
+	req2 := NewRequest(config, "METHOD", "/")
+	req2.WithHandler(handler2)
+	req2.Expect().chain.assertOK(t)
+	assert.NotNil(t, hr2)
+}
+
+func TestRequestHandlerResueClient(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
+	handler1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+	handler2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+
+	client := &http.Client{
+		Transport: NewBinder(handler1),
+		Jar:       NewJar(),
+	}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		RequestFactory: factory,
+		Reporter:       reporter,
+		Client:         client,
+	}
+
+	req := NewRequest(config, "METHOD", "/")
+	req.WithHandler(handler2)
+
+	assert.True(t, req.config.Client.(*http.Client).Jar == client.Jar)
 }
 
 func TestRequestProto(t *testing.T) {

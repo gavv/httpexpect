@@ -107,6 +107,58 @@ func NewRequest(config Config, method, path string, pathargs ...interface{}) *Re
 	}
 }
 
+// WithClient sets client.
+//
+// The new client overwrites Config.Client. It will be use once to send the
+// request and receive a response.
+//
+// Example:
+//  req := NewRequest(config, "GET", "/path")
+//  req.WithClient(&http.Client{
+//    Transport: &http.Transport{
+//      DisableCompression: true,
+//    },
+//  })
+func (r *Request) WithClient(client Client) *Request {
+	if r.chain.failed() {
+		return r
+	}
+	if client == nil {
+		r.chain.fail("\nunexpected nil client in WithClient")
+		return r
+	}
+	r.config.Client = client
+	return r
+}
+
+// WithHandler configures client to invoke the given handler directly.
+//
+// If Config.Client is http.Client, then only its Transport field is overwritten
+// because the client may contain some state shared among requests like a cookie
+// jar. Otherwise, the whole client is overwritten with a new client.
+//
+// Example:
+//  req := NewRequest(config, "GET", "/path")
+//  req.WithHandler(myServer.someHandler)
+func (r *Request) WithHandler(handler http.Handler) *Request {
+	if r.chain.failed() {
+		return r
+	}
+	if handler == nil {
+		r.chain.fail("\nunexpected nil handler in WithHandler")
+		return r
+	}
+	if client, ok := r.config.Client.(*http.Client); ok {
+		client.Transport = NewBinder(handler)
+	} else {
+		r.config.Client = &http.Client{
+			Transport: NewBinder(handler),
+			Jar:       NewJar(),
+		}
+	}
+	return r
+}
+
 // WithPath substitutes named parameters in url path.
 //
 // value is converted to string using fmt.Sprint(). If there is no named
