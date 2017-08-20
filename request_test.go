@@ -126,6 +126,10 @@ func TestRequestClient(t *testing.T) {
 	req2.WithClient(client2)
 	req2.Expect().chain.assertOK(t)
 	assert.NotNil(t, client2.req)
+
+	req3 := NewRequest(config, "METHOD", "/")
+	req3.WithClient(nil)
+	req3.chain.assertFailed(t)
 }
 
 func TestRequestHandler(t *testing.T) {
@@ -159,6 +163,10 @@ func TestRequestHandler(t *testing.T) {
 	req2.WithHandler(handler2)
 	req2.Expect().chain.assertOK(t)
 	assert.NotNil(t, hr2)
+
+	req3 := NewRequest(config, "METHOD", "/")
+	req3.WithHandler(nil)
+	req3.chain.assertFailed(t)
 }
 
 func TestRequestHandlerResueClient(t *testing.T) {
