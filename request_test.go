@@ -169,6 +169,31 @@ func TestRequestHandler(t *testing.T) {
 	req3.chain.assertFailed(t)
 }
 
+func TestRequestHandlerResetClient(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
+	var hr *http.Request
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hr = r
+	})
+
+	client := &mockClient{}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		RequestFactory: factory,
+		Reporter:       reporter,
+		Client:         client,
+	}
+
+	req := NewRequest(config, "METHOD", "/")
+	req.WithHandler(handler)
+	req.Expect().chain.assertOK(t)
+	assert.NotNil(t, hr)
+	assert.Nil(t, client.req)
+}
+
 func TestRequestHandlerResueClient(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
