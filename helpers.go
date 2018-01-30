@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"regexp"
 
+	"github.com/PaesslerAG/jsonpath"
 	"github.com/xeipuuv/gojsonschema"
-	"github.com/yalp/jsonpath"
 	"github.com/yudai/gojsondiff"
 	"github.com/yudai/gojsondiff/formatter"
 )
@@ -28,7 +28,7 @@ func getPath(chain *chain, value interface{}, path string) *Value {
 		return &Value{*chain, nil}
 	}
 
-	result, err := jsonpath.Read(value, path)
+	result, err := jsonpath.Get(path, value)
 	if err != nil {
 		chain.fail(err.Error())
 		return &Value{*chain, nil}
