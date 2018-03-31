@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/ajg/form"
+	"github.com/gorilla/websocket"
 )
 
 // StatusRange is enum for response status ranges.
@@ -39,9 +40,11 @@ const (
 type Response struct {
 	chain   chain
 	resp    *http.Response
+	conn    *websocket.Conn
 	content []byte
 	cookies []*http.Cookie
 	time    time.Duration
+	isWS    bool
 }
 
 // NewResponse returns a new Response given a reporter used to report
@@ -53,7 +56,8 @@ type Response struct {
 // If duration is given, it defines response time to be reported by
 // response.Duration().
 func NewResponse(
-	reporter Reporter, response *http.Response, duration ...time.Duration) *Response {
+	reporter Reporter, response *http.Response, duration ...time.Duration,
+) *Response {
 	var dr time.Duration
 	if len(duration) > 0 {
 		dr = duration[0]
@@ -62,7 +66,8 @@ func NewResponse(
 }
 
 func makeResponse(
-	chain chain, response *http.Response, duration time.Duration) *Response {
+	chain chain, response *http.Response, duration time.Duration,
+) *Response {
 	var content []byte
 	var cookies []*http.Cookie
 	if response != nil {
@@ -78,6 +83,16 @@ func makeResponse(
 		cookies: cookies,
 		time:    duration,
 	}
+}
+
+func makeResponseWS(
+	chain chain, conn *websocket.Conn, response *http.Response,
+	duration time.Duration,
+) *Response {
+	resp := makeResponse(chain, response, duration)
+	resp.isWS = true
+	resp.conn = conn
+	return resp
 }
 
 func getContent(chain *chain, resp *http.Response) []byte {
@@ -104,8 +119,8 @@ func (r *Response) Raw() *http.Response {
 // response time, in nanoseconds.
 //
 // Response time is a time interval starting just before request is sent
-// and ending right after response is received, retrieved from monotonic
-// clock source.
+// and ending right after response is received (handshake finished for
+// WebSocket request), retrieved from monotonic clock source.
 //
 // Example:
 //  resp := NewResponse(t, response, time.Duration(10000000))
@@ -261,6 +276,23 @@ func (r *Response) Cookie(name string) *Cookie {
 	r.chain.fail("\nexpected response with cookie:\n %q\n\nbut got only cookies:\n%s",
 		name, dumpValue(names))
 	return &Cookie{r.chain, nil}
+}
+
+// Connection returns WebSocket Connection that may be used to interact with
+// WebSocket server.
+//
+// Example:
+//  TODO
+func (r *Response) Connection() *Connection {
+	switch {
+	case !r.isWS:
+		r.chain.fail("\nunexpected Connection usage for non-WebSocket response")
+	case r.conn == nil:
+		r.chain.fail(
+			"\nexpected successful WebSocket connection, "+
+				"but got handshake failure")
+	}
+	return makeConnection(r.chain, r.conn)
 }
 
 // Body returns a new String object that may be used to inspect response body.

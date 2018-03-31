@@ -71,6 +71,7 @@ import (
 	"net/http/cookiejar"
 	"time"
 
+	"github.com/gorilla/websocket"
 	"golang.org/x/net/publicsuffix"
 )
 
@@ -102,6 +103,14 @@ type Config struct {
 	// custom implementation.
 	Client Client
 
+	// Dialer is used to establish websocket.Conn and receive http.Response
+	// of handshake result.
+	// Should not be nil.
+	//
+	// You can use websocket.DefaultDialer or websocket.Dialer, or provide
+	// custom implementation.
+	Dialer Dialer
+
 	// Reporter is used to report failures.
 	// Should not be nil.
 	//
@@ -132,6 +141,15 @@ type RequestFactory interface {
 type Client interface {
 	// Do sends request and returns response.
 	Do(*http.Request) (*http.Response, error)
+}
+
+// Dialer is used to establish websocket.Conn and receive http.Response
+// of handshake result.
+// websocket.Dialer implements this interface.
+type Dialer interface {
+	// Dial establishes new WebSocket connection and returns response
+	// of handshake result.
+	Dial(url string, reqH http.Header) (*websocket.Conn, *http.Response, error)
 }
 
 // Printer is used to print requests and responses.
@@ -219,6 +237,13 @@ func New(t LoggerReporter, baseURL string) *Expect {
 //      Jar: httpexpect.NewJar(),
 //  }
 //
+// If Dialer is nil, it's set to a default dialer with handshake timeout 45s
+// and enabled compression:
+//  &websocket.Dialer{
+//      HandshakeTimeout:  45 * time.Second,
+//      EnableCompression: true,
+//  }
+//
 // Example:
 //  func TestSomething(t *testing.T) {
 //      e := httpexpect.WithConfig(httpexpect.Config{
@@ -248,6 +273,12 @@ func WithConfig(config Config) *Expect {
 	if config.Client == nil {
 		config.Client = &http.Client{
 			Jar: NewJar(),
+		}
+	}
+	if config.Dialer == nil {
+		config.Dialer = &websocket.Dialer{
+			HandshakeTimeout:  45 * time.Second,
+			EnableCompression: true,
 		}
 	}
 	return &Expect{
@@ -343,6 +374,12 @@ func (e *Expect) PATCH(path string, pathargs ...interface{}) *Request {
 // DELETE is a shorthand for e.Request("DELETE", path, pathargs...).
 func (e *Expect) DELETE(path string, pathargs ...interface{}) *Request {
 	return e.Request("DELETE", path, pathargs...)
+}
+
+// WS is a shorthand for e.Request("ws", path, pathargs...).
+func (e *Expect) WS(path string, pathargs ...interface{}) *Request {
+	req := e.Request("ws", path, pathargs...)
+	return req
 }
 
 // Value is a shorthand for NewValue(e.config.Reporter, value).
