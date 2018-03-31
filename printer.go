@@ -1,11 +1,14 @@
 package httpexpect
 
 import (
+	"bytes"
+	"fmt"
 	"net/http"
 	"net/http/httputil"
 	"strings"
 	"time"
 
+	"github.com/gorilla/websocket"
 	"github.com/moul/http2curl"
 )
 
@@ -71,6 +74,44 @@ func (p DebugPrinter) Response(resp *http.Response, duration time.Duration) {
 	lines := strings.SplitN(text, "\n", 2)
 
 	p.logger.Logf("%s %s\n%s", lines[0], duration, lines[1])
+}
+
+// Write implements WsPrinter.Write.
+func (p DebugPrinter) Write(typ int, content []byte, closeCode int) {
+	b := &bytes.Buffer{}
+	fmt.Fprintf(b, "-> Sent: %s", wsMessageTypeName(typ))
+	if typ == websocket.CloseMessage {
+		fmt.Fprintf(b, " (%d)", closeCode)
+	}
+	fmt.Fprint(b, "\n")
+	if len(content) > 0 {
+		if typ == websocket.BinaryMessage {
+			fmt.Fprintf(b, "%v\n", content)
+		} else {
+			fmt.Fprintf(b, "%s\n", content)
+		}
+	}
+	fmt.Fprintf(b, "\n")
+	p.logger.Logf(b.String())
+}
+
+// Read implements WsPrinter.Read.
+func (p DebugPrinter) Read(typ int, content []byte, closeCode int) {
+	b := &bytes.Buffer{}
+	fmt.Fprintf(b, "<- Received: %s", wsMessageTypeName(typ))
+	if typ == websocket.CloseMessage {
+		fmt.Fprintf(b, " (%d)", closeCode)
+	}
+	fmt.Fprint(b, "\n")
+	if len(content) > 0 {
+		if typ == websocket.BinaryMessage {
+			fmt.Fprintf(b, "%v\n", content)
+		} else {
+			fmt.Fprintf(b, "%s\n", content)
+		}
+	}
+	fmt.Fprintf(b, "\n")
+	p.logger.Logf(b.String())
 }
 
 // CurlPrinter implements Printer. Uses http2curl to dump requests as

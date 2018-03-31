@@ -39,8 +39,10 @@ const (
 type Response struct {
 	chain   chain
 	resp    *http.Response
+	conn    *wsConn
 	content []byte
 	cookies []*http.Cookie
+	isWs    bool
 	rtt     *time.Duration
 }
 
@@ -53,7 +55,8 @@ type Response struct {
 // If rtt is given, it defines response round-trip time to be reported
 // by response.RoundTripTime().
 func NewResponse(
-	reporter Reporter, response *http.Response, rtt ...time.Duration) *Response {
+	reporter Reporter, response *http.Response, rtt ...time.Duration,
+) *Response {
 	var rttPtr *time.Duration
 	if len(rtt) > 0 {
 		rttPtr = &rtt[0]
@@ -62,7 +65,8 @@ func NewResponse(
 }
 
 func makeResponse(
-	chain chain, response *http.Response, rtt *time.Duration) *Response {
+	chain chain, response *http.Response, rtt *time.Duration,
+) *Response {
 	var content []byte
 	var cookies []*http.Cookie
 	if response != nil {
@@ -78,6 +82,15 @@ func makeResponse(
 		cookies: cookies,
 		rtt:     rtt,
 	}
+}
+
+func makeWsResponse(
+	chain chain, conn *wsConn, response *http.Response, rtt *time.Duration,
+) *Response {
+	resp := makeResponse(chain, response, rtt)
+	resp.isWs = true
+	resp.conn = conn
+	return resp
 }
 
 func getContent(chain *chain, resp *http.Response) []byte {
@@ -103,9 +116,9 @@ func (r *Response) Raw() *http.Response {
 // RoundTripTime returns a new Duration object that may be used to inspect
 // the round-trip time.
 //
-// The returned duration is a time interval starting just before request
-// is sent and ending right after response is received, measured using a
-// monotonic clock source.
+// The returned duration is a time interval starting just before request is
+// sent and ending right after response is received (handshake finished for
+// WebSocket request), retrieved from a monotonic clock source.
 //
 // Example:
 //  resp := NewResponse(t, response, time.Duration(10000000))
@@ -269,6 +282,27 @@ func (r *Response) Cookie(name string) *Cookie {
 	r.chain.fail("\nexpected response with cookie:\n %q\n\nbut got only cookies:\n%s",
 		name, dumpValue(names))
 	return &Cookie{r.chain, nil}
+}
+
+// Connection returns WsConnection that may be used to interact with
+// WebSocket server.
+//
+// That is responsibility of caller to explicitly close WsConnection after use.
+//
+// Example:
+//  resp := req.Expect()
+//  conn := resp.Connection()
+//  defer conn.Disconnect()
+func (r *Response) Connection() *WsConnection {
+	switch {
+	case !r.isWs:
+		r.chain.fail("\nunexpected Connection usage for non-WebSocket response")
+	case r.conn == nil:
+		r.chain.fail(
+			"\nexpected successful WebSocket connection, " +
+				"but got handshake failure")
+	}
+	return makeWsConnection(r.chain, r.conn)
 }
 
 // Body returns a new String object that may be used to inspect response body.

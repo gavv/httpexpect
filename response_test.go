@@ -16,7 +16,7 @@ func TestResponseFailed(t *testing.T) {
 
 	chain.fail("fail")
 
-	resp := &Response{chain, nil, nil, nil, nil}
+	resp := &Response{chain: chain}
 
 	resp.chain.assertFailed(t)
 
