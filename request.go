@@ -19,8 +19,8 @@ import (
 	"github.com/fatih/structs"
 	"github.com/gavv/monotime"
 	"github.com/google/go-querystring/query"
-	"github.com/imkira/go-interpol"
 	"github.com/gorilla/websocket"
+	"github.com/imkira/go-interpol"
 )
 
 // Request provides methods to incrementally build http.Request object,
@@ -37,7 +37,7 @@ type Request struct {
 	bodysetter string
 	typesetter string
 	forcetype  bool
-	isWS       bool
+	isWs       bool
 }
 
 // NewRequest returns a new Request object.
@@ -96,9 +96,9 @@ func NewRequest(config Config, method, path string, pathargs ...interface{}) *Re
 		chain.fail(err.Error())
 	}
 
-	isWS := false
+	isWs := false
 	if method == "ws" {
-		isWS = true
+		isWs = true
 		method = http.MethodGet
 	}
 
@@ -112,7 +112,7 @@ func NewRequest(config Config, method, path string, pathargs ...interface{}) *Re
 		chain:  chain,
 		path:   path,
 		http:   hr,
-		isWS:   isWS,
+		isWs:   isWs,
 	}
 }
 
@@ -132,7 +132,7 @@ func (r *Request) WithClient(client Client) *Request {
 	switch {
 	case r.chain.failed():
 		return r
-	case r.isWS:
+	case r.isWs:
 		r.chain.fail(
 			"\nunexpected WithClient usage for WebSocket request, " +
 				"use WithDialer instead")
@@ -158,7 +158,7 @@ func (r *Request) WithDialer(dialer Dialer) *Request {
 	switch {
 	case r.chain.failed():
 		return r
-	case !r.isWS:
+	case !r.isWs:
 		r.chain.fail(
 			"\nunexpected WithDialer usage for non-WebSocket request, " +
 				"use WithClient instead")
@@ -183,7 +183,7 @@ func (r *Request) WithHandler(handler http.Handler) *Request {
 	switch {
 	case r.chain.failed():
 		return r
-	case r.isWS:
+	case r.isWs:
 		r.chain.fail(
 			"\nunexpected WithHandler usage for WebSocket request, " +
 				"which is not supported currently") // TODO: support maybe?
@@ -420,12 +420,12 @@ func (r *Request) WithURL(urlStr string) *Request {
 	case err != nil:
 		r.chain.fail(err.Error())
 		return r
-	case r.isWS && u.Scheme != "ws" && u.Scheme != "wss":
+	case r.isWs && u.Scheme != "ws" && u.Scheme != "wss":
 		r.chain.fail(
 			"\nunexpected usage of URL scheme '%s' for WebSocket request "+
 				"in WithURL, can be 'ws' or 'wss' only", u.Scheme)
 		return r
-	case !r.isWS && (u.Scheme == "ws" || u.Scheme == "wss"):
+	case !r.isWs && (u.Scheme == "ws" || u.Scheme == "wss"):
 		r.chain.fail(
 			"\nunexpected usage of URL scheme '%s' for non-WebSocket request "+
 				"in WithURL", u.Scheme)
@@ -569,7 +569,7 @@ func (r *Request) WithChunked(reader io.Reader) *Request {
 	switch {
 	case r.chain.failed():
 		return r
-	case r.isWS:
+	case r.isWs:
 		r.chain.fail(
 			"\nunexpected WithChunked usage for WebSocket request, " +
 				"which cannot have body")
@@ -593,7 +593,7 @@ func (r *Request) WithBytes(b []byte) *Request {
 	switch {
 	case r.chain.failed():
 		return r
-	case r.isWS:
+	case r.isWs:
 		r.chain.fail(
 			"\nunexpected WithBytes usage for WebSocket request, " +
 				"which cannot have body")
@@ -617,7 +617,7 @@ func (r *Request) WithText(s string) *Request {
 	switch {
 	case r.chain.failed():
 		return r
-	case r.isWS:
+	case r.isWs:
 		r.chain.fail(
 			"\nunexpected WithText usage for WebSocket request, " +
 				"which cannot have body")
@@ -645,7 +645,7 @@ func (r *Request) WithJSON(object interface{}) *Request {
 	switch {
 	case r.chain.failed():
 		return r
-	case r.isWS:
+	case r.isWs:
 		r.chain.fail(
 			"\nunexpected WithJSON usage for WebSocket request, " +
 				"which cannot have body")
@@ -688,7 +688,7 @@ func (r *Request) WithForm(object interface{}) *Request {
 	switch {
 	case r.chain.failed():
 		return r
-	case r.isWS:
+	case r.isWs:
 		r.chain.fail(
 			"\nunexpected WithForm usage for WebSocket request, " +
 				"which cannot have body")
@@ -744,7 +744,7 @@ func (r *Request) WithFormField(key string, value interface{}) *Request {
 	switch {
 	case r.chain.failed():
 		return r
-	case r.isWS:
+	case r.isWs:
 		r.chain.fail(
 			"\nunexpected WithFormField usage for WebSocket request, " +
 				"which cannot have body")
@@ -792,7 +792,7 @@ func (r *Request) WithFile(key, path string, reader ...io.Reader) *Request {
 	switch {
 	case r.chain.failed():
 		return r
-	case r.isWS:
+	case r.isWs:
 		r.chain.fail(
 			"\nunexpected WithFile usage for WebSocket request, " +
 				"which cannot have body")
@@ -847,7 +847,7 @@ func (r *Request) WithFileBytes(key, path string, data []byte) *Request {
 	switch {
 	case r.chain.failed():
 		return r
-	case r.isWS:
+	case r.isWs:
 		r.chain.fail(
 			"\nunexpected WithFileBytes usage for WebSocket request, " +
 				"which cannot have body")
@@ -873,7 +873,7 @@ func (r *Request) WithMultipart() *Request {
 	switch {
 	case r.chain.failed():
 		return r
-	case r.isWS:
+	case r.isWs:
 		r.chain.fail(
 			"\nunexpected WithMultipart usage for WebSocket request, " +
 				"which cannot have body")
@@ -906,8 +906,8 @@ func (r *Request) Expect() *Response {
 
 	resp, conn, elapsed := r.sendRequest()
 
-	if r.isWS {
-		return makeResponseWS(r.chain, conn, resp, elapsed)
+	if r.isWs {
+		return makeWsResponse(r.chain, conn, resp, elapsed)
 	}
 	return makeResponse(r.chain, resp, elapsed)
 }
@@ -917,7 +917,7 @@ func (r *Request) encodeRequest() {
 		return
 	}
 
-	if r.isWS {
+	if r.isWs {
 		switch r.http.URL.Scheme {
 		case "https":
 			r.http.URL.Scheme = "wss"
@@ -960,7 +960,7 @@ func (r *Request) sendRequest() (
 	start := monotime.Now()
 
 	var err error
-	if r.isWS {
+	if r.isWs {
 		conn, resp, err = r.config.Dialer.
 			Dial(r.http.URL.String(), r.http.Header)
 	} else {

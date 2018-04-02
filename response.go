@@ -44,7 +44,7 @@ type Response struct {
 	content []byte
 	cookies []*http.Cookie
 	time    time.Duration
-	isWS    bool
+	isWs    bool
 }
 
 // NewResponse returns a new Response given a reporter used to report
@@ -85,12 +85,12 @@ func makeResponse(
 	}
 }
 
-func makeResponseWS(
+func makeWsResponse(
 	chain chain, conn *websocket.Conn, response *http.Response,
 	duration time.Duration,
 ) *Response {
 	resp := makeResponse(chain, response, duration)
-	resp.isWS = true
+	resp.isWs = true
 	resp.conn = conn
 	return resp
 }
@@ -283,16 +283,16 @@ func (r *Response) Cookie(name string) *Cookie {
 //
 // Example:
 //  TODO
-func (r *Response) Connection() *Connection {
+func (r *Response) Connection() *WsConnection {
 	switch {
-	case !r.isWS:
+	case !r.isWs:
 		r.chain.fail("\nunexpected Connection usage for non-WebSocket response")
 	case r.conn == nil:
 		r.chain.fail(
-			"\nexpected successful WebSocket connection, "+
+			"\nexpected successful WebSocket connection, " +
 				"but got handshake failure")
 	}
-	return makeConnection(r.chain, r.conn)
+	return makeWsConnection(r.chain, r.conn)
 }
 
 // Body returns a new String object that may be used to inspect response body.
