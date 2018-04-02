@@ -24,15 +24,6 @@ type (
 	WsCloseMessage struct {
 		msg *WsMessage
 	}
-
-	// TODO: impl
-	WsPingMessage struct {
-		msg *WsMessage
-	}
-
-	WsPongMessage struct {
-		msg *WsMessage
-	}
 )
 
 func (m *WsMessage) Message() (msg *WsTextMessage) {
@@ -74,21 +65,6 @@ func (m *WsMessage) Closed() (msg *WsCloseMessage) {
 		m.chain.fail(
 			"\nexpected WebSocket message type:\n %s\n\nbut got:\n %s",
 			wsMessageTypeName(websocket.CloseMessage),
-			wsMessageTypeName(m.typ))
-		return
-	}
-	return
-}
-
-func (m *WsMessage) Ping() (msg *WsPingMessage) {
-	msg = &WsPingMessage{msg: m}
-	switch {
-	case m.chain.failed():
-		return
-	case m.typ != websocket.PingMessage:
-		m.chain.fail(
-			"\nexpected WebSocket message type:\n %s\n\nbut got:\n %s",
-			wsMessageTypeName(websocket.PingMessage),
 			wsMessageTypeName(m.typ))
 		return
 	}
@@ -155,6 +131,48 @@ func (m *WsBinaryMessage) NoContent() *WsBinaryMessage {
 
 func (m *WsBinaryMessage) Raw() []byte {
 	return m.msg.body
+}
+
+func (m *WsCloseMessage) Code(code ...int) *WsCloseMessage {
+	switch {
+	case m.msg.chain.failed():
+		return m
+	case len(code) == 0:
+		m.msg.chain.fail("\nunexpected nil argument passed to Code")
+		return m
+	}
+	yes := false
+	for _, c := range code {
+		if c == m.msg.closeCode {
+			yes = true
+			break
+		}
+	}
+	if !yes {
+		m.msg.chain.fail(
+			"\nexpected close code equal to one of:\n%v\n\nbut got:\n%d",
+			code, m.msg.closeCode)
+	}
+	return m
+}
+
+func (m *WsCloseMessage) CodeNotEqual(code ...int) *WsCloseMessage {
+	switch {
+	case m.msg.chain.failed():
+		return m
+	case len(code) == 0:
+		m.msg.chain.fail("\nunexpected nil argument passed to CodeNotEqual")
+		return m
+	}
+	for _, c := range code {
+		if c == m.msg.closeCode {
+			m.msg.chain.fail(
+				"\nexpected close code not equal:\n%v\n\nbut got:\n%d",
+				code, m.msg.closeCode)
+			return m
+		}
+	}
+	return m
 }
 
 func (m *WsCloseMessage) Body() *String {

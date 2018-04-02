@@ -5,10 +5,14 @@ import (
 	"time"
 )
 
+var noDuration = time.Duration(0)
+
 type WsConnection struct {
-	chain  chain
-	conn   *websocket.Conn
-	closed bool
+	chain        chain
+	conn         *websocket.Conn
+	readTimeout  time.Duration
+	writeTimeout time.Duration
+	isClosed     bool
 }
 
 func NewWsConnection(reporter Reporter, conn *websocket.Conn) *WsConnection {
@@ -22,10 +26,31 @@ func makeWsConnection(chain chain, conn *websocket.Conn) *WsConnection {
 	}
 }
 
+func (c *WsConnection) ReadTimeout(timeout time.Duration) *WsConnection {
+	c.readTimeout = timeout
+	return c
+}
+
+func (c *WsConnection) NoReadTimeout() *WsConnection {
+	c.readTimeout = noDuration
+	return c
+}
+
+func (c *WsConnection) WriteTimeout(timeout time.Duration) *WsConnection {
+	c.writeTimeout = timeout
+	return c
+}
+
+func (c *WsConnection) NoWriteTimeout() *WsConnection {
+	c.writeTimeout = noDuration
+	return c
+}
+
 func (c *WsConnection) Close() {
-	if c.conn == nil || c.closed {
+	if c.conn == nil || c.isClosed {
 		return
 	}
+	c.isClosed = true
 
 	// Cleanly close the connection by sending a close message and then
 	// waiting (with timeout) for the server to close the connection.
@@ -55,16 +80,17 @@ func (c *WsConnection) Expect() (m *WsMessage) {
 	case c.conn == nil:
 		c.chain.fail("\nunexpected read failed WebSocket connection")
 		return
-	case c.closed:
+	case c.isClosed:
 		c.chain.fail("\nunexpected read closed WebSocket connection")
+		return
+	case !c.setReadDeadline():
 		return
 	}
 	var err error
-	// TODO: deadline???
-	// TODO: correct Read ping message?
 	m.typ, m.body, err = c.conn.ReadMessage()
 	if err != nil {
 		if cls, ok := err.(*websocket.CloseError); ok {
+			m.typ = websocket.CloseMessage
 			m.closeCode = cls.Code
 			m.body = []byte(cls.Text)
 		} else {
@@ -75,4 +101,18 @@ func (c *WsConnection) Expect() (m *WsMessage) {
 		}
 	}
 	return
+}
+
+func (c *WsConnection) setReadDeadline() bool {
+	var deadline time.Time
+	if c.readTimeout != noDuration {
+		deadline = time.Now().Add(c.readTimeout)
+	}
+	if err := c.conn.SetReadDeadline(deadline); err != nil {
+		c.chain.fail(
+			"\nunexpected failure when setting "+
+				"read WebSocket connection deadline: %s", err.Error())
+		return false
+	}
+	return true
 }
