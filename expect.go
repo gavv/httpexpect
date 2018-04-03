@@ -137,7 +137,17 @@ type RequestFactory interface {
 }
 
 // Client is used to send http.Request and receive http.Response.
-// http.Client, Binder, and FastBinder implement this interface.
+// http.Client implements this interface.
+//
+// Binder and FastBinder may be used to obtain this interface implementation.
+//
+// Example:
+//  httpBinderClient := &http.Client{
+//    Transport: httpexpect.NewBinder(HTTPHandler),
+//  }
+//  fastBinderClient := &http.Client{
+//    Transport: httpexpect.NewFastBinder(FastHTTPHandler),
+//  }
 type Client interface {
 	// Do sends request and returns response.
 	Do(*http.Request) (*http.Response, error)
@@ -146,6 +156,16 @@ type Client interface {
 // Dialer is used to establish websocket.Conn and receive http.Response
 // of handshake result.
 // websocket.Dialer implements this interface.
+//
+// Binder and FastBinder may be used to obtain this interface implementation.
+//
+// Example:
+//  httpBinderClient := &http.Client{
+//    Dialer: httpexpect.NewBinder(HTTPHandler).Dialer(),
+//  }
+//  fastBinderClient := &http.Client{
+//    Dialer: httpexpect.NewFastBinder(FastHTTPHandler).Dialer(),
+//  }
 type Dialer interface {
 	// Dial establishes new WebSocket connection and returns response
 	// of handshake result.

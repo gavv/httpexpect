@@ -7,9 +7,18 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-var noDuration = time.Duration(0)
+// DefaultWsConnectionTimeout is a default timeout duration
+// for WebSocket connection read and writes.
+//
+// You may preconfigure this option globally.
+var DefaultWsConnectionTimeout = 30 * time.Second
+
+const noDuration = time.Duration(0)
+
 var infiniteTime = time.Time{}
 
+// WsConnection provides methods to read from, write into and close WebSocket
+// connection.
 type WsConnection struct {
 	chain        chain
 	conn         *websocket.Conn
@@ -18,14 +27,18 @@ type WsConnection struct {
 	isClosed     bool
 }
 
+// NewWsConnection returns a new WsConnection given a reporter used to report
+// failures and websocket.Conn to be inspected and handled.
 func NewWsConnection(reporter Reporter, conn *websocket.Conn) *WsConnection {
 	return makeWsConnection(makeChain(reporter), conn)
 }
 
 func makeWsConnection(chain chain, conn *websocket.Conn) *WsConnection {
 	return &WsConnection{
-		chain: chain,
-		conn:  conn,
+		chain:        chain,
+		conn:         conn,
+		readTimeout:  DefaultWsConnectionTimeout,
+		writeTimeout: DefaultWsConnectionTimeout,
 	}
 }
 
@@ -39,21 +52,33 @@ func (c *WsConnection) Subprotocol() *String {
 	return s
 }
 
+// ReadTimeout set timeout duration for WebSocket connection reads.
+//
+// If not set then DefaultWsConnectionTimeout will be used.
 func (c *WsConnection) ReadTimeout(timeout time.Duration) *WsConnection {
 	c.readTimeout = timeout
 	return c
 }
 
+// NoReadTimeout removes timeout for WebSocket connection reads.
+//
+// If not used then DefaultWsConnectionTimeout will be used.
 func (c *WsConnection) NoReadTimeout() *WsConnection {
 	c.readTimeout = noDuration
 	return c
 }
 
+// WriteTimeout set timeout duration for WebSocket connection writes.
+//
+// If not set then DefaultWsConnectionTimeout will be used.
 func (c *WsConnection) WriteTimeout(timeout time.Duration) *WsConnection {
 	c.writeTimeout = timeout
 	return c
 }
 
+// NoWriteTimeout removes timeout for WebSocket connection writes.
+//
+// If not used then DefaultWsConnectionTimeout will be used.
 func (c *WsConnection) NoWriteTimeout() *WsConnection {
 	c.writeTimeout = noDuration
 	return c
@@ -65,6 +90,12 @@ func (c *WsConnection) Raw() *websocket.Conn {
 	return c.conn
 }
 
+// Expect reads next message from WebSocket connection and
+// returns a new WsMessage object to inspect received message.
+//
+// Example:
+//  msg := conn.Expect()
+//  msg.JSON().Object().ValueEqual("message", "hi")
 func (c *WsConnection) Expect() (m *WsMessage) {
 	m = &WsMessage{
 		chain: c.chain,
