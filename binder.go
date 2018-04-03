@@ -81,15 +81,16 @@ func (binder Binder) RoundTrip(req *http.Request) (*http.Response, error) {
 	return &resp, nil
 }
 
-// TODO
+// Dialer produces new websocket.Dialer which dials to bound http.Handler
+// without creating a real net.Conn.
 //
 // Original idea is stolen from: https://github.com/posener/wstest
 func (binder Binder) Dialer() *websocket.Dialer {
-	client, server := net.Pipe()
-	recorder := &hijackRecorder{server: server}
+	clientConn, serverConn := net.Pipe()
+	recorder := &hijackRecorder{server: serverConn}
 
 	go func() {
-		req, err := http.ReadRequest(bufio.NewReader(server))
+		req, err := http.ReadRequest(bufio.NewReader(serverConn))
 		if err != nil {
 			return
 		}
@@ -98,7 +99,7 @@ func (binder Binder) Dialer() *websocket.Dialer {
 
 	return &websocket.Dialer{
 		NetDial: func(network, addr string) (net.Conn, error) {
-			return client, nil
+			return clientConn, nil
 		},
 	}
 }
@@ -157,6 +158,18 @@ func (binder FastBinder) RoundTrip(stdreq *http.Request) (*http.Response, error)
 	binder.Handler(&ctx)
 
 	return fast2std(stdreq, &ctx.Response), nil
+}
+
+// Dialer produces new websocket.Dialer which dials to bound
+// fasthttp.RequestHandler without creating a real net.Conn.
+func (binder FastBinder) Dialer() *websocket.Dialer {
+	clientConn, serverConn := net.Pipe()
+	go fasthttp.ServeConn(serverConn, binder.Handler)
+	return &websocket.Dialer{
+		NetDial: func(network, addr string) (net.Conn, error) {
+			return clientConn, nil
+		},
+	}
 }
 
 func std2fast(stdreq *http.Request) *fasthttp.Request {
