@@ -8,6 +8,7 @@ import (
 )
 
 var noDuration = time.Duration(0)
+var infiniteTime = time.Time{}
 
 type WsConnection struct {
 	chain        chain
@@ -98,7 +99,7 @@ func (c *WsConnection) Expect() (m *WsMessage) {
 }
 
 func (c *WsConnection) setReadDeadline() bool {
-	var deadline time.Time
+	deadline := infiniteTime
 	if c.readTimeout != noDuration {
 		deadline = time.Now().Add(c.readTimeout)
 	}
@@ -300,7 +301,9 @@ func (c *WsConnection) WriteMessage(
 		return c
 	}
 
-	c.conn.SetWriteDeadline(time.Now().Add(c.writeTimeout))
+	if !c.setWriteDeadline() {
+		return c
+	}
 	if err := c.conn.WriteMessage(typ, content); err != nil {
 		c.chain.fail(
 			"\nexpected write into WebSocket connection, "+
@@ -365,4 +368,18 @@ func (c *WsConnection) checkUnusable(where string) bool {
 		return true
 	}
 	return false
+}
+
+func (c *WsConnection) setWriteDeadline() bool {
+	deadline := infiniteTime
+	if c.writeTimeout != noDuration {
+		deadline = time.Now().Add(c.writeTimeout)
+	}
+	if err := c.conn.SetWriteDeadline(deadline); err != nil {
+		c.chain.fail(
+			"\nunexpected failure when setting "+
+				"write WebSocket connection deadline: %s", err.Error())
+		return false
+	}
+	return true
 }
