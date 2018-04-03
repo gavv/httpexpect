@@ -47,7 +47,6 @@ func (m *WsMessage) NotText() *WsMessage {
 // Type succeeds if WebSocket message type is one of the given.
 //
 // WebSocket message types are defined in RFC 6455, section 11.8.
-//
 // See also https://godoc.org/github.com/gorilla/websocket#pkg-constants
 //
 // Example:
@@ -85,7 +84,6 @@ func (m *WsMessage) Type(typ ...int) *WsMessage {
 // NotType succeeds if WebSocket message type is none of the given.
 //
 // WebSocket message types are defined in RFC 6455, section 11.8.
-//
 // See also https://godoc.org/github.com/gorilla/websocket#pkg-constants
 //
 // Example:
@@ -121,7 +119,6 @@ func (m *WsMessage) NotType(typ ...int) *WsMessage {
 // Code fails if WebSocket message type is not "8 - Connection Close Frame".
 //
 // WebSocket close codes are defined in RFC 6455, section 11.7.
-//
 // See also https://godoc.org/github.com/gorilla/websocket#pkg-constants
 //
 // Example:
@@ -163,7 +160,6 @@ func (m *WsMessage) Code(code ...int) *WsMessage {
 // NotCode fails if WebSocket message type is not "8 - Connection Close Frame".
 //
 // WebSocket close codes are defined in RFC 6455, section 11.7.
-//
 // See also https://godoc.org/github.com/gorilla/websocket#pkg-constants
 //
 // Example:

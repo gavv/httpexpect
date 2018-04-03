@@ -286,7 +286,7 @@ func (r *Response) Cookie(name string) *Cookie {
 // Example:
 //  resp := req.Expect()
 //  conn := resp.Connection()
-//  defer conn.Close()
+//  defer conn.Disconnect()
 func (r *Response) Connection() *WsConnection {
 	switch {
 	case !r.isWs:

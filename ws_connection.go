@@ -1,8 +1,10 @@
 package httpexpect
 
 import (
-	"github.com/gorilla/websocket"
+	"encoding/json"
 	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 var noDuration = time.Duration(0)
@@ -26,6 +28,16 @@ func makeWsConnection(chain chain, conn *websocket.Conn) *WsConnection {
 	}
 }
 
+// Subprotocol returns a new String object that may be used to inspect
+// negotiated protocol for the connection.
+func (c *WsConnection) Subprotocol() *String {
+	s := &String{chain: c.chain}
+	if c.conn != nil {
+		s.value = c.conn.Subprotocol()
+	}
+	return s
+}
+
 func (c *WsConnection) ReadTimeout(timeout time.Duration) *WsConnection {
 	c.readTimeout = timeout
 	return c
@@ -44,24 +56,6 @@ func (c *WsConnection) WriteTimeout(timeout time.Duration) *WsConnection {
 func (c *WsConnection) NoWriteTimeout() *WsConnection {
 	c.writeTimeout = noDuration
 	return c
-}
-
-func (c *WsConnection) Close() {
-	if c.conn == nil || c.isClosed {
-		return
-	}
-	c.isClosed = true
-
-	// Cleanly close the connection by sending a close message and then
-	// waiting (with timeout) for the server to close the connection.
-	c.conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
-	err := c.conn.WriteMessage(websocket.CloseMessage,
-		websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-	if err != nil {
-		return
-	}
-	c.conn.SetReadDeadline(time.Now().Add(5 * time.Second))
-	c.conn.ReadMessage() // nolint: errcheck
 }
 
 // Raw returns underlying websocket.Conn object.
@@ -115,4 +109,260 @@ func (c *WsConnection) setReadDeadline() bool {
 		return false
 	}
 	return true
+}
+
+// Disconnect closes the underlying WebSocket connection without sending or
+// waiting for a close message.
+//
+// It's okay to call this function multiple times.
+//
+// It's recommended to always call this function after connection usage is over
+// to ensure that no resource leaks will happen.
+//
+// Example:
+//  conn := resp.Connection()
+//  defer conn.Disconnect()
+func (c *WsConnection) Disconnect() *WsConnection {
+	if c.conn == nil || c.isClosed {
+		return c
+	}
+	c.isClosed = true
+	c.conn.Close() // nolint: errcheck
+	return c
+}
+
+// Close cleanly closes the underlying WebSocket connection
+// by sending an empty close message and then waiting (with timeout)
+// for the server to close the connection.
+//
+// WebSocket close code may be optionally specified.
+// If not, then "1000 - Normal Closure" will be used.
+//
+// WebSocket close codes are defined in RFC 6455, section 11.7.
+// See also https://godoc.org/github.com/gorilla/websocket#pkg-constants
+//
+// It's okay to call this function multiple times.
+//
+// Example:
+//  conn := resp.Connection()
+//  conn.Close(websocket.CloseUnsupportedData)
+func (c *WsConnection) Close(code ...int) *WsConnection {
+	switch {
+	case c.isClosed || c.checkUnusable("Close"):
+		return c
+	case len(code) > 1:
+		c.chain.fail("\nunexpected multiple code arguments passed to Close")
+		return c
+	}
+	return c.CloseWithBytes(nil, code...)
+}
+
+// CloseWithBytes cleanly closes the underlying WebSocket connection
+// by sending given slice of bytes as a close message and then waiting
+// (with timeout) for the server to close the connection.
+//
+// WebSocket close code may be optionally specified.
+// If not, then "1000 - Normal Closure" will be used.
+//
+// WebSocket close codes are defined in RFC 6455, section 11.7.
+// See also https://godoc.org/github.com/gorilla/websocket#pkg-constants
+//
+// It's okay to call this function multiple times.
+//
+// Example:
+//  conn := resp.Connection()
+//  conn.CloseWithBytes([]byte("bye!"), websocket.CloseGoingAway)
+func (c *WsConnection) CloseWithBytes(b []byte, code ...int) *WsConnection {
+	switch {
+	case c.isClosed || c.checkUnusable("CloseWithBytes"):
+		return c
+	case len(code) > 1:
+		c.chain.fail(
+			"\nunexpected multiple code arguments passed to CloseWithBytes")
+		return c
+	}
+
+	defer c.Disconnect()
+
+	c.WriteMessage(websocket.CloseMessage, b, code...)
+
+	// Waiting (with timeout) for the server to close the connection.
+	c.conn.SetReadDeadline(time.Now().Add(time.Second))
+	c.conn.ReadMessage() // nolint: errcheck
+
+	return c
+}
+
+// CloseWithJSON cleanly closes the underlying WebSocket connection
+// by sending given object (marshaled using json.Marshal()) as a close message
+// and then waiting (with timeout) for the server to close the connection.
+//
+// WebSocket close code may be optionally specified.
+// If not, then "1000 - Normal Closure" will be used.
+//
+// WebSocket close codes are defined in RFC 6455, section 11.7.
+// See also https://godoc.org/github.com/gorilla/websocket#pkg-constants
+//
+// It's okay to call this function multiple times.
+//
+// Example:
+//  type MyJSON struct {
+//    Foo int `json:"foo"`
+//  }
+//
+//  conn := resp.Connection()
+//  conn.CloseWithJSON(MyJSON{Foo: 123}, websocket.CloseUnsupportedData)
+func (c *WsConnection) CloseWithJSON(
+	object interface{}, code ...int,
+) *WsConnection {
+	switch {
+	case c.isClosed || c.checkUnusable("CloseWithJSON"):
+		return c
+	case len(code) > 1:
+		c.chain.fail(
+			"\nunexpected multiple code arguments passed to CloseWithJSON")
+		return c
+	}
+
+	defer c.Disconnect()
+
+	b, err := json.Marshal(object)
+	if err != nil {
+		c.chain.fail(err.Error())
+		return c
+	}
+	return c.CloseWithBytes(b, code...)
+}
+
+// CloseWithText cleanly closes the underlying WebSocket connection
+// by sending given text as a close message and then waiting (with timeout)
+// for the server to close the connection.
+//
+// WebSocket close code may be optionally specified.
+// If not, then "1000 - Normal Closure" will be used.
+//
+// WebSocket close codes are defined in RFC 6455, section 11.7.
+// See also https://godoc.org/github.com/gorilla/websocket#pkg-constants
+//
+// It's okay to call this function multiple times.
+//
+// Example:
+//  conn := resp.Connection()
+//  conn.CloseWithText("bye!")
+func (c *WsConnection) CloseWithText(s string, code ...int) *WsConnection {
+	switch {
+	case c.isClosed || c.checkUnusable("CloseWithText"):
+		return c
+	case len(code) > 1:
+		c.chain.fail(
+			"\nunexpected multiple code arguments passed to CloseWithText")
+		return c
+	}
+	return c.CloseWithBytes([]byte(s), code...)
+}
+
+// WriteMessage writes to the underlying WebSocket connection a message
+// of given type with given content.
+// Additionally, WebSocket close code may be specified for close messages.
+//
+// WebSocket message types are defined in RFC 6455, section 11.8.
+// See also https://godoc.org/github.com/gorilla/websocket#pkg-constants
+//
+// WebSocket close codes are defined in RFC 6455, section 11.7.
+// See also https://godoc.org/github.com/gorilla/websocket#pkg-constants
+//
+// Example:
+//  conn := resp.Connection()
+//  conn.WriteMessage(websocket.CloseMessage, []byte("Namárië..."))
+func (c *WsConnection) WriteMessage(
+	typ int, content []byte, closeCode ...int,
+) *WsConnection {
+	if c.checkUnusable("WriteMessage") {
+		return c
+	}
+
+	switch typ {
+	case websocket.TextMessage, websocket.BinaryMessage:
+	case websocket.CloseMessage:
+		if len(closeCode) > 1 {
+			c.chain.fail("\nunexpected multiple closeCode arguments " +
+				"passed to WriteMessage")
+			return c
+		}
+		code := websocket.CloseNormalClosure
+		if len(closeCode) > 0 {
+			code = closeCode[0]
+		}
+		content = websocket.FormatCloseMessage(code, string(content))
+	default:
+		c.chain.fail("\nunexpected WebSocket message type '%s' "+
+			"passed to WriteMessage", wsMessageTypeName(typ))
+		return c
+	}
+
+	c.conn.SetWriteDeadline(time.Now().Add(c.writeTimeout))
+	if err := c.conn.WriteMessage(typ, content); err != nil {
+		c.chain.fail(
+			"\nexpected write into WebSocket connection, "+
+				"but got failure: %s", err.Error())
+	}
+
+	return c
+}
+
+// WriteBytes is a shorthand for c.WriteMessage(websocket.TextMessage, b).
+func (c *WsConnection) WriteBytes(b []byte) *WsConnection {
+	if c.checkUnusable("WriteBytes") {
+		return c
+	}
+	return c.WriteMessage(websocket.TextMessage, b)
+}
+
+// WriteBytes is a shorthand for c.WriteMessage(websocket.BinaryMessage, b).
+func (c *WsConnection) WriteBinary(b []byte) *WsConnection {
+	if c.checkUnusable("WriteBinary") {
+		return c
+	}
+	return c.WriteMessage(websocket.BinaryMessage, b)
+}
+
+// WriteJSON writes to the underlying WebSocket connection given object,
+// marshaled using json.Marshal().
+func (c *WsConnection) WriteJSON(object interface{}) *WsConnection {
+	if c.checkUnusable("WriteJSON") {
+		return c
+	}
+
+	b, err := json.Marshal(object)
+	if err != nil {
+		c.chain.fail(err.Error())
+		return c
+	}
+
+	return c.WriteMessage(websocket.TextMessage, b)
+}
+
+// WriteText is a shorthand for
+// c.WriteMessage(websocket.TextMessage, []byte(s)).
+func (c *WsConnection) WriteText(s string) *WsConnection {
+	if c.checkUnusable("WriteText") {
+		return c
+	}
+	return c.WriteMessage(websocket.TextMessage, []byte(s))
+}
+
+func (c *WsConnection) checkUnusable(where string) bool {
+	switch {
+	case c.chain.failed():
+		return true
+	case c.conn == nil:
+		c.chain.fail("\nunexpected %s usage for failed WebSocket connection",
+			where)
+		return true
+	case c.isClosed:
+		c.chain.fail("\nunexpected %s usage for closed WebSocket connection",
+			where)
+		return true
+	}
+	return false
 }
