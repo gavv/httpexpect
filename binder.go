@@ -1,6 +1,7 @@
 package httpexpect
 
 import (
+	"bufio"
 	"bytes"
 	"crypto/tls"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 
+	"github.com/gorilla/websocket"
 	"github.com/valyala/fasthttp"
 )
 
@@ -77,6 +79,28 @@ func (binder Binder) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 
 	return &resp, nil
+}
+
+// TODO
+//
+// Original idea is stolen from: https://github.com/posener/wstest
+func (binder Binder) Dialer() *websocket.Dialer {
+	client, server := net.Pipe()
+	recorder := &hijackRecorder{server: server}
+
+	go func() {
+		req, err := http.ReadRequest(bufio.NewReader(server))
+		if err != nil {
+			return
+		}
+		binder.Handler.ServeHTTP(recorder, req)
+	}()
+
+	return &websocket.Dialer{
+		NetDial: func(network, addr string) (net.Conn, error) {
+			return client, nil
+		},
+	}
 }
 
 // FastBinder implements networkless http.RoundTripper attached directly
@@ -211,4 +235,30 @@ type connTLS struct {
 
 func (c connTLS) ConnectionState() tls.ConnectionState {
 	return *c.state
+}
+
+// hijackRecorder it similar to httptest.ResponseRecorder,
+// but with Hijack capabilities.
+//
+// Original idea is stolen from: https://github.com/posener/wstest
+type hijackRecorder struct {
+	httptest.ResponseRecorder
+	server net.Conn
+}
+
+// Hijack the connection for caller.
+//
+// Implements http.Hijacker interface.
+func (r *hijackRecorder) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	// return to the recorder the recorder, which is the recorder side of the connection
+	rw := bufio.NewReadWriter(bufio.NewReader(r.server), bufio.NewWriter(r.server))
+	return r.server, rw, nil
+}
+
+// WriteHeader write HTTP header to the client and closes the connection
+//
+// Implements http.ResponseWriter interface.
+func (r *hijackRecorder) WriteHeader(code int) {
+	resp := http.Response{StatusCode: code, Header: r.Header()}
+	resp.Write(r.server)
 }
