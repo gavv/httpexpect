@@ -278,11 +278,15 @@ func (r *Response) Cookie(name string) *Cookie {
 	return &Cookie{r.chain, nil}
 }
 
-// Connection returns WebSocket Connection that may be used to interact with
+// Connection returns WsConnection that may be used to interact with
 // WebSocket server.
 //
+// That is responsibility of caller to explicitly close WsConnection after use.
+//
 // Example:
-//  TODO
+//  resp := req.Expect()
+//  conn := resp.Connection()
+//  defer conn.Close()
 func (r *Response) Connection() *WsConnection {
 	switch {
 	case !r.isWs:

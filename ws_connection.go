@@ -87,12 +87,12 @@ func (c *WsConnection) Expect() (m *WsMessage) {
 		return
 	}
 	var err error
-	m.typ, m.body, err = c.conn.ReadMessage()
+	m.typ, m.content, err = c.conn.ReadMessage()
 	if err != nil {
 		if cls, ok := err.(*websocket.CloseError); ok {
 			m.typ = websocket.CloseMessage
 			m.closeCode = cls.Code
-			m.body = []byte(cls.Text)
+			m.content = []byte(cls.Text)
 		} else {
 			c.chain.fail(
 				"\nexpected read WebSocket connection, "+
