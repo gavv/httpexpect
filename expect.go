@@ -260,7 +260,7 @@ func New(t LoggerReporter, baseURL string) *Expect {
 // If Dialer is nil, it's set to a default dialer with handshake timeout 45s
 // and enabled compression:
 //  &websocket.Dialer{
-//      HandshakeTimeout:  45 * time.Second,
+//      HandshakeTimeout:  DefaultWsConnectionTimeout,
 //      EnableCompression: true,
 //  }
 //
@@ -297,7 +297,7 @@ func WithConfig(config Config) *Expect {
 	}
 	if config.Dialer == nil {
 		config.Dialer = &websocket.Dialer{
-			HandshakeTimeout:  45 * time.Second,
+			HandshakeTimeout:  DefaultWsConnectionTimeout,
 			EnableCompression: true,
 		}
 	}
