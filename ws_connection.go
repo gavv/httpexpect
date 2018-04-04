@@ -382,7 +382,7 @@ func (c *WsConnection) WriteBytes(b []byte) *WsConnection {
 	return c.WriteMessage(websocket.TextMessage, b)
 }
 
-// WriteBytes is a shorthand for c.WriteMessage(websocket.BinaryMessage, b).
+// WriteBinary is a shorthand for c.WriteMessage(websocket.BinaryMessage, b).
 func (c *WsConnection) WriteBinary(b []byte) *WsConnection {
 	if c.checkUnusable("WriteBinary") {
 		return c
