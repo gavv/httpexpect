@@ -21,22 +21,35 @@ var infiniteTime = time.Time{}
 // connection.
 type WsConnection struct {
 	chain        chain
+	config       Config
 	conn         *websocket.Conn
 	readTimeout  time.Duration
 	writeTimeout time.Duration
 	isClosed     bool
 }
 
-// NewWsConnection returns a new WsConnection given a reporter used to report
-// failures and websocket.Conn to be inspected and handled.
-func NewWsConnection(reporter Reporter, conn *websocket.Conn) *WsConnection {
-	return makeWsConnection(makeChain(reporter), conn)
+type wsConn struct {
+	*websocket.Conn
+	config Config
 }
 
-func makeWsConnection(chain chain, conn *websocket.Conn) *WsConnection {
+// NewWsConnection returns a new WsConnection given a Config with Reporter and
+// Printers, and websocket.Conn to be inspected and handled.
+func NewWsConnection(config Config, conn *websocket.Conn) *WsConnection {
+	return &WsConnection{
+		chain:        makeChain(config.Reporter),
+		config:       config,
+		conn:         conn,
+		readTimeout:  DefaultWsConnectionTimeout,
+		writeTimeout: DefaultWsConnectionTimeout,
+	}
+}
+
+func makeWsConnection(chain chain, conn *wsConn) *WsConnection {
 	return &WsConnection{
 		chain:        chain,
-		conn:         conn,
+		config:       conn.config,
+		conn:         conn.Conn,
 		readTimeout:  DefaultWsConnectionTimeout,
 		writeTimeout: DefaultWsConnectionTimeout,
 	}
@@ -119,13 +132,17 @@ func (c *WsConnection) Expect() (m *WsMessage) {
 			m.typ = websocket.CloseMessage
 			m.closeCode = cls.Code
 			m.content = []byte(cls.Text)
+			c.printRead(m.typ, m.content, m.closeCode)
 		} else {
 			c.chain.fail(
 				"\nexpected read WebSocket connection, "+
 					"but got failure: %s", err.Error())
 			return
 		}
+	} else {
+		c.printRead(m.typ, m.content, m.closeCode)
 	}
+
 	return
 }
 
@@ -141,6 +158,14 @@ func (c *WsConnection) setReadDeadline() bool {
 		return false
 	}
 	return true
+}
+
+func (c *WsConnection) printRead(typ int, content []byte, closeCode int) {
+	for _, printer := range c.config.Printers {
+		if p, ok := printer.(WsPrinter); ok {
+			p.Read(typ, content, closeCode)
+		}
+	}
 }
 
 // Disconnect closes the underlying WebSocket connection without sending or
@@ -315,16 +340,21 @@ func (c *WsConnection) WriteMessage(
 
 	switch typ {
 	case websocket.TextMessage, websocket.BinaryMessage:
+		c.printWrite(typ, content, 0)
 	case websocket.CloseMessage:
 		if len(closeCode) > 1 {
 			c.chain.fail("\nunexpected multiple closeCode arguments " +
 				"passed to WriteMessage")
 			return c
 		}
+
 		code := websocket.CloseNormalClosure
 		if len(closeCode) > 0 {
 			code = closeCode[0]
 		}
+
+		c.printWrite(typ, content, code)
+
 		content = websocket.FormatCloseMessage(code, string(content))
 	default:
 		c.chain.fail("\nunexpected WebSocket message type '%s' "+
@@ -413,4 +443,12 @@ func (c *WsConnection) setWriteDeadline() bool {
 		return false
 	}
 	return true
+}
+
+func (c *WsConnection) printWrite(typ int, content []byte, closeCode int) {
+	for _, printer := range c.config.Printers {
+		if p, ok := printer.(WsPrinter); ok {
+			p.Write(typ, content, closeCode)
+		}
+	}
 }

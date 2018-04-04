@@ -182,6 +182,18 @@ type Printer interface {
 	Response(*http.Response, time.Duration)
 }
 
+// WsPrinter is used to print writes and reads of WebSocket connection.
+// DebugPrinter implements this interface.
+type WsPrinter interface {
+	Printer
+
+	// Write is called before writes to WebSocket connection.
+	Write(typ int, content []byte, closeCode int)
+
+	// Read is called after reads from WebSocket connection.
+	Read(typ int, content []byte, closeCode int)
+}
+
 // Logger is used as output backend for Printer.
 // testing.TB implements this interface.
 type Logger interface {

@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/ajg/form"
-	"github.com/gorilla/websocket"
 )
 
 // StatusRange is enum for response status ranges.
@@ -40,7 +39,7 @@ const (
 type Response struct {
 	chain   chain
 	resp    *http.Response
-	conn    *websocket.Conn
+	conn    *wsConn
 	content []byte
 	cookies []*http.Cookie
 	time    time.Duration
@@ -86,7 +85,7 @@ func makeResponse(
 }
 
 func makeWsResponse(
-	chain chain, conn *websocket.Conn, response *http.Response,
+	chain chain, conn *wsConn, response *http.Response,
 	duration time.Duration,
 ) *Response {
 	resp := makeResponse(chain, response, duration)

@@ -907,6 +907,7 @@ func (r *Request) Expect() *Response {
 	resp, conn, elapsed := r.sendRequest()
 
 	if r.isWs {
+		conn := &wsConn{conn, r.config}
 		return makeWsResponse(r.chain, conn, resp, elapsed)
 	}
 	return makeResponse(r.chain, resp, elapsed)
