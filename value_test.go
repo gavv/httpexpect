@@ -457,7 +457,8 @@ func TestValuePathExpressions(t *testing.T) {
 		assert.Equal(t, expected, actual)
 	}
 
-	runTests := func(cmpFn func(expected, actual interface{}), tests map[string]interface{}) {
+	runTests := func(cmpFn func(expected, actual interface{}),
+		tests map[string]interface{}) {
 		value := NewValue(reporter, data)
 		value.chain.assertOK(t)
 
