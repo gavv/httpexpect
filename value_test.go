@@ -2,10 +2,8 @@ package httpexpect
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
-	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -429,9 +427,38 @@ func TestValuePathExpressions(t *testing.T) {
 		"D": map[string]interface{}{
 			"C": 3.1415,
 			"V": []interface{}{
-				"string2",
+				"string2a",
+				"string2b",
 				map[string]interface{}{
 					"C": 3.141592,
+				},
+			},
+		},
+		"E": map[string]interface{}{
+			"A": []interface{}{"string3"},
+			"D": map[string]interface{}{
+				"V": map[string]interface{}{
+					"C": 3.14159265,
+				},
+			},
+		},
+		"F": map[string]interface{}{
+			"V": []interface{}{
+				"string4a",
+				"string4b",
+				map[string]interface{}{
+					"CC": 3.1415926535,
+				},
+				map[string]interface{}{
+					"CC": "hello",
+				},
+				[]interface{}{
+					"string5a",
+					"string5b",
+				},
+				[]interface{}{
+					"string6a",
+					"string6b",
 				},
 			},
 		},
@@ -439,26 +466,7 @@ func TestValuePathExpressions(t *testing.T) {
 
 	reporter := newMockReporter(t)
 
-	compare := func(expected, actual interface{}) {
-		assert.Equal(t, expected, actual)
-	}
-
-	compareUnordered := func(expected, actual interface{}) {
-		sortFn := func(obj interface{}) {
-			sort.Slice(obj, func(i, j int) bool {
-				arr := obj.([]interface{})
-				return fmt.Sprint(arr[i]) < fmt.Sprint(arr[j])
-			})
-		}
-
-		sortFn(expected)
-		sortFn(actual)
-
-		assert.Equal(t, expected, actual)
-	}
-
-	runTests := func(cmpFn func(expected, actual interface{}),
-		tests map[string]interface{}) {
+	runTests := func(tests map[string]interface{}) {
 		value := NewValue(reporter, data)
 		value.chain.assertOK(t)
 
@@ -466,61 +474,120 @@ func TestValuePathExpressions(t *testing.T) {
 			actual := value.Path(path)
 			actual.chain.assertOK(t)
 
-			cmpFn(expected, actual.Raw())
+			assert.Equal(t, expected, actual.Raw())
 		}
 	}
 
-	t.Run("basic", func(t *testing.T) {
-		runTests(compare, map[string]interface{}{
-			"$":          data,
-			"$.A[0]":     "string",
-			`$["A"][0]`:  "string",
-			"$.A":        []interface{}{"string", 23.3, 3.0, true, false, nil},
-			"$.A[*]":     []interface{}{"string", 23.3, 3.0, true, false, nil},
-			"$.A.*":      []interface{}{"string", 23.3, 3.0, true, false, nil},
-			"$.A.*.a":    []interface{}{},
-			"$.*.V[0]":   []interface{}{"string2"},
-			`$["B","C"]`: []interface{}{"value", 3.14},
-			"$.A[1,4,2]": []interface{}{23.3, false, 3.0},
-			`$["C","B"]`: []interface{}{3.14, "value"},
+	t.Run("pick", func(t *testing.T) {
+		runTests(map[string]interface{}{
+			"$":         data,
+			"$.A[0]":    "string",
+			`$["A"][0]`: "string",
+			"$.A":       []interface{}{"string", 23.3, 3.0, true, false, nil},
+			"$.A[*]":    []interface{}{"string", 23.3, 3.0, true, false, nil},
+			"$.A.*":     []interface{}{"string", 23.3, 3.0, true, false, nil},
+			"$.A.*.a":   []interface{}{},
 		})
 	})
 
-	t.Run("ranges", func(t *testing.T) {
-		runTests(compare, map[string]interface{}{
-			"$.A[1:4]":  []interface{}{23.3, 3.0, true},
-			"$.A[::2]":  []interface{}{"string", 3.0, false},
-			"$.A[-2:]":  []interface{}{false, nil},
-			"$.A[:-1]":  []interface{}{"string", 23.3, 3.0, true, false},
-			"$.A[::-1]": []interface{}{nil, false, true, 3.0, 23.3, "string"},
+	t.Run("slice", func(t *testing.T) {
+		runTests(map[string]interface{}{
+			"$.A[1,4,2]":      []interface{}{23.3, false, 3.0},
+			`$["B","C"]`:      []interface{}{"value", 3.14},
+			`$["C","B"]`:      []interface{}{3.14, "value"},
+			"$.A[1:4]":        []interface{}{23.3, 3.0, true},
+			"$.A[::2]":        []interface{}{"string", 3.0, false},
+			"$.A[-2:]":        []interface{}{false, nil},
+			"$.A[:-1]":        []interface{}{"string", 23.3, 3.0, true, false},
+			"$.A[::-1]":       []interface{}{nil, false, true, 3.0, 23.3, "string"},
+			"$.F.V[4:5][0,1]": []interface{}{"string5a", "string5b"},
+			"$.F.V[4:6][1]":   []interface{}{"string5b", "string6b"},
+			"$.F.V[4:6][0,1]": []interface{}{"string5a", "string5b", "string6a", "string6b"},
+			"$.F.V[4,5][0:2]": []interface{}{"string5a", "string5b", "string6a", "string6b"},
+			"$.F.V[4:6]": []interface{}{
+				[]interface{}{
+					"string5a",
+					"string5b",
+				},
+				[]interface{}{
+					"string6a",
+					"string6b",
+				},
+			},
 		})
 	})
 
-	t.Run("quotes", func(t *testing.T) {
-		runTests(compare, map[string]interface{}{
+	t.Run("quote", func(t *testing.T) {
+		runTests(map[string]interface{}{
 			`$[A][0]`:    "string",
 			`$["A"][0]`:  "string",
 			`$[B,C]`:     []interface{}{"value", 3.14},
 			`$["B","C"]`: []interface{}{"value", 3.14},
-			`$[C,B]`:     []interface{}{3.14, "value"},
-			`$["C","B"]`: []interface{}{3.14, "value"},
 		})
 	})
 
-	t.Run("recursion", func(t *testing.T) {
-		runTests(compareUnordered, map[string]interface{}{
-			"$..V[1].C": []interface{}{3.141592},
-			"$..C":      []interface{}{3.1415, 3.141592},
-			`$..["C"]`:  []interface{}{3.1415, 3.141592},
+	t.Run("search", func(t *testing.T) {
+		runTests(map[string]interface{}{
+			"$..C":       []interface{}{3.14, 3.1415, 3.141592, 3.14159265},
+			`$..["C"]`:   []interface{}{3.14, 3.1415, 3.141592, 3.14159265},
+			"$.D.V..C":   []interface{}{3.141592},
+			"$.D.V.*.C":  []interface{}{3.141592},
+			"$.D.V..*.C": []interface{}{3.141592},
+			"$.D.*..C":   []interface{}{3.141592},
+			"$.*.V..C":   []interface{}{3.141592},
+			"$.*.D.V.C":  []interface{}{3.14159265},
+			"$.*.D..C":   []interface{}{3.14159265},
+			"$.*.D.V..*": []interface{}{3.14159265},
+			"$..D..V..C": []interface{}{3.141592, 3.14159265},
+			"$.*.*.*.C":  []interface{}{3.141592, 3.14159265},
+			"$..V..C":    []interface{}{3.141592, 3.14159265},
 			"$.D.V..*": []interface{}{
-				"string2",
+				"string2a",
+				"string2b",
 				map[string]interface{}{
 					"C": 3.141592,
 				},
 				3.141592,
 			},
-			"$..[0]": []interface{}{"string", "string2"},
-			"$..ZZ":  []interface{}{},
+			"$..A": []interface{}{
+				[]interface{}{"string", 23.3, 3.0, true, false, nil},
+				[]interface{}{"string3"},
+			},
+			"$..A..*":      []interface{}{"string", 23.3, 3.0, true, false, nil, "string3"},
+			"$.A..*":       []interface{}{"string", 23.3, 3.0, true, false, nil},
+			"$.A.*":        []interface{}{"string", 23.3, 3.0, true, false, nil},
+			"$..A[0,1]":    []interface{}{"string", 23.3},
+			"$..A[0]":      []interface{}{"string", "string3"},
+			"$.*.V[0]":     []interface{}{"string2a", "string4a"},
+			"$.*.V[1]":     []interface{}{"string2b", "string4b"},
+			"$.*.V[0,1]":   []interface{}{"string2a", "string2b", "string4a", "string4b"},
+			"$.*.V[0:2]":   []interface{}{"string2a", "string2b", "string4a", "string4b"},
+			"$.*.V[2].C":   []interface{}{3.141592},
+			"$..V[2].C":    []interface{}{3.141592},
+			"$..V[*].C":    []interface{}{3.141592},
+			"$.*.V[2].*":   []interface{}{3.141592, 3.1415926535},
+			"$.*.V[2:3].*": []interface{}{3.141592, 3.1415926535},
+			"$.*.V[2:4].*": []interface{}{3.141592, 3.1415926535, "hello"},
+			"$..V[2,3].CC": []interface{}{3.1415926535, "hello"},
+			"$..V[2:4].CC": []interface{}{3.1415926535, "hello"},
+			"$..V[*].*": []interface{}{
+				3.141592,
+				3.1415926535,
+				"hello",
+				"string5a",
+				"string5b",
+				"string6a",
+				"string6b",
+			},
+			"$..[0]": []interface{}{
+				"string",
+				"string2a",
+				"string3",
+				"string4a",
+				"string5a",
+				"string6a",
+			},
+			"$..ZZ": []interface{}{},
 		})
 	})
 }
