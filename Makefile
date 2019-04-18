@@ -7,9 +7,7 @@ test:
 	go test . ./_examples
 
 check:
-	go get -u github.com/alecthomas/gometalinter
-	gometalinter --install
-	gometalinter --config .gometalinter
+	golangci-lint run ./...
 
 fmt:
 	gofmt -s -w . ./_examples
