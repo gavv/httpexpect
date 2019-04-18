@@ -103,3 +103,31 @@ func (c *Cookie) Expires() *DateTime {
 	}
 	return &DateTime{c.chain, c.value.Expires}
 }
+
+// MaxAge returns a new Duration object that may be used to inspect
+// cookie Max-age field.
+//
+// If MaxAge is not set, the returned Duration is unset. Whether a Duration
+// is set or not can be chacked using its IsSet and NotSet methods.
+//
+// If MaxAge is zero (which means delete cookie now), the returned Duration
+// is set and equals to zero.
+//
+// Example:
+//  cookie := NewCookie(t, &http.Cookie{...})
+//  cookie.MaxAge().IsSet()
+//  cookie.MaxAge().InRange(time.Minute, time.Minute*10)
+func (c *Cookie) MaxAge() *Duration {
+	if c.chain.failed() {
+		return &Duration{c.chain, nil}
+	}
+	if c.value.MaxAge == 0 {
+		return &Duration{c.chain, nil}
+	}
+	if c.value.MaxAge < 0 {
+		var zero time.Duration
+		return &Duration{c.chain, &zero}
+	}
+	d := time.Duration(c.value.MaxAge) * time.Second
+	return &Duration{c.chain, &d}
+}

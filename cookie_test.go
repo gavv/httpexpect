@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCookieFailed(t *testing.T) {
@@ -34,6 +35,7 @@ func TestCookieGetters(t *testing.T) {
 		Domain:  "example.com",
 		Path:    "/path",
 		Expires: time.Unix(1234, 0),
+		MaxAge:  123,
 	})
 
 	value.chain.assertOK(t)
@@ -49,6 +51,52 @@ func TestCookieGetters(t *testing.T) {
 	assert.Equal(t, "example.com", value.Domain().Raw())
 	assert.Equal(t, "/path", value.Path().Raw())
 	assert.True(t, time.Unix(1234, 0).Equal(value.Expires().Raw()))
+	assert.Equal(t, time.Duration(123*time.Second), value.MaxAge().Raw())
 
 	value.chain.assertOK(t)
+}
+
+func TestCookieMaxAge(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	t.Run("unset", func(t *testing.T) {
+		value := NewCookie(reporter, &http.Cookie{
+			MaxAge: 0,
+		})
+
+		value.chain.assertOK(t)
+
+		require.Nil(t, value.MaxAge().value)
+
+		value.MaxAge().NotSet().chain.assertOK(t)
+		value.MaxAge().IsSet().chain.assertFailed(t)
+	})
+
+	t.Run("zero", func(t *testing.T) {
+		value := NewCookie(reporter, &http.Cookie{
+			MaxAge: -1,
+		})
+
+		value.chain.assertOK(t)
+
+		require.NotNil(t, value.MaxAge().value)
+		require.Equal(t, time.Duration(0), *value.MaxAge().value)
+
+		value.MaxAge().IsSet().chain.assertOK(t)
+		value.MaxAge().Equal(0).chain.assertOK(t)
+	})
+
+	t.Run("non-zero", func(t *testing.T) {
+		value := NewCookie(reporter, &http.Cookie{
+			MaxAge: 3,
+		})
+
+		value.chain.assertOK(t)
+
+		require.NotNil(t, value.MaxAge().value)
+		require.Equal(t, 3*time.Second, *value.MaxAge().value)
+
+		value.MaxAge().IsSet().chain.assertOK(t)
+		value.MaxAge().Equal(3 * time.Second).chain.assertOK(t)
+	})
 }
