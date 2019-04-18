@@ -105,7 +105,7 @@ func (s *String) NotEmpty() *String {
 	return s.NotEqual("")
 }
 
-// Equal succeeds if string is equal to another str.
+// Equal succeeds if string is equal to given Go string.
 //
 // Example:
 //  str := NewString(t, "Hello")
@@ -118,7 +118,7 @@ func (s *String) Equal(value string) *String {
 	return s
 }
 
-// NotEqual succeeds if string is not equal to another str.
+// NotEqual succeeds if string is not equal to given Go string.
 //
 // Example:
 //  str := NewString(t, "Hello")
@@ -130,8 +130,8 @@ func (s *String) NotEqual(value string) *String {
 	return s
 }
 
-// EqualFold succeeds if string is equal to another string under Unicode case-folding
-// (case-insensitive match).
+// EqualFold succeeds if string is equal to given Go string after applying Unicode
+// case-folding (so it's a case-insensitive match).
 //
 // Example:
 //  str := NewString(t, "Hello")
@@ -145,8 +145,8 @@ func (s *String) EqualFold(value string) *String {
 	return s
 }
 
-// NotEqualFold succeeds if string is not equal to another string under Unicode
-// case-folding (case-insensitive match).
+// NotEqualFold succeeds if string is not equal to given Go string after applying
+// Unicode case-folding (so it's a case-insensitive match).
 //
 // Example:
 //  str := NewString(t, "Hello")
@@ -160,7 +160,7 @@ func (s *String) NotEqualFold(value string) *String {
 	return s
 }
 
-// Contains succeeds if string contains given substr.
+// Contains succeeds if string contains given Go string as a substring.
 //
 // Example:
 //  str := NewString(t, "Hello")
@@ -174,7 +174,7 @@ func (s *String) Contains(value string) *String {
 	return s
 }
 
-// NotContains succeeds if string doesn't contain given substr.
+// NotContains succeeds if string doesn't contain Go string as a substring.
 //
 // Example:
 //  str := NewString(t, "Hello")
@@ -188,8 +188,8 @@ func (s *String) NotContains(value string) *String {
 	return s
 }
 
-// ContainsFold succeeds if string contains given substring under Unicode case-folding
-// (case-insensitive match).
+// ContainsFold succeeds if string contains given Go string as a substring after
+// applying Unicode case-folding (so it's a case-insensitive match).
 //
 // Example:
 //  str := NewString(t, "Hello")
@@ -203,8 +203,8 @@ func (s *String) ContainsFold(value string) *String {
 	return s
 }
 
-// NotContainsFold succeeds if string doesn't contain given substring under Unicode
-// case-folding (case-insensitive match).
+// NotContainsFold succeeds if string doesn't contain given Go string as a substring
+// after applying Unicode case-folding (so it's a case-insensitive match).
 //
 // Example:
 //  str := NewString(t, "Hello")

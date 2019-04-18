@@ -153,10 +153,10 @@ func (a *Array) NotEmpty() *Array {
 	return a.NotEqual([]interface{}{})
 }
 
-// Equal succeeds if array is equal to another array.
-// Before comparison, both arrays are converted to canonical form.
+// Equal succeeds if array is equal to given Go slice.
+// Before comparison, both array and value are converted to canonical form.
 //
-// value should be slice of any type.
+// value should be a slice of any type.
 //
 // Example:
 //  array := NewArray(t, []interface{}{"foo", 123})
@@ -181,10 +181,10 @@ func (a *Array) Equal(value interface{}) *Array {
 	return a
 }
 
-// NotEqual succeeds if array is not equal to another array.
-// Before comparison, both arrays are converted to canonical form.
+// NotEqual succeeds if array is not equal to given Go slice.
+// Before comparison, both array and value are converted to canonical form.
 //
-// value should be slice of any type.
+// value should be a slice of any type.
 //
 // Example:
 //  array := NewArray(t, []interface{}{"foo", 123})
@@ -201,8 +201,8 @@ func (a *Array) NotEqual(value interface{}) *Array {
 	return a
 }
 
-// Elements succeeds if array contains all given elements, in given order, and only them.
-// Before comparison, array and all elements are converted to canonical form.
+// Elements succeeds if array contains all given elements, in given order, and only
+// them. Before comparison, array and all elements are converted to canonical form.
 //
 // For partial or unordered comparison, see Contains and ContainsOnly.
 //

@@ -110,10 +110,10 @@ func (o *Object) NotEmpty() *Object {
 	return o.NotEqual(map[string]interface{}{})
 }
 
-// Equal succeeds if object is equal to another object.
-// Before comparison, both objects are converted to canonical form.
+// Equal succeeds if object is equal to given Go map or struct.
+// Before comparison, both object and value are converted to canonical form.
 //
-// value should map[string]interface{} or struct.
+// value should be map[string]interface{} or struct.
 //
 // Example:
 //  object := NewObject(t, map[string]interface{}{"foo": 123})
@@ -132,10 +132,10 @@ func (o *Object) Equal(value interface{}) *Object {
 	return o
 }
 
-// NotEqual succeeds if object is not equal to another object.
-// Before comparison, both objects are converted to canonical form.
+// NotEqual succeeds if object is not equal to given Go map or struct.
+// Before comparison, both object and value are converted to canonical form.
 //
-// value should map[string]interface{} or struct.
+// value should be map[string]interface{} or struct.
 //
 // Example:
 //  object := NewObject(t, map[string]interface{}{"foo": 123})
@@ -179,10 +179,10 @@ func (o *Object) NotContainsKey(key string) *Object {
 	return o
 }
 
-// ContainsMap succeeds if object contains given sub-object.
-// Before comparison, both objects are converted to canonical form.
+// ContainsMap succeeds if object contains given Go value.
+// Before comparison, both object and value are converted to canonical form.
 //
-// value should map[string]interface{} or struct.
+// value should be map[string]interface{} or struct.
 //
 // Example:
 //  object := NewObject(t, map[string]interface{}{
@@ -217,10 +217,10 @@ func (o *Object) ContainsMap(value interface{}) *Object {
 	return o
 }
 
-// NotContainsMap succeeds if object doesn't contain given sub-object exactly.
-// Before comparison, both objects are converted to canonical form.
+// NotContainsMap succeeds if object doesn't contain given Go value.
+// Before comparison, both object and value are converted to canonical form.
 //
-// value should map[string]interface{} or struct.
+// value should be map[string]interface{} or struct.
 //
 // Example:
 //  object := NewObject(t, map[string]interface{}{"foo": 123, "bar": 456})
@@ -233,10 +233,10 @@ func (o *Object) NotContainsMap(value interface{}) *Object {
 	return o
 }
 
-// ValueEqual succeeds if object's value for given key is equal to given value.
+// ValueEqual succeeds if object's value for given key is equal to given Go value.
 // Before comparison, both values are converted to canonical form.
 //
-// value should map[string]interface{} or struct.
+// value should be map[string]interface{} or struct.
 //
 // Example:
 //  object := NewObject(t, map[string]interface{}{"foo": 123})
@@ -262,10 +262,10 @@ func (o *Object) ValueEqual(key string, value interface{}) *Object {
 	return o
 }
 
-// ValueNotEqual succeeds if object's value for given key is not equal to given value.
-// Before comparison, both values are converted to canonical form.
+// ValueNotEqual succeeds if object's value for given key is not equal to given
+// Go value. Before comparison, both values are converted to canonical form.
 //
-// value should map[string]interface{} or struct.
+// value should be map[string]interface{} or struct.
 //
 // If object doesn't contain any value for given key, failure is reported.
 //

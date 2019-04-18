@@ -158,7 +158,7 @@ func (v *Value) Array() *Array {
 
 // String returns a new String attached to underlying value.
 //
-// If underlying value is not string, failure is reported and empty (but non-nil)
+// If underlying value is not a string, failure is reported and empty (but non-nil)
 // value is returned.
 //
 // Example:
@@ -247,7 +247,7 @@ func (v *Value) NotNull() *Value {
 	return v
 }
 
-// Equal succeeds if value is equal to another value.
+// Equal succeeds if value is equal to given Go value (e.g. map, slice, string, etc).
 // Before comparison, both values are converted to canonical form.
 //
 // Example:
@@ -267,8 +267,8 @@ func (v *Value) Equal(value interface{}) *Value {
 	return v
 }
 
-// NotEqual succeeds if value is not equal to another value.
-// Before comparison, both values are converted to canonical form.
+// NotEqual succeeds if value is not equal to given Go value (e.g. map, slice,
+// string, etc). Before comparison, both values are converted to canonical form.
 //
 // Example:
 //  value := NewValue(t, "foo")
