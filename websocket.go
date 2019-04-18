@@ -7,57 +7,74 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// DefaultWsConnectionTimeout is a default timeout duration
-// for WebSocket connection read and writes.
-//
-// You may preconfigure this option globally.
-var DefaultWsConnectionTimeout = 30 * time.Second
-
 const noDuration = time.Duration(0)
 
 var infiniteTime = time.Time{}
 
-// WsConnection provides methods to read from, write into and close WebSocket
+// Websocket provides methods to read from, write into and close WebSocket
 // connection.
-type WsConnection struct {
-	chain        chain
+type Websocket struct {
 	config       Config
+	chain        chain
 	conn         *websocket.Conn
 	readTimeout  time.Duration
 	writeTimeout time.Duration
 	isClosed     bool
 }
 
-type wsConn struct {
-	*websocket.Conn
-	config Config
-}
-
-// NewWsConnection returns a new WsConnection given a Config with Reporter and
+// NewWebsocket returns a new Websocket given a Config with Reporter and
 // Printers, and websocket.Conn to be inspected and handled.
-func NewWsConnection(config Config, conn *websocket.Conn) *WsConnection {
-	return &WsConnection{
-		chain:        makeChain(config.Reporter),
-		config:       config,
-		conn:         conn,
-		readTimeout:  DefaultWsConnectionTimeout,
-		writeTimeout: DefaultWsConnectionTimeout,
+func NewWebsocket(config Config, conn *websocket.Conn) *Websocket {
+	return makeWebsocket(config, makeChain(config.Reporter), conn)
+}
+
+func makeWebsocket(config Config, chain chain, conn *websocket.Conn) *Websocket {
+	return &Websocket{
+		config: config,
+		chain:  chain,
+		conn:   conn,
 	}
 }
 
-func makeWsConnection(chain chain, conn *wsConn) *WsConnection {
-	return &WsConnection{
-		chain:        chain,
-		config:       conn.config,
-		conn:         conn.Conn,
-		readTimeout:  DefaultWsConnectionTimeout,
-		writeTimeout: DefaultWsConnectionTimeout,
-	}
+// Raw returns underlying websocket.Conn object.
+// This is the value originally passed to NewConnection.
+func (c *Websocket) Raw() *websocket.Conn {
+	return c.conn
+}
+
+// WithReadTimeout sets timeout duration for WebSocket connection reads.
+//
+// By default no timeout is used.
+func (c *Websocket) WithReadTimeout(timeout time.Duration) *Websocket {
+	c.readTimeout = timeout
+	return c
+}
+
+// WithoutReadTimeout removes timeout for WebSocket connection reads.
+func (c *Websocket) WithoutReadTimeout() *Websocket {
+	c.readTimeout = noDuration
+	return c
+}
+
+// WithWriteTimeout sets timeout duration for WebSocket connection writes.
+//
+// By default no timeout is used.
+func (c *Websocket) WithWriteTimeout(timeout time.Duration) *Websocket {
+	c.writeTimeout = timeout
+	return c
+}
+
+// WithoutWriteTimeout removes timeout for WebSocket connection writes.
+//
+// If not used then DefaultWebsocketTimeout will be used.
+func (c *Websocket) WithoutWriteTimeout() *Websocket {
+	c.writeTimeout = noDuration
+	return c
 }
 
 // Subprotocol returns a new String object that may be used to inspect
 // negotiated protocol for the connection.
-func (c *WsConnection) Subprotocol() *String {
+func (c *Websocket) Subprotocol() *String {
 	s := &String{chain: c.chain}
 	if c.conn != nil {
 		s.value = c.conn.Subprotocol()
@@ -65,62 +82,24 @@ func (c *WsConnection) Subprotocol() *String {
 	return s
 }
 
-// ReadTimeout set timeout duration for WebSocket connection reads.
-//
-// If not set then DefaultWsConnectionTimeout will be used.
-func (c *WsConnection) ReadTimeout(timeout time.Duration) *WsConnection {
-	c.readTimeout = timeout
-	return c
-}
-
-// NoReadTimeout removes timeout for WebSocket connection reads.
-//
-// If not used then DefaultWsConnectionTimeout will be used.
-func (c *WsConnection) NoReadTimeout() *WsConnection {
-	c.readTimeout = noDuration
-	return c
-}
-
-// WriteTimeout set timeout duration for WebSocket connection writes.
-//
-// If not set then DefaultWsConnectionTimeout will be used.
-func (c *WsConnection) WriteTimeout(timeout time.Duration) *WsConnection {
-	c.writeTimeout = timeout
-	return c
-}
-
-// NoWriteTimeout removes timeout for WebSocket connection writes.
-//
-// If not used then DefaultWsConnectionTimeout will be used.
-func (c *WsConnection) NoWriteTimeout() *WsConnection {
-	c.writeTimeout = noDuration
-	return c
-}
-
-// Raw returns underlying websocket.Conn object.
-// This is the value originally passed to NewConnection.
-func (c *WsConnection) Raw() *websocket.Conn {
-	return c.conn
-}
-
 // Expect reads next message from WebSocket connection and
-// returns a new WsMessage object to inspect received message.
+// returns a new WebsocketMessage object to inspect received message.
 //
 // Example:
 //  msg := conn.Expect()
 //  msg.JSON().Object().ValueEqual("message", "hi")
-func (c *WsConnection) Expect() (m *WsMessage) {
-	m = &WsMessage{
+func (c *Websocket) Expect() (m *WebsocketMessage) {
+	m = &WebsocketMessage{
 		chain: c.chain,
 	}
 	switch {
 	case c.chain.failed():
 		return
 	case c.conn == nil:
-		c.chain.fail("\nunexpected read failed WebSocket connection")
+		c.chain.fail("\nunexpected read from failed WebSocket connection")
 		return
 	case c.isClosed:
-		c.chain.fail("\nunexpected read closed WebSocket connection")
+		c.chain.fail("\nunexpected read from closed WebSocket connection")
 		return
 	case !c.setReadDeadline():
 		return
@@ -146,7 +125,7 @@ func (c *WsConnection) Expect() (m *WsMessage) {
 	return
 }
 
-func (c *WsConnection) setReadDeadline() bool {
+func (c *Websocket) setReadDeadline() bool {
 	deadline := infiniteTime
 	if c.readTimeout != noDuration {
 		deadline = time.Now().Add(c.readTimeout)
@@ -160,10 +139,10 @@ func (c *WsConnection) setReadDeadline() bool {
 	return true
 }
 
-func (c *WsConnection) printRead(typ int, content []byte, closeCode int) {
+func (c *Websocket) printRead(typ int, content []byte, closeCode int) {
 	for _, printer := range c.config.Printers {
-		if p, ok := printer.(WsPrinter); ok {
-			p.Read(typ, content, closeCode)
+		if p, ok := printer.(WebsocketPrinter); ok {
+			p.WebsocketRead(typ, content, closeCode)
 		}
 	}
 }
@@ -179,12 +158,14 @@ func (c *WsConnection) printRead(typ int, content []byte, closeCode int) {
 // Example:
 //  conn := resp.Connection()
 //  defer conn.Disconnect()
-func (c *WsConnection) Disconnect() *WsConnection {
+func (c *Websocket) Disconnect() *Websocket {
 	if c.conn == nil || c.isClosed {
 		return c
 	}
 	c.isClosed = true
-	c.conn.Close() // nolint: errcheck
+	if err := c.conn.Close(); err != nil {
+		c.chain.fail("close error when disconnecting webcoket: " + err.Error())
+	}
 	return c
 }
 
@@ -203,7 +184,7 @@ func (c *WsConnection) Disconnect() *WsConnection {
 // Example:
 //  conn := resp.Connection()
 //  conn.Close(websocket.CloseUnsupportedData)
-func (c *WsConnection) Close(code ...int) *WsConnection {
+func (c *Websocket) Close(code ...int) *Websocket {
 	switch {
 	case c.isClosed || c.checkUnusable("Close"):
 		return c
@@ -229,7 +210,7 @@ func (c *WsConnection) Close(code ...int) *WsConnection {
 // Example:
 //  conn := resp.Connection()
 //  conn.CloseWithBytes([]byte("bye!"), websocket.CloseGoingAway)
-func (c *WsConnection) CloseWithBytes(b []byte, code ...int) *WsConnection {
+func (c *Websocket) CloseWithBytes(b []byte, code ...int) *Websocket {
 	switch {
 	case c.isClosed || c.checkUnusable("CloseWithBytes"):
 		return c
@@ -239,13 +220,7 @@ func (c *WsConnection) CloseWithBytes(b []byte, code ...int) *WsConnection {
 		return c
 	}
 
-	defer c.Disconnect()
-
 	c.WriteMessage(websocket.CloseMessage, b, code...)
-
-	// Waiting (with timeout) for the server to close the connection.
-	c.conn.SetReadDeadline(time.Now().Add(time.Second))
-	c.conn.ReadMessage() // nolint: errcheck
 
 	return c
 }
@@ -269,9 +244,9 @@ func (c *WsConnection) CloseWithBytes(b []byte, code ...int) *WsConnection {
 //
 //  conn := resp.Connection()
 //  conn.CloseWithJSON(MyJSON{Foo: 123}, websocket.CloseUnsupportedData)
-func (c *WsConnection) CloseWithJSON(
+func (c *Websocket) CloseWithJSON(
 	object interface{}, code ...int,
-) *WsConnection {
+) *Websocket {
 	switch {
 	case c.isClosed || c.checkUnusable("CloseWithJSON"):
 		return c
@@ -306,7 +281,7 @@ func (c *WsConnection) CloseWithJSON(
 // Example:
 //  conn := resp.Connection()
 //  conn.CloseWithText("bye!")
-func (c *WsConnection) CloseWithText(s string, code ...int) *WsConnection {
+func (c *Websocket) CloseWithText(s string, code ...int) *Websocket {
 	switch {
 	case c.isClosed || c.checkUnusable("CloseWithText"):
 		return c
@@ -331,9 +306,9 @@ func (c *WsConnection) CloseWithText(s string, code ...int) *WsConnection {
 // Example:
 //  conn := resp.Connection()
 //  conn.WriteMessage(websocket.CloseMessage, []byte("Namárië..."))
-func (c *WsConnection) WriteMessage(
+func (c *Websocket) WriteMessage(
 	typ int, content []byte, closeCode ...int,
-) *WsConnection {
+) *Websocket {
 	if c.checkUnusable("WriteMessage") {
 		return c
 	}
@@ -374,25 +349,34 @@ func (c *WsConnection) WriteMessage(
 	return c
 }
 
-// WriteBytes is a shorthand for c.WriteMessage(websocket.TextMessage, b).
-func (c *WsConnection) WriteBytes(b []byte) *WsConnection {
-	if c.checkUnusable("WriteBytes") {
-		return c
-	}
-	return c.WriteMessage(websocket.TextMessage, b)
-}
-
-// WriteBinary is a shorthand for c.WriteMessage(websocket.BinaryMessage, b).
-func (c *WsConnection) WriteBinary(b []byte) *WsConnection {
-	if c.checkUnusable("WriteBinary") {
+// WriteBytesBinary is a shorthand for c.WriteMessage(websocket.BinaryMessage, b).
+func (c *Websocket) WriteBytesBinary(b []byte) *Websocket {
+	if c.checkUnusable("WriteBytesBinary") {
 		return c
 	}
 	return c.WriteMessage(websocket.BinaryMessage, b)
 }
 
+// WriteBytesText is a shorthand for c.WriteMessage(websocket.TextMessage, b).
+func (c *Websocket) WriteBytesText(b []byte) *Websocket {
+	if c.checkUnusable("WriteBytesText") {
+		return c
+	}
+	return c.WriteMessage(websocket.TextMessage, b)
+}
+
+// WriteText is a shorthand for
+// c.WriteMessage(websocket.TextMessage, []byte(s)).
+func (c *Websocket) WriteText(s string) *Websocket {
+	if c.checkUnusable("WriteText") {
+		return c
+	}
+	return c.WriteMessage(websocket.TextMessage, []byte(s))
+}
+
 // WriteJSON writes to the underlying WebSocket connection given object,
 // marshaled using json.Marshal().
-func (c *WsConnection) WriteJSON(object interface{}) *WsConnection {
+func (c *Websocket) WriteJSON(object interface{}) *Websocket {
 	if c.checkUnusable("WriteJSON") {
 		return c
 	}
@@ -406,32 +390,23 @@ func (c *WsConnection) WriteJSON(object interface{}) *WsConnection {
 	return c.WriteMessage(websocket.TextMessage, b)
 }
 
-// WriteText is a shorthand for
-// c.WriteMessage(websocket.TextMessage, []byte(s)).
-func (c *WsConnection) WriteText(s string) *WsConnection {
-	if c.checkUnusable("WriteText") {
-		return c
-	}
-	return c.WriteMessage(websocket.TextMessage, []byte(s))
-}
-
-func (c *WsConnection) checkUnusable(where string) bool {
+func (c *Websocket) checkUnusable(where string) bool {
 	switch {
 	case c.chain.failed():
 		return true
 	case c.conn == nil:
-		c.chain.fail("\nunexpected %s usage for failed WebSocket connection",
+		c.chain.fail("\nunexpected %s call for failed WebSocket connection",
 			where)
 		return true
 	case c.isClosed:
-		c.chain.fail("\nunexpected %s usage for closed WebSocket connection",
+		c.chain.fail("\nunexpected %s call for closed WebSocket connection",
 			where)
 		return true
 	}
 	return false
 }
 
-func (c *WsConnection) setWriteDeadline() bool {
+func (c *Websocket) setWriteDeadline() bool {
 	deadline := infiniteTime
 	if c.writeTimeout != noDuration {
 		deadline = time.Now().Add(c.writeTimeout)
@@ -445,10 +420,10 @@ func (c *WsConnection) setWriteDeadline() bool {
 	return true
 }
 
-func (c *WsConnection) printWrite(typ int, content []byte, closeCode int) {
+func (c *Websocket) printWrite(typ int, content []byte, closeCode int) {
 	for _, printer := range c.config.Printers {
-		if p, ok := printer.(WsPrinter); ok {
-			p.Write(typ, content, closeCode)
+		if p, ok := printer.(WebsocketPrinter); ok {
+			p.WebsocketWrite(typ, content, closeCode)
 		}
 	}
 }

@@ -104,13 +104,13 @@ type Config struct {
 	// custom implementation.
 	Client Client
 
-	// Dialer is used to establish websocket.Conn and receive http.Response
-	// of handshake result.
+	// WebsocketDialer is used to establish websocket.Conn and receive
+	// http.Response of handshake result.
 	// Should not be nil.
 	//
 	// You can use websocket.DefaultDialer or websocket.Dialer, or provide
 	// custom implementation.
-	Dialer Dialer
+	WebsocketDialer WebsocketDialer
 
 	// Reporter is used to report failures.
 	// Should not be nil.
@@ -154,20 +154,19 @@ type Client interface {
 	Do(*http.Request) (*http.Response, error)
 }
 
-// Dialer is used to establish websocket.Conn and receive http.Response
+// WebsocketDialer is used to establish websocket.Conn and receive http.Response
 // of handshake result.
 // websocket.Dialer implements this interface.
 //
-// Binder and FastBinder may be used to obtain this interface implementation.
+// NewWebsocketDialer and NewFastWebsocketDialer may be used to obtain this
+// interface implementation.
 //
 // Example:
-//  httpBinderClient := &http.Client{
-//    Dialer: httpexpect.NewBinder(HTTPHandler).Dialer(),
-//  }
-//  fastBinderClient := &http.Client{
-//    Dialer: httpexpect.NewFastBinder(FastHTTPHandler).Dialer(),
-//  }
-type Dialer interface {
+//  e := httpexpect.WithConfig(httpexpect.Config{
+//    BaseURL:         "http://example.com",
+//    WebsocketDialer: httpexpect.NewWebsocketDialer(myHandler),
+//	})
+type WebsocketDialer interface {
 	// Dial establishes new WebSocket connection and returns response
 	// of handshake result.
 	Dial(url string, reqH http.Header) (*websocket.Conn, *http.Response, error)
@@ -183,16 +182,20 @@ type Printer interface {
 	Response(*http.Response, time.Duration)
 }
 
-// WsPrinter is used to print writes and reads of WebSocket connection.
+// WebsocketPrinter is used to print writes and reads of WebSocket connection.
+//
+// If WebSocket connection is used, all Printers that also implement WebsocketPrinter
+// are invoked on every WebSocket message read or written.
+//
 // DebugPrinter implements this interface.
-type WsPrinter interface {
+type WebsocketPrinter interface {
 	Printer
 
-	// Write is called before writes to WebSocket connection.
-	Write(typ int, content []byte, closeCode int)
+	// WebsocketWrite is called before writes to WebSocket connection.
+	WebsocketWrite(typ int, content []byte, closeCode int)
 
-	// Read is called after reads from WebSocket connection.
-	Read(typ int, content []byte, closeCode int)
+	// WebsocketRead is called after reads from WebSocket connection.
+	WebsocketRead(typ int, content []byte, closeCode int)
 }
 
 // Logger is used as output backend for Printer.
@@ -270,12 +273,8 @@ func New(t LoggerReporter, baseURL string) *Expect {
 //      Jar: httpexpect.NewJar(),
 //  }
 //
-// If Dialer is nil, it's set to a default dialer with handshake timeout 45s
-// and enabled compression:
-//  &websocket.Dialer{
-//      HandshakeTimeout:  DefaultWsConnectionTimeout,
-//      EnableCompression: true,
-//  }
+// If WebsocketDialer is nil, it's set to a default dialer:
+//  &websocket.Dialer{}
 //
 // Example:
 //  func TestSomething(t *testing.T) {
@@ -308,11 +307,8 @@ func WithConfig(config Config) *Expect {
 			Jar: NewJar(),
 		}
 	}
-	if config.Dialer == nil {
-		config.Dialer = &websocket.Dialer{
-			HandshakeTimeout:  DefaultWsConnectionTimeout,
-			EnableCompression: true,
-		}
+	if config.WebsocketDialer == nil {
+		config.WebsocketDialer = &websocket.Dialer{}
 	}
 	return &Expect{
 		config: config,
@@ -434,12 +430,6 @@ func (e *Expect) PATCH(path string, pathargs ...interface{}) *Request {
 // DELETE is a shorthand for e.Request("DELETE", path, pathargs...).
 func (e *Expect) DELETE(path string, pathargs ...interface{}) *Request {
 	return e.Request("DELETE", path, pathargs...)
-}
-
-// WS is a shorthand for e.Request("ws", path, pathargs...).
-func (e *Expect) WS(path string, pathargs ...interface{}) *Request {
-	req := e.Request("ws", path, pathargs...)
-	return req
 }
 
 // Value is a shorthand for NewValue(e.config.Reporter, value).

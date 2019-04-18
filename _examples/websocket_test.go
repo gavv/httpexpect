@@ -1,8 +1,8 @@
 package examples
 
 import (
-	"testing"
 	"net/http"
+	"testing"
 
 	"github.com/gavv/httpexpect"
 	"github.com/gorilla/websocket"
@@ -10,94 +10,110 @@ import (
 
 func wsHttpHandlerTester(t *testing.T) *httpexpect.Expect {
 	return httpexpect.WithConfig(httpexpect.Config{
-		BaseURL: "http://example.com",
-		Dialer: httpexpect.NewBinder(http.HandlerFunc(WsHttpHandler)).Dialer(),
-		Reporter: httpexpect.NewAssertReporter(t),
+		BaseURL:         "ws://example.com",
+		WebsocketDialer: httpexpect.NewWebsocketDialer(http.HandlerFunc(WsHttpHandler)),
+		Reporter:        httpexpect.NewAssertReporter(t),
 		Printers: []httpexpect.Printer{
 			httpexpect.NewDebugPrinter(t, true),
 		},
 	})
 }
 
-func TestWsHttpHandler_Text(t *testing.T) {
-	conn := wsHttpHandlerTester(t).WS("/ws").Expect().
-		Status(http.StatusSwitchingProtocols).
-		Connection()
-	defer conn.Disconnect()
+func TestWsHttpHandlerText(t *testing.T) {
+	e := wsHttpHandlerTester(t)
 
-	conn.WriteText("hi").
-		Expect().Text().Body().Equal("hi")
+	ws := e.GET("/path").WithWebsocketUpgrade().
+		Expect().
+		Status(http.StatusSwitchingProtocols).
+		Websocket()
+	defer ws.Disconnect()
+
+	ws.WriteText("hi").
+		Expect().
+		TextMessage().Body().Equal("hi")
 }
 
-func TestWsHttpHandler_JSON(t *testing.T) {
-	conn := wsHttpHandlerTester(t).WS("/ws").Expect().
-		Status(http.StatusSwitchingProtocols).
-		Connection()
-	defer conn.Disconnect()
+func TestWsHttpHandlerJSON(t *testing.T) {
+	e := wsHttpHandlerTester(t)
 
-	conn.WriteJSON(struct {
+	ws := e.GET("/path").WithWebsocketUpgrade().
+		Expect().
+		Status(http.StatusSwitchingProtocols).
+		Websocket()
+	defer ws.Disconnect()
+
+	ws.WriteJSON(struct {
 		Message string `json:"message"`
 	}{"hi"}).
 		Expect().
-		Text().JSON().Object().ValueEqual("message", "hi")
+		TextMessage().JSON().Object().ValueEqual("message", "hi")
 }
 
-func TestWsHttpHandler_Close(t *testing.T) {
-	conn := wsHttpHandlerTester(t).WS("/ws").Expect().
-		Status(http.StatusSwitchingProtocols).
-		Connection()
-	defer conn.Disconnect()
+func TestWsHttpHandlerClose(t *testing.T) {
+	e := wsHttpHandlerTester(t)
 
-	conn.WriteMessage(websocket.CloseMessage,
-		[]byte("Namárië..."), websocket.CloseGoingAway)
-	conn.Expect().
-		Closed().
-		NoContent()
+	ws := e.GET("/path").WithWebsocketUpgrade().
+		Expect().
+		Status(http.StatusSwitchingProtocols).
+		Websocket()
+	defer ws.Disconnect()
+
+	ws.CloseWithText("Namárië...", websocket.CloseGoingAway).
+		Expect().
+		CloseMessage().NoContent()
 }
 
 func wsFastHandlerTester(t *testing.T) *httpexpect.Expect {
 	return httpexpect.WithConfig(httpexpect.Config{
-		BaseURL: "http://example.com",
-		Dialer: httpexpect.NewFastBinder(WsFastHandler).Dialer(),
-		Reporter: httpexpect.NewAssertReporter(t),
+		BaseURL:         "http://example.com",
+		WebsocketDialer: httpexpect.NewFastWebsocketDialer(WsFastHandler),
+		Reporter:        httpexpect.NewAssertReporter(t),
 		Printers: []httpexpect.Printer{
 			httpexpect.NewDebugPrinter(t, true),
 		},
 	})
 }
 
-func TestWsFastHandler_Text(t *testing.T) {
-	conn := wsFastHandlerTester(t).WS("/ws").Expect().
-		Status(http.StatusSwitchingProtocols).
-		Connection()
-	defer conn.Disconnect()
+func TestWsFastHandlerText(t *testing.T) {
+	e := wsFastHandlerTester(t)
 
-	conn.WriteText("hi").
-		Expect().Text().Body().Equal("hi")
+	ws := e.GET("/path").WithWebsocketUpgrade().
+		Expect().
+		Status(http.StatusSwitchingProtocols).
+		Websocket()
+	defer ws.Disconnect()
+
+	ws.WriteText("hi").
+		Expect().
+		TextMessage().Body().Equal("hi")
 }
 
-func TestWsFastHandler_JSON(t *testing.T) {
-	conn := wsFastHandlerTester(t).WS("/ws").Expect().
-		Status(http.StatusSwitchingProtocols).
-		Connection()
-	defer conn.Disconnect()
+func TestWsFastHandlerJSON(t *testing.T) {
+	e := wsFastHandlerTester(t)
 
-	conn.WriteJSON(struct {
+	ws := e.GET("/path").WithWebsocketUpgrade().
+		Expect().
+		Status(http.StatusSwitchingProtocols).
+		Websocket()
+	defer ws.Disconnect()
+
+	ws.WriteJSON(struct {
 		Message string `json:"message"`
 	}{"hi"}).
 		Expect().
-		Text().JSON().Object().ValueEqual("message", "hi")
+		TextMessage().JSON().Object().ValueEqual("message", "hi")
 }
 
-func TestWsFastHandler_Close(t *testing.T) {
-	conn := wsFastHandlerTester(t).WS("/ws").Expect().
-		Status(http.StatusSwitchingProtocols).
-		Connection()
-	defer conn.Disconnect()
+func TestWsFastHandlerClose(t *testing.T) {
+	e := wsFastHandlerTester(t)
 
-	conn.WriteMessage(websocket.CloseMessage,
-		[]byte("Namárië..."), websocket.CloseGoingAway)
-	conn.Expect().
-		Closed().
-		NoContent()
+	ws := e.GET("/path").WithWebsocketUpgrade().
+		Expect().
+		Status(http.StatusSwitchingProtocols).
+		Websocket()
+	defer ws.Disconnect()
+
+	ws.CloseWithText("Namárië...", websocket.CloseGoingAway).
+		Expect().
+		CloseMessage().NoContent()
 }

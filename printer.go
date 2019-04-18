@@ -12,6 +12,32 @@ import (
 	"github.com/moul/http2curl"
 )
 
+// CurlPrinter implements Printer. Uses http2curl to dump requests as
+// curl commands.
+type CurlPrinter struct {
+	logger Logger
+}
+
+// NewCurlPrinter returns a new CurlPrinter given a logger.
+func NewCurlPrinter(logger Logger) CurlPrinter {
+	return CurlPrinter{logger}
+}
+
+// Request implements Printer.Request.
+func (p CurlPrinter) Request(req *http.Request) {
+	if req != nil {
+		cmd, err := http2curl.GetCurlCommand(req)
+		if err != nil {
+			panic(err)
+		}
+		p.logger.Logf("%s", cmd.String())
+	}
+}
+
+// Response implements Printer.Response.
+func (CurlPrinter) Response(*http.Response, time.Duration) {
+}
+
 // CompactPrinter implements Printer. It prints requests in compact form.
 type CompactPrinter struct {
 	logger Logger
@@ -76,8 +102,8 @@ func (p DebugPrinter) Response(resp *http.Response, duration time.Duration) {
 	p.logger.Logf("%s %s\n%s", lines[0], duration, lines[1])
 }
 
-// Write implements WsPrinter.Write.
-func (p DebugPrinter) Write(typ int, content []byte, closeCode int) {
+// WebsocketWrite implements WebsocketPrinter.WebsocketWrite.
+func (p DebugPrinter) WebsocketWrite(typ int, content []byte, closeCode int) {
 	b := &bytes.Buffer{}
 	fmt.Fprintf(b, "-> Sent: %s", wsMessageTypeName(typ))
 	if typ == websocket.CloseMessage {
@@ -95,8 +121,8 @@ func (p DebugPrinter) Write(typ int, content []byte, closeCode int) {
 	p.logger.Logf(b.String())
 }
 
-// Read implements WsPrinter.Read.
-func (p DebugPrinter) Read(typ int, content []byte, closeCode int) {
+// WebsocketRead implements WebsocketPrinter.WebsocketRead.
+func (p DebugPrinter) WebsocketRead(typ int, content []byte, closeCode int) {
 	b := &bytes.Buffer{}
 	fmt.Fprintf(b, "<- Received: %s", wsMessageTypeName(typ))
 	if typ == websocket.CloseMessage {
@@ -112,30 +138,4 @@ func (p DebugPrinter) Read(typ int, content []byte, closeCode int) {
 	}
 	fmt.Fprintf(b, "\n")
 	p.logger.Logf(b.String())
-}
-
-// CurlPrinter implements Printer. Uses http2curl to dump requests as
-// curl commands.
-type CurlPrinter struct {
-	logger Logger
-}
-
-// NewCurlPrinter returns a new CurlPrinter given a logger.
-func NewCurlPrinter(logger Logger) CurlPrinter {
-	return CurlPrinter{logger}
-}
-
-// Request implements Printer.Request.
-func (p CurlPrinter) Request(req *http.Request) {
-	if req != nil {
-		cmd, err := http2curl.GetCurlCommand(req)
-		if err != nil {
-			panic(err)
-		}
-		p.logger.Logf("%s", cmd.String())
-	}
-}
-
-// Response implements Printer.Response.
-func (CurlPrinter) Response(*http.Response, time.Duration) {
 }

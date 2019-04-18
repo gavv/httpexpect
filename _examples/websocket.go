@@ -5,7 +5,7 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	fastws "github.com/fasthttp-contrib/websocket"
+	fastwebsocket "github.com/fasthttp-contrib/websocket"
 	"github.com/valyala/fasthttp"
 )
 
@@ -32,7 +32,7 @@ func WsHttpHandler(w http.ResponseWriter, r *http.Request) {
 // WsFastHandler is a simple fasthttp.RequestHandler that implements
 // WebSocket echo server.
 func WsFastHandler(ctx *fasthttp.RequestCtx) {
-	upgrader := fastws.New(func (c *fastws.Conn) {
+	upgrader := fastwebsocket.New(func(c *fastwebsocket.Conn) {
 		defer c.Close()
 		for {
 			mt, message, err := c.ReadMessage()

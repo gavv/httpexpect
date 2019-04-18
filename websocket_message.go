@@ -6,41 +6,69 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// WsMessage provides methods to inspect message read from WebSocket connection.
-type WsMessage struct {
+// WebsocketMessage provides methods to inspect message read from WebSocket connection.
+type WebsocketMessage struct {
 	chain     chain
 	typ       int
 	content   []byte
 	closeCode int
 }
 
-// Closed is a shorthand for m.Type(websocket.CloseMessage).
-func (m *WsMessage) Closed() *WsMessage {
+// NewWebsocketMessage returns a new WebsocketMessage object given a reporter used to
+// report failures and the message parameters to be inspected.
+//
+// reporter should not be nil.
+//
+// Example:
+//   m := NewWebsocketMessage(reporter, websocket.TextMessage, []byte("content"), 0)
+//   m.TextMessage()
+func NewWebsocketMessage(
+	reporter Reporter, typ int, content []byte, closeCode ...int,
+) *WebsocketMessage {
+	m := &WebsocketMessage{
+		chain:   makeChain(reporter),
+		typ:     typ,
+		content: content,
+	}
+	if len(closeCode) != 0 {
+		m.closeCode = closeCode[0]
+	}
+	return m
+}
+
+// Raw returns underlying type, content and close code of WebSocket message.
+// Theses values are originally read from WebSocket connection.
+func (m *WebsocketMessage) Raw() (typ int, content []byte, closeCode int) {
+	return m.typ, m.content, m.closeCode
+}
+
+// CloseMessage is a shorthand for m.Type(websocket.CloseMessage).
+func (m *WebsocketMessage) CloseMessage() *WebsocketMessage {
 	return m.Type(websocket.CloseMessage)
 }
 
-// NotClosed is a shorthand for m.NotType(websocket.CloseMessage).
-func (m *WsMessage) NotClosed() *WsMessage {
+// NotCloseMessage is a shorthand for m.NotType(websocket.CloseMessage).
+func (m *WebsocketMessage) NotCloseMessage() *WebsocketMessage {
 	return m.NotType(websocket.CloseMessage)
 }
 
-// Binary is a shorthand for m.Type(websocket.BinaryMessage).
-func (m *WsMessage) Binary() *WsMessage {
+// BinaryMessage is a shorthand for m.Type(websocket.BinaryMessage).
+func (m *WebsocketMessage) BinaryMessage() *WebsocketMessage {
 	return m.Type(websocket.BinaryMessage)
 }
 
-// NotBinary is a shorthand for m.NotType(websocket.BinaryMessage).
-func (m *WsMessage) NotBinary() *WsMessage {
+// NotBinaryMessage is a shorthand for m.NotType(websocket.BinaryMessage).
+func (m *WebsocketMessage) NotBinaryMessage() *WebsocketMessage {
 	return m.NotType(websocket.BinaryMessage)
 }
 
-// Text is a shorthand for m.Type(websocket.TextMessage).
-func (m *WsMessage) Text() *WsMessage {
+// TextMessage is a shorthand for m.Type(websocket.TextMessage).
+func (m *WebsocketMessage) TextMessage() *WebsocketMessage {
 	return m.Type(websocket.TextMessage)
 }
 
-// NotText is a shorthand for m.NotType(websocket.TextMessage).
-func (m *WsMessage) NotText() *WsMessage {
+// NotTextMessage is a shorthand for m.NotType(websocket.TextMessage).
+func (m *WebsocketMessage) NotTextMessage() *WebsocketMessage {
 	return m.NotType(websocket.TextMessage)
 }
 
@@ -52,7 +80,7 @@ func (m *WsMessage) NotText() *WsMessage {
 // Example:
 //  msg := conn.Expect()
 //  msg.Type(websocket.TextMessage, websocket.BinaryMessage)
-func (m *WsMessage) Type(typ ...int) *WsMessage {
+func (m *WebsocketMessage) Type(typ ...int) *WebsocketMessage {
 	switch {
 	case m.chain.failed():
 		return m
@@ -89,7 +117,7 @@ func (m *WsMessage) Type(typ ...int) *WsMessage {
 // Example:
 //  msg := conn.Expect()
 //  msg.NotType(websocket.CloseMessage, websocket.BinaryMessage)
-func (m *WsMessage) NotType(typ ...int) *WsMessage {
+func (m *WebsocketMessage) NotType(typ ...int) *WebsocketMessage {
 	switch {
 	case m.chain.failed():
 		return m
@@ -124,7 +152,7 @@ func (m *WsMessage) NotType(typ ...int) *WsMessage {
 // Example:
 //  msg := conn.Expect().Closed()
 //  msg.Code(websocket.CloseNormalClosure, websocket.CloseGoingAway)
-func (m *WsMessage) Code(code ...int) *WsMessage {
+func (m *WebsocketMessage) Code(code ...int) *WebsocketMessage {
 	switch {
 	case m.chain.failed():
 		return m
@@ -165,14 +193,14 @@ func (m *WsMessage) Code(code ...int) *WsMessage {
 // Example:
 //  msg := conn.Expect().Closed()
 //  msg.NotCode(websocket.CloseAbnormalClosure, websocket.CloseNoStatusReceived)
-func (m *WsMessage) NotCode(code ...int) *WsMessage {
+func (m *WebsocketMessage) NotCode(code ...int) *WebsocketMessage {
 	switch {
 	case m.chain.failed():
 		return m
 	case len(code) == 0:
 		m.chain.fail("\nunexpected nil argument passed to CodeNotEqual")
 		return m
-	case m.checkClosed("CodeNotEqual"):
+	case m.checkClosed("NotCode"):
 		return m
 	}
 	for _, c := range code {
@@ -192,7 +220,7 @@ func (m *WsMessage) NotCode(code ...int) *WsMessage {
 	return m
 }
 
-func (m *WsMessage) checkClosed(where string) bool {
+func (m *WebsocketMessage) checkClosed(where string) bool {
 	if m.typ != websocket.CloseMessage {
 		m.chain.fail(
 			"\nunexpected %s usage for not '%' WebSocket message type\n\n"+
@@ -205,12 +233,6 @@ func (m *WsMessage) checkClosed(where string) bool {
 	return false
 }
 
-// Raw returns underlying type, content and close code of WebSocket message.
-// Theses values are originally read from WebSocket connection.
-func (m *WsMessage) Raw() (typ int, content []byte, closeCode int) {
-	return m.typ, m.content, m.closeCode
-}
-
 // Body returns a new String object that may be used to inspect
 // WebSocket message content.
 //
@@ -218,22 +240,12 @@ func (m *WsMessage) Raw() (typ int, content []byte, closeCode int) {
 //  msg := conn.Expect()
 //  msg.Body().NotEmpty()
 //  msg.Body().Length().Equal(100)
-func (m *WsMessage) Body() *String {
+func (m *WebsocketMessage) Body() *String {
 	return &String{m.chain, string(m.content)}
 }
 
-// Content returns a new Value object that may be used to inspect
-// WebSocket message content.
-//
-// Example:
-//  msg := conn.Expect()
-//  msg.Content().Equal([]byte{0, 1, 2})
-func (m *WsMessage) Content() *Value {
-	return &Value{m.chain, m.content}
-}
-
 // NoContent succeeds if WebSocket message has no content (is empty).
-func (m *WsMessage) NoContent() *WsMessage {
+func (m *WebsocketMessage) NoContent() *WebsocketMessage {
 	switch {
 	case m.chain.failed():
 		return m
@@ -261,11 +273,11 @@ func (m *WsMessage) NoContent() *WsMessage {
 // Example:
 //  msg := conn.Expect()
 //  msg.JSON().Array().Elements("foo", "bar")
-func (m *WsMessage) JSON() *Value {
+func (m *WebsocketMessage) JSON() *Value {
 	return &Value{m.chain, m.getJSON()}
 }
 
-func (m *WsMessage) getJSON() interface{} {
+func (m *WebsocketMessage) getJSON() interface{} {
 	if m.chain.failed() {
 		return nil
 	}

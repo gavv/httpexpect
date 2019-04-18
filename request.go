@@ -33,10 +33,10 @@ type Request struct {
 	form       url.Values
 	formbuf    *bytes.Buffer
 	multipart  *multipart.Writer
-	bodysetter string
-	typesetter string
-	forcetype  bool
-	isWs       bool
+	bodySetter string
+	typeSetter string
+	forceType  bool
+	wsUpgrade  bool
 	matchers   []func(*Response)
 }
 
@@ -96,12 +96,6 @@ func NewRequest(config Config, method, path string, pathargs ...interface{}) *Re
 		chain.fail(err.Error())
 	}
 
-	isWs := false
-	if method == "ws" {
-		isWs = true
-		method = http.MethodGet
-	}
-
 	hr, err := config.RequestFactory.NewRequest(method, config.BaseURL, nil)
 	if err != nil {
 		chain.fail(err.Error())
@@ -112,7 +106,6 @@ func NewRequest(config Config, method, path string, pathargs ...interface{}) *Re
 		chain:  chain,
 		path:   path,
 		http:   hr,
-		isWs:   isWs,
 	}
 }
 
@@ -143,44 +136,14 @@ func (r *Request) WithMatcher(matcher func(*Response)) *Request {
 //    },
 //  })
 func (r *Request) WithClient(client Client) *Request {
-	switch {
-	case r.chain.failed():
+	if r.chain.failed() {
 		return r
-	case r.isWs:
-		r.chain.fail(
-			"\nunexpected WithClient usage for WebSocket request, " +
-				"use WithDialer instead")
-	case client == nil:
+	}
+	if client == nil {
 		r.chain.fail("\nunexpected nil client in WithClient")
 		return r
 	}
 	r.config.Client = client
-	return r
-}
-
-// WithDialer sets dialer.
-//
-// The new dialer overwrites Config.Dialer. It will be used once to establish
-// the WebSocket connection and receiver a response of handshake result.
-//
-// Example:
-//  req := NewRequest(config, "ws", "/path")
-//  req.WithDialer(&websocket.Dialer{
-//    EnableCompression: false,
-//  })
-func (r *Request) WithDialer(dialer Dialer) *Request {
-	switch {
-	case r.chain.failed():
-		return r
-	case !r.isWs:
-		r.chain.fail(
-			"\nunexpected WithDialer usage for non-WebSocket request, " +
-				"use WithClient instead")
-	case dialer == nil:
-		r.chain.fail("\nunexpected nil dialer in WithDialer")
-		return r
-	}
-	r.config.Dialer = dialer
 	return r
 }
 
@@ -194,14 +157,10 @@ func (r *Request) WithDialer(dialer Dialer) *Request {
 //  req := NewRequest(config, "GET", "/path")
 //  req.WithHandler(myServer.someHandler)
 func (r *Request) WithHandler(handler http.Handler) *Request {
-	switch {
-	case r.chain.failed():
+	if r.chain.failed() {
 		return r
-	case r.isWs:
-		r.chain.fail(
-			"\nunexpected WithHandler usage for WebSocket request, " +
-				"which is not supported currently") // TODO: support maybe?
-	case handler == nil:
+	}
+	if handler == nil {
 		r.chain.fail("\nunexpected nil handler in WithHandler")
 		return r
 	}
@@ -213,6 +172,57 @@ func (r *Request) WithHandler(handler http.Handler) *Request {
 			Jar:       NewJar(),
 		}
 	}
+	return r
+}
+
+// WithWebsocketUpgrade enables upgrades the connection to websocket.
+//
+// At least the following fields are added to the request header:
+//  Upgrade: websocket
+//  Connection: Upgrade
+//
+// The actual set of header fields is define by the protocol implementation
+// in the gorilla/websocket package.
+//
+// The user should then call the Response.Websocket() method which returns
+// the Websocket object. This object can be used to send messages to the
+// server, to inspect the received messages, and to close the websocket.
+//
+// Example:
+//  req := NewRequest(config, "GET", "/path")
+//  req.WithWebsocketUpgrade()
+//  ws := req.Expect().Status(http.StatusSwitchingProtocols).Websocket()
+//  defer ws.Disconnect()
+func (r *Request) WithWebsocketUpgrade() *Request {
+	if r.chain.failed() {
+		return r
+	}
+	r.wsUpgrade = true
+	return r
+}
+
+// WithWebsocketDialer sets the custom websocket dialer.
+//
+// The new dialer overwrites Config.WebsocketDialer. It will be used once to establish
+// the WebSocket connection and receive a response of handshake result.
+//
+// Example:
+//  req := NewRequest(config, "GET", "/path")
+//  req.WithWebsocketUpgrade()
+//  req.WithWebsocketDialer(&websocket.Dialer{
+//    EnableCompression: false,
+//  })
+//  ws := req.Expect().Status(http.StatusSwitchingProtocols).Websocket()
+//  defer ws.Disconnect()
+func (r *Request) WithWebsocketDialer(dialer WebsocketDialer) *Request {
+	if r.chain.failed() {
+		return r
+	}
+	if dialer == nil {
+		r.chain.fail("\nunexpected nil dialer in WithWebsocketDialer")
+		return r
+	}
+	r.config.WebsocketDialer = dialer
 	return r
 }
 
@@ -429,23 +439,11 @@ func (r *Request) WithURL(urlStr string) *Request {
 	if r.chain.failed() {
 		return r
 	}
-	u, err := url.Parse(urlStr)
-	switch {
-	case err != nil:
+	if u, err := url.Parse(urlStr); err == nil {
+		r.http.URL = u
+	} else {
 		r.chain.fail(err.Error())
-		return r
-	case r.isWs && u.Scheme != "ws" && u.Scheme != "wss":
-		r.chain.fail(
-			"\nunexpected usage of URL scheme '%s' for WebSocket request "+
-				"in WithURL, can be 'ws' or 'wss' only", u.Scheme)
-		return r
-	case !r.isWs && (u.Scheme == "ws" || u.Scheme == "wss"):
-		r.chain.fail(
-			"\nunexpected usage of URL scheme '%s' for non-WebSocket request "+
-				"in WithURL", u.Scheme)
-		return r
 	}
-	r.http.URL = u
 	return r
 }
 
@@ -479,11 +477,11 @@ func (r *Request) WithHeader(k, v string) *Request {
 	case "Host":
 		r.http.Host = v
 	case "Content-Type":
-		if !r.forcetype {
+		if !r.forceType {
 			delete(r.http.Header, "Content-Type")
 		}
-		r.forcetype = true
-		r.typesetter = "WithHeader"
+		r.forceType = true
+		r.typeSetter = "WithHeader"
 		r.http.Header.Add(k, v)
 	default:
 		r.http.Header.Add(k, v)
@@ -580,15 +578,10 @@ func (r *Request) WithProto(proto string) *Request {
 //  req.WithHeader("Content-Type": "application/octet-stream")
 //  req.WithChunked(fh)
 func (r *Request) WithChunked(reader io.Reader) *Request {
-	switch {
-	case r.chain.failed():
+	if r.chain.failed() {
 		return r
-	case r.isWs:
-		r.chain.fail(
-			"\nunexpected WithChunked usage for WebSocket request, " +
-				"which cannot have body")
-		return r
-	case !r.http.ProtoAtLeast(1, 1):
+	}
+	if !r.http.ProtoAtLeast(1, 1) {
 		r.chain.fail("chunked Transfer-Encoding requires at least \"HTTP/1.1\","+
 			"but \"HTTP/%d.%d\" is enabled", r.http.ProtoMajor, r.http.ProtoMinor)
 		return r
@@ -604,13 +597,7 @@ func (r *Request) WithChunked(reader io.Reader) *Request {
 //  req.WithHeader("Content-Type": "application/json")
 //  req.WithBytes([]byte(`{"foo": 123}`))
 func (r *Request) WithBytes(b []byte) *Request {
-	switch {
-	case r.chain.failed():
-		return r
-	case r.isWs:
-		r.chain.fail(
-			"\nunexpected WithBytes usage for WebSocket request, " +
-				"which cannot have body")
+	if r.chain.failed() {
 		return r
 	}
 	if b == nil {
@@ -628,13 +615,7 @@ func (r *Request) WithBytes(b []byte) *Request {
 //  req := NewRequest(config, "PUT", "http://example.com/path")
 //  req.WithText("hello, world!")
 func (r *Request) WithText(s string) *Request {
-	switch {
-	case r.chain.failed():
-		return r
-	case r.isWs:
-		r.chain.fail(
-			"\nunexpected WithText usage for WebSocket request, " +
-				"which cannot have body")
+	if r.chain.failed() {
 		return r
 	}
 	r.setType("WithText", "text/plain; charset=utf-8", false)
@@ -656,13 +637,7 @@ func (r *Request) WithText(s string) *Request {
 //  req := NewRequest(config, "PUT", "http://example.com/path")
 //  req.WithJSON(map[string]interface{}{"foo": 123})
 func (r *Request) WithJSON(object interface{}) *Request {
-	switch {
-	case r.chain.failed():
-		return r
-	case r.isWs:
-		r.chain.fail(
-			"\nunexpected WithJSON usage for WebSocket request, " +
-				"which cannot have body")
+	if r.chain.failed() {
 		return r
 	}
 	b, err := json.Marshal(object)
@@ -699,13 +674,7 @@ func (r *Request) WithJSON(object interface{}) *Request {
 //  req := NewRequest(config, "PUT", "http://example.com/path")
 //  req.WithForm(map[string]interface{}{"foo": 123})
 func (r *Request) WithForm(object interface{}) *Request {
-	switch {
-	case r.chain.failed():
-		return r
-	case r.isWs:
-		r.chain.fail(
-			"\nunexpected WithForm usage for WebSocket request, " +
-				"which cannot have body")
+	if r.chain.failed() {
 		return r
 	}
 
@@ -755,13 +724,7 @@ func (r *Request) WithForm(object interface{}) *Request {
 //  req.WithFormField("foo", 123).
 //      WithFormField("bar", 456)
 func (r *Request) WithFormField(key string, value interface{}) *Request {
-	switch {
-	case r.chain.failed():
-		return r
-	case r.isWs:
-		r.chain.fail(
-			"\nunexpected WithFormField usage for WebSocket request, " +
-				"which cannot have body")
+	if r.chain.failed() {
 		return r
 	}
 	if r.multipart != nil {
@@ -803,13 +766,7 @@ func (r *Request) WithFormField(key string, value interface{}) *Request {
 //      WithFile("avatar", "john.png", fh)
 //  fh.Close()
 func (r *Request) WithFile(key, path string, reader ...io.Reader) *Request {
-	switch {
-	case r.chain.failed():
-		return r
-	case r.isWs:
-		r.chain.fail(
-			"\nunexpected WithFile usage for WebSocket request, " +
-				"which cannot have body")
+	if r.chain.failed() {
 		return r
 	}
 
@@ -858,13 +815,8 @@ func (r *Request) WithFile(key, path string, reader ...io.Reader) *Request {
 //      WithFileBytes("avatar", "john.png", b)
 //  fh.Close()
 func (r *Request) WithFileBytes(key, path string, data []byte) *Request {
-	switch {
-	case r.chain.failed():
+	if r.chain.failed() {
 		return r
-	case r.isWs:
-		r.chain.fail(
-			"\nunexpected WithFileBytes usage for WebSocket request, " +
-				"which cannot have body")
 	}
 	return r.WithFile(key, path, bytes.NewReader(data))
 }
@@ -884,13 +836,8 @@ func (r *Request) WithFileBytes(key, path string, data []byte) *Request {
 //  req.WithMultipart().
 //      WithForm(map[string]interface{}{"foo": 123})
 func (r *Request) WithMultipart() *Request {
-	switch {
-	case r.chain.failed():
+	if r.chain.failed() {
 		return r
-	case r.isWs:
-		r.chain.fail(
-			"\nunexpected WithMultipart usage for WebSocket request, " +
-				"which cannot have body")
 	}
 
 	r.setType("WithMultipart", "multipart/form-data", false)
@@ -916,38 +863,73 @@ func (r *Request) WithMultipart() *Request {
 //  resp := req.Expect()
 //  resp.Status(http.StatusOK)
 func (r *Request) Expect() *Response {
-	r.encodeRequest()
+	resp := r.roundTrip()
 
-	resp, conn, elapsed := r.sendRequest()
-
-	var ret *Response
-	if r.isWs {
-		conn := &wsConn{conn, r.config}
-		ret = makeWsResponse(r.chain, conn, resp, &elapsed)
-	} else {
-		ret = makeResponse(r.chain, resp, &elapsed)
+	if resp == nil {
+		return makeResponse(responseOpts{
+			config: r.config,
+			chain:  r.chain,
+		})
 	}
 
 	for _, matcher := range r.matchers {
-		matcher(ret)
+		matcher(resp)
 	}
 
-	return ret
+	return resp
 }
 
-func (r *Request) encodeRequest() {
-	if r.chain.failed() {
-		return
+func (r *Request) roundTrip() *Response {
+	if !r.encodeRequest() {
+		return nil
 	}
 
-	if r.isWs {
-		switch r.http.URL.Scheme {
-		case "https":
-			r.http.URL.Scheme = "wss"
-		default:
-			r.http.URL.Scheme = "ws"
+	if r.wsUpgrade {
+		if !r.encodeWebsocketRequest() {
+			return nil
 		}
 	}
+
+	for _, printer := range r.config.Printers {
+		printer.Request(r.http)
+	}
+
+	start := time.Now()
+
+	var (
+		httpResp *http.Response
+		websock  *websocket.Conn
+	)
+	if r.wsUpgrade {
+		httpResp, websock = r.sendWebsocketRequest()
+	} else {
+		httpResp = r.sendRequest()
+	}
+
+	elapsed := time.Since(start)
+
+	if httpResp == nil {
+		return nil
+	}
+
+	for _, printer := range r.config.Printers {
+		printer.Response(httpResp, elapsed)
+	}
+
+	return makeResponse(responseOpts{
+		config:    r.config,
+		chain:     r.chain,
+		response:  httpResp,
+		websocket: websock,
+		rtt:       &elapsed,
+	})
+}
+
+func (r *Request) encodeRequest() bool {
+	if r.chain.failed() {
+		return false
+	}
+
 	r.http.URL.Path = concatPaths(r.http.URL.Path, r.path)
 
 	if r.query != nil {
@@ -957,7 +939,7 @@ func (r *Request) encodeRequest() {
 	if r.multipart != nil {
 		if err := r.multipart.Close(); err != nil {
 			r.chain.fail(err.Error())
-			return
+			return false
 		}
 
 		r.setType("Expect", r.multipart.FormDataContentType(), true)
@@ -966,46 +948,66 @@ func (r *Request) encodeRequest() {
 		s := r.form.Encode()
 		r.setBody("WithForm or WithFormField", strings.NewReader(s), len(s), false)
 	}
+
+	return true
 }
 
-func (r *Request) sendRequest() (
-	resp *http.Response, conn *websocket.Conn, elapsed time.Duration,
-) {
+func (r *Request) encodeWebsocketRequest() bool {
 	if r.chain.failed() {
-		return
+		return false
 	}
 
-	// TODO: print actual request made by Dialer
-	for _, printer := range r.config.Printers {
-		printer.Request(r.http)
+	if r.bodySetter != "" {
+		r.chain.fail(
+			"\nwebocket request can not have body:\n  "+
+				"body set by %s\n  webocket enabled by WithWebsocketUpgrade",
+			r.bodySetter)
+		return false
 	}
 
-	start := time.Now()
-
-	var err error
-	if r.isWs {
-		conn, resp, err = r.config.Dialer.
-			Dial(r.http.URL.String(), r.http.Header)
-	} else {
-		resp, err = r.config.Client.Do(r.http)
+	switch r.http.URL.Scheme {
+	case "https":
+		r.http.URL.Scheme = "wss"
+	default:
+		r.http.URL.Scheme = "ws"
 	}
 
-	elapsed = time.Since(start)
+	return true
+}
+
+func (r *Request) sendRequest() *http.Response {
+	if r.chain.failed() {
+		return nil
+	}
+
+	resp, err := r.config.Client.Do(r.http)
+
+	if err != nil {
+		r.chain.fail(err.Error())
+		return nil
+	}
+
+	return resp
+}
+
+func (r *Request) sendWebsocketRequest() (*http.Response, *websocket.Conn) {
+	if r.chain.failed() {
+		return nil, nil
+	}
+
+	conn, resp, err := r.config.WebsocketDialer.Dial(
+		r.http.URL.String(), r.http.Header)
 
 	if err != nil && err != websocket.ErrBadHandshake {
 		r.chain.fail(err.Error())
-		return
+		return nil, nil
 	}
 
-	for _, printer := range r.config.Printers {
-		printer.Response(resp, elapsed)
-	}
-
-	return
+	return resp, conn
 }
 
 func (r *Request) setType(newSetter, newType string, overwrite bool) {
-	if r.forcetype {
+	if r.forceType {
 		return
 	}
 
@@ -1016,21 +1018,21 @@ func (r *Request) setType(newSetter, newType string, overwrite bool) {
 			r.chain.fail(
 				"\nambiguous request \"Content-Type\" header values:\n %q (set by %s)\n\n"+
 					"and:\n %q (wanted by %s)",
-				previousType, r.typesetter,
+				previousType, r.typeSetter,
 				newType, newSetter)
 			return
 		}
 	}
 
-	r.typesetter = newSetter
+	r.typeSetter = newSetter
 	r.http.Header["Content-Type"] = []string{newType}
 }
 
 func (r *Request) setBody(setter string, reader io.Reader, len int, overwrite bool) {
-	if !overwrite && r.bodysetter != "" {
+	if !overwrite && r.bodySetter != "" {
 		r.chain.fail(
 			"\nambiguous request body contents:\n  set by %s\n  overwritten by %s",
-			r.bodysetter, setter)
+			r.bodySetter, setter)
 		return
 	}
 
@@ -1046,7 +1048,7 @@ func (r *Request) setBody(setter string, reader io.Reader, len int, overwrite bo
 		r.http.ContentLength = int64(len)
 	}
 
-	r.bodysetter = setter
+	r.bodySetter = setter
 }
 
 func concatPaths(a, b string) string {

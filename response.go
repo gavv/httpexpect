@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/ajg/form"
+	"github.com/gorilla/websocket"
 )
 
 // StatusRange is enum for response status ranges.
@@ -37,13 +38,13 @@ const (
 
 // Response provides methods to inspect attached http.Response object.
 type Response struct {
-	chain   chain
-	resp    *http.Response
-	conn    *wsConn
-	content []byte
-	cookies []*http.Cookie
-	isWs    bool
-	rtt     *time.Duration
+	config    Config
+	chain     chain
+	resp      *http.Response
+	content   []byte
+	cookies   []*http.Cookie
+	websocket *websocket.Conn
+	rtt       *time.Duration
 }
 
 // NewResponse returns a new Response given a reporter used to report
@@ -61,36 +62,39 @@ func NewResponse(
 	if len(rtt) > 0 {
 		rttPtr = &rtt[0]
 	}
-	return makeResponse(makeChain(reporter), response, rttPtr)
+	return makeResponse(responseOpts{
+		chain:    makeChain(reporter),
+		response: response,
+		rtt:      rttPtr,
+	})
 }
 
-func makeResponse(
-	chain chain, response *http.Response, rtt *time.Duration,
-) *Response {
+type responseOpts struct {
+	config    Config
+	chain     chain
+	response  *http.Response
+	websocket *websocket.Conn
+	rtt       *time.Duration
+}
+
+func makeResponse(opts responseOpts) *Response {
 	var content []byte
 	var cookies []*http.Cookie
-	if response != nil {
-		content = getContent(&chain, response)
-		cookies = response.Cookies()
+	if opts.response != nil {
+		content = getContent(&opts.chain, opts.response)
+		cookies = opts.response.Cookies()
 	} else {
-		chain.fail("expected non-nil response")
+		opts.chain.fail("expected non-nil response")
 	}
 	return &Response{
-		chain:   chain,
-		resp:    response,
-		content: content,
-		cookies: cookies,
-		rtt:     rtt,
+		config:    opts.config,
+		chain:     opts.chain,
+		resp:      opts.response,
+		content:   content,
+		cookies:   cookies,
+		websocket: opts.websocket,
+		rtt:       opts.rtt,
 	}
-}
-
-func makeWsResponse(
-	chain chain, conn *wsConn, response *http.Response, rtt *time.Duration,
-) *Response {
-	resp := makeResponse(chain, response, rtt)
-	resp.isWs = true
-	resp.conn = conn
-	return resp
 }
 
 func getContent(chain *chain, resp *http.Response) []byte {
@@ -284,25 +288,22 @@ func (r *Response) Cookie(name string) *Cookie {
 	return &Cookie{r.chain, nil}
 }
 
-// Connection returns WsConnection that may be used to interact with
+// Websocket returns Websocket object that can be used to interact with
 // WebSocket server.
 //
-// That is responsibility of caller to explicitly close WsConnection after use.
+// May be called only if the WithWebsocketUpgrade was called on the request.
+// That is responsibility of the caller to explicitly close the websocket after use.
 //
 // Example:
-//  resp := req.Expect()
-//  conn := resp.Connection()
-//  defer conn.Disconnect()
-func (r *Response) Connection() *WsConnection {
-	switch {
-	case !r.isWs:
-		r.chain.fail("\nunexpected Connection usage for non-WebSocket response")
-	case r.conn == nil:
-		r.chain.fail(
-			"\nexpected successful WebSocket connection, " +
-				"but got handshake failure")
+//  req := NewRequest(config, "GET", "/path")
+//  req.WithWebsocketUpgrade()
+//  ws := req.Expect().Websocket()
+//  defer ws.Disconnect()
+func (r *Response) Websocket() *Websocket {
+	if !r.chain.failed() && r.websocket == nil {
+		r.chain.fail("\nunexpected Websocket call for non-WebSocket response")
 	}
-	return makeWsConnection(r.chain, r.conn)
+	return makeWebsocket(r.config, r.chain, r.websocket)
 }
 
 // Body returns a new String object that may be used to inspect response body.
