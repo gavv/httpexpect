@@ -329,6 +329,14 @@ func (r *Response) TransferEncoding(encoding ...string) *Response {
 	return r
 }
 
+// ContentOpts define parameters for matching the response content parameters.
+type ContentOpts struct {
+	// The media type Content-Type part, e.g. "application/json"
+	MediaType string
+	// The character set Content-Type part, e.g. "utf-8"
+	Charset string
+}
+
 // Text returns a new String object that may be used to inspect response body.
 //
 // Text succeeds if response contains "text/plain" Content-Type header
@@ -337,10 +345,13 @@ func (r *Response) TransferEncoding(encoding ...string) *Response {
 // Example:
 //  resp := NewResponse(t, response)
 //  resp.Text().Equal("hello, world!")
-func (r *Response) Text() *String {
+//  resp.Text(ContentOpts{
+//    MediaType: "text/plain",
+//  }).Equal("hello, world!")
+func (r *Response) Text(opts ...ContentOpts) *String {
 	var content string
 
-	if !r.chain.failed() && r.checkContentType("text/plain") {
+	if !r.chain.failed() && r.checkContentOpts(opts, "text/plain") {
 		content = string(r.content)
 	}
 
@@ -357,17 +368,20 @@ func (r *Response) Text() *String {
 // Example:
 //  resp := NewResponse(t, response)
 //  resp.Form().Value("foo").Equal("bar")
-func (r *Response) Form() *Object {
-	object := r.getForm()
+//  resp.Form(ContentOpts{
+//    MediaType: "application/x-www-form-urlencoded",
+//  }).Value("foo").Equal("bar")
+func (r *Response) Form(opts ...ContentOpts) *Object {
+	object := r.getForm(opts...)
 	return &Object{r.chain, object}
 }
 
-func (r *Response) getForm() map[string]interface{} {
+func (r *Response) getForm(opts ...ContentOpts) map[string]interface{} {
 	if r.chain.failed() {
 		return nil
 	}
 
-	if !r.checkContentType("application/x-www-form-urlencoded", "") {
+	if !r.checkContentOpts(opts, "application/x-www-form-urlencoded", "") {
 		return nil
 	}
 
@@ -391,17 +405,20 @@ func (r *Response) getForm() map[string]interface{} {
 // Example:
 //  resp := NewResponse(t, response)
 //  resp.JSON().Array().Elements("foo", "bar")
-func (r *Response) JSON() *Value {
-	value := r.getJSON()
+//  resp.JSON(ContentOpts{
+//    MediaType: "application/json",
+//  }).Array.Elements("foo", "bar")
+func (r *Response) JSON(opts ...ContentOpts) *Value {
+	value := r.getJSON(opts...)
 	return &Value{r.chain, value}
 }
 
-func (r *Response) getJSON() interface{} {
+func (r *Response) getJSON(opts ...ContentOpts) interface{} {
 	if r.chain.failed() {
 		return nil
 	}
 
-	if !r.checkContentType("application/json") {
+	if !r.checkContentOpts(opts, "application/json") {
 		return nil
 	}
 
@@ -428,8 +445,11 @@ func (r *Response) getJSON() interface{} {
 // Example:
 //  resp := NewResponse(t, response)
 //  resp.JSONP("myCallback").Array().Elements("foo", "bar")
-func (r *Response) JSONP(callback string) *Value {
-	value := r.getJSONP(callback)
+//  resp.JSONP("myCallback", ContentOpts{
+//    MediaType: "application/javascript",
+//  }).Array.Elements("foo", "bar")
+func (r *Response) JSONP(callback string, opts ...ContentOpts) *Value {
+	value := r.getJSONP(callback, opts...)
 	return &Value{r.chain, value}
 }
 
@@ -437,12 +457,12 @@ var (
 	jsonp = regexp.MustCompile(`^\s*([^\s(]+)\s*\((.*)\)\s*;*\s*$`)
 )
 
-func (r *Response) getJSONP(callback string) interface{} {
+func (r *Response) getJSONP(callback string, opts ...ContentOpts) interface{} {
 	if r.chain.failed() {
 		return nil
 	}
 
-	if !r.checkContentType("application/javascript") {
+	if !r.checkContentOpts(opts, "application/javascript") {
 		return nil
 	}
 
@@ -462,6 +482,20 @@ func (r *Response) getJSONP(callback string) interface{} {
 	}
 
 	return value
+}
+
+func (r *Response) checkContentOpts(
+	opts []ContentOpts, expectedType string, expectedCharset ...string,
+) bool {
+	if len(opts) != 0 {
+		if opts[0].MediaType != "" {
+			expectedType = opts[0].MediaType
+		}
+		if opts[0].Charset != "" {
+			expectedCharset = []string{opts[0].Charset}
+		}
+	}
+	return r.checkContentType(expectedType, expectedCharset...)
 }
 
 func (r *Response) checkContentType(expectedType string, expectedCharset ...string) bool {

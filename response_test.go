@@ -919,3 +919,149 @@ func TestResponseJSONPCharsetBad(t *testing.T) {
 
 	assert.Equal(t, nil, resp.JSONP("foo").Raw())
 }
+
+func TestResponseContentOpts(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	type testCase struct {
+		respContentType   string
+		respBody          string
+		expectedMediaType string
+		expectedCharset   string
+		match             bool
+		chainFunc         func(*Response, ContentOpts) chain
+	}
+
+	runTest := func(tc testCase) {
+		headers := map[string][]string{
+			"Content-Type": {tc.respContentType},
+		}
+
+		httpResp := &http.Response{
+			StatusCode: http.StatusOK,
+			Header:     http.Header(headers),
+			Body:       ioutil.NopCloser(bytes.NewBufferString(tc.respBody)),
+		}
+
+		resp := NewResponse(reporter, httpResp)
+
+		c := tc.chainFunc(resp, ContentOpts{
+			MediaType: tc.expectedMediaType,
+			Charset:   tc.expectedCharset,
+		})
+
+		if tc.match {
+			c.assertOK(t)
+		} else {
+			c.assertFailed(t)
+		}
+	}
+
+	check := func(
+		defaultType, defaultCharset, respBody string,
+		chainFunc func(*Response, ContentOpts) chain,
+	) {
+		runTest(testCase{
+			respContentType:   "test-type; charset=test-charset",
+			respBody:          respBody,
+			expectedMediaType: "test-type",
+			expectedCharset:   "test-charset",
+			match:             true,
+			chainFunc:         chainFunc,
+		})
+		runTest(testCase{
+			respContentType:   "test-type; charset=BAD",
+			respBody:          respBody,
+			expectedMediaType: "test-type",
+			expectedCharset:   "test-charset",
+			match:             false,
+			chainFunc:         chainFunc,
+		})
+		runTest(testCase{
+			respContentType:   "BAD; charset=test-charset",
+			respBody:          respBody,
+			expectedMediaType: "test-type",
+			expectedCharset:   "test-charset",
+			match:             false,
+			chainFunc:         chainFunc,
+		})
+		if defaultCharset != "" {
+			runTest(testCase{
+				respContentType:   "test-type; charset=" + defaultCharset,
+				respBody:          respBody,
+				expectedMediaType: "test-type",
+				expectedCharset:   defaultCharset,
+				match:             true,
+				chainFunc:         chainFunc,
+			})
+			runTest(testCase{
+				respContentType:   "test-type; charset=" + defaultCharset,
+				respBody:          respBody,
+				expectedMediaType: "test-type",
+				expectedCharset:   "",
+				match:             true,
+				chainFunc:         chainFunc,
+			})
+		}
+		runTest(testCase{
+			respContentType:   "test-type",
+			respBody:          respBody,
+			expectedMediaType: "test-type",
+			expectedCharset:   "",
+			match:             true,
+			chainFunc:         chainFunc,
+		})
+		runTest(testCase{
+			respContentType:   defaultType + "; charset=test-charset",
+			respBody:          respBody,
+			expectedMediaType: defaultType,
+			expectedCharset:   "test-charset",
+			match:             true,
+			chainFunc:         chainFunc,
+		})
+		runTest(testCase{
+			respContentType:   defaultType + "; charset=test-charset",
+			respBody:          respBody,
+			expectedMediaType: "",
+			expectedCharset:   "test-charset",
+			match:             true,
+			chainFunc:         chainFunc,
+		})
+	}
+
+	t.Run("text", func(t *testing.T) {
+		check("text/plain",
+			"utf-8",
+			"test text",
+			func(resp *Response, opts ContentOpts) chain {
+				return resp.Text(opts).chain
+			})
+	})
+
+	t.Run("form", func(t *testing.T) {
+		check("application/x-www-form-urlencoded",
+			"",
+			"a=b",
+			func(resp *Response, opts ContentOpts) chain {
+				return resp.Form(opts).chain
+			})
+	})
+
+	t.Run("json", func(t *testing.T) {
+		check("application/json",
+			"utf-8",
+			"{}",
+			func(resp *Response, opts ContentOpts) chain {
+				return resp.JSON(opts).chain
+			})
+	})
+
+	t.Run("jsonp", func(t *testing.T) {
+		check("application/javascript",
+			"utf-8",
+			"cb({})",
+			func(resp *Response, opts ContentOpts) chain {
+				return resp.JSONP("cb", opts).chain
+			})
+	})
+}
