@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestRequestFailed(t *testing.T) {
@@ -100,7 +101,8 @@ func TestRequestTime(t *testing.T) {
 	for n := 0; n < 10; n++ {
 		req := NewRequest(config, "", "")
 		resp := req.Expect()
-		assert.True(t, resp.time >= 0)
+		require.NotNil(t, resp.rtt)
+		assert.True(t, *resp.rtt >= 0)
 	}
 }
 

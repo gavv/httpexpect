@@ -41,7 +41,7 @@ type Response struct {
 	resp    *http.Response
 	content []byte
 	cookies []*http.Cookie
-	time    time.Duration
+	rtt     *time.Duration
 }
 
 // NewResponse returns a new Response given a reporter used to report
@@ -50,19 +50,19 @@ type Response struct {
 // Both reporter and response should not be nil. If response is nil,
 // failure is reported.
 //
-// If duration is given, it defines response time to be reported by
-// response.Duration().
+// If rtt is given, it defines response round-trip time to be reported
+// by response.RoundTripTime().
 func NewResponse(
-	reporter Reporter, response *http.Response, duration ...time.Duration) *Response {
-	var dr time.Duration
-	if len(duration) > 0 {
-		dr = duration[0]
+	reporter Reporter, response *http.Response, rtt ...time.Duration) *Response {
+	var rttPtr *time.Duration
+	if len(rtt) > 0 {
+		rttPtr = &rtt[0]
 	}
-	return makeResponse(makeChain(reporter), response, dr)
+	return makeResponse(makeChain(reporter), response, rttPtr)
 }
 
 func makeResponse(
-	chain chain, response *http.Response, duration time.Duration) *Response {
+	chain chain, response *http.Response, rtt *time.Duration) *Response {
 	var content []byte
 	var cookies []*http.Cookie
 	if response != nil {
@@ -76,7 +76,7 @@ func makeResponse(
 		resp:    response,
 		content: content,
 		cookies: cookies,
-		time:    duration,
+		rtt:     rtt,
 	}
 }
 
@@ -100,18 +100,26 @@ func (r *Response) Raw() *http.Response {
 	return r.resp
 }
 
-// Duration returns a new Number object that may be used to inspect
-// response time, in nanoseconds.
+// RoundTripTime returns a new Duration object that may be used to inspect
+// the round-trip time.
 //
-// Response time is a time interval starting just before request is sent
-// and ending right after response is received, retrieved from monotonic
-// clock source.
+// The returned duration is a time interval starting just before request
+// is sent and ending right after response is received, measured using a
+// monotonic clock source.
 //
 // Example:
 //  resp := NewResponse(t, response, time.Duration(10000000))
-//  resp.Duration().Equal(10 * time.Millisecond)
+//  resp.RoundTripTime().Lt(10 * time.Millisecond)
+func (r *Response) RoundTripTime() *Duration {
+	return &Duration{r.chain, r.rtt}
+}
+
+// Deprecated: use RoundTripTime instead.
 func (r *Response) Duration() *Number {
-	return &Number{r.chain, float64(r.time)}
+	if r.rtt == nil {
+		return &Number{r.chain, 0}
+	}
+	return &Number{r.chain, float64(*r.rtt)}
 }
 
 // Status succeeds if response contains given status code.

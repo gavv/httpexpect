@@ -799,7 +799,7 @@ func (r *Request) Expect() *Response {
 
 	resp, elapsed := r.sendRequest()
 
-	return makeResponse(r.chain, resp, elapsed)
+	return makeResponse(r.chain, resp, &elapsed)
 }
 
 func (r *Request) encodeRequest() {

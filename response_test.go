@@ -16,7 +16,7 @@ func TestResponseFailed(t *testing.T) {
 
 	chain.fail("fail")
 
-	resp := &Response{chain, nil, nil, nil, 0}
+	resp := &Response{chain, nil, nil, nil, nil}
 
 	resp.chain.assertFailed(t)
 
@@ -46,21 +46,40 @@ func TestResponseFailed(t *testing.T) {
 	resp.TransferEncoding("")
 }
 
-func TestResponseDuration(t *testing.T) {
+func TestResponseRoundTripTime(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	duration := time.Duration(10000000)
+	t.Run("set", func(t *testing.T) {
+		duration := time.Second
 
-	resp := NewResponse(reporter, &http.Response{}, duration)
-	resp.chain.assertOK(t)
-	resp.chain.reset()
+		resp := NewResponse(reporter, &http.Response{}, duration)
+		resp.chain.assertOK(t)
+		resp.chain.reset()
 
-	rt := resp.Duration()
+		rt := resp.RoundTripTime()
 
-	assert.Equal(t, float64(duration), rt.Raw())
+		assert.Equal(t, time.Second, rt.Raw())
 
-	rt.Equal(10 * time.Millisecond)
-	rt.chain.assertOK(t)
+		rt.IsSet()
+		rt.Equal(time.Second)
+		rt.chain.assertOK(t)
+	})
+
+	t.Run("unset", func(t *testing.T) {
+		resp := NewResponse(reporter, &http.Response{})
+		resp.chain.assertOK(t)
+		resp.chain.reset()
+
+		rt := resp.RoundTripTime()
+
+		assert.Equal(t, time.Duration(0), rt.Raw())
+
+		rt.NotSet()
+		rt.chain.assertOK(t)
+
+		rt.IsSet()
+		rt.chain.assertFailed(t)
+	})
 }
 
 func TestResponseStatusRange(t *testing.T) {
