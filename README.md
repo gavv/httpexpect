@@ -61,7 +61,7 @@ Development is done in `master` branch on github:
 import "github.com/gavv/httpexpect"
 ```
 
-When the master is merged into a stable branch, a new version tag is assigned to the branch head. The versions are selected accroding to the [semantic versioning](https://semver.org/) scheme.
+When the master is merged into a stable branch, a new version tag is assigned to the branch head. The versions are selected according to the [semantic versioning](https://semver.org/) scheme.
 
 ## Documentation
 
