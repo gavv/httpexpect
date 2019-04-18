@@ -209,6 +209,10 @@ type connTLS struct {
 	state *tls.ConnectionState
 }
 
+func (c connTLS) Handshake() error {
+	return nil
+}
+
 func (c connTLS) ConnectionState() tls.ConnectionState {
 	return *c.state
 }
