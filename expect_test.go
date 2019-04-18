@@ -91,6 +91,49 @@ func TestExpectBuilders(t *testing.T) {
 	assert.Equal(t, r1, reqs2[0])
 }
 
+func TestExpectMatchers(t *testing.T) {
+	client := &mockClient{}
+
+	reporter := NewAssertReporter(t)
+
+	config := Config{
+		Client:   client,
+		Reporter: reporter,
+	}
+
+	e := WithConfig(config)
+
+	var resps1 []*Response
+
+	e1 := e.Matcher(func(r *Response) {
+		resps1 = append(resps1, r)
+	})
+
+	var resps2 []*Response
+
+	e2 := e1.Matcher(func(r *Response) {
+		resps2 = append(resps2, r)
+	})
+
+	e.Request("METHOD", "/url")
+
+	req1 := e1.Request("METHOD", "/url")
+	req2 := e2.Request("METHOD", "/url")
+
+	assert.Equal(t, 0, int(len(resps1)))
+	assert.Equal(t, 0, int(len(resps2)))
+
+	resp1 := req1.Expect()
+	resp2 := req2.Expect()
+
+	assert.Equal(t, 2, int(len(resps1)))
+	assert.Equal(t, 1, int(len(resps2)))
+
+	assert.Equal(t, resp1, resps1[0])
+	assert.Equal(t, resp2, resps1[1])
+	assert.Equal(t, resp2, resps2[0])
+}
+
 func TestExpectValues(t *testing.T) {
 	client := &mockClient{}
 

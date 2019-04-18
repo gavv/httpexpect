@@ -79,6 +79,7 @@ import (
 type Expect struct {
 	config   Config
 	builders []func(*Request)
+	matchers []func(*Response)
 }
 
 // Config contains various settings.
@@ -251,8 +252,7 @@ func WithConfig(config Config) *Expect {
 		}
 	}
 	return &Expect{
-		config:   config,
-		builders: nil,
+		config: config,
 	}
 }
 
@@ -296,6 +296,30 @@ func (e *Expect) Builder(builder func(*Request)) *Expect {
 	return &ret
 }
 
+// Matcher returns a copy of Expect instance with given matcher attached to it.
+// Returned copy contains all previously attached matchers plus a new one.
+// Matchers are invoked from Request.Expect method, after retrieving a new response.
+//
+// Example:
+//  e := httpexpect.New(t, "http://example.com")
+//
+//  m := e.Matcher(func (resp *httpexpect.Response) {
+//      resp.Header("API-Version").NotEmpty()
+//  })
+//
+//  m.GET("/some-path").
+// 	    Expect().
+// 	    Status(http.StatusOK)
+//
+//  m.GET("/bad-path").
+// 	    Expect().
+// 	    Status(http.StatusNotFound)
+func (e *Expect) Matcher(matcher func(*Response)) *Expect {
+	ret := *e
+	ret.matchers = append(e.matchers, matcher)
+	return &ret
+}
+
 // Request returns a new Request object.
 // Arguments a similar to NewRequest.
 // After creating request, all builders attached to Expect object are invoked.
@@ -305,6 +329,10 @@ func (e *Expect) Request(method, path string, pathargs ...interface{}) *Request 
 
 	for _, builder := range e.builders {
 		builder(req)
+	}
+
+	for _, matcher := range e.matchers {
+		req.WithMatcher(matcher)
 	}
 
 	return req

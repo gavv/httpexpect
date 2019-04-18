@@ -17,13 +17,14 @@ Workflow:
 * URL path construction, with simple string interpolation provided by [`go-interpol`](https://github.com/imkira/go-interpol) package.
 * URL query parameters (encoding using [`go-querystring`](https://github.com/google/go-querystring) package).
 * Headers, cookies, payload: JSON,  urlencoded or multipart forms (encoding using [`form`](https://github.com/ajg/form) package), plain text.
-* Create custom [request builders](#reusable-builders) that can be reused.
+* Custom reusable [request builders](#reusable-builders).
 
 ##### Response assertions
 
 * Response status, predefined status ranges.
 * Headers, cookies, payload: JSON, JSONP, forms, text.
 * Round-trip time.
+* Custom reusable [response matcher](#reusable-matchers).
 
 ##### Payload assertions
 
@@ -299,12 +300,12 @@ m.Name("user").Equal("john")
 
 ```go
 e.GET("/path").WithURL("http://example.com").
-   Expect().
-   Status(http.StatusOK)
+	Expect().
+	Status(http.StatusOK)
 
 e.GET("/path").WithURL("http://subdomain.example.com").
-   Expect().
-   Status(http.StatusOK)
+	Expect().
+	Status(http.StatusOK)
 ```
 
 ##### Reusable builders
@@ -323,12 +324,31 @@ auth := e.Builder(func (req *httpexpect.Request) {
 })
 
 auth.GET("/restricted").
-   Expect().
-   Status(http.StatusOK)
+	Expect().
+	Status(http.StatusOK)
 
 e.GET("/restricted").
-   Expect().
-   Status(http.StatusUnauthorized)
+	Expect().
+	Status(http.StatusUnauthorized)
+```
+
+##### Reusable matchers
+
+```go
+e := httpexpect.New(t, "http://example.com")
+
+// every response should have this header
+m := e.Matcher(func (resp *httpexpect.Response) {
+	resp.Header("API-Version").NotEmpty()
+})
+
+m.GET("/some-path").
+	Expect().
+	Status(http.StatusOK)
+
+m.GET("/bad-path").
+	Expect().
+	Status(http.StatusNotFound)
 ```
 
 ##### Custom config

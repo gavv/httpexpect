@@ -36,6 +36,7 @@ type Request struct {
 	forcetype  bool
 	typesetter string
 	bodysetter string
+	matchers   []func(*Response)
 }
 
 // NewRequest returns a new Request object.
@@ -105,6 +106,20 @@ func NewRequest(config Config, method, path string, pathargs ...interface{}) *Re
 		path:   path,
 		http:   hr,
 	}
+}
+
+// WithMatcher attaches a matcher to the request.
+// All attached matchers are invoked in the Expect method for a newly
+// created Response.
+//
+// Example:
+//  req := NewRequest(config, "GET", "/path")
+//  req.WithMatcher(func (resp *httpexpect.Response) {
+//      resp.Header("API-Version").NotEmpty()
+//  })
+func (r *Request) WithMatcher(matcher func(*Response)) *Request {
+	r.matchers = append(r.matchers, matcher)
+	return r
 }
 
 // WithClient sets client.
@@ -799,7 +814,13 @@ func (r *Request) Expect() *Response {
 
 	resp, elapsed := r.sendRequest()
 
-	return makeResponse(r.chain, resp, &elapsed)
+	ret := makeResponse(r.chain, resp, &elapsed)
+
+	for _, matcher := range r.matchers {
+		matcher(ret)
+	}
+
+	return ret
 }
 
 func (r *Request) encodeRequest() {

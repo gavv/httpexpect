@@ -106,6 +106,35 @@ func TestRequestTime(t *testing.T) {
 	}
 }
 
+func TestRequestMatchers(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
+	client := &mockClient{}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		RequestFactory: factory,
+		Reporter:       reporter,
+		Client:         client,
+	}
+
+	req := NewRequest(config, "METHOD", "/")
+
+	var resps []*Response
+
+	req.WithMatcher(func(r *Response) {
+		resps = append(resps, r)
+	})
+
+	assert.Equal(t, 0, int(len(resps)))
+
+	resp := req.Expect()
+
+	assert.Equal(t, 1, int(len(resps)))
+	assert.Equal(t, resp, resps[0])
+}
+
 func TestRequestClient(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
