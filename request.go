@@ -17,7 +17,6 @@ import (
 
 	"github.com/ajg/form"
 	"github.com/fatih/structs"
-	"github.com/gavv/monotime"
 	"github.com/google/go-querystring/query"
 	"github.com/imkira/go-interpol"
 )
@@ -857,11 +856,11 @@ func (r *Request) sendRequest() (resp *http.Response, elapsed time.Duration) {
 		printer.Request(r.http)
 	}
 
-	start := monotime.Now()
+	start := time.Now()
 
 	resp, err := r.config.Client.Do(r.http)
 
-	elapsed = monotime.Since(start)
+	elapsed = time.Since(start)
 
 	if err != nil {
 		r.chain.fail(err.Error())
