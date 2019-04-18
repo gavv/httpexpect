@@ -82,6 +82,36 @@ func TestResponseRoundTripTime(t *testing.T) {
 	})
 }
 
+func TestResponseDuration(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	t.Run("set", func(t *testing.T) {
+		duration := time.Second
+
+		resp := NewResponse(reporter, &http.Response{}, duration)
+		resp.chain.assertOK(t)
+		resp.chain.reset()
+
+		d := resp.Duration()
+
+		assert.Equal(t, float64(time.Second), d.Raw())
+
+		d.chain.assertOK(t)
+	})
+
+	t.Run("unset", func(t *testing.T) {
+		resp := NewResponse(reporter, &http.Response{})
+		resp.chain.assertOK(t)
+		resp.chain.reset()
+
+		d := resp.Duration()
+
+		assert.Equal(t, float64(0), d.Raw())
+
+		d.chain.assertOK(t)
+	})
+}
+
 func TestResponseStatusRange(t *testing.T) {
 	reporter := newMockReporter(t)
 

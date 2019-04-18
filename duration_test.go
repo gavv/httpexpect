@@ -27,6 +27,24 @@ func TestDurationFailed(t *testing.T) {
 	value.InRange(ts, ts)
 }
 
+func TestDurationNil(t *testing.T) {
+	chain := makeChain(newMockReporter(t))
+
+	ts := time.Second
+
+	value := &Duration{chain, nil}
+
+	value.chain.assertOK(t)
+
+	value.Equal(ts)
+	value.NotEqual(ts)
+	value.Gt(ts)
+	value.Ge(ts)
+	value.Lt(ts)
+	value.Le(ts)
+	value.InRange(ts, ts)
+}
+
 func TestDurationSet(t *testing.T) {
 	chain := makeChain(newMockReporter(t))
 

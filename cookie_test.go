@@ -22,6 +22,7 @@ func TestCookieFailed(t *testing.T) {
 	assert.True(t, value.Domain() != nil)
 	assert.True(t, value.Path() != nil)
 	assert.True(t, value.Expires() != nil)
+	assert.True(t, value.MaxAge() != nil)
 }
 
 func TestCookieGetters(t *testing.T) {
@@ -45,6 +46,7 @@ func TestCookieGetters(t *testing.T) {
 	value.Domain().chain.assertOK(t)
 	value.Path().chain.assertOK(t)
 	value.Expires().chain.assertOK(t)
+	value.MaxAge().chain.assertOK(t)
 
 	assert.Equal(t, "name", value.Name().Raw())
 	assert.Equal(t, "value", value.Value().Raw())
