@@ -65,7 +65,7 @@ func (binder Binder) RoundTrip(req *http.Request) (*http.Response, error) {
 		Request:    req,
 		StatusCode: recorder.Code,
 		Status:     http.StatusText(recorder.Code),
-		Header:     recorder.HeaderMap,
+		Header:     recorder.Result().Header,
 	}
 
 	if recorder.Flushed {
