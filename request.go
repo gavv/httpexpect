@@ -80,12 +80,12 @@ func NewRequest(config Config, method, path string, pathargs ...interface{}) *Re
 					"\nunexpected nil argument for url path format string:\n"+
 						" Request(\"%s\", %v...)", method, pathargs)
 			} else {
-				w.Write([]byte(fmt.Sprint(pathargs[n])))
+				mustWrite(w, fmt.Sprint(pathargs[n]))
 			}
 		} else {
-			w.Write([]byte("{"))
-			w.Write([]byte(k))
-			w.Write([]byte("}"))
+			mustWrite(w, "{")
+			mustWrite(w, k)
+			mustWrite(w, "}")
 		}
 		n++
 		return nil
@@ -183,13 +183,13 @@ func (r *Request) WithPath(key string, value interface{}) *Request {
 					"\nunexpected nil argument for url path format string:\n"+
 						" WithPath(\"%s\", %v)", key, value)
 			} else {
-				w.Write([]byte(fmt.Sprint(value)))
+				mustWrite(w, fmt.Sprint(value))
 				ok = true
 			}
 		} else {
-			w.Write([]byte("{"))
-			w.Write([]byte(k))
-			w.Write([]byte("}"))
+			mustWrite(w, "{")
+			mustWrite(w, k)
+			mustWrite(w, "}")
 		}
 		return nil
 	})
@@ -909,4 +909,11 @@ func concatPaths(a, b string) string {
 	a = strings.TrimSuffix(a, "/")
 	b = strings.TrimPrefix(b, "/")
 	return a + "/" + b
+}
+
+func mustWrite(w io.Writer, s string) {
+	_, err := w.Write([]byte(s))
+	if err != nil {
+		panic(err)
+	}
 }

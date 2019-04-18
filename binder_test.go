@@ -313,9 +313,9 @@ func TestFastBinderChunked(t *testing.T) {
 
 		ctx.Response.Header.Set("Content-Type", "application/json")
 		ctx.Response.SetBodyStreamWriter(func(w *bufio.Writer) {
-			w.WriteString(`[1, `)
-			w.Flush()
-			w.WriteString(`2]`)
+			_, _ = w.WriteString(`[1, `)
+			_ = w.Flush()
+			_, _ = w.WriteString(`2]`)
 		})
 	}
 

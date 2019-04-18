@@ -253,20 +253,20 @@ func createBasicHandler() http.Handler {
 
 	mux.HandleFunc("/foo", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"foo":123}`))
+		_, _ = w.Write([]byte(`{"foo":123}`))
 	})
 
 	mux.HandleFunc("/bar", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
-		w.Write([]byte(`field1=` + r.FormValue("field1")))
-		w.Write([]byte(`&field2=` + r.PostFormValue("field2")))
+		_, _ = w.Write([]byte(`field1=` + r.FormValue("field1")))
+		_, _ = w.Write([]byte(`&field2=` + r.PostFormValue("field2")))
 	})
 
 	mux.HandleFunc("/baz/qux", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case "GET":
 			w.Header().Set("Content-Type", "application/json")
-			w.Write([]byte(`[true, false]`))
+			_, _ = w.Write([]byte(`[true, false]`))
 
 		case "PUT":
 			decoder := json.NewDecoder(r.Body)
@@ -277,7 +277,7 @@ func createBasicHandler() http.Handler {
 				w.WriteHeader(http.StatusBadRequest)
 			} else {
 				w.WriteHeader(http.StatusOK)
-				w.Write([]byte(`ok`))
+				_, _ = w.Write([]byte(`ok`))
 			}
 		}
 	})
@@ -285,8 +285,8 @@ func createBasicHandler() http.Handler {
 	mux.HandleFunc("/wee", func(w http.ResponseWriter, r *http.Request) {
 		if u, p, ok := r.BasicAuth(); ok {
 			w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
-			w.Write([]byte(`username=` + u))
-			w.Write([]byte(`&password=` + p))
+			_, _ = w.Write([]byte(`username=` + u))
+			_, _ = w.Write([]byte(`&password=` + p))
 		} else {
 			w.WriteHeader(http.StatusBadRequest)
 		}
@@ -418,7 +418,7 @@ func createRedirectHandler() http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/foo", func(w http.ResponseWriter, _ *http.Request) {
-		w.Write([]byte(`hello`))
+		_, _ = w.Write([]byte(`hello`))
 	})
 
 	mux.HandleFunc("/bar", func(w http.ResponseWriter, r *http.Request) {
@@ -484,9 +484,9 @@ func createAutoTLSHandler(https string) http.Handler {
 
 	mux.HandleFunc("/tls", func(w http.ResponseWriter, r *http.Request) {
 		if r.TLS == nil {
-			w.Write([]byte(`no`))
+			_, _ = w.Write([]byte(`no`))
 		} else {
-			w.Write([]byte(`yes`))
+			_, _ = w.Write([]byte(`yes`))
 		}
 	})
 
@@ -494,7 +494,7 @@ func createAutoTLSHandler(https string) http.Handler {
 		if r.TLS == nil {
 			http.Redirect(w, r, https+r.RequestURI, http.StatusFound)
 		} else {
-			w.Write([]byte(`hello`))
+			_, _ = w.Write([]byte(`hello`))
 		}
 	})
 
@@ -620,9 +620,9 @@ func createChunkedHandler() http.Handler {
 		} else {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`[1, `))
+			_, _ = w.Write([]byte(`[1, `))
 			w.(http.Flusher).Flush()
-			w.Write([]byte(`2]`))
+			_, _ = w.Write([]byte(`2]`))
 		}
 	})
 
@@ -643,9 +643,9 @@ func createChunkedFastHandler(t *testing.T) fasthttp.RequestHandler {
 
 		ctx.Response.Header.Set("Content-Type", "application/json")
 		ctx.Response.SetBodyStreamWriter(func(w *bufio.Writer) {
-			w.WriteString(`[1, `)
-			w.Flush()
-			w.WriteString(`2]`)
+			_, _ = w.WriteString(`[1, `)
+			_ = w.Flush()
+			_, _ = w.WriteString(`2]`)
 		})
 	}
 }
@@ -713,7 +713,7 @@ func createCookieHandler() http.Handler {
 			w.WriteHeader(http.StatusBadRequest)
 		} else {
 			w.Header().Set("Content-Type", "text/plain")
-			w.Write([]byte(cookie.Value))
+			_, _ = w.Write([]byte(cookie.Value))
 		}
 	})
 

@@ -1005,7 +1005,7 @@ func TestRequestBodyMultipartFile(t *testing.T) {
 
 	fh, _ := ioutil.TempFile("", "httpexpect")
 	filename2 := fh.Name()
-	fh.WriteString("2")
+	_, _ = fh.WriteString("2")
 	fh.Close()
 	defer os.Remove(filename2)
 

@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestValueFailed(t *testing.T) {
@@ -645,7 +646,8 @@ func TestValueSchema(t *testing.T) {
 	NewValue(reporter, data2).Schema([]byte(schema)).chain.assertFailed(t)
 
 	var b interface{}
-	json.Unmarshal([]byte(schema), &b)
+	err := json.Unmarshal([]byte(schema), &b)
+	require.Nil(t, err)
 
 	NewValue(reporter, data1).Schema(b).chain.assertOK(t)
 	NewValue(reporter, data2).Schema(b).chain.assertFailed(t)
@@ -653,8 +655,11 @@ func TestValueSchema(t *testing.T) {
 	tmp, _ := ioutil.TempFile("", "httpexpect")
 	defer os.Remove(tmp.Name())
 
-	tmp.Write([]byte(schema))
-	tmp.Close()
+	_, err = tmp.Write([]byte(schema))
+	require.Nil(t, err)
+
+	err = tmp.Close()
+	require.Nil(t, err)
 
 	url := "file://" + tmp.Name()
 
