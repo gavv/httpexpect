@@ -24,7 +24,7 @@ Workflow:
 * Response status, predefined status ranges.
 * Headers, cookies, payload: JSON, JSONP, forms, text.
 * Round-trip time.
-* Custom reusable [response matcher](#reusable-matchers).
+* Custom reusable [response matchers](#reusable-matchers).
 
 ##### Payload assertions
 
