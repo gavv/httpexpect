@@ -33,6 +33,12 @@ Workflow:
 * Simple JSON queries (using subset of [JSONPath](http://goessner.net/articles/JsonPath/)), provided by [`jsonpath`](https://github.com/yalp/jsonpath) package.
 * [JSON Schema](http://json-schema.org/) validation, provided by [`gojsonschema`](https://github.com/xeipuuv/gojsonschema) package.
 
+##### WebSocket support (thanks to [@tyranron](https://github.com/tyranron))
+
+* Upgrade an HTTP connection to a WebSocket connection (we use [`gorilla/websocket`](https://github.com/gorilla/websocket) internally).
+* Interact with the WebSocket server.
+* Inspect WebSocket connection parameters and WebSocket messages.
+
 ##### Pretty printing
 
 * Verbose error messages.
@@ -87,6 +93,10 @@ See [`_examples`](_examples) directory for complete standalone examples.
 * [`fasthttp_test.go`](_examples/fasthttp_test.go)
 
     Testing a server made with [`fasthttp`](https://github.com/valyala/fasthttp) package. Tests invoke the `fasthttp.RequestHandler` directly.
+
+* [`websocket_test.go`](_examples/websocket_test.go)
+
+    Testing a WebSocket server based on [`gorilla/websocket`](https://github.com/gorilla/websocket). Tests invoke the `http.Handler` or `fasthttp.RequestHandler` directly.
 
 * [`gae_test.go`](_examples/gae_test.go)
 
@@ -306,6 +316,24 @@ e.GET("/path").WithURL("http://example.com").
 e.GET("/path").WithURL("http://subdomain.example.com").
 	Expect().
 	Status(http.StatusOK)
+```
+
+##### WebSocket support
+
+```go
+ws := e.GET("/mysocket").WithWebsocketUpgrade().
+	Expect().
+	Status(http.StatusSwitchingProtocols).
+	Websocket()
+defer ws.Disconnect()
+
+ws.WriteText("some request").
+	Expect().
+	TextMessage().Body().Equal("some response")
+
+ws.CloseWithText("bye").
+	Expect().
+	CloseMessage().NoContent()
 ```
 
 ##### Reusable builders
