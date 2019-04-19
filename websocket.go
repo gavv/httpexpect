@@ -88,23 +88,21 @@ func (c *Websocket) Subprotocol() *String {
 // Example:
 //  msg := conn.Expect()
 //  msg.JSON().Object().ValueEqual("message", "hi")
-func (c *Websocket) Expect() (m *WebsocketMessage) {
-	m = &WebsocketMessage{
-		chain: c.chain,
-	}
+func (c *Websocket) Expect() *WebsocketMessage {
 	switch {
 	case c.chain.failed():
-		return
+		return makeWebsocketMessage(c.chain)
 	case c.conn == nil:
 		c.chain.fail("\nunexpected read from failed WebSocket connection")
-		return
+		return makeWebsocketMessage(c.chain)
 	case c.isClosed:
 		c.chain.fail("\nunexpected read from closed WebSocket connection")
-		return
+		return makeWebsocketMessage(c.chain)
 	case !c.setReadDeadline():
-		return
+		return makeWebsocketMessage(c.chain)
 	}
 	var err error
+	m := makeWebsocketMessage(c.chain)
 	m.typ, m.content, err = c.conn.ReadMessage()
 	if err != nil {
 		if cls, ok := err.(*websocket.CloseError); ok {
@@ -116,13 +114,12 @@ func (c *Websocket) Expect() (m *WebsocketMessage) {
 			c.chain.fail(
 				"\nexpected read WebSocket connection, "+
 					"but got failure: %s", err.Error())
-			return
+			return makeWebsocketMessage(c.chain)
 		}
 	} else {
 		c.printRead(m.typ, m.content, m.closeCode)
 	}
-
-	return
+	return m
 }
 
 func (c *Websocket) setReadDeadline() bool {
@@ -186,7 +183,7 @@ func (c *Websocket) Disconnect() *Websocket {
 //  conn.Close(websocket.CloseUnsupportedData)
 func (c *Websocket) Close(code ...int) *Websocket {
 	switch {
-	case c.isClosed || c.checkUnusable("Close"):
+	case c.checkUnusable("Close"):
 		return c
 	case len(code) > 1:
 		c.chain.fail("\nunexpected multiple code arguments passed to Close")
@@ -212,7 +209,7 @@ func (c *Websocket) Close(code ...int) *Websocket {
 //  conn.CloseWithBytes([]byte("bye!"), websocket.CloseGoingAway)
 func (c *Websocket) CloseWithBytes(b []byte, code ...int) *Websocket {
 	switch {
-	case c.isClosed || c.checkUnusable("CloseWithBytes"):
+	case c.checkUnusable("CloseWithBytes"):
 		return c
 	case len(code) > 1:
 		c.chain.fail(
@@ -248,15 +245,13 @@ func (c *Websocket) CloseWithJSON(
 	object interface{}, code ...int,
 ) *Websocket {
 	switch {
-	case c.isClosed || c.checkUnusable("CloseWithJSON"):
+	case c.checkUnusable("CloseWithJSON"):
 		return c
 	case len(code) > 1:
 		c.chain.fail(
 			"\nunexpected multiple code arguments passed to CloseWithJSON")
 		return c
 	}
-
-	defer c.Disconnect()
 
 	b, err := json.Marshal(object)
 	if err != nil {
@@ -283,7 +278,7 @@ func (c *Websocket) CloseWithJSON(
 //  conn.CloseWithText("bye!")
 func (c *Websocket) CloseWithText(s string, code ...int) *Websocket {
 	switch {
-	case c.isClosed || c.checkUnusable("CloseWithText"):
+	case c.checkUnusable("CloseWithText"):
 		return c
 	case len(code) > 1:
 		c.chain.fail(

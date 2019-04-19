@@ -74,6 +74,8 @@ func testWebsocketSession(e *Expect) {
 		Websocket()
 	defer ws.Disconnect()
 
+	ws.Subprotocol().Empty()
+
 	ws.WriteBytesBinary([]byte("my binary bytes")).
 		Expect().
 		BinaryMessage().Body().Equal("my binary bytes")
@@ -131,29 +133,70 @@ func TestE2EWebsocketLive(t *testing.T) {
 	e := WithConfig(Config{
 		BaseURL:  server.URL,
 		Reporter: NewAssertReporter(t),
+		Printers: []Printer{
+			NewDebugPrinter(t, true),
+		},
 	})
 
 	testWebsocket(e)
 }
 
 func TestE2EWebsocketHandlerStandard(t *testing.T) {
-	handler := createWebsocketHandler(wsHandlerOpts{})
+	t.Run("dialer-config", func(t *testing.T) {
+		handler := createWebsocketHandler(wsHandlerOpts{})
 
-	e := WithConfig(Config{
-		Reporter:        NewAssertReporter(t),
-		WebsocketDialer: NewWebsocketDialer(handler),
+		e := WithConfig(Config{
+			Reporter:        NewAssertReporter(t),
+			WebsocketDialer: NewWebsocketDialer(handler),
+			Printers: []Printer{
+				NewDebugPrinter(t, true),
+			},
+		})
+
+		testWebsocket(e)
 	})
 
-	testWebsocket(e)
+	t.Run("dialer-method", func(t *testing.T) {
+		handler := createWebsocketHandler(wsHandlerOpts{})
+
+		e := WithConfig(Config{
+			Reporter: NewAssertReporter(t),
+			Printers: []Printer{
+				NewDebugPrinter(t, true),
+			},
+		})
+
+		testWebsocket(e.Builder(func(req *Request) {
+			req.WithWebsocketDialer(NewWebsocketDialer(handler))
+		}))
+	})
 }
 
 func TestE2EWebsocketHandlerFast(t *testing.T) {
-	e := WithConfig(Config{
-		Reporter:        NewAssertReporter(t),
-		WebsocketDialer: NewFastWebsocketDialer(websocketFastHandler),
+	t.Run("dialer-config", func(t *testing.T) {
+		e := WithConfig(Config{
+			Reporter:        NewAssertReporter(t),
+			WebsocketDialer: NewFastWebsocketDialer(websocketFastHandler),
+			Printers: []Printer{
+				NewDebugPrinter(t, true),
+			},
+		})
+
+		testWebsocket(e)
 	})
 
-	testWebsocket(e)
+	t.Run("dialer-method", func(t *testing.T) {
+		e := WithConfig(Config{
+			Reporter: NewAssertReporter(t),
+			Printers: []Printer{
+				NewDebugPrinter(t, true),
+			},
+		})
+
+		testWebsocket(e.Builder(func(req *Request) {
+			req.WithWebsocketDialer(NewFastWebsocketDialer(websocketFastHandler))
+		}))
+	})
 }
 
 func testWebsocketTimeout(
@@ -238,5 +281,126 @@ func TestE2EWebsocketTimeouts(t *testing.T) {
 		testWebsocketTimeout(t, handler, blockCh, false, func(ws *Websocket) {
 			ws.WithoutWriteTimeout()
 		})
+	})
+}
+
+func TestE2EWebsocketClosed(t *testing.T) {
+	t.Run("close-write", func(t *testing.T) {
+		handler := createWebsocketHandler(wsHandlerOpts{})
+
+		server := httptest.NewServer(handler)
+		defer server.Close()
+
+		e := WithConfig(Config{
+			BaseURL:  server.URL,
+			Reporter: newMockReporter(t),
+		})
+
+		ws := e.GET("/test").WithWebsocketUpgrade().
+			Expect().
+			Status(http.StatusSwitchingProtocols).
+			Websocket()
+		defer ws.Disconnect()
+
+		ws.CloseWithText("bye")
+		ws.chain.assertOK(t)
+
+		ws.WriteText("test")
+		ws.chain.assertFailed(t)
+	})
+
+	t.Run("close-close", func(t *testing.T) {
+		handler := createWebsocketHandler(wsHandlerOpts{})
+
+		server := httptest.NewServer(handler)
+		defer server.Close()
+
+		e := WithConfig(Config{
+			BaseURL:  server.URL,
+			Reporter: newMockReporter(t),
+		})
+
+		ws := e.GET("/test").WithWebsocketUpgrade().
+			Expect().
+			Status(http.StatusSwitchingProtocols).
+			Websocket()
+		defer ws.Disconnect()
+
+		ws.CloseWithText("bye")
+		ws.chain.assertOK(t)
+
+		ws.CloseWithText("bye")
+		ws.chain.assertFailed(t)
+	})
+}
+
+func TestE2EWebsocketDisconnected(t *testing.T) {
+	t.Run("disconnect-write", func(t *testing.T) {
+		handler := createWebsocketHandler(wsHandlerOpts{})
+
+		server := httptest.NewServer(handler)
+		defer server.Close()
+
+		e := WithConfig(Config{
+			BaseURL:  server.URL,
+			Reporter: newMockReporter(t),
+		})
+
+		ws := e.GET("/test").WithWebsocketUpgrade().
+			Expect().
+			Status(http.StatusSwitchingProtocols).
+			Websocket()
+
+		ws.Disconnect()
+		ws.chain.assertOK(t)
+
+		ws.WriteText("test")
+		ws.chain.assertFailed(t)
+	})
+
+	t.Run("disconnect-close", func(t *testing.T) {
+		handler := createWebsocketHandler(wsHandlerOpts{})
+
+		server := httptest.NewServer(handler)
+		defer server.Close()
+
+		e := WithConfig(Config{
+			BaseURL:  server.URL,
+			Reporter: newMockReporter(t),
+		})
+
+		ws := e.GET("/test").WithWebsocketUpgrade().
+			Expect().
+			Status(http.StatusSwitchingProtocols).
+			Websocket()
+
+		ws.Disconnect()
+		ws.chain.assertOK(t)
+
+		ws.CloseWithText("test")
+		ws.chain.assertFailed(t)
+	})
+
+	t.Run("disconnect-disconnect", func(t *testing.T) {
+		handler := createWebsocketHandler(wsHandlerOpts{})
+
+		server := httptest.NewServer(handler)
+		defer server.Close()
+
+		e := WithConfig(Config{
+			BaseURL:  server.URL,
+			Reporter: newMockReporter(t),
+		})
+
+		ws := e.GET("/test").WithWebsocketUpgrade().
+			Expect().
+			Status(http.StatusSwitchingProtocols).
+			Websocket()
+
+		ws.Disconnect()
+		ws.chain.assertOK(t)
+
+		ws.Disconnect()
+		ws.chain.assertOK(t)
 	})
 }

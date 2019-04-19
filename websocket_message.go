@@ -36,6 +36,12 @@ func NewWebsocketMessage(
 	return m
 }
 
+func makeWebsocketMessage(chain chain) *WebsocketMessage {
+	return &WebsocketMessage{
+		chain: chain,
+	}
+}
+
 // Raw returns underlying type, content and close code of WebSocket message.
 // Theses values are originally read from WebSocket connection.
 func (m *WebsocketMessage) Raw() (typ int, content []byte, closeCode int) {

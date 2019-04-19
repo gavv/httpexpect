@@ -39,3 +39,16 @@ func TestWebsocketFailed(t *testing.T) {
 
 	ws.Disconnect()
 }
+
+func TestWebsocketNil(t *testing.T) {
+	config := Config{
+		Reporter: newMockReporter(t),
+	}
+
+	ws := NewWebsocket(config, nil)
+
+	msg := ws.Expect()
+	msg.chain.assertFailed(t)
+
+	ws.chain.assertFailed(t)
+}
