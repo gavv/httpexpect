@@ -1,3 +1,5 @@
+// +build never
+
 package examples
 
 import (
@@ -9,23 +11,20 @@ import (
 	"google.golang.org/appengine/aetest"
 )
 
+// These tests require installed Google Appengine SDK.
+// https://cloud.google.com/appengine/downloads
+
 // init() is used by GAE to start serving the app
 // added here for illustration purposes
-//
-// func init() {
-//     http.Handle("/", GaeHandler())
-// }
+func init() {
+	http.Handle("/", GaeHandler())
+}
 
 // gaeInstance is our global dev_appserver instance.
 var gaeInstance aetest.Instance
 
 // TestMain is called first to create the gaeInstance.
 func TestMain(m *testing.M) {
-	// INFO: Remove the return to actually run the tests.
-	// Requires installed Google Appengine SDK.
-	// https://cloud.google.com/appengine/downloads
-	return
-
 	var err error
 	gaeInstance, err = aetest.NewInstance(nil)
 	if err != nil {
