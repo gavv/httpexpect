@@ -96,16 +96,6 @@ func IrisHandler() http.Handler {
 		c.Write(body)
 	})
 
-	sub := app.Party("subdomain.")
-
-	sub.Post("/set", func(c *iris.Context) {
-		c.Session().Set("message", "hello from subdomain")
-	})
-
-	sub.Get("/get", func(c *iris.Context) {
-		c.Writef(c.Session().GetString("message"))
-	})
-
 	app.Boot()
 	return app.Router
 }
