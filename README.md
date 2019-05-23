@@ -56,10 +56,10 @@ Workflow:
 
 Stable branches are available on [`gopkg.in`](http://labix.org/gopkg.in) and will not introduce backward-incompatible changes.
 
-Current stable branch is [`v1`](http://gopkg.in/gavv/httpexpect.v1):
+Current stable branch is [`v2`](http://gopkg.in/gavv/httpexpect.v2):
 
 ```go
-import "gopkg.in/gavv/httpexpect.v1"
+import "gopkg.in/gavv/httpexpect.v2"
 ```
 
 Development is done in `master` branch on github:
