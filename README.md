@@ -479,6 +479,7 @@ e.GET("/path").WithHandler(handler).
 * [`frisby`](https://github.com/verdverm/frisby)
 * [`forest`](https://github.com/emicklei/forest)
 * [`restit`](https://github.com/go-restit/restit)
+* [`httptesting`](https://github.com/dolab/httptesting)
 * [`http-test`](https://github.com/vsco/http-test)
 * [`go-json-rest`](https://github.com/ant0ine/go-json-rest)
 
