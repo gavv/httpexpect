@@ -1,3 +1,5 @@
+// +build go1.12
+
 package examples
 
 import (
@@ -7,7 +9,6 @@ import (
 	"net/http"
 
 	"github.com/kataras/iris"
-	"github.com/kataras/iris/context"
 	"github.com/kataras/iris/middleware/basicauth"
 	"github.com/kataras/iris/sessions"
 )
@@ -20,25 +21,25 @@ func IrisHandler() http.Handler {
 		Cookie: "irissessionid",
 	})
 
-	app.Get("/things", func(ctx context.Context) {
+	app.Get("/things", func(ctx iris.Context) {
 		ctx.JSON([]interface{}{
-			context.Map{
+			iris.Map{
 				"name":        "foo",
 				"description": "foo thing",
 			},
-			context.Map{
+			iris.Map{
 				"name":        "bar",
 				"description": "bar thing",
 			},
 		})
 	})
 
-	app.Post("/redirect", func(ctx context.Context) {
+	app.Post("/redirect", func(ctx iris.Context) {
 		ctx.Redirect("/things", iris.StatusFound)
 	})
 
-	app.Post("/params/{x}/{y}", func(ctx context.Context) {
-		ctx.JSON(context.Map{
+	app.Post("/params/{x}/{y}", func(ctx iris.Context) {
+		ctx.JSON(iris.Map{
 			"x":  ctx.Params().Get("x"),
 			"y":  ctx.Params().Get("y"),
 			"q":  ctx.URLParam("q"),
@@ -51,14 +52,14 @@ func IrisHandler() http.Handler {
 		"ford": "betelgeuse7",
 	})
 
-	app.Get("/auth", auth, func(ctx context.Context) {
+	app.Get("/auth", auth, func(ctx iris.Context) {
 		ctx.Writef("authenticated!")
 	})
 
-	app.Post("/session/set", func(ctx context.Context) {
+	app.Post("/session/set", func(ctx iris.Context) {
 		session := sess.Start(ctx)
 
-		v := context.Map{}
+		v := iris.Map{}
 
 		if err := ctx.ReadJSON(&v); err != nil {
 			ctx.StatusCode(iris.StatusBadRequest)
@@ -68,15 +69,15 @@ func IrisHandler() http.Handler {
 		session.Set("name", v["name"])
 	})
 
-	app.Get("/session/get", func(ctx context.Context) {
+	app.Get("/session/get", func(ctx iris.Context) {
 		session := sess.Start(ctx)
 
-		ctx.JSON(context.Map{
+		ctx.JSON(iris.Map{
 			"name": session.GetString("name"),
 		})
 	})
 
-	app.Get("/stream", func(ctx context.Context) {
+	app.Get("/stream", func(ctx iris.Context) {
 		ctx.StreamWriter(func(w io.Writer) bool {
 			for i := 0; i < 10; i++ {
 				fmt.Fprintf(w, "%d", i)
@@ -88,7 +89,7 @@ func IrisHandler() http.Handler {
 		// return true
 	})
 
-	app.Post("/stream", func(ctx context.Context) {
+	app.Post("/stream", func(ctx iris.Context) {
 		body, err := ioutil.ReadAll(ctx.Request().Body)
 		if err != nil {
 			app.Logger().Error(err)
@@ -101,12 +102,12 @@ func IrisHandler() http.Handler {
 
 	sub := app.Subdomain("subdomain")
 
-	sub.Post("/set", func(ctx context.Context) {
+	sub.Post("/set", func(ctx iris.Context) {
 		session := sess.Start(ctx)
 		session.Set("message", "hello from subdomain")
 	})
 
-	sub.Get("/get", func(ctx context.Context) {
+	sub.Get("/get", func(ctx iris.Context) {
 		session := sess.Start(ctx)
 		ctx.WriteString(session.GetString("message"))
 	})
