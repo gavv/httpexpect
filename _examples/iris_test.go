@@ -1,5 +1,3 @@
-// +build go1.8
-
 package examples
 
 import (
@@ -14,7 +12,6 @@ func irisTester(t *testing.T) *httpexpect.Expect {
 	handler := IrisHandler()
 
 	return httpexpect.WithConfig(httpexpect.Config{
-		BaseURL: "http://example.com",
 		Client: &http.Client{
 			Transport: httpexpect.NewBinder(handler),
 			Jar:       httpexpect.NewJar(),
@@ -84,7 +81,8 @@ func TestIrisParams(t *testing.T) {
 	// Form: p1=P1&p2=P2
 
 	r := e.POST("/params/{x}/{y}", "xxx", "yyy").
-		WithQuery("q", "qqq").WithForm(Form{P1: "P1", P2: "P2"}).
+		WithQuery("q", "qqq").
+		WithForm(Form{P1: "P1", P2: "P2"}).
 		Expect().
 		Status(http.StatusOK).JSON().Object()
 
@@ -115,11 +113,15 @@ func TestIrisAuth(t *testing.T) {
 func TestIrisSession(t *testing.T) {
 	e := irisTester(t)
 
-	e.POST("/session/set").WithJSON(map[string]string{"name": "test"}).
+	sub := e.Builder(func(req *httpexpect.Request) {
+		req.WithURL("http://example.com")
+	})
+
+	sub.POST("/session/set").WithJSON(map[string]string{"name": "test"}).
 		Expect().
 		Status(http.StatusOK).Cookies().NotEmpty()
 
-	r := e.GET("/session/get").
+	r := sub.GET("/session/get").
 		Expect().
 		Status(http.StatusOK).JSON().Object()
 
@@ -141,4 +143,21 @@ func TestIrisStream(t *testing.T) {
 	e.POST("/stream").WithChunked(strings.NewReader("<long text>")).
 		Expect().
 		Status(http.StatusOK).Body().Equal("<long text>")
+}
+
+func TestIrisSubdomain(t *testing.T) {
+	e := irisTester(t)
+
+	sub := e.Builder(func(req *httpexpect.Request) {
+		req.WithURL("http://subdomain.example.com")
+	})
+
+	sub.POST("/set").
+		Expect().
+		Status(http.StatusOK)
+
+	sub.GET("/get").
+		Expect().
+		Status(http.StatusOK).
+		Body().Equal("hello from subdomain")
 }
