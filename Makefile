@@ -1,7 +1,7 @@
-all: update test check
+GO111MODULE := on
+export GO111MODULE
 
-update:
-	go get -u -t . ./_examples
+all: test check
 
 test:
 	go test . ./_examples
