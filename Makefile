@@ -8,7 +8,7 @@ test:
 	cd _examples && go test
 
 check:
-	golangci-lint run ./...
+	golangci-lint run .
 
 fmt:
 	gofmt -s -w . ./_examples
