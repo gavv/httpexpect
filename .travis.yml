@@ -13,8 +13,9 @@ before_install:
   - go get github.com/golangci/golangci-lint/cmd/golangci-lint
 
 script:
-  - go get -v -t . ./_examples
-  - go test -coverprofile profile.cov .
-  - go test ./_examples
+  - go get -v .
+  - cd _examples && go get -v .
+  - go test -coverprofile profile.cov
+  - cd _examples && go test
   - ${GOPATH}/bin/golangci-lint run ./...
   - ${GOPATH}/bin/goveralls -coverprofile profile.cov -service=travis-ci
