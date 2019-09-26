@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/moul/http2curl"
+	"moul.io/http2curl"
 )
 
 // CompactPrinter implements Printer. It prints requests in compact form.
