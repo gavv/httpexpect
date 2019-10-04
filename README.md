@@ -52,23 +52,23 @@ Workflow:
 * Custom HTTP client, logger, printer, and failure reporter may be provided by user.
 * Custom HTTP request factory may be provided, e.g. from the Google App Engine testing.
 
-## Status
+## Versions
 
-Stable branches are available on [`gopkg.in`](http://labix.org/gopkg.in) and will not introduce backward-incompatible changes.
+The versions are selected according to the [semantic versioning](https://semver.org/) scheme. Every new major version gets its own stable branch with a backwards compatibility promise. Releases are tagged from stable branches.
 
-Current stable branch is [`v2`](http://gopkg.in/gavv/httpexpect.v2):
+The current stable branch is `v2`. Previous branches are still maintained, but no new features are added.
+
+If you're using go.mod, use a versioned import path:
+
+```go
+import "github.com/gavv/httpexpect/v2"
+```
+
+Otherwise, use gopkg.in import path:
 
 ```go
 import "gopkg.in/gavv/httpexpect.v2"
 ```
-
-Development is done in `master` branch on github:
-
-```go
-import "github.com/gavv/httpexpect"
-```
-
-When the master is merged into a stable branch, a new version tag is assigned to the branch head. The versions are selected according to the [semantic versioning](https://semver.org/) scheme.
 
 ## Documentation
 
