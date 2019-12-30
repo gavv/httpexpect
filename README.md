@@ -92,7 +92,7 @@ See [`_examples`](_examples) directory for complete standalone examples.
 
 * [`gin_test.go`](_examples/gin_test.go)
 
-    Testing a server utilizing the [gin web framework](https://github.com/gin-gonic/gin).
+    Testing a server utilizing the [`gin`](https://github.com/gin-gonic/gin) web framework. Tests invoke the `http.Handler` directly.
 
 * [`fasthttp_test.go`](_examples/fasthttp_test.go)
 
