@@ -24,7 +24,7 @@ require (
 	github.com/iris-contrib/go.uuid v2.0.0+incompatible // indirect
 	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
 	github.com/kataras/golog v0.0.10 // indirect
-	github.com/kataras/iris v12.1.4
+	github.com/kataras/iris/v12 v12.1.4
 	github.com/kataras/pio v0.0.2 // indirect
 	github.com/labstack/echo v3.1.0+incompatible
 	github.com/labstack/gommon v0.2.9 // indirect
