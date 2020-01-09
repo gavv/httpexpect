@@ -90,6 +90,10 @@ See [`_examples`](_examples) directory for complete standalone examples.
 
     Testing a server with JWT authentication made with [`echo`](https://github.com/labstack/echo/) framework. Tests use either HTTP client or invoke the `http.Handler` directly.
 
+* [`gin_test.go`](_examples/gin_test.go)
+
+    Testing a server utilizing the [`gin`](https://github.com/gin-gonic/gin) web framework. Tests invoke the `http.Handler` directly.
+
 * [`fasthttp_test.go`](_examples/fasthttp_test.go)
 
     Testing a server made with [`fasthttp`](https://github.com/valyala/fasthttp) package. Tests invoke the `fasthttp.RequestHandler` directly.
