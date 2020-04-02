@@ -10,7 +10,7 @@ import (
 
 func TestGinHandler(t *testing.T) {
 	// Create new gin instance
-	engine := gin.Default()
+	engine := gin.New()
 	// Add /example route via handler function to the gin instance
 	handler := GinHandler(engine)
 	// Create httpexpect instance
