@@ -58,7 +58,9 @@ func TestRequestFailed(t *testing.T) {
 	req.WithMultipart()
 
 	resp := req.Expect()
-	assert.False(t, resp == nil)
+	if resp == nil {
+		panic("Expect returned nil")
+	}
 
 	req.chain.assertFailed(t)
 	resp.chain.assertFailed(t)
