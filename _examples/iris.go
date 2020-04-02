@@ -1,4 +1,4 @@
-// +build go1.12
+// +build go1.14
 
 package examples
 
@@ -8,9 +8,9 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/kataras/iris"
-	"github.com/kataras/iris/middleware/basicauth"
-	"github.com/kataras/iris/sessions"
+	"github.com/kataras/iris/v12"
+	"github.com/kataras/iris/v12/middleware/basicauth"
+	"github.com/kataras/iris/v12/sessions"
 )
 
 // IrisHandler tests iris handler
