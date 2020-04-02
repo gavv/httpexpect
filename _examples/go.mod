@@ -28,6 +28,7 @@ require (
 	github.com/kataras/golog v0.0.0-20190624001437-99c81de45f40 // indirect
 	github.com/kataras/iris v11.1.0+incompatible
 	github.com/kataras/pio v0.0.0-20190103105442-ea782b38602d // indirect
+	github.com/klauspost/compress v1.4.1 // indirect
 	github.com/labstack/echo v3.1.0+incompatible
 	github.com/labstack/gommon v0.2.9 // indirect
 	github.com/microcosm-cc/bluemonday v1.0.2 // indirect
