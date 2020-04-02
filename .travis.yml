@@ -5,9 +5,9 @@ go:
     - 1.12.x
 
 before_install:
+  - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.24.0
   - go get golang.org/x/tools/cmd/cover
   - go get github.com/mattn/goveralls
-  - go get github.com/golangci/golangci-lint/cmd/golangci-lint
 
 script:
   - go get -v -t . ./_examples
