@@ -118,7 +118,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gavv/httpexpect"
+	"github.com/gavv/httpexpect/v2"
 )
 
 func TestFruits(t *testing.T) {
