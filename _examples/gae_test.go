@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/gavv/httpexpect"
+	"github.com/gavv/httpexpect/v2"
 	"google.golang.org/appengine/aetest"
 )
 

@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/gavv/httpexpect"
+	"github.com/gavv/httpexpect/v2"
 )
 
 // fastHTTPTester returns a new Expect instance to test FastHTTPHandler().
