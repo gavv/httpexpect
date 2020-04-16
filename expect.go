@@ -219,6 +219,14 @@ type LoggerReporter interface {
 	Reporter
 }
 
+// Formatter 
+type Formatter interface {
+	BeginAssertion(Context)
+	Success(Context)
+	Failure(Context, Failure)
+	EndAssertion(Context)
+}
+
 // DefaultRequestFactory is the default RequestFactory implementation which just
 // calls http.NewRequest.
 type DefaultRequestFactory struct{}
