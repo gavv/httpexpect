@@ -219,7 +219,7 @@ type LoggerReporter interface {
 	Reporter
 }
 
-// Formatter 
+// Formatter is used for common formatting options.
 type Formatter interface {
 	BeginAssertion(Context)
 	Success(Context)
