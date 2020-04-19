@@ -9,7 +9,7 @@ type Context struct {
 	name      string
 	request   *Request
 	response  *Response
-	reporter  *Reporter
+	reporter  Reporter
 	rtt       *time.Duration
 	formatter Formatter
 }
