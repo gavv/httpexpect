@@ -38,6 +38,8 @@ type Request struct {
 	forceType  bool
 	wsUpgrade  bool
 	matchers   []func(*Response)
+	maxRetry   int
+	retryDelay time.Duration
 }
 
 // NewRequest returns a new Request object.
@@ -851,6 +853,18 @@ func (r *Request) WithMultipart() *Request {
 	return r
 }
 
+// WithRetry allows to retry an HTTP request until a max retry value.
+// It also accepts a retry delay that is performed before to retry on failure.
+func (r *Request) WithRetry(maxRetry int, retryDelay time.Duration) *Request {
+	if r.chain.failed() {
+		return r
+	}
+
+	r.maxRetry = maxRetry
+	r.retryDelay = retryDelay
+	return r
+}
+
 // Expect constructs http.Request, sends it, receives http.Response, and
 // returns a new Response object to inspect received response.
 //
@@ -980,7 +994,20 @@ func (r *Request) sendRequest() *http.Response {
 		return nil
 	}
 
-	resp, err := r.config.Client.Do(r.http)
+	var err error
+	var resp *http.Response
+	if r.maxRetry == 0 {
+		resp, err = r.config.Client.Do(r.http)
+	} else {
+		for i := 0; i < r.maxRetry; i++ {
+			resp, err = r.config.Client.Do(r.http)
+			if err != nil {
+				time.Sleep(r.retryDelay)
+				continue
+			}
+			break
+		}
+	}
 
 	if err != nil {
 		r.chain.fail(err.Error())

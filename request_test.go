@@ -11,6 +11,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -163,6 +164,53 @@ func TestRequestClient(t *testing.T) {
 	req3 := NewRequest(config, "METHOD", "/")
 	req3.WithClient(nil)
 	req3.chain.assertFailed(t)
+}
+
+func TestRequestWithRetrySuccess(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
+	client := &mockClient{
+		retries: []retry{
+			{err: errors.New("foo")},
+			{err: errors.New("bar")},
+			{resp: http.Response{}},
+		},
+	}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		RequestFactory: factory,
+		Reporter:       reporter,
+		Client:         client,
+	}
+
+	req1 := NewRequest(config, "METHOD", "/").WithRetry(3, time.Millisecond)
+	req1.Expect().chain.assertOK(t)
+	assert.NotNil(t, client.req)
+}
+
+func TestRequestWithRetryFailure(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
+	client := &mockClient{
+		retries: []retry{
+			{err: errors.New("foo")},
+			{err: errors.New("bar")},
+			{err: errors.New("baz")},
+		},
+	}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		RequestFactory: factory,
+		Reporter:       reporter,
+		Client:         client,
+	}
+
+	req1 := NewRequest(config, "METHOD", "/").WithRetry(3, time.Millisecond)
+	req1.Expect().chain.assertFailed(t)
 }
 
 func TestRequestHandler(t *testing.T) {

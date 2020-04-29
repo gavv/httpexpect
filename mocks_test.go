@@ -6,13 +6,30 @@ import (
 )
 
 type mockClient struct {
-	req  *http.Request
+	req        *http.Request
+	resp       http.Response
+	err        error
+	retries    []retry
+	retryIndex int
+}
+
+type retry struct {
 	resp http.Response
 	err  error
 }
 
 func (c *mockClient) Do(req *http.Request) (*http.Response, error) {
 	c.req = req
+	if c.retries != nil {
+		currentRetry := c.retries[c.retryIndex]
+		c.retryIndex++
+		if currentRetry.err != nil {
+			return nil, currentRetry.err
+		}
+		c.resp.Header = c.req.Header
+		c.resp.Body = c.req.Body
+		return &currentRetry.resp, nil
+	}
 	if c.err == nil {
 		c.resp.Header = c.req.Header
 		c.resp.Body = c.req.Body
