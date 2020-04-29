@@ -57,6 +57,7 @@ func TestRequestFailed(t *testing.T) {
 	req.WithFile("foo", "bar", strings.NewReader("baz"))
 	req.WithFileBytes("foo", "bar", []byte("baz"))
 	req.WithMultipart()
+	req.WithRetry(3, time.Millisecond)
 
 	resp := req.Expect()
 	if resp == nil {
