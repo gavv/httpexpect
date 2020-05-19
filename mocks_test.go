@@ -1,6 +1,7 @@
 package httpexpect
 
 import (
+	"fmt"
 	"net/http"
 	"testing"
 )
@@ -32,5 +33,19 @@ func newMockReporter(t *testing.T) *mockReporter {
 
 func (r *mockReporter) Errorf(message string, args ...interface{}) {
 	r.testing.Logf("Fail: "+message, args...)
+	r.reported = true
+}
+
+type stringReporter struct {
+	msg      string
+	reported bool
+}
+
+func newStringReporter() *stringReporter {
+	return &stringReporter{"", false}
+}
+
+func (r *stringReporter) Errorf(message string, args ...interface{}) {
+	r.msg = fmt.Sprintf(message, args...)
 	r.reported = true
 }
