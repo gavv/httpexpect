@@ -53,7 +53,7 @@ func TestWebsocketNil(t *testing.T) {
 	ws.chain.assertFailed(t)
 }
 
-func TestWebsocket_Expect(t *testing.T) {
+func TestWebsocketExpect(t *testing.T) {
 
 	t.Run("websocket is closed", func(t *testing.T) {
 		r := newStringReporter()
@@ -77,7 +77,7 @@ func TestWebsocket_Expect(t *testing.T) {
 	})
 }
 
-func TestWebsocket_checkUnusable(t *testing.T) {
+func TestWebsocketCheckUnusable(t *testing.T) {
 	type fields struct {
 		conn     *websocket.Conn
 		isClosed bool
@@ -146,7 +146,7 @@ func TestWebsocket_checkUnusable(t *testing.T) {
 	}
 }
 
-func TestWriteJSONMarshalFail(t *testing.T) {
+func TestWebsocketWriteJSONMarshalFail(t *testing.T) {
 	r := newStringReporter()
 
 	ws := &Websocket{
@@ -167,7 +167,7 @@ func TestWriteJSONMarshalFail(t *testing.T) {
 	}
 }
 
-func TestWebsocket_WriteMessage(t *testing.T) {
+func TestWebsocketWriteMessage(t *testing.T) {
 	type args struct {
 		reporter  *stringReporter
 		typ       int
@@ -224,7 +224,7 @@ func TestWebsocket_WriteMessage(t *testing.T) {
 	}
 }
 
-func TestWebsocket_CloseWithText(t *testing.T) {
+func TestWebsocketCloseWithText(t *testing.T) {
 	t.Run("multiple code args", func(t *testing.T) {
 		r := newStringReporter()
 		c := &Websocket{
@@ -247,7 +247,7 @@ func TestWebsocket_CloseWithText(t *testing.T) {
 	})
 }
 
-func TestWebsocket_CloseWithJSON(t *testing.T) {
+func TestWebsocketCloseWithJSON(t *testing.T) {
 	t.Run("multiple code args", func(t *testing.T) {
 		r := newStringReporter()
 		c := &Websocket{
@@ -285,7 +285,7 @@ func TestWebsocket_CloseWithJSON(t *testing.T) {
 	})
 }
 
-func TestWebsocket_CloseWithBytes(t *testing.T) {
+func TestWebsocketCloseWithBytes(t *testing.T) {
 	t.Run("multiple code args", func(t *testing.T) {
 		r := newStringReporter()
 		c := &Websocket{
@@ -308,7 +308,7 @@ func TestWebsocket_CloseWithBytes(t *testing.T) {
 	})
 }
 
-func TestWebsocket_Close(t *testing.T) {
+func TestWebsocketClose(t *testing.T) {
 	t.Run("multiple code args", func(t *testing.T) {
 		r := newStringReporter()
 		c := &Websocket{
