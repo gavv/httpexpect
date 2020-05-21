@@ -135,7 +135,8 @@ func TestWebsocketCheckUnusable(t *testing.T) {
 				return
 			}
 			if got := tt.args.reporter.reported; got != tt.reported {
-				t.Errorf("Websocket.checkUnusable() is error message reported = %v, want %v", got, tt.want)
+				t.Errorf("Websocket.checkUnusable() is error message reported = %v, want %v",
+					got, tt.want)
 				return
 			}
 			if got := tt.args.reporter.msg; got != tt.wantMsg {
@@ -214,7 +215,8 @@ func TestWebsocketWriteMessage(t *testing.T) {
 			c.WriteMessage(tt.args.typ, tt.args.content, tt.args.closeCode...)
 
 			if got := tt.args.reporter.reported; got != tt.reported {
-				t.Errorf("Websocket.WriteMessage() is error message reported = %v, want %v", got, tt.reported)
+				t.Errorf("Websocket.WriteMessage() is error message reported = %v, want %v",
+					got, tt.reported)
 			}
 
 			if got := tt.args.reporter.msg; got != tt.reportedMsg {
@@ -233,7 +235,8 @@ func TestWebsocketCloseWithText(t *testing.T) {
 			isClosed: false,
 		}
 
-		c.CloseWithText("Closing...", websocket.CloseNormalClosure, websocket.CloseAbnormalClosure)
+		c.CloseWithText("Closing...", websocket.CloseNormalClosure,
+			websocket.CloseAbnormalClosure)
 
 		if !r.reported {
 			t.Errorf("Websocket.CloseWithText() error message not reported")
@@ -256,7 +259,8 @@ func TestWebsocketCloseWithJSON(t *testing.T) {
 			isClosed: false,
 		}
 
-		c.CloseWithJSON("Closing...", websocket.CloseNormalClosure, websocket.CloseAbnormalClosure)
+		c.CloseWithJSON("Closing...", websocket.CloseNormalClosure,
+			websocket.CloseAbnormalClosure)
 
 		if !r.reported {
 			t.Errorf("Websocket.CloseWithText() error message not reported")
@@ -294,7 +298,8 @@ func TestWebsocketCloseWithBytes(t *testing.T) {
 			isClosed: false,
 		}
 
-		c.CloseWithBytes([]byte("Closing..."), websocket.CloseNormalClosure, websocket.CloseAbnormalClosure)
+		c.CloseWithBytes([]byte("Closing..."), websocket.CloseNormalClosure,
+			websocket.CloseAbnormalClosure)
 
 		if !r.reported {
 			t.Errorf("Websocket.CloseWithText() error message not reported")
