@@ -54,9 +54,8 @@ func TestWebsocketNil(t *testing.T) {
 }
 
 func TestWebsocketExpect(t *testing.T) {
-
 	t.Run("websocket is closed", func(t *testing.T) {
-		r := newStringReporter()
+		r := newMockReporter(t)
 		c := &Websocket{
 			chain:    makeChain(r),
 			conn:     &websocket.Conn{},
@@ -68,12 +67,6 @@ func TestWebsocketExpect(t *testing.T) {
 		if !r.reported {
 			t.Errorf("Websocket.CloseWithText() error message not reported")
 		}
-
-		want := "\nunexpected read from closed WebSocket connection"
-
-		if got := r.msg; got != want {
-			t.Errorf("Websocket.CloseWithText() = %v, want %v", got, want)
-		}
 	})
 }
 
@@ -83,7 +76,7 @@ func TestWebsocketCheckUnusable(t *testing.T) {
 		isClosed bool
 	}
 	type args struct {
-		reporter *stringReporter
+		reporter *mockReporter
 		where    string
 	}
 	tests := []struct {
@@ -92,7 +85,6 @@ func TestWebsocketCheckUnusable(t *testing.T) {
 		args     args
 		want     bool
 		reported bool
-		wantMsg  string
 	}{
 		{
 			name: "conn is nil",
@@ -101,12 +93,11 @@ func TestWebsocketCheckUnusable(t *testing.T) {
 				isClosed: false,
 			},
 			args: args{
-				reporter: newStringReporter(),
+				reporter: newMockReporter(t),
 				where:    "Close",
 			},
 			want:     true,
 			reported: true,
-			wantMsg:  "\nunexpected Close call for failed WebSocket connection",
 		},
 		{
 			name: "websocket is closed",
@@ -115,12 +106,11 @@ func TestWebsocketCheckUnusable(t *testing.T) {
 				isClosed: true,
 			},
 			args: args{
-				reporter: newStringReporter(),
+				reporter: newMockReporter(t),
 				where:    "Close",
 			},
 			want:     true,
 			reported: true,
-			wantMsg:  "\nunexpected Close call for closed WebSocket connection",
 		},
 	}
 	for _, tt := range tests {
@@ -139,16 +129,12 @@ func TestWebsocketCheckUnusable(t *testing.T) {
 					got, tt.want)
 				return
 			}
-			if got := tt.args.reporter.msg; got != tt.wantMsg {
-				t.Errorf("Websocket.checkUnusable() error message = %v, want %v", got, tt.want)
-				return
-			}
 		})
 	}
 }
 
 func TestWebsocketWriteJSONMarshalFail(t *testing.T) {
-	r := newStringReporter()
+	r := newMockReporter(t)
 
 	ws := &Websocket{
 		chain:    makeChain(r),
@@ -170,38 +156,35 @@ func TestWebsocketWriteJSONMarshalFail(t *testing.T) {
 
 func TestWebsocketWriteMessage(t *testing.T) {
 	type args struct {
-		reporter  *stringReporter
+		reporter  *mockReporter
 		typ       int
 		content   []byte
 		closeCode []int
 	}
 	tests := []struct {
-		name        string
-		args        args
-		reported    bool
-		reportedMsg string
+		name     string
+		args     args
+		reported bool
 	}{
 		{
 			name: "Close message, multiple close code",
 			args: args{
-				reporter:  newStringReporter(),
+				reporter:  newMockReporter(t),
 				typ:       websocket.CloseMessage,
 				content:   []byte("closing message..."),
 				closeCode: []int{websocket.CloseNormalClosure, websocket.CloseAbnormalClosure},
 			},
-			reported:    true,
-			reportedMsg: "\nunexpected multiple closeCode arguments passed to WriteMessage",
+			reported: true,
 		},
 		{
 			name: "Close message, multiple close code",
 			args: args{
-				reporter:  newStringReporter(),
+				reporter:  newMockReporter(t),
 				typ:       websocket.PingMessage,
 				content:   []byte("closing message..."),
 				closeCode: []int{websocket.CloseNormalClosure, websocket.CloseAbnormalClosure},
 			},
-			reported:    true,
-			reportedMsg: "\nunexpected WebSocket message type 'ping' passed to WriteMessage",
+			reported: true,
 		},
 	}
 	for _, tt := range tests {
@@ -218,17 +201,13 @@ func TestWebsocketWriteMessage(t *testing.T) {
 				t.Errorf("Websocket.WriteMessage() is error message reported = %v, want %v",
 					got, tt.reported)
 			}
-
-			if got := tt.args.reporter.msg; got != tt.reportedMsg {
-				t.Errorf("Websocket.WriteMessage() error message = %v, want %v", got, tt.reportedMsg)
-			}
 		})
 	}
 }
 
 func TestWebsocketCloseWithText(t *testing.T) {
 	t.Run("multiple code args", func(t *testing.T) {
-		r := newStringReporter()
+		r := newMockReporter(t)
 		c := &Websocket{
 			chain:    makeChain(r),
 			conn:     &websocket.Conn{},
@@ -241,18 +220,12 @@ func TestWebsocketCloseWithText(t *testing.T) {
 		if !r.reported {
 			t.Errorf("Websocket.CloseWithText() error message not reported")
 		}
-
-		want := "\nunexpected multiple code arguments passed to CloseWithText"
-
-		if got := r.msg; got != want {
-			t.Errorf("Websocket.CloseWithText() = %v, want %v", got, want)
-		}
 	})
 }
 
 func TestWebsocketCloseWithJSON(t *testing.T) {
 	t.Run("multiple code args", func(t *testing.T) {
-		r := newStringReporter()
+		r := newMockReporter(t)
 		c := &Websocket{
 			chain:    makeChain(r),
 			conn:     &websocket.Conn{},
@@ -265,16 +238,10 @@ func TestWebsocketCloseWithJSON(t *testing.T) {
 		if !r.reported {
 			t.Errorf("Websocket.CloseWithText() error message not reported")
 		}
-
-		want := "\nunexpected multiple code arguments passed to CloseWithJSON"
-
-		if got := r.msg; got != want {
-			t.Errorf("Websocket.CloseWithText() = %v, want %v", got, want)
-		}
 	})
 
 	t.Run("json marshall error", func(t *testing.T) {
-		r := newStringReporter()
+		r := newMockReporter(t)
 		c := &Websocket{
 			chain:    makeChain(r),
 			conn:     &websocket.Conn{},
@@ -291,7 +258,7 @@ func TestWebsocketCloseWithJSON(t *testing.T) {
 
 func TestWebsocketCloseWithBytes(t *testing.T) {
 	t.Run("multiple code args", func(t *testing.T) {
-		r := newStringReporter()
+		r := newMockReporter(t)
 		c := &Websocket{
 			chain:    makeChain(r),
 			conn:     &websocket.Conn{},
@@ -304,18 +271,12 @@ func TestWebsocketCloseWithBytes(t *testing.T) {
 		if !r.reported {
 			t.Errorf("Websocket.CloseWithText() error message not reported")
 		}
-
-		want := "\nunexpected multiple code arguments passed to CloseWithBytes"
-
-		if got := r.msg; got != want {
-			t.Errorf("Websocket.CloseWithText() = %v, want %v", got, want)
-		}
 	})
 }
 
 func TestWebsocketClose(t *testing.T) {
 	t.Run("multiple code args", func(t *testing.T) {
-		r := newStringReporter()
+		r := newMockReporter(t)
 		c := &Websocket{
 			chain:    makeChain(r),
 			conn:     &websocket.Conn{},
@@ -326,12 +287,6 @@ func TestWebsocketClose(t *testing.T) {
 
 		if !r.reported {
 			t.Errorf("Websocket.CloseWithText() error message not reported")
-		}
-
-		want := "\nunexpected multiple code arguments passed to Close"
-
-		if got := r.msg; got != want {
-			t.Errorf("Websocket.CloseWithText() = %v, want %v", got, want)
 		}
 	})
 }
