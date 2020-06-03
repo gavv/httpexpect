@@ -1,9 +1,8 @@
 language: go
-sudo: false
 
 go:
   - 1.12.x
-  - 1.14.x
+  - 1.x
 
 env:
   - GO111MODULE=on
