@@ -407,26 +407,6 @@ e := httpexpect.WithConfig(httpexpect.Config{
 })
 ```
 
-##### Session support
-
-```go
-// cookie jar is used to store cookies from server
-e := httpexpect.WithConfig(httpexpect.Config{
-	Reporter: httpexpect.NewAssertReporter(t),
-	Client: &http.Client{
-		Jar: httpexpect.NewJar(), // used by default if Client is nil
-	},
-})
-
-// cookies are disabled
-e := httpexpect.WithConfig(httpexpect.Config{
-	Reporter: httpexpect.NewAssertReporter(t),
-	Client: &http.Client{
-		Jar: nil,
-	},
-})
-```
-
 ##### Use HTTP handler directly
 
 ```go
@@ -473,6 +453,54 @@ e.GET("/path").WithClient(client).
 e.GET("/path").WithHandler(handler).
 	Expect().
 	Status(http.StatusOK)
+```
+
+##### Session support
+
+```go
+// cookie jar is used to store cookies from server
+e := httpexpect.WithConfig(httpexpect.Config{
+	Reporter: httpexpect.NewAssertReporter(t),
+	Client: &http.Client{
+		Jar: httpexpect.NewJar(), // used by default if Client is nil
+	},
+})
+
+// cookies are disabled
+e := httpexpect.WithConfig(httpexpect.Config{
+	Reporter: httpexpect.NewAssertReporter(t),
+	Client: &http.Client{
+		Jar: nil,
+	},
+})
+```
+
+##### TLS support
+
+```go
+// use TLS with http.Transport
+e := httpexpect.WithConfig(httpexpect.Config{
+	Reporter: httpexpect.NewAssertReporter(t),
+	Client: &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				// accept any certificate; for testing only!
+				InsecureSkipVerify: true,
+			},
+		},
+	},
+})
+
+// use TLS with http.Handler
+e := httpexpect.WithConfig(httpexpect.Config{
+	Reporter: httpexpect.NewAssertReporter(t),
+	Client: &http.Client{
+		Transport: &httpexpect.Binder{
+			Handler: myHandler,
+			TLS:     &tls.ConnectionState{},
+		},
+	},
+})
 ```
 
 ## Similar packages
