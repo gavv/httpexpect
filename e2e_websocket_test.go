@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	fastwebsocket "github.com/fasthttp-contrib/websocket"
+	fastwebsocket "github.com/fasthttp/websocket"
 	"github.com/gorilla/websocket"
 	"github.com/valyala/fasthttp"
 )
@@ -48,7 +48,8 @@ func createWebsocketHandler(opts wsHandlerOpts) http.Handler {
 }
 
 func websocketFastHandler(ctx *fasthttp.RequestCtx) {
-	upgrader := fastwebsocket.New(func(c *fastwebsocket.Conn) {
+	var upgrader fastwebsocket.FastHTTPUpgrader
+	err := upgrader.Upgrade(ctx, func(c *fastwebsocket.Conn) {
 		defer c.Close()
 		for {
 			mt, message, err := c.ReadMessage()
@@ -61,7 +62,6 @@ func websocketFastHandler(ctx *fasthttp.RequestCtx) {
 			}
 		}
 	})
-	err := upgrader.Upgrade(ctx)
 	if err != nil {
 		panic(err)
 	}
