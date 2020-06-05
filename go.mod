@@ -6,11 +6,13 @@ require (
 	github.com/ajg/form v1.5.1
 	github.com/fasthttp/websocket v1.4.3-rc.6
 	github.com/fatih/structs v1.0.0
+	github.com/gavv/httpexpect v2.0.0+incompatible // indirect
 	github.com/google/go-querystring v1.0.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/imkira/go-interpol v1.0.0
 	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
 	github.com/mattn/go-colorable v0.1.2 // indirect
+	github.com/moul/http2curl v1.0.0 // indirect
 	github.com/onsi/ginkgo v1.10.1 // indirect
 	github.com/onsi/gomega v1.7.0 // indirect
 	github.com/sergi/go-diff v1.0.0 // indirect
