@@ -16,19 +16,29 @@ var infiniteTime = time.Time{}
 type Websocket struct {
 	config       Config
 	chain        chain
-	conn         *websocket.Conn
+	conn         WebsocketConn
 	readTimeout  time.Duration
 	writeTimeout time.Duration
 	isClosed     bool
 }
 
+// WebsocketConn is used by Websocket to communicate with actual websocket connection.
+type WebsocketConn interface {
+	ReadMessage() (messageType int, p []byte, err error)
+	WriteMessage(messageType int, data []byte) error
+	Close() error
+	SetReadDeadline(t time.Time) error
+	SetWriteDeadline(t time.Time) error
+	Subprotocol() string
+}
+
 // NewWebsocket returns a new Websocket given a Config with Reporter and
-// Printers, and websocket.Conn to be inspected and handled.
-func NewWebsocket(config Config, conn *websocket.Conn) *Websocket {
+// Printers, and Websocket to be inspected and handled.
+func NewWebsocket(config Config, conn WebsocketConn) *Websocket {
 	return makeWebsocket(config, makeChain(config.Reporter), conn)
 }
 
-func makeWebsocket(config Config, chain chain, conn *websocket.Conn) *Websocket {
+func makeWebsocket(config Config, chain chain, conn WebsocketConn) *Websocket {
 	return &Websocket{
 		config: config,
 		chain:  chain,
@@ -36,9 +46,9 @@ func makeWebsocket(config Config, chain chain, conn *websocket.Conn) *Websocket 
 	}
 }
 
-// Raw returns underlying websocket.Conn object.
+// Raw returns underlying WebsocketConn object.
 // This is the value originally passed to NewConnection.
-func (c *Websocket) Raw() *websocket.Conn {
+func (c *Websocket) Raw() WebsocketConn {
 	return c.conn
 }
 
@@ -91,9 +101,6 @@ func (c *Websocket) Subprotocol() *String {
 func (c *Websocket) Expect() *WebsocketMessage {
 	switch {
 	case c.chain.failed():
-		return makeWebsocketMessage(c.chain)
-	case c.conn == nil:
-		c.chain.fail("\nunexpected read from failed WebSocket connection")
 		return makeWebsocketMessage(c.chain)
 	case c.isClosed:
 		c.chain.fail("\nunexpected read from closed WebSocket connection")
@@ -388,10 +395,6 @@ func (c *Websocket) WriteJSON(object interface{}) *Websocket {
 func (c *Websocket) checkUnusable(where string) bool {
 	switch {
 	case c.chain.failed():
-		return true
-	case c.conn == nil:
-		c.chain.fail("\nunexpected %s call for failed WebSocket connection",
-			where)
 		return true
 	case c.isClosed:
 		c.chain.fail("\nunexpected %s call for closed WebSocket connection",
