@@ -43,7 +43,6 @@ func TestWebsocketFailed(t *testing.T) {
 }
 
 func TestWebsocketExpect(t *testing.T) {
-
 	failedChain := makeChain(newMockReporter(t))
 	failedChain.fail("some previous fail...")
 
@@ -59,7 +58,7 @@ func TestWebsocketExpect(t *testing.T) {
 		assertOk bool
 	}{
 		{
-			name: "Expect success",
+			name: "success",
 			args: args{
 				config:     Config{},
 				chain:      makeChain(newMockReporter(t)),
@@ -69,17 +68,18 @@ func TestWebsocketExpect(t *testing.T) {
 			assertOk: true,
 		},
 		{
-			name: "Expect failed to read message from conn",
+			name: "fail to read message from conn",
 			args: args{
 				config:     Config{},
 				chain:      makeChain(newMockReporter(t)),
 				wsPreSteps: noWsPreSteps,
-				wsConn:     newMockWebsocketConn().WithReadMsgError(fmt.Errorf("failed to read message")),
+				wsConn: newMockWebsocketConn().WithReadMsgError(
+					fmt.Errorf("failed to read message")),
 			},
 			assertOk: false,
 		},
 		{
-			name: "Expect chain already failed",
+			name: "chain already failed",
 			args: args{
 				config:     Config{},
 				chain:      failedChain,
@@ -89,7 +89,7 @@ func TestWebsocketExpect(t *testing.T) {
 			assertOk: false,
 		},
 		{
-			name: "Expect connection closed",
+			name: "connection closed",
 			args: args{
 				config: Config{},
 				chain:  makeChain(newMockReporter(t)),
@@ -101,12 +101,13 @@ func TestWebsocketExpect(t *testing.T) {
 			assertOk: false,
 		},
 		{
-			name: "Expect failed to set read deadline",
+			name: "failed to set read deadline",
 			args: args{
 				config:     Config{},
 				chain:      makeChain(newMockReporter(t)),
 				wsPreSteps: noWsPreSteps,
-				wsConn:     newMockWebsocketConn().WithReadDlError(fmt.Errorf("failed to set read deadline")),
+				wsConn: newMockWebsocketConn().WithReadDlError(
+					fmt.Errorf("failed to set read deadline")),
 			},
 			assertOk: false,
 		},
@@ -114,7 +115,6 @@ func TestWebsocketExpect(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ws := makeWebsocket(tt.args.config, tt.args.chain, tt.args.wsConn)
-
 			tt.args.wsPreSteps(ws)
 
 			ws.Expect()
@@ -146,7 +146,7 @@ func TestWebsocketClose(t *testing.T) {
 		assertOk bool
 	}{
 		{
-			name: "Close success",
+			name: "success",
 			args: args{
 				config:     Config{},
 				chain:      makeChain(newMockReporter(t)),
@@ -157,7 +157,7 @@ func TestWebsocketClose(t *testing.T) {
 			assertOk: true,
 		},
 		{
-			name: "Close websocket unusable",
+			name: "websocket unusable",
 			args: args{
 				config: Config{},
 				chain:  makeChain(newMockReporter(t)),
@@ -170,7 +170,7 @@ func TestWebsocketClose(t *testing.T) {
 			assertOk: false,
 		},
 		{
-			name: "Close too many close codes",
+			name: "too many close codes",
 			args: args{
 				config:     Config{},
 				chain:      makeChain(newMockReporter(t)),
@@ -454,7 +454,7 @@ func TestWebsocketWriteMessage(t *testing.T) {
 		assertOk bool
 	}{
 		{
-			name: "Text message success",
+			name: "text message success",
 			args: args{
 				config:     Config{},
 				chain:      makeChain(newMockReporter(t)),
@@ -467,7 +467,7 @@ func TestWebsocketWriteMessage(t *testing.T) {
 			assertOk: true,
 		},
 		{
-			name: "Text message fail unusable",
+			name: "text message fail unusable",
 			args: args{
 				config: Config{},
 				chain:  makeChain(newMockReporter(t)),
@@ -482,11 +482,12 @@ func TestWebsocketWriteMessage(t *testing.T) {
 			assertOk: false,
 		},
 		{
-			name: "Text message failed to set write deadline",
+			name: "text message failed to set write deadline",
 			args: args{
-				config:     Config{},
-				chain:      makeChain(newMockReporter(t)),
-				wsConn:     newMockWebsocketConn().WithWriteDlError(fmt.Errorf("failed to set write deadline")),
+				config: Config{},
+				chain:  makeChain(newMockReporter(t)),
+				wsConn: newMockWebsocketConn().WithWriteDlError(
+					fmt.Errorf("failed to set write deadline")),
 				wsPreSteps: noWsPreSteps,
 				typ:        websocket.TextMessage,
 				content:    []byte("random message..."),
@@ -495,11 +496,12 @@ func TestWebsocketWriteMessage(t *testing.T) {
 			assertOk: false,
 		},
 		{
-			name: "Text message failed to write to conn",
+			name: "text message failed to write to conn",
 			args: args{
-				config:     Config{},
-				chain:      makeChain(newMockReporter(t)),
-				wsConn:     newMockWebsocketConn().WithWriteMsgError(fmt.Errorf("failed to write message to conn")),
+				config: Config{},
+				chain:  makeChain(newMockReporter(t)),
+				wsConn: newMockWebsocketConn().WithWriteMsgError(
+					fmt.Errorf("failed to write message to conn")),
 				wsPreSteps: noWsPreSteps,
 				typ:        websocket.TextMessage,
 				content:    []byte("random message..."),
@@ -508,7 +510,7 @@ func TestWebsocketWriteMessage(t *testing.T) {
 			assertOk: false,
 		},
 		{
-			name: "Text binary message success",
+			name: "text binary message success",
 			args: args{
 				config:     Config{},
 				chain:      makeChain(newMockReporter(t)),
@@ -521,7 +523,7 @@ func TestWebsocketWriteMessage(t *testing.T) {
 			assertOk: true,
 		},
 		{
-			name: "Close message success",
+			name: "close message success",
 			args: args{
 				config:     Config{},
 				chain:      makeChain(newMockReporter(t)),
@@ -534,7 +536,7 @@ func TestWebsocketWriteMessage(t *testing.T) {
 			assertOk: true,
 		},
 		{
-			name: "Close message too many close codes",
+			name: "close message too many close codes",
 			args: args{
 				config:     Config{},
 				chain:      makeChain(newMockReporter(t)),
@@ -547,7 +549,7 @@ func TestWebsocketWriteMessage(t *testing.T) {
 			assertOk: false,
 		},
 		{
-			name: "Unsupported message type",
+			name: "unsupported message type",
 			args: args{
 				config:     Config{},
 				chain:      makeChain(newMockReporter(t)),
@@ -591,7 +593,7 @@ func TestWebsocketWriteBytesBinary(t *testing.T) {
 		assertOk bool
 	}{
 		{
-			name: "Write binary success",
+			name: "success",
 			args: args{
 				config:     Config{},
 				chain:      makeChain(newMockReporter(t)),
@@ -602,7 +604,7 @@ func TestWebsocketWriteBytesBinary(t *testing.T) {
 			assertOk: true,
 		},
 		{
-			name: "Write binary websocket unusable",
+			name: "websocket unusable",
 			args: args{
 				config: Config{},
 				chain:  makeChain(newMockReporter(t)),
@@ -646,7 +648,7 @@ func TestWebsocketWriteBytesText(t *testing.T) {
 		assertOk bool
 	}{
 		{
-			name: "Write bytes text success",
+			name: "success",
 			args: args{
 				config:     Config{},
 				chain:      makeChain(newMockReporter(t)),
@@ -657,7 +659,7 @@ func TestWebsocketWriteBytesText(t *testing.T) {
 			assertOk: true,
 		},
 		{
-			name: "Write bytes text websocket unusable",
+			name: "websocket unusable",
 			args: args{
 				config: Config{},
 				chain:  makeChain(newMockReporter(t)),
@@ -701,7 +703,7 @@ func TestWebsocketWriteText(t *testing.T) {
 		assertOk bool
 	}{
 		{
-			name: "Write text success",
+			name: "success",
 			args: args{
 				config:     Config{},
 				chain:      makeChain(newMockReporter(t)),
@@ -712,7 +714,7 @@ func TestWebsocketWriteText(t *testing.T) {
 			assertOk: true,
 		},
 		{
-			name: "Write text websocket unusable",
+			name: "websocket unusable",
 			args: args{
 				config: Config{},
 				chain:  makeChain(newMockReporter(t)),
@@ -756,7 +758,7 @@ func TestWebsocketWriteJSON(t *testing.T) {
 		assertOk bool
 	}{
 		{
-			name: "Write JSON success",
+			name: "success",
 			args: args{
 				config:     Config{},
 				chain:      makeChain(newMockReporter(t)),
@@ -769,7 +771,7 @@ func TestWebsocketWriteJSON(t *testing.T) {
 			assertOk: true,
 		},
 		{
-			name: "Write JSON websocket unusable",
+			name: "websocket unusable",
 			args: args{
 				config: Config{},
 				chain:  makeChain(newMockReporter(t)),
@@ -784,7 +786,7 @@ func TestWebsocketWriteJSON(t *testing.T) {
 			assertOk: false,
 		},
 		{
-			name: "Write JSON marshal failed",
+			name: "JSON marshal failed",
 			args: args{
 				config:     Config{},
 				chain:      makeChain(newMockReporter(t)),
@@ -848,14 +850,16 @@ func TestWebsocket_setReadDeadline(t *testing.T) {
 			args: args{
 				config: Config{},
 				chain:  makeChain(newMockReporter(t)),
-				wsConn: newMockWebsocketConn().WithReadDlError(fmt.Errorf("Failed to set read deadline")),
+				wsConn: newMockWebsocketConn().WithReadDlError(
+					fmt.Errorf("Failed to set read deadline")),
 			},
 			assertOk: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ws := makeWebsocket(tt.args.config, tt.args.chain, tt.args.wsConn).WithReadTimeout(time.Second)
+			ws := makeWebsocket(tt.args.config, tt.args.chain, tt.args.wsConn).
+				WithReadTimeout(time.Second)
 
 			ws.setReadDeadline()
 
@@ -893,14 +897,16 @@ func TestWebsocket_setWriteDeadline(t *testing.T) {
 			args: args{
 				config: Config{},
 				chain:  makeChain(newMockReporter(t)),
-				wsConn: newMockWebsocketConn().WithWriteDlError(fmt.Errorf("Failed to set read deadline")),
+				wsConn: newMockWebsocketConn().WithWriteDlError(
+					fmt.Errorf("Failed to set read deadline")),
 			},
 			assertOk: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ws := makeWebsocket(tt.args.config, tt.args.chain, tt.args.wsConn).WithWriteTimeout(time.Second)
+			ws := makeWebsocket(tt.args.config, tt.args.chain, tt.args.wsConn).
+				WithWriteTimeout(time.Second)
 
 			ws.setWriteDeadline()
 
@@ -938,7 +944,8 @@ func TestWebsocket_Disconnect(t *testing.T) {
 			args: args{
 				config: Config{},
 				chain:  makeChain(newMockReporter(t)),
-				wsConn: newMockWebsocketConn().WithCloseError(fmt.Errorf("failed to close ws conn")),
+				wsConn: newMockWebsocketConn().WithCloseError(
+					fmt.Errorf("failed to close ws conn")),
 			},
 			assertOk: false,
 		},
@@ -965,7 +972,9 @@ func TestPrintRead(t *testing.T) {
 	}
 	ws := makeWebsocket(config, makeChain(newMockReporter(t)), newMockWebsocketConn())
 
-	ws.printRead(websocket.CloseMessage, []byte("random message"), websocket.CloseNormalClosure)
+	ws.printRead(websocket.CloseMessage,
+		[]byte("random message"),
+		websocket.CloseNormalClosure)
 
 	if !printer.isReadFrom {
 		t.Errorf("Websocket.printRead() failed to read from printer")
@@ -979,7 +988,9 @@ func TestPrintWrite(t *testing.T) {
 	}
 	ws := makeWebsocket(config, makeChain(newMockReporter(t)), newMockWebsocketConn())
 
-	ws.printWrite(websocket.CloseMessage, []byte("random message"), websocket.CloseNormalClosure)
+	ws.printWrite(websocket.CloseMessage,
+		[]byte("random message"),
+		websocket.CloseNormalClosure)
 
 	if !printer.isWrittenTo {
 		t.Errorf("Websocket.printWrite() failed to write to printer")
