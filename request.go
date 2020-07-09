@@ -851,6 +851,26 @@ func (r *Request) WithMultipart() *Request {
 	return r
 }
 
+// WithRequestTransformer executes the given transform on the underlying http.Request.
+//
+// Example:
+//  req := NewRequest(config, "PUT", "http://example.com/path")
+//  req.WithRequestTransformer(func(r *http.Request) { r.Header.Add("foo", "bar") })
+func (r *Request) WithRequestTransformer(transform func(r *http.Request)) *Request {
+	if r.chain.failed() {
+		return r
+	}
+
+	if transform == nil {
+		r.chain.fail("\nunexpected nil transform in WithRequestTransformer")
+		return r
+	}
+
+	transform(r.http)
+
+	return r
+}
+
 // Expect constructs http.Request, sends it, receives http.Response, and
 // returns a new Response object to inspect received response.
 //

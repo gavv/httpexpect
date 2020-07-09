@@ -56,6 +56,9 @@ func TestRequestFailed(t *testing.T) {
 	req.WithFile("foo", "bar", strings.NewReader("baz"))
 	req.WithFileBytes("foo", "bar", []byte("baz"))
 	req.WithMultipart()
+	req.WithRequestTransformer(func(r *http.Request) {
+		r.Header.Add("foo", "bar")
+	})
 
 	resp := req.Expect()
 	if resp == nil {
@@ -1451,5 +1454,33 @@ func TestRequestErrorConflictMultipart(t *testing.T) {
 
 	req3 := NewRequest(config, "METHOD", "url")
 	req3.WithFileBytes("a", "a", []byte("a"))
+	req3.chain.assertFailed(t)
+}
+
+func TestRequestTransformer(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
+	client := &mockClient{}
+
+	reporter := newMockReporter(t)
+
+	var req *http.Request
+	transform := func(r *http.Request) {
+		req = r
+	}
+
+	config := Config{
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
+	}
+
+	req1 := NewRequest(config, "METHOD", "/")
+	req1.WithRequestTransformer(transform)
+	req1.Expect().chain.assertOK(t)
+	assert.NotNil(t, req)
+
+	req3 := NewRequest(config, "METHOD", "/")
+	req3.WithRequestTransformer(nil)
 	req3.chain.assertFailed(t)
 }
