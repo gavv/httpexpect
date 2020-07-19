@@ -25,5 +25,6 @@ require (
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
 	github.com/yudai/pp v2.0.1+incompatible // indirect
 	golang.org/x/net v0.0.0-20190827160401-ba9fcec4b297
+	google.golang.org/appengine v1.6.6 // indirect
 	moul.io/http2curl v1.0.1-0.20190925090545-5cd742060b0e
 )
