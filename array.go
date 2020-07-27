@@ -211,7 +211,7 @@ func (a *Array) NotEqual(value interface{}) *Array {
 //  array.Elements("foo", 123)
 //
 // This calls are equivalent:
-//  array.Elelems("a", "b")
+//  array.Elements("a", "b")
 //  array.Equal([]interface{}{"a", "b"})
 func (a *Array) Elements(values ...interface{}) *Array {
 	return a.Equal(values)
