@@ -851,6 +851,21 @@ func (r *Request) WithMultipart() *Request {
 	return r
 }
 
+// WithHost sets request host to given string.
+//
+// Example:
+//  req := NewRequest(config, "PUT", "http://example.com/path")
+//  req.WithHost("example.com")
+func (r *Request) WithHost(host string) *Request {
+	if r.chain.failed() {
+		return r
+	}
+
+	r.http.Host = host
+
+	return r
+}
+
 // Expect constructs http.Request, sends it, receives http.Response, and
 // returns a new Response object to inspect received response.
 //
