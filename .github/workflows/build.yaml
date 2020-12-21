@@ -19,11 +19,14 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
 
+      - name: Install cover
+        run: go get -v golang.org/x/tools/cmd/cover
+
       - name: Build
         run: go get -v .
 
       - name: Run tests
-        run: go test -coverprofile profile.cov
+        run: go test -covermode=count -coverprofile=coverage.out
 
       - name: Run linters
         uses: golangci/golangci-lint-action@v2
@@ -36,7 +39,11 @@ jobs:
       - name: Run examples tests
         run: cd _examples && go test
 
+      - name: Prepare coverage report
+        uses: jandelgado/gcov2lcov-action@v1.0.5
+
       - name: Send coverage report
         uses: coverallsapp/github-action@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          path-to-lcov: coverage.lcov
