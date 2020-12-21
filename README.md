@@ -392,7 +392,7 @@ myTranform := func(r* http.Request) {
 	// modify the underlying http.Request
 }
 
-// set transformer to a single request
+// apply transformer to a single request
 e.POST("/some-path").
 	WithTransformer(myTranform).
 	Expect().
