@@ -44,15 +44,3 @@ jobs:
 
       - name: Build examples
         run: cd _examples && go get -v .
-
-      - name: Run examples tests
-        run: cd _examples && go test
-
-      - name: Prepare coverage report
-        uses: jandelgado/gcov2lcov-action@v1.0.5
-
-      - name: Send coverage report
-        uses: coverallsapp/github-action@master
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          path-to-lcov: coverage.lcov
