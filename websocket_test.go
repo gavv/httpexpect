@@ -51,13 +51,21 @@ func TestWebsocketNilConn(t *testing.T) {
 
 	ws := NewWebsocket(config, nil)
 
-	ws.Conn()
-	ws.Raw()
+	if ws.Conn() != nil {
+		t.Fatal("Conn returned not nil")
+	}
+
+	if ws.Raw() != nil {
+		t.Fatal("Raw returned not nil")
+	}
 
 	msg := ws.Expect()
 	msg.chain.assertFailed(t)
 
 	ws.chain.assertFailed(t)
+
+	ws.Disconnect()
+	ws.Close()
 }
 
 func TestWebsocketMockConn(t *testing.T) {
@@ -69,13 +77,21 @@ func TestWebsocketMockConn(t *testing.T) {
 
 	ws := makeWebsocket(config, makeChain(reporter), newMockWebsocketConn())
 
-	ws.Conn()
-	ws.Raw()
+	if ws.Conn() == nil {
+		t.Fatal("Conn returned nil")
+	}
+
+	if ws.Raw() != nil {
+		t.Fatal("Raw returned not nil")
+	}
 
 	msg := ws.Expect()
 	msg.chain.assertOK(t)
 
 	ws.chain.assertOK(t)
+
+	ws.Disconnect()
+	ws.Close()
 }
 
 func TestWebsocketExpect(t *testing.T) {
