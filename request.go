@@ -123,6 +123,27 @@ func (r *Request) WithMatcher(matcher func(*Response)) *Request {
 	return r
 }
 
+// WithRequestTransformer executes the given transform on the underlying http.Request.
+// It's executed after encoding request and before sending it.
+//
+// Example:
+//  req := NewRequest(config, "PUT", "http://example.com/path")
+//  req.WithRequestTransformer(func(r *http.Request) { r.Header.Add("foo", "bar") })
+func (r *Request) WithRequestTransformer(transform func(r *http.Request)) *Request {
+	if r.chain.failed() {
+		return r
+	}
+
+	if transform == nil {
+		r.chain.fail("\nunexpected nil transform in WithRequestTransformer")
+		return r
+	}
+
+	transform(r.http)
+
+	return r
+}
+
 // WithClient sets client.
 //
 // The new client overwrites Config.Client. It will be used once to send the
@@ -540,6 +561,21 @@ func (r *Request) WithBasicAuth(username, password string) *Request {
 	return r
 }
 
+// WithHost sets request host to given string.
+//
+// Example:
+//  req := NewRequest(config, "PUT", "http://example.com/path")
+//  req.WithHost("example.com")
+func (r *Request) WithHost(host string) *Request {
+	if r.chain.failed() {
+		return r
+	}
+
+	r.http.Host = host
+
+	return r
+}
+
 // WithProto sets HTTP protocol version.
 //
 // proto should have form of "HTTP/{major}.{minor}", e.g. "HTTP/1.1".
@@ -847,42 +883,6 @@ func (r *Request) WithMultipart() *Request {
 		r.multipart = multipart.NewWriter(r.formbuf)
 		r.setBody("WithMultipart", r.formbuf, 0, false)
 	}
-
-	return r
-}
-
-// WithHost sets request host to given string.
-//
-// Example:
-//  req := NewRequest(config, "PUT", "http://example.com/path")
-//  req.WithHost("example.com")
-func (r *Request) WithHost(host string) *Request {
-	if r.chain.failed() {
-		return r
-	}
-
-	r.http.Host = host
-
-	return r
-}
-
-// WithRequestTransformer executes the given transform on the underlying http.Request.
-// It's executed after encoding request and before sending it.
-//
-// Example:
-//  req := NewRequest(config, "PUT", "http://example.com/path")
-//  req.WithRequestTransformer(func(r *http.Request) { r.Header.Add("foo", "bar") })
-func (r *Request) WithRequestTransformer(transform func(r *http.Request)) *Request {
-	if r.chain.failed() {
-		return r
-	}
-
-	if transform == nil {
-		r.chain.fail("\nunexpected nil transform in WithRequestTransformer")
-		return r
-	}
-
-	transform(r.http)
 
 	return r
 }

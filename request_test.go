@@ -140,6 +140,34 @@ func TestRequestMatchers(t *testing.T) {
 	assert.Equal(t, resp, resps[0])
 }
 
+func TestRequestTransformer(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
+	client := &mockClient{}
+
+	reporter := newMockReporter(t)
+
+	var req *http.Request
+	transform := func(r *http.Request) {
+		req = r
+	}
+
+	config := Config{
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
+	}
+
+	req1 := NewRequest(config, "METHOD", "/")
+	req1.WithRequestTransformer(transform)
+	req1.Expect().chain.assertOK(t)
+	assert.NotNil(t, req)
+
+	req3 := NewRequest(config, "METHOD", "/")
+	req3.WithRequestTransformer(nil)
+	req3.chain.assertFailed(t)
+}
+
 func TestRequestClient(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
@@ -633,6 +661,69 @@ func TestRequestBasicAuth(t *testing.T) {
 
 	assert.Equal(t, "Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==",
 		req.http.Header.Get("Authorization"))
+}
+
+func TestRequestWithHost(t *testing.T) {
+	factory1 := DefaultRequestFactory{}
+	client1 := &mockClient{}
+	reporter1 := newMockReporter(t)
+
+	config1 := Config{
+		RequestFactory: factory1,
+		Client:         client1,
+		Reporter:       reporter1,
+	}
+
+	req1 := NewRequest(config1, "METHOD", "url")
+
+	req1.WithHost("example.com")
+
+	resp := req1.Expect()
+	resp.chain.assertOK(t)
+
+	assert.Equal(t, "METHOD", client1.req.Method)
+	assert.Equal(t, "example.com", client1.req.Host)
+	assert.Equal(t, "url", client1.req.URL.String())
+
+	assert.Equal(t, &client1.resp, resp.Raw())
+
+	factory2 := DefaultRequestFactory{}
+	client2 := &mockClient{}
+	reporter2 := newMockReporter(t)
+
+	config2 := Config{
+		RequestFactory: factory2,
+		Client:         client2,
+		Reporter:       reporter2,
+	}
+
+	req2 := NewRequest(config2, "METHOD", "url")
+
+	req2.WithHeader("HOST", "example1.com")
+	req2.WithHost("example2.com")
+
+	req2.Expect().chain.assertOK(t)
+
+	assert.Equal(t, "example2.com", client2.req.Host)
+
+	factory3 := DefaultRequestFactory{}
+	client3 := &mockClient{}
+	reporter3 := newMockReporter(t)
+
+	config3 := Config{
+		RequestFactory: factory3,
+		Client:         client3,
+		Reporter:       reporter3,
+	}
+
+	req3 := NewRequest(config3, "METHOD", "url")
+
+	req3.WithHost("example2.com")
+	req3.WithHeader("HOST", "example1.com")
+
+	req3.Expect().chain.assertOK(t)
+
+	assert.Equal(t, "example1.com", client3.req.Host)
 }
 
 func TestRequestBodyChunked(t *testing.T) {
@@ -1454,96 +1545,5 @@ func TestRequestErrorConflictMultipart(t *testing.T) {
 
 	req3 := NewRequest(config, "METHOD", "url")
 	req3.WithFileBytes("a", "a", []byte("a"))
-	req3.chain.assertFailed(t)
-}
-
-func TestRequestWithHost(t *testing.T) {
-	factory1 := DefaultRequestFactory{}
-	client1 := &mockClient{}
-	reporter1 := newMockReporter(t)
-
-	config1 := Config{
-		RequestFactory: factory1,
-		Client:         client1,
-		Reporter:       reporter1,
-	}
-
-	req1 := NewRequest(config1, "METHOD", "url")
-
-	req1.WithHost("example.com")
-
-	resp := req1.Expect()
-	resp.chain.assertOK(t)
-
-	assert.Equal(t, "METHOD", client1.req.Method)
-	assert.Equal(t, "example.com", client1.req.Host)
-	assert.Equal(t, "url", client1.req.URL.String())
-
-	assert.Equal(t, &client1.resp, resp.Raw())
-
-	factory2 := DefaultRequestFactory{}
-	client2 := &mockClient{}
-	reporter2 := newMockReporter(t)
-
-	config2 := Config{
-		RequestFactory: factory2,
-		Client:         client2,
-		Reporter:       reporter2,
-	}
-
-	req2 := NewRequest(config2, "METHOD", "url")
-
-	req2.WithHeader("HOST", "example1.com")
-	req2.WithHost("example2.com")
-
-	req2.Expect().chain.assertOK(t)
-
-	assert.Equal(t, "example2.com", client2.req.Host)
-
-	factory3 := DefaultRequestFactory{}
-	client3 := &mockClient{}
-	reporter3 := newMockReporter(t)
-
-	config3 := Config{
-		RequestFactory: factory3,
-		Client:         client3,
-		Reporter:       reporter3,
-	}
-
-	req3 := NewRequest(config3, "METHOD", "url")
-
-	req3.WithHost("example2.com")
-	req3.WithHeader("HOST", "example1.com")
-
-	req3.Expect().chain.assertOK(t)
-
-	assert.Equal(t, "example1.com", client3.req.Host)
-}
-
-func TestRequestTransformer(t *testing.T) {
-	factory := DefaultRequestFactory{}
-
-	client := &mockClient{}
-
-	reporter := newMockReporter(t)
-
-	var req *http.Request
-	transform := func(r *http.Request) {
-		req = r
-	}
-
-	config := Config{
-		RequestFactory: factory,
-		Client:         client,
-		Reporter:       reporter,
-	}
-
-	req1 := NewRequest(config, "METHOD", "/")
-	req1.WithRequestTransformer(transform)
-	req1.Expect().chain.assertOK(t)
-	assert.NotNil(t, req)
-
-	req3 := NewRequest(config, "METHOD", "/")
-	req3.WithRequestTransformer(nil)
 	req3.chain.assertFailed(t)
 }
