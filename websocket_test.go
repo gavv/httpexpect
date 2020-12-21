@@ -43,6 +43,40 @@ func TestWebsocketFailed(t *testing.T) {
 	ws.Disconnect()
 }
 
+func TestWebsocketNilConn(t *testing.T) {
+	config := Config{
+		Reporter: newMockReporter(t),
+	}
+
+	ws := NewWebsocket(config, nil)
+
+	ws.Conn()
+	ws.Raw()
+
+	msg := ws.Expect()
+	msg.chain.assertFailed(t)
+
+	ws.chain.assertFailed(t)
+}
+
+func TestWebsocketMockConn(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	config := Config{
+		Reporter: reporter,
+	}
+
+	ws := makeWebsocket(config, makeChain(reporter), newMockWebsocketConn())
+
+	ws.Conn()
+	ws.Raw()
+
+	msg := ws.Expect()
+	msg.chain.assertOK(t)
+
+	ws.chain.assertOK(t)
+}
+
 func TestWebsocketExpect(t *testing.T) {
 	failedChain := makeChain(newMockReporter(t))
 	failedChain.fail("some previous fail...")
