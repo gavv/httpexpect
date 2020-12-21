@@ -67,6 +67,22 @@ func websocketFastHandler(ctx *fasthttp.RequestCtx) {
 	}
 }
 
+func testWebsocketConn(e *Expect) {
+	ws := e.GET("/test").WithWebsocketUpgrade().
+		Expect().
+		Status(http.StatusSwitchingProtocols).
+		Websocket()
+	defer ws.Disconnect()
+
+	if ws.Conn() == nil {
+		panic("Conn returned nil")
+	}
+
+	if ws.Raw() == nil {
+		panic("Raw returned nil")
+	}
+}
+
 func testWebsocketSession(e *Expect) {
 	ws := e.GET("/test").WithWebsocketUpgrade().
 		Expect().
@@ -120,6 +136,7 @@ func testWebsocketTypes(e *Expect) {
 }
 
 func testWebsocket(e *Expect) {
+	testWebsocketConn(e)
 	testWebsocketSession(e)
 	testWebsocketTypes(e)
 }

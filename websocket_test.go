@@ -41,6 +41,7 @@ func TestWebsocketFailed(t *testing.T) {
 	ws.CloseWithText("a")
 
 	ws.Disconnect()
+	ws.Close()
 }
 
 func TestWebsocketNilConn(t *testing.T) {
