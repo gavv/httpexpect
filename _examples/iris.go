@@ -1,4 +1,4 @@
-// +build go1.8
+// +build go1.14
 
 package examples
 
@@ -8,10 +8,10 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"gopkg.in/kataras/iris.v6"
-	"gopkg.in/kataras/iris.v6/adaptors/httprouter"
-	"gopkg.in/kataras/iris.v6/adaptors/sessions"
-	"gopkg.in/kataras/iris.v6/middleware/basicauth"
+	"gopkg.in/kataras/iris/v12"
+	"gopkg.in/kataras/iris/v12/adaptors/httprouter"
+	"gopkg.in/kataras/iris/v12/adaptors/sessions"
+	"gopkg.in/kataras/iris/v12/middleware/basicauth"
 )
 
 // IrisHandler tests iris v6's handler
