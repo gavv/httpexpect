@@ -49,23 +49,32 @@ func TestWebsocketNilConn(t *testing.T) {
 		Reporter: newMockReporter(t),
 	}
 
-	ws := NewWebsocket(config, nil)
+	t.Run("getters", func(t *testing.T) {
+		ws := NewWebsocket(config, nil)
 
-	if ws.Conn() != nil {
-		t.Fatal("Conn returned not nil")
-	}
+		if ws.Conn() != nil {
+			t.Fatal("Conn returned not nil")
+		}
 
-	if ws.Raw() != nil {
-		t.Fatal("Raw returned not nil")
-	}
+		if ws.Raw() != nil {
+			t.Fatal("Raw returned not nil")
+		}
 
-	msg := ws.Expect()
-	msg.chain.assertFailed(t)
+		if ws.Subprotocol() == nil {
+			t.Fatal("Subprotocol returned nil")
+		}
 
-	ws.chain.assertFailed(t)
+		ws.chain.assertOK(t)
+	})
 
-	ws.Disconnect()
-	ws.Close()
+	t.Run("expect", func(t *testing.T) {
+		ws := NewWebsocket(config, nil)
+
+		msg := ws.Expect()
+		msg.chain.assertFailed(t)
+
+		ws.chain.assertFailed(t)
+	})
 }
 
 func TestWebsocketMockConn(t *testing.T) {
@@ -75,23 +84,32 @@ func TestWebsocketMockConn(t *testing.T) {
 		Reporter: reporter,
 	}
 
-	ws := makeWebsocket(config, makeChain(reporter), newMockWebsocketConn())
+	t.Run("getters", func(t *testing.T) {
+		ws := makeWebsocket(config, makeChain(reporter), newMockWebsocketConn())
 
-	if ws.Conn() == nil {
-		t.Fatal("Conn returned nil")
-	}
+		if ws.Conn() == nil {
+			t.Fatal("Conn returned nil")
+		}
 
-	if ws.Raw() != nil {
-		t.Fatal("Raw returned not nil")
-	}
+		if ws.Raw() != nil {
+			t.Fatal("Raw returned not nil")
+		}
 
-	msg := ws.Expect()
-	msg.chain.assertOK(t)
+		if ws.Subprotocol() == nil {
+			t.Fatal("Subprotocol returned nil")
+		}
 
-	ws.chain.assertOK(t)
+		ws.chain.assertOK(t)
+	})
 
-	ws.Disconnect()
-	ws.Close()
+	t.Run("expect", func(t *testing.T) {
+		ws := makeWebsocket(config, makeChain(reporter), newMockWebsocketConn())
+
+		msg := ws.Expect()
+		msg.chain.assertOK(t)
+
+		ws.chain.assertOK(t)
+	})
 }
 
 func TestWebsocketExpect(t *testing.T) {
@@ -137,6 +155,16 @@ func TestWebsocketExpect(t *testing.T) {
 				chain:      failedChain,
 				wsPreSteps: noWsPreSteps,
 				wsConn:     newMockWebsocketConn(),
+			},
+			assertOk: false,
+		},
+		{
+			name: "conn is nil",
+			args: args{
+				config:     Config{},
+				chain:      makeChain(newMockReporter(t)),
+				wsPreSteps: noWsPreSteps,
+				wsConn:     nil,
 			},
 			assertOk: false,
 		},
@@ -209,6 +237,17 @@ func TestWebsocketClose(t *testing.T) {
 			assertOk: true,
 		},
 		{
+			name: "conn is nil",
+			args: args{
+				config: Config{},
+				chain:  makeChain(newMockReporter(t)),
+				wsPreSteps: noWsPreSteps,
+				wsConn:    nil,
+				closeCode: []int{websocket.CloseNormalClosure},
+			},
+			assertOk: false,
+		},
+		{
 			name: "websocket unusable",
 			args: args{
 				config: Config{},
@@ -279,6 +318,18 @@ func TestWebsocketCloseWithBytes(t *testing.T) {
 				closeCode:  []int{websocket.CloseNormalClosure},
 			},
 			assertOk: true,
+		},
+		{
+			name: "conn is nil",
+			args: args{
+				config: Config{},
+				chain:  makeChain(newMockReporter(t)),
+				wsPreSteps: noWsPreSteps,
+				wsConn:    nil,
+				content:   []byte("connection closed..."),
+				closeCode: []int{websocket.CloseNormalClosure},
+			},
+			assertOk: false,
 		},
 		{
 			name: "websocket unusable",
@@ -355,6 +406,18 @@ func TestWebsocketCloseWithText(t *testing.T) {
 			assertOk: true,
 		},
 		{
+			name: "conn is nil",
+			args: args{
+				config: Config{},
+				chain:  makeChain(newMockReporter(t)),
+				wsPreSteps: noWsPreSteps,
+				wsConn:    nil,
+				content:   "connection closed...",
+				closeCode: []int{websocket.CloseNormalClosure},
+			},
+			assertOk: false,
+		},
+		{
 			name: "websocket unusable",
 			args: args{
 				config: Config{},
@@ -429,6 +492,20 @@ func TestWebsocketCloseWithJSON(t *testing.T) {
 				closeCode: []int{websocket.CloseNormalClosure},
 			},
 			assertOk: true,
+		},
+		{
+			name: "conn is nil",
+			args: args{
+				config: Config{},
+				chain:  makeChain(newMockReporter(t)),
+				wsPreSteps: noWsPreSteps,
+				wsConn: nil,
+				content: map[string]string{
+					"msg": "connection closing...",
+				},
+				closeCode: []int{websocket.CloseNormalClosure},
+			},
+			assertOk: false,
 		},
 		{
 			name: "websocket unusable",
@@ -517,6 +594,19 @@ func TestWebsocketWriteMessage(t *testing.T) {
 				closeCode:  []int{},
 			},
 			assertOk: true,
+		},
+		{
+			name: "text message fail nil conn",
+			args: args{
+				config: Config{},
+				chain:  makeChain(newMockReporter(t)),
+				wsConn: nil,
+				wsPreSteps: noWsPreSteps,
+				typ:       websocket.TextMessage,
+				content:   []byte("random message..."),
+				closeCode: []int{},
+			},
+			assertOk: false,
 		},
 		{
 			name: "text message fail unusable",
@@ -656,6 +746,17 @@ func TestWebsocketWriteBytesBinary(t *testing.T) {
 			assertOk: true,
 		},
 		{
+			name: "conn is nil",
+			args: args{
+				config: Config{},
+				chain:  makeChain(newMockReporter(t)),
+				wsConn: nil,
+				wsPreSteps: noWsPreSteps,
+				content: []byte("random message..."),
+			},
+			assertOk: false,
+		},
+		{
 			name: "websocket unusable",
 			args: args{
 				config: Config{},
@@ -709,6 +810,17 @@ func TestWebsocketWriteBytesText(t *testing.T) {
 				content:    []byte("random message..."),
 			},
 			assertOk: true,
+		},
+		{
+			name: "conn is nil",
+			args: args{
+				config: Config{},
+				chain:  makeChain(newMockReporter(t)),
+				wsConn: nil,
+				wsPreSteps: noWsPreSteps,
+				content: []byte("random message..."),
+			},
+			assertOk: false,
 		},
 		{
 			name: "websocket unusable",
@@ -766,6 +878,17 @@ func TestWebsocketWriteText(t *testing.T) {
 			assertOk: true,
 		},
 		{
+			name: "conn is nil",
+			args: args{
+				config: Config{},
+				chain:  makeChain(newMockReporter(t)),
+				wsConn: nil,
+				wsPreSteps: noWsPreSteps,
+				content: "random message...",
+			},
+			assertOk: false,
+		},
+		{
 			name: "websocket unusable",
 			args: args{
 				config: Config{},
@@ -821,6 +944,19 @@ func TestWebsocketWriteJSON(t *testing.T) {
 				},
 			},
 			assertOk: true,
+		},
+		{
+			name: "conn is nil",
+			args: args{
+				config: Config{},
+				chain:  makeChain(newMockReporter(t)),
+				wsConn: nil,
+				wsPreSteps: noWsPreSteps,
+				content: map[string]string{
+					"msg": "random message",
+				},
+			},
+			assertOk: false,
 		},
 		{
 			name: "websocket unusable",
@@ -988,6 +1124,15 @@ func TestWebsocket_Disconnect(t *testing.T) {
 				config: Config{},
 				chain:  makeChain(newMockReporter(t)),
 				wsConn: newMockWebsocketConn(),
+			},
+			assertOk: true,
+		},
+		{
+			name: "success even if conn is nil",
+			args: args{
+				config: Config{},
+				chain:  makeChain(newMockReporter(t)),
+				wsConn: nil,
 			},
 			assertOk: true,
 		},
