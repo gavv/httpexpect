@@ -75,10 +75,6 @@ See [`_examples`](_examples) directory for complete standalone examples.
 
     Testing a simple CRUD server made with bare `net/http`.
 
-* [`iris_test.go`](_examples/iris_test.go)
-
-    Testing a server made with [`iris`](https://github.com/kataras/iris/) framework. Example includes JSON queries and validation, URL and form parameters, basic auth, sessions, and streaming. Tests invoke the `http.Handler` directly.
-
 * [`echo_test.go`](_examples/echo_test.go)
 
     Testing a server with JWT authentication made with [`echo`](https://github.com/labstack/echo/) framework. Tests use either HTTP client or invoke the `http.Handler` directly.
