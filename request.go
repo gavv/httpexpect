@@ -37,6 +37,7 @@ type Request struct {
 	typeSetter string
 	forceType  bool
 	wsUpgrade  bool
+	transforms []func(*http.Request)
 	matchers   []func(*Response)
 }
 
@@ -119,28 +120,35 @@ func NewRequest(config Config, method, path string, pathargs ...interface{}) *Re
 //      resp.Header("API-Version").NotEmpty()
 //  })
 func (r *Request) WithMatcher(matcher func(*Response)) *Request {
+	if r.chain.failed() {
+		return r
+	}
+	if matcher == nil {
+		r.chain.fail("\nunexpected nil matcher in WithMatcher")
+		return r
+	}
+
 	r.matchers = append(r.matchers, matcher)
 	return r
 }
 
-// WithRequestTransformer executes the given transform on the underlying http.Request.
-// It's executed after encoding request and before sending it.
+// WithTransformer attaches a transform to the Request.
+// All attachhed transforms are invoked in the Expect methods for
+// http.Request struct, after it's encoded and before it's sent.
 //
 // Example:
 //  req := NewRequest(config, "PUT", "http://example.com/path")
-//  req.WithRequestTransformer(func(r *http.Request) { r.Header.Add("foo", "bar") })
-func (r *Request) WithRequestTransformer(transform func(r *http.Request)) *Request {
+//  req.WithTransformer(func(r *http.Request) { r.Header.Add("foo", "bar") })
+func (r *Request) WithTransformer(transform func(*http.Request)) *Request {
 	if r.chain.failed() {
 		return r
 	}
-
 	if transform == nil {
-		r.chain.fail("\nunexpected nil transform in WithRequestTransformer")
+		r.chain.fail("\nunexpected nil transform in WithTransformer")
 		return r
 	}
 
-	transform(r.http)
-
+	r.transforms = append(r.transforms, transform)
 	return r
 }
 
@@ -924,6 +932,10 @@ func (r *Request) roundTrip() *Response {
 		if !r.encodeWebsocketRequest() {
 			return nil
 		}
+	}
+
+	for _, transform := range r.transforms {
+		transform(r.http)
 	}
 
 	for _, printer := range r.config.Printers {

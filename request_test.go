@@ -56,7 +56,7 @@ func TestRequestFailed(t *testing.T) {
 	req.WithFile("foo", "bar", strings.NewReader("baz"))
 	req.WithFileBytes("foo", "bar", []byte("baz"))
 	req.WithMultipart()
-	req.WithRequestTransformer(func(r *http.Request) {
+	req.WithTransformer(func(r *http.Request) {
 		r.Header.Add("foo", "bar")
 	})
 
@@ -140,17 +140,12 @@ func TestRequestMatchers(t *testing.T) {
 	assert.Equal(t, resp, resps[0])
 }
 
-func TestRequestTransformer(t *testing.T) {
+func TestRequestTransformers(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	client := &mockClient{}
 
 	reporter := newMockReporter(t)
-
-	var req *http.Request
-	transform := func(r *http.Request) {
-		req = r
-	}
 
 	config := Config{
 		RequestFactory: factory,
@@ -158,14 +153,60 @@ func TestRequestTransformer(t *testing.T) {
 		Reporter:       reporter,
 	}
 
-	req1 := NewRequest(config, "METHOD", "/")
-	req1.WithRequestTransformer(transform)
-	req1.Expect().chain.assertOK(t)
-	assert.NotNil(t, req)
+	t.Run("save-ptr", func(t *testing.T) {
+		var savedReq *http.Request
+		transform := func(r *http.Request) {
+			savedReq = r
+		}
 
-	req3 := NewRequest(config, "METHOD", "/")
-	req3.WithRequestTransformer(nil)
-	req3.chain.assertFailed(t)
+		req := NewRequest(config, "METHOD", "/")
+		req.WithTransformer(transform)
+		req.Expect().chain.assertOK(t)
+
+		assert.NotNil(t, savedReq)
+	})
+
+	t.Run("append-header", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+
+		req.WithTransformer(func(r *http.Request) {
+			r.Header.Add("foo", "11")
+		})
+
+		req.WithTransformer(func(r *http.Request) {
+			r.Header.Add("bar", "22")
+		})
+
+		req.Expect().chain.assertOK(t)
+
+		assert.Equal(t, []string{"11"}, client.req.Header["Foo"])
+		assert.Equal(t, []string{"22"}, client.req.Header["Bar"])
+	})
+
+	t.Run("append-url", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/{arg1}/{arg2}")
+
+		req.WithPath("arg1", "11")
+		req.WithPath("arg2", "22")
+
+		req.WithTransformer(func(r *http.Request) {
+			r.URL.Path += "/33"
+		})
+
+		req.WithTransformer(func(r *http.Request) {
+			r.URL.Path += "/44"
+		})
+
+		req.Expect().chain.assertOK(t)
+
+		assert.Equal(t, "/11/22/33/44", client.req.URL.Path)
+	})
+
+	t.Run("nil-func", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.WithTransformer(nil)
+		req.chain.assertFailed(t)
+	})
 }
 
 func TestRequestClient(t *testing.T) {
