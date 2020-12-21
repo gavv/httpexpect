@@ -19,6 +19,7 @@ func TestWebsocketFailed(t *testing.T) {
 
 	ws.chain.assertFailed(t)
 
+	ws.Conn()
 	ws.Raw()
 	ws.WithReadTimeout(0)
 	ws.WithoutReadTimeout()

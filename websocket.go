@@ -46,10 +46,22 @@ func makeWebsocket(config Config, chain chain, conn WebsocketConn) *Websocket {
 	}
 }
 
-// Raw returns underlying WebsocketConn object.
+// Conn returns underlying WebsocketConn object.
 // This is the value originally passed to NewConnection.
-func (c *Websocket) Raw() WebsocketConn {
+func (c *Websocket) Conn() WebsocketConn {
 	return c.conn
+}
+
+// Deprecated: use Conn instead.
+func (c *Websocket) Raw() *websocket.Conn {
+	if c.conn == nil {
+		return nil
+	}
+	conn, ok := c.conn.(*websocket.Conn)
+	if !ok {
+		return nil
+	}
+	return conn
 }
 
 // WithReadTimeout sets timeout duration for WebSocket connection reads.
@@ -101,6 +113,9 @@ func (c *Websocket) Subprotocol() *String {
 func (c *Websocket) Expect() *WebsocketMessage {
 	switch {
 	case c.chain.failed():
+		return makeWebsocketMessage(c.chain)
+	case c.conn == nil:
+		c.chain.fail("\nunexpected read from failed WebSocket connection")
 		return makeWebsocketMessage(c.chain)
 	case c.isClosed:
 		c.chain.fail("\nunexpected read from closed WebSocket connection")
@@ -395,6 +410,10 @@ func (c *Websocket) WriteJSON(object interface{}) *Websocket {
 func (c *Websocket) checkUnusable(where string) bool {
 	switch {
 	case c.chain.failed():
+		return true
+	case c.conn == nil:
+		c.chain.fail("\nunexpected %s call for failed WebSocket connection",
+			where)
 		return true
 	case c.isClosed:
 		c.chain.fail("\nunexpected %s call for closed WebSocket connection",
