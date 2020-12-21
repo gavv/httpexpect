@@ -28,7 +28,7 @@ jobs:
       - name: Run linters
         uses: golangci/golangci-lint-action@v2
         with:
-          version: v1.24
+          version: v1.28
 
       - name: Build examples
         run: cd _examples && go get -v .
