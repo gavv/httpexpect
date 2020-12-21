@@ -17,7 +17,7 @@ Workflow:
 * URL path construction, with simple string interpolation provided by [`go-interpol`](https://github.com/imkira/go-interpol) package.
 * URL query parameters (encoding using [`go-querystring`](https://github.com/google/go-querystring) package).
 * Headers, cookies, payload: JSON,  urlencoded or multipart forms (encoding using [`form`](https://github.com/ajg/form) package), plain text.
-* Custom reusable [request builders](#reusable-builders).
+* Custom reusable [request builders](#reusable-builders) and [request transformers](#request-transformers).
 
 ##### Response assertions
 
@@ -381,6 +381,31 @@ m.GET("/some-path").
 m.GET("/bad-path").
 	Expect().
 	Status(http.StatusNotFound)
+```
+
+##### Request transformers
+
+```go
+e := httpexpect.New(t, "http://example.com")
+
+myTranform := func(r* http.Request) {
+	// modify the underlying http.Request
+}
+
+// set transformer to a single request
+e.POST("/some-path").
+	WithTransformer(myTranform).
+	Expect().
+	Status(http.StatusOK)
+
+// create a builder that applies transfromer to every request
+myBuilder := e.Builder(func (req *httpexpect.Request) {
+	req.WithTransformer(myTranform)
+})
+
+myBuilder.POST("/some-path").
+	Expect().
+	Status(http.StatusOK)
 ```
 
 ##### Custom config
