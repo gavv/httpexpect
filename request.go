@@ -497,7 +497,7 @@ func (r *Request) WithHeaders(headers map[string]string) *Request {
 //
 // Example:
 //  req := NewRequest(config, "PUT", "http://example.com/path")
-//  req.WithHeader("Content-Type": "application/json")
+//  req.WithHeader("Content-Type", "application/json")
 func (r *Request) WithHeader(k, v string) *Request {
 	if r.chain.failed() {
 		return r
