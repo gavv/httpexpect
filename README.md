@@ -439,6 +439,9 @@ e := httpexpect.WithConfig(httpexpect.Config{
 var handler http.Handler = MyHandler()
 
 e := httpexpect.WithConfig(httpexpect.Config{
+	// prepend this url to all requests, required for cookies
+	// to be handled correctly
+	BaseURL: "http://example.com",
 	Reporter: httpexpect.NewAssertReporter(t),
 	Client: &http.Client{
 		Transport: httpexpect.NewBinder(handler),
@@ -450,6 +453,9 @@ e := httpexpect.WithConfig(httpexpect.Config{
 var handler fasthttp.RequestHandler = myHandler()
 
 e := httpexpect.WithConfig(httpexpect.Config{
+	// prepend this url to all requests, required for cookies
+	// to be handled correctly
+	BaseURL: "http://example.com",
 	Reporter: httpexpect.NewAssertReporter(t),
 	Client: &http.Client{
 		Transport: httpexpect.NewFastBinder(handler),
