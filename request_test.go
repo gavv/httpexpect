@@ -56,6 +56,7 @@ func TestRequestFailed(t *testing.T) {
 	req.WithFile("foo", "bar", strings.NewReader("baz"))
 	req.WithFileBytes("foo", "bar", []byte("baz"))
 	req.WithMultipart()
+	req.WithRetry(3)
 	req.WithTransformer(func(r *http.Request) {
 		r.Header.Add("foo", "bar")
 	})
@@ -1587,4 +1588,60 @@ func TestRequestErrorConflictMultipart(t *testing.T) {
 	req3 := NewRequest(config, "METHOD", "url")
 	req3.WithFileBytes("a", "a", []byte("a"))
 	req3.chain.assertFailed(t)
+}
+
+func TestRequestWithRetrySuccess(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
+	client := &mockClient{
+		retries: []retry{
+			{err: errors.New("foo")},
+			{err: errors.New("bar")},
+			{resp: http.Response{Status: "200 OK", StatusCode: 200}},
+		},
+	}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		RequestFactory: factory,
+		Reporter:       reporter,
+		Client:         client,
+		BaseURL:        "http://example.com",
+	}
+
+	req1 := NewRequest(config, "METHOD", "/").WithRetry(3)
+	resp := req1.Expect()
+
+	req1.chain.assertOK(t)
+	resp.chain.assertOK(t)
+}
+
+func TestRequestWithRetryFailure(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
+	client := &mockClient{
+		retries: []retry{
+			{err: errors.New("foo")},
+			{err: errors.New("bar")},
+			{err: errors.New("baz")},
+			{err: errors.New("baz")},
+			{err: errors.New("baz")},
+		},
+	}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		RequestFactory: factory,
+		Reporter:       reporter,
+		Client:         client,
+		BaseURL:        "http://example.com",
+	}
+
+	req1 := NewRequest(config, "METHOD", "/").WithRetry(3)
+	resp := req1.Expect()
+
+	req1.chain.assertOK(t)
+	resp.chain.assertFailed(t)
 }

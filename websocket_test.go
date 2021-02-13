@@ -239,11 +239,11 @@ func TestWebsocketClose(t *testing.T) {
 		{
 			name: "conn is nil",
 			args: args{
-				config: Config{},
-				chain:  makeChain(newMockReporter(t)),
+				config:     Config{},
+				chain:      makeChain(newMockReporter(t)),
 				wsPreSteps: noWsPreSteps,
-				wsConn:    nil,
-				closeCode: []int{websocket.CloseNormalClosure},
+				wsConn:     nil,
+				closeCode:  []int{websocket.CloseNormalClosure},
 			},
 			assertOk: false,
 		},
@@ -322,12 +322,12 @@ func TestWebsocketCloseWithBytes(t *testing.T) {
 		{
 			name: "conn is nil",
 			args: args{
-				config: Config{},
-				chain:  makeChain(newMockReporter(t)),
+				config:     Config{},
+				chain:      makeChain(newMockReporter(t)),
 				wsPreSteps: noWsPreSteps,
-				wsConn:    nil,
-				content:   []byte("connection closed..."),
-				closeCode: []int{websocket.CloseNormalClosure},
+				wsConn:     nil,
+				content:    []byte("connection closed..."),
+				closeCode:  []int{websocket.CloseNormalClosure},
 			},
 			assertOk: false,
 		},
@@ -408,12 +408,12 @@ func TestWebsocketCloseWithText(t *testing.T) {
 		{
 			name: "conn is nil",
 			args: args{
-				config: Config{},
-				chain:  makeChain(newMockReporter(t)),
+				config:     Config{},
+				chain:      makeChain(newMockReporter(t)),
 				wsPreSteps: noWsPreSteps,
-				wsConn:    nil,
-				content:   "connection closed...",
-				closeCode: []int{websocket.CloseNormalClosure},
+				wsConn:     nil,
+				content:    "connection closed...",
+				closeCode:  []int{websocket.CloseNormalClosure},
 			},
 			assertOk: false,
 		},
@@ -496,10 +496,10 @@ func TestWebsocketCloseWithJSON(t *testing.T) {
 		{
 			name: "conn is nil",
 			args: args{
-				config: Config{},
-				chain:  makeChain(newMockReporter(t)),
+				config:     Config{},
+				chain:      makeChain(newMockReporter(t)),
 				wsPreSteps: noWsPreSteps,
-				wsConn: nil,
+				wsConn:     nil,
 				content: map[string]string{
 					"msg": "connection closing...",
 				},
@@ -598,13 +598,13 @@ func TestWebsocketWriteMessage(t *testing.T) {
 		{
 			name: "text message fail nil conn",
 			args: args{
-				config: Config{},
-				chain:  makeChain(newMockReporter(t)),
-				wsConn: nil,
+				config:     Config{},
+				chain:      makeChain(newMockReporter(t)),
+				wsConn:     nil,
 				wsPreSteps: noWsPreSteps,
-				typ:       websocket.TextMessage,
-				content:   []byte("random message..."),
-				closeCode: []int{},
+				typ:        websocket.TextMessage,
+				content:    []byte("random message..."),
+				closeCode:  []int{},
 			},
 			assertOk: false,
 		},
@@ -748,11 +748,11 @@ func TestWebsocketWriteBytesBinary(t *testing.T) {
 		{
 			name: "conn is nil",
 			args: args{
-				config: Config{},
-				chain:  makeChain(newMockReporter(t)),
-				wsConn: nil,
+				config:     Config{},
+				chain:      makeChain(newMockReporter(t)),
+				wsConn:     nil,
 				wsPreSteps: noWsPreSteps,
-				content: []byte("random message..."),
+				content:    []byte("random message..."),
 			},
 			assertOk: false,
 		},
@@ -814,11 +814,11 @@ func TestWebsocketWriteBytesText(t *testing.T) {
 		{
 			name: "conn is nil",
 			args: args{
-				config: Config{},
-				chain:  makeChain(newMockReporter(t)),
-				wsConn: nil,
+				config:     Config{},
+				chain:      makeChain(newMockReporter(t)),
+				wsConn:     nil,
 				wsPreSteps: noWsPreSteps,
-				content: []byte("random message..."),
+				content:    []byte("random message..."),
 			},
 			assertOk: false,
 		},
@@ -880,11 +880,11 @@ func TestWebsocketWriteText(t *testing.T) {
 		{
 			name: "conn is nil",
 			args: args{
-				config: Config{},
-				chain:  makeChain(newMockReporter(t)),
-				wsConn: nil,
+				config:     Config{},
+				chain:      makeChain(newMockReporter(t)),
+				wsConn:     nil,
 				wsPreSteps: noWsPreSteps,
-				content: "random message...",
+				content:    "random message...",
 			},
 			assertOk: false,
 		},
@@ -948,9 +948,9 @@ func TestWebsocketWriteJSON(t *testing.T) {
 		{
 			name: "conn is nil",
 			args: args{
-				config: Config{},
-				chain:  makeChain(newMockReporter(t)),
-				wsConn: nil,
+				config:     Config{},
+				chain:      makeChain(newMockReporter(t)),
+				wsConn:     nil,
 				wsPreSteps: noWsPreSteps,
 				content: map[string]string{
 					"msg": "random message",

@@ -8,6 +8,7 @@ require (
 	github.com/fatih/structs v1.0.0
 	github.com/google/go-querystring v1.0.0
 	github.com/gorilla/websocket v1.0.0
+	github.com/hashicorp/go-retryablehttp v0.6.8
 	github.com/imkira/go-interpol v1.0.0
 	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
 	github.com/mattn/go-colorable v0.1.2 // indirect

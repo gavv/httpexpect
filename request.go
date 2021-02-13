@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -19,6 +20,7 @@ import (
 	"github.com/fatih/structs"
 	"github.com/google/go-querystring/query"
 	"github.com/gorilla/websocket"
+	"github.com/hashicorp/go-retryablehttp"
 	"github.com/imkira/go-interpol"
 )
 
@@ -39,6 +41,7 @@ type Request struct {
 	wsUpgrade  bool
 	transforms []func(*http.Request)
 	matchers   []func(*Response)
+	maxRetry   int
 }
 
 // NewRequest returns a new Request object.
@@ -96,7 +99,6 @@ func NewRequest(config Config, method, path string, pathargs ...interface{}) *Re
 	if err != nil {
 		chain.fail(err.Error())
 	}
-
 	hr, err := config.RequestFactory.NewRequest(method, config.BaseURL, nil)
 	if err != nil {
 		chain.fail(err.Error())
@@ -895,6 +897,16 @@ func (r *Request) WithMultipart() *Request {
 	return r
 }
 
+// WithRetry allows retrying of an HTTP request until a max retry value.
+func (r *Request) WithRetry(maxRetry int) *Request {
+	if r.chain.failed() {
+		return r
+	}
+
+	r.maxRetry = maxRetry
+	return r
+}
+
 // Expect constructs http.Request, sends it, receives http.Response, and
 // returns a new Response object to inspect received response.
 //
@@ -1028,7 +1040,24 @@ func (r *Request) sendRequest() *http.Response {
 		return nil
 	}
 
-	resp, err := r.config.Client.Do(r.http)
+	var err error
+	var resp *http.Response
+
+	if r.maxRetry == 0 {
+		resp, err = r.config.Client.Do(r.http)
+	} else {
+		retryClient := retryablehttp.NewClient()
+		retryClient.RetryMax = r.maxRetry
+		retryClient.RetryWaitMax = 1 * time.Second
+		retryClient.Logger = log.New(ioutil.Discard, "", 0)
+
+		retryableReq, retryableErr := retryablehttp.FromRequest(r.http)
+		if retryableErr != nil {
+			r.chain.fail(retryableErr.Error())
+			return nil
+		}
+		resp, err = retryClient.Do(retryableReq)
+	}
 
 	if err != nil {
 		r.chain.fail(err.Error())
