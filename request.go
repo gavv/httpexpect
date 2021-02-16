@@ -946,7 +946,6 @@ func (r *Request) WithRetry(maxRetry int) *Request {
 	}
 
 	r.maxRetry = maxRetry
-	r.doRetry = true
 	return r
 }
 
@@ -957,7 +956,6 @@ func (r *Request) WithRetryDelay(minDelay, maxDelay time.Duration) *Request {
 
 	r.minDelay = minDelay
 	r.maxDelay = maxDelay
-	r.doRetry = true
 	return r
 }
 
