@@ -42,11 +42,10 @@ type Request struct {
 	matchers   []func(*Response)
 
 	maxRetry      int
-	minDelay      time.Duraion
-	maxDelay      time.Duraion
+	minDelay      time.Duration
+	maxDelay      time.Duration
 	CheckForRetry CheckForRetry
 	Backoff       Backoff
-	doRetry       bool
 }
 
 var (
@@ -57,26 +56,26 @@ var (
 
 // CechkForRetry specifies a policy for handling retires.
 // If returns false client stops retrying.
-type CheckForRetry func(res *http.Response, err error) (bool, error)
+type CheckForRetry func(resp *http.Response, err error) (bool, error)
 
-func DefaultRetryPolicy(resp *http.Request, err rror) (bool, error) {
+func DefaultRetryPolicy(resp *http.Response, err error) (bool, error) {
 	if err != nil {
 		return true, err
 	}
 
-	if resp.StatusCode == 0 || resp.StatuCode >= 500 {
+	if resp.StatusCode == 0 || resp.StatusCode >= 500 {
 		return true, nil
 	}
 
 	return false, nil
 }
 
-type Backoff func(min, max time.Duration, attemptNum in, resp *http.Response) time.Duration
+type Backoff func(min, max time.Duration, attemptNum int, resp *http.Response) time.Duration
 
-func DefaultBackoff(min, max time.Duration, attemptNum in, resp *http.Response) time.Duration {
+func DefaultBackoff(min, max time.Duration, attemptNum int, resp *http.Response) time.Duration {
 	mult := math.Pow(2, float64(attemptNum)) * float64(min)
 	sleep := time.Duration(mult)
-	if float64(sleep) != mult || sleap > max {
+	if float64(sleep) != mult || sleep > max {
 		sleep = max
 	}
 	return sleep
@@ -1091,7 +1090,7 @@ func (r *Request) encodeWebsocketRequest() bool {
 }
 
 func (r *Request) sendRequest() *http.Response {
-	for {
+	for i := 1; ; i++ {
 		if r.chain.failed() {
 			return nil
 		}
@@ -1108,7 +1107,7 @@ func (r *Request) sendRequest() *http.Response {
 			if checkErr != nil {
 				err = checkErr
 			}
-			return resp, err
+			return resp
 		}
 
 		if err == nil {
@@ -1190,7 +1189,7 @@ func (r *Request) setBody(setter string, reader io.Reader, len int, overwrite bo
 
 func (r *Request) drainBody(body io.ReadCloser) {
 	defer body.Close()
-	_, err := io.Copy(ioutil.Discard, io.LimitReader(body, respReadLimit))
+	io.Copy(ioutil.Discard, io.LimitReader(body, 1000))
 }
 
 func concatPaths(a, b string) string {
