@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"math"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -39,6 +40,46 @@ type Request struct {
 	wsUpgrade  bool
 	transforms []func(*http.Request)
 	matchers   []func(*Response)
+
+	maxRetry      int
+	minDelay      time.Duraion
+	maxDelay      time.Duraion
+	CheckForRetry CheckForRetry
+	Backoff       Backoff
+	doRetry       bool
+}
+
+var (
+	// Default retry configuration
+	defaultRetryWaitMin = 1 * time.Second
+	defaultRetryWaitMax = 30 * time.Second
+)
+
+// CechkForRetry specifies a policy for handling retires.
+// If returns false client stops retrying.
+type CheckForRetry func(res *http.Response, err error) (bool, error)
+
+func DefaultRetryPolicy(resp *http.Request, err rror) (bool, error) {
+	if err != nil {
+		return true, err
+	}
+
+	if resp.StatusCode == 0 || resp.StatuCode >= 500 {
+		return true, nil
+	}
+
+	return false, nil
+}
+
+type Backoff func(min, max time.Duration, attemptNum in, resp *http.Response) time.Duration
+
+func DefaultBackoff(min, max time.Duration, attemptNum in, resp *http.Response) time.Duration {
+	mult := math.Pow(2, float64(attemptNum)) * float64(min)
+	sleep := time.Duration(mult)
+	if float64(sleep) != mult || sleap > max {
+		sleep = max
+	}
+	return sleep
 }
 
 // NewRequest returns a new Request object.
@@ -103,10 +144,14 @@ func NewRequest(config Config, method, path string, pathargs ...interface{}) *Re
 	}
 
 	return &Request{
-		config: config,
-		chain:  chain,
-		path:   path,
-		http:   hr,
+		config:        config,
+		chain:         chain,
+		path:          path,
+		http:          hr,
+		minDelay:      defaultRetryWaitMin,
+		maxDelay:      defaultRetryWaitMin,
+		CheckForRetry: DefaultRetryPolicy,
+		Backoff:       DefaultBackoff,
 	}
 }
 
@@ -895,6 +940,28 @@ func (r *Request) WithMultipart() *Request {
 	return r
 }
 
+// WithRetry allows retrying of an HTTP request until a max retry value.
+func (r *Request) WithRetry(maxRetry int) *Request {
+	if r.chain.failed() {
+		return r
+	}
+
+	r.maxRetry = maxRetry
+	r.doRetry = true
+	return r
+}
+
+func (r *Request) WithRetryDelay(minDelay, maxDelay time.Duration) *Request {
+	if r.chain.failed() {
+		return r
+	}
+
+	r.minDelay = minDelay
+	r.maxDelay = maxDelay
+	r.doRetry = true
+	return r
+}
+
 // Expect constructs http.Request, sends it, receives http.Response, and
 // returns a new Response object to inspect received response.
 //
@@ -1024,18 +1091,40 @@ func (r *Request) encodeWebsocketRequest() bool {
 }
 
 func (r *Request) sendRequest() *http.Response {
-	if r.chain.failed() {
-		return nil
+	for {
+		if r.chain.failed() {
+			return nil
+		}
+
+		resp, err := r.config.Client.Do(r.http)
+
+		checkOK, checkErr := r.CheckForRetry(resp, err)
+
+		if err != nil {
+			r.chain.fail(err.Error())
+		}
+
+		if !checkOK {
+			if checkErr != nil {
+				err = checkErr
+			}
+			return resp, err
+		}
+
+		if err == nil {
+			r.drainBody(resp.Body)
+		}
+
+		remain := r.maxRetry - i
+		if remain == 0 {
+			break
+		}
+
+		wait := r.Backoff(r.minDelay, r.maxDelay, i, resp)
+		time.Sleep(wait)
 	}
 
-	resp, err := r.config.Client.Do(r.http)
-
-	if err != nil {
-		r.chain.fail(err.Error())
-		return nil
-	}
-
-	return resp
+	return nil
 }
 
 func (r *Request) sendWebsocketRequest() (*http.Response, *websocket.Conn) {
@@ -1097,6 +1186,11 @@ func (r *Request) setBody(setter string, reader io.Reader, len int, overwrite bo
 	}
 
 	r.bodySetter = setter
+}
+
+func (r *Request) drainBody(body io.ReadCloser) {
+	defer body.Close()
+	_, err := io.Copy(ioutil.Discard, io.LimitReader(body, respReadLimit))
 }
 
 func concatPaths(a, b string) string {
