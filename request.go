@@ -194,7 +194,9 @@ func (r *Request) WithHandler(handler http.Handler) *Request {
 		return r
 	}
 	if client, ok := r.config.Client.(*http.Client); ok {
-		client.Transport = NewBinder(handler)
+		clientCopy := *client
+		clientCopy.Transport = NewBinder(handler)
+		r.config.Client = &clientCopy
 	} else {
 		r.config.Client = &http.Client{
 			Transport: NewBinder(handler),
