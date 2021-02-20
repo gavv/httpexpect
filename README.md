@@ -549,6 +549,19 @@ e := httpexpect.WithConfig(httpexpect.Config{
 })
 ```
 
+##### Proxy support
+
+```go
+e := httpexpect.WithConfig(httpexpect.Config{
+	Reporter: httpexpect.NewAssertReporter(t),
+	Client: &http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyURL("http://proxy.example.com"),
+		},
+	},
+})
+```
+
 ## Similar packages
 
 * [`gorequest`](https://github.com/parnurzeal/gorequest)
