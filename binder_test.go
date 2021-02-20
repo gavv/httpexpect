@@ -116,29 +116,29 @@ func TestBinderTLS(t *testing.T) {
 	resp, err := httpClient.Do(req)
 	assert.Nil(t, err)
 	assert.NotNil(t, resp)
-	assert.Nil(t, req.TLS)
+	assert.Nil(t, resp.Request.TLS)
 
 	handler.https = true
 	req, _ = http.NewRequest("GET", "https://example.com/path", strings.NewReader("body"))
 	resp, err = httpClient.Do(req)
 	assert.Nil(t, err)
 	assert.NotNil(t, resp)
-	assert.Nil(t, req.TLS)
+	assert.Nil(t, resp.Request.TLS)
 
 	handler.https = false
 	req, _ = http.NewRequest("GET", "http://example.com/path", strings.NewReader("body"))
 	resp, err = httpsClient.Do(req)
 	assert.Nil(t, err)
 	assert.NotNil(t, resp)
-	assert.Nil(t, req.TLS)
+	assert.Nil(t, resp.Request.TLS)
 
 	handler.https = true
 	req, _ = http.NewRequest("GET", "https://example.com/path", strings.NewReader("body"))
 	resp, err = httpsClient.Do(req)
 	assert.Nil(t, err)
 	assert.NotNil(t, resp)
-	assert.NotNil(t, req.TLS)
-	assert.Equal(t, tlsState, req.TLS)
+	assert.NotNil(t, resp.Request.TLS)
+	assert.Equal(t, tlsState, resp.Request.TLS)
 }
 
 func TestBinderChunked(t *testing.T) {
@@ -163,7 +163,7 @@ func TestBinderChunked(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, []string{"chunked"}, req.TransferEncoding)
+	assert.Equal(t, []string{"chunked"}, resp.Request.TransferEncoding)
 	assert.Equal(t, []string{"chunked"}, resp.TransferEncoding)
 }
 

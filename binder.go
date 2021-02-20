@@ -36,7 +36,9 @@ func NewBinder(handler http.Handler) Binder {
 }
 
 // RoundTrip implements http.RoundTripper.RoundTrip.
-func (binder Binder) RoundTrip(req *http.Request) (*http.Response, error) {
+func (binder Binder) RoundTrip(origReq *http.Request) (*http.Response, error) {
+	req := *origReq
+
 	if req.Proto == "" {
 		req.Proto = fmt.Sprintf("HTTP/%d.%d", req.ProtoMajor, req.ProtoMinor)
 	}
@@ -59,10 +61,10 @@ func (binder Binder) RoundTrip(req *http.Request) (*http.Response, error) {
 
 	recorder := httptest.NewRecorder()
 
-	binder.Handler.ServeHTTP(recorder, req)
+	binder.Handler.ServeHTTP(recorder, &req)
 
 	resp := http.Response{
-		Request:    req,
+		Request:    &req,
 		StatusCode: recorder.Code,
 		Status:     http.StatusText(recorder.Code),
 		Header:     recorder.Result().Header,
