@@ -818,7 +818,7 @@ func TestRequestBodyChunkedNil(t *testing.T) {
 	resp := req.Expect()
 	resp.chain.assertOK(t)
 
-	assert.True(t, client.req.Body == nil)
+	assert.True(t, client.req.Body == http.NoBody)
 	assert.Equal(t, int64(0), client.req.ContentLength)
 }
 
@@ -906,7 +906,7 @@ func TestRequestBodyBytesNil(t *testing.T) {
 	resp := req.Expect()
 	resp.chain.assertOK(t)
 
-	assert.True(t, client.req.Body == nil)
+	assert.True(t, client.req.Body == http.NoBody)
 	assert.Equal(t, int64(0), client.req.ContentLength)
 }
 

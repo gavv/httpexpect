@@ -25,20 +25,22 @@ import (
 // Request provides methods to incrementally build http.Request object,
 // send it, and receive response.
 type Request struct {
-	config     Config
-	chain      chain
-	http       *http.Request
-	path       string
-	query      url.Values
-	form       url.Values
-	formbuf    *bytes.Buffer
-	multipart  *multipart.Writer
-	bodySetter string
-	typeSetter string
-	forceType  bool
-	wsUpgrade  bool
-	transforms []func(*http.Request)
-	matchers   []func(*Response)
+	config         Config
+	chain          chain
+	http           *http.Request
+	redirectPolicy RedirectPolicy
+	maxRedirects   int
+	path           string
+	query          url.Values
+	form           url.Values
+	formbuf        *bytes.Buffer
+	multipart      *multipart.Writer
+	bodySetter     string
+	typeSetter     string
+	forceType      bool
+	wsUpgrade      bool
+	transforms     []func(*http.Request)
+	matchers       []func(*Response)
 }
 
 // NewRequest returns a new Request object.
@@ -97,16 +99,18 @@ func NewRequest(config Config, method, path string, pathargs ...interface{}) *Re
 		chain.fail(err.Error())
 	}
 
-	hr, err := config.RequestFactory.NewRequest(method, config.BaseURL, nil)
+	httpReq, err := config.RequestFactory.NewRequest(method, config.BaseURL, nil)
 	if err != nil {
 		chain.fail(err.Error())
 	}
 
 	return &Request{
-		config: config,
-		chain:  chain,
-		path:   path,
-		http:   hr,
+		config:         config,
+		chain:          chain,
+		path:           path,
+		http:           httpReq,
+		redirectPolicy: defaultRedirectPolicy,
+		maxRedirects:   -1,
 	}
 }
 
@@ -203,6 +207,91 @@ func (r *Request) WithHandler(handler http.Handler) *Request {
 			Jar:       NewJar(),
 		}
 	}
+	return r
+}
+
+// RedirectPolicy defines how redirection responses are handled.
+//
+// Status codes 307, 308 require resending body. They are followed only if
+// redirect policy is FollowAllRedirects.
+//
+// Status codes 301, 302, 303 don't require resending body. On such redirect,
+// http.Client automatically switches HTTP method to GET, if it's not GET or
+// HEAD already. These redirects are followed if redirect policy is either
+// FollowAllRedirects or FollowRedirectsWithoutBody.
+//
+// Default redirect policy is FollowRedirectsWithoutBody.
+type RedirectPolicy int
+
+const (
+	// indicates that WithRedirectPolicy was not called
+	defaultRedirectPolicy RedirectPolicy = iota
+
+	// DontFollowRedirects forbids following any redirects.
+	// Redirection response is returned to the user and can be inspected.
+	DontFollowRedirects
+
+	// FollowAllRedirects allows following any redirects, including those
+	// which require resending body.
+	FollowAllRedirects
+
+	// FollowRedirectsWithoutBody allows following only redirects which
+	// don't require resending body.
+	// If redirect requires resending body, it's not followed, and redirection
+	// response is returned instead.
+	FollowRedirectsWithoutBody
+)
+
+// WithRedirectPolicy sets policy for redirection response handling.
+//
+// How redirect is handled depends on both response status code and
+// redirect policy. See comments for RedirectPolicy for details.
+//
+// Default redirect policy is defined by Client implementation.
+// Default behavior of http.Client corresponds to FollowRedirectsWithoutBody.
+//
+// This method can be used only if Client interface points to
+// *http.Client struct, since we rely on it in redirect handling.
+//
+// Example:
+//  req1 := NewRequest(config, "POST", "/path")
+//  req1.WithRedirectPolicy(FollowAllRedirects)
+//  req1.Expect().Status(http.StatusOK)
+//
+//  req2 := NewRequest(config, "POST", "/path")
+//  req2.WithRedirectPolicy(DontFollowRedirects)
+//  req2.Expect().Status(http.StatusPermanentRedirect)
+func (r *Request) WithRedirectPolicy(policy RedirectPolicy) *Request {
+	if r.chain.failed() {
+		return r
+	}
+	r.redirectPolicy = policy
+	return r
+}
+
+// WithMaxRedirects sets maximum number of redirects to follow.
+//
+// If the number of redirects exceedes this limit, request is failed.
+//
+// Default limit is defined by Client implementation.
+// Default behavior of http.Client corresponds to maximum of 10-1 redirects.
+//
+// This method can be used only if Client interface points to
+// *http.Client struct, since we rely on it in redirect handling.
+//
+// Example:
+//  req1 := NewRequest(config, "POST", "/path")
+//  req1.WithMaxRedirects(1)
+//  req1.Expect().Status(http.StatusOK)
+func (r *Request) WithMaxRedirects(maxRedirects int) *Request {
+	if r.chain.failed() {
+		return r
+	}
+	if maxRedirects < 0 {
+		r.chain.fail("\nunexpected negative integer in WithMaxRedirects")
+		return r
+	}
+	r.maxRedirects = maxRedirects
 	return r
 }
 
@@ -900,8 +989,8 @@ func (r *Request) WithMultipart() *Request {
 // Expect constructs http.Request, sends it, receives http.Response, and
 // returns a new Response object to inspect received response.
 //
-// Request is sent using Config.Client interface, or Config.Dialer interface
-// in case of WebSocket request.
+// Request is sent using Client interface, or Dialer interface in case of
+// WebSocket request.
 //
 // Example:
 //  req := NewRequest(config, "PUT", "http://example.com/path")
@@ -999,6 +1088,12 @@ func (r *Request) encodeRequest() bool {
 		r.setBody("WithForm or WithFormField", strings.NewReader(s), len(s), false)
 	}
 
+	if r.http.Body == nil {
+		r.http.Body = http.NoBody
+	}
+
+	r.setupRedirects()
+
 	return true
 }
 
@@ -1091,7 +1186,7 @@ func (r *Request) setBody(setter string, reader io.Reader, len int, overwrite bo
 	}
 
 	if reader == nil {
-		r.http.Body = nil
+		r.http.Body = http.NoBody
 		r.http.ContentLength = 0
 	} else {
 		r.http.Body = ioutil.NopCloser(reader)
@@ -1099,6 +1194,60 @@ func (r *Request) setBody(setter string, reader io.Reader, len int, overwrite bo
 	}
 
 	r.bodySetter = setter
+}
+
+func (r *Request) setupRedirects() {
+	httpClient, _ := r.config.Client.(*http.Client)
+
+	if httpClient == nil {
+		if r.redirectPolicy != defaultRedirectPolicy {
+			r.chain.fail("WithRedirectPolicy can be used only if Client is *http.Client")
+			return
+		}
+
+		if r.maxRedirects != -1 {
+			r.chain.fail("WithMaxRedirects can be used only if Client is *http.Client")
+			return
+		}
+	} else {
+		if r.redirectPolicy != defaultRedirectPolicy || r.maxRedirects != -1 {
+			clientCopy := *httpClient
+			httpClient = &clientCopy
+			r.config.Client = &clientCopy
+		}
+	}
+
+	if r.redirectPolicy == DontFollowRedirects {
+		httpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		}
+	} else if r.maxRedirects >= 0 {
+		httpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+			if len(via) > r.maxRedirects {
+				return fmt.Errorf("stopped after %d redirects", r.maxRedirects)
+			}
+			return nil
+		}
+	} else if r.redirectPolicy != defaultRedirectPolicy {
+		httpClient.CheckRedirect = nil
+	}
+
+	if r.redirectPolicy == FollowAllRedirects {
+		if r.http.Body != nil && r.http.Body != http.NoBody {
+			bodyBytes, bodyErr := ioutil.ReadAll(r.http.Body)
+
+			r.http.GetBody = func() (io.ReadCloser, error) {
+				if bodyErr != nil {
+					return nil, bodyErr
+				}
+				return ioutil.NopCloser(bytes.NewReader(bodyBytes)), nil
+			}
+		} else {
+			r.http.GetBody = func() (io.ReadCloser, error) {
+				return http.NoBody, nil
+			}
+		}
+	}
 }
 
 func concatPaths(a, b string) string {

@@ -310,6 +310,21 @@ m.Name("host").Equal("example.com")
 m.Name("user").Equal("john")
 ```
 
+##### Redirection support
+
+```go
+e.POST("/path").
+	WithRedirectPolicy(httpexpect.FollowAllRedirects).
+	WithMaxRedirects(5).
+	Expect().
+	Status(http.StatusOK)
+
+e.POST("/path").
+	WithRedirectPolicy(httpexpect.DontFollowRedirects).
+	Expect().
+	Status(http.StatusPermanentRedirect)
+```
+
 ##### Subdomains and per-request URL
 
 ```go
