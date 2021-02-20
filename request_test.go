@@ -11,6 +11,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -35,6 +36,11 @@ func TestRequestFailed(t *testing.T) {
 
 	req.WithClient(&http.Client{})
 	req.WithHandler(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
+	req.WithRedirectPolicy(FollowAllRedirects)
+	req.WithMaxRedirects(1)
+	req.WithRetryPolicy(RetryAllErrors)
+	req.WithMaxRetries(1)
+	req.WithRetryDelay(time.Millisecond, time.Millisecond)
 	req.WithPath("foo", "bar")
 	req.WithPathObject(map[string]interface{}{"foo": "bar"})
 	req.WithQuery("foo", "bar")

@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"mime/multipart"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -30,6 +31,10 @@ type Request struct {
 	http           *http.Request
 	redirectPolicy RedirectPolicy
 	maxRedirects   int
+	retryPolicy    RetryPolicy
+	maxRetries     int
+	minRetryDelay  time.Duration
+	maxRetryDelay  time.Duration
 	path           string
 	query          url.Values
 	form           url.Values
@@ -111,6 +116,10 @@ func NewRequest(config Config, method, path string, pathargs ...interface{}) *Re
 		http:           httpReq,
 		redirectPolicy: defaultRedirectPolicy,
 		maxRedirects:   -1,
+		retryPolicy:    RetryTemporaryNetworkAndServerErrors,
+		maxRetries:     0,
+		minRetryDelay:  time.Millisecond * 50,
+		maxRetryDelay:  time.Second * 5,
 	}
 }
 
@@ -292,6 +301,99 @@ func (r *Request) WithMaxRedirects(maxRedirects int) *Request {
 		return r
 	}
 	r.maxRedirects = maxRedirects
+	return r
+}
+
+// RetryPolicy defines how failed requests are retried.
+//
+// Whether a request is retried depends on error type (if any), response
+// status code (if any), and retry policy.
+type RetryPolicy int
+
+const (
+	// DontRetry disables retrying at all.
+	DontRetry RetryPolicy = iota
+
+	// RetryTemporaryNetworkErrors enables retrying only temporary network errors.
+	// Retry happens if Client returns net.Error and its Temporary() method
+	// returns true.
+	RetryTemporaryNetworkErrors
+
+	// RetryTemporaryNetworkAndServerErrors enables retrying of temporary network
+	// errors, as well as 5xx status codes.
+	RetryTemporaryNetworkAndServerErrors
+
+	// RetryAllErrors enables retrying of any error or 4xx/5xx status code.
+	RetryAllErrors
+)
+
+// WithRetryPolicy sets policy for retries.
+//
+// Whether a request is retried depends on error type (if any), response
+// status code (if any), and retry policy.
+//
+// How much retry attempts happens is defined by WithMaxRetries().
+// How much to wait between attempts is defined by WithRetryDelay().
+//
+// Default retry policy is RetryTemporaryNetworkAndServerErrors, but
+// default maximum number of retries is zero, so no retries happen
+// unless WithMaxRetries() is called.
+//
+// Example:
+//  req := NewRequest(config, "POST", "/path")
+//  req.WithRetryPolicy(RetryAllErrors)
+//  req.Expect().Status(http.StatusOK)
+func (r *Request) WithRetryPolicy(policy RetryPolicy) *Request {
+	if r.chain.failed() {
+		return r
+	}
+	r.retryPolicy = policy
+	return r
+}
+
+// WithMaxRetries sets maximum number of retry attempts.
+//
+// After first request failure, additional retry attempts may happen,
+// depending on the retry policy.
+//
+// Setting this to zero disables retries, i.e. only one request is sent.
+// Setting this to N enables retries, and up to N+1 requests may be sent.
+//
+// Default number of retries is zero, i.e. retries are disabled.
+//
+// Example:
+//  req := NewRequest(config, "POST", "/path")
+//  req.WithMaxRetries(1)
+//  req.Expect().Status(http.StatusOK)
+func (r *Request) WithMaxRetries(maxRetries int) *Request {
+	if r.chain.failed() {
+		return r
+	}
+	if maxRetries < 0 {
+		r.chain.fail("\nunexpected negative integer in WithMaxRetries")
+		return r
+	}
+	r.maxRetries = maxRetries
+	return r
+}
+
+// WithRetryDelay sets minimum and maximum delay between retries.
+//
+// If multiple retry attempts happen, delay between attempts starts from
+// minDelay and then grows exponentionally until it reaches maxDelay.
+//
+// Default delay range is [50ms; 5s].
+//
+// Example:
+//  req := NewRequest(config, "POST", "/path")
+//  req.WithRetryDelay(time.Second, time.Minute)
+//  req.Expect().Status(http.StatusOK)
+func (r *Request) WithRetryDelay(minDelay, maxDelay time.Duration) *Request {
+	if r.chain.failed() {
+		return r
+	}
+	r.minRetryDelay = minDelay
+	r.maxRetryDelay = maxDelay
 	return r
 }
 
@@ -1029,30 +1131,19 @@ func (r *Request) roundTrip() *Response {
 		transform(r.http)
 	}
 
-	for _, printer := range r.config.Printers {
-		printer.Request(r.http)
-	}
-
-	start := time.Now()
-
 	var (
 		httpResp *http.Response
 		websock  *websocket.Conn
+		elapsed  time.Duration
 	)
 	if r.wsUpgrade {
-		httpResp, websock = r.sendWebsocketRequest()
+		httpResp, websock, elapsed = r.sendWebsocketRequest()
 	} else {
-		httpResp = r.sendRequest()
+		httpResp, elapsed = r.sendRequest()
 	}
-
-	elapsed := time.Since(start)
 
 	if httpResp == nil {
 		return nil
-	}
-
-	for _, printer := range r.config.Printers {
-		printer.Response(httpResp, elapsed)
 	}
 
 	return makeResponse(responseOpts{
@@ -1120,35 +1211,123 @@ func (r *Request) encodeWebsocketRequest() bool {
 	return true
 }
 
-func (r *Request) sendRequest() *http.Response {
+func (r *Request) sendRequest() (*http.Response, time.Duration) {
 	if r.chain.failed() {
-		return nil
+		return nil, 0
 	}
 
-	resp, err := r.config.Client.Do(r.http)
+	resp, elapsed, err := r.retryRequest(func() (*http.Response, error) {
+		return r.config.Client.Do(r.http)
+	})
 
 	if err != nil {
 		r.chain.fail(err.Error())
-		return nil
+		return nil, 0
 	}
 
-	return resp
+	return resp, elapsed
 }
 
-func (r *Request) sendWebsocketRequest() (*http.Response, *websocket.Conn) {
+func (r *Request) sendWebsocketRequest() (
+	*http.Response, *websocket.Conn, time.Duration,
+) {
 	if r.chain.failed() {
-		return nil, nil
+		return nil, nil, 0
 	}
 
-	conn, resp, err := r.config.WebsocketDialer.Dial(
-		r.http.URL.String(), r.http.Header)
+	var conn *websocket.Conn
+	resp, elapsed, err := r.retryRequest(func() (resp *http.Response, err error) {
+		conn, resp, err = r.config.WebsocketDialer.Dial(
+			r.http.URL.String(), r.http.Header)
+		return resp, err
+	})
 
 	if err != nil && err != websocket.ErrBadHandshake {
 		r.chain.fail(err.Error())
-		return nil, nil
+		return nil, nil, 0
 	}
 
-	return resp, conn
+	return resp, conn, elapsed
+}
+
+func (r *Request) retryRequest(reqFunc func() (resp *http.Response, err error)) (
+	resp *http.Response, elapsed time.Duration, err error,
+) {
+	var body []byte
+	if r.maxRetries > 0 && r.http.Body != nil && r.http.Body != http.NoBody {
+		body, _ = ioutil.ReadAll(r.http.Body)
+	}
+
+	delay := r.minRetryDelay
+	i := 0
+
+	for {
+		if body != nil {
+			r.http.Body = ioutil.NopCloser(bytes.NewReader(body))
+		}
+
+		for _, printer := range r.config.Printers {
+			printer.Request(r.http)
+		}
+
+		start := time.Now()
+
+		resp, err = reqFunc()
+
+		elapsed = time.Since(start)
+
+		if resp != nil {
+			for _, printer := range r.config.Printers {
+				printer.Response(resp, elapsed)
+			}
+		}
+
+		i++
+		if i == r.maxRetries+1 {
+			return
+		}
+
+		if !r.shouldRetry(resp, err) {
+			return
+		}
+
+		time.Sleep(delay)
+
+		delay *= 2
+		if delay > r.maxRetryDelay {
+			delay = r.maxRetryDelay
+		}
+	}
+}
+
+func (r *Request) shouldRetry(resp *http.Response, err error) bool {
+	var (
+		isTemporaryNetworkError bool
+		isTemporaryServerError  bool
+		isHTTPError             bool
+	)
+
+	if netErr, ok := err.(net.Error); ok {
+		isTemporaryNetworkError = netErr.Temporary()
+	}
+
+	if resp != nil {
+		isTemporaryServerError = resp.StatusCode >= 500 && resp.StatusCode <= 599
+		isHTTPError = resp.StatusCode >= 400 && resp.StatusCode <= 599
+	}
+
+	switch r.retryPolicy {
+	case RetryTemporaryNetworkErrors:
+		return isTemporaryNetworkError
+
+	case RetryTemporaryNetworkAndServerErrors:
+		return isTemporaryNetworkError || isTemporaryServerError
+
+	case RetryAllErrors:
+		return err != nil || isHTTPError
+	}
+
+	return false
 }
 
 func (r *Request) setType(newSetter, newType string, overwrite bool) {

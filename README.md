@@ -325,6 +325,30 @@ e.POST("/path").
 	Status(http.StatusPermanentRedirect)
 ```
 
+##### Retry support
+
+```go
+// default retry policy
+e.POST("/path").
+	WithMaxRetries(5).
+	Expect().
+	Status(http.StatusOK)
+
+// custom retry policy
+e.POST("/path").
+	WithMaxRetries(5).
+	WithRetryPolicy(httpexpect.RetryAllErrors).
+	Expect().
+	Status(http.StatusOK)
+
+// custom retry delays
+e.POST("/path").
+	WithMaxRetries(5).
+	WithRetryDelay(time.Second, time.Minute).
+	Expect().
+	Status(http.StatusOK)
+```
+
 ##### Subdomains and per-request URL
 
 ```go
