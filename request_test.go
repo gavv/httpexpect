@@ -1594,3 +1594,63 @@ func TestRequestErrorConflictMultipart(t *testing.T) {
 	req3.WithFileBytes("a", "a", []byte("a"))
 	req3.chain.assertFailed(t)
 }
+
+func TestRequestRedirectPolicy(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
+	client := &mockClient{
+		err: errors.New("error"),
+	}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
+	}
+
+	req := NewRequest(config, "POST", "/path")
+	assert.Equal(t, RedirectPolicy(0), req.redirectPolicy)
+
+	req.chain.assertOK(t)
+	req.WithRedirectPolicy(FollowAllRedirects)
+	assert.Equal(t, RedirectPolicy(2), req.redirectPolicy)
+
+	req.chain.assertOK(t)
+	req.WithRedirectPolicy(DontFollowRedirects)
+	assert.Equal(t, RedirectPolicy(1), req.redirectPolicy)
+
+	req.chain.fail("\nchain is now failed")
+	req.WithRedirectPolicy(FollowRedirectsWithoutBody)
+	assert.Equal(t, RedirectPolicy(1), req.redirectPolicy)
+}
+
+func TestRequestMaxRedirects(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
+	client := &mockClient{
+		err: errors.New("error"),
+	}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
+	}
+
+	req := NewRequest(config, "POST", "/path")
+	assert.Equal(t, -1, req.maxRedirects)
+	req.WithMaxRedirects(0)
+	assert.Equal(t, 0, req.maxRedirects)
+	req.WithMaxRedirects(50)
+	assert.Equal(t, 50, req.maxRedirects)
+
+	req.WithMaxRedirects(-2)
+	assert.Equal(t, 50, req.maxRedirects)
+
+	req.WithMaxRedirects(10)
+	assert.Equal(t, 50, req.maxRedirects)
+}
