@@ -1654,3 +1654,63 @@ func TestRequestMaxRedirects(t *testing.T) {
 	req.WithMaxRedirects(10)
 	assert.Equal(t, 50, req.maxRedirects)
 }
+
+func TestRequestRetryPolicy(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
+	client := &mockClient{
+		err: errors.New("error"),
+	}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
+	}
+
+	req := NewRequest(config, "POST", "/path")
+	assert.Equal(t, RetryPolicy(2), req.retryPolicy)
+
+	req.chain.assertOK(t)
+	req.WithRetryPolicy(DontRetry)
+	assert.Equal(t, RetryPolicy(0), req.retryPolicy)
+
+	req.chain.assertOK(t)
+	req.WithRetryPolicy(RetryTemporaryNetworkErrors)
+	assert.Equal(t, RetryPolicy(1), req.retryPolicy)
+
+	req.chain.fail("\nchain is now failed")
+	req.WithRetryPolicy(RetryAllErrors)
+	assert.Equal(t, RetryPolicy(1), req.retryPolicy)
+}
+
+func TestRequestMaxRetries(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
+	client := &mockClient{
+		err: errors.New("error"),
+	}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
+	}
+
+	req := NewRequest(config, "POST", "/path")
+	assert.Equal(t, 0, req.maxRetries)
+	req.WithMaxRetries(1)
+	assert.Equal(t, 1, req.maxRetries)
+	req.WithMaxRetries(50)
+	assert.Equal(t, 50, req.maxRetries)
+
+	req.WithMaxRetries(-2)
+	assert.Equal(t, 50, req.maxRetries)
+
+	req.WithMaxRetries(10)
+	assert.Equal(t, 50, req.maxRetries)
+}
