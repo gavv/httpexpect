@@ -66,6 +66,7 @@
 package httpexpect
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"net/http/cookiejar"
@@ -129,6 +130,14 @@ type Config struct {
 	// you're happy with their format, but want to send logs somewhere
 	// else instead of testing.TB.
 	Printers []Printer
+
+	// Context is passed to all requests. It is typically used for request cancellation,
+	// either explicit or after a time-out.
+	// May be nil.
+	//
+	// You can use the Request.WithContext for per-request context and Request.WithTimeout
+	// for per-request timeout.
+	Context context.Context
 }
 
 // RequestFactory is used to create all http.Request objects.

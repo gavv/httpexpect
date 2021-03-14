@@ -2,6 +2,7 @@ package httpexpect
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -46,6 +47,8 @@ type Request struct {
 	wsUpgrade      bool
 	transforms     []func(*http.Request)
 	matchers       []func(*Response)
+	context        context.Context
+	timeout        time.Duration
 }
 
 // NewRequest returns a new Request object.
@@ -445,6 +448,56 @@ func (r *Request) WithWebsocketDialer(dialer WebsocketDialer) *Request {
 		return r
 	}
 	r.config.WebsocketDialer = dialer
+	return r
+}
+
+// WithContext sets the context.
+//
+// Config.Context will be overwritten.
+//
+// Any retries will stop after one is cancelled.
+// If the intended behavior is to continue any further retries, use WithTimeout.
+//
+// Example:
+//
+//	ctx, _ = context.WithTimeout(context.Background(), time.Duration(3)*time.Second)
+//  req := NewRequest(config, "GET", "/path")
+//  req.WithContext(ctx)
+//  req.Expect().Status(http.StatusOK)
+func (r *Request) WithContext(ctx context.Context) *Request {
+	if r.chain.failed() {
+		return r
+	}
+	if ctx == nil {
+		r.chain.fail("\nunexpected nil ctx in WithContext")
+		return r
+	}
+
+	r.context = ctx
+
+	return r
+}
+
+// WithTimeout sets a timeout duration for the request.
+//
+// Config.Context or any context set WithContext will be overwritten.
+//
+// Any retries will continue after one is cancelled.
+// If the intended behavior is to stop any further retries, use WithContext or
+// Config.Context.
+//
+// Example:
+//
+//  req := NewRequest(config, "GET", "/path")
+//  req.WithTimeout(time.Duration(3)*time.Second)
+//  req.Expect().Status(http.StatusOK)
+func (r *Request) WithTimeout(timeout time.Duration) *Request {
+	if r.chain.failed() {
+		return r
+	}
+
+	r.timeout = timeout
+
 	return r
 }
 
@@ -1183,6 +1236,13 @@ func (r *Request) encodeRequest() bool {
 		r.http.Body = http.NoBody
 	}
 
+	if r.config.Context != nil && r.context == nil {
+		r.http = r.http.WithContext(r.config.Context)
+	}
+	if r.context != nil {
+		r.http = r.http.WithContext(r.context)
+	}
+
 	r.setupRedirects()
 
 	return true
@@ -1264,6 +1324,14 @@ func (r *Request) retryRequest(reqFunc func() (resp *http.Response, err error)) 
 	for {
 		if body != nil {
 			r.http.Body = ioutil.NopCloser(bytes.NewReader(body))
+		}
+
+		var cancel context.CancelFunc
+		if r.timeout > 0 {
+			var ctx context.Context
+			ctx, cancel = context.WithTimeout(context.Background(), r.timeout)
+			defer cancel()
+			r.http = r.http.WithContext(ctx)
 		}
 
 		for _, printer := range r.config.Printers {
