@@ -1326,21 +1326,23 @@ func (r *Request) retryRequest(reqFunc func() (resp *http.Response, err error)) 
 			r.http.Body = ioutil.NopCloser(bytes.NewReader(body))
 		}
 
-		var cancel context.CancelFunc
-		if r.timeout > 0 {
-			var ctx context.Context
-			ctx, cancel = context.WithTimeout(context.Background(), r.timeout)
-			defer cancel()
-			r.http = r.http.WithContext(ctx)
-		}
-
 		for _, printer := range r.config.Printers {
 			printer.Request(r.http)
 		}
 
 		start := time.Now()
 
-		resp, err = reqFunc()
+		func() {
+			var cancel context.CancelFunc
+			if r.timeout > 0 {
+				var ctx context.Context
+				ctx, cancel = context.WithTimeout(context.Background(), r.timeout)
+				defer cancel()
+				r.http = r.http.WithContext(ctx)
+			}
+
+			resp, err = reqFunc()
+		}()
 
 		elapsed = time.Since(start)
 
