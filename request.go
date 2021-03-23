@@ -459,8 +459,7 @@ func (r *Request) WithWebsocketDialer(dialer WebsocketDialer) *Request {
 // If the intended behavior is to continue any further retries, use WithTimeout.
 //
 // Example:
-//
-//	ctx, _ = context.WithTimeout(context.Background(), time.Duration(3)*time.Second)
+//  ctx, _ = context.WithTimeout(context.Background(), time.Duration(3)*time.Second)
 //  req := NewRequest(config, "GET", "/path")
 //  req.WithContext(ctx)
 //  req.Expect().Status(http.StatusOK)
