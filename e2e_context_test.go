@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 )
@@ -16,6 +17,7 @@ type waitHandler struct {
 	callCount     int
 	retriesToFail int
 	retriesDone   chan struct{}
+	sync.RWMutex
 }
 
 func (h *waitHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -23,14 +25,14 @@ func (h *waitHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *waitHandler) WaitForContextCancellation(w http.ResponseWriter, r *http.Request) {
-	h.callCount++
+	h.IncrCallCount()
 	// if retries-to-fail are not set then simply wait for the cancellation
 	if h.retriesToFail == 0 {
 		<-r.Context().Done()
 	} else {
 		// if retries-to-fail are set then make sure they are exhausted before
 		// waiting for cancellation
-		if h.callCount < h.retriesToFail+1 {
+		if h.GetCallCount() < h.retriesToFail+1 {
 			w.WriteHeader(http.StatusInternalServerError)
 		} else {
 			h.retriesDone <- struct{}{}
@@ -41,15 +43,28 @@ func (h *waitHandler) WaitForContextCancellation(w http.ResponseWriter, r *http.
 }
 
 func (h *waitHandler) WaitForPerRequestTimeout(w http.ResponseWriter, r *http.Request) {
-	h.callCount++
+	h.IncrCallCount()
 	// if retries-to-fail are not set or not exhausted yet, simply wait for
 	// the timeout
-	if h.retriesToFail == 0 || h.callCount < h.retriesToFail+1 {
+	if h.retriesToFail == 0 || h.GetCallCount() < h.retriesToFail+1 {
 		<-r.Context().Done()
 	} else {
 		// otherwise succeed
 		w.WriteHeader(http.StatusOK)
 	}
+}
+
+func (h *waitHandler) IncrCallCount() {
+	h.Lock()
+	h.callCount++
+	h.Unlock()
+}
+
+func (h *waitHandler) GetCallCount() int {
+	h.RLock()
+	r := h.callCount
+	h.RUnlock()
+	return r
 }
 
 func newWaitHandler(retriesToFail int) *waitHandler {
@@ -169,7 +184,7 @@ func TestGlobalContextWithRetries(t *testing.T) {
 	// expected error should occur
 	assert.True(t, reporter.expErrorOccurred)
 	// first call + retries to fail should be the call count
-	assert.Equal(t, retriesToFail+1, handler.callCount)
+	assert.Equal(t, retriesToFail+1, handler.GetCallCount())
 }
 
 func TestPerRequestContext(t *testing.T) {
@@ -247,7 +262,7 @@ func TestPerRequestContextWithRetries(t *testing.T) {
 	// expected error should occur
 	assert.True(t, reporter.expErrorOccurred)
 	// first call + retries to fail should be the call count
-	assert.Equal(t, retriesToFail+1, handler.callCount)
+	assert.Equal(t, retriesToFail+1, handler.GetCallCount())
 }
 
 func TestPerRequestWithTimeout(t *testing.T) {
@@ -297,5 +312,5 @@ func TestPerRequestWithTimeoutAndWithRetries(t *testing.T) {
 		Status(http.StatusOK)
 
 	// first call + retries to fail should be the call count
-	assert.Equal(t, retriesToFail+1, handler.callCount)
+	assert.Equal(t, retriesToFail+1, handler.GetCallCount())
 }
