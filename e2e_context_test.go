@@ -12,11 +12,10 @@ import (
 )
 
 type waitHandler struct {
-	mux                       *http.ServeMux
-	callCount                 int
-	retriesToFail             int
-	waitForCancelAfterRetries bool
-	retriesDone               chan struct{}
+	mux           *http.ServeMux
+	callCount     int
+	retriesToFail int
+	retriesDone   chan struct{}
 }
 
 func (h *waitHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
