@@ -1325,7 +1325,7 @@ func (r *Request) retryRequest(reqFunc func() (resp *http.Response, err error)) 
 			printer.Request(r.http)
 		}
 
-		start := time.Now()
+		var start time.Time
 
 		func() {
 			var cancel context.CancelFunc
@@ -1341,6 +1341,7 @@ func (r *Request) retryRequest(reqFunc func() (resp *http.Response, err error)) 
 				r.http = r.http.WithContext(ctx)
 			}
 
+			start = time.Now()
 			resp, err = reqFunc()
 		}()
 
