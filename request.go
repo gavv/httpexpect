@@ -47,7 +47,6 @@ type Request struct {
 	wsUpgrade      bool
 	transforms     []func(*http.Request)
 	matchers       []func(*Response)
-	context        context.Context
 	timeout        time.Duration
 }
 
@@ -472,7 +471,7 @@ func (r *Request) WithContext(ctx context.Context) *Request {
 		return r
 	}
 
-	r.context = ctx
+	r.config.Context = ctx
 
 	return r
 }
@@ -1235,11 +1234,8 @@ func (r *Request) encodeRequest() bool {
 		r.http.Body = http.NoBody
 	}
 
-	if r.config.Context != nil && r.context == nil {
+	if r.config.Context != nil {
 		r.http = r.http.WithContext(r.config.Context)
-	}
-	if r.context != nil {
-		r.http = r.http.WithContext(r.context)
 	}
 
 	r.setupRedirects()
@@ -1335,7 +1331,12 @@ func (r *Request) retryRequest(reqFunc func() (resp *http.Response, err error)) 
 			var cancel context.CancelFunc
 			if r.timeout > 0 {
 				var ctx context.Context
-				ctx, cancel = context.WithTimeout(context.Background(), r.timeout)
+				if r.config.Context != nil {
+					ctx, cancel = context.WithTimeout(r.config.Context, r.timeout)
+				} else {
+					ctx, cancel = context.WithTimeout(context.Background(), r.timeout)
+				}
+
 				defer cancel()
 				r.http = r.http.WithContext(ctx)
 			}

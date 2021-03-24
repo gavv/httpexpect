@@ -39,7 +39,6 @@ func (h *waitHandler) WaitForContextCancellation(w http.ResponseWriter, r *http.
 			h.retriesDone <- struct{}{}
 			<-r.Context().Done()
 		}
-
 	}
 }
 
@@ -314,4 +313,71 @@ func TestPerRequestWithTimeoutAndWithRetries(t *testing.T) {
 
 	// first call + retries to fail should be the call count
 	assert.Equal(t, retriesToFail+1, handler.GetCallCount())
+}
+
+func TestPerRequestWithContextAndTimeout_CancelledByTimeout(t *testing.T) {
+
+	handler := newWaitHandler(0)
+
+	server := httptest.NewServer(handler)
+	defer server.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// config with context deadline expected error
+	reporter := newExpErrorSuppressor(t,
+		func(message string, args ...interface{}) bool {
+			return strings.HasSuffix(message, "context deadline exceeded")
+		})
+	e := WithConfig(Config{
+		BaseURL:  server.URL,
+		Reporter: reporter,
+	})
+
+	e.GET("/WaitForPerRequestTimeout").
+		WithContext(ctx).
+		WithTimeout(time.Duration(1) * time.Second).
+		Expect()
+
+	// expected error should occur
+	assert.True(t, reporter.expErrorOccurred)
+}
+
+func TestPerRequestWithContextAndTimeout_CancelledByContext(t *testing.T) {
+
+	handler := newWaitHandler(0)
+
+	server := httptest.NewServer(handler)
+	defer server.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// config with context deadline expected error
+	reporter := newExpErrorSuppressor(t,
+		func(message string, args ...interface{}) bool {
+			return strings.HasSuffix(message, "context canceled")
+		})
+	e := WithConfig(Config{
+		BaseURL:  server.URL,
+		Reporter: reporter,
+	})
+
+	done := make(chan struct{})
+
+	go func() {
+		e.GET("/WaitForContextCancellation").
+			WithContext(ctx).
+			WithTimeout(time.Duration(1) * time.Second).
+			Expect()
+		done <- struct{}{}
+	}()
+
+	cancel() // cancel the rest
+
+	<-done
+
+	// expected error should occur
+	assert.True(t, reporter.expErrorOccurred)
 }
