@@ -478,14 +478,15 @@ func (r *Request) WithContext(ctx context.Context) *Request {
 
 // WithTimeout sets a timeout duration for the request.
 //
-// Config.Context or any context set WithContext will be overwritten.
+// Will attach to the request a context.WithTimeout around the Config.Context
+// or any context set WithContext. If these are nil, the new context will be
+// created on top of a context.Background().
 //
 // Any retries will continue after one is cancelled.
 // If the intended behavior is to stop any further retries, use WithContext or
 // Config.Context.
 //
 // Example:
-//
 //  req := NewRequest(config, "GET", "/path")
 //  req.WithTimeout(time.Duration(3)*time.Second)
 //  req.Expect().Status(http.StatusOK)
@@ -1343,9 +1344,8 @@ func (r *Request) retryRequest(reqFunc func() (resp *http.Response, err error)) 
 
 			start = time.Now()
 			resp, err = reqFunc()
+			elapsed = time.Since(start)
 		}()
-
-		elapsed = time.Since(start)
 
 		if resp != nil {
 			for _, printer := range r.config.Printers {
