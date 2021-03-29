@@ -271,7 +271,6 @@ func TestPerRequestContextWithRetries(t *testing.T) {
 }
 
 func TestPerRequestWithTimeout(t *testing.T) {
-
 	handler := newWaitHandler(0)
 
 	server := httptest.NewServer(handler)
@@ -296,7 +295,6 @@ func TestPerRequestWithTimeout(t *testing.T) {
 }
 
 func TestPerRequestWithTimeoutAndWithRetries(t *testing.T) {
-
 	maxRetries := 3
 	retriesToFail := 2
 	handler := newWaitHandler(retriesToFail)
@@ -321,7 +319,6 @@ func TestPerRequestWithTimeoutAndWithRetries(t *testing.T) {
 }
 
 func TestPerRequestWithContextAndTimeout_CancelledByTimeout(t *testing.T) {
-
 	handler := newWaitHandler(0)
 
 	server := httptest.NewServer(handler)
@@ -350,7 +347,6 @@ func TestPerRequestWithContextAndTimeout_CancelledByTimeout(t *testing.T) {
 }
 
 func TestPerRequestWithContextAndTimeout_CancelledByContext(t *testing.T) {
-
 	handler := newWaitHandler(0)
 
 	server := httptest.NewServer(handler)
