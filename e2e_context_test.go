@@ -13,6 +13,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const (
+	TimeOutDuration = 500 * time.Millisecond
+)
+
 type waitHandler struct {
 	mux           *http.ServeMux
 	callCount     int
@@ -26,14 +30,14 @@ func (h *waitHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *waitHandler) WaitForContextCancellation(w http.ResponseWriter, r *http.Request) {
-	h.IncrCallCount()
+	callCount := h.IncrCallCount()
 	// if retries-to-fail are not set then simply wait for the cancellation
 	if h.retriesToFail == 0 {
 		<-r.Context().Done()
 	} else {
 		// if retries-to-fail are set then make sure they are exhausted before
 		// waiting for cancellation
-		if h.GetCallCount() < h.retriesToFail+1 {
+		if callCount < h.retriesToFail+1 {
 			w.WriteHeader(http.StatusInternalServerError)
 		} else {
 			h.retriesDone <- struct{}{}
@@ -43,10 +47,10 @@ func (h *waitHandler) WaitForContextCancellation(w http.ResponseWriter, r *http.
 }
 
 func (h *waitHandler) WaitForPerRequestTimeout(w http.ResponseWriter, r *http.Request) {
-	h.IncrCallCount()
+	callCount := h.IncrCallCount()
 	// if retries-to-fail are not set or not exhausted yet, simply wait for
 	// the timeout
-	if h.retriesToFail == 0 || h.GetCallCount() < h.retriesToFail+1 {
+	if h.retriesToFail == 0 || callCount < h.retriesToFail+1 {
 		<-r.Context().Done()
 	} else {
 		// otherwise succeed
@@ -54,17 +58,18 @@ func (h *waitHandler) WaitForPerRequestTimeout(w http.ResponseWriter, r *http.Re
 	}
 }
 
-func (h *waitHandler) IncrCallCount() {
+func (h *waitHandler) IncrCallCount() int {
 	h.Lock()
+	defer h.Unlock()
 	h.callCount++
-	h.Unlock()
+	r := h.callCount
+	return r
 }
 
 func (h *waitHandler) GetCallCount() int {
 	h.RLock()
-	r := h.callCount
-	h.RUnlock()
-	return r
+	defer h.RUnlock()
+	return h.callCount
 }
 
 func newWaitHandler(retriesToFail int) *waitHandler {
@@ -283,7 +288,7 @@ func TestPerRequestWithTimeout(t *testing.T) {
 	})
 
 	e.GET("/WaitForPerRequestTimeout").
-		WithTimeout(time.Duration(1) * time.Second).
+		WithTimeout(TimeOutDuration).
 		Expect()
 
 	// expected error should occur
@@ -306,7 +311,7 @@ func TestPerRequestWithTimeoutAndWithRetries(t *testing.T) {
 	})
 
 	e.GET("/WaitForPerRequestTimeout").
-		WithTimeout(time.Duration(1) * time.Second).
+		WithTimeout(TimeOutDuration).
 		WithMaxRetries(maxRetries).
 		Expect().
 		Status(http.StatusOK)
@@ -337,7 +342,7 @@ func TestPerRequestWithContextAndTimeout_CancelledByTimeout(t *testing.T) {
 
 	e.GET("/WaitForPerRequestTimeout").
 		WithContext(ctx).
-		WithTimeout(time.Duration(1) * time.Second).
+		WithTimeout(TimeOutDuration).
 		Expect()
 
 	// expected error should occur
@@ -369,7 +374,7 @@ func TestPerRequestWithContextAndTimeout_CancelledByContext(t *testing.T) {
 	go func() {
 		e.GET("/WaitForContextCancellation").
 			WithContext(ctx).
-			WithTimeout(time.Duration(1) * time.Second).
+			WithTimeout(TimeOutDuration).
 			Expect()
 		done <- struct{}{}
 	}()

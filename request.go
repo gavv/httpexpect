@@ -1326,12 +1326,10 @@ func (r *Request) retryRequest(reqFunc func() (resp *http.Response, err error)) 
 			printer.Request(r.http)
 		}
 
-		var start time.Time
-
 		func() {
-			var cancel context.CancelFunc
 			if r.timeout > 0 {
 				var ctx context.Context
+				var cancel context.CancelFunc
 				if r.config.Context != nil {
 					ctx, cancel = context.WithTimeout(r.config.Context, r.timeout)
 				} else {
@@ -1342,7 +1340,7 @@ func (r *Request) retryRequest(reqFunc func() (resp *http.Response, err error)) 
 				r.http = r.http.WithContext(ctx)
 			}
 
-			start = time.Now()
+			start := time.Now()
 			resp, err = reqFunc()
 			elapsed = time.Since(start)
 		}()
