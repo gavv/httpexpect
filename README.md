@@ -585,6 +585,48 @@ e := httpexpect.WithConfig(httpexpect.Config{
 	},
 })
 ```
+##### Global time-out/cancellation
+
+```go
+handler := FruitsHandler()
+
+server := httptest.NewServer(handler)
+defer server.Close()
+
+e := WithConfig(Config{
+  BaseURL:  server.URL,
+  Reporter: httpexpect.NewAssertReporter(t),
+  Context: ctx,
+})
+
+ctx, cancel := context.WithCancel(context.Background())
+
+go func() {
+  time.Sleep(time.Duration(5)*time.Seconds)
+  cancel()
+}()
+
+e.GET("/fruits").
+  Expect().
+  Status(http.StatusOK)
+```
+
+
+##### Per-request time-out 
+
+```go
+e.GET("/fruits").
+  WithTimeout(time.Duration(5)*time.Seconds).
+  Expect().
+  Status(http.StatusOK)
+
+// combined with retries
+e.POST("/fruits").
+  WithMaxRetries(5).
+  WithTimeout(time.Duration(10)*time.Seconds).
+  Expect().
+  Status(http.StatusOK)
+```
 
 ## Similar packages
 
