@@ -7,7 +7,7 @@ import (
 )
 
 func TestObjectFailed(t *testing.T) {
-	chain := makeChain(newMockReporter(t))
+	chain := makeChain(newMockContext(t))
 
 	chain.fail("fail")
 
@@ -39,7 +39,7 @@ func TestObjectFailed(t *testing.T) {
 }
 
 func TestObjectGetters(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
 	m := map[string]interface{}{
 		"foo": 123.0,
@@ -49,7 +49,7 @@ func TestObjectGetters(t *testing.T) {
 		},
 	}
 
-	value := NewObject(reporter, m)
+	value := NewObject(ctx, m)
 
 	keys := []interface{}{"foo", "bar", "baz"}
 
@@ -103,15 +103,15 @@ func TestObjectGetters(t *testing.T) {
 }
 
 func TestObjectEmpty(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value1 := NewObject(reporter, nil)
+	value1 := NewObject(ctx, nil)
 
 	_ = value1
 	value1.chain.assertFailed(t)
 	value1.chain.reset()
 
-	value2 := NewObject(reporter, map[string]interface{}{})
+	value2 := NewObject(ctx, map[string]interface{}{})
 
 	value2.Empty()
 	value2.chain.assertOK(t)
@@ -121,7 +121,7 @@ func TestObjectEmpty(t *testing.T) {
 	value2.chain.assertFailed(t)
 	value2.chain.reset()
 
-	value3 := NewObject(reporter, map[string]interface{}{"": nil})
+	value3 := NewObject(ctx, map[string]interface{}{"": nil})
 
 	value3.Empty()
 	value3.chain.assertFailed(t)
@@ -133,9 +133,9 @@ func TestObjectEmpty(t *testing.T) {
 }
 
 func TestObjectEqualEmpty(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewObject(reporter, map[string]interface{}{})
+	value := NewObject(ctx, map[string]interface{}{})
 
 	assert.Equal(t, map[string]interface{}{}, value.Raw())
 
@@ -157,9 +157,9 @@ func TestObjectEqualEmpty(t *testing.T) {
 }
 
 func TestObjectEqual(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewObject(reporter, map[string]interface{}{"foo": 123.0})
+	value := NewObject(ctx, map[string]interface{}{"foo": 123.0})
 
 	assert.Equal(t, map[string]interface{}{"foo": 123.0}, value.Raw())
 
@@ -205,9 +205,9 @@ func TestObjectEqual(t *testing.T) {
 }
 
 func TestObjectEqualStruct(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewObject(reporter, map[string]interface{}{
+	value := NewObject(ctx, map[string]interface{}{
 		"foo": 123,
 		"bar": map[string]interface{}{
 			"baz": []interface{}{true, false},
@@ -250,9 +250,9 @@ func TestObjectEqualStruct(t *testing.T) {
 }
 
 func TestObjectContainsKey(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewObject(reporter, map[string]interface{}{"foo": 123, "bar": ""})
+	value := NewObject(ctx, map[string]interface{}{"foo": 123, "bar": ""})
 
 	value.ContainsKey("foo")
 	value.chain.assertOK(t)
@@ -280,9 +280,9 @@ func TestObjectContainsKey(t *testing.T) {
 }
 
 func TestObjectContainsMapSuccess(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewObject(reporter, map[string]interface{}{
+	value := NewObject(ctx, map[string]interface{}{
 		"foo": 123,
 		"bar": []interface{}{"456", 789},
 		"baz": map[string]interface{}{
@@ -325,9 +325,9 @@ func TestObjectContainsMapSuccess(t *testing.T) {
 }
 
 func TestObjectContainsMapFailed(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewObject(reporter, map[string]interface{}{
+	value := NewObject(ctx, map[string]interface{}{
 		"foo": 123,
 		"bar": []interface{}{"456", 789},
 		"baz": map[string]interface{}{
@@ -391,9 +391,9 @@ func TestObjectContainsMapFailed(t *testing.T) {
 }
 
 func TestObjectContainsMapStruct(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewObject(reporter, map[string]interface{}{
+	value := NewObject(ctx, map[string]interface{}{
 		"foo": 123,
 		"bar": []interface{}{"456", 789},
 		"baz": map[string]interface{}{
@@ -446,9 +446,9 @@ func TestObjectContainsMapStruct(t *testing.T) {
 }
 
 func TestObjectValueEqual(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewObject(reporter, map[string]interface{}{
+	value := NewObject(ctx, map[string]interface{}{
 		"foo": 123,
 		"bar": []interface{}{"456", 789},
 		"baz": map[string]interface{}{
@@ -498,9 +498,9 @@ func TestObjectValueEqual(t *testing.T) {
 }
 
 func TestObjectValueEqualStruct(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewObject(reporter, map[string]interface{}{
+	value := NewObject(ctx, map[string]interface{}{
 		"foo": 123,
 		"bar": []interface{}{"456", 789},
 		"baz": map[string]interface{}{
@@ -552,9 +552,9 @@ func TestObjectConvertEqual(t *testing.T) {
 		myInt int
 	)
 
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewObject(reporter, map[string]interface{}{"foo": 123})
+	value := NewObject(ctx, map[string]interface{}{"foo": 123})
 
 	value.Equal(map[string]interface{}{"foo": "123"})
 	value.chain.assertFailed(t)
@@ -596,9 +596,9 @@ func TestObjectConvertContainsMap(t *testing.T) {
 		myInt   int
 	)
 
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewObject(reporter, map[string]interface{}{
+	value := NewObject(ctx, map[string]interface{}{
 		"foo": 123,
 		"bar": []interface{}{"456", 789},
 		"baz": map[string]interface{}{
@@ -627,9 +627,9 @@ func TestObjectConvertValueEqual(t *testing.T) {
 		myInt   int
 	)
 
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewObject(reporter, map[string]interface{}{
+	value := NewObject(ctx, map[string]interface{}{
 		"foo": 123,
 		"bar": []interface{}{"456", 789},
 		"baz": map[string]interface{}{

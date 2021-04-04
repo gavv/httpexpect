@@ -56,14 +56,14 @@ type Response struct {
 // If rtt is given, it defines response round-trip time to be reported
 // by response.RoundTripTime().
 func NewResponse(
-	reporter Reporter, response *http.Response, rtt ...time.Duration,
+	ctx *Context, response *http.Response, rtt ...time.Duration,
 ) *Response {
 	var rttPtr *time.Duration
 	if len(rtt) > 0 {
 		rttPtr = &rtt[0]
 	}
 	return makeResponse(responseOpts{
-		chain:    makeChain(reporter),
+		chain:    makeChain(ctx),
 		response: response,
 		rtt:      rttPtr,
 	})

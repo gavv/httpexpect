@@ -64,7 +64,7 @@ type Request struct {
 // After interpolation, path is urlencoded and appended to Config.BaseURL,
 // separated by slash. If BaseURL ends with a slash and path (after interpolation)
 // starts with a slash, only single slash is inserted.
-func NewRequest(config Config, method, path string, pathargs ...interface{}) *Request {
+func NewRequest(config Config, ctx *Context, method, path string, pathargs ...interface{}) *Request {
 	if config.RequestFactory == nil {
 		panic("config.RequestFactory == nil")
 	}
@@ -73,7 +73,7 @@ func NewRequest(config Config, method, path string, pathargs ...interface{}) *Re
 		panic("config.Client == nil")
 	}
 
-	chain := makeChain(config.Reporter)
+	chain := makeChain(ctx) // FIXME: pass context
 
 	n := 0
 	path, err := interpol.WithFunc(path, func(k string, w io.Writer) error {

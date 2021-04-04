@@ -79,7 +79,7 @@ import (
 // to construct Request objects.
 type Expect struct {
 	config   Config
-	context  Context
+	context  *Context
 	builders []func(*Request)
 	matchers []func(*Response)
 }
@@ -323,7 +323,7 @@ func WithConfig(config Config) *Expect {
 	}
 	return &Expect{
 		config: config,
-		context: Context{
+		context: &Context{
 			TestName:  "",
 			Request:   nil,
 			Response:  nil,
@@ -403,8 +403,8 @@ func (e *Expect) Matcher(matcher func(*Response)) *Expect {
 // After creating request, all builders attached to Expect object are invoked.
 // See Builder.
 func (e *Expect) Request(method, path string, pathargs ...interface{}) *Request {
-	req := NewRequest(e.config, method, path, pathargs...)
-	req.withContext(&e.context)
+	req := NewRequest(e.config, e.context, method, path, pathargs...)
+	req.withContext(e.context)
 	e.context.Request = req
 
 	for _, builder := range e.builders {
@@ -460,25 +460,25 @@ func (e *Expect) Value(value interface{}) *Value {
 
 // Object is a shorthand for NewObject(e.config.Reporter, value).
 func (e *Expect) Object(value map[string]interface{}) *Object {
-	return NewObject(e.config.Reporter, value)
+	return NewObject(e.context, value)
 }
 
 // Array is a shorthand for NewArray(e.config.Reporter, value).
 func (e *Expect) Array(value []interface{}) *Array {
-	return NewArray(e.config.Reporter, value)
+	return NewArray(e.context, value)
 }
 
 // String is a shorthand for NewString(e.config.Reporter, value).
 func (e *Expect) String(value string) *String {
-	return NewString(e.config.Reporter, value)
+	return NewString(e.context, value)
 }
 
 // Number is a shorthand for NewNumber(e.config.Reporter, value).
 func (e *Expect) Number(value float64) *Number {
-	return NewNumber(e.config.Reporter, value)
+	return NewNumber(e.context, value)
 }
 
 // Boolean is a shorthand for NewBoolean(e.config.Reporter, value).
 func (e *Expect) Boolean(value bool) *Boolean {
-	return NewBoolean(e.config.Reporter, value)
+	return NewBoolean(e.context, value)
 }

@@ -21,8 +21,8 @@ type DateTime struct {
 //
 //   time.Sleep(time.Second)
 //   dt.Lt(time.Now())
-func NewDateTime(reporter Reporter, value time.Time) *DateTime {
-	return &DateTime{makeChain(reporter), value}
+func NewDateTime(ctx *Context, value time.Time) *DateTime {
+	return &DateTime{makeChain(ctx), value}
 }
 
 // Raw returns underlying time.Time value attached to DateTime.

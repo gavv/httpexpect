@@ -7,7 +7,7 @@ import (
 )
 
 func TestChainFail(t *testing.T) {
-	chain := makeChain(newMockReporter(t))
+	chain := makeChain(newMockContext(t))
 
 	assert.False(t, chain.failed())
 
@@ -19,7 +19,7 @@ func TestChainFail(t *testing.T) {
 }
 
 func TestChainCopy(t *testing.T) {
-	chain1 := makeChain(newMockReporter(t))
+	chain1 := makeChain(newMockContext(t))
 	chain2 := chain1
 
 	assert.False(t, chain1.failed())
@@ -37,7 +37,7 @@ func TestChainCopy(t *testing.T) {
 }
 
 func TestChainReport(t *testing.T) {
-	r0 := newMockReporter(t)
+	r0 := newMockContext(t)
 
 	chain := makeChain(r0)
 
@@ -52,7 +52,7 @@ func TestChainReport(t *testing.T) {
 	assert.False(t, chain.failed())
 
 	chain.fail("fail")
-	assert.True(t, r0.reported)
+	assert.True(t, r0.Reporter.(*mockReporter).reported)
 
 	r2 := newMockReporter(t)
 

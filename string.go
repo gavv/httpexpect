@@ -21,8 +21,8 @@ type String struct {
 //
 // Example:
 //  str := NewString(t, "Hello")
-func NewString(reporter Reporter, value string) *String {
-	return &String{makeChain(reporter), value}
+func NewString(ctx *Context, value string) *String {
+	return &String{makeChain(ctx), value}
 }
 
 // Raw returns underlying value attached to String.

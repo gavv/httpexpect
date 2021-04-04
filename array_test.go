@@ -7,7 +7,7 @@ import (
 )
 
 func TestArrayFailed(t *testing.T) {
-	chain := makeChain(newMockReporter(t))
+	chain := makeChain(newMockContext(t))
 
 	chain.fail("fail")
 
@@ -39,11 +39,11 @@ func TestArrayFailed(t *testing.T) {
 }
 
 func TestArrayGetters(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
 	a := []interface{}{"foo", 123.0}
 
-	value := NewArray(reporter, a)
+	value := NewArray(ctx, a)
 
 	assert.Equal(t, a, value.Raw())
 	value.chain.assertOK(t)
@@ -86,15 +86,15 @@ func TestArrayGetters(t *testing.T) {
 }
 
 func TestArrayEmpty(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value1 := NewArray(reporter, nil)
+	value1 := NewArray(ctx, nil)
 
 	_ = value1
 	value1.chain.assertFailed(t)
 	value1.chain.reset()
 
-	value2 := NewArray(reporter, []interface{}{})
+	value2 := NewArray(ctx, []interface{}{})
 
 	value2.Empty()
 	value2.chain.assertOK(t)
@@ -104,7 +104,7 @@ func TestArrayEmpty(t *testing.T) {
 	value2.chain.assertFailed(t)
 	value2.chain.reset()
 
-	value3 := NewArray(reporter, []interface{}{""})
+	value3 := NewArray(ctx, []interface{}{""})
 
 	value3.Empty()
 	value3.chain.assertFailed(t)
@@ -116,9 +116,9 @@ func TestArrayEmpty(t *testing.T) {
 }
 
 func TestArrayEqualEmpty(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewArray(reporter, []interface{}{})
+	value := NewArray(ctx, []interface{}{})
 
 	assert.Equal(t, []interface{}{}, value.Raw())
 
@@ -140,9 +140,9 @@ func TestArrayEqualEmpty(t *testing.T) {
 }
 
 func TestArrayEqualNotEmpty(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewArray(reporter, []interface{}{"foo", "bar"})
+	value := NewArray(ctx, []interface{}{"foo", "bar"})
 
 	assert.Equal(t, []interface{}{"foo", "bar"}, value.Raw())
 
@@ -180,11 +180,11 @@ func TestArrayEqualNotEmpty(t *testing.T) {
 }
 
 func TestArrayEqualTypes(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value1 := NewArray(reporter, []interface{}{"foo", "bar"})
-	value2 := NewArray(reporter, []interface{}{123, 456})
-	value3 := NewArray(reporter, []interface{}{
+	value1 := NewArray(ctx, []interface{}{"foo", "bar"})
+	value2 := NewArray(ctx, []interface{}{123, 456})
+	value3 := NewArray(ctx, []interface{}{
 		map[string]interface{}{
 			"foo": 123,
 		},
@@ -247,9 +247,9 @@ func TestArrayEqualTypes(t *testing.T) {
 }
 
 func TestArrayElements(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewArray(reporter, []interface{}{123, "foo"})
+	value := NewArray(ctx, []interface{}{123, "foo"})
 
 	value.Elements(123)
 	value.chain.assertFailed(t)
@@ -273,9 +273,9 @@ func TestArrayElements(t *testing.T) {
 }
 
 func TestArrayContains(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewArray(reporter, []interface{}{123, "foo"})
+	value := NewArray(ctx, []interface{}{123, "foo"})
 
 	value.Contains(123)
 	value.chain.assertOK(t)
@@ -323,9 +323,9 @@ func TestArrayContains(t *testing.T) {
 }
 
 func TestArrayContainsOnly(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewArray(reporter, []interface{}{123, "foo"})
+	value := NewArray(ctx, []interface{}{123, "foo"})
 
 	value.ContainsOnly(123)
 	value.chain.assertFailed(t)
@@ -354,9 +354,9 @@ func TestArrayConvertEqual(t *testing.T) {
 		myInt   int
 	)
 
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewArray(reporter, []interface{}{123, 456})
+	value := NewArray(ctx, []interface{}{123, 456})
 
 	assert.Equal(t, []interface{}{123.0, 456.0}, value.Raw())
 
@@ -390,9 +390,9 @@ func TestArrayConvertElements(t *testing.T) {
 		myInt int
 	)
 
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewArray(reporter, []interface{}{123, 456})
+	value := NewArray(ctx, []interface{}{123, 456})
 
 	assert.Equal(t, []interface{}{123.0, 456.0}, value.Raw())
 
@@ -410,9 +410,9 @@ func TestArrayConvertContains(t *testing.T) {
 		myInt int
 	)
 
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewArray(reporter, []interface{}{123, 456})
+	value := NewArray(ctx, []interface{}{123, 456})
 
 	assert.Equal(t, []interface{}{123.0, 456.0}, value.Raw())
 

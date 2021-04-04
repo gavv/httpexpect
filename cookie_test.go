@@ -10,7 +10,7 @@ import (
 )
 
 func TestCookieFailed(t *testing.T) {
-	chain := makeChain(newMockReporter(t))
+	chain := makeChain(newMockContext(t))
 
 	chain.fail("fail")
 
@@ -26,11 +26,11 @@ func TestCookieFailed(t *testing.T) {
 }
 
 func TestCookieGetters(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	NewCookie(reporter, nil).chain.assertFailed(t)
+	NewCookie(ctx, nil).chain.assertFailed(t)
 
-	value := NewCookie(reporter, &http.Cookie{
+	value := NewCookie(ctx, &http.Cookie{
 		Name:    "name",
 		Value:   "value",
 		Domain:  "example.com",
@@ -59,10 +59,10 @@ func TestCookieGetters(t *testing.T) {
 }
 
 func TestCookieMaxAge(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
 	t.Run("unset", func(t *testing.T) {
-		value := NewCookie(reporter, &http.Cookie{
+		value := NewCookie(ctx, &http.Cookie{
 			MaxAge: 0,
 		})
 
@@ -75,7 +75,7 @@ func TestCookieMaxAge(t *testing.T) {
 	})
 
 	t.Run("zero", func(t *testing.T) {
-		value := NewCookie(reporter, &http.Cookie{
+		value := NewCookie(ctx, &http.Cookie{
 			MaxAge: -1,
 		})
 
@@ -89,7 +89,7 @@ func TestCookieMaxAge(t *testing.T) {
 	})
 
 	t.Run("non-zero", func(t *testing.T) {
-		value := NewCookie(reporter, &http.Cookie{
+		value := NewCookie(ctx, &http.Cookie{
 			MaxAge: 3,
 		})
 

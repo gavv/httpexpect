@@ -11,7 +11,7 @@ import (
 )
 
 func TestValueFailed(t *testing.T) {
-	chain := makeChain(newMockReporter(t))
+	chain := makeChain(newMockContext(t))
 
 	chain.fail("fail")
 

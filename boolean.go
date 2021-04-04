@@ -14,8 +14,8 @@ type Boolean struct {
 //
 // Example:
 //  boolean := NewBoolean(t, true)
-func NewBoolean(reporter Reporter, value bool) *Boolean {
-	return &Boolean{makeChain(reporter), value}
+func NewBoolean(ctx *Context, value bool) *Boolean {
+	return &Boolean{makeChain(ctx), value}
 }
 
 // Raw returns underlying value attached to Boolean.

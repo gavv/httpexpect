@@ -7,7 +7,7 @@ import (
 )
 
 func TestMatchFailed(t *testing.T) {
-	chain := makeChain(newMockReporter(t))
+	chain := makeChain(newMockContext(t))
 
 	chain.fail("fail")
 
@@ -30,12 +30,12 @@ func TestMatchFailed(t *testing.T) {
 }
 
 func TestMatchGetters(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
 	matches := []string{"m0", "m1", "m2"}
 	names := []string{"", "n1", "n2"}
 
-	value := NewMatch(reporter, matches, names)
+	value := NewMatch(ctx, matches, names)
 
 	assert.Equal(t, matches, value.Raw())
 
@@ -68,11 +68,11 @@ func TestMatchGetters(t *testing.T) {
 }
 
 func TestMatchEmpty(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value1 := NewMatch(reporter, []string{"m"}, nil)
-	value2 := NewMatch(reporter, []string{}, nil)
-	value3 := NewMatch(reporter, nil, nil)
+	value1 := NewMatch(ctx, []string{"m"}, nil)
+	value2 := NewMatch(ctx, []string{}, nil)
+	value3 := NewMatch(ctx, nil, nil)
 
 	assert.Equal(t, []string{}, value2.Raw())
 	assert.Equal(t, []string{}, value3.Raw())
@@ -103,9 +103,9 @@ func TestMatchEmpty(t *testing.T) {
 }
 
 func TestMatchValues(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewMatch(reporter, []string{"m0", "m1", "m2"}, nil)
+	value := NewMatch(ctx, []string{"m0", "m1", "m2"}, nil)
 
 	value.Values("m1", "m2")
 	value.chain.assertOK(t)
@@ -141,11 +141,11 @@ func TestMatchValues(t *testing.T) {
 }
 
 func TestMatchValuesEmpty(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value1 := NewMatch(reporter, nil, nil)
-	value2 := NewMatch(reporter, []string{}, nil)
-	value3 := NewMatch(reporter, []string{"m0"}, nil)
+	value1 := NewMatch(ctx, nil, nil)
+	value2 := NewMatch(ctx, []string{}, nil)
+	value3 := NewMatch(ctx, []string{"m0"}, nil)
 
 	value1.Values()
 	value1.chain.assertOK(t)

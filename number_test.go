@@ -8,7 +8,7 @@ import (
 )
 
 func TestNumberFailed(t *testing.T) {
-	chain := makeChain(newMockReporter(t))
+	chain := makeChain(newMockContext(t))
 
 	chain.fail("fail")
 
@@ -29,9 +29,9 @@ func TestNumberFailed(t *testing.T) {
 }
 
 func TestNumberGetters(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewNumber(reporter, 123.0)
+	value := NewNumber(ctx, 123.0)
 
 	assert.Equal(t, 123.0, value.Raw())
 	value.chain.assertOK(t)
@@ -51,9 +51,9 @@ func TestNumberGetters(t *testing.T) {
 }
 
 func TestNumberEqual(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewNumber(reporter, 1234)
+	value := NewNumber(ctx, 1234)
 
 	assert.Equal(t, 1234, int(value.Raw()))
 
@@ -75,9 +75,9 @@ func TestNumberEqual(t *testing.T) {
 }
 
 func TestNumberEqualDelta(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewNumber(reporter, 1234.5)
+	value := NewNumber(ctx, 1234.5)
 
 	value.EqualDelta(1234.3, 0.3)
 	value.chain.assertOK(t)
@@ -113,45 +113,45 @@ func TestNumberEqualDelta(t *testing.T) {
 }
 
 func TestNumberEqualNaN(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	v1 := NewNumber(reporter, math.NaN())
+	v1 := NewNumber(ctx, math.NaN())
 	v1.Equal(1234.5)
 	v1.chain.assertFailed(t)
 
-	v2 := NewNumber(reporter, 1234.5)
+	v2 := NewNumber(ctx, 1234.5)
 	v2.Equal(math.NaN())
 	v2.chain.assertFailed(t)
 
-	v3 := NewNumber(reporter, math.NaN())
+	v3 := NewNumber(ctx, math.NaN())
 	v3.EqualDelta(1234.0, 0.1)
 	v3.chain.assertFailed(t)
 
-	v4 := NewNumber(reporter, 1234.5)
+	v4 := NewNumber(ctx, 1234.5)
 	v4.EqualDelta(math.NaN(), 0.1)
 	v4.chain.assertFailed(t)
 
-	v5 := NewNumber(reporter, 1234.5)
+	v5 := NewNumber(ctx, 1234.5)
 	v5.EqualDelta(1234.5, math.NaN())
 	v5.chain.assertFailed(t)
 
-	v6 := NewNumber(reporter, math.NaN())
+	v6 := NewNumber(ctx, math.NaN())
 	v6.NotEqualDelta(1234.0, 0.1)
 	v6.chain.assertFailed(t)
 
-	v7 := NewNumber(reporter, 1234.5)
+	v7 := NewNumber(ctx, 1234.5)
 	v7.NotEqualDelta(math.NaN(), 0.1)
 	v7.chain.assertFailed(t)
 
-	v8 := NewNumber(reporter, 1234.5)
+	v8 := NewNumber(ctx, 1234.5)
 	v8.NotEqualDelta(1234.5, math.NaN())
 	v8.chain.assertFailed(t)
 }
 
 func TestNumberGreater(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewNumber(reporter, 1234)
+	value := NewNumber(ctx, 1234)
 
 	value.Gt(1234 - 1)
 	value.chain.assertOK(t)
@@ -175,9 +175,9 @@ func TestNumberGreater(t *testing.T) {
 }
 
 func TestNumberLesser(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewNumber(reporter, 1234)
+	value := NewNumber(ctx, 1234)
 
 	value.Lt(1234 + 1)
 	value.chain.assertOK(t)
@@ -201,9 +201,9 @@ func TestNumberLesser(t *testing.T) {
 }
 
 func TestNumberInRange(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewNumber(reporter, 1234)
+	value := NewNumber(ctx, 1234)
 
 	value.InRange(1234, 1234)
 	value.chain.assertOK(t)
@@ -231,9 +231,9 @@ func TestNumberInRange(t *testing.T) {
 }
 
 func TestNumberConvertEqual(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewNumber(reporter, 1234)
+	value := NewNumber(ctx, 1234)
 
 	value.Equal(int64(1234))
 	value.chain.assertOK(t)
@@ -261,9 +261,9 @@ func TestNumberConvertEqual(t *testing.T) {
 }
 
 func TestNumberConvertGreater(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewNumber(reporter, 1234)
+	value := NewNumber(ctx, 1234)
 
 	value.Gt(int64(1233))
 	value.chain.assertOK(t)
@@ -291,9 +291,9 @@ func TestNumberConvertGreater(t *testing.T) {
 }
 
 func TestNumberConvertLesser(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewNumber(reporter, 1234)
+	value := NewNumber(ctx, 1234)
 
 	value.Lt(int64(1235))
 	value.chain.assertOK(t)
@@ -321,9 +321,9 @@ func TestNumberConvertLesser(t *testing.T) {
 }
 
 func TestNumberConvertInRange(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewNumber(reporter, 1234)
+	value := NewNumber(ctx, 1234)
 
 	value.InRange(int64(1233), float32(1235))
 	value.chain.assertOK(t)

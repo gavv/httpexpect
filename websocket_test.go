@@ -7,7 +7,7 @@ import (
 )
 
 func TestWebsocketFailed(t *testing.T) {
-	chain := makeChain(newMockReporter(t))
+	chain := makeChain(newMockContext(t))
 
 	chain.fail("fail")
 
@@ -45,7 +45,7 @@ func TestWebsocketNil(t *testing.T) {
 		Reporter: newMockReporter(t),
 	}
 
-	ws := NewWebsocket(config, nil)
+	ws := NewWebsocket(config, &Context{Reporter: config.Reporter}, nil)
 
 	msg := ws.Expect()
 	msg.chain.assertFailed(t)

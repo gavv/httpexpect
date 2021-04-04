@@ -30,9 +30,14 @@ func newMockReporter(t *testing.T) *mockReporter {
 	return &mockReporter{t, false}
 }
 
+func newMockContext(t *testing.T) *Context {
+	return &Context{Reporter: newMockReporter(t)}
+}
 
-func newMockContext(t *testing.T) Context {
-	return Context{Reporter: newMockReporter(t)}
+func newMockContextAndReporter(t *testing.T) (*Context, *mockReporter){
+	ctx := newMockContext(t)
+	rep := ctx.Reporter.(*mockReporter)
+	return ctx, rep
 }
 
 func (r *mockReporter) Errorf(message string, args ...interface{}) {

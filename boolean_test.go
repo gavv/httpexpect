@@ -7,7 +7,7 @@ import (
 )
 
 func TestBooleanFailed(t *testing.T) {
-	chain := makeChain(newMockReporter(t))
+	chain := makeChain(newMockContext(t))
 
 	chain.fail("fail")
 
@@ -25,9 +25,9 @@ func TestBooleanFailed(t *testing.T) {
 }
 
 func TestBooleanGetters(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewBoolean(reporter, true)
+	value := NewBoolean(ctx, true)
 
 	assert.Equal(t, true, value.Raw())
 	value.chain.assertOK(t)
@@ -47,9 +47,9 @@ func TestBooleanGetters(t *testing.T) {
 }
 
 func TestBooleanTrue(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewBoolean(reporter, true)
+	value := NewBoolean(ctx, true)
 
 	assert.Equal(t, true, value.Raw())
 
@@ -79,9 +79,9 @@ func TestBooleanTrue(t *testing.T) {
 }
 
 func TestBooleanFalse(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewBoolean(reporter, false)
+	value := NewBoolean(ctx, false)
 
 	assert.Equal(t, false, value.Raw())
 

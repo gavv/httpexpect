@@ -19,8 +19,8 @@ type Array struct {
 //
 // Example:
 //  array := NewArray(t, []interface{}{"foo", 123})
-func NewArray(reporter Reporter, value []interface{}) *Array {
-	chain := makeChain(reporter)
+func NewArray(ctx *Context, value []interface{}) *Array {
+	chain := makeChain(ctx)
 	if value == nil {
 		chain.fail("expected non-nil array value")
 	} else {

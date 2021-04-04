@@ -8,7 +8,7 @@ import (
 )
 
 func TestStringFailed(t *testing.T) {
-	chain := makeChain(newMockReporter(t))
+	chain := makeChain(newMockContext(t))
 
 	chain.fail("fail")
 
@@ -31,9 +31,9 @@ func TestStringFailed(t *testing.T) {
 }
 
 func TestStringGetters(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewString(reporter, "foo")
+	value := NewString(ctx, "foo")
 
 	assert.Equal(t, "foo", value.Raw())
 	value.chain.assertOK(t)
@@ -53,9 +53,9 @@ func TestStringGetters(t *testing.T) {
 }
 
 func TestStringEmpty(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value1 := NewString(reporter, "")
+	value1 := NewString(ctx, "")
 
 	value1.Empty()
 	value1.chain.assertOK(t)
@@ -65,7 +65,7 @@ func TestStringEmpty(t *testing.T) {
 	value1.chain.assertFailed(t)
 	value1.chain.reset()
 
-	value2 := NewString(reporter, "a")
+	value2 := NewString(ctx, "a")
 
 	value2.Empty()
 	value2.chain.assertFailed(t)
@@ -77,9 +77,9 @@ func TestStringEmpty(t *testing.T) {
 }
 
 func TestStringEqual(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewString(reporter, "foo")
+	value := NewString(ctx, "foo")
 
 	assert.Equal(t, "foo", value.Raw())
 
@@ -101,9 +101,9 @@ func TestStringEqual(t *testing.T) {
 }
 
 func TestStringEqualFold(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewString(reporter, "foo")
+	value := NewString(ctx, "foo")
 
 	value.EqualFold("foo")
 	value.chain.assertOK(t)
@@ -131,9 +131,9 @@ func TestStringEqualFold(t *testing.T) {
 }
 
 func TestStringContains(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewString(reporter, "11-foo-22")
+	value := NewString(ctx, "11-foo-22")
 
 	value.Contains("foo")
 	value.chain.assertOK(t)
@@ -153,9 +153,9 @@ func TestStringContains(t *testing.T) {
 }
 
 func TestStringContainsFold(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewString(reporter, "11-foo-22")
+	value := NewString(ctx, "11-foo-22")
 
 	value.ContainsFold("foo")
 	value.chain.assertOK(t)
@@ -183,9 +183,9 @@ func TestStringContainsFold(t *testing.T) {
 }
 
 func TestStringLength(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewString(reporter, "1234567")
+	value := NewString(ctx, "1234567")
 
 	num := value.Length()
 	value.chain.assertOK(t)
@@ -194,21 +194,21 @@ func TestStringLength(t *testing.T) {
 }
 
 func TestStringDateTime(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value1 := NewString(reporter, "Tue, 15 Nov 1994 08:12:31 GMT")
+	value1 := NewString(ctx, "Tue, 15 Nov 1994 08:12:31 GMT")
 	dt1 := value1.DateTime()
 	value1.chain.assertOK(t)
 	dt1.chain.assertOK(t)
 	assert.True(t, time.Date(1994, 11, 15, 8, 12, 31, 0, time.UTC).Equal(dt1.Raw()))
 
-	value2 := NewString(reporter, "15 Nov 94 08:12 GMT")
+	value2 := NewString(ctx, "15 Nov 94 08:12 GMT")
 	dt2 := value2.DateTime(time.RFC822)
 	value2.chain.assertOK(t)
 	dt2.chain.assertOK(t)
 	assert.True(t, time.Date(1994, 11, 15, 8, 12, 0, 0, time.UTC).Equal(dt2.Raw()))
 
-	value3 := NewString(reporter, "bad")
+	value3 := NewString(ctx, "bad")
 	dt3 := value3.DateTime()
 	value3.chain.assertFailed(t)
 	dt3.chain.assertFailed(t)
@@ -216,9 +216,9 @@ func TestStringDateTime(t *testing.T) {
 }
 
 func TestStringMatchOne(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewString(reporter, "http://example.com/users/john")
+	value := NewString(ctx, "http://example.com/users/john")
 
 	m1 := value.Match(`http://(?P<host>.+)/users/(?P<user>.+)`)
 	m1.chain.assertOK(t)
@@ -236,9 +236,9 @@ func TestStringMatchOne(t *testing.T) {
 }
 
 func TestStringMatchAll(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewString(reporter,
+	value := NewString(ctx,
 		"http://example.com/users/john http://example.com/users/bob")
 
 	m := value.MatchAll(`http://(\S+)/users/(\S+)`)
@@ -258,9 +258,9 @@ func TestStringMatchAll(t *testing.T) {
 }
 
 func TestStringMatchStatus(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewString(reporter, "a")
+	value := NewString(ctx, "a")
 
 	value.Match(`a`)
 	value.chain.assertOK(t)
@@ -291,9 +291,9 @@ func TestStringMatchStatus(t *testing.T) {
 }
 
 func TestStringMatchInvalid(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	value := NewString(reporter, "a")
+	value := NewString(ctx, "a")
 
 	value.Match(`[`)
 	value.chain.assertFailed(t)

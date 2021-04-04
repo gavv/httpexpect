@@ -30,8 +30,8 @@ type Match struct {
 //
 //   m.Name("host").Equal("example.com")
 //   m.Name("user").Equal("john")
-func NewMatch(reporter Reporter, submatches []string, names []string) *Match {
-	return makeMatch(makeChain(reporter), submatches, names)
+func NewMatch(ctx *Context, submatches []string, names []string) *Match {
+	return makeMatch(makeChain(ctx), submatches, names)
 }
 
 func makeMatch(chain chain, submatches []string, names []string) *Match {

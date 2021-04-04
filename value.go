@@ -35,8 +35,8 @@ type Value struct {
 //
 //  value := NewValue(t, nil)
 //  value.Null()
-func NewValue(ctx Context, value interface{}) *Value {
-	chain := makeChain(ctx.Reporter)
+func NewValue(ctx *Context, value interface{}) *Value {
+	chain := makeChain(ctx)
 	if value != nil {
 		value, _ = canonValue(&chain, value)
 	}

@@ -12,7 +12,7 @@ import (
 )
 
 func TestResponseFailed(t *testing.T) {
-	chain := makeChain(newMockReporter(t))
+	chain := makeChain(newMockContext(t))
 
 	chain.fail("fail")
 
@@ -47,12 +47,12 @@ func TestResponseFailed(t *testing.T) {
 }
 
 func TestResponseRoundTripTime(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
 	t.Run("set", func(t *testing.T) {
 		duration := time.Second
 
-		resp := NewResponse(reporter, &http.Response{}, duration)
+		resp := NewResponse(ctx, &http.Response{}, duration)
 		resp.chain.assertOK(t)
 		resp.chain.reset()
 
@@ -66,7 +66,7 @@ func TestResponseRoundTripTime(t *testing.T) {
 	})
 
 	t.Run("unset", func(t *testing.T) {
-		resp := NewResponse(reporter, &http.Response{})
+		resp := NewResponse(ctx, &http.Response{})
 		resp.chain.assertOK(t)
 		resp.chain.reset()
 
@@ -83,12 +83,12 @@ func TestResponseRoundTripTime(t *testing.T) {
 }
 
 func TestResponseDuration(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
 	t.Run("set", func(t *testing.T) {
 		duration := time.Second
 
-		resp := NewResponse(reporter, &http.Response{}, duration)
+		resp := NewResponse(ctx, &http.Response{}, duration)
 		resp.chain.assertOK(t)
 		resp.chain.reset()
 
@@ -100,7 +100,7 @@ func TestResponseDuration(t *testing.T) {
 	})
 
 	t.Run("unset", func(t *testing.T) {
-		resp := NewResponse(reporter, &http.Response{})
+		resp := NewResponse(ctx, &http.Response{})
 		resp.chain.assertOK(t)
 		resp.chain.reset()
 
@@ -113,7 +113,7 @@ func TestResponseDuration(t *testing.T) {
 }
 
 func TestResponseStatusRange(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
 	ranges := []StatusRange{
 		Status1xx,
@@ -143,7 +143,7 @@ func TestResponseStatusRange(t *testing.T) {
 
 	for _, test := range cases {
 		for _, r := range ranges {
-			resp := NewResponse(reporter, &http.Response{
+			resp := NewResponse(ctx, &http.Response{
 				StatusCode: test.Status,
 			})
 
@@ -159,7 +159,7 @@ func TestResponseStatusRange(t *testing.T) {
 }
 
 func TestResponseHeaders(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
 	headers := map[string][]string{
 		"First-Header":  {"foo"},
@@ -172,7 +172,7 @@ func TestResponseHeaders(t *testing.T) {
 		Body:       nil,
 	}
 
-	resp := NewResponse(reporter, httpResp)
+	resp := NewResponse(ctx, httpResp)
 	resp.chain.assertOK(t)
 	resp.chain.reset()
 
@@ -198,7 +198,7 @@ func TestResponseHeaders(t *testing.T) {
 }
 
 func TestResponseCookies(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
 	headers := map[string][]string{
 		"Set-Cookie": {
@@ -214,7 +214,7 @@ func TestResponseCookies(t *testing.T) {
 		Body:       nil,
 	}
 
-	resp := NewResponse(reporter, httpResp)
+	resp := NewResponse(ctx, httpResp)
 	resp.chain.assertOK(t)
 	resp.chain.reset()
 
@@ -244,7 +244,7 @@ func TestResponseCookies(t *testing.T) {
 }
 
 func TestResponseNoCookies(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
 	httpResp := &http.Response{
 		StatusCode: http.StatusOK,
@@ -252,7 +252,7 @@ func TestResponseNoCookies(t *testing.T) {
 		Body:       nil,
 	}
 
-	resp := NewResponse(reporter, httpResp)
+	resp := NewResponse(ctx, httpResp)
 	resp.chain.assertOK(t)
 	resp.chain.reset()
 
@@ -266,14 +266,14 @@ func TestResponseNoCookies(t *testing.T) {
 }
 
 func TestResponseBody(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
 	httpResp := &http.Response{
 		StatusCode: http.StatusOK,
 		Body:       ioutil.NopCloser(bytes.NewBufferString("body")),
 	}
 
-	resp := NewResponse(reporter, httpResp)
+	resp := NewResponse(ctx, httpResp)
 
 	assert.Equal(t, "body", resp.Body().Raw())
 	resp.chain.assertOK(t)
@@ -281,7 +281,7 @@ func TestResponseBody(t *testing.T) {
 }
 
 func TestResponseNoContentEmpty(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
 	headers := map[string][]string{
 		"Content-Type": {""},
@@ -293,7 +293,7 @@ func TestResponseNoContentEmpty(t *testing.T) {
 		Body:       ioutil.NopCloser(bytes.NewBufferString("")),
 	}
 
-	resp := NewResponse(reporter, httpResp)
+	resp := NewResponse(ctx, httpResp)
 
 	assert.Equal(t, "", resp.Body().Raw())
 	resp.chain.assertOK(t)
@@ -325,7 +325,7 @@ func TestResponseNoContentEmpty(t *testing.T) {
 }
 
 func TestResponseNoContentNil(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
 	headers := map[string][]string{
 		"Content-Type": {""},
@@ -337,7 +337,7 @@ func TestResponseNoContentNil(t *testing.T) {
 		Body:       nil,
 	}
 
-	resp := NewResponse(reporter, httpResp)
+	resp := NewResponse(ctx, httpResp)
 
 	assert.Equal(t, "", resp.Body().Raw())
 	resp.chain.assertOK(t)
@@ -369,7 +369,7 @@ func TestResponseNoContentNil(t *testing.T) {
 }
 
 func TestResponseNoContentFailed(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
 	headers := map[string][]string{
 		"Content-Type": {"text/plain; charset=utf-8"},
@@ -383,7 +383,7 @@ func TestResponseNoContentFailed(t *testing.T) {
 		Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
 	}
 
-	resp := NewResponse(reporter, httpResp)
+	resp := NewResponse(ctx, httpResp)
 
 	assert.Equal(t, body, resp.Body().Raw())
 	resp.chain.assertOK(t)
@@ -395,13 +395,13 @@ func TestResponseNoContentFailed(t *testing.T) {
 }
 
 func TestResponseContentType(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
 	headers := map[string][]string{
 		"Content-Type": {"text/plain; charset=utf-8"},
 	}
 
-	resp := NewResponse(reporter, &http.Response{
+	resp := NewResponse(ctx, &http.Response{
 		Header: http.Header(headers),
 	})
 
@@ -435,13 +435,13 @@ func TestResponseContentType(t *testing.T) {
 }
 
 func TestResponseContentTypeEmptyCharset(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
 	headers := map[string][]string{
 		"Content-Type": {"text/plain"},
 	}
 
-	resp := NewResponse(reporter, &http.Response{
+	resp := NewResponse(ctx, &http.Response{
 		Header: http.Header(headers),
 	})
 
@@ -459,7 +459,7 @@ func TestResponseContentTypeEmptyCharset(t *testing.T) {
 }
 
 func TestResponseContentTypeInvalid(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
 	headers1 := map[string][]string{
 		"Content-Type": {";"},
@@ -469,11 +469,11 @@ func TestResponseContentTypeInvalid(t *testing.T) {
 		"Content-Type": {"charset=utf-8"},
 	}
 
-	resp1 := NewResponse(reporter, &http.Response{
+	resp1 := NewResponse(ctx, &http.Response{
 		Header: http.Header(headers1),
 	})
 
-	resp2 := NewResponse(reporter, &http.Response{
+	resp2 := NewResponse(ctx, &http.Response{
 		Header: http.Header(headers2),
 	})
 
@@ -495,13 +495,13 @@ func TestResponseContentTypeInvalid(t *testing.T) {
 }
 
 func TestResponseContentEncoding(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
 	headers := map[string][]string{
 		"Content-Encoding": {"gzip", "deflate"},
 	}
 
-	resp := NewResponse(reporter, &http.Response{
+	resp := NewResponse(ctx, &http.Response{
 		Header: http.Header(headers),
 	})
 
@@ -523,9 +523,9 @@ func TestResponseContentEncoding(t *testing.T) {
 }
 
 func TestResponseTransferEncoding(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
-	resp := NewResponse(reporter, &http.Response{
+	resp := NewResponse(ctx, &http.Response{
 		TransferEncoding: []string{"foo", "bar"},
 	})
 
@@ -543,7 +543,7 @@ func TestResponseTransferEncoding(t *testing.T) {
 }
 
 func TestResponseText(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
 	headers := map[string][]string{
 		"Content-Type": {"text/plain; charset=utf-8"},
@@ -557,7 +557,7 @@ func TestResponseText(t *testing.T) {
 		Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
 	}
 
-	resp := NewResponse(reporter, httpResp)
+	resp := NewResponse(ctx, httpResp)
 
 	assert.Equal(t, body, resp.Body().Raw())
 	resp.chain.assertOK(t)
@@ -583,7 +583,7 @@ func TestResponseText(t *testing.T) {
 }
 
 func TestResponseForm(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
 	headers := map[string][]string{
 		"Content-Type": {"application/x-www-form-urlencoded"},
@@ -597,7 +597,7 @@ func TestResponseForm(t *testing.T) {
 		Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
 	}
 
-	resp := NewResponse(reporter, httpResp)
+	resp := NewResponse(ctx, httpResp)
 
 	assert.Equal(t, body, resp.Body().Raw())
 	resp.chain.assertOK(t)
@@ -628,7 +628,7 @@ func TestResponseForm(t *testing.T) {
 }
 
 func TestResponseFormBadBody(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
 	headers := map[string][]string{
 		"Content-Type": {"application/x-www-form-urlencoded"},
@@ -642,7 +642,7 @@ func TestResponseFormBadBody(t *testing.T) {
 		Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
 	}
 
-	resp := NewResponse(reporter, httpResp)
+	resp := NewResponse(ctx, httpResp)
 
 	resp.Form()
 	resp.chain.assertFailed(t)
@@ -652,7 +652,7 @@ func TestResponseFormBadBody(t *testing.T) {
 }
 
 func TestResponseFormBadType(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
 	headers := map[string][]string{
 		"Content-Type": {"bad"},
@@ -666,7 +666,7 @@ func TestResponseFormBadType(t *testing.T) {
 		Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
 	}
 
-	resp := NewResponse(reporter, httpResp)
+	resp := NewResponse(ctx, httpResp)
 
 	resp.Form()
 	resp.chain.assertFailed(t)
@@ -676,7 +676,7 @@ func TestResponseFormBadType(t *testing.T) {
 }
 
 func TestResponseJSON(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
 	headers := map[string][]string{
 		"Content-Type": {"application/json; charset=utf-8"},
@@ -690,7 +690,7 @@ func TestResponseJSON(t *testing.T) {
 		Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
 	}
 
-	resp := NewResponse(reporter, httpResp)
+	resp := NewResponse(ctx, httpResp)
 
 	assert.Equal(t, body, resp.Body().Raw())
 	resp.chain.assertOK(t)
@@ -717,7 +717,7 @@ func TestResponseJSON(t *testing.T) {
 }
 
 func TestResponseJSONBadBody(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
 	headers := map[string][]string{
 		"Content-Type": {"application/json; charset=utf-8"},
@@ -731,7 +731,7 @@ func TestResponseJSONBadBody(t *testing.T) {
 		Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
 	}
 
-	resp := NewResponse(reporter, httpResp)
+	resp := NewResponse(ctx, httpResp)
 
 	resp.JSON()
 	resp.chain.assertFailed(t)
@@ -741,7 +741,7 @@ func TestResponseJSONBadBody(t *testing.T) {
 }
 
 func TestResponseJSONCharsetEmpty(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
 	headers := map[string][]string{
 		"Content-Type": {"application/json"},
@@ -755,7 +755,7 @@ func TestResponseJSONCharsetEmpty(t *testing.T) {
 		Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
 	}
 
-	resp := NewResponse(reporter, httpResp)
+	resp := NewResponse(ctx, httpResp)
 
 	resp.JSON()
 	resp.chain.assertOK(t)
@@ -766,7 +766,7 @@ func TestResponseJSONCharsetEmpty(t *testing.T) {
 }
 
 func TestResponseJSONCharsetBad(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
 	headers := map[string][]string{
 		"Content-Type": {"application/json; charset=bad"},
@@ -780,7 +780,7 @@ func TestResponseJSONCharsetBad(t *testing.T) {
 		Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
 	}
 
-	resp := NewResponse(reporter, httpResp)
+	resp := NewResponse(ctx, httpResp)
 
 	resp.JSON()
 	resp.chain.assertFailed(t)
@@ -790,7 +790,7 @@ func TestResponseJSONCharsetBad(t *testing.T) {
 }
 
 func TestResponseJSONP(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
 	headers := map[string][]string{
 		"Content-Type": {"application/javascript; charset=utf-8"},
@@ -807,7 +807,7 @@ func TestResponseJSONP(t *testing.T) {
 			Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
 		}
 
-		resp := NewResponse(reporter, httpResp)
+		resp := NewResponse(ctx, httpResp)
 
 		assert.Equal(t, body, resp.Body().Raw())
 		resp.chain.assertOK(t)
@@ -843,7 +843,7 @@ func TestResponseJSONP(t *testing.T) {
 }
 
 func TestResponseJSONPBadBody(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
 	headers := map[string][]string{
 		"Content-Type": {"application/javascript; charset=utf-8"},
@@ -861,7 +861,7 @@ func TestResponseJSONPBadBody(t *testing.T) {
 			Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
 		}
 
-		resp := NewResponse(reporter, httpResp)
+		resp := NewResponse(ctx, httpResp)
 
 		resp.JSONP("foo")
 		resp.chain.assertFailed(t)
@@ -872,7 +872,7 @@ func TestResponseJSONPBadBody(t *testing.T) {
 }
 
 func TestResponseJSONPCharsetEmpty(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
 	headers := map[string][]string{
 		"Content-Type": {"application/javascript"},
@@ -886,7 +886,7 @@ func TestResponseJSONPCharsetEmpty(t *testing.T) {
 		Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
 	}
 
-	resp := NewResponse(reporter, httpResp)
+	resp := NewResponse(ctx, httpResp)
 
 	resp.JSONP("foo")
 	resp.chain.assertOK(t)
@@ -897,7 +897,7 @@ func TestResponseJSONPCharsetEmpty(t *testing.T) {
 }
 
 func TestResponseJSONPCharsetBad(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
 	headers := map[string][]string{
 		"Content-Type": {"application/javascript; charset=bad"},
@@ -911,7 +911,7 @@ func TestResponseJSONPCharsetBad(t *testing.T) {
 		Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
 	}
 
-	resp := NewResponse(reporter, httpResp)
+	resp := NewResponse(ctx, httpResp)
 
 	resp.JSONP("foo")
 	resp.chain.assertFailed(t)
@@ -921,7 +921,7 @@ func TestResponseJSONPCharsetBad(t *testing.T) {
 }
 
 func TestResponseContentOpts(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := newMockContext(t)
 
 	type testCase struct {
 		respContentType   string
@@ -943,7 +943,7 @@ func TestResponseContentOpts(t *testing.T) {
 			Body:       ioutil.NopCloser(bytes.NewBufferString(tc.respBody)),
 		}
 
-		resp := NewResponse(reporter, httpResp)
+		resp := NewResponse(ctx, httpResp)
 
 		c := tc.chainFunc(resp, ContentOpts{
 			MediaType: tc.expectedMediaType,
