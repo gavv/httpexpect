@@ -12,7 +12,7 @@ import (
 func TestCookieFailed(t *testing.T) {
 	chain := makeChain(newMockReporter(t))
 
-	chain.fail("fail")
+	chain.fail(Failure{})
 
 	value := &Cookie{chain, nil}
 

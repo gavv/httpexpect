@@ -10,7 +10,7 @@ import (
 func TestDateTimeFailed(t *testing.T) {
 	chain := makeChain(newMockReporter(t))
 
-	chain.fail("fail")
+	chain.fail(Failure{})
 
 	ts := time.Unix(0, 0)
 

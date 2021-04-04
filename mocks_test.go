@@ -56,6 +56,42 @@ func (r *mockReporter) Errorf(message string, args ...interface{}) {
 	r.reported = true
 }
 
+type mockFormatter struct {
+	testing          *testing.T
+	formattedSuccess int
+	formattedFailure int
+}
+
+func (m *mockFormatter) Success(context *Context) string {
+	m.formattedSuccess++
+	return context.TestName
+}
+
+func (m *mockFormatter) Failure(context *Context, failure Failure) string {
+	m.formattedFailure++
+	return context.TestName + "." + failure.AssertionName
+}
+
+func newMockFormatter(t *testing.T) *mockFormatter {
+	return &mockFormatter{testing: t}
+}
+
+func newMockAssertionHandler(t *testing.T) AssertionHandler {
+	return DefaultAssertionHandler{
+		Reporter:  newMockReporter(t),
+		Formatter: DefaultFormatter{},
+	}
+}
+
+func newMockContext(t *testing.T) *Context {
+	return &Context{AssertionHandler: newMockAssertionHandler(t)}
+}
+
+func (r *mockReporter) Errorf(message string, args ...interface{}) {
+	r.testing.Logf("Fail: "+message, args...)
+	r.reported = true
+}
+
 type mockPrinter struct {
 	reqBody  []byte
 	respBody []byte

@@ -13,7 +13,7 @@ import (
 func TestValueFailed(t *testing.T) {
 	chain := makeChain(newMockReporter(t))
 
-	chain.fail("fail")
+	chain.fail(Failure{})
 
 	value := &Value{chain, nil}
 
@@ -43,115 +43,115 @@ func TestValueFailed(t *testing.T) {
 }
 
 func TestValueCastNull(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := wrapContext(newMockContext(t))
 
 	var data interface{}
 
-	NewValue(reporter, data).Object().chain.assertFailed(t)
-	NewValue(reporter, data).Array().chain.assertFailed(t)
-	NewValue(reporter, data).String().chain.assertFailed(t)
-	NewValue(reporter, data).Number().chain.assertFailed(t)
-	NewValue(reporter, data).Boolean().chain.assertFailed(t)
-	NewValue(reporter, data).NotNull().chain.assertFailed(t)
-	NewValue(reporter, data).Null().chain.assertOK(t)
+	NewValue(ctx, data).Object().chain.assertFailed(t)
+	NewValue(ctx, data).Array().chain.assertFailed(t)
+	NewValue(ctx, data).String().chain.assertFailed(t)
+	NewValue(ctx, data).Number().chain.assertFailed(t)
+	NewValue(ctx, data).Boolean().chain.assertFailed(t)
+	NewValue(ctx, data).NotNull().chain.assertFailed(t)
+	NewValue(ctx, data).Null().chain.assertOK(t)
 }
 
 func TestValueCastIndirectNull(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := wrapContext(newMockContext(t))
 
 	var data []interface{}
 
-	NewValue(reporter, data).Object().chain.assertFailed(t)
-	NewValue(reporter, data).Array().chain.assertFailed(t)
-	NewValue(reporter, data).String().chain.assertFailed(t)
-	NewValue(reporter, data).Number().chain.assertFailed(t)
-	NewValue(reporter, data).Boolean().chain.assertFailed(t)
-	NewValue(reporter, data).NotNull().chain.assertFailed(t)
-	NewValue(reporter, data).Null().chain.assertOK(t)
+	NewValue(ctx, data).Object().chain.assertFailed(t)
+	NewValue(ctx, data).Array().chain.assertFailed(t)
+	NewValue(ctx, data).String().chain.assertFailed(t)
+	NewValue(ctx, data).Number().chain.assertFailed(t)
+	NewValue(ctx, data).Boolean().chain.assertFailed(t)
+	NewValue(ctx, data).NotNull().chain.assertFailed(t)
+	NewValue(ctx, data).Null().chain.assertOK(t)
 }
 
 func TestValueCastBad(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := wrapContext(newMockContext(t))
 
 	data := func() {}
 
-	NewValue(reporter, data).Object().chain.assertFailed(t)
-	NewValue(reporter, data).Array().chain.assertFailed(t)
-	NewValue(reporter, data).String().chain.assertFailed(t)
-	NewValue(reporter, data).Number().chain.assertFailed(t)
-	NewValue(reporter, data).Boolean().chain.assertFailed(t)
-	NewValue(reporter, data).NotNull().chain.assertFailed(t)
-	NewValue(reporter, data).Null().chain.assertFailed(t)
+	NewValue(ctx, data).Object().chain.assertFailed(t)
+	NewValue(ctx, data).Array().chain.assertFailed(t)
+	NewValue(ctx, data).String().chain.assertFailed(t)
+	NewValue(ctx, data).Number().chain.assertFailed(t)
+	NewValue(ctx, data).Boolean().chain.assertFailed(t)
+	NewValue(ctx, data).NotNull().chain.assertFailed(t)
+	NewValue(ctx, data).Null().chain.assertFailed(t)
 }
 
 func TestValueCastObject(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := wrapContext(newMockContext(t))
 
 	data := map[string]interface{}{}
 
-	NewValue(reporter, data).Object().chain.assertOK(t)
-	NewValue(reporter, data).Array().chain.assertFailed(t)
-	NewValue(reporter, data).String().chain.assertFailed(t)
-	NewValue(reporter, data).Number().chain.assertFailed(t)
-	NewValue(reporter, data).Boolean().chain.assertFailed(t)
-	NewValue(reporter, data).NotNull().chain.assertOK(t)
-	NewValue(reporter, data).Null().chain.assertFailed(t)
+	NewValue(ctx, data).Object().chain.assertOK(t)
+	NewValue(ctx, data).Array().chain.assertFailed(t)
+	NewValue(ctx, data).String().chain.assertFailed(t)
+	NewValue(ctx, data).Number().chain.assertFailed(t)
+	NewValue(ctx, data).Boolean().chain.assertFailed(t)
+	NewValue(ctx, data).NotNull().chain.assertOK(t)
+	NewValue(ctx, data).Null().chain.assertFailed(t)
 }
 
 func TestValueCastArray(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := wrapContext(newMockContext(t))
 
 	data := []interface{}{}
 
-	NewValue(reporter, data).Object().chain.assertFailed(t)
-	NewValue(reporter, data).Array().chain.assertOK(t)
-	NewValue(reporter, data).String().chain.assertFailed(t)
-	NewValue(reporter, data).Number().chain.assertFailed(t)
-	NewValue(reporter, data).Boolean().chain.assertFailed(t)
-	NewValue(reporter, data).NotNull().chain.assertOK(t)
-	NewValue(reporter, data).Null().chain.assertFailed(t)
+	NewValue(ctx, data).Object().chain.assertFailed(t)
+	NewValue(ctx, data).Array().chain.assertOK(t)
+	NewValue(ctx, data).String().chain.assertFailed(t)
+	NewValue(ctx, data).Number().chain.assertFailed(t)
+	NewValue(ctx, data).Boolean().chain.assertFailed(t)
+	NewValue(ctx, data).NotNull().chain.assertOK(t)
+	NewValue(ctx, data).Null().chain.assertFailed(t)
 }
 
 func TestValueCastString(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := wrapContext(newMockContext(t))
 
 	data := ""
 
-	NewValue(reporter, data).Object().chain.assertFailed(t)
-	NewValue(reporter, data).Array().chain.assertFailed(t)
-	NewValue(reporter, data).String().chain.assertOK(t)
-	NewValue(reporter, data).Number().chain.assertFailed(t)
-	NewValue(reporter, data).Boolean().chain.assertFailed(t)
-	NewValue(reporter, data).NotNull().chain.assertOK(t)
-	NewValue(reporter, data).Null().chain.assertFailed(t)
+	NewValue(ctx, data).Object().chain.assertFailed(t)
+	NewValue(ctx, data).Array().chain.assertFailed(t)
+	NewValue(ctx, data).String().chain.assertOK(t)
+	NewValue(ctx, data).Number().chain.assertFailed(t)
+	NewValue(ctx, data).Boolean().chain.assertFailed(t)
+	NewValue(ctx, data).NotNull().chain.assertOK(t)
+	NewValue(ctx, data).Null().chain.assertFailed(t)
 }
 
 func TestValueCastNumber(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := wrapContext(newMockContext(t))
 
 	data := 0.0
 
-	NewValue(reporter, data).Object().chain.assertFailed(t)
-	NewValue(reporter, data).Array().chain.assertFailed(t)
-	NewValue(reporter, data).String().chain.assertFailed(t)
-	NewValue(reporter, data).Number().chain.assertOK(t)
-	NewValue(reporter, data).Boolean().chain.assertFailed(t)
-	NewValue(reporter, data).NotNull().chain.assertOK(t)
-	NewValue(reporter, data).Null().chain.assertFailed(t)
+	NewValue(ctx, data).Object().chain.assertFailed(t)
+	NewValue(ctx, data).Array().chain.assertFailed(t)
+	NewValue(ctx, data).String().chain.assertFailed(t)
+	NewValue(ctx, data).Number().chain.assertOK(t)
+	NewValue(ctx, data).Boolean().chain.assertFailed(t)
+	NewValue(ctx, data).NotNull().chain.assertOK(t)
+	NewValue(ctx, data).Null().chain.assertFailed(t)
 }
 
 func TestValueCastBoolean(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := wrapContext(newMockContext(t))
 
 	data := false
 
-	NewValue(reporter, data).Object().chain.assertFailed(t)
-	NewValue(reporter, data).Array().chain.assertFailed(t)
-	NewValue(reporter, data).String().chain.assertFailed(t)
-	NewValue(reporter, data).Number().chain.assertFailed(t)
-	NewValue(reporter, data).Boolean().chain.assertOK(t)
-	NewValue(reporter, data).NotNull().chain.assertOK(t)
-	NewValue(reporter, data).Null().chain.assertFailed(t)
+	NewValue(ctx, data).Object().chain.assertFailed(t)
+	NewValue(ctx, data).Array().chain.assertFailed(t)
+	NewValue(ctx, data).String().chain.assertFailed(t)
+	NewValue(ctx, data).Number().chain.assertFailed(t)
+	NewValue(ctx, data).Boolean().chain.assertOK(t)
+	NewValue(ctx, data).NotNull().chain.assertOK(t)
+	NewValue(ctx, data).Null().chain.assertFailed(t)
 }
 
 func TestValueGetObject(t *testing.T) {
@@ -159,11 +159,11 @@ func TestValueGetObject(t *testing.T) {
 		myMap map[string]interface{}
 	)
 
-	reporter := newMockReporter(t)
+	ctx := wrapContext(newMockContext(t))
 
 	data1 := map[string]interface{}{"foo": 123.0}
 
-	value1 := NewValue(reporter, data1)
+	value1 := NewValue(ctx, data1)
 	inner1 := value1.Object()
 
 	inner1.chain.assertOK(t)
@@ -172,7 +172,7 @@ func TestValueGetObject(t *testing.T) {
 
 	data2 := myMap{"foo": 123.0}
 
-	value2 := NewValue(reporter, data2)
+	value2 := NewValue(ctx, data2)
 	inner2 := value2.Object()
 
 	inner2.chain.assertOK(t)
@@ -185,11 +185,11 @@ func TestValueGetArray(t *testing.T) {
 		myArray []interface{}
 	)
 
-	reporter := newMockReporter(t)
+	ctx := wrapContext(newMockContext(t))
 
 	data1 := []interface{}{"foo", 123.0}
 
-	value1 := NewValue(reporter, data1)
+	value1 := NewValue(ctx, data1)
 	inner1 := value1.Array()
 
 	inner1.chain.assertOK(t)
@@ -198,7 +198,7 @@ func TestValueGetArray(t *testing.T) {
 
 	data2 := myArray{"foo", 123.0}
 
-	value2 := NewValue(reporter, data2)
+	value2 := NewValue(ctx, data2)
 	inner2 := value2.Array()
 
 	inner2.chain.assertOK(t)
@@ -207,9 +207,9 @@ func TestValueGetArray(t *testing.T) {
 }
 
 func TestValueGetString(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := wrapContext(newMockContext(t))
 
-	value := NewValue(reporter, "foo")
+	value := NewValue(ctx, "foo")
 	inner := value.String()
 
 	inner.chain.assertOK(t)
@@ -222,11 +222,11 @@ func TestValueGetNumber(t *testing.T) {
 		myInt int
 	)
 
-	reporter := newMockReporter(t)
+	ctx := wrapContext(newMockContext(t))
 
 	data1 := 123.0
 
-	value1 := NewValue(reporter, data1)
+	value1 := NewValue(ctx, data1)
 	inner1 := value1.Number()
 
 	inner1.chain.assertOK(t)
@@ -235,7 +235,7 @@ func TestValueGetNumber(t *testing.T) {
 
 	data2 := 123
 
-	value2 := NewValue(reporter, data2)
+	value2 := NewValue(ctx, data2)
 	inner2 := value2.Number()
 
 	inner2.chain.assertOK(t)
@@ -244,7 +244,7 @@ func TestValueGetNumber(t *testing.T) {
 
 	data3 := myInt(123)
 
-	value3 := NewValue(reporter, data3)
+	value3 := NewValue(ctx, data3)
 	inner3 := value3.Number()
 
 	inner3.chain.assertOK(t)
@@ -253,16 +253,16 @@ func TestValueGetNumber(t *testing.T) {
 }
 
 func TestValueGetBoolean(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := wrapContext(newMockContext(t))
 
-	value1 := NewValue(reporter, true)
+	value1 := NewValue(ctx, true)
 	inner1 := value1.Boolean()
 
 	inner1.chain.assertOK(t)
 	inner1.chain.reset()
 	assert.Equal(t, true, inner1.Raw())
 
-	value2 := NewValue(reporter, false)
+	value2 := NewValue(ctx, false)
 	inner2 := value2.Boolean()
 
 	inner2.chain.assertOK(t)
@@ -271,34 +271,34 @@ func TestValueGetBoolean(t *testing.T) {
 }
 
 func TestValueEqual(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := wrapContext(newMockContext(t))
 
 	data1 := map[string]interface{}{"foo": "bar"}
 	data2 := "baz"
 
-	NewValue(reporter, data1).Equal(data1).chain.assertOK(t)
-	NewValue(reporter, data2).Equal(data2).chain.assertOK(t)
+	NewValue(ctx, data1).Equal(data1).chain.assertOK(t)
+	NewValue(ctx, data2).Equal(data2).chain.assertOK(t)
 
-	NewValue(reporter, data1).NotEqual(data1).chain.assertFailed(t)
-	NewValue(reporter, data2).NotEqual(data2).chain.assertFailed(t)
+	NewValue(ctx, data1).NotEqual(data1).chain.assertFailed(t)
+	NewValue(ctx, data2).NotEqual(data2).chain.assertFailed(t)
 
-	NewValue(reporter, data1).Equal(data2).chain.assertFailed(t)
-	NewValue(reporter, data2).Equal(data1).chain.assertFailed(t)
+	NewValue(ctx, data1).Equal(data2).chain.assertFailed(t)
+	NewValue(ctx, data2).Equal(data1).chain.assertFailed(t)
 
-	NewValue(reporter, data1).NotEqual(data2).chain.assertOK(t)
-	NewValue(reporter, data2).NotEqual(data1).chain.assertOK(t)
+	NewValue(ctx, data1).NotEqual(data2).chain.assertOK(t)
+	NewValue(ctx, data2).NotEqual(data1).chain.assertOK(t)
 
-	NewValue(reporter, nil).Equal(nil).chain.assertOK(t)
+	NewValue(ctx, nil).Equal(nil).chain.assertOK(t)
 
-	NewValue(reporter, nil).Equal(map[string]interface{}(nil)).chain.assertOK(t)
-	NewValue(reporter, nil).Equal(map[string]interface{}{}).chain.assertFailed(t)
+	NewValue(ctx, nil).Equal(map[string]interface{}(nil)).chain.assertOK(t)
+	NewValue(ctx, nil).Equal(map[string]interface{}{}).chain.assertFailed(t)
 
-	NewValue(reporter, data1).Equal(func() {}).chain.assertFailed(t)
-	NewValue(reporter, data1).NotEqual(func() {}).chain.assertFailed(t)
+	NewValue(ctx, data1).Equal(func() {}).chain.assertFailed(t)
+	NewValue(ctx, data1).NotEqual(func() {}).chain.assertFailed(t)
 }
 
 func TestValuePathObject(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := wrapContext(newMockContext(t))
 
 	user0 := map[string]interface{}{"name": "john"}
 	user1 := map[string]interface{}{"name": "bob"}
@@ -310,7 +310,7 @@ func TestValuePathObject(t *testing.T) {
 		},
 	}
 
-	value := NewValue(reporter, data)
+	value := NewValue(ctx, data)
 
 	assert.Equal(t, data, value.Path("$").Raw())
 	assert.Equal(t, data["users"], value.Path("$.users").Raw())
@@ -335,7 +335,7 @@ func TestValuePathObject(t *testing.T) {
 }
 
 func TestValuePathArray(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := wrapContext(newMockContext(t))
 
 	user0 := map[string]interface{}{"name": "john"}
 	user1 := map[string]interface{}{"name": "bob"}
@@ -345,7 +345,7 @@ func TestValuePathArray(t *testing.T) {
 		user1,
 	}
 
-	value := NewValue(reporter, data)
+	value := NewValue(ctx, data)
 
 	assert.Equal(t, data, value.Path("$").Raw())
 	assert.Equal(t, user0, value.Path("$[0]").Raw())
@@ -356,53 +356,53 @@ func TestValuePathArray(t *testing.T) {
 }
 
 func TestValuePathString(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := wrapContext(newMockContext(t))
 
 	data := "foo"
 
-	value := NewValue(reporter, data)
+	value := NewValue(ctx, data)
 
 	assert.Equal(t, data, value.Path("$").Raw())
 	value.chain.assertOK(t)
 }
 
 func TestValuePathNumber(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := wrapContext(newMockContext(t))
 
 	data := 123
 
-	value := NewValue(reporter, data)
+	value := NewValue(ctx, data)
 
 	assert.Equal(t, float64(data), value.Path("$").Raw())
 	value.chain.assertOK(t)
 }
 
 func TestValuePathBoolean(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := wrapContext(newMockContext(t))
 
 	data := true
 
-	value := NewValue(reporter, data)
+	value := NewValue(ctx, data)
 
 	assert.Equal(t, data, value.Path("$").Raw())
 	value.chain.assertOK(t)
 }
 
 func TestValuePathNull(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := wrapContext(newMockContext(t))
 
-	value := NewValue(reporter, nil)
+	value := NewValue(ctx, nil)
 
 	assert.Equal(t, nil, value.Path("$").Raw())
 	value.chain.assertOK(t)
 }
 
 func TestValuePathError(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := wrapContext(newMockContext(t))
 
 	data := "foo"
 
-	value := NewValue(reporter, data)
+	value := NewValue(ctx, data)
 
 	for _, key := range []string{"$.bad", "!"} {
 		bad := value.Path(key)
@@ -465,10 +465,10 @@ func TestValuePathExpressions(t *testing.T) {
 		},
 	}
 
-	reporter := newMockReporter(t)
+	ctx := wrapContext(newMockContext(t))
 
 	runTests := func(tests map[string]interface{}) {
-		value := NewValue(reporter, data)
+		value := NewValue(ctx, data)
 		value.chain.assertOK(t)
 
 		for path, expected := range tests {
@@ -594,14 +594,14 @@ func TestValuePathExpressions(t *testing.T) {
 }
 
 func TestValuePathIntFloat(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := wrapContext(newMockContext(t))
 
 	data := map[string]interface{}{
 		"A": 123,
 		"B": 123.0,
 	}
 
-	value := NewValue(reporter, data)
+	value := NewValue(ctx, data)
 	value.chain.assertOK(t)
 
 	a := value.Path(`$["A"]`)
@@ -614,7 +614,7 @@ func TestValuePathIntFloat(t *testing.T) {
 }
 
 func TestValueSchema(t *testing.T) {
-	reporter := newMockReporter(t)
+	ctx := wrapContext(newMockContext(t))
 
 	schema := `{
 		"type": "object",
@@ -639,18 +639,18 @@ func TestValueSchema(t *testing.T) {
 		"bar": "b",
 	}
 
-	NewValue(reporter, data1).Schema(schema).chain.assertOK(t)
-	NewValue(reporter, data2).Schema(schema).chain.assertFailed(t)
+	NewValue(ctx, data1).Schema(schema).chain.assertOK(t)
+	NewValue(ctx, data2).Schema(schema).chain.assertFailed(t)
 
-	NewValue(reporter, data1).Schema([]byte(schema)).chain.assertOK(t)
-	NewValue(reporter, data2).Schema([]byte(schema)).chain.assertFailed(t)
+	NewValue(ctx, data1).Schema([]byte(schema)).chain.assertOK(t)
+	NewValue(ctx, data2).Schema([]byte(schema)).chain.assertFailed(t)
 
 	var b interface{}
 	err := json.Unmarshal([]byte(schema), &b)
 	require.Nil(t, err)
 
-	NewValue(reporter, data1).Schema(b).chain.assertOK(t)
-	NewValue(reporter, data2).Schema(b).chain.assertFailed(t)
+	NewValue(ctx, data1).Schema(b).chain.assertOK(t)
+	NewValue(ctx, data2).Schema(b).chain.assertFailed(t)
 
 	tmp, _ := ioutil.TempFile("", "httpexpect")
 	defer os.Remove(tmp.Name())
@@ -663,9 +663,9 @@ func TestValueSchema(t *testing.T) {
 
 	url := "file://" + tmp.Name()
 
-	NewValue(reporter, data1).Schema(url).chain.assertOK(t)
-	NewValue(reporter, data2).Schema(url).chain.assertFailed(t)
+	NewValue(ctx, data1).Schema(url).chain.assertOK(t)
+	NewValue(ctx, data2).Schema(url).chain.assertFailed(t)
 
-	NewValue(reporter, data1).Schema("file:///bad/path").chain.assertFailed(t)
-	NewValue(reporter, data1).Schema("{ bad json").chain.assertFailed(t)
+	NewValue(ctx, data1).Schema("file:///bad/path").chain.assertFailed(t)
+	NewValue(ctx, data1).Schema("{ bad json").chain.assertFailed(t)
 }

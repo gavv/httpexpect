@@ -1,6 +1,7 @@
 package httpexpect
 
 import (
+	"fmt"
 	"reflect"
 )
 
@@ -22,7 +23,10 @@ type Object struct {
 func NewObject(reporter Reporter, value map[string]interface{}) *Object {
 	chain := makeChain(reporter)
 	if value == nil {
-		chain.fail("expected non-nil map value")
+		chain.fail(Failure{
+			OriginalError: fmt.Errorf("expected non-nil map value"),
+			AssertType:    FailureInvalidInput,
+		})
 	} else {
 		value, _ = canonMap(&chain, value)
 	}
@@ -85,8 +89,12 @@ func (o *Object) Values() *Array {
 func (o *Object) Value(key string) *Value {
 	value, ok := o.value[key]
 	if !ok {
-		o.chain.fail("\nexpected object containing key '%s', but got:\n%s",
-			key, dumpValue(o.value))
+		o.chain.fail(Failure{
+			AssertionName: "Object.Value",
+			AssertType:    FailureAssertKey,
+			Expected:      key,
+			Actual:        o.value,
+		})
 		return &Value{o.chain, nil}
 	}
 	return &Value{o.chain, value}
@@ -124,10 +132,12 @@ func (o *Object) Equal(value interface{}) *Object {
 		return o
 	}
 	if !reflect.DeepEqual(expected, o.value) {
-		o.chain.fail("\nexpected object equal to:\n%s\n\nbut got:\n%s\n\ndiff:\n%s",
-			dumpValue(expected),
-			dumpValue(o.value),
-			diffValues(expected, o.value))
+		o.chain.fail(Failure{
+			AssertionName: "Object.Equal",
+			AssertType:    FailureAssertEqual,
+			Expected:      expected,
+			Actual:        o.value,
+		})
 	}
 	return o
 }
@@ -146,8 +156,11 @@ func (o *Object) NotEqual(v interface{}) *Object {
 		return o
 	}
 	if reflect.DeepEqual(expected, o.value) {
-		o.chain.fail("\nexpected object not equal to:\n%s",
-			dumpValue(expected))
+		o.chain.fail(Failure{
+			AssertionName: "Object.NotEqual",
+			AssertType:    FailureAssertNotEqual,
+			Expected:      v,
+		})
 	}
 	return o
 }
@@ -159,8 +172,12 @@ func (o *Object) NotEqual(v interface{}) *Object {
 //  object.ContainsKey("foo")
 func (o *Object) ContainsKey(key string) *Object {
 	if !o.containsKey(key) {
-		o.chain.fail("\nexpected object containing key '%s', but got:\n%s",
-			key, dumpValue(o.value))
+		o.chain.fail(Failure{
+			AssertionName: "Object.ContainsKey",
+			AssertType:    FailureAssertKey,
+			Expected:      key,
+			Actual:        o.value,
+		})
 	}
 	return o
 }
@@ -172,9 +189,12 @@ func (o *Object) ContainsKey(key string) *Object {
 //  object.NotContainsKey("bar")
 func (o *Object) NotContainsKey(key string) *Object {
 	if o.containsKey(key) {
-		o.chain.fail(
-			"\nexpected object not containing key '%s', but got:\n%s", key,
-			dumpValue(o.value))
+		o.chain.fail(Failure{
+			AssertionName: "Object.NotContainsKey",
+			AssertType:    FailureAssertKey,
+			Expected:      key,
+			Actual:        o.value,
+		})
 	}
 	return o
 }
@@ -211,8 +231,12 @@ func (o *Object) NotContainsKey(key string) *Object {
 //  })
 func (o *Object) ContainsMap(value interface{}) *Object {
 	if !o.containsMap(value) {
-		o.chain.fail("\nexpected object containing sub-object:\n%s\n\nbut got:\n%s",
-			dumpValue(value), dumpValue(o.value))
+		o.chain.fail(Failure{
+			AssertionName: "Object.ContainsMap",
+			AssertType:    FailureAssertContains,
+			Expected:      value,
+			Actual:        o.value,
+		})
 	}
 	return o
 }
@@ -227,8 +251,12 @@ func (o *Object) ContainsMap(value interface{}) *Object {
 //  object.NotContainsMap(map[string]interface{}{"foo": 123, "bar": "no-no-no"})
 func (o *Object) NotContainsMap(value interface{}) *Object {
 	if o.containsMap(value) {
-		o.chain.fail("\nexpected object not containing sub-object:\n%s\n\nbut got:\n%s",
-			dumpValue(value), dumpValue(o.value))
+		o.chain.fail(Failure{
+			AssertionName: "Object.NotContainsMap",
+			AssertType:    FailureAssertNotContains,
+			Expected:      value,
+			Actual:        o.value,
+		})
 	}
 	return o
 }
@@ -242,22 +270,22 @@ func (o *Object) NotContainsMap(value interface{}) *Object {
 //  object := NewObject(t, map[string]interface{}{"foo": 123})
 //  object.ValueEqual("foo", 123)
 func (o *Object) ValueEqual(key string, value interface{}) *Object {
-	if !o.containsKey(key) {
-		o.chain.fail("\nexpected object containing key '%s', but got:\n%s",
-			key, dumpValue(o.value))
+	o.ContainsKey(key)
+	if o.chain.failed() {
 		return o
 	}
+
 	expected, ok := canonValue(&o.chain, value)
 	if !ok {
 		return o
 	}
 	if !reflect.DeepEqual(expected, o.value[key]) {
-		o.chain.fail(
-			"\nexpected value for key '%s' equal to:\n%s\n\nbut got:\n%s\n\ndiff:\n%s",
-			key,
-			dumpValue(expected),
-			dumpValue(o.value[key]),
-			diffValues(expected, o.value[key]))
+		o.chain.fail(Failure{
+			AssertionName: "Object.ValueEqual",
+			AssertType:    FailureAssertEqual,
+			Expected:      expected,
+			Actual:        o.value[key],
+		})
 	}
 	return o
 }
@@ -274,18 +302,21 @@ func (o *Object) ValueEqual(key string, value interface{}) *Object {
 //  object.ValueNotEqual("foo", "bad value")  // success
 //  object.ValueNotEqual("bar", "bad value")  // failure! (key is missing)
 func (o *Object) ValueNotEqual(key string, value interface{}) *Object {
-	if !o.containsKey(key) {
-		o.chain.fail("\nexpected object containing key '%s', but got:\n%s",
-			key, dumpValue(o.value))
+	o.ContainsKey(key)
+	if o.chain.failed() {
 		return o
 	}
+
 	expected, ok := canonValue(&o.chain, value)
 	if !ok {
 		return o
 	}
 	if reflect.DeepEqual(expected, o.value[key]) {
-		o.chain.fail("\nexpected value for key '%s' not equal to:\n%s",
-			key, dumpValue(expected))
+		o.chain.fail(Failure{
+			AssertionName: "Object.ValueNotEqual",
+			AssertType:    FailureAssertNotEqual,
+			Expected:      expected,
+		})
 	}
 	return o
 }

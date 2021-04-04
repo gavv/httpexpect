@@ -22,8 +22,7 @@ func TestRequestFailed(t *testing.T) {
 	client := &mockClient{}
 
 	chain := makeChain(newMockReporter(t))
-
-	chain.fail("fail")
+	chain.fail(Failure{})
 
 	config := Config{
 		Client: client,

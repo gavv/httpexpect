@@ -3,6 +3,7 @@ package httpexpect
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"mime"
 	"net/http"
@@ -84,7 +85,7 @@ func makeResponse(opts responseOpts) *Response {
 		content = getContent(&opts.chain, opts.response)
 		cookies = opts.response.Cookies()
 	} else {
-		opts.chain.fail("expected non-nil response")
+		opts.chain.fail(newErrorFailure(fmt.Errorf("expected non-nil response")))
 	}
 	return &Response{
 		config:    opts.config,
@@ -114,7 +115,7 @@ func getContent(chain *chain, resp *http.Response) []byte {
 	}
 
 	if err != nil {
-		chain.fail(err.Error())
+		chain.fail(newErrorFailure(err))
 		return nil
 	}
 
@@ -187,14 +188,12 @@ func (r *Response) StatusRange(rn StatusRange) *Response {
 	expected := statusRangeText(int(rn))
 
 	if actual == "" || actual != expected {
-		if actual == "" {
-			r.chain.fail("\nexpected status from range:\n %q\n\nbut got:\n %q",
-				expected, status)
-		} else {
-			r.chain.fail(
-				"\nexpected status from range:\n %q\n\nbut got:\n %q (%q)",
-				expected, actual, status)
-		}
+		r.chain.fail(Failure{
+			AssertionName: "Response.StatusRange",
+			AssertType:    FailureAssertHTTPStatusRange,
+			Expected:      rn,
+			Actual:        status,
+		})
 	}
 
 	return r
@@ -293,8 +292,13 @@ func (r *Response) Cookie(name string) *Cookie {
 		}
 		names = append(names, c.Name)
 	}
-	r.chain.fail("\nexpected response with cookie:\n %q\n\nbut got only cookies:\n%s",
-		name, dumpValue(names))
+
+	r.chain.fail(Failure{
+		AssertionName: "Response.Cookie",
+		AssertType:    FailureAssertCookie,
+		Expected:      name,
+		Actual:        names,
+	})
 	return &Cookie{r.chain, nil}
 }
 
@@ -311,7 +315,7 @@ func (r *Response) Cookie(name string) *Cookie {
 //  defer ws.Disconnect()
 func (r *Response) Websocket() *Websocket {
 	if !r.chain.failed() && r.websocket == nil {
-		r.chain.fail("\nunexpected Websocket call for non-WebSocket response")
+		r.chain.fail(newErrorFailure(fmt.Errorf("unexpected Websocket call for non-WebSocket response")))
 	}
 	return makeWebsocket(r.config, r.chain, r.websocket)
 }
@@ -434,7 +438,7 @@ func (r *Response) getForm(opts ...ContentOpts) map[string]interface{} {
 
 	var object map[string]interface{}
 	if err := decoder.Decode(&object); err != nil {
-		r.chain.fail(err.Error())
+		r.chain.fail(newErrorFailure(err))
 		return nil
 	}
 
@@ -469,7 +473,7 @@ func (r *Response) getJSON(opts ...ContentOpts) interface{} {
 
 	var value interface{}
 	if err := json.Unmarshal(r.content, &value); err != nil {
-		r.chain.fail(err.Error())
+		r.chain.fail(newErrorFailure(err))
 		return nil
 	}
 
@@ -513,16 +517,16 @@ func (r *Response) getJSONP(callback string, opts ...ContentOpts) interface{} {
 
 	m := jsonp.FindSubmatch(r.content)
 	if len(m) != 3 || string(m[1]) != callback {
-		r.chain.fail(
-			"\nexpected JSONP body in form of:\n \"%s(<valid json>)\"\n\nbut got:\n %q\n",
+		r.chain.fail(newErrorFailure(fmt.Errorf(
+			"expected JSONP body in form of:\n \"%s(<valid json>)\"\n\nbut got:\n %q\n",
 			callback,
-			string(r.content))
+			string(r.content))))
 		return nil
 	}
 
 	var value interface{}
 	if err := json.Unmarshal(m[2], &value); err != nil {
-		r.chain.fail(err.Error())
+		r.chain.fail(newErrorFailure(err))
 		return nil
 	}
 
@@ -558,14 +562,14 @@ func (r *Response) checkContentType(expectedType string, expectedCharset ...stri
 
 	mediaType, params, err := mime.ParseMediaType(contentType)
 	if err != nil {
-		r.chain.fail("\ngot invalid \"Content-Type\" header %q", contentType)
+		r.chain.fail(newErrorFailure(fmt.Errorf("got invalid \"Content-Type\" header %q", contentType)))
 		return false
 	}
 
 	if mediaType != expectedType {
-		r.chain.fail(
-			"\nexpected \"Content-Type\" header with %q media type,"+
-				"\nbut got %q", expectedType, mediaType)
+		r.chain.fail(newErrorFailure(fmt.Errorf(
+			"expected \"Content-Type\" header with %q media type, "+
+				"but got %q", expectedType, mediaType)))
 		return false
 	}
 
@@ -573,16 +577,16 @@ func (r *Response) checkContentType(expectedType string, expectedCharset ...stri
 
 	if len(expectedCharset) == 0 {
 		if charset != "" && !strings.EqualFold(charset, "utf-8") {
-			r.chain.fail(
-				"\nexpected \"Content-Type\" header with \"utf-8\" or empty charset,"+
-					"\nbut got %q", charset)
+			r.chain.fail(newErrorFailure(fmt.Errorf(
+				"expected \"Content-Type\" header with \"utf-8\" or empty charset, "+
+					"but got %q", charset)))
 			return false
 		}
 	} else {
 		if !strings.EqualFold(charset, expectedCharset[0]) {
-			r.chain.fail(
-				"\nexpected \"Content-Type\" header with %q charset,"+
-					"\nbut got %q", expectedCharset[0], charset)
+			r.chain.fail(newErrorFailure(fmt.Errorf(
+				"expected \"Content-Type\" header with %q charset, "+
+					"but got %q", expectedCharset[0], charset)))
 			return false
 		}
 	}
@@ -592,7 +596,11 @@ func (r *Response) checkContentType(expectedType string, expectedCharset ...stri
 
 func (r *Response) checkEqual(what string, expected, actual interface{}) {
 	if !reflect.DeepEqual(expected, actual) {
-		r.chain.fail("\nexpected %s equal to:\n%s\n\nbut got:\n%s", what,
-			dumpValue(expected), dumpValue(actual))
+		r.chain.fail(Failure{
+			AssertionName: "Response.Equal",
+			AssertType:    FailureAssertEqual,
+			Expected:      expected,
+			Actual:        actual,
+		})
 	}
 }
