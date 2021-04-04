@@ -25,6 +25,7 @@ import (
 // Request provides methods to incrementally build http.Request object,
 // send it, and receive response.
 type Request struct {
+	context    *Context
 	config     Config
 	chain      chain
 	http       *http.Request
@@ -851,6 +852,11 @@ func (r *Request) WithMultipart() *Request {
 	return r
 }
 
+func (r *Request) withContext(ctx *Context) *Request {
+	r.context = ctx
+	return r
+}
+
 // Expect constructs http.Request, sends it, receives http.Response, and
 // returns a new Response object to inspect received response.
 //
@@ -864,6 +870,7 @@ func (r *Request) WithMultipart() *Request {
 //  resp.Status(http.StatusOK)
 func (r *Request) Expect() *Response {
 	resp := r.roundTrip()
+	r.context.Response = resp
 
 	if resp == nil {
 		return makeResponse(responseOpts{

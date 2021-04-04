@@ -142,7 +142,9 @@ func TestExpectValues(t *testing.T) {
 	n := 0.0
 	b := false
 
-	assert.Equal(t, NewValue(r, m), e.Value(m))
+	ctx := Context{Reporter: r}
+
+	assert.Equal(t, NewValue(ctx, m), e.Value(m))
 	assert.Equal(t, NewObject(r, m), e.Object(m))
 	assert.Equal(t, NewArray(r, a), e.Array(a))
 	assert.Equal(t, NewString(r, s), e.String(s))

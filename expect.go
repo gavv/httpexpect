@@ -66,7 +66,6 @@
 package httpexpect
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/cookiejar"
@@ -80,6 +79,7 @@ import (
 // to construct Request objects.
 type Expect struct {
 	config   Config
+	context  Context
 	builders []func(*Request)
 	matchers []func(*Response)
 }
@@ -119,6 +119,12 @@ type Config struct {
 	// You can use AssertReporter, RequireReporter (they use testify),
 	// or testing.TB, or provide custom implementation.
 	Reporter Reporter
+
+	// Formatter is used to format failures using a Context. A DefaultFormatter
+	// is available and is used by default when no formatter is provided.
+	//
+	// See Context struct and Formatter interface to implement your own.
+	Formatter Formatter
 
 	// Printers are used to print requests and responses.
 	// May be nil.
@@ -220,14 +226,6 @@ type LoggerReporter interface {
 	Reporter
 }
 
-// Formatter is used for common formatting options.
-type Formatter interface {
-	BeginAssertion(Context)
-	Success(Context)
-	Failure(Context, Failure)
-	EndAssertion(Context)
-}
-
 // DefaultRequestFactory is the default RequestFactory implementation which just
 // calls http.NewRequest.
 type DefaultRequestFactory struct{}
@@ -236,50 +234,6 @@ type DefaultRequestFactory struct{}
 func (DefaultRequestFactory) NewRequest(
 	method, urlStr string, body io.Reader) (*http.Request, error) {
 	return http.NewRequest(method, urlStr, body)
-}
-
-// DefaultFormatter is the default Formatter implementation.
-type DefaultFormatter struct{}
-
-// BeginAssertion implements Formatter.BeginAssertion.
-//
-// It is a no-op for now. Actual implementation may be
-// added later.
-func (DefaultFormatter) BeginAssertion(ctx Context) {}
-
-// Success implements Formatter.Success.
-//
-// It is a no-op for now. Actual implementation may be
-// added later.
-func (DefaultFormatter) Success(ctx Context) {}
-
-// EndAssertion implements Formatter.EndAssertion.
-//
-// It is a no-op for now. Actual implementation may be
-// added later.
-func (DefaultFormatter) EndAssertion(ctx Context) {}
-
-// Failure implements Formatter.Failure and reports failure.
-//
-// It formats the info from Context and Failure struct into
-// a string and passes it to Context.Reporter for reporting.
-func (DefaultFormatter) Failure(ctx Context, f Failure) {
-	errString := ""
-	if f.actual != nil {
-		errString = fmt.Sprintf(
-			"\nexpected:\n%s\nactual:\n%s\ndiff:\n%s",
-			dumpValue(f.expected),
-			dumpValue(f.actual),
-			diffValues(f.expected, f.actual),
-		)
-	} else {
-		errString = fmt.Sprintf(
-			"expected value not equal to:\n%s",
-			dumpValue(f.expected),
-		)
-	}
-
-	ctx.reporter.Errorf(errString)
 }
 
 // New returns a new Expect object.
@@ -291,6 +245,7 @@ func (DefaultFormatter) Failure(ctx Context, f Failure) {
 //  - CompactPrinter as Printer, with testing.TB as Logger
 //  - AssertReporter as Reporter
 //  - DefaultRequestFactory as RequestFactory
+//  - DefaultFormatter as Formatter
 //
 // Client is set to a default client with a non-nil Jar:
 //  &http.Client{
@@ -363,8 +318,19 @@ func WithConfig(config Config) *Expect {
 	if config.WebsocketDialer == nil {
 		config.WebsocketDialer = &websocket.Dialer{}
 	}
+	if config.Formatter == nil {
+		config.Formatter = DefaultFormatter{}
+	}
 	return &Expect{
 		config: config,
+		context: Context{
+			TestName:  "",
+			Request:   nil,
+			Response:  nil,
+			Reporter:  config.Reporter,
+			RTT:       nil,
+			formatter: config.Formatter,
+		},
 	}
 }
 
@@ -438,6 +404,8 @@ func (e *Expect) Matcher(matcher func(*Response)) *Expect {
 // See Builder.
 func (e *Expect) Request(method, path string, pathargs ...interface{}) *Request {
 	req := NewRequest(e.config, method, path, pathargs...)
+	req.withContext(&e.context)
+	e.context.Request = req
 
 	for _, builder := range e.builders {
 		builder(req)
@@ -487,7 +455,7 @@ func (e *Expect) DELETE(path string, pathargs ...interface{}) *Request {
 
 // Value is a shorthand for NewValue(e.config.Reporter, value).
 func (e *Expect) Value(value interface{}) *Value {
-	return NewValue(e.config.Reporter, value)
+	return NewValue(e.context, value)
 }
 
 // Object is a shorthand for NewObject(e.config.Reporter, value).

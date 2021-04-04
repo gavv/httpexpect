@@ -6,10 +6,10 @@ import "time"
 // It will be inherited by nested objects through the chain struct.
 type Context struct {
 	// Name of the test
-	name      string
-	request   *Request
-	response  *Response
-	reporter  Reporter
-	rtt       *time.Duration
+	TestName  string
+	Request   *Request
+	Response  *Response
+	Reporter  Reporter
+	RTT       *time.Duration
 	formatter Formatter
 }
