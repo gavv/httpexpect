@@ -31,7 +31,7 @@ func newMockReporter(t *testing.T) *mockReporter {
 }
 
 func newMockContext(t *testing.T) *Context {
-	return &Context{Reporter: newMockReporter(t)}
+	return &Context{Reporter: newMockReporter(t), TestName: t.Name()}
 }
 
 func newMockContextAndReporter(t *testing.T) (*Context, *mockReporter){

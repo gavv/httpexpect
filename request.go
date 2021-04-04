@@ -73,7 +73,7 @@ func NewRequest(config Config, ctx *Context, method, path string, pathargs ...in
 		panic("config.Client == nil")
 	}
 
-	chain := makeChain(ctx) // FIXME: pass context
+	chain := makeChain(ctx)
 
 	n := 0
 	path, err := interpol.WithFunc(path, func(k string, w io.Writer) error {
@@ -103,10 +103,11 @@ func NewRequest(config Config, ctx *Context, method, path string, pathargs ...in
 	}
 
 	return &Request{
-		config: config,
-		chain:  chain,
-		path:   path,
-		http:   hr,
+		config:  config,
+		chain:   chain,
+		path:    path,
+		http:    hr,
+		context: ctx,
 	}
 }
 

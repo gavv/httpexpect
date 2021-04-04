@@ -324,7 +324,7 @@ func WithConfig(config Config) *Expect {
 	return &Expect{
 		config: config,
 		context: &Context{
-			TestName:  "",
+			TestName:  "", // FIXME: should be set here?
 			Request:   nil,
 			Response:  nil,
 			Reporter:  config.Reporter,

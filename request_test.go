@@ -28,9 +28,10 @@ func TestRequestFailed(t *testing.T) {
 	}
 
 	req := &Request{
-		config: config,
-		chain:  chain,
-		http:   nil,
+		config:  config,
+		chain:   chain,
+		http:    nil,
+		context: chain.ctx,
 	}
 
 	req.WithClient(&http.Client{})
@@ -293,7 +294,7 @@ func TestRequestURLConcatenate(t *testing.T) {
 	client := &mockClient{}
 
 	reporter := NewAssertReporter(t)
-	ctx := &Context{Reporter: reporter}
+	ctx := &Context{Reporter: reporter, TestName: t.Name()}
 
 	config1 := Config{
 		RequestFactory: factory,
@@ -349,7 +350,7 @@ func TestRequestURLOverwrite(t *testing.T) {
 	client := &mockClient{}
 
 	reporter := NewAssertReporter(t)
-	ctx := &Context{Reporter: reporter}
+	ctx := &Context{Reporter: reporter, TestName: t.Name()}
 
 	config1 := Config{
 		RequestFactory: factory,
