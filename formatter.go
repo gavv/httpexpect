@@ -33,7 +33,8 @@ func (DefaultFormatter) Failure(ctx Context, f Failure) {
 	errString := ""
 	if f.actual != nil {
 		errString = fmt.Sprintf(
-			"\nexpected:\n%s\nactual:\n%s\ndiff:\n%s",
+			"\nassertion:\n%s\nexpected:\n%s\nactual:\n%s\ndiff:\n%s",
+			f.assertionName,
 			dumpValue(f.expected),
 			dumpValue(f.actual),
 			diffValues(f.expected, f.actual),
