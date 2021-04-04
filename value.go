@@ -35,8 +35,8 @@ type Value struct {
 //
 //  value := NewValue(t, nil)
 //  value.Null()
-func NewValue(reporter Reporter, value interface{}) *Value {
-	chain := makeChain(reporter)
+func NewValue(r Reporter, value interface{}) *Value {
+	chain := makeChain(r)
 	if value != nil {
 		value, _ = canonValue(&chain, value)
 	}
@@ -133,8 +133,12 @@ func (v *Value) Schema(schema interface{}) *Value {
 func (v *Value) Object() *Object {
 	data, ok := v.value.(map[string]interface{})
 	if !ok {
-		v.chain.fail("\nexpected object value (map or struct), but got:\n%s",
-			dumpValue(v.value))
+		v.chain.fail(Failure{
+			AssertionName: "Value.Object",
+			AssertType:    FailureAssertBadType,
+			Expected:      make(map[string]interface{}),
+			Actual:        v.value,
+		})
 	}
 	return &Object{v.chain, data}
 }
@@ -150,8 +154,12 @@ func (v *Value) Object() *Object {
 func (v *Value) Array() *Array {
 	data, ok := v.value.([]interface{})
 	if !ok {
-		v.chain.fail("\nexpected array value, but got:\n%s",
-			dumpValue(v.value))
+		v.chain.fail(Failure{
+			AssertionName: "Value.Array",
+			AssertType:    FailureAssertBadType,
+			Expected:      make([]interface{}, 0),
+			Actual:        v.value,
+		})
 	}
 	return &Array{v.chain, data}
 }
@@ -167,8 +175,12 @@ func (v *Value) Array() *Array {
 func (v *Value) String() *String {
 	data, ok := v.value.(string)
 	if !ok {
-		v.chain.fail("\nexpected string value, but got:\n%s",
-			dumpValue(v.value))
+		v.chain.fail(Failure{
+			AssertionName: "Value.String",
+			AssertType:    FailureAssertBadType,
+			Expected:      "",
+			Actual:        v.value,
+		})
 	}
 	return &String{v.chain, data}
 }
@@ -184,8 +196,12 @@ func (v *Value) String() *String {
 func (v *Value) Number() *Number {
 	data, ok := v.value.(float64)
 	if !ok {
-		v.chain.fail("\nexpected numeric value, but got:\n%s",
-			dumpValue(v.value))
+		v.chain.fail(Failure{
+			AssertionName: "Value.Number",
+			AssertType:    FailureAssertBadType,
+			Expected:      float64(0),
+			Actual:        v.value,
+		})
 	}
 	return &Number{v.chain, data}
 }
@@ -201,8 +217,12 @@ func (v *Value) Number() *Number {
 func (v *Value) Boolean() *Boolean {
 	data, ok := v.value.(bool)
 	if !ok {
-		v.chain.fail("\nexpected boolean value, but got:\n%s",
-			dumpValue(v.value))
+		v.chain.fail(Failure{
+			AssertionName: "Value.Boolean",
+			AssertType:    FailureAssertBadType,
+			Expected:      true, // could be false. it's just the type.
+			Actual:        v.value,
+		})
 	}
 	return &Boolean{v.chain, data}
 }
@@ -221,8 +241,12 @@ func (v *Value) Boolean() *Boolean {
 //  value.Null()
 func (v *Value) Null() *Value {
 	if v.value != nil {
-		v.chain.fail("\nexpected nil value, but got:\n%s",
-			dumpValue(v.value))
+		v.chain.fail(Failure{
+			AssertionName: "Value.Null",
+			AssertType:    FailureAssertNil,
+			Expected:      nil,
+			Actual:        v.value,
+		})
 	}
 	return v
 }
@@ -241,8 +265,11 @@ func (v *Value) Null() *Value {
 //  value.Null()
 func (v *Value) NotNull() *Value {
 	if v.value == nil {
-		v.chain.fail("\nexpected non-nil value, but got:\n%s",
-			dumpValue(v.value))
+		v.chain.fail(Failure{
+			AssertionName: "Value.NotNull",
+			AssertType:    FailureAssertNotNil,
+			Actual:        v.value,
+		})
 	}
 	return v
 }
@@ -259,10 +286,12 @@ func (v *Value) Equal(value interface{}) *Value {
 		return v
 	}
 	if !reflect.DeepEqual(expected, v.value) {
-		v.chain.fail("\nexpected value equal to:\n%s\n\nbut got:\n%s\n\ndiff:\n%s",
-			dumpValue(expected),
-			dumpValue(v.value),
-			diffValues(expected, v.value))
+		v.chain.fail(Failure{
+			AssertionName: "Value.Equal",
+			AssertType:    FailureAssertEqual,
+			Expected:      expected,
+			Actual:        v.value,
+		})
 	}
 	return v
 }
@@ -279,8 +308,12 @@ func (v *Value) NotEqual(value interface{}) *Value {
 		return v
 	}
 	if reflect.DeepEqual(expected, v.value) {
-		v.chain.fail("\nexpected value not equal to:\n%s",
-			dumpValue(expected))
+		v.chain.fail(Failure{
+			AssertionName: "Value.NotEqual",
+			AssertType:    FailureAssertNotEqual,
+			Expected:      value,
+			Actual:        v.value,
+		})
 	}
 	return v
 }

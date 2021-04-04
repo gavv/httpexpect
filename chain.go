@@ -1,24 +1,34 @@
 package httpexpect
 
 type chain struct {
-	reporter Reporter
-	failbit  bool
+	reqContext *Context
+	failbit    bool
 }
 
 func makeChain(reporter Reporter) chain {
-	return chain{reporter, false}
+	switch v := reporter.(type) {
+	case contextReporterWrapper:
+		return chain{v.ctx, false}
+	default:
+		return chain{&Context{
+			AssertionHandler: DefaultAssertionHandler{
+				Reporter:  v,
+				Formatter: DefaultFormatter{},
+			},
+		}, false}
+	}
 }
 
 func (c *chain) failed() bool {
 	return c.failbit
 }
 
-func (c *chain) fail(message string, args ...interface{}) {
+func (c *chain) fail(failure Failure) {
 	if c.failbit {
 		return
 	}
 	c.failbit = true
-	c.reporter.Errorf(message, args...)
+	c.reqContext.AssertionHandler.Failure(c.reqContext, failure)
 }
 
 func (c *chain) reset() {

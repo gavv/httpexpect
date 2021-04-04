@@ -14,7 +14,7 @@ import (
 func TestResponseFailed(t *testing.T) {
 	chain := makeChain(newMockReporter(t))
 
-	chain.fail("fail")
+	chain.fail(Failure{})
 
 	resp := &Response{chain: chain}
 

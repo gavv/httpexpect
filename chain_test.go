@@ -11,10 +11,10 @@ func TestChainFail(t *testing.T) {
 
 	assert.False(t, chain.failed())
 
-	chain.fail("fail")
+	chain.fail(Failure{})
 	assert.True(t, chain.failed())
 
-	chain.fail("fail")
+	chain.fail(Failure{})
 	assert.True(t, chain.failed())
 }
 
@@ -25,12 +25,12 @@ func TestChainCopy(t *testing.T) {
 	assert.False(t, chain1.failed())
 	assert.False(t, chain2.failed())
 
-	chain1.fail("fail")
+	chain1.fail(Failure{})
 
 	assert.True(t, chain1.failed())
 	assert.False(t, chain2.failed())
 
-	chain2.fail("fail")
+	chain2.fail(Failure{})
 
 	assert.True(t, chain1.failed())
 	assert.True(t, chain2.failed())
@@ -51,7 +51,7 @@ func TestChainReport(t *testing.T) {
 
 	assert.False(t, chain.failed())
 
-	chain.fail("fail")
+	chain.fail(Failure{})
 	assert.True(t, r0.reported)
 
 	r2 := newMockReporter(t)

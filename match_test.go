@@ -9,7 +9,7 @@ import (
 func TestMatchFailed(t *testing.T) {
 	chain := makeChain(newMockReporter(t))
 
-	chain.fail("fail")
+	chain.fail(Failure{})
 
 	value := &Match{chain, nil, nil}
 

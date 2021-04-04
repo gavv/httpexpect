@@ -126,7 +126,7 @@ func TestGlobalContextCancel(t *testing.T) {
 	// config with context cancel suppression
 	reporter := newExpErrorSuppressor(t,
 		func(message string, args ...interface{}) bool {
-			return strings.HasSuffix(message, "context canceled")
+			return strings.Contains(message, "context canceled")
 		})
 	e := WithConfig(Config{
 		BaseURL:  server.URL,
@@ -164,7 +164,7 @@ func TestGlobalContextWithRetries(t *testing.T) {
 	// config with context cancel suppression
 	reporter := newExpErrorSuppressor(t,
 		func(message string, args ...interface{}) bool {
-			return strings.HasSuffix(message, "context canceled")
+			return strings.Contains(message, "context canceled")
 		})
 	e := WithConfig(Config{
 		BaseURL:  server.URL,
@@ -204,7 +204,7 @@ func TestPerRequestContext(t *testing.T) {
 	// config with context cancel suppression
 	reporter := newExpErrorSuppressor(t,
 		func(message string, args ...interface{}) bool {
-			return strings.HasSuffix(message, "context canceled")
+			return strings.Contains(message, "context canceled")
 		})
 	e := WithConfig(Config{
 		BaseURL:  server.URL,
@@ -242,7 +242,7 @@ func TestPerRequestContextWithRetries(t *testing.T) {
 	// config with context cancel suppression
 	reporter := newExpErrorSuppressor(t,
 		func(message string, args ...interface{}) bool {
-			return strings.HasSuffix(message, "context canceled")
+			return strings.Contains(message, "context canceled")
 		})
 	e := WithConfig(Config{
 		BaseURL:  server.URL,
@@ -279,7 +279,7 @@ func TestPerRequestWithTimeout(t *testing.T) {
 	// config with context deadline expected error
 	reporter := newExpErrorSuppressor(t,
 		func(message string, args ...interface{}) bool {
-			return strings.HasSuffix(message, "context deadline exceeded")
+			return strings.Contains(message, "context deadline exceeded")
 		})
 	e := WithConfig(Config{
 		BaseURL:  server.URL,
@@ -330,7 +330,7 @@ func TestPerRequestWithContextAndTimeout_CancelledByTimeout(t *testing.T) {
 	// config with context deadline expected error
 	reporter := newExpErrorSuppressor(t,
 		func(message string, args ...interface{}) bool {
-			return strings.HasSuffix(message, "context deadline exceeded")
+			return strings.Contains(message, "context deadline exceeded")
 		})
 	e := WithConfig(Config{
 		BaseURL:  server.URL,
@@ -358,7 +358,7 @@ func TestPerRequestWithContextAndTimeout_CancelledByContext(t *testing.T) {
 	// config with context deadline expected error
 	reporter := newExpErrorSuppressor(t,
 		func(message string, args ...interface{}) bool {
-			return strings.HasSuffix(message, "context canceled")
+			return strings.Contains(message, "context canceled")
 		})
 	e := WithConfig(Config{
 		BaseURL:  server.URL,

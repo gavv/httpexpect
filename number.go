@@ -58,8 +58,12 @@ func (n *Number) Equal(value interface{}) *Number {
 		return n
 	}
 	if !(n.value == v) {
-		n.chain.fail("\nexpected number equal to:\n %v\n\nbut got:\n %v",
-			v, n.value)
+		n.chain.fail(Failure{
+			AssertionName: "Number.Equal",
+			AssertType:    FailureAssertEqual,
+			Expected:      v,
+			Actual:        n.value,
+		})
 	}
 	return n
 }
@@ -79,8 +83,12 @@ func (n *Number) NotEqual(value interface{}) *Number {
 		return n
 	}
 	if !(n.value != v) {
-		n.chain.fail("\nexpected number not equal to:\n %v\n\nbut got:\n %v",
-			v, n.value)
+		n.chain.fail(Failure{
+			AssertionName: "Number.NotEqual",
+			AssertType:    FailureAssertNotEqual,
+			Expected:      v,
+			Actual:        n.value,
+		})
 	}
 	return n
 }
@@ -91,17 +99,22 @@ func (n *Number) NotEqual(value interface{}) *Number {
 //  number := NewNumber(t, 123.0)
 //  number.EqualDelta(123.2, 0.3)
 func (n *Number) EqualDelta(value, delta float64) *Number {
+	failure := Failure{
+		AssertionName: "Number.EqualDelta",
+		AssertType:    FailureAssertEqualDelta,
+		Expected:      value,
+		Actual:        n.value,
+		ExpectedDelta: delta,
+	}
+
 	if math.IsNaN(n.value) || math.IsNaN(value) || math.IsNaN(delta) {
-		n.chain.fail("\nexpected number equal to:\n %v\n\nbut got:\n %v\n\ndelta:\n %v",
-			value, n.value, delta)
+		n.chain.fail(failure)
 		return n
 	}
 
-	diff := (n.value - value)
-
+	diff := n.value - value
 	if diff < -delta || diff > delta {
-		n.chain.fail("\nexpected number equal to:\n %v\n\nbut got:\n %v\n\ndelta:\n %v",
-			value, n.value, delta)
+		n.chain.fail(failure)
 		return n
 	}
 
@@ -114,19 +127,22 @@ func (n *Number) EqualDelta(value, delta float64) *Number {
 //  number := NewNumber(t, 123.0)
 //  number.NotEqualDelta(123.2, 0.1)
 func (n *Number) NotEqualDelta(value, delta float64) *Number {
+	failure := Failure{
+		AssertionName: "Number.NotEqualDelta",
+		AssertType:    FailureAssertNotEqualDelta,
+		Expected:      value,
+		Actual:        n.value,
+		ExpectedDelta: delta,
+	}
+
 	if math.IsNaN(n.value) || math.IsNaN(value) || math.IsNaN(delta) {
-		n.chain.fail(
-			"\nexpected number not equal to:\n %v\n\nbut got:\n %v\n\ndelta:\n %v",
-			value, n.value, delta)
+		n.chain.fail(failure)
 		return n
 	}
 
-	diff := (n.value - value)
-
+	diff := n.value - value
 	if !(diff < -delta || diff > delta) {
-		n.chain.fail(
-			"\nexpected number not equal to:\n %v\n\nbut got:\n %v\n\ndelta:\n %v",
-			value, n.value, delta)
+		n.chain.fail(failure)
 		return n
 	}
 
@@ -148,8 +164,12 @@ func (n *Number) Gt(value interface{}) *Number {
 		return n
 	}
 	if !(n.value > v) {
-		n.chain.fail("\nexpected number > then:\n %v\n\nbut got:\n %v",
-			v, n.value)
+		n.chain.fail(Failure{
+			AssertionName: "Number.Gt",
+			AssertType:    FailureAssertGt,
+			Expected:      v,
+			Actual:        n.value,
+		})
 	}
 	return n
 }
@@ -169,8 +189,12 @@ func (n *Number) Ge(value interface{}) *Number {
 		return n
 	}
 	if !(n.value >= v) {
-		n.chain.fail("\nexpected number >= then:\n %v\n\nbut got:\n %v",
-			v, n.value)
+		n.chain.fail(Failure{
+			AssertionName: "Number.Ge",
+			AssertType:    FailureAssertGe,
+			Expected:      v,
+			Actual:        n.value,
+		})
 	}
 	return n
 }
@@ -190,8 +214,12 @@ func (n *Number) Lt(value interface{}) *Number {
 		return n
 	}
 	if !(n.value < v) {
-		n.chain.fail("\nexpected number < then:\n %v\n\nbut got:\n %v",
-			v, n.value)
+		n.chain.fail(Failure{
+			AssertionName: "Number.Lt",
+			AssertType:    FailureAssertLt,
+			Expected:      v,
+			Actual:        n.value,
+		})
 	}
 	return n
 }
@@ -211,8 +239,12 @@ func (n *Number) Le(value interface{}) *Number {
 		return n
 	}
 	if !(n.value <= v) {
-		n.chain.fail("\nexpected number <= then:\n %v\n\nbut got:\n %v",
-			v, n.value)
+		n.chain.fail(Failure{
+			AssertionName: "Number.Le",
+			AssertType:    FailureAssertLe,
+			Expected:      v,
+			Actual:        n.value,
+		})
 	}
 	return n
 }
@@ -237,8 +269,12 @@ func (n *Number) InRange(min, max interface{}) *Number {
 		return n
 	}
 	if !(n.value >= a && n.value <= b) {
-		n.chain.fail("\nexpected number in range:\n [%v; %v]\n\nbut got:\n %v",
-			a, b, n.value)
+		n.chain.fail(Failure{
+			AssertionName:   "Number.InRange",
+			AssertType:      FailureAssertInRange,
+			ExpectedInRange: []interface{}{a, b},
+			Actual:          n.value,
+		})
 	}
 	return n
 }

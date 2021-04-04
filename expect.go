@@ -67,7 +67,6 @@ package httpexpect
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/cookiejar"
@@ -81,6 +80,7 @@ import (
 // to construct Request objects.
 type Expect struct {
 	config   Config
+	context  *Context
 	builders []func(*Request)
 	matchers []func(*Response)
 }
@@ -114,12 +114,18 @@ type Config struct {
 	// custom implementation.
 	WebsocketDialer WebsocketDialer
 
+	// DEPRECATED. Use AssertionHandler instead. Please note that a Formatter
+	// can only be passed with an AssertionHandler. This is provided for compatibility.
+	//
 	// Reporter is used to report failures.
 	// Should not be nil.
 	//
 	// You can use AssertReporter, RequireReporter (they use testify),
 	// or testing.TB, or provide custom implementation.
 	Reporter Reporter
+
+	// AssertionHandler replaces Reporter. The AssertionHandler is used to report failures.
+	AssertionHandler AssertionHandler
 
 	// Printers are used to print requests and responses.
 	// May be nil.
@@ -131,6 +137,9 @@ type Config struct {
 	// you're happy with their format, but want to send logs somewhere
 	// else instead of testing.TB.
 	Printers []Printer
+
+	// TestName of the currently running test case.
+	TestName string
 
 	// Context is passed to all requests. It is typically used for request cancellation,
 	// either explicit or after a time-out.
@@ -224,17 +233,23 @@ type Reporter interface {
 }
 
 // LoggerReporter combines Logger and Reporter interfaces.
+// method requirement in order to provide the name of the current test.
+//
+// Note: all methods are provided when using a *testing.T struct.
 type LoggerReporter interface {
 	Logger
 	Reporter
 }
 
-// Formatter is used for common formatting options.
-type Formatter interface {
-	BeginAssertion(Context)
-	Success(Context)
-	Failure(Context, Failure)
-	EndAssertion(Context)
+// Namer provides an interface to get the name of the currently running test, such as provided by *testing.T.
+type Namer interface {
+	Name() string
+}
+
+// LoggerReporterNamer combines LoggerReporter and Namer interfaces.
+type LoggerReporterNamer interface {
+	LoggerReporter
+	Namer
 }
 
 // DefaultRequestFactory is the default RequestFactory implementation which just
@@ -247,50 +262,6 @@ func (DefaultRequestFactory) NewRequest(
 	return http.NewRequest(method, urlStr, body)
 }
 
-// DefaultFormatter is the default Formatter implementation.
-type DefaultFormatter struct{}
-
-// BeginAssertion implements Formatter.BeginAssertion.
-//
-// It is a no-op for now. Actual implementation may be
-// added later.
-func (DefaultFormatter) BeginAssertion(ctx Context) {}
-
-// Success implements Formatter.Success.
-//
-// It is a no-op for now. Actual implementation may be
-// added later.
-func (DefaultFormatter) Success(ctx Context) {}
-
-// EndAssertion implements Formatter.EndAssertion.
-//
-// It is a no-op for now. Actual implementation may be
-// added later.
-func (DefaultFormatter) EndAssertion(ctx Context) {}
-
-// Failure implements Formatter.Failure and reports failure.
-//
-// It formats the info from Context and Failure struct into
-// a string and passes it to Context.Reporter for reporting.
-func (DefaultFormatter) Failure(ctx Context, f Failure) {
-	errString := ""
-	if f.actual != nil {
-		errString = fmt.Sprintf(
-			"\nexpected:\n%s\nactual:\n%s\ndiff:\n%s",
-			dumpValue(f.expected),
-			dumpValue(f.actual),
-			diffValues(f.expected, f.actual),
-		)
-	} else {
-		errString = fmt.Sprintf(
-			"expected value not equal to:\n%s",
-			dumpValue(f.expected),
-		)
-	}
-
-	ctx.reporter.Errorf(errString)
-}
-
 // New returns a new Expect object.
 //
 // baseURL specifies URL to prepended to all request. My be empty. If non-empty,
@@ -300,6 +271,11 @@ func (DefaultFormatter) Failure(ctx Context, f Failure) {
 //  - CompactPrinter as Printer, with testing.TB as Logger
 //  - AssertReporter as Reporter
 //  - DefaultRequestFactory as RequestFactory
+//  - DefaultFormatter as Formatter
+//
+// Note that the parameter t (LoggerReporter) can also be a LoggerReporterNamer, such as *testing.T.
+// The LoggerReporter is still used for compatibility.
+//
 //
 // Client is set to a default client with a non-nil Jar:
 //  &http.Client{
@@ -315,12 +291,23 @@ func (DefaultFormatter) Failure(ctx Context, f Failure) {
 //          Status(http.StatusOK)
 //  }
 func New(t LoggerReporter, baseURL string) *Expect {
+	testName := ""
+
+	var assertionHandler AssertionHandler
+	if lrn, ok := t.(LoggerReporterNamer); ok {
+		testName = lrn.Name()
+		assertionHandler = NewDefaultAssertionHandler(lrn)
+	} else {
+		assertionHandler = newDefaultAssertionHandler(t)
+	}
+
 	return WithConfig(Config{
-		BaseURL:  baseURL,
-		Reporter: NewAssertReporter(t),
+		BaseURL:          baseURL,
+		AssertionHandler: assertionHandler,
 		Printers: []Printer{
 			NewCompactPrinter(t),
 		},
+		TestName: testName,
 	})
 }
 
@@ -358,22 +345,31 @@ func New(t LoggerReporter, baseURL string) *Expect {
 //          Status(http.StatusOK)
 //  }
 func WithConfig(config Config) *Expect {
-	if config.Reporter == nil {
-		panic("config.Reporter is nil")
-	}
+	config.AssertionHandler = ensureAssertionHandler(config)
+
 	if config.RequestFactory == nil {
 		config.RequestFactory = DefaultRequestFactory{}
 	}
+
 	if config.Client == nil {
 		config.Client = &http.Client{
 			Jar: NewJar(),
 		}
 	}
+
 	if config.WebsocketDialer == nil {
 		config.WebsocketDialer = &websocket.Dialer{}
 	}
+
 	return &Expect{
 		config: config,
+		context: &Context{
+			TestName:         config.TestName,
+			Request:          nil,
+			Response:         nil,
+			AssertionHandler: config.AssertionHandler,
+			RTT:              nil,
+		},
 	}
 }
 
@@ -460,7 +456,9 @@ func (e *Expect) Matcher(matcher func(*Response)) *Expect {
 // After creating request, all builders attached to Expect object are invoked.
 // See Builder.
 func (e *Expect) Request(method, path string, pathargs ...interface{}) *Request {
-	req := NewRequest(e.config, method, path, pathargs...)
+	req := NewRequest(e.config, method, path, pathargs...).
+		WithContext(e.context)
+	e.context.Request = req
 
 	for _, builder := range e.builders {
 		builder(req)
@@ -510,30 +508,30 @@ func (e *Expect) DELETE(path string, pathargs ...interface{}) *Request {
 
 // Value is a shorthand for NewValue(e.config.Reporter, value).
 func (e *Expect) Value(value interface{}) *Value {
-	return NewValue(e.config.Reporter, value)
+	return NewValue(wrapContext(e.context), value)
 }
 
 // Object is a shorthand for NewObject(e.config.Reporter, value).
 func (e *Expect) Object(value map[string]interface{}) *Object {
-	return NewObject(e.config.Reporter, value)
+	return NewObject(wrapContext(e.context), value)
 }
 
 // Array is a shorthand for NewArray(e.config.Reporter, value).
 func (e *Expect) Array(value []interface{}) *Array {
-	return NewArray(e.config.Reporter, value)
+	return NewArray(wrapContext(e.context), value)
 }
 
 // String is a shorthand for NewString(e.config.Reporter, value).
 func (e *Expect) String(value string) *String {
-	return NewString(e.config.Reporter, value)
+	return NewString(wrapContext(e.context), value)
 }
 
 // Number is a shorthand for NewNumber(e.config.Reporter, value).
 func (e *Expect) Number(value float64) *Number {
-	return NewNumber(e.config.Reporter, value)
+	return NewNumber(wrapContext(e.context), value)
 }
 
 // Boolean is a shorthand for NewBoolean(e.config.Reporter, value).
 func (e *Expect) Boolean(value bool) *Boolean {
-	return NewBoolean(e.config.Reporter, value)
+	return NewBoolean(wrapContext(e.context), value)
 }
