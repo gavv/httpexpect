@@ -644,7 +644,7 @@ e.POST("/fruits").
 
 Feel free to report bugs, suggest improvements, and send pull requests! Please add documentation and tests for new features.
 
-Update dependencies, build code, and run tests and linters:
+Build code, run linters, run tests:
 
 ```
 $ make
@@ -654,6 +654,12 @@ Format code:
 
 ```
 $ make fmt
+```
+
+Run go mod tidy:
+
+```
+$ make tidy
 ```
 
 ## License
