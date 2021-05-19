@@ -72,7 +72,7 @@ import "gopkg.in/gavv/httpexpect.v2"
 
 ## Documentation
 
-Documentation is available on [pkg.go.dev](https://pkg.go.dev/github.com/gavv/httpexpect/v2). It contains an overview and reference.
+Documentation is available on [pkg.go.dev](https://pkg.go.dev/github.com/gavv/httpexpect/v2#section-documentation). It contains an overview and reference.
 
 ## Examples
 
