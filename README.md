@@ -593,39 +593,45 @@ handler := FruitsHandler()
 server := httptest.NewServer(handler)
 defer server.Close()
 
-e := WithConfig(Config{
-  BaseURL:  server.URL,
-  Reporter: httpexpect.NewAssertReporter(t),
-  Context: ctx,
-})
-
 ctx, cancel := context.WithCancel(context.Background())
 
+e := WithConfig(Config{
+	BaseURL:  server.URL,
+	Reporter: httpexpect.NewAssertReporter(t),
+	Context:  ctx,
+})
+
 go func() {
-  time.Sleep(time.Duration(5)*time.Seconds)
-  cancel()
+	time.Sleep(time.Duration(5)*time.Second)
+	cancel()
 }()
 
 e.GET("/fruits").
-  Expect().
-  Status(http.StatusOK)
+	Expect().
+	Status(http.StatusOK)
 ```
 
-
-##### Per-request time-out 
+##### Per-request time-out/cancellation
 
 ```go
+// per-request context
 e.GET("/fruits").
-  WithTimeout(time.Duration(5)*time.Seconds).
-  Expect().
-  Status(http.StatusOK)
+	WithContext(context.TODO()).
+	Expect().
+	Status(http.StatusOK)
 
-// combined with retries
+// per-request timeout
+e.GET("/fruits").
+	WithTimeout(time.Duration(5)*time.Second).
+	Expect().
+	Status(http.StatusOK)
+
+// timeout combined with retries (timeout applies to each try)
 e.POST("/fruits").
-  WithMaxRetries(5).
-  WithTimeout(time.Duration(10)*time.Seconds).
-  Expect().
-  Status(http.StatusOK)
+	WithMaxRetries(5).
+	WithTimeout(time.Duration(10)*time.Second).
+	Expect().
+	Status(http.StatusOK)
 ```
 
 ## Similar packages
