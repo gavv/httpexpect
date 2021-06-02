@@ -10,7 +10,12 @@ func makeChain(reporterOrCtx Reporter) chain {
 	case *Context:
 		return chain{v, false}
 	default:
-		return chain{&Context{Reporter: v}, false}
+		return chain{&Context{
+			AssertionHandler: DefaultAssertionHandler{
+				Reporter:  v,
+				Formatter: DefaultFormatter{},
+			},
+		}, false}
 	}
 }
 
@@ -23,7 +28,7 @@ func (c *chain) fail(message string, args ...interface{}) {
 		return
 	}
 	c.failbit = true
-	c.ctx.Reporter.Errorf(message, args...)
+	c.ctx.Errorf(message, args...)
 }
 
 func (c *chain) reset() {

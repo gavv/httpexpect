@@ -24,8 +24,8 @@ type Websocket struct {
 
 // NewWebsocket returns a new Websocket given a Config with Reporter and
 // Printers, and websocket.Conn to be inspected and handled.
-func NewWebsocket(config Config, ctx *Context, conn *websocket.Conn) *Websocket {
-	return makeWebsocket(config, makeChain(ctx), conn)
+func NewWebsocket(config Config, conn *websocket.Conn) *Websocket {
+	return makeWebsocket(config, makeChain(config.AssertionHandler), conn)
 }
 
 func makeWebsocket(config Config, chain chain, conn *websocket.Conn) *Websocket {

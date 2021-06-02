@@ -5,6 +5,7 @@ import (
 )
 
 type AssertionHandler interface {
+	// Reporter is implemented for compatibility only and shouldn't be used directly.
 	Reporter
 	Failure(ctx *Context, failure Failure)
 	Success(ctx *Context)
@@ -29,15 +30,14 @@ func (d DefaultAssertionHandler) Success(ctx *Context) {}
 // It will be inherited by nested objects through the chain struct.
 type Context struct {
 	// Name of the test
-	TestName  string
-	Request   *Request
-	Response  *Response
-	Reporter  Reporter
-	RTT       *time.Duration
-	formatter Formatter
+	TestName         string
+	AssertionHandler AssertionHandler
+	Request          *Request
+	Response         *Response
+	RTT              *time.Duration
 }
 
-// Errorf implements Reporter for compatibility.
+// Errorf implements Reporter for compatibility and shouldn't be used directly.
 func (c *Context) Errorf(message string, args ...interface{}) {
-	c.Reporter.Errorf(message, args...)
+	c.AssertionHandler.Errorf(message, args...)
 }

@@ -45,7 +45,7 @@ func TestWebsocketNil(t *testing.T) {
 		Reporter: newMockReporter(t),
 	}
 
-	ws := NewWebsocket(config, &Context{Reporter: config.Reporter, TestName: t.Name()}, nil)
+	ws := NewWebsocket(config, nil)
 
 	msg := ws.Expect()
 	msg.chain.assertFailed(t)

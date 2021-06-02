@@ -113,18 +113,15 @@ type Config struct {
 	// custom implementation.
 	WebsocketDialer WebsocketDialer
 
+	// DEPRECATED. Use AssertionHandler instead. Please note that a Formatter
+	// can only be passed with an AssertionHandler. This is provided for compatibility.
+	//
 	// Reporter is used to report failures.
 	// Should not be nil.
 	//
 	// You can use AssertReporter, RequireReporter (they use testify),
 	// or testing.TB, or provide custom implementation.
 	Reporter Reporter
-
-	// Formatter is used to format failures using a Context. A DefaultFormatter
-	// is available and is used by default when no formatter is provided.
-	//
-	// See Context struct and Formatter interface to implement your own.
-	Formatter Formatter
 
 	AssertionHandler AssertionHandler
 
@@ -264,8 +261,11 @@ func (DefaultRequestFactory) NewRequest(
 //  }
 func New(t LoggerReporter, baseURL string) *Expect {
 	return WithConfig(Config{
-		BaseURL:  baseURL,
-		Reporter: NewAssertReporter(t),
+		BaseURL: baseURL,
+		AssertionHandler: DefaultAssertionHandler{
+			Reporter:  NewAssertReporter(t),
+			Formatter: DefaultFormatter{},
+		},
 		Printers: []Printer{
 			NewCompactPrinter(t),
 		},
@@ -306,9 +306,17 @@ func New(t LoggerReporter, baseURL string) *Expect {
 //          Status(http.StatusOK)
 //  }
 func WithConfig(config Config) *Expect {
-	if config.Reporter == nil {
-		panic("config.Reporter is nil")
+	if config.AssertionHandler == nil {
+		if config.Reporter == nil {
+			panic("config.Reporter is nil")
+		}
+
+		config.AssertionHandler = DefaultAssertionHandler{
+			Reporter:  config.Reporter,
+			Formatter: DefaultFormatter{},
+		}
 	}
+
 	if config.RequestFactory == nil {
 		config.RequestFactory = DefaultRequestFactory{}
 	}
@@ -320,18 +328,15 @@ func WithConfig(config Config) *Expect {
 	if config.WebsocketDialer == nil {
 		config.WebsocketDialer = &websocket.Dialer{}
 	}
-	if config.Formatter == nil {
-		config.Formatter = DefaultFormatter{}
-	}
+
 	return &Expect{
 		config: config,
 		context: &Context{
-			TestName:  "", // FIXME: should be set here?
-			Request:   nil,
-			Response:  nil,
-			Reporter:  config.Reporter,
-			RTT:       nil,
-			formatter: config.Formatter,
+			TestName:         "", // FIXME: should be set here?
+			Request:          nil,
+			Response:         nil,
+			AssertionHandler: config.AssertionHandler,
+			RTT:              nil,
 		},
 	}
 }

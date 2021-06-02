@@ -73,9 +73,7 @@ func NewRequest(config Config, method, path string, pathargs ...interface{}) *Re
 		panic("config.Client == nil")
 	}
 
-	placeholderCtx := &Context{
-		Reporter: config.Reporter,
-	}
+	placeholderCtx := &Context{AssertionHandler: config.AssertionHandler}
 
 	chain := makeChain(placeholderCtx)
 
