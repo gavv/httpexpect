@@ -7,6 +7,7 @@ import (
 // Context contains information related to an assertion.
 // It will be inherited by nested objects through the chain struct.
 type Context struct {
+	TestName         string
 	AssertionHandler AssertionHandler
 	Request          *Request
 	Response         *Response

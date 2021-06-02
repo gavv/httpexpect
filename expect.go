@@ -221,8 +221,12 @@ type Reporter interface {
 	Errorf(message string, args ...interface{})
 }
 
-// LoggerReporter combines Logger and Reporter interfaces.
+// LoggerReporter combines Logger and Reporter interfaces, and adds the Name()
+// method requirement in order to provide the name of the current test.
+//
+// Note: all methods are provided when using a *testing.T struct.
 type LoggerReporter interface {
+	Name() string
 	Logger
 	Reporter
 }
@@ -263,14 +267,12 @@ func (DefaultRequestFactory) NewRequest(
 //  }
 func New(t LoggerReporter, baseURL string) *Expect {
 	return WithConfig(Config{
-		BaseURL: baseURL,
-		AssertionHandler: DefaultAssertionHandler{
-			Reporter:  NewAssertReporter(t),
-			Formatter: DefaultFormatter{},
-		},
+		BaseURL:          baseURL,
+		AssertionHandler: NewDefaultAssertionHandler(t),
 		Printers: []Printer{
 			NewCompactPrinter(t),
 		},
+		TestName: t.Name(),
 	})
 }
 
@@ -313,11 +315,13 @@ func WithConfig(config Config) *Expect {
 	if config.RequestFactory == nil {
 		config.RequestFactory = DefaultRequestFactory{}
 	}
+
 	if config.Client == nil {
 		config.Client = &http.Client{
 			Jar: NewJar(),
 		}
 	}
+
 	if config.WebsocketDialer == nil {
 		config.WebsocketDialer = &websocket.Dialer{}
 	}
@@ -325,6 +329,7 @@ func WithConfig(config Config) *Expect {
 	return &Expect{
 		config: config,
 		context: &Context{
+			TestName:         config.TestName,
 			Request:          nil,
 			Response:         nil,
 			AssertionHandler: config.AssertionHandler,

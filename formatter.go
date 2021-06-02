@@ -13,9 +13,9 @@ type Formatter interface {
 // DefaultFormatter is the default Formatter implementation.
 type DefaultFormatter struct{}
 
-// Success implements Formatter.Success and returns an empty string.
+// Success implements Formatter.Success and returns the test name.
 func (DefaultFormatter) Success(ctx *Context) string {
-	return ""
+	return ctx.TestName
 }
 
 // Failure implements Formatter.Failure and reports failure.

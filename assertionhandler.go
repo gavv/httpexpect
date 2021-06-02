@@ -1,7 +1,22 @@
 package httpexpect
 
-import "testing"
-
+// AssertionHandler takes care of reporting test Failure or Success.
+//
+// It implements Reporter for compatibility reason and must not be used for new code.
+//
+// When implementing your own AssertionHandler, you can chose to ignore those
+// Reporter and Formatter interfaces/implementations and decide to handle
+// everything by yourself instead.
+//
+// For example, you can provide a JSON output for ulterior processing.
+//
+// You should avoid "expensive I/O" in the implementation. Instead, write results
+// to a "local" sink and publish those results from an external tool.
+//
+// For example: run the tests in your CI, but have a separate step to publish
+// test results from said JSON file.
+//
+// This way you don't mix testing and reporting.
 type AssertionHandler interface {
 	// Reporter is implemented for compatibility only and shouldn't be used directly.
 	Reporter
@@ -9,12 +24,37 @@ type AssertionHandler interface {
 	Success(ctx *Context)
 }
 
+// ChainAssertionHandler will call all Handlers one after another, as they are provided.
+type ChainAssertionHandler struct {
+	Handlers []AssertionHandler
+}
+
+func (c ChainAssertionHandler) Errorf(message string, args ...interface{}) {
+	for _, h := range c.Handlers {
+		h.Errorf(message, args...)
+	}
+}
+
+func (c ChainAssertionHandler) Failure(ctx *Context, failure Failure) {
+	for _, h := range c.Handlers {
+		h.Failure(ctx, failure)
+	}
+}
+
+func (c ChainAssertionHandler) Success(ctx *Context) {
+	for _, h := range c.Handlers {
+		h.Success(ctx)
+	}
+}
+
 type DefaultAssertionHandler struct {
 	Reporter  Reporter
 	Formatter Formatter
 }
 
-func NewDefaultAssertionHandler(t *testing.T) AssertionHandler {
+// NewDefaultAssertionHandler uses AssertReporter and DefaultFormatter.
+// The Formatter is called first and provides the string to Reporter.
+func NewDefaultAssertionHandler(t LoggerReporter) AssertionHandler {
 	return DefaultAssertionHandler{
 		Reporter:  NewAssertReporter(t),
 		Formatter: DefaultFormatter{},
