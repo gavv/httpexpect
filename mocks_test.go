@@ -38,7 +38,7 @@ func newMockAssertionHandler(t *testing.T) AssertionHandler {
 }
 
 func newMockContext(t *testing.T) *Context {
-	return &Context{AssertionHandler: newMockAssertionHandler(t), TestName: t.Name()}
+	return &Context{AssertionHandler: newMockAssertionHandler(t)}
 }
 
 func (r *mockReporter) Errorf(message string, args ...interface{}) {

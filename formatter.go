@@ -1,6 +1,8 @@
 package httpexpect
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // Formatter is used for common formatting options.
 type Formatter interface {
@@ -11,10 +13,9 @@ type Formatter interface {
 // DefaultFormatter is the default Formatter implementation.
 type DefaultFormatter struct{}
 
-// Success implements Formatter.Success and returns the current
-// test name from context.
+// Success implements Formatter.Success and returns an empty string.
 func (DefaultFormatter) Success(ctx *Context) string {
-	return ctx.TestName + " passed"
+	return ""
 }
 
 // Failure implements Formatter.Failure and reports failure.
@@ -23,20 +24,18 @@ func (DefaultFormatter) Success(ctx *Context) string {
 // a string and passes it to Context.Reporter for reporting.
 func (DefaultFormatter) Failure(ctx *Context, f Failure) string {
 	errString := ""
-	if f.actual != nil {
-		errString = fmt.Sprintf(
-			"\nassertion:\n%s\nexpected:\n%s\nactual:\n%s\ndiff:\n%s",
-			f.assertionName,
-			dumpValue(f.expected),
-			dumpValue(f.actual),
-			diffValues(f.expected, f.actual),
-		)
-	} else {
-		errString = fmt.Sprintf(
-			"expected value not equal to:\n%s",
-			dumpValue(f.expected),
-		)
+	if f.err != nil {
+		errString += "\noriginal error: " + f.err.Error()
 	}
+
+	// FIXME: implement all failureAssert* cases
+	errString += fmt.Sprintf(
+		"\nassertion: %s\nexpected: %s\nactual: %s\ndiff:\n%s",
+		f.assertionName,
+		dumpValue(f.expected),
+		dumpValue(f.actual),
+		diffValues(f.expected, f.actual),
+	)
 
 	return errString
 }

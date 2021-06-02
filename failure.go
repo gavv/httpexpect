@@ -3,6 +3,7 @@ package httpexpect
 type failureAssertType uint64
 
 const (
+	// FIXME: use stringer to provide a string representation and allow those const to be used publicly?
 	failureAssertEqual failureAssertType = iota
 	failureAssertNotEqual
 	failureAssertLt

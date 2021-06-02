@@ -135,6 +135,8 @@ type Config struct {
 	// you're happy with their format, but want to send logs somewhere
 	// else instead of testing.TB.
 	Printers []Printer
+
+	TestName string
 }
 
 // RequestFactory is used to create all http.Request objects.
@@ -323,7 +325,6 @@ func WithConfig(config Config) *Expect {
 	return &Expect{
 		config: config,
 		context: &Context{
-			TestName:         "", // FIXME: should be set here?
 			Request:          nil,
 			Response:         nil,
 			AssertionHandler: config.AssertionHandler,
