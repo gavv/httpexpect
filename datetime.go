@@ -42,8 +42,13 @@ func (dt *DateTime) Raw() time.Time {
 //  dt.Equal(time.Unix(0, 1))
 func (dt *DateTime) Equal(value time.Time) *DateTime {
 	if !dt.value.Equal(value) {
-		dt.chain.fail("\nexpected datetime equal to:\n %s\n\nbut got:\n %s",
-			value, dt.value)
+		failure := Failure{
+			assertionName: "datetime",
+			expected:      value,
+			actual:        dt.value,
+			assertType:    failureAssertEqual,
+		}
+		dt.chain.fail(failure)
 	}
 	return dt
 }
@@ -55,7 +60,13 @@ func (dt *DateTime) Equal(value time.Time) *DateTime {
 //  dt.NotEqual(time.Unix(0, 2))
 func (dt *DateTime) NotEqual(value time.Time) *DateTime {
 	if dt.value.Equal(value) {
-		dt.chain.fail("\nexpected datetime not equal to:\n %s", value)
+		failure := Failure{
+			assertionName: "datetime",
+			expected:      value,
+			actual:        dt.value,
+			assertType:    failureAssertNotEqual,
+		}
+		dt.chain.fail(failure)
 	}
 	return dt
 }
@@ -67,8 +78,13 @@ func (dt *DateTime) NotEqual(value time.Time) *DateTime {
 //  dt.Gt(time.Unix(0, 1))
 func (dt *DateTime) Gt(value time.Time) *DateTime {
 	if !dt.value.After(value) {
-		dt.chain.fail("\nexpected datetime > then:\n %s\n\nbut got:\n %s",
-			value, dt.value)
+		failure := Failure{
+			assertionName: "datetime",
+			expected:      value,
+			actual:        dt.value,
+			assertType:    failureAssertGt,
+		}
+		dt.chain.fail(failure)
 	}
 	return dt
 }
@@ -80,8 +96,13 @@ func (dt *DateTime) Gt(value time.Time) *DateTime {
 //  dt.Ge(time.Unix(0, 1))
 func (dt *DateTime) Ge(value time.Time) *DateTime {
 	if !(dt.value.After(value) || dt.value.Equal(value)) {
-		dt.chain.fail("\nexpected datetime >= then:\n %s\n\nbut got:\n %s",
-			value, dt.value)
+		failure := Failure{
+			assertionName: "datetime",
+			expected:      value,
+			actual:        dt.value,
+			assertType:    failureAssertGe,
+		}
+		dt.chain.fail(failure)
 	}
 	return dt
 }
@@ -93,8 +114,13 @@ func (dt *DateTime) Ge(value time.Time) *DateTime {
 //  dt.Lt(time.Unix(0, 2))
 func (dt *DateTime) Lt(value time.Time) *DateTime {
 	if !dt.value.Before(value) {
-		dt.chain.fail("\nexpected datetime < then:\n %s\n\nbut got:\n %s",
-			value, dt.value)
+		failure := Failure{
+			assertionName: "datetime",
+			expected:      value,
+			actual:        dt.value,
+			assertType:    failureAssertLt,
+		}
+		dt.chain.fail(failure)
 	}
 	return dt
 }
@@ -106,8 +132,13 @@ func (dt *DateTime) Lt(value time.Time) *DateTime {
 //  dt.Le(time.Unix(0, 2))
 func (dt *DateTime) Le(value time.Time) *DateTime {
 	if !(dt.value.Before(value) || dt.value.Equal(value)) {
-		dt.chain.fail("\nexpected datetime <= then:\n %s\n\nbut got:\n %s",
-			value, dt.value)
+		failure := Failure{
+			assertionName: "datetime",
+			expected:      value,
+			actual:        dt.value,
+			assertType:    failureAssertLe,
+		}
+		dt.chain.fail(failure)
 	}
 	return dt
 }
@@ -121,9 +152,13 @@ func (dt *DateTime) Le(value time.Time) *DateTime {
 func (dt *DateTime) InRange(min, max time.Time) *DateTime {
 	if !((dt.value.After(min) || dt.value.Equal(min)) &&
 		(dt.value.Before(max) || dt.value.Equal(max))) {
-		dt.chain.fail(
-			"\nexpected datetime in range:\n min: %s\n max: %s\n\nbut got: %s",
-			min, max, dt.value)
+		failure := Failure{
+			assertionName:   "datetime",
+			actual:          dt.value,
+			expectedInRange: []interface{}{min, max},
+			assertType:      failureAssertInRange,
+		}
+		dt.chain.fail(failure)
 	}
 	return dt
 }

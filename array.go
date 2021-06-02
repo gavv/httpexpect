@@ -24,7 +24,8 @@ func NewArray(reporter Reporter, value []interface{}) *Array {
 	chain := makeChain(reporter)
 	if value == nil {
 		failure := Failure{
-			err: fmt.Errorf("expected non-nill array value"),
+			err:        fmt.Errorf("expected non-nil array value"),
+			assertType: failureAssertNotNil,
 		}
 		chain.fail(failure)
 	} else {
@@ -76,8 +77,10 @@ func (a *Array) Length() *Number {
 func (a *Array) Element(index int) *Value {
 	if index < 0 || index >= len(a.value) {
 		failure := Failure{
-			err:           fmt.Errorf("array index out of bounds:\n  index %d\n\n  bounds [%d; %d)"),
-			assertionName: "Array.Element",
+			assertionName:   "array",
+			actual:          index,
+			assertType:      failureAssertOutOfBounds,
+			expectedInRange: []interface{}{0, len(a.value) - 1},
 		}
 		a.chain.fail(failure)
 		return &Value{a.chain, nil}
@@ -98,7 +101,8 @@ func (a *Array) First() *Value {
 	if len(a.value) < 1 {
 		failure := Failure{
 			err:           fmt.Errorf("array is empty"),
-			assertionName: "Array.First",
+			assertionName: "array",
+			assertType:    failureAssertFirst,
 		}
 		a.chain.fail(failure)
 		return &Value{a.chain, nil}
@@ -119,7 +123,8 @@ func (a *Array) Last() *Value {
 	if len(a.value) < 1 {
 		a.chain.fail(Failure{
 			err:           fmt.Errorf("array is empty"),
-			assertionName: "Array.Last",
+			assertionName: "array",
+			assertType:    failureAssertLast,
 		})
 		return &Value{a.chain, nil}
 	}
@@ -185,9 +190,10 @@ func (a *Array) Equal(value interface{}) *Array {
 	}
 	if !reflect.DeepEqual(expected, a.value) {
 		failure := Failure{
-			assertionName: "Array.Equal",
+			assertionName: "array",
 			actual:        a.value,
 			expected:      expected,
+			assertType:    failureAssertEqual,
 		}
 		a.chain.fail(failure)
 	}
@@ -209,8 +215,10 @@ func (a *Array) NotEqual(value interface{}) *Array {
 	}
 	if reflect.DeepEqual(expected, a.value) {
 		failure := Failure{
-			assertionName: "Array.NotEqual",
+			assertionName: "array",
 			expected:      expected,
+			actual:        a.value,
+			assertType:    failureAssertNotEqual,
 		}
 		a.chain.fail(failure)
 	}
@@ -247,9 +255,10 @@ func (a *Array) Contains(values ...interface{}) *Array {
 	for _, e := range elements {
 		if !a.containsElement(e) {
 			failure := Failure{
-				assertionName: "Array.Contains",
+				assertionName: "array",
 				expected:      e,
 				actual:        a.value,
+				assertType:    failureAssertContains,
 			}
 			a.chain.fail(failure)
 		}
@@ -272,9 +281,10 @@ func (a *Array) NotContains(values ...interface{}) *Array {
 	for _, e := range elements {
 		if a.containsElement(e) {
 			failure := Failure{
-				assertionName: "Array.NotContains",
+				assertionName: "array",
 				expected:      e,
 				actual:        a.value,
+				assertType:    failureAssertNotContains,
 			}
 			a.chain.fail(failure)
 		}
@@ -299,10 +309,11 @@ func (a *Array) ContainsOnly(values ...interface{}) *Array {
 	}
 	if len(elements) != len(a.value) {
 		failure := Failure{
-			assertionName: "Array.ContainsOnly",
+			assertionName: "array",
 			err:           fmt.Errorf("arrays of different lengths"),
 			expected:      len(elements),
 			actual:        len(a.value),
+			assertType:    failureAssertContainsOnly,
 		}
 		a.chain.fail(failure)
 		return a
@@ -310,10 +321,10 @@ func (a *Array) ContainsOnly(values ...interface{}) *Array {
 	for _, e := range elements {
 		if !a.containsElement(e) {
 			failure := Failure{
-				assertionName: "Array.ContainsOnly",
-				err:           fmt.Errorf("expected arry containing element"),
+				assertionName: "array",
 				expected:      e,
 				actual:        a.value,
+				assertType:    failureAssertContainsOnly,
 			}
 			a.chain.fail(failure)
 		}

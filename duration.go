@@ -42,7 +42,11 @@ func (d *Duration) Raw() time.Duration {
 //  d.IsSet()
 func (d *Duration) IsSet() *Duration {
 	if d.value == nil {
-		d.chain.fail("expected duration is set, but it is not")
+		failure := Failure{
+			assertionName: "duration",
+			assertType:    failureAssertIsSet,
+		}
+		d.chain.fail(failure)
 	}
 	return d
 }
@@ -50,7 +54,11 @@ func (d *Duration) IsSet() *Duration {
 // NotSet succeeds if Duration is not set.
 func (d *Duration) NotSet() *Duration {
 	if d.value != nil {
-		d.chain.fail("expected duration is not set, but it is")
+		failure := Failure{
+			assertionName: "duration",
+			assertType:    failureAssertNotSet,
+		}
+		d.chain.fail(failure)
 	}
 	return d
 }
@@ -61,13 +69,16 @@ func (d *Duration) NotSet() *Duration {
 //  d := NewDuration(t, time.Second)
 //  d.Equal(time.Second)
 func (d *Duration) Equal(value time.Duration) *Duration {
-	if d.value == nil {
-		d.chain.fail("expected duration is set, but it is not")
-		return d
-	}
+	d.IsSet()
+
 	if !(*d.value == value) {
-		d.chain.fail("\nexpected duration equal to:\n %s\n\nbut got:\n %s",
-			value, *d.value)
+		failure := Failure{
+			assertionName: "duration",
+			assertType:    failureAssertEqual,
+			expected:      value,
+			actual:        *d.value,
+		}
+		d.chain.fail(failure)
 	}
 	return d
 }
@@ -78,12 +89,16 @@ func (d *Duration) Equal(value time.Duration) *Duration {
 //  d := NewDuration(t, time.Second)
 //  d.NotEqual(time.Minute)
 func (d *Duration) NotEqual(value time.Duration) *Duration {
-	if d.value == nil {
-		d.chain.fail("expected duration is set, but it is not")
-		return d
-	}
+	d.IsSet()
+
 	if !(*d.value != value) {
-		d.chain.fail("\nexpected duration not equal to:\n %s", value)
+		failure := Failure{
+			assertionName: "duration",
+			expected:      value,
+			actual:        *d.value,
+			assertType:    failureAssertNotEqual,
+		}
+		d.chain.fail(failure)
 	}
 	return d
 }
@@ -94,13 +109,16 @@ func (d *Duration) NotEqual(value time.Duration) *Duration {
 //  d := NewDuration(t, time.Minute)
 //  d.Gt(time.Second)
 func (d *Duration) Gt(value time.Duration) *Duration {
-	if d.value == nil {
-		d.chain.fail("expected duration is set, but it is not")
-		return d
-	}
+	d.IsSet()
+
 	if !(*d.value > value) {
-		d.chain.fail("\nexpected duration > then:\n %s\n\nbut got:\n %s",
-			value, *d.value)
+		failure := Failure{
+			assertionName: "duration",
+			assertType:    failureAssertGt,
+			expected:      value,
+			actual:        *d.value,
+		}
+		d.chain.fail(failure)
 	}
 	return d
 }
@@ -111,13 +129,16 @@ func (d *Duration) Gt(value time.Duration) *Duration {
 //  d := NewDuration(t, time.Minute)
 //  d.Ge(time.Second)
 func (d *Duration) Ge(value time.Duration) *Duration {
-	if d.value == nil {
-		d.chain.fail("expected duration is set, but it is not")
-		return d
-	}
+	d.IsSet()
+
 	if !(*d.value >= value) {
-		d.chain.fail("\nexpected duration >= then:\n %s\n\nbut got:\n %s",
-			value, *d.value)
+		failure := Failure{
+			assertionName: "duration",
+			assertType:    failureAssertGe,
+			expected:      value,
+			actual:        *d.value,
+		}
+		d.chain.fail(failure)
 	}
 	return d
 }
@@ -128,13 +149,16 @@ func (d *Duration) Ge(value time.Duration) *Duration {
 //  d := NewDuration(t, time.Second)
 //  d.Lt(time.Minute)
 func (d *Duration) Lt(value time.Duration) *Duration {
-	if d.value == nil {
-		d.chain.fail("expected duration is set, but it is not")
-		return d
-	}
+	d.IsSet()
+
 	if !(*d.value < value) {
-		d.chain.fail("\nexpected duration < then:\n %s\n\nbut got:\n %s",
-			value, *d.value)
+		failure := Failure{
+			assertionName: "duration",
+			assertType:    failureAssertLt,
+			expected:      value,
+			actual:        *d.value,
+		}
+		d.chain.fail(failure)
 	}
 	return d
 }
@@ -145,13 +169,16 @@ func (d *Duration) Lt(value time.Duration) *Duration {
 //  d := NewDuration(t, time.Second)
 //  d.Le(time.Minute)
 func (d *Duration) Le(value time.Duration) *Duration {
-	if d.value == nil {
-		d.chain.fail("expected duration is set, but it is not")
-		return d
-	}
+	d.IsSet()
+
 	if !(*d.value <= value) {
-		d.chain.fail("\nexpected duration <= then:\n %s\n\nbut got:\n %s",
-			value, *d.value)
+		failure := Failure{
+			assertionName: "duration",
+			assertType:    failureAssertLe,
+			expected:      value,
+			actual:        *d.value,
+		}
+		d.chain.fail(failure)
 	}
 	return d
 }
@@ -163,14 +190,16 @@ func (d *Duration) Le(value time.Duration) *Duration {
 //  d.InRange(time.Second, time.Hour)
 //  d.InRange(time.Minute, time.Minute)
 func (d *Duration) InRange(min, max time.Duration) *Duration {
-	if d.value == nil {
-		d.chain.fail("expected duration is set, but it is not")
-		return d
-	}
+	d.IsSet()
+
 	if !(*d.value >= min && *d.value <= max) {
-		d.chain.fail(
-			"\nexpected duration in range:\n min: %s\n max: %s\n\nbut got: %s",
-			min, max, *d.value)
+		failure := Failure{
+			assertionName:   "duration",
+			assertType:      failureAssertInRange,
+			expectedInRange: []interface{}{min, max},
+			actual:          *d.value,
+		}
+		d.chain.fail(failure)
 	}
 	return d
 }

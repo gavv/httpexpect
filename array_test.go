@@ -9,7 +9,7 @@ import (
 func TestArrayFailed(t *testing.T) {
 	chain := makeChain(newMockReporter(t))
 
-	chain.fail("fail")
+	chain.fail(Failure{})
 
 	value := &Array{chain, nil}
 

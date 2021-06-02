@@ -81,7 +81,7 @@ func (s *String) DateTime(layout ...string) *DateTime {
 		t, err = http.ParseTime(s.value)
 	}
 	if err != nil {
-		s.chain.fail(err.Error())
+		s.chain.fail(NewErrorFailure(err))
 		return &DateTime{s.chain, time.Unix(0, 0)}
 	}
 	return &DateTime{s.chain, t}
@@ -112,8 +112,13 @@ func (s *String) NotEmpty() *String {
 //  str.Equal("Hello")
 func (s *String) Equal(value string) *String {
 	if !(s.value == value) {
-		s.chain.fail("\nexpected string equal to:\n %q\n\nbut got:\n %q",
-			value, s.value)
+		failure := Failure{
+			assertionName: "string",
+			assertType:    failureAssertEqual,
+			expected:      value,
+			actual:        s.value,
+		}
+		s.chain.fail(failure)
 	}
 	return s
 }
@@ -125,7 +130,12 @@ func (s *String) Equal(value string) *String {
 //  str.NotEqual("Goodbye")
 func (s *String) NotEqual(value string) *String {
 	if !(s.value != value) {
-		s.chain.fail("\nexpected string not equal to:\n %q", value)
+		failure := Failure{
+			assertionName: "string",
+			assertType:    failureAssertNotEqual,
+			expected:      value,
+		}
+		s.chain.fail(failure)
 	}
 	return s
 }
@@ -135,12 +145,16 @@ func (s *String) NotEqual(value string) *String {
 //
 // Example:
 //  str := NewString(t, "Hello")
-//  str.EqualFold("hELLo")
+//  str.EqualFold("hELLo")"\nexpected string not equal to:\n %q", value
 func (s *String) EqualFold(value string) *String {
 	if !strings.EqualFold(s.value, value) {
-		s.chain.fail(
-			"\nexpected string equal to (case-insensitive):\n %q\n\nbut got:\n %q",
-			value, s.value)
+		failure := Failure{
+			assertionName: "string",
+			assertType:    failureAssertEqual,
+			expected:      value,
+			actual:        s.value,
+		}
+		s.chain.fail(failure)
 	}
 	return s
 }
@@ -153,9 +167,13 @@ func (s *String) EqualFold(value string) *String {
 //  str.NotEqualFold("gOODBYe")
 func (s *String) NotEqualFold(value string) *String {
 	if strings.EqualFold(s.value, value) {
-		s.chain.fail(
-			"\nexpected string not equal to (case-insensitive):\n %q\n\nbut got:\n %q",
-			value, s.value)
+		failure := Failure{
+			assertionName: "string",
+			assertType:    failureAssertNotEqual,
+			expected:      value,
+			actual:        s.value,
+		}
+		s.chain.fail(failure)
 	}
 	return s
 }
@@ -167,9 +185,13 @@ func (s *String) NotEqualFold(value string) *String {
 //  str.Contains("ell")
 func (s *String) Contains(value string) *String {
 	if !strings.Contains(s.value, value) {
-		s.chain.fail(
-			"\nexpected string containing substring:\n %q\n\nbut got:\n %q",
-			value, s.value)
+		failure := Failure{
+			assertionName: "string",
+			assertType:    failureAssertContains,
+			expected:      value,
+			actual:        s.value,
+		}
+		s.chain.fail(failure)
 	}
 	return s
 }
@@ -181,9 +203,13 @@ func (s *String) Contains(value string) *String {
 //  str.NotContains("bye")
 func (s *String) NotContains(value string) *String {
 	if strings.Contains(s.value, value) {
-		s.chain.fail(
-			"\nexpected string not containing substring:\n %q\n\nbut got:\n %q",
-			value, s.value)
+		failure := Failure{
+			assertionName: "string",
+			assertType:    failureAssertNotContains,
+			expected:      value,
+			actual:        s.value,
+		}
+		s.chain.fail(failure)
 	}
 	return s
 }
@@ -196,9 +222,13 @@ func (s *String) NotContains(value string) *String {
 //  str.ContainsFold("ELL")
 func (s *String) ContainsFold(value string) *String {
 	if !strings.Contains(strings.ToLower(s.value), strings.ToLower(value)) {
-		s.chain.fail(
-			"\nexpected string containing substring (case-insensitive):\n %q"+
-				"\n\nbut got:\n %q", value, s.value)
+		failure := Failure{
+			assertionName: "string",
+			assertType:    failureAssertContains,
+			expected:      value,
+			actual:        s.value,
+		}
+		s.chain.fail(failure)
 	}
 	return s
 }
@@ -211,9 +241,13 @@ func (s *String) ContainsFold(value string) *String {
 //  str.NotContainsFold("BYE")
 func (s *String) NotContainsFold(value string) *String {
 	if strings.Contains(strings.ToLower(s.value), strings.ToLower(value)) {
-		s.chain.fail(
-			"\nexpected string not containing substring (case-insensitive):\n %q"+
-				"\n\nbut got:\n %q", value, s.value)
+		failure := Failure{
+			assertionName: "string",
+			assertType:    failureAssertNotContains,
+			expected:      value,
+			actual:        s.value,
+		}
+		s.chain.fail(failure)
 	}
 	return s
 }
@@ -241,14 +275,19 @@ func (s *String) NotContainsFold(value string) *String {
 func (s *String) Match(re string) *Match {
 	r, err := regexp.Compile(re)
 	if err != nil {
-		s.chain.fail(err.Error())
+		s.chain.fail(NewErrorFailure(err))
 		return makeMatch(s.chain, nil, nil)
 	}
 
 	m := r.FindStringSubmatch(s.value)
 	if m == nil {
-		s.chain.fail("\nexpected string matching regexp:\n `%s`\n\nbut got:\n %q",
-			re, s.value)
+		failure := Failure{
+			assertionName: "string",
+			assertType:    failureAssertMatchRe,
+			expected:      re,
+			actual:        s.value,
+		}
+		s.chain.fail(failure)
 		return makeMatch(s.chain, nil, nil)
 	}
 
@@ -273,14 +312,19 @@ func (s *String) Match(re string) *Match {
 func (s *String) MatchAll(re string) []Match {
 	r, err := regexp.Compile(re)
 	if err != nil {
-		s.chain.fail(err.Error())
+		s.chain.fail(NewErrorFailure(err))
 		return []Match{}
 	}
 
 	matches := r.FindAllStringSubmatch(s.value, -1)
 	if matches == nil {
-		s.chain.fail("\nexpected string matching regexp:\n `%s`\n\nbut got:\n %q",
-			re, s.value)
+		failure := Failure{
+			assertionName: "string",
+			assertType:    failureAssertMatchRe,
+			expected:      re,
+			actual:        s.value,
+		}
+		s.chain.fail(failure)
 		return []Match{}
 	}
 
@@ -306,13 +350,18 @@ func (s *String) MatchAll(re string) []Match {
 func (s *String) NotMatch(re string) *String {
 	r, err := regexp.Compile(re)
 	if err != nil {
-		s.chain.fail(err.Error())
+		s.chain.fail(NewErrorFailure(err))
 		return s
 	}
 
 	if r.MatchString(s.value) {
-		s.chain.fail("\nexpected string not matching regexp:\n `%s`\n\nbut got:\n %q",
-			re, s.value)
+		failure := Failure{
+			assertionName: "string",
+			assertType:    failureAssertNotMatchRe,
+			expected:      re,
+			actual:        s.value,
+		}
+		s.chain.fail(failure)
 		return s
 	}
 

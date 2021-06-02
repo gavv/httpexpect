@@ -306,16 +306,7 @@ func New(t LoggerReporter, baseURL string) *Expect {
 //          Status(http.StatusOK)
 //  }
 func WithConfig(config Config) *Expect {
-	if config.AssertionHandler == nil {
-		if config.Reporter == nil {
-			panic("config.Reporter is nil")
-		}
-
-		config.AssertionHandler = DefaultAssertionHandler{
-			Reporter:  config.Reporter,
-			Formatter: DefaultFormatter{},
-		}
-	}
+	config.AssertionHandler = ensureAssertionHandler(config)
 
 	if config.RequestFactory == nil {
 		config.RequestFactory = DefaultRequestFactory{}
@@ -467,25 +458,25 @@ func (e *Expect) Value(value interface{}) *Value {
 
 // Object is a shorthand for NewObject(e.config.Reporter, value).
 func (e *Expect) Object(value map[string]interface{}) *Object {
-	return NewObject(e.config.Reporter, value)
+	return NewObject(e.context, value)
 }
 
 // Array is a shorthand for NewArray(e.config.Reporter, value).
 func (e *Expect) Array(value []interface{}) *Array {
-	return NewArray(e.config.Reporter, value)
+	return NewArray(e.context, value)
 }
 
 // String is a shorthand for NewString(e.config.Reporter, value).
 func (e *Expect) String(value string) *String {
-	return NewString(e.config.Reporter, value)
+	return NewString(e.context, value)
 }
 
 // Number is a shorthand for NewNumber(e.config.Reporter, value).
 func (e *Expect) Number(value float64) *Number {
-	return NewNumber(e.config.Reporter, value)
+	return NewNumber(e.context, value)
 }
 
 // Boolean is a shorthand for NewBoolean(e.config.Reporter, value).
 func (e *Expect) Boolean(value bool) *Boolean {
-	return NewBoolean(e.config.Reporter, value)
+	return NewBoolean(e.context, value)
 }

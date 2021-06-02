@@ -83,9 +83,7 @@ func NewRequest(config Config, method, path string, pathargs ...interface{}) *Re
 	path, err := interpol.WithFunc(path, func(k string, w io.Writer) error {
 		if n < len(pathargs) {
 			if pathargs[n] == nil {
-				chain.fail(
-					"\nunexpected nil argument for url path format string:\n"+
-						" Request(\"%s\", %v...)", method, pathargs)
+				chain.fail(NewErrorFailure(fmt.Errorf("unexpected nil argument for url path format string: Request(\"%s\", %v...)", method, pathargs)))
 			} else {
 				mustWrite(w, fmt.Sprint(pathargs[n]))
 			}
@@ -98,12 +96,12 @@ func NewRequest(config Config, method, path string, pathargs ...interface{}) *Re
 		return nil
 	})
 	if err != nil {
-		chain.fail(err.Error())
+		chain.fail(NewErrorFailure(err))
 	}
 
 	hr, err := config.RequestFactory.NewRequest(method, config.BaseURL, nil)
 	if err != nil {
-		chain.fail(err.Error())
+		chain.fail(NewErrorFailure(err))
 	}
 
 	return &Request{
@@ -152,7 +150,7 @@ func (r *Request) WithClient(client Client) *Request {
 		return r
 	}
 	if client == nil {
-		r.chain.fail("\nunexpected nil client in WithClient")
+		r.chain.fail(NewErrorFailure(fmt.Errorf("unexpected nil client in WithClient")))
 		return r
 	}
 	r.config.Client = client
@@ -173,7 +171,7 @@ func (r *Request) WithHandler(handler http.Handler) *Request {
 		return r
 	}
 	if handler == nil {
-		r.chain.fail("\nunexpected nil handler in WithHandler")
+		r.chain.fail(NewErrorFailure(fmt.Errorf("unexpected nil handler in WithHandler")))
 		return r
 	}
 	if client, ok := r.config.Client.(*http.Client); ok {
@@ -231,7 +229,7 @@ func (r *Request) WithWebsocketDialer(dialer WebsocketDialer) *Request {
 		return r
 	}
 	if dialer == nil {
-		r.chain.fail("\nunexpected nil dialer in WithWebsocketDialer")
+		r.chain.fail(NewErrorFailure(fmt.Errorf("unexpected nil dialer in WithWebsocketDialer")))
 		return r
 	}
 	r.config.WebsocketDialer = dialer
@@ -258,9 +256,9 @@ func (r *Request) WithPath(key string, value interface{}) *Request {
 	path, err := interpol.WithFunc(r.path, func(k string, w io.Writer) error {
 		if strings.EqualFold(k, key) {
 			if value == nil {
-				r.chain.fail(
-					"\nunexpected nil argument for url path format string:\n"+
-						" WithPath(\"%s\", %v)", key, value)
+				r.chain.fail(NewErrorFailure(fmt.Errorf(
+					"unexpected nil argument for url path format string: "+
+						" WithPath(\"%s\", %v)", key, value)))
 			} else {
 				mustWrite(w, fmt.Sprint(value))
 				ok = true
@@ -275,13 +273,13 @@ func (r *Request) WithPath(key string, value interface{}) *Request {
 	if err == nil {
 		r.path = path
 	} else {
-		r.chain.fail(err.Error())
+		r.chain.fail(NewErrorFailure(err))
 		return r
 	}
 	if !ok {
-		r.chain.fail("\nunexpected key for url path format string:\n"+
+		r.chain.fail(NewErrorFailure(fmt.Errorf("unexpected key for url path format string: "+
 			" WithPath(\"%s\", %v)\n\npath:\n %q",
-			key, value, r.path)
+			key, value, r.path)))
 		return r
 	}
 	return r
@@ -394,13 +392,13 @@ func (r *Request) WithQueryObject(object interface{}) *Request {
 	if reflect.Indirect(reflect.ValueOf(object)).Kind() == reflect.Struct {
 		q, err = query.Values(object)
 		if err != nil {
-			r.chain.fail(err.Error())
+			r.chain.fail(NewErrorFailure(err))
 			return r
 		}
 	} else {
 		q, err = form.EncodeToValues(object)
 		if err != nil {
-			r.chain.fail(err.Error())
+			r.chain.fail(NewErrorFailure(err))
 			return r
 		}
 	}
@@ -426,7 +424,7 @@ func (r *Request) WithQueryString(query string) *Request {
 	}
 	v, err := url.ParseQuery(query)
 	if err != nil {
-		r.chain.fail(err.Error())
+		r.chain.fail(NewErrorFailure(err))
 		return r
 	}
 	if r.query == nil {
@@ -454,7 +452,7 @@ func (r *Request) WithURL(urlStr string) *Request {
 	if u, err := url.Parse(urlStr); err == nil {
 		r.http.URL = u
 	} else {
-		r.chain.fail(err.Error())
+		r.chain.fail(NewErrorFailure(err))
 	}
 	return r
 }
@@ -565,9 +563,9 @@ func (r *Request) WithProto(proto string) *Request {
 	}
 	major, minor, ok := http.ParseHTTPVersion(proto)
 	if !ok {
-		r.chain.fail(
-			"\nunexpected protocol version %q, expected \"HTTP/{major}.{minor}\"",
-			proto)
+		r.chain.fail(NewErrorFailure(fmt.Errorf(
+			"unexpected protocol version %q, expected \"HTTP/{major}.{minor}\"",
+			proto)))
 		return r
 	}
 	r.http.ProtoMajor = major
@@ -594,8 +592,8 @@ func (r *Request) WithChunked(reader io.Reader) *Request {
 		return r
 	}
 	if !r.http.ProtoAtLeast(1, 1) {
-		r.chain.fail("chunked Transfer-Encoding requires at least \"HTTP/1.1\","+
-			"but \"HTTP/%d.%d\" is enabled", r.http.ProtoMajor, r.http.ProtoMinor)
+		r.chain.fail(NewErrorFailure(fmt.Errorf("chunked Transfer-Encoding requires at least \"HTTP/1.1\","+
+			"but \"HTTP/%d.%d\" is enabled", r.http.ProtoMajor, r.http.ProtoMinor)))
 		return r
 	}
 	r.setBody("WithChunked", reader, -1, false)
@@ -654,7 +652,7 @@ func (r *Request) WithJSON(object interface{}) *Request {
 	}
 	b, err := json.Marshal(object)
 	if err != nil {
-		r.chain.fail(err.Error())
+		r.chain.fail(NewErrorFailure(err))
 		return r
 	}
 
@@ -692,7 +690,7 @@ func (r *Request) WithForm(object interface{}) *Request {
 
 	f, err := form.EncodeToValues(object)
 	if err != nil {
-		r.chain.fail(err.Error())
+		r.chain.fail(NewErrorFailure(err))
 		return r
 	}
 
@@ -706,7 +704,7 @@ func (r *Request) WithForm(object interface{}) *Request {
 		sort.Strings(keys)
 		for _, k := range keys {
 			if err := r.multipart.WriteField(k, f[k][0]); err != nil {
-				r.chain.fail(err.Error())
+				r.chain.fail(NewErrorFailure(err))
 				return r
 			}
 		}
@@ -744,7 +742,7 @@ func (r *Request) WithFormField(key string, value interface{}) *Request {
 
 		err := r.multipart.WriteField(key, fmt.Sprint(value))
 		if err != nil {
-			r.chain.fail(err.Error())
+			r.chain.fail(NewErrorFailure(err))
 			return r
 		}
 	} else {
@@ -785,13 +783,13 @@ func (r *Request) WithFile(key, path string, reader ...io.Reader) *Request {
 	r.setType("WithFile", "multipart/form-data", false)
 
 	if r.multipart == nil {
-		r.chain.fail("WithFile requires WithMultipart to be called first")
+		r.chain.fail(NewErrorFailure(fmt.Errorf("WithFile requires WithMultipart to be called first")))
 		return r
 	}
 
 	wr, err := r.multipart.CreateFormFile(key, path)
 	if err != nil {
-		r.chain.fail(err.Error())
+		r.chain.fail(NewErrorFailure(err))
 		return r
 	}
 
@@ -801,7 +799,7 @@ func (r *Request) WithFile(key, path string, reader ...io.Reader) *Request {
 	} else {
 		f, err := os.Open(path)
 		if err != nil {
-			r.chain.fail(err.Error())
+			r.chain.fail(NewErrorFailure(err))
 			return r
 		}
 		rd = f
@@ -809,7 +807,7 @@ func (r *Request) WithFile(key, path string, reader ...io.Reader) *Request {
 	}
 
 	if _, err := io.Copy(wr, rd); err != nil {
-		r.chain.fail(err.Error())
+		r.chain.fail(NewErrorFailure(err))
 		return r
 	}
 
@@ -951,7 +949,7 @@ func (r *Request) encodeRequest() bool {
 
 	if r.multipart != nil {
 		if err := r.multipart.Close(); err != nil {
-			r.chain.fail(err.Error())
+			r.chain.fail(NewErrorFailure(err))
 			return false
 		}
 
@@ -971,10 +969,10 @@ func (r *Request) encodeWebsocketRequest() bool {
 	}
 
 	if r.bodySetter != "" {
-		r.chain.fail(
-			"\nwebocket request can not have body:\n  "+
+		r.chain.fail(NewErrorFailure(fmt.Errorf(
+			"webocket request can not have body:\n  "+
 				"body set by %s\n  webocket enabled by WithWebsocketUpgrade",
-			r.bodySetter)
+			r.bodySetter)))
 		return false
 	}
 
@@ -996,7 +994,7 @@ func (r *Request) sendRequest() *http.Response {
 	resp, err := r.config.Client.Do(r.http)
 
 	if err != nil {
-		r.chain.fail(err.Error())
+		r.chain.fail(NewErrorFailure(err))
 		return nil
 	}
 
@@ -1012,7 +1010,7 @@ func (r *Request) sendWebsocketRequest() (*http.Response, *websocket.Conn) {
 		r.http.URL.String(), r.http.Header)
 
 	if err != nil && err != websocket.ErrBadHandshake {
-		r.chain.fail(err.Error())
+		r.chain.fail(NewErrorFailure(err))
 		return nil, nil
 	}
 
@@ -1028,11 +1026,11 @@ func (r *Request) setType(newSetter, newType string, overwrite bool) {
 		previousType := r.http.Header.Get("Content-Type")
 
 		if previousType != "" && previousType != newType {
-			r.chain.fail(
-				"\nambiguous request \"Content-Type\" header values:\n %q (set by %s)\n\n"+
+			r.chain.fail(NewErrorFailure(fmt.Errorf(
+				"ambiguous request \"Content-Type\" header values:\n %q (set by %s)\n\n"+
 					"and:\n %q (wanted by %s)",
 				previousType, r.typeSetter,
-				newType, newSetter)
+				newType, newSetter)))
 			return
 		}
 	}
@@ -1043,9 +1041,9 @@ func (r *Request) setType(newSetter, newType string, overwrite bool) {
 
 func (r *Request) setBody(setter string, reader io.Reader, len int, overwrite bool) {
 	if !overwrite && r.bodySetter != "" {
-		r.chain.fail(
-			"\nambiguous request body contents:\n  set by %s\n  overwritten by %s",
-			r.bodySetter, setter)
+		r.chain.fail(NewErrorFailure(fmt.Errorf(
+			"ambiguous request body contents:\n  set by %s\n  overwritten by %s",
+			r.bodySetter, setter)))
 		return
 	}
 

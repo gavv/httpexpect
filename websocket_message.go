@@ -2,6 +2,7 @@ package httpexpect
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/gorilla/websocket"
 )
@@ -91,7 +92,7 @@ func (m *WebsocketMessage) Type(typ ...int) *WebsocketMessage {
 	case m.chain.failed():
 		return m
 	case len(typ) == 0:
-		m.chain.fail("\nunexpected nil argument passed to Type")
+		m.chain.fail(NewErrorFailure(fmt.Errorf("unexpected nil argument passed to Type")))
 		return m
 	}
 	yes := false
@@ -102,15 +103,16 @@ func (m *WebsocketMessage) Type(typ ...int) *WebsocketMessage {
 		}
 	}
 	if !yes {
-		if len(typ) > 1 {
-			m.chain.fail(
-				"\nexpected message type equal to one of:\n %v\n\nbut got:\n %d",
-				typ, m.typ)
-		} else {
-			m.chain.fail(
-				"\nexpected message type:\n %d\n\nbut got:\n %d",
-				typ[0], m.typ)
+		failure := Failure{
+			assertionName: "websocket.message",
+			assertType:    failureAssertEqual,
+			actual:        m.typ,
+			expected:      typ,
 		}
+		if len(typ) == 1 {
+			failure.expected = typ[0]
+		}
+		m.chain.fail(failure)
 	}
 	return m
 }
@@ -128,20 +130,23 @@ func (m *WebsocketMessage) NotType(typ ...int) *WebsocketMessage {
 	case m.chain.failed():
 		return m
 	case len(typ) == 0:
-		m.chain.fail("\nunexpected nil argument passed to NotType")
+		m.chain.fail(NewErrorFailure(fmt.Errorf("unexpected nil argument passed to NotType")))
 		return m
 	}
 	for _, t := range typ {
 		if t == m.typ {
-			if len(typ) > 1 {
-				m.chain.fail(
-					"\nexpected message type not equal:\n %v\n\nbut got:\n %d",
-					typ, m.typ)
-			} else {
-				m.chain.fail(
-					"\nexpected message type not equal:\n %d\n\nbut it did",
-					typ[0], m.typ)
+			failure := Failure{
+				assertionName: "websocket.message",
+				assertType:    failureAssertNotEqual,
+				expected:      typ,
+				actual:        m.typ,
 			}
+			if len(typ) == 1 {
+				failure.expected = typ[0]
+			}
+
+			m.chain.fail(failure)
+
 			return m
 		}
 	}
@@ -163,7 +168,7 @@ func (m *WebsocketMessage) Code(code ...int) *WebsocketMessage {
 	case m.chain.failed():
 		return m
 	case len(code) == 0:
-		m.chain.fail("\nunexpected nil argument passed to Code")
+		m.chain.fail(NewErrorFailure(fmt.Errorf("unexpected nil argument passed to Code")))
 		return m
 	case m.checkClosed("Code"):
 		return m
@@ -176,15 +181,16 @@ func (m *WebsocketMessage) Code(code ...int) *WebsocketMessage {
 		}
 	}
 	if !yes {
-		if len(code) > 1 {
-			m.chain.fail(
-				"\nexpected close code equal to one of:\n %v\n\nbut got:\n %d",
-				code, m.closeCode)
-		} else {
-			m.chain.fail(
-				"\nexpected close code:\n %d\n\nbut got:\n %d",
-				code[0], m.closeCode)
+		failure := Failure{
+			assertionName: "websocket close code",
+			assertType:    failureAssertNotEqual,
+			expected:      code,
+			actual:        m.closeCode,
 		}
+		if len(code) == 1 {
+			failure.expected = code[0]
+		}
+		m.chain.fail(failure)
 	}
 	return m
 }
@@ -204,22 +210,25 @@ func (m *WebsocketMessage) NotCode(code ...int) *WebsocketMessage {
 	case m.chain.failed():
 		return m
 	case len(code) == 0:
-		m.chain.fail("\nunexpected nil argument passed to CodeNotEqual")
+		m.chain.fail(NewErrorFailure(fmt.Errorf("unexpected nil argument passed to CodeNotEqual")))
 		return m
 	case m.checkClosed("NotCode"):
 		return m
 	}
 	for _, c := range code {
 		if c == m.closeCode {
-			if len(code) > 1 {
-				m.chain.fail(
-					"\nexpected close code not equal:\n %v\n\nbut got:\n %d",
-					code, m.closeCode)
-			} else {
-				m.chain.fail(
-					"\nexpected close code not equal:\n %d\n\nbut it did",
-					code[0], m.closeCode)
+			failure := Failure{
+				assertionName: "websocket close code",
+				assertType:    failureAssertNotEqual,
+				expected:      code,
+				actual:        m.closeCode,
 			}
+			if len(code) == 1 {
+				failure.expected = code[0]
+			}
+
+			m.chain.fail(failure)
+
 			return m
 		}
 	}
@@ -228,12 +237,14 @@ func (m *WebsocketMessage) NotCode(code ...int) *WebsocketMessage {
 
 func (m *WebsocketMessage) checkClosed(where string) bool {
 	if m.typ != websocket.CloseMessage {
-		m.chain.fail(
-			"\nunexpected %s usage for not '%' WebSocket message type\n\n"+
-				"got type:\n %s",
-			where,
-			wsMessageTypeName(websocket.CloseMessage),
-			wsMessageTypeName(m.typ))
+		failure := Failure{
+			assertionName: "websocket check closed",
+			err:           fmt.Errorf("where: %s", where),
+			assertType:    failureAssertEqual,
+			expected:      websocket.CloseMessage,
+			actual:        m.typ,
+		}
+		m.chain.fail(failure)
 		return true
 	}
 	return false
@@ -258,16 +269,21 @@ func (m *WebsocketMessage) NoContent() *WebsocketMessage {
 	case len(m.content) == 0:
 		return m
 	}
+
+	failure := Failure{
+		assertionName: "websocket message body being empty",
+		assertType:    failureAssertNotEmpty,
+	}
+
 	switch m.typ {
 	case websocket.BinaryMessage:
-		m.chain.fail(
-			"\nexpected message body being empty, but got:\n %d bytes",
-			len(m.content))
+		failure.actual = len(m.content)
 	default:
-		m.chain.fail(
-			"\nexpected message body being empty, but got:\n %s",
-			string(m.content))
+		failure.actual = string(m.content)
 	}
+
+	m.chain.fail(failure)
+
 	return m
 }
 
@@ -290,7 +306,7 @@ func (m *WebsocketMessage) getJSON() interface{} {
 
 	var value interface{}
 	if err := json.Unmarshal(m.content, &value); err != nil {
-		m.chain.fail(err.Error())
+		m.chain.fail(NewErrorFailure(err))
 		return nil
 	}
 

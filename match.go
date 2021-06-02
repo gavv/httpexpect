@@ -84,11 +84,13 @@ func (m *Match) Length() *Number {
 //   m.Index(2).Equal("john")
 func (m *Match) Index(index int) *String {
 	if index < 0 || index >= len(m.submatches) {
-		m.chain.fail(
-			"\nsubmatch index out of bounds:\n  index %d\n\n  bounds [%d; %d)",
-			index,
-			0,
-			len(m.submatches))
+		failure := Failure{
+			assertionName: "match",
+			assertType:    failureAssertMatchOutOfBounds,
+			expected:      index,
+			actual:        len(m.submatches),
+		}
+		m.chain.fail(failure)
 		return &String{m.chain, ""}
 	}
 	return &String{m.chain, m.submatches[index]}
@@ -111,10 +113,13 @@ func (m *Match) Index(index int) *String {
 func (m *Match) Name(name string) *String {
 	index, ok := m.names[name]
 	if !ok {
-		m.chain.fail(
-			"\nsubmatch name not found:\n %q\n\navailable names:\n%s",
-			name,
-			dumpValue(m.names))
+		failure := Failure{
+			assertionName: "match",
+			assertType:    failureAssertMatchName,
+			expected:      m.names,
+			actual:        name,
+		}
+		m.chain.fail(failure)
 		return &String{m.chain, ""}
 	}
 	return m.Index(index)
@@ -127,8 +132,12 @@ func (m *Match) Name(name string) *String {
 //  m.Empty()
 func (m *Match) Empty() *Match {
 	if len(m.submatches) != 0 {
-		m.chain.fail("\nexpected zero submatches, but got:\n  %s",
-			dumpValue(m.submatches))
+		failure := Failure{
+			assertionName: "match",
+			assertType:    failureAssertMatchEmpty,
+			actual:        m.submatches,
+		}
+		m.chain.fail(failure)
 	}
 	return m
 }
@@ -140,7 +149,11 @@ func (m *Match) Empty() *Match {
 //  m.NotEmpty()
 func (m *Match) NotEmpty() *Match {
 	if len(m.submatches) == 0 {
-		m.chain.fail("expected non-zero submatches")
+		failure := Failure{
+			assertionName: "match",
+			assertType:    failureAssertMatchNotEmpty,
+		}
+		m.chain.fail(failure)
 	}
 	return m
 }
@@ -161,9 +174,13 @@ func (m *Match) Values(values ...string) *Match {
 		values = []string{}
 	}
 	if !reflect.DeepEqual(values, m.getValues()) {
-		m.chain.fail("\nexpected submatches equal to:\n%s\n\nbut got:\n%s",
-			dumpValue(values),
-			dumpValue(m.getValues()))
+		failure := Failure{
+			assertionName: "match",
+			assertType:    failureAssertMatchValues,
+			expected:      values,
+			actual:        m.getValues(),
+		}
+		m.chain.fail(failure)
 	}
 	return m
 }
@@ -184,8 +201,12 @@ func (m *Match) NotValues(values ...string) *Match {
 		values = []string{}
 	}
 	if reflect.DeepEqual(values, m.getValues()) {
-		m.chain.fail("\nexpected submatches not equal to:\n%s",
-			dumpValue(values))
+		failure := Failure{
+			assertionName: "match",
+			assertType:    failureAssertMatchNotValues,
+			expected:      values,
+		}
+		m.chain.fail(failure)
 	}
 	return m
 }

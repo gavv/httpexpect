@@ -5,9 +5,14 @@ import (
 	"time"
 )
 
+type namer interface {
+	Name() string // testing.T and so on…
+}
+
 type AssertionHandler interface {
 	// Reporter is implemented for compatibility only and shouldn't be used directly.
 	Reporter
+	TestName() string
 	Failure(ctx *Context, failure Failure)
 	Success(ctx *Context)
 }
@@ -39,6 +44,14 @@ func ensureAssertionHandler(config Config) AssertionHandler {
 	}
 }
 
+func (d DefaultAssertionHandler) TestName() string {
+	if n, ok := d.Reporter.(namer); ok {
+		return n.Name()
+	}
+
+	return ""
+}
+
 func (d DefaultAssertionHandler) Errorf(message string, args ...interface{}) {
 	d.Reporter.Errorf(message, args...)
 }
@@ -60,6 +73,7 @@ type Context struct {
 	RTT              *time.Duration
 }
 
+// DEPRECATED
 // Errorf implements Reporter for compatibility and shouldn't be used directly.
 func (c *Context) Errorf(message string, args ...interface{}) {
 	c.AssertionHandler.Errorf(message, args...)

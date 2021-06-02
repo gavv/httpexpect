@@ -10,7 +10,7 @@ import (
 func TestNumberFailed(t *testing.T) {
 	chain := makeChain(newMockReporter(t))
 
-	chain.fail("fail")
+	chain.fail(Failure{})
 
 	value := &Number{chain, 0}
 
