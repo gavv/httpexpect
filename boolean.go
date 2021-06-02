@@ -47,7 +47,7 @@ func (b *Boolean) Schema(schema interface{}) *Boolean {
 func (b *Boolean) Equal(value bool) *Boolean {
 	if !(b.value == value) {
 		failure := Failure{
-			assertionName: "Boolean.Equal",
+			assertionName: "boolean",
 			expected:      value,
 			actual:        b.value,
 		}
@@ -64,7 +64,7 @@ func (b *Boolean) Equal(value bool) *Boolean {
 func (b *Boolean) NotEqual(value bool) *Boolean {
 	if !(b.value != value) {
 		failure := Failure{
-			assertionName: "Boolean.NotEqual",
+			assertionName: "boolean",
 			expected:      value,
 			actual:        b.value,
 		}
