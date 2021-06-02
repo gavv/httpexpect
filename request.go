@@ -113,7 +113,16 @@ func NewRequest(config Config, method, path string, pathargs ...interface{}) *Re
 	}
 }
 
+// WithContext is NOT go's standard context.Context interface. It is a concrete *Context pointer from httpexpect
+// that holds data to be provided to an AssertionHandler (also Reporter and Formatter, when using the default one).
+//
+// WithContext replaces the existing context with the given one.
+//
+// Providing a nil Context will panic.
 func (r *Request) WithContext(ctx *Context) *Request {
+	if ctx == nil {
+		panic("provided context is nil")
+	}
 	r.chain.ctx = ctx
 	r.context = ctx
 	return r
