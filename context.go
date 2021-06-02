@@ -24,6 +24,21 @@ func NewDefaultAssertionHandler(t *testing.T) AssertionHandler {
 	}
 }
 
+func ensureAssertionHandler(config Config) AssertionHandler {
+	if config.AssertionHandler != nil {
+		return config.AssertionHandler
+	}
+
+	if config.Reporter == nil {
+		panic("compat legacy Reporter is nil. you should provide an AssertionHandler or a Reporter.")
+	}
+
+	return DefaultAssertionHandler{
+		Reporter:  config.Reporter,
+		Formatter: DefaultFormatter{},
+	}
+}
+
 func (d DefaultAssertionHandler) Errorf(message string, args ...interface{}) {
 	d.Reporter.Errorf(message, args...)
 }

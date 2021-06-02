@@ -73,12 +73,7 @@ func NewRequest(config Config, method, path string, pathargs ...interface{}) *Re
 		panic("config.Client == nil")
 	}
 
-	if config.AssertionHandler == nil {
-		config.AssertionHandler = DefaultAssertionHandler{
-			Reporter:  config.Reporter,
-			Formatter: DefaultFormatter{},
-		}
-	}
+	config.AssertionHandler = ensureAssertionHandler(config)
 
 	placeholderCtx := &Context{AssertionHandler: config.AssertionHandler}
 
