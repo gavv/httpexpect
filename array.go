@@ -1,6 +1,7 @@
 package httpexpect
 
 import (
+	"fmt"
 	"reflect"
 )
 
@@ -22,7 +23,10 @@ type Array struct {
 func NewArray(reporter Reporter, value []interface{}) *Array {
 	chain := makeChain(reporter)
 	if value == nil {
-		chain.fail("expected non-nil array value")
+		failure := Failure{
+			err: fmt.Errorf("expected non-nill array value"),
+		}
+		chain.fail(failure)
 	} else {
 		value, _ = canonArray(&chain, value)
 	}
@@ -71,11 +75,11 @@ func (a *Array) Length() *Number {
 //  array.Element(1).Number().Equal(123)
 func (a *Array) Element(index int) *Value {
 	if index < 0 || index >= len(a.value) {
-		a.chain.fail(
-			"\narray index out of bounds:\n  index %d\n\n  bounds [%d; %d)",
-			index,
-			0,
-			len(a.value))
+		failure := Failure{
+			err:           fmt.Errorf("array index out of bounds:\n  index %d\n\n  bounds [%d; %d)"),
+			assertionName: "Array.Element",
+		}
+		a.chain.fail(failure)
 		return &Value{a.chain, nil}
 	}
 	return &Value{a.chain, a.value[index]}
@@ -92,7 +96,11 @@ func (a *Array) Element(index int) *Value {
 //  array.First().String().Equal("foo")
 func (a *Array) First() *Value {
 	if len(a.value) < 1 {
-		a.chain.fail("\narray is empty")
+		failure := Failure{
+			err:           fmt.Errorf("array is empty"),
+			assertionName: "Array.First",
+		}
+		a.chain.fail(failure)
 		return &Value{a.chain, nil}
 	}
 	return &Value{a.chain, a.value[0]}
@@ -109,7 +117,10 @@ func (a *Array) First() *Value {
 //  array.Last().Number().Equal(123)
 func (a *Array) Last() *Value {
 	if len(a.value) < 1 {
-		a.chain.fail("\narray is empty")
+		a.chain.fail(Failure{
+			err:           fmt.Errorf("array is empty"),
+			assertionName: "Array.Last",
+		})
 		return &Value{a.chain, nil}
 	}
 	return &Value{a.chain, a.value[len(a.value)-1]}
@@ -173,10 +184,12 @@ func (a *Array) Equal(value interface{}) *Array {
 		return a
 	}
 	if !reflect.DeepEqual(expected, a.value) {
-		a.chain.fail("\nexpected array equal to:\n%s\n\nbut got:\n%s\n\ndiff:\n%s",
-			dumpValue(expected),
-			dumpValue(a.value),
-			diffValues(expected, a.value))
+		failure := Failure{
+			assertionName: "Array.Equal",
+			actual:        a.value,
+			expected:      expected,
+		}
+		a.chain.fail(failure)
 	}
 	return a
 }
@@ -195,8 +208,11 @@ func (a *Array) NotEqual(value interface{}) *Array {
 		return a
 	}
 	if reflect.DeepEqual(expected, a.value) {
-		a.chain.fail("\nexpected array not equal to:\n%s",
-			dumpValue(expected))
+		failure := Failure{
+			assertionName: "Array.NotEqual",
+			expected:      expected,
+		}
+		a.chain.fail(failure)
 	}
 	return a
 }
@@ -230,8 +246,12 @@ func (a *Array) Contains(values ...interface{}) *Array {
 	}
 	for _, e := range elements {
 		if !a.containsElement(e) {
-			a.chain.fail("\nexpected array containing element:\n%s\n\nbut got:\n%s",
-				dumpValue(e), dumpValue(a.value))
+			failure := Failure{
+				assertionName: "Array.Contains",
+				expected:      e,
+				actual:        a.value,
+			}
+			a.chain.fail(failure)
 		}
 	}
 	return a
@@ -251,8 +271,12 @@ func (a *Array) NotContains(values ...interface{}) *Array {
 	}
 	for _, e := range elements {
 		if a.containsElement(e) {
-			a.chain.fail("\nexpected array not containing element:\n%s\n\nbut got:\n%s",
-				dumpValue(e), dumpValue(a.value))
+			failure := Failure{
+				assertionName: "Array.NotContains",
+				expected:      e,
+				actual:        a.value,
+			}
+			a.chain.fail(failure)
 		}
 	}
 	return a
@@ -274,16 +298,24 @@ func (a *Array) ContainsOnly(values ...interface{}) *Array {
 		return a
 	}
 	if len(elements) != len(a.value) {
-		a.chain.fail("\nexpected array of length == %d:\n%s\n\n"+
-			"but got array of length %d:\n%s",
-			len(elements), dumpValue(elements),
-			len(a.value), dumpValue(a.value))
+		failure := Failure{
+			assertionName: "Array.ContainsOnly",
+			err:           fmt.Errorf("arrays of different lengths"),
+			expected:      len(elements),
+			actual:        len(a.value),
+		}
+		a.chain.fail(failure)
 		return a
 	}
 	for _, e := range elements {
 		if !a.containsElement(e) {
-			a.chain.fail("\nexpected array containing element:\n%s\n\nbut got:\n%s",
-				dumpValue(e), dumpValue(a.value))
+			failure := Failure{
+				assertionName: "Array.ContainsOnly",
+				err:           fmt.Errorf("expected arry containing element"),
+				expected:      e,
+				actual:        a.value,
+			}
+			a.chain.fail(failure)
 		}
 	}
 	return a

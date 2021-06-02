@@ -6,6 +6,6 @@ type Failure struct {
 	// Original Error while performing an assertion
 	err           error
 	assertionName string
-	actual        *Value
-	expected      *Value
+	actual        interface{}
+	expected      interface{}
 }

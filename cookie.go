@@ -1,6 +1,7 @@
 package httpexpect
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 )
@@ -24,7 +25,8 @@ type Cookie struct {
 func NewCookie(reporter Reporter, value *http.Cookie) *Cookie {
 	chain := makeChain(reporter)
 	if value == nil {
-		chain.fail("expected non-nil cookie")
+		failure := Failure{err: fmt.Errorf("expected non-nil cookie")}
+		chain.fail(failure)
 	}
 	return &Cookie{chain, value}
 }

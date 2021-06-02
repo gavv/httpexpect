@@ -23,12 +23,12 @@ func (c *chain) failed() bool {
 	return c.failbit
 }
 
-func (c *chain) fail(message string, args ...interface{}) {
+func (c *chain) fail(failure Failure) {
 	if c.failbit {
 		return
 	}
 	c.failbit = true
-	c.ctx.Errorf(message, args...)
+	c.ctx.AssertionHandler.Failure(c.ctx, failure)
 }
 
 func (c *chain) reset() {
