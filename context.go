@@ -1,6 +1,7 @@
 package httpexpect
 
 import (
+	"testing"
 	"time"
 )
 
@@ -14,6 +15,13 @@ type AssertionHandler interface {
 type DefaultAssertionHandler struct {
 	Reporter  Reporter
 	Formatter Formatter
+}
+
+func NewDefaultAssertionHandler(t *testing.T) AssertionHandler {
+	return DefaultAssertionHandler{
+		Reporter:  NewAssertReporter(t),
+		Formatter: DefaultFormatter{},
+	}
 }
 
 func (d DefaultAssertionHandler) Errorf(message string, args ...interface{}) {

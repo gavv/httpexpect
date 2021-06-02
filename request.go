@@ -73,6 +73,13 @@ func NewRequest(config Config, method, path string, pathargs ...interface{}) *Re
 		panic("config.Client == nil")
 	}
 
+	if config.AssertionHandler == nil {
+		config.AssertionHandler = DefaultAssertionHandler{
+			Reporter:  config.Reporter,
+			Formatter: DefaultFormatter{},
+		}
+	}
+
 	placeholderCtx := &Context{AssertionHandler: config.AssertionHandler}
 
 	chain := makeChain(placeholderCtx)
@@ -105,10 +112,11 @@ func NewRequest(config Config, method, path string, pathargs ...interface{}) *Re
 	}
 
 	return &Request{
-		config: config,
-		chain:  chain,
-		path:   path,
-		http:   hr,
+		config:  config,
+		chain:   chain,
+		path:    path,
+		http:    hr,
+		context: placeholderCtx,
 	}
 }
 
