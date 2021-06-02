@@ -70,6 +70,9 @@ func (d *Duration) NotSet() *Duration {
 //  d.Equal(time.Second)
 func (d *Duration) Equal(value time.Duration) *Duration {
 	d.IsSet()
+	if d.chain.failed() {
+		return d
+	}
 
 	if !(*d.value == value) {
 		failure := Failure{
@@ -90,6 +93,9 @@ func (d *Duration) Equal(value time.Duration) *Duration {
 //  d.NotEqual(time.Minute)
 func (d *Duration) NotEqual(value time.Duration) *Duration {
 	d.IsSet()
+	if d.chain.failed() {
+		return d
+	}
 
 	if !(*d.value != value) {
 		failure := Failure{
@@ -110,6 +116,9 @@ func (d *Duration) NotEqual(value time.Duration) *Duration {
 //  d.Gt(time.Second)
 func (d *Duration) Gt(value time.Duration) *Duration {
 	d.IsSet()
+	if d.chain.failed() {
+		return d
+	}
 
 	if !(*d.value > value) {
 		failure := Failure{
@@ -130,6 +139,9 @@ func (d *Duration) Gt(value time.Duration) *Duration {
 //  d.Ge(time.Second)
 func (d *Duration) Ge(value time.Duration) *Duration {
 	d.IsSet()
+	if d.chain.failed() {
+		return d
+	}
 
 	if !(*d.value >= value) {
 		failure := Failure{
@@ -150,6 +162,9 @@ func (d *Duration) Ge(value time.Duration) *Duration {
 //  d.Lt(time.Minute)
 func (d *Duration) Lt(value time.Duration) *Duration {
 	d.IsSet()
+	if d.chain.failed() {
+		return d
+	}
 
 	if !(*d.value < value) {
 		failure := Failure{
@@ -170,6 +185,9 @@ func (d *Duration) Lt(value time.Duration) *Duration {
 //  d.Le(time.Minute)
 func (d *Duration) Le(value time.Duration) *Duration {
 	d.IsSet()
+	if d.chain.failed() {
+		return d
+	}
 
 	if !(*d.value <= value) {
 		failure := Failure{
@@ -191,6 +209,9 @@ func (d *Duration) Le(value time.Duration) *Duration {
 //  d.InRange(time.Minute, time.Minute)
 func (d *Duration) InRange(min, max time.Duration) *Duration {
 	d.IsSet()
+	if d.chain.failed() {
+		return d
+	}
 
 	if !(*d.value >= min && *d.value <= max) {
 		failure := Failure{
