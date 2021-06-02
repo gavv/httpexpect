@@ -21,8 +21,8 @@ type Cookie struct {
 //   cookie.Domain().Equal("example.com")
 //   cookie.Path().Equal("/")
 //   cookie.Expires().InRange(time.Now(), time.Now().Add(time.Hour * 24))
-func NewCookie(ctx *Context, value *http.Cookie) *Cookie {
-	chain := makeChain(ctx)
+func NewCookie(reporter Reporter, value *http.Cookie) *Cookie {
+	chain := makeChain(reporter)
 	if value == nil {
 		chain.fail("expected non-nil cookie")
 	}

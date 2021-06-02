@@ -4,32 +4,24 @@ import "fmt"
 
 // Formatter is used for common formatting options.
 type Formatter interface {
-	BeginAssertion(Context)
-	Success(Context)
-	Failure(Context, Failure)
-	EndAssertion(Context)
+	Success(*Context) string
+	Failure(*Context, Failure) string
 }
 
 // DefaultFormatter is the default Formatter implementation.
 type DefaultFormatter struct{}
 
-// BeginAssertion implements Formatter.BeginAssertion.
-//
-// It is a no-op for now. Actual implementation may be
-// added later.
-func (DefaultFormatter) BeginAssertion(ctx Context) {}
-
-// Success implements Formatter.Success.
-//
-// It is a no-op for now. Actual implementation may be
-// added later.
-func (DefaultFormatter) Success(ctx Context) {}
+// Success implements Formatter.Success and returns the current
+// test name from context.
+func (DefaultFormatter) Success(ctx *Context) string {
+	return ctx.TestName + " passed"
+}
 
 // Failure implements Formatter.Failure and reports failure.
 //
 // It formats the info from Context and Failure struct into
 // a string and passes it to Context.Reporter for reporting.
-func (DefaultFormatter) Failure(ctx Context, f Failure) {
+func (DefaultFormatter) Failure(ctx *Context, f Failure) string {
 	errString := ""
 	if f.actual != nil {
 		errString = fmt.Sprintf(
@@ -46,11 +38,5 @@ func (DefaultFormatter) Failure(ctx Context, f Failure) {
 		)
 	}
 
-	ctx.Reporter.Errorf(errString)
+	return errString
 }
-
-// EndAssertion implements Formatter.EndAssertion.
-//
-// It is a no-op for now. Actual implementation may be
-// added later.
-func (DefaultFormatter) EndAssertion(ctx Context) {}

@@ -1,12 +1,17 @@
 package httpexpect
 
 type chain struct {
-	ctx *Context
-	failbit  bool
+	ctx     *Context
+	failbit bool
 }
 
-func makeChain(ctx *Context) chain {
-	return chain{ctx, false}
+func makeChain(reporterOrCtx Reporter) chain {
+	switch v := reporterOrCtx.(type) {
+	case *Context:
+		return chain{v, false}
+	default:
+		return chain{&Context{Reporter: v}, false}
+	}
 }
 
 func (c *chain) failed() bool {

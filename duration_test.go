@@ -8,7 +8,7 @@ import (
 )
 
 func TestDurationFailed(t *testing.T) {
-	chain := makeChain(newMockContext(t))
+	chain := makeChain(newMockReporter(t))
 
 	chain.fail("fail")
 
@@ -28,7 +28,7 @@ func TestDurationFailed(t *testing.T) {
 }
 
 func TestDurationNil(t *testing.T) {
-	chain := makeChain(newMockContext(t))
+	chain := makeChain(newMockReporter(t))
 
 	ts := time.Second
 
@@ -46,7 +46,7 @@ func TestDurationNil(t *testing.T) {
 }
 
 func TestDurationSet(t *testing.T) {
-	chain := makeChain(newMockContext(t))
+	chain := makeChain(newMockReporter(t))
 
 	ts := time.Second
 
@@ -62,7 +62,7 @@ func TestDurationSet(t *testing.T) {
 }
 
 func TestDurationUnset(t *testing.T) {
-	chain := makeChain(newMockContext(t))
+	chain := makeChain(newMockReporter(t))
 
 	value := &Duration{chain, nil}
 
@@ -76,9 +76,9 @@ func TestDurationUnset(t *testing.T) {
 }
 
 func TestDurationEqual(t *testing.T) {
-	ctx := newMockContext(t)
+	reporter := newMockReporter(t)
 
-	value := NewDuration(ctx, time.Second)
+	value := NewDuration(reporter, time.Second)
 
 	assert.Equal(t, time.Second, value.Raw())
 
@@ -100,9 +100,9 @@ func TestDurationEqual(t *testing.T) {
 }
 
 func TestDurationGreater(t *testing.T) {
-	ctx := newMockContext(t)
+	reporter := newMockReporter(t)
 
-	value := NewDuration(ctx, time.Second)
+	value := NewDuration(reporter, time.Second)
 
 	value.Gt(time.Second - 1)
 	value.chain.assertOK(t)
@@ -126,9 +126,9 @@ func TestDurationGreater(t *testing.T) {
 }
 
 func TestDurationLesser(t *testing.T) {
-	ctx := newMockContext(t)
+	reporter := newMockReporter(t)
 
-	value := NewDuration(ctx, time.Second)
+	value := NewDuration(reporter, time.Second)
 
 	value.Lt(time.Second + 1)
 	value.chain.assertOK(t)
@@ -152,9 +152,9 @@ func TestDurationLesser(t *testing.T) {
 }
 
 func TestDurationInRange(t *testing.T) {
-	ctx := newMockContext(t)
+	reporter := newMockReporter(t)
 
-	value := NewDuration(ctx, time.Second)
+	value := NewDuration(reporter, time.Second)
 
 	value.InRange(time.Second, time.Second)
 	value.chain.assertOK(t)

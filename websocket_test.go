@@ -7,7 +7,7 @@ import (
 )
 
 func TestWebsocketFailed(t *testing.T) {
-	chain := makeChain(newMockContext(t))
+	chain := makeChain(newMockReporter(t))
 
 	chain.fail("fail")
 

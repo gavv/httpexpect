@@ -23,10 +23,10 @@ type WebsocketMessage struct {
 //   m := NewWebsocketMessage(reporter, websocket.TextMessage, []byte("content"), 0)
 //   m.TextMessage()
 func NewWebsocketMessage(
-	ctx *Context, typ int, content []byte, closeCode ...int,
+	reporter Reporter, typ int, content []byte, closeCode ...int,
 ) *WebsocketMessage {
 	m := &WebsocketMessage{
-		chain:   makeChain(ctx),
+		chain:   makeChain(reporter),
 		typ:     typ,
 		content: content,
 	}

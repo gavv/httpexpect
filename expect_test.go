@@ -142,14 +142,12 @@ func TestExpectValues(t *testing.T) {
 	n := 0.0
 	b := false
 
-	ctx := e.context
-
-	assert.Equal(t, NewValue(ctx, m), e.Value(m))
-	assert.Equal(t, NewObject(ctx, m), e.Object(m))
-	assert.Equal(t, NewArray(ctx, a), e.Array(a))
-	assert.Equal(t, NewString(ctx, s), e.String(s))
-	assert.Equal(t, NewNumber(ctx, n), e.Number(n))
-	assert.Equal(t, NewBoolean(ctx, b), e.Boolean(b))
+	assert.Equal(t, NewValue(r, m), e.Value(m))
+	assert.Equal(t, NewObject(r, m), e.Object(m))
+	assert.Equal(t, NewArray(r, a), e.Array(a))
+	assert.Equal(t, NewString(r, s), e.String(s))
+	assert.Equal(t, NewNumber(r, n), e.Number(n))
+	assert.Equal(t, NewBoolean(r, b), e.Boolean(b))
 }
 
 func TestExpectTraverse(t *testing.T) {

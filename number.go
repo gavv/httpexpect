@@ -18,8 +18,8 @@ type Number struct {
 //
 // Example:
 //  number := NewNumber(t, 123.4)
-func NewNumber(ctx *Context, value float64) *Number {
-	return &Number{makeChain(ctx), value}
+func NewNumber(reporter Reporter, value float64) *Number {
+	return &Number{makeChain(reporter), value}
 }
 
 // Raw returns underlying value attached to Number.

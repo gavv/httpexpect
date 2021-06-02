@@ -8,7 +8,7 @@ import (
 )
 
 func TestDateTimeFailed(t *testing.T) {
-	chain := makeChain(newMockContext(t))
+	chain := makeChain(newMockReporter(t))
 
 	chain.fail("fail")
 
@@ -28,9 +28,9 @@ func TestDateTimeFailed(t *testing.T) {
 }
 
 func TestDateTimeEqual(t *testing.T) {
-	ctx := newMockContext(t)
+	reporter := newMockReporter(t)
 
-	value := NewDateTime(ctx, time.Unix(0, 1234))
+	value := NewDateTime(reporter, time.Unix(0, 1234))
 
 	assert.True(t, time.Unix(0, 1234).Equal(value.Raw()))
 
@@ -52,9 +52,9 @@ func TestDateTimeEqual(t *testing.T) {
 }
 
 func TestDateTimeGreater(t *testing.T) {
-	ctx := newMockContext(t)
+	reporter := newMockReporter(t)
 
-	value := NewDateTime(ctx, time.Unix(0, 1234))
+	value := NewDateTime(reporter, time.Unix(0, 1234))
 
 	value.Gt(time.Unix(0, 1234-1))
 	value.chain.assertOK(t)
@@ -78,9 +78,9 @@ func TestDateTimeGreater(t *testing.T) {
 }
 
 func TestDateTimeLesser(t *testing.T) {
-	ctx := newMockContext(t)
+	reporter := newMockReporter(t)
 
-	value := NewDateTime(ctx, time.Unix(0, 1234))
+	value := NewDateTime(reporter, time.Unix(0, 1234))
 
 	value.Lt(time.Unix(0, 1234+1))
 	value.chain.assertOK(t)
@@ -104,9 +104,9 @@ func TestDateTimeLesser(t *testing.T) {
 }
 
 func TestDateTimeInRange(t *testing.T) {
-	ctx := newMockContext(t)
+	reporter := newMockReporter(t)
 
-	value := NewDateTime(ctx, time.Unix(0, 1234))
+	value := NewDateTime(reporter, time.Unix(0, 1234))
 
 	value.InRange(time.Unix(0, 1234), time.Unix(0, 1234))
 	value.chain.assertOK(t)

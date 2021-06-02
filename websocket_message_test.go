@@ -8,7 +8,7 @@ import (
 )
 
 func TestWebsocketMessageFailed(t *testing.T) {
-	chain := makeChain(newMockContext(t))
+	chain := makeChain(newMockReporter(t))
 
 	chain.fail("fail")
 
@@ -36,7 +36,7 @@ func TestWebsocketMessageFailed(t *testing.T) {
 }
 
 func TestWebsocketMessageBadUsage(t *testing.T) {
-	chain := makeChain(newMockContext(t))
+	chain := makeChain(newMockReporter(t))
 
 	msg := &WebsocketMessage{
 		chain: chain,
@@ -60,9 +60,9 @@ func TestWebsocketMessageBadUsage(t *testing.T) {
 }
 
 func TestWebsocketMessageCloseMessage(t *testing.T) {
-	ctx := newMockContext(t)
+	reporter := newMockReporter(t)
 
-	msg := NewWebsocketMessage(ctx, websocket.CloseMessage, nil, 0)
+	msg := NewWebsocketMessage(reporter, websocket.CloseMessage, nil, 0)
 
 	msg.CloseMessage()
 	msg.chain.assertOK(t)
@@ -106,9 +106,9 @@ func TestWebsocketMessageCloseMessage(t *testing.T) {
 }
 
 func TestWebsocketMessageTextMessage(t *testing.T) {
-	ctx := newMockContext(t)
+	reporter := newMockReporter(t)
 
-	msg := NewWebsocketMessage(ctx, websocket.TextMessage, nil, 0)
+	msg := NewWebsocketMessage(reporter, websocket.TextMessage, nil, 0)
 
 	msg.CloseMessage()
 	msg.chain.assertFailed(t)
@@ -152,9 +152,9 @@ func TestWebsocketMessageTextMessage(t *testing.T) {
 }
 
 func TestWebsocketMessageBinaryMessage(t *testing.T) {
-	ctx := newMockContext(t)
+	reporter := newMockReporter(t)
 
-	msg := NewWebsocketMessage(ctx, websocket.BinaryMessage, nil, 0)
+	msg := NewWebsocketMessage(reporter, websocket.BinaryMessage, nil, 0)
 
 	msg.CloseMessage()
 	msg.chain.assertFailed(t)
@@ -198,9 +198,9 @@ func TestWebsocketMessageBinaryMessage(t *testing.T) {
 }
 
 func TestWebsocketMessageMatchTypes(t *testing.T) {
-	ctx := newMockContext(t)
+	reporter := newMockReporter(t)
 
-	msg := NewWebsocketMessage(ctx, websocket.TextMessage, nil, 0)
+	msg := NewWebsocketMessage(reporter, websocket.TextMessage, nil, 0)
 
 	msg.Type(websocket.TextMessage, websocket.BinaryMessage)
 	msg.chain.assertOK(t)
@@ -236,9 +236,9 @@ func TestWebsocketMessageMatchTypes(t *testing.T) {
 }
 
 func TestWebsocketMessageMatchCodes(t *testing.T) {
-	ctx := newMockContext(t)
+	reporter := newMockReporter(t)
 
-	msg := NewWebsocketMessage(ctx, websocket.CloseMessage, nil, 10)
+	msg := NewWebsocketMessage(reporter, websocket.CloseMessage, nil, 10)
 
 	msg.Code(10, 20)
 	msg.chain.assertOK(t)
@@ -274,9 +274,9 @@ func TestWebsocketMessageMatchCodes(t *testing.T) {
 }
 
 func TestWebsocketMessageCodeAndType(t *testing.T) {
-	ctx := newMockContext(t)
+	reporter := newMockReporter(t)
 
-	m1 := NewWebsocketMessage(ctx, websocket.TextMessage, nil, 10)
+	m1 := NewWebsocketMessage(reporter, websocket.TextMessage, nil, 10)
 
 	m1.Code(10)
 	m1.chain.assertFailed(t)
@@ -286,7 +286,7 @@ func TestWebsocketMessageCodeAndType(t *testing.T) {
 	m1.chain.assertFailed(t)
 	m1.chain.reset()
 
-	m2 := NewWebsocketMessage(ctx, websocket.CloseMessage, nil, 10)
+	m2 := NewWebsocketMessage(reporter, websocket.CloseMessage, nil, 10)
 
 	m2.Code(10)
 	m2.chain.assertOK(t)
@@ -298,27 +298,27 @@ func TestWebsocketMessageCodeAndType(t *testing.T) {
 }
 
 func TestWebsocketMessageNoContent(t *testing.T) {
-	ctx := newMockContext(t)
+	reporter := newMockReporter(t)
 
-	m1 := NewWebsocketMessage(ctx, websocket.TextMessage, nil)
+	m1 := NewWebsocketMessage(reporter, websocket.TextMessage, nil)
 	m1.NoContent()
 	m1.chain.assertOK(t)
 
-	m2 := NewWebsocketMessage(ctx, websocket.TextMessage, []byte(""))
+	m2 := NewWebsocketMessage(reporter, websocket.TextMessage, []byte(""))
 	m2.NoContent()
 	m2.chain.assertOK(t)
 
-	m3 := NewWebsocketMessage(ctx, websocket.TextMessage, []byte("test"))
+	m3 := NewWebsocketMessage(reporter, websocket.TextMessage, []byte("test"))
 	m3.NoContent()
 	m3.chain.assertFailed(t)
 }
 
 func TestWebsocketMessageBody(t *testing.T) {
-	ctx := newMockContext(t)
+	reporter := newMockReporter(t)
 
 	body := []byte("test")
 
-	msg := NewWebsocketMessage(ctx, websocket.TextMessage, body)
+	msg := NewWebsocketMessage(reporter, websocket.TextMessage, body)
 
 	s := msg.Body()
 	s.chain.assertOK(t)
@@ -327,12 +327,12 @@ func TestWebsocketMessageBody(t *testing.T) {
 }
 
 func TestWebsocketMessageJSON(t *testing.T) {
-	ctx := newMockContext(t)
+	reporter := newMockReporter(t)
 
 	t.Run("good", func(t *testing.T) {
 		body := []byte(`{"foo":"bar"}`)
 
-		msg := NewWebsocketMessage(ctx, websocket.TextMessage, body)
+		msg := NewWebsocketMessage(reporter, websocket.TextMessage, body)
 
 		j := msg.JSON()
 		j.chain.assertOK(t)
@@ -343,7 +343,7 @@ func TestWebsocketMessageJSON(t *testing.T) {
 	t.Run("bad", func(t *testing.T) {
 		body := []byte(`{`)
 
-		msg := NewWebsocketMessage(ctx, websocket.TextMessage, body)
+		msg := NewWebsocketMessage(reporter, websocket.TextMessage, body)
 
 		j := msg.JSON()
 		j.chain.assertFailed(t)

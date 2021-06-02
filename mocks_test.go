@@ -34,12 +34,6 @@ func newMockContext(t *testing.T) *Context {
 	return &Context{Reporter: newMockReporter(t), TestName: t.Name()}
 }
 
-func newMockContextAndReporter(t *testing.T) (*Context, *mockReporter){
-	ctx := newMockContext(t)
-	rep := ctx.Reporter.(*mockReporter)
-	return ctx, rep
-}
-
 func (r *mockReporter) Errorf(message string, args ...interface{}) {
 	r.testing.Logf("Fail: "+message, args...)
 	r.reported = true

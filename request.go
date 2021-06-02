@@ -64,7 +64,7 @@ type Request struct {
 // After interpolation, path is urlencoded and appended to Config.BaseURL,
 // separated by slash. If BaseURL ends with a slash and path (after interpolation)
 // starts with a slash, only single slash is inserted.
-func NewRequest(config Config, ctx *Context, method, path string, pathargs ...interface{}) *Request {
+func NewRequest(config Config, method, path string, pathargs ...interface{}) *Request {
 	if config.RequestFactory == nil {
 		panic("config.RequestFactory == nil")
 	}
@@ -73,7 +73,11 @@ func NewRequest(config Config, ctx *Context, method, path string, pathargs ...in
 		panic("config.Client == nil")
 	}
 
-	chain := makeChain(ctx)
+	placeholderCtx := &Context{
+		Reporter: config.Reporter,
+	}
+
+	chain := makeChain(placeholderCtx)
 
 	n := 0
 	path, err := interpol.WithFunc(path, func(k string, w io.Writer) error {
@@ -103,12 +107,17 @@ func NewRequest(config Config, ctx *Context, method, path string, pathargs ...in
 	}
 
 	return &Request{
-		config:  config,
-		chain:   chain,
-		path:    path,
-		http:    hr,
-		context: ctx,
+		config: config,
+		chain:  chain,
+		path:   path,
+		http:   hr,
 	}
+}
+
+func (r *Request) WithContext(ctx *Context) *Request {
+	r.chain.ctx = ctx
+	r.context = ctx
+	return r
 }
 
 // WithMatcher attaches a matcher to the request.
@@ -850,11 +859,6 @@ func (r *Request) WithMultipart() *Request {
 		r.setBody("WithMultipart", r.formbuf, 0, false)
 	}
 
-	return r
-}
-
-func (r *Request) withContext(ctx *Context) *Request {
-	r.context = ctx
 	return r
 }
 

@@ -19,8 +19,8 @@ type Object struct {
 //
 // Example:
 //  object := NewObject(t, map[string]interface{}{"foo": 123})
-func NewObject(ctx *Context, value map[string]interface{}) *Object {
-	chain := makeChain(ctx)
+func NewObject(reporter Reporter, value map[string]interface{}) *Object {
+	chain := makeChain(reporter)
 	if value == nil {
 		chain.fail("expected non-nil map value")
 	} else {

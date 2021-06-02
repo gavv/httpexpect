@@ -18,8 +18,8 @@ type Duration struct {
 // Example:
 //   d := NewDuration(reporter, time.Second)
 //   d.Le(time.Minute)
-func NewDuration(ctx *Context, value time.Duration) *Duration {
-	return &Duration{makeChain(ctx), &value}
+func NewDuration(reporter Reporter, value time.Duration) *Duration {
+	return &Duration{makeChain(reporter), &value}
 }
 
 // Raw returns underlying time.Duration value attached to Duration.
