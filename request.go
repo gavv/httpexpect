@@ -116,6 +116,9 @@ func NewRequest(config Config, method, path string, pathargs ...interface{}) *Re
 // WithContext is NOT go's standard context.Context interface. It is a concrete *Context pointer from httpexpect
 // that holds data to be provided to an AssertionHandler (also Reporter and Formatter, when using the default one).
 //
+// Do NOT use this method yourself unless you know what you are doing: Expect.Request handles the call and passes
+// the current Expect's Context to the Request as needed.
+//
 // WithContext replaces the existing context with the given one.
 //
 // Providing a nil Context will panic.
