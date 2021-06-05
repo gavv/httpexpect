@@ -77,6 +77,7 @@ func ensureAssertionHandler(config Config) AssertionHandler {
 }
 
 func (d DefaultAssertionHandler) Errorf(message string, args ...interface{}) {
+	// FIXME: eventually, create a Failure and use d.Failure instead?
 	d.Reporter.Errorf(message, args...)
 }
 
