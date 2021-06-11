@@ -5,6 +5,7 @@ go 1.14
 require (
 	github.com/dgrijalva/jwt-go v3.0.0+incompatible
 	github.com/fasthttp/websocket v1.4.2
+	github.com/gavv/httpexpect v2.0.0+incompatible // indirect
 	github.com/gavv/httpexpect/v2 v2.0.3
 	github.com/gin-gonic/gin v1.5.0
 	github.com/gorilla/websocket v1.4.2
@@ -16,6 +17,8 @@ require (
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/smartystreets/goconvey v0.0.0-20190731233626-505e41936337 // indirect
 	github.com/valyala/fasthttp v1.9.0
+	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
+	golang.org/x/net v0.0.0-20210610132358-84b48f89b13b // indirect
 	google.golang.org/appengine v1.0.0
 	gopkg.in/yaml.v2 v2.2.8 // indirect
 )
