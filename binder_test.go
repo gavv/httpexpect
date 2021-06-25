@@ -232,6 +232,84 @@ func TestFastBinder(t *testing.T) {
 	assert.Equal(t, []string(nil), resp.TransferEncoding)
 }
 
+func TestFastBinderRemoteAddr(t *testing.T) {
+	handler := func(ctx *fasthttp.RequestCtx) {
+		assert.Equal(t, "8.8.8.8:88", ctx.RemoteAddr().String())
+
+		ctx.Response.SetBody([]byte(`ok`))
+	}
+
+	client := &http.Client{
+		Transport: NewFastBinder(handler),
+	}
+
+	req, err := http.NewRequest(
+		"POST", "http://example.com/path", strings.NewReader("foo=bar"))
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req.RemoteAddr = "8.8.8.8:88"
+
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal(t, `ok`, string(b))
+}
+
+func TestFastBinderProtocol(t *testing.T) {
+	test := func(setProto func(req *http.Request)) {
+		handler := func(ctx *fasthttp.RequestCtx) {
+			assert.Equal(t, "HTTP/1.0", string(ctx.Request.Header.Protocol()))
+
+			ctx.Response.SetBody([]byte(`ok`))
+		}
+
+		client := &http.Client{
+			Transport: NewFastBinder(handler),
+		}
+
+		req, err := http.NewRequest(
+			"POST", "http://example.com/path", strings.NewReader("foo=bar"))
+
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		setProto(req)
+
+		resp, err := client.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		b, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		assert.Equal(t, `ok`, string(b))
+	}
+
+	test(func(req *http.Request) {
+		req.Proto = "HTTP/1.0"
+	})
+
+	test(func(req *http.Request) {
+		req.Proto = ""
+		req.ProtoMajor = 1
+		req.ProtoMinor = 0
+	})
+}
+
 func TestFastBinderTLS(t *testing.T) {
 	var isHTTPS, isTLS bool
 

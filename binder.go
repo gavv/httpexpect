@@ -8,6 +8,8 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
+	"strings"
 
 	"github.com/valyala/fasthttp"
 )
@@ -119,6 +121,19 @@ func (binder FastBinder) RoundTrip(stdreq *http.Request) (*http.Response, error)
 	ctx.Init2(conn, fastLogger{}, true)
 	fastreq.CopyTo(&ctx.Request)
 
+	if stdreq.RemoteAddr != "" {
+		var parts = strings.SplitN(stdreq.RemoteAddr, ":", 2)
+		host := parts[0]
+		port := 0
+		if len(parts) > 1 {
+			port, _ = strconv.Atoi(parts[1])
+		}
+		ctx.SetRemoteAddr(&net.TCPAddr{
+			IP:   net.ParseIP(host),
+			Port: port,
+		})
+	}
+
 	if stdreq.ContentLength >= 0 {
 		ctx.Request.Header.SetContentLength(int(stdreq.ContentLength))
 	} else {
@@ -140,7 +155,15 @@ func (binder FastBinder) RoundTrip(stdreq *http.Request) (*http.Response, error)
 
 func std2fast(stdreq *http.Request) *fasthttp.Request {
 	fastreq := &fasthttp.Request{}
+
 	fastreq.SetRequestURI(stdreq.URL.String())
+
+	if stdreq.Proto != "" {
+		fastreq.Header.SetProtocol(stdreq.Proto)
+	} else if stdreq.ProtoMajor != 0 || stdreq.ProtoMinor != 0 {
+		fastreq.Header.SetProtocol(
+			fmt.Sprintf("HTTP/%d.%d", stdreq.ProtoMajor, stdreq.ProtoMinor))
+	}
 
 	fastreq.Header.SetMethod(stdreq.Method)
 
@@ -168,9 +191,9 @@ func fast2std(stdreq *http.Request, fastresp *fasthttp.Response) *http.Response 
 	body := fastresp.Body()
 
 	stdresp := &http.Response{
-		Request:    stdreq,
 		StatusCode: status,
 		Status:     http.StatusText(status),
+		Request:    stdreq,
 	}
 
 	fastresp.Header.VisitAll(func(k, v []byte) {
