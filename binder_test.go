@@ -182,6 +182,7 @@ func TestFastBinder(t *testing.T) {
 		})
 
 		expected := map[string][]string{
+			"Host":           {"example.com"},
 			"Content-Type":   {"application/x-www-form-urlencoded"},
 			"Content-Length": {"7"},
 			"Some-Header":    {"foo", "bar"},
@@ -302,6 +303,7 @@ func TestFastBinderChunked(t *testing.T) {
 		})
 
 		expected := map[string][]string{
+			"Host":              {"example.com"},
 			"Content-Type":      {"application/x-www-form-urlencoded"},
 			"Transfer-Encoding": {"chunked"},
 		}

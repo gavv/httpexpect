@@ -144,6 +144,10 @@ func std2fast(stdreq *http.Request) *fasthttp.Request {
 
 	fastreq.Header.SetMethod(stdreq.Method)
 
+	if stdreq.Host != "" {
+		fastreq.Header.SetHost(stdreq.Host)
+	}
+
 	for k, a := range stdreq.Header {
 		for n, v := range a {
 			if n == 0 {
