@@ -122,6 +122,7 @@ func (binder FastBinder) RoundTrip(stdreq *http.Request) (*http.Response, error)
 	if stdreq.ContentLength >= 0 {
 		ctx.Request.Header.SetContentLength(int(stdreq.ContentLength))
 	} else {
+		ctx.Request.Header.SetContentLength(-1)
 		ctx.Request.Header.Add("Transfer-Encoding", "chunked")
 	}
 
@@ -153,6 +154,8 @@ func std2fast(stdreq *http.Request) *fasthttp.Request {
 		}
 	}
 
+	fastreq.Header.SetContentLength(int(stdreq.ContentLength))
+
 	return fastreq
 }
 
@@ -175,7 +178,10 @@ func fast2std(stdreq *http.Request, fastresp *fasthttp.Response) *http.Response 
 		stdresp.Header.Add(sk, sv)
 	})
 
-	if fastresp.Header.ContentLength() == -1 {
+	if fastresp.Header.ContentLength() >= 0 {
+		stdresp.ContentLength = int64(fastresp.Header.ContentLength())
+	} else {
+		stdresp.ContentLength = -1
 		stdresp.TransferEncoding = []string{"chunked"}
 	}
 
