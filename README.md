@@ -653,19 +653,19 @@ Feel free to report bugs, suggest improvements, and send pull requests! Please a
 Build code, run linters, run tests:
 
 ```
-$ make
+make
 ```
 
 Format code:
 
 ```
-$ make fmt
+make fmt
 ```
 
 Run go mod tidy:
 
 ```
-$ make tidy
+make tidy
 ```
 
 ## License
