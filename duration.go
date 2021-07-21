@@ -44,7 +44,7 @@ func (d *Duration) IsSet() *Duration {
 	if d.value == nil {
 		d.chain.fail(Failure{
 			assertionName: "Duration.IsSet",
-			assertType:    FailureAssertNotEmpty,
+			assertType:    FailureAssertNotNil,
 		})
 	}
 	return d
@@ -55,7 +55,7 @@ func (d *Duration) NotSet() *Duration {
 	if d.value != nil {
 		d.chain.fail(Failure{
 			assertionName: "Duration.NotSet",
-			assertType:    FailureAssertEmpty,
+			assertType:    FailureAssertNil,
 		})
 	}
 	return d
