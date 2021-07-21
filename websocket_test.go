@@ -114,7 +114,7 @@ func TestWebsocketMockConn(t *testing.T) {
 
 func TestWebsocketExpect(t *testing.T) {
 	failedChain := makeChain(newMockReporter(t))
-	failedChain.fail(NewErrorFailure(fmt.Errorf("some previous fail...")))
+	failedChain.fail(newErrorFailure(fmt.Errorf("some previous fail...")))
 
 	type args struct {
 		config     Config
@@ -211,7 +211,7 @@ func TestWebsocketExpect(t *testing.T) {
 func TestWebsocketClose(t *testing.T) {
 
 	failedChain := makeChain(newMockReporter(t))
-	failedChain.fail(NewErrorFailure(fmt.Errorf("some previous fail...")))
+	failedChain.fail(newErrorFailure(fmt.Errorf("some previous fail...")))
 
 	type args struct {
 		config     Config
@@ -291,7 +291,7 @@ func TestWebsocketClose(t *testing.T) {
 
 func TestWebsocketCloseWithBytes(t *testing.T) {
 	failedChain := makeChain(newMockReporter(t))
-	failedChain.fail(NewErrorFailure(fmt.Errorf("some previous fail...")))
+	failedChain.fail(newErrorFailure(fmt.Errorf("some previous fail...")))
 
 	type args struct {
 		config     Config
@@ -377,7 +377,7 @@ func TestWebsocketCloseWithBytes(t *testing.T) {
 func TestWebsocketCloseWithText(t *testing.T) {
 
 	failedChain := makeChain(newMockReporter(t))
-	failedChain.fail(NewErrorFailure(fmt.Errorf("some previous fail...")))
+	failedChain.fail(newErrorFailure(fmt.Errorf("some previous fail...")))
 
 	type args struct {
 		config     Config
@@ -463,7 +463,7 @@ func TestWebsocketCloseWithText(t *testing.T) {
 func TestWebsocketCloseWithJSON(t *testing.T) {
 
 	failedChain := makeChain(newMockReporter(t))
-	failedChain.fail(NewErrorFailure(fmt.Errorf("some previous fail...")))
+	failedChain.fail(newErrorFailure(fmt.Errorf("some previous fail...")))
 
 	type args struct {
 		config     Config

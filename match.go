@@ -85,8 +85,8 @@ func (m *Match) Length() *Number {
 func (m *Match) Index(index int) *String {
 	if index < 0 || index >= len(m.submatches) {
 		failure := Failure{
-			assertionName: "match",
-			assertType:    failureAssertMatchOutOfBounds,
+			assertionName: "Match.Index",
+			assertType:    failureAssertOutOfBounds,
 			expected:      index,
 			actual:        len(m.submatches),
 		}
@@ -114,8 +114,8 @@ func (m *Match) Name(name string) *String {
 	index, ok := m.names[name]
 	if !ok {
 		failure := Failure{
-			assertionName: "match",
-			assertType:    failureAssertMatchName,
+			assertionName: "Match.Name",
+			assertType:    failureAssertMatchRe,
 			expected:      m.names,
 			actual:        name,
 		}
@@ -133,8 +133,8 @@ func (m *Match) Name(name string) *String {
 func (m *Match) Empty() *Match {
 	if len(m.submatches) != 0 {
 		failure := Failure{
-			assertionName: "match",
-			assertType:    failureAssertMatchEmpty,
+			assertionName: "Match.Empty",
+			assertType:    failureAssertEmpty,
 			actual:        m.submatches,
 		}
 		m.chain.fail(failure)
@@ -150,8 +150,8 @@ func (m *Match) Empty() *Match {
 func (m *Match) NotEmpty() *Match {
 	if len(m.submatches) == 0 {
 		failure := Failure{
-			assertionName: "match",
-			assertType:    failureAssertMatchNotEmpty,
+			assertionName: "Match.NotEmpty",
+			assertType:    failureAssertNotEmpty,
 		}
 		m.chain.fail(failure)
 	}
@@ -175,8 +175,8 @@ func (m *Match) Values(values ...string) *Match {
 	}
 	if !reflect.DeepEqual(values, m.getValues()) {
 		failure := Failure{
-			assertionName: "match",
-			assertType:    failureAssertMatchValues,
+			assertionName: "Match.Values",
+			assertType:    failureAssertEqual,
 			expected:      values,
 			actual:        m.getValues(),
 		}
@@ -202,8 +202,8 @@ func (m *Match) NotValues(values ...string) *Match {
 	}
 	if reflect.DeepEqual(values, m.getValues()) {
 		failure := Failure{
-			assertionName: "match",
-			assertType:    failureAssertMatchNotValues,
+			assertionName: "Match.NotValues",
+			assertType:    failureAssertNotEqual,
 			expected:      values,
 		}
 		m.chain.fail(failure)

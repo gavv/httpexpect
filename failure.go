@@ -13,36 +13,23 @@ const (
 	failureAssertInRange
 	failureAssertEmpty
 	failureAssertNotEmpty
-	failureAssertFirst
-	failureAssertLast
 	failureAssertContainsOnly
 	failureAssertContains
 	failureAssertNotContains
 	failureAssertNotNil
 	failureAssertNil
 	failureAssertOutOfBounds
-	failureAssertIsSet
-	failureAssertNotSet
 	failureAssertUNDEFINED // used when err must be used.
 	failureAssertJsonSchema
-	failureAssertMatchName
-	failureAssertMatchEmpty
-	failureAssertMatchNotEmpty
-	failureAssertMatchOutOfBounds
-	failureAssertMatchValues
-	failureAssertMatchNotValues
 	failureAssertEqualDelta
 	failureAssertNotEqualDelta
 	failureAssertKey
-	failureAssertContainsKey
-	failureAssertNotContainsKey
-	failureAssertContainsMap
-	failureAssertNotContainsMap
 	failureAssertHTTPStatusRange
 	failureAssertCookie
 	failureAssertMatchRe
 	failureAssertNotMatchRe
-	failureAssertBadValueType
+	failureAssertBadType
+	failureInvalidInput
 )
 
 // Failure contains information about failed assertion.
@@ -59,6 +46,6 @@ type Failure struct {
 	assertType       failureAssertType
 }
 
-func NewErrorFailure(err error) Failure {
+func newErrorFailure(err error) Failure {
 	return Failure{err: err, assertType: failureAssertUNDEFINED}
 }

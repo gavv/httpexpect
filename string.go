@@ -81,7 +81,7 @@ func (s *String) DateTime(layout ...string) *DateTime {
 		t, err = http.ParseTime(s.value)
 	}
 	if err != nil {
-		s.chain.fail(NewErrorFailure(err))
+		s.chain.fail(newErrorFailure(err))
 		return &DateTime{s.chain, time.Unix(0, 0)}
 	}
 	return &DateTime{s.chain, t}
@@ -113,7 +113,7 @@ func (s *String) NotEmpty() *String {
 func (s *String) Equal(value string) *String {
 	if !(s.value == value) {
 		failure := Failure{
-			assertionName: "string",
+			assertionName: "String.Equal",
 			assertType:    failureAssertEqual,
 			expected:      value,
 			actual:        s.value,
@@ -131,7 +131,7 @@ func (s *String) Equal(value string) *String {
 func (s *String) NotEqual(value string) *String {
 	if !(s.value != value) {
 		failure := Failure{
-			assertionName: "string",
+			assertionName: "String.NotEqual",
 			assertType:    failureAssertNotEqual,
 			expected:      value,
 		}
@@ -149,7 +149,7 @@ func (s *String) NotEqual(value string) *String {
 func (s *String) EqualFold(value string) *String {
 	if !strings.EqualFold(s.value, value) {
 		failure := Failure{
-			assertionName: "string",
+			assertionName: "String.EqualFold",
 			assertType:    failureAssertEqual,
 			expected:      value,
 			actual:        s.value,
@@ -168,7 +168,7 @@ func (s *String) EqualFold(value string) *String {
 func (s *String) NotEqualFold(value string) *String {
 	if strings.EqualFold(s.value, value) {
 		failure := Failure{
-			assertionName: "string",
+			assertionName: "String.NotEqualFold",
 			assertType:    failureAssertNotEqual,
 			expected:      value,
 			actual:        s.value,
@@ -186,7 +186,7 @@ func (s *String) NotEqualFold(value string) *String {
 func (s *String) Contains(value string) *String {
 	if !strings.Contains(s.value, value) {
 		failure := Failure{
-			assertionName: "string",
+			assertionName: "String.Contains",
 			assertType:    failureAssertContains,
 			expected:      value,
 			actual:        s.value,
@@ -204,7 +204,7 @@ func (s *String) Contains(value string) *String {
 func (s *String) NotContains(value string) *String {
 	if strings.Contains(s.value, value) {
 		failure := Failure{
-			assertionName: "string",
+			assertionName: "String.NotContains",
 			assertType:    failureAssertNotContains,
 			expected:      value,
 			actual:        s.value,
@@ -223,7 +223,7 @@ func (s *String) NotContains(value string) *String {
 func (s *String) ContainsFold(value string) *String {
 	if !strings.Contains(strings.ToLower(s.value), strings.ToLower(value)) {
 		failure := Failure{
-			assertionName: "string",
+			assertionName: "String.ContainsFold",
 			assertType:    failureAssertContains,
 			expected:      value,
 			actual:        s.value,
@@ -242,7 +242,7 @@ func (s *String) ContainsFold(value string) *String {
 func (s *String) NotContainsFold(value string) *String {
 	if strings.Contains(strings.ToLower(s.value), strings.ToLower(value)) {
 		failure := Failure{
-			assertionName: "string",
+			assertionName: "String.NotContainsFold",
 			assertType:    failureAssertNotContains,
 			expected:      value,
 			actual:        s.value,
@@ -275,14 +275,14 @@ func (s *String) NotContainsFold(value string) *String {
 func (s *String) Match(re string) *Match {
 	r, err := regexp.Compile(re)
 	if err != nil {
-		s.chain.fail(NewErrorFailure(err))
+		s.chain.fail(newErrorFailure(err))
 		return makeMatch(s.chain, nil, nil)
 	}
 
 	m := r.FindStringSubmatch(s.value)
 	if m == nil {
 		failure := Failure{
-			assertionName: "string",
+			assertionName: "String.Match",
 			assertType:    failureAssertMatchRe,
 			expected:      re,
 			actual:        s.value,
@@ -312,14 +312,14 @@ func (s *String) Match(re string) *Match {
 func (s *String) MatchAll(re string) []Match {
 	r, err := regexp.Compile(re)
 	if err != nil {
-		s.chain.fail(NewErrorFailure(err))
+		s.chain.fail(newErrorFailure(err))
 		return []Match{}
 	}
 
 	matches := r.FindAllStringSubmatch(s.value, -1)
 	if matches == nil {
 		failure := Failure{
-			assertionName: "string",
+			assertionName: "String.MatchAll",
 			assertType:    failureAssertMatchRe,
 			expected:      re,
 			actual:        s.value,
@@ -350,13 +350,13 @@ func (s *String) MatchAll(re string) []Match {
 func (s *String) NotMatch(re string) *String {
 	r, err := regexp.Compile(re)
 	if err != nil {
-		s.chain.fail(NewErrorFailure(err))
+		s.chain.fail(newErrorFailure(err))
 		return s
 	}
 
 	if r.MatchString(s.value) {
 		failure := Failure{
-			assertionName: "string",
+			assertionName: "String.NotMatch",
 			assertType:    failureAssertNotMatchRe,
 			expected:      re,
 			actual:        s.value,

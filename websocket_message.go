@@ -92,7 +92,7 @@ func (m *WebsocketMessage) Type(typ ...int) *WebsocketMessage {
 	case m.chain.failed():
 		return m
 	case len(typ) == 0:
-		m.chain.fail(NewErrorFailure(fmt.Errorf("unexpected nil argument passed to Type")))
+		m.chain.fail(newErrorFailure(fmt.Errorf("unexpected nil argument passed to Type")))
 		return m
 	}
 	yes := false
@@ -130,7 +130,7 @@ func (m *WebsocketMessage) NotType(typ ...int) *WebsocketMessage {
 	case m.chain.failed():
 		return m
 	case len(typ) == 0:
-		m.chain.fail(NewErrorFailure(fmt.Errorf("unexpected nil argument passed to NotType")))
+		m.chain.fail(newErrorFailure(fmt.Errorf("unexpected nil argument passed to NotType")))
 		return m
 	}
 	for _, t := range typ {
@@ -168,7 +168,7 @@ func (m *WebsocketMessage) Code(code ...int) *WebsocketMessage {
 	case m.chain.failed():
 		return m
 	case len(code) == 0:
-		m.chain.fail(NewErrorFailure(fmt.Errorf("unexpected nil argument passed to Code")))
+		m.chain.fail(newErrorFailure(fmt.Errorf("unexpected nil argument passed to Code")))
 		return m
 	case m.checkClosed("Code"):
 		return m
@@ -210,7 +210,7 @@ func (m *WebsocketMessage) NotCode(code ...int) *WebsocketMessage {
 	case m.chain.failed():
 		return m
 	case len(code) == 0:
-		m.chain.fail(NewErrorFailure(fmt.Errorf("unexpected nil argument passed to CodeNotEqual")))
+		m.chain.fail(newErrorFailure(fmt.Errorf("unexpected nil argument passed to CodeNotEqual")))
 		return m
 	case m.checkClosed("NotCode"):
 		return m
@@ -306,7 +306,7 @@ func (m *WebsocketMessage) getJSON() interface{} {
 
 	var value interface{}
 	if err := json.Unmarshal(m.content, &value); err != nil {
-		m.chain.fail(NewErrorFailure(err))
+		m.chain.fail(newErrorFailure(err))
 		return nil
 	}
 

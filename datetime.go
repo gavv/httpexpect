@@ -43,7 +43,7 @@ func (dt *DateTime) Raw() time.Time {
 func (dt *DateTime) Equal(value time.Time) *DateTime {
 	if !dt.value.Equal(value) {
 		failure := Failure{
-			assertionName: "datetime",
+			assertionName: "Datetime.Equal",
 			expected:      value,
 			actual:        dt.value,
 			assertType:    failureAssertEqual,
@@ -61,7 +61,7 @@ func (dt *DateTime) Equal(value time.Time) *DateTime {
 func (dt *DateTime) NotEqual(value time.Time) *DateTime {
 	if dt.value.Equal(value) {
 		failure := Failure{
-			assertionName: "datetime",
+			assertionName: "Datetime.NotEqual",
 			expected:      value,
 			actual:        dt.value,
 			assertType:    failureAssertNotEqual,
@@ -79,7 +79,7 @@ func (dt *DateTime) NotEqual(value time.Time) *DateTime {
 func (dt *DateTime) Gt(value time.Time) *DateTime {
 	if !dt.value.After(value) {
 		failure := Failure{
-			assertionName: "datetime",
+			assertionName: "Datetime.Gt",
 			expected:      value,
 			actual:        dt.value,
 			assertType:    failureAssertGt,
@@ -97,7 +97,7 @@ func (dt *DateTime) Gt(value time.Time) *DateTime {
 func (dt *DateTime) Ge(value time.Time) *DateTime {
 	if !(dt.value.After(value) || dt.value.Equal(value)) {
 		failure := Failure{
-			assertionName: "datetime",
+			assertionName: "Datetime.Ge",
 			expected:      value,
 			actual:        dt.value,
 			assertType:    failureAssertGe,
@@ -115,7 +115,7 @@ func (dt *DateTime) Ge(value time.Time) *DateTime {
 func (dt *DateTime) Lt(value time.Time) *DateTime {
 	if !dt.value.Before(value) {
 		failure := Failure{
-			assertionName: "datetime",
+			assertionName: "Datetime.Lt",
 			expected:      value,
 			actual:        dt.value,
 			assertType:    failureAssertLt,
@@ -133,7 +133,7 @@ func (dt *DateTime) Lt(value time.Time) *DateTime {
 func (dt *DateTime) Le(value time.Time) *DateTime {
 	if !(dt.value.Before(value) || dt.value.Equal(value)) {
 		failure := Failure{
-			assertionName: "datetime",
+			assertionName: "Datetime.Le",
 			expected:      value,
 			actual:        dt.value,
 			assertType:    failureAssertLe,
@@ -153,7 +153,7 @@ func (dt *DateTime) InRange(min, max time.Time) *DateTime {
 	if !((dt.value.After(min) || dt.value.Equal(min)) &&
 		(dt.value.Before(max) || dt.value.Equal(max))) {
 		failure := Failure{
-			assertionName:   "datetime",
+			assertionName:   "Datetime.InRange",
 			actual:          dt.value,
 			expectedInRange: []interface{}{min, max},
 			assertType:      failureAssertInRange,

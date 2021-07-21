@@ -23,7 +23,10 @@ type Object struct {
 func NewObject(reporter Reporter, value map[string]interface{}) *Object {
 	chain := makeChain(reporter)
 	if value == nil {
-		chain.fail(NewErrorFailure(fmt.Errorf("expected non-nil map value")))
+		chain.fail(Failure{
+			err:        fmt.Errorf("expected non-nil map value"),
+			assertType: failureInvalidInput,
+		})
 	} else {
 		value, _ = canonMap(&chain, value)
 	}
@@ -87,7 +90,7 @@ func (o *Object) Value(key string) *Value {
 	value, ok := o.value[key]
 	if !ok {
 		failure := Failure{
-			assertionName: "object",
+			assertionName: "Object.Value",
 			assertType:    failureAssertKey,
 			expected:      key,
 			actual:        o.value,
@@ -131,7 +134,7 @@ func (o *Object) Equal(value interface{}) *Object {
 	}
 	if !reflect.DeepEqual(expected, o.value) {
 		failure := Failure{
-			assertionName: "object",
+			assertionName: "Object.Equal",
 			assertType:    failureAssertEqual,
 			expected:      expected,
 			actual:        o.value,
@@ -156,7 +159,7 @@ func (o *Object) NotEqual(v interface{}) *Object {
 	}
 	if reflect.DeepEqual(expected, o.value) {
 		failure := Failure{
-			assertionName: "object",
+			assertionName: "Object.NotEqual",
 			assertType:    failureAssertNotEqual,
 			expected:      v,
 		}
@@ -173,8 +176,8 @@ func (o *Object) NotEqual(v interface{}) *Object {
 func (o *Object) ContainsKey(key string) *Object {
 	if !o.containsKey(key) {
 		failure := Failure{
-			assertionName: "object",
-			assertType:    failureAssertContainsKey,
+			assertionName: "Object.ContainsKey",
+			assertType:    failureAssertKey,
 			expected:      key,
 			actual:        o.value,
 		}
@@ -191,8 +194,8 @@ func (o *Object) ContainsKey(key string) *Object {
 func (o *Object) NotContainsKey(key string) *Object {
 	if o.containsKey(key) {
 		failure := Failure{
-			assertionName: "object",
-			assertType:    failureAssertNotContainsKey,
+			assertionName: "Object.NotContainsKey",
+			assertType:    failureAssertKey,
 			expected:      key,
 			actual:        o.value,
 		}
@@ -234,8 +237,8 @@ func (o *Object) NotContainsKey(key string) *Object {
 func (o *Object) ContainsMap(value interface{}) *Object {
 	if !o.containsMap(value) {
 		failure := Failure{
-			assertionName: "object",
-			assertType:    failureAssertContainsMap,
+			assertionName: "Object.ContainsMap",
+			assertType:    failureAssertContains,
 			expected:      value,
 			actual:        o.value,
 		}
@@ -255,8 +258,8 @@ func (o *Object) ContainsMap(value interface{}) *Object {
 func (o *Object) NotContainsMap(value interface{}) *Object {
 	if o.containsMap(value) {
 		failure := Failure{
-			assertionName: "object",
-			assertType:    failureAssertNotContainsMap,
+			assertionName: "Object.NotContainsMap",
+			assertType:    failureAssertNotContains,
 			expected:      value,
 			actual:        o.value,
 		}
@@ -285,7 +288,7 @@ func (o *Object) ValueEqual(key string, value interface{}) *Object {
 	}
 	if !reflect.DeepEqual(expected, o.value[key]) {
 		failure := Failure{
-			assertionName: "object",
+			assertionName: "Object.ValueEqual",
 			assertType:    failureAssertEqual,
 			expected:      expected,
 			actual:        o.value[key],
@@ -318,7 +321,7 @@ func (o *Object) ValueNotEqual(key string, value interface{}) *Object {
 	}
 	if reflect.DeepEqual(expected, o.value[key]) {
 		failure := Failure{
-			assertionName: "object",
+			assertionName: "Object.ValueNotEqual",
 			assertType:    failureAssertNotEqual,
 			expected:      expected,
 		}

@@ -30,7 +30,7 @@ func getPath(chain *chain, value interface{}, path string) *Value {
 
 	result, err := jsonpath.Read(value, path)
 	if err != nil {
-		chain.fail(NewErrorFailure(err))
+		chain.fail(newErrorFailure(err))
 		return &Value{*chain, nil}
 	}
 
@@ -59,7 +59,7 @@ func checkSchema(chain *chain, value, schema interface{}) {
 	result, err := gojsonschema.Validate(schemaLoader, valueLoader)
 	if err != nil {
 		failure := Failure{
-			assertionName: "json.schema",
+			assertionName: "Json.Schema",
 			err:           err,
 			assertType:    failureAssertJsonSchema,
 			expected:      schema,
@@ -71,7 +71,7 @@ func checkSchema(chain *chain, value, schema interface{}) {
 
 	if !result.Valid() {
 		failure := Failure{
-			assertionName: "json.schema",
+			assertionName: "Json.Schema",
 			assertType:    failureAssertJsonSchema,
 			expected:      schema,
 			actual:        value,
@@ -103,7 +103,7 @@ func canonNumber(chain *chain, number interface{}) (f float64, ok bool) {
 	ok = true
 	defer func() {
 		if err := recover(); err != nil {
-			chain.fail(NewErrorFailure(fmt.Errorf("%s", err)))
+			chain.fail(newErrorFailure(fmt.Errorf("%s", err)))
 			ok = false
 		}
 	}()
@@ -117,7 +117,10 @@ func canonArray(chain *chain, in interface{}) ([]interface{}, bool) {
 	if ok {
 		out, ok = data.([]interface{})
 		if !ok {
-			chain.fail(NewErrorFailure(fmt.Errorf("expected array, got %v", out)))
+			chain.fail(Failure{
+				err:        fmt.Errorf("expected array, got %v", out),
+				assertType: failureInvalidInput,
+			})
 		}
 	}
 	return out, ok
@@ -129,7 +132,10 @@ func canonMap(chain *chain, in interface{}) (map[string]interface{}, bool) {
 	if ok {
 		out, ok = data.(map[string]interface{})
 		if !ok {
-			chain.fail(NewErrorFailure(fmt.Errorf("expected map, got %v", out)))
+			chain.fail(Failure{
+				err:        fmt.Errorf("expected map, got %v", out),
+				assertType: failureInvalidInput,
+			})
 		}
 	}
 	return out, ok
@@ -138,13 +144,13 @@ func canonMap(chain *chain, in interface{}) (map[string]interface{}, bool) {
 func canonValue(chain *chain, in interface{}) (interface{}, bool) {
 	b, err := json.Marshal(in)
 	if err != nil {
-		chain.fail(NewErrorFailure(err))
+		chain.fail(newErrorFailure(err))
 		return nil, false
 	}
 
 	var out interface{}
 	if err := json.Unmarshal(b, &out); err != nil {
-		chain.fail(NewErrorFailure(err))
+		chain.fail(newErrorFailure(err))
 		return nil, false
 	}
 

@@ -43,8 +43,8 @@ func (d *Duration) Raw() time.Duration {
 func (d *Duration) IsSet() *Duration {
 	if d.value == nil {
 		failure := Failure{
-			assertionName: "duration",
-			assertType:    failureAssertIsSet,
+			assertionName: "Duration.IsSet",
+			assertType:    failureAssertNotEmpty,
 		}
 		d.chain.fail(failure)
 	}
@@ -55,8 +55,8 @@ func (d *Duration) IsSet() *Duration {
 func (d *Duration) NotSet() *Duration {
 	if d.value != nil {
 		failure := Failure{
-			assertionName: "duration",
-			assertType:    failureAssertNotSet,
+			assertionName: "Duration.NotSet",
+			assertType:    failureAssertEmpty,
 		}
 		d.chain.fail(failure)
 	}
@@ -69,14 +69,13 @@ func (d *Duration) NotSet() *Duration {
 //  d := NewDuration(t, time.Second)
 //  d.Equal(time.Second)
 func (d *Duration) Equal(value time.Duration) *Duration {
-	d.IsSet()
-	if d.chain.failed() {
+	if d.IsSet().chain.failed() {
 		return d
 	}
 
 	if !(*d.value == value) {
 		failure := Failure{
-			assertionName: "duration",
+			assertionName: "Duration.Equal",
 			assertType:    failureAssertEqual,
 			expected:      value,
 			actual:        *d.value,
@@ -92,14 +91,13 @@ func (d *Duration) Equal(value time.Duration) *Duration {
 //  d := NewDuration(t, time.Second)
 //  d.NotEqual(time.Minute)
 func (d *Duration) NotEqual(value time.Duration) *Duration {
-	d.IsSet()
-	if d.chain.failed() {
+	if d.IsSet().chain.failed() {
 		return d
 	}
 
 	if !(*d.value != value) {
 		failure := Failure{
-			assertionName: "duration",
+			assertionName: "Duration.NotEqual",
 			expected:      value,
 			actual:        *d.value,
 			assertType:    failureAssertNotEqual,
@@ -115,14 +113,13 @@ func (d *Duration) NotEqual(value time.Duration) *Duration {
 //  d := NewDuration(t, time.Minute)
 //  d.Gt(time.Second)
 func (d *Duration) Gt(value time.Duration) *Duration {
-	d.IsSet()
-	if d.chain.failed() {
+	if d.IsSet().chain.failed() {
 		return d
 	}
 
 	if !(*d.value > value) {
 		failure := Failure{
-			assertionName: "duration",
+			assertionName: "Duration.Gt",
 			assertType:    failureAssertGt,
 			expected:      value,
 			actual:        *d.value,
@@ -138,14 +135,13 @@ func (d *Duration) Gt(value time.Duration) *Duration {
 //  d := NewDuration(t, time.Minute)
 //  d.Ge(time.Second)
 func (d *Duration) Ge(value time.Duration) *Duration {
-	d.IsSet()
-	if d.chain.failed() {
+	if d.IsSet().chain.failed() {
 		return d
 	}
 
 	if !(*d.value >= value) {
 		failure := Failure{
-			assertionName: "duration",
+			assertionName: "Duration.Ge",
 			assertType:    failureAssertGe,
 			expected:      value,
 			actual:        *d.value,
@@ -161,14 +157,13 @@ func (d *Duration) Ge(value time.Duration) *Duration {
 //  d := NewDuration(t, time.Second)
 //  d.Lt(time.Minute)
 func (d *Duration) Lt(value time.Duration) *Duration {
-	d.IsSet()
-	if d.chain.failed() {
+	if d.IsSet().chain.failed() {
 		return d
 	}
 
 	if !(*d.value < value) {
 		failure := Failure{
-			assertionName: "duration",
+			assertionName: "Duration.Lt",
 			assertType:    failureAssertLt,
 			expected:      value,
 			actual:        *d.value,
@@ -184,14 +179,13 @@ func (d *Duration) Lt(value time.Duration) *Duration {
 //  d := NewDuration(t, time.Second)
 //  d.Le(time.Minute)
 func (d *Duration) Le(value time.Duration) *Duration {
-	d.IsSet()
-	if d.chain.failed() {
+	if d.IsSet().chain.failed() {
 		return d
 	}
 
 	if !(*d.value <= value) {
 		failure := Failure{
-			assertionName: "duration",
+			assertionName: "Duration.Le",
 			assertType:    failureAssertLe,
 			expected:      value,
 			actual:        *d.value,
@@ -208,14 +202,13 @@ func (d *Duration) Le(value time.Duration) *Duration {
 //  d.InRange(time.Second, time.Hour)
 //  d.InRange(time.Minute, time.Minute)
 func (d *Duration) InRange(min, max time.Duration) *Duration {
-	d.IsSet()
-	if d.chain.failed() {
+	if d.IsSet().chain.failed() {
 		return d
 	}
 
 	if !(*d.value >= min && *d.value <= max) {
 		failure := Failure{
-			assertionName:   "duration",
+			assertionName:   "Duration.InRange",
 			assertType:      failureAssertInRange,
 			expectedInRange: []interface{}{min, max},
 			actual:          *d.value,

@@ -93,7 +93,7 @@ func NewRequest(config Config, method, path string, pathargs ...interface{}) *Re
 	path, err := interpol.WithFunc(path, func(k string, w io.Writer) error {
 		if n < len(pathargs) {
 			if pathargs[n] == nil {
-				chain.fail(NewErrorFailure(fmt.Errorf("unexpected nil argument for url path format string: Request(\"%s\", %v...)", method, pathargs)))
+				chain.fail(newErrorFailure(fmt.Errorf("unexpected nil argument for url path format string: Request(\"%s\", %v...)", method, pathargs)))
 			} else {
 				mustWrite(w, fmt.Sprint(pathargs[n]))
 			}
@@ -106,12 +106,12 @@ func NewRequest(config Config, method, path string, pathargs ...interface{}) *Re
 		return nil
 	})
 	if err != nil {
-		chain.fail(NewErrorFailure(err))
+		chain.fail(newErrorFailure(err))
 	}
 
 	httpReq, err := config.RequestFactory.NewRequest(method, config.BaseURL, nil)
 	if err != nil {
-		chain.fail(NewErrorFailure(err))
+		chain.fail(newErrorFailure(err))
 	}
 
 	return &Request{
@@ -161,7 +161,7 @@ func (r *Request) WithMatcher(matcher func(*Response)) *Request {
 		return r
 	}
 	if matcher == nil {
-		r.chain.fail(NewErrorFailure(fmt.Errorf("unexpected nil matcher in WithMatcher")))
+		r.chain.fail(newErrorFailure(fmt.Errorf("unexpected nil matcher in WithMatcher")))
 		return r
 	}
 
@@ -181,7 +181,7 @@ func (r *Request) WithTransformer(transform func(*http.Request)) *Request {
 		return r
 	}
 	if transform == nil {
-		r.chain.fail(NewErrorFailure(fmt.Errorf("unexpected nil transform in WithTransformer")))
+		r.chain.fail(newErrorFailure(fmt.Errorf("unexpected nil transform in WithTransformer")))
 		return r
 	}
 
@@ -206,7 +206,7 @@ func (r *Request) WithClient(client Client) *Request {
 		return r
 	}
 	if client == nil {
-		r.chain.fail(NewErrorFailure(fmt.Errorf("unexpected nil client in WithClient")))
+		r.chain.fail(newErrorFailure(fmt.Errorf("unexpected nil client in WithClient")))
 		return r
 	}
 	r.config.Client = client
@@ -227,7 +227,7 @@ func (r *Request) WithHandler(handler http.Handler) *Request {
 		return r
 	}
 	if handler == nil {
-		r.chain.fail(NewErrorFailure(fmt.Errorf("unexpected nil handler in WithHandler")))
+		r.chain.fail(newErrorFailure(fmt.Errorf("unexpected nil handler in WithHandler")))
 		return r
 	}
 	if client, ok := r.config.Client.(*http.Client); ok {
@@ -321,7 +321,7 @@ func (r *Request) WithMaxRedirects(maxRedirects int) *Request {
 		return r
 	}
 	if maxRedirects < 0 {
-		r.chain.fail(NewErrorFailure(fmt.Errorf("unexpected negative integer in WithMaxRedirects")))
+		r.chain.fail(newErrorFailure(fmt.Errorf("unexpected negative integer in WithMaxRedirects")))
 		return r
 	}
 	r.maxRedirects = maxRedirects
@@ -394,7 +394,7 @@ func (r *Request) WithMaxRetries(maxRetries int) *Request {
 		return r
 	}
 	if maxRetries < 0 {
-		r.chain.fail(NewErrorFailure(fmt.Errorf("unexpected negative integer in WithMaxRetries")))
+		r.chain.fail(newErrorFailure(fmt.Errorf("unexpected negative integer in WithMaxRetries")))
 		return r
 	}
 	r.maxRetries = maxRetries
@@ -465,7 +465,7 @@ func (r *Request) WithWebsocketDialer(dialer WebsocketDialer) *Request {
 		return r
 	}
 	if dialer == nil {
-		r.chain.fail(NewErrorFailure(fmt.Errorf("unexpected nil dialer in WithWebsocketDialer")))
+		r.chain.fail(newErrorFailure(fmt.Errorf("unexpected nil dialer in WithWebsocketDialer")))
 		return r
 	}
 	r.config.WebsocketDialer = dialer
@@ -489,7 +489,7 @@ func (r *Request) WithContext(ctx context.Context) *Request {
 		return r
 	}
 	if ctx == nil {
-		r.chain.fail(NewErrorFailure(fmt.Errorf("unexpected nil ctx in WithContext")))
+		r.chain.fail(newErrorFailure(fmt.Errorf("unexpected nil ctx in WithContext")))
 		return r
 	}
 
@@ -542,7 +542,7 @@ func (r *Request) WithPath(key string, value interface{}) *Request {
 	path, err := interpol.WithFunc(r.path, func(k string, w io.Writer) error {
 		if strings.EqualFold(k, key) {
 			if value == nil {
-				r.chain.fail(NewErrorFailure(fmt.Errorf(
+				r.chain.fail(newErrorFailure(fmt.Errorf(
 					"unexpected nil argument for url path format string: "+
 						" WithPath(\"%s\", %v)", key, value)))
 			} else {
@@ -559,11 +559,11 @@ func (r *Request) WithPath(key string, value interface{}) *Request {
 	if err == nil {
 		r.path = path
 	} else {
-		r.chain.fail(NewErrorFailure(err))
+		r.chain.fail(newErrorFailure(err))
 		return r
 	}
 	if !ok {
-		r.chain.fail(NewErrorFailure(fmt.Errorf("unexpected key for url path format string: "+
+		r.chain.fail(newErrorFailure(fmt.Errorf("unexpected key for url path format string: "+
 			" WithPath(\"%s\", %v)\n\npath:\n %q",
 			key, value, r.path)))
 		return r
@@ -678,13 +678,13 @@ func (r *Request) WithQueryObject(object interface{}) *Request {
 	if reflect.Indirect(reflect.ValueOf(object)).Kind() == reflect.Struct {
 		q, err = query.Values(object)
 		if err != nil {
-			r.chain.fail(NewErrorFailure(err))
+			r.chain.fail(newErrorFailure(err))
 			return r
 		}
 	} else {
 		q, err = form.EncodeToValues(object)
 		if err != nil {
-			r.chain.fail(NewErrorFailure(err))
+			r.chain.fail(newErrorFailure(err))
 			return r
 		}
 	}
@@ -710,7 +710,7 @@ func (r *Request) WithQueryString(query string) *Request {
 	}
 	v, err := url.ParseQuery(query)
 	if err != nil {
-		r.chain.fail(NewErrorFailure(err))
+		r.chain.fail(newErrorFailure(err))
 		return r
 	}
 	if r.query == nil {
@@ -738,7 +738,7 @@ func (r *Request) WithURL(urlStr string) *Request {
 	if u, err := url.Parse(urlStr); err == nil {
 		r.http.URL = u
 	} else {
-		r.chain.fail(NewErrorFailure(err))
+		r.chain.fail(newErrorFailure(err))
 	}
 	return r
 }
@@ -864,7 +864,7 @@ func (r *Request) WithProto(proto string) *Request {
 	}
 	major, minor, ok := http.ParseHTTPVersion(proto)
 	if !ok {
-		r.chain.fail(NewErrorFailure(fmt.Errorf(
+		r.chain.fail(newErrorFailure(fmt.Errorf(
 			"unexpected protocol version %q, expected \"HTTP/{major}.{minor}\"",
 			proto)))
 		return r
@@ -893,7 +893,7 @@ func (r *Request) WithChunked(reader io.Reader) *Request {
 		return r
 	}
 	if !r.http.ProtoAtLeast(1, 1) {
-		r.chain.fail(NewErrorFailure(fmt.Errorf("chunked Transfer-Encoding requires at least \"HTTP/1.1\","+
+		r.chain.fail(newErrorFailure(fmt.Errorf("chunked Transfer-Encoding requires at least \"HTTP/1.1\","+
 			"but \"HTTP/%d.%d\" is enabled", r.http.ProtoMajor, r.http.ProtoMinor)))
 		return r
 	}
@@ -953,7 +953,7 @@ func (r *Request) WithJSON(object interface{}) *Request {
 	}
 	b, err := json.Marshal(object)
 	if err != nil {
-		r.chain.fail(NewErrorFailure(err))
+		r.chain.fail(newErrorFailure(err))
 		return r
 	}
 
@@ -991,7 +991,7 @@ func (r *Request) WithForm(object interface{}) *Request {
 
 	f, err := form.EncodeToValues(object)
 	if err != nil {
-		r.chain.fail(NewErrorFailure(err))
+		r.chain.fail(newErrorFailure(err))
 		return r
 	}
 
@@ -1005,7 +1005,7 @@ func (r *Request) WithForm(object interface{}) *Request {
 		sort.Strings(keys)
 		for _, k := range keys {
 			if err := r.multipart.WriteField(k, f[k][0]); err != nil {
-				r.chain.fail(NewErrorFailure(err))
+				r.chain.fail(newErrorFailure(err))
 				return r
 			}
 		}
@@ -1043,7 +1043,7 @@ func (r *Request) WithFormField(key string, value interface{}) *Request {
 
 		err := r.multipart.WriteField(key, fmt.Sprint(value))
 		if err != nil {
-			r.chain.fail(NewErrorFailure(err))
+			r.chain.fail(newErrorFailure(err))
 			return r
 		}
 	} else {
@@ -1084,13 +1084,13 @@ func (r *Request) WithFile(key, path string, reader ...io.Reader) *Request {
 	r.setType("WithFile", "multipart/form-data", false)
 
 	if r.multipart == nil {
-		r.chain.fail(NewErrorFailure(fmt.Errorf("WithFile requires WithMultipart to be called first")))
+		r.chain.fail(newErrorFailure(fmt.Errorf("WithFile requires WithMultipart to be called first")))
 		return r
 	}
 
 	wr, err := r.multipart.CreateFormFile(key, path)
 	if err != nil {
-		r.chain.fail(NewErrorFailure(err))
+		r.chain.fail(newErrorFailure(err))
 		return r
 	}
 
@@ -1100,7 +1100,7 @@ func (r *Request) WithFile(key, path string, reader ...io.Reader) *Request {
 	} else {
 		f, err := os.Open(path)
 		if err != nil {
-			r.chain.fail(NewErrorFailure(err))
+			r.chain.fail(newErrorFailure(err))
 			return r
 		}
 		rd = f
@@ -1108,7 +1108,7 @@ func (r *Request) WithFile(key, path string, reader ...io.Reader) *Request {
 	}
 
 	if _, err := io.Copy(wr, rd); err != nil {
-		r.chain.fail(NewErrorFailure(err))
+		r.chain.fail(newErrorFailure(err))
 		return r
 	}
 
@@ -1243,7 +1243,7 @@ func (r *Request) encodeRequest() bool {
 
 	if r.multipart != nil {
 		if err := r.multipart.Close(); err != nil {
-			r.chain.fail(NewErrorFailure(err))
+			r.chain.fail(newErrorFailure(err))
 			return false
 		}
 
@@ -1273,7 +1273,7 @@ func (r *Request) encodeWebsocketRequest() bool {
 	}
 
 	if r.bodySetter != "" {
-		r.chain.fail(NewErrorFailure(fmt.Errorf(
+		r.chain.fail(newErrorFailure(fmt.Errorf(
 			"webocket request can not have body:\n  "+
 				"body set by %s\n  webocket enabled by WithWebsocketUpgrade",
 			r.bodySetter)))
@@ -1300,7 +1300,7 @@ func (r *Request) sendRequest() (*http.Response, time.Duration) {
 	})
 
 	if err != nil {
-		r.chain.fail(NewErrorFailure(err))
+		r.chain.fail(newErrorFailure(err))
 		return nil, 0
 	}
 
@@ -1322,7 +1322,7 @@ func (r *Request) sendWebsocketRequest() (
 	})
 
 	if err != nil && err != websocket.ErrBadHandshake {
-		r.chain.fail(NewErrorFailure(err))
+		r.chain.fail(newErrorFailure(err))
 		return nil, nil, 0
 	}
 
@@ -1431,7 +1431,7 @@ func (r *Request) setType(newSetter, newType string, overwrite bool) {
 		previousType := r.http.Header.Get("Content-Type")
 
 		if previousType != "" && previousType != newType {
-			r.chain.fail(NewErrorFailure(fmt.Errorf(
+			r.chain.fail(newErrorFailure(fmt.Errorf(
 				"ambiguous request \"Content-Type\" header values:\n %q (set by %s)\n\n"+
 					"and:\n %q (wanted by %s)",
 				previousType, r.typeSetter,
@@ -1446,7 +1446,7 @@ func (r *Request) setType(newSetter, newType string, overwrite bool) {
 
 func (r *Request) setBody(setter string, reader io.Reader, len int, overwrite bool) {
 	if !overwrite && r.bodySetter != "" {
-		r.chain.fail(NewErrorFailure(fmt.Errorf(
+		r.chain.fail(newErrorFailure(fmt.Errorf(
 			"ambiguous request body contents:\n  set by %s\n  overwritten by %s",
 			r.bodySetter, setter)))
 		return
@@ -1472,12 +1472,12 @@ func (r *Request) setupRedirects() {
 
 	if httpClient == nil {
 		if r.redirectPolicy != defaultRedirectPolicy {
-			r.chain.fail(NewErrorFailure(fmt.Errorf("WithRedirectPolicy can be used only if Client is *http.Client")))
+			r.chain.fail(newErrorFailure(fmt.Errorf("WithRedirectPolicy can be used only if Client is *http.Client")))
 			return
 		}
 
 		if r.maxRedirects != -1 {
-			r.chain.fail(NewErrorFailure(fmt.Errorf("WithMaxRedirects can be used only if Client is *http.Client")))
+			r.chain.fail(newErrorFailure(fmt.Errorf("WithMaxRedirects can be used only if Client is *http.Client")))
 			return
 		}
 	} else {

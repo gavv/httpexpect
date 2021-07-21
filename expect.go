@@ -124,6 +124,7 @@ type Config struct {
 	// or testing.TB, or provide custom implementation.
 	Reporter Reporter
 
+	// AssertionHandler replaces Reporter. The AssertionHandler is used to report failures.
 	AssertionHandler AssertionHandler
 
 	// Printers are used to print requests and responses.
@@ -137,6 +138,7 @@ type Config struct {
 	// else instead of testing.TB.
 	Printers []Printer
 
+	// TestName of the currently running test case.
 	TestName string
 
 	// Context is passed to all requests. It is typically used for request cancellation,

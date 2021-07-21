@@ -25,7 +25,10 @@ type Cookie struct {
 func NewCookie(reporter Reporter, value *http.Cookie) *Cookie {
 	chain := makeChain(reporter)
 	if value == nil {
-		failure := Failure{err: fmt.Errorf("expected non-nil cookie")}
+		failure := Failure{
+			err:        fmt.Errorf("expected non-nil cookie"),
+			assertType: failureAssertNotNil,
+		}
 		chain.fail(failure)
 	}
 	return &Cookie{chain, value}

@@ -135,7 +135,7 @@ func (v *Value) Object() *Object {
 	if !ok {
 		failure := Failure{
 			assertionName: "value",
-			assertType:    failureAssertBadValueType,
+			assertType:    failureAssertBadType,
 			expected:      make(map[string]interface{}),
 			actual:        v.value,
 		}
@@ -157,7 +157,7 @@ func (v *Value) Array() *Array {
 	if !ok {
 		failure := Failure{
 			assertionName: "value",
-			assertType:    failureAssertBadValueType,
+			assertType:    failureAssertBadType,
 			expected:      make([]interface{}, 0),
 			actual:        v.value,
 		}
@@ -179,7 +179,7 @@ func (v *Value) String() *String {
 	if !ok {
 		failure := Failure{
 			assertionName: "value",
-			assertType:    failureAssertBadValueType,
+			assertType:    failureAssertBadType,
 			expected:      "",
 			actual:        v.value,
 		}
@@ -201,7 +201,7 @@ func (v *Value) Number() *Number {
 	if !ok {
 		failure := Failure{
 			assertionName: "value",
-			assertType:    failureAssertBadValueType,
+			assertType:    failureAssertBadType,
 			expected:      float64(0),
 			actual:        v.value,
 		}
@@ -223,7 +223,7 @@ func (v *Value) Boolean() *Boolean {
 	if !ok {
 		failure := Failure{
 			assertionName: "value",
-			assertType:    failureAssertBadValueType,
+			assertType:    failureAssertBadType,
 			expected:      true, // could be false. it's just the type.
 			actual:        v.value,
 		}
