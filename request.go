@@ -2,11 +2,13 @@ package httpexpect
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -25,20 +27,28 @@ import (
 // Request provides methods to incrementally build http.Request object,
 // send it, and receive response.
 type Request struct {
-	context    *Context
-	config     Config
-	chain      chain
-	http       *http.Request
-	path       string
-	query      url.Values
-	form       url.Values
-	formbuf    *bytes.Buffer
-	multipart  *multipart.Writer
-	bodySetter string
-	typeSetter string
-	forceType  bool
-	wsUpgrade  bool
-	matchers   []func(*Response)
+	context        *Context
+	config         Config
+	chain          chain
+	http           *http.Request
+	redirectPolicy RedirectPolicy
+	maxRedirects   int
+	retryPolicy    RetryPolicy
+	maxRetries     int
+	minRetryDelay  time.Duration
+	maxRetryDelay  time.Duration
+	path           string
+	query          url.Values
+	form           url.Values
+	formbuf        *bytes.Buffer
+	multipart      *multipart.Writer
+	bodySetter     string
+	typeSetter     string
+	forceType      bool
+	wsUpgrade      bool
+	transforms     []func(*http.Request)
+	matchers       []func(*Response)
+	timeout        time.Duration
 }
 
 // NewRequest returns a new Request object.
@@ -99,30 +109,36 @@ func NewRequest(config Config, method, path string, pathargs ...interface{}) *Re
 		chain.fail(NewErrorFailure(err))
 	}
 
-	hr, err := config.RequestFactory.NewRequest(method, config.BaseURL, nil)
+	httpReq, err := config.RequestFactory.NewRequest(method, config.BaseURL, nil)
 	if err != nil {
 		chain.fail(NewErrorFailure(err))
 	}
 
 	return &Request{
-		config:  config,
-		chain:   chain,
-		path:    path,
-		http:    hr,
-		context: placeholderCtx,
+		context:        placeholderCtx,
+		config:         config,
+		chain:          chain,
+		path:           path,
+		http:           httpReq,
+		redirectPolicy: defaultRedirectPolicy,
+		maxRedirects:   -1,
+		retryPolicy:    RetryTemporaryNetworkAndServerErrors,
+		maxRetries:     0,
+		minRetryDelay:  time.Millisecond * 50,
+		maxRetryDelay:  time.Second * 5,
 	}
 }
 
-// WithContext is NOT go's standard context.Context interface. It is a concrete *Context pointer from httpexpect
+// WithReqContext is NOT go's standard context.Context interface. It is a concrete *Context pointer from httpexpect
 // that holds data to be provided to an AssertionHandler (also Reporter and Formatter, when using the default one).
 //
 // Do NOT use this method yourself unless you know what you are doing: Expect.Request handles the call and passes
 // the current Expect's Context to the Request as needed.
 //
-// WithContext replaces the existing context with the given one.
+// WithReqContext replaces the existing context with the given one.
 //
 // Providing a nil Context will panic.
-func (r *Request) WithContext(ctx *Context) *Request {
+func (r *Request) WithReqContext(ctx *Context) *Request {
 	if ctx == nil {
 		panic("provided context is nil")
 	}
@@ -141,7 +157,35 @@ func (r *Request) WithContext(ctx *Context) *Request {
 //      resp.Header("API-Version").NotEmpty()
 //  })
 func (r *Request) WithMatcher(matcher func(*Response)) *Request {
+	if r.chain.failed() {
+		return r
+	}
+	if matcher == nil {
+		r.chain.fail(NewErrorFailure(fmt.Errorf("unexpected nil matcher in WithMatcher")))
+		return r
+	}
+
 	r.matchers = append(r.matchers, matcher)
+	return r
+}
+
+// WithTransformer attaches a transform to the Request.
+// All attachhed transforms are invoked in the Expect methods for
+// http.Request struct, after it's encoded and before it's sent.
+//
+// Example:
+//  req := NewRequest(config, "PUT", "http://example.com/path")
+//  req.WithTransformer(func(r *http.Request) { r.Header.Add("foo", "bar") })
+func (r *Request) WithTransformer(transform func(*http.Request)) *Request {
+	if r.chain.failed() {
+		return r
+	}
+	if transform == nil {
+		r.chain.fail(NewErrorFailure(fmt.Errorf("unexpected nil transform in WithTransformer")))
+		return r
+	}
+
+	r.transforms = append(r.transforms, transform)
 	return r
 }
 
@@ -187,13 +231,193 @@ func (r *Request) WithHandler(handler http.Handler) *Request {
 		return r
 	}
 	if client, ok := r.config.Client.(*http.Client); ok {
-		client.Transport = NewBinder(handler)
+		clientCopy := *client
+		clientCopy.Transport = NewBinder(handler)
+		r.config.Client = &clientCopy
 	} else {
 		r.config.Client = &http.Client{
 			Transport: NewBinder(handler),
 			Jar:       NewJar(),
 		}
 	}
+	return r
+}
+
+// RedirectPolicy defines how redirection responses are handled.
+//
+// Status codes 307, 308 require resending body. They are followed only if
+// redirect policy is FollowAllRedirects.
+//
+// Status codes 301, 302, 303 don't require resending body. On such redirect,
+// http.Client automatically switches HTTP method to GET, if it's not GET or
+// HEAD already. These redirects are followed if redirect policy is either
+// FollowAllRedirects or FollowRedirectsWithoutBody.
+//
+// Default redirect policy is FollowRedirectsWithoutBody.
+type RedirectPolicy int
+
+const (
+	// indicates that WithRedirectPolicy was not called
+	defaultRedirectPolicy RedirectPolicy = iota
+
+	// DontFollowRedirects forbids following any redirects.
+	// Redirection response is returned to the user and can be inspected.
+	DontFollowRedirects
+
+	// FollowAllRedirects allows following any redirects, including those
+	// which require resending body.
+	FollowAllRedirects
+
+	// FollowRedirectsWithoutBody allows following only redirects which
+	// don't require resending body.
+	// If redirect requires resending body, it's not followed, and redirection
+	// response is returned instead.
+	FollowRedirectsWithoutBody
+)
+
+// WithRedirectPolicy sets policy for redirection response handling.
+//
+// How redirect is handled depends on both response status code and
+// redirect policy. See comments for RedirectPolicy for details.
+//
+// Default redirect policy is defined by Client implementation.
+// Default behavior of http.Client corresponds to FollowRedirectsWithoutBody.
+//
+// This method can be used only if Client interface points to
+// *http.Client struct, since we rely on it in redirect handling.
+//
+// Example:
+//  req1 := NewRequest(config, "POST", "/path")
+//  req1.WithRedirectPolicy(FollowAllRedirects)
+//  req1.Expect().Status(http.StatusOK)
+//
+//  req2 := NewRequest(config, "POST", "/path")
+//  req2.WithRedirectPolicy(DontFollowRedirects)
+//  req2.Expect().Status(http.StatusPermanentRedirect)
+func (r *Request) WithRedirectPolicy(policy RedirectPolicy) *Request {
+	if r.chain.failed() {
+		return r
+	}
+	r.redirectPolicy = policy
+	return r
+}
+
+// WithMaxRedirects sets maximum number of redirects to follow.
+//
+// If the number of redirects exceedes this limit, request is failed.
+//
+// Default limit is defined by Client implementation.
+// Default behavior of http.Client corresponds to maximum of 10-1 redirects.
+//
+// This method can be used only if Client interface points to
+// *http.Client struct, since we rely on it in redirect handling.
+//
+// Example:
+//  req1 := NewRequest(config, "POST", "/path")
+//  req1.WithMaxRedirects(1)
+//  req1.Expect().Status(http.StatusOK)
+func (r *Request) WithMaxRedirects(maxRedirects int) *Request {
+	if r.chain.failed() {
+		return r
+	}
+	if maxRedirects < 0 {
+		r.chain.fail(NewErrorFailure(fmt.Errorf("unexpected negative integer in WithMaxRedirects")))
+		return r
+	}
+	r.maxRedirects = maxRedirects
+	return r
+}
+
+// RetryPolicy defines how failed requests are retried.
+//
+// Whether a request is retried depends on error type (if any), response
+// status code (if any), and retry policy.
+type RetryPolicy int
+
+const (
+	// DontRetry disables retrying at all.
+	DontRetry RetryPolicy = iota
+
+	// RetryTemporaryNetworkErrors enables retrying only temporary network errors.
+	// Retry happens if Client returns net.Error and its Temporary() method
+	// returns true.
+	RetryTemporaryNetworkErrors
+
+	// RetryTemporaryNetworkAndServerErrors enables retrying of temporary network
+	// errors, as well as 5xx status codes.
+	RetryTemporaryNetworkAndServerErrors
+
+	// RetryAllErrors enables retrying of any error or 4xx/5xx status code.
+	RetryAllErrors
+)
+
+// WithRetryPolicy sets policy for retries.
+//
+// Whether a request is retried depends on error type (if any), response
+// status code (if any), and retry policy.
+//
+// How much retry attempts happens is defined by WithMaxRetries().
+// How much to wait between attempts is defined by WithRetryDelay().
+//
+// Default retry policy is RetryTemporaryNetworkAndServerErrors, but
+// default maximum number of retries is zero, so no retries happen
+// unless WithMaxRetries() is called.
+//
+// Example:
+//  req := NewRequest(config, "POST", "/path")
+//  req.WithRetryPolicy(RetryAllErrors)
+//  req.Expect().Status(http.StatusOK)
+func (r *Request) WithRetryPolicy(policy RetryPolicy) *Request {
+	if r.chain.failed() {
+		return r
+	}
+	r.retryPolicy = policy
+	return r
+}
+
+// WithMaxRetries sets maximum number of retry attempts.
+//
+// After first request failure, additional retry attempts may happen,
+// depending on the retry policy.
+//
+// Setting this to zero disables retries, i.e. only one request is sent.
+// Setting this to N enables retries, and up to N+1 requests may be sent.
+//
+// Default number of retries is zero, i.e. retries are disabled.
+//
+// Example:
+//  req := NewRequest(config, "POST", "/path")
+//  req.WithMaxRetries(1)
+//  req.Expect().Status(http.StatusOK)
+func (r *Request) WithMaxRetries(maxRetries int) *Request {
+	if r.chain.failed() {
+		return r
+	}
+	if maxRetries < 0 {
+		r.chain.fail(NewErrorFailure(fmt.Errorf("unexpected negative integer in WithMaxRetries")))
+		return r
+	}
+	r.maxRetries = maxRetries
+	return r
+}
+
+// WithRetryDelay sets minimum and maximum delay between retries.
+//
+// If multiple retry attempts happen, delay between attempts starts from
+// minDelay and then grows exponentionally until it reaches maxDelay.
+//
+// Default delay range is [50ms; 5s].
+//
+// Example:
+//  req := NewRequest(config, "POST", "/path")
+//  req.WithRetryDelay(time.Second, time.Minute)
+//  req.Expect().Status(http.StatusOK)
+func (r *Request) WithRetryDelay(minDelay, maxDelay time.Duration) *Request {
+	if r.chain.failed() {
+		return r
+	}
+	r.minRetryDelay = minDelay
+	r.maxRetryDelay = maxDelay
 	return r
 }
 
@@ -245,6 +469,56 @@ func (r *Request) WithWebsocketDialer(dialer WebsocketDialer) *Request {
 		return r
 	}
 	r.config.WebsocketDialer = dialer
+	return r
+}
+
+// WithContext sets the context.
+//
+// Config.Context will be overwritten.
+//
+// Any retries will stop after one is cancelled.
+// If the intended behavior is to continue any further retries, use WithTimeout.
+//
+// Example:
+//  ctx, _ = context.WithTimeout(context.Background(), time.Duration(3)*time.Second)
+//  req := NewRequest(config, "GET", "/path")
+//  req.WithContext(ctx)
+//  req.Expect().Status(http.StatusOK)
+func (r *Request) WithContext(ctx context.Context) *Request {
+	if r.chain.failed() {
+		return r
+	}
+	if ctx == nil {
+		r.chain.fail(NewErrorFailure(fmt.Errorf("unexpected nil ctx in WithContext")))
+		return r
+	}
+
+	r.config.Context = ctx
+
+	return r
+}
+
+// WithTimeout sets a timeout duration for the request.
+//
+// Will attach to the request a context.WithTimeout around the Config.Context
+// or any context set WithContext. If these are nil, the new context will be
+// created on top of a context.Background().
+//
+// Any retries will continue after one is cancelled.
+// If the intended behavior is to stop any further retries, use WithContext or
+// Config.Context.
+//
+// Example:
+//  req := NewRequest(config, "GET", "/path")
+//  req.WithTimeout(time.Duration(3)*time.Second)
+//  req.Expect().Status(http.StatusOK)
+func (r *Request) WithTimeout(timeout time.Duration) *Request {
+	if r.chain.failed() {
+		return r
+	}
+
+	r.timeout = timeout
+
 	return r
 }
 
@@ -490,7 +764,7 @@ func (r *Request) WithHeaders(headers map[string]string) *Request {
 //
 // Example:
 //  req := NewRequest(config, "PUT", "http://example.com/path")
-//  req.WithHeader("Content-Type": "application/json")
+//  req.WithHeader("Content-Type", "application/json")
 func (r *Request) WithHeader(k, v string) *Request {
 	if r.chain.failed() {
 		return r
@@ -559,6 +833,21 @@ func (r *Request) WithBasicAuth(username, password string) *Request {
 		return r
 	}
 	r.http.SetBasicAuth(username, password)
+	return r
+}
+
+// WithHost sets request host to given string.
+//
+// Example:
+//  req := NewRequest(config, "PUT", "http://example.com/path")
+//  req.WithHost("example.com")
+func (r *Request) WithHost(host string) *Request {
+	if r.chain.failed() {
+		return r
+	}
+
+	r.http.Host = host
+
 	return r
 }
 
@@ -876,8 +1165,8 @@ func (r *Request) WithMultipart() *Request {
 // Expect constructs http.Request, sends it, receives http.Response, and
 // returns a new Response object to inspect received response.
 //
-// Request is sent using Config.Client interface, or Config.Dialer interface
-// in case of WebSocket request.
+// Request is sent using Client interface, or Dialer interface in case of
+// WebSocket request.
 //
 // Example:
 //  req := NewRequest(config, "PUT", "http://example.com/path")
@@ -913,30 +1202,23 @@ func (r *Request) roundTrip() *Response {
 		}
 	}
 
-	for _, printer := range r.config.Printers {
-		printer.Request(r.http)
+	for _, transform := range r.transforms {
+		transform(r.http)
 	}
-
-	start := time.Now()
 
 	var (
 		httpResp *http.Response
 		websock  *websocket.Conn
+		elapsed  time.Duration
 	)
 	if r.wsUpgrade {
-		httpResp, websock = r.sendWebsocketRequest()
+		httpResp, websock, elapsed = r.sendWebsocketRequest()
 	} else {
-		httpResp = r.sendRequest()
+		httpResp, elapsed = r.sendRequest()
 	}
-
-	elapsed := time.Since(start)
 
 	if httpResp == nil {
 		return nil
-	}
-
-	for _, printer := range r.config.Printers {
-		printer.Response(httpResp, elapsed)
 	}
 
 	return makeResponse(responseOpts{
@@ -972,6 +1254,16 @@ func (r *Request) encodeRequest() bool {
 		r.setBody("WithForm or WithFormField", strings.NewReader(s), len(s), false)
 	}
 
+	if r.http.Body == nil {
+		r.http.Body = http.NoBody
+	}
+
+	if r.config.Context != nil {
+		r.http = r.http.WithContext(r.config.Context)
+	}
+
+	r.setupRedirects()
+
 	return true
 }
 
@@ -998,35 +1290,136 @@ func (r *Request) encodeWebsocketRequest() bool {
 	return true
 }
 
-func (r *Request) sendRequest() *http.Response {
+func (r *Request) sendRequest() (*http.Response, time.Duration) {
 	if r.chain.failed() {
-		return nil
+		return nil, 0
 	}
 
-	resp, err := r.config.Client.Do(r.http)
+	resp, elapsed, err := r.retryRequest(func() (*http.Response, error) {
+		return r.config.Client.Do(r.http)
+	})
 
 	if err != nil {
 		r.chain.fail(NewErrorFailure(err))
-		return nil
+		return nil, 0
 	}
 
-	return resp
+	return resp, elapsed
 }
 
-func (r *Request) sendWebsocketRequest() (*http.Response, *websocket.Conn) {
+func (r *Request) sendWebsocketRequest() (
+	*http.Response, *websocket.Conn, time.Duration,
+) {
 	if r.chain.failed() {
-		return nil, nil
+		return nil, nil, 0
 	}
 
-	conn, resp, err := r.config.WebsocketDialer.Dial(
-		r.http.URL.String(), r.http.Header)
+	var conn *websocket.Conn
+	resp, elapsed, err := r.retryRequest(func() (resp *http.Response, err error) {
+		conn, resp, err = r.config.WebsocketDialer.Dial(
+			r.http.URL.String(), r.http.Header)
+		return resp, err
+	})
 
 	if err != nil && err != websocket.ErrBadHandshake {
 		r.chain.fail(NewErrorFailure(err))
-		return nil, nil
+		return nil, nil, 0
 	}
 
-	return resp, conn
+	return resp, conn, elapsed
+}
+
+func (r *Request) retryRequest(reqFunc func() (resp *http.Response, err error)) (
+	resp *http.Response, elapsed time.Duration, err error,
+) {
+	var body []byte
+	if r.maxRetries > 0 && r.http.Body != nil && r.http.Body != http.NoBody {
+		body, _ = ioutil.ReadAll(r.http.Body)
+	}
+
+	delay := r.minRetryDelay
+	i := 0
+
+	for {
+		if body != nil {
+			r.http.Body = ioutil.NopCloser(bytes.NewReader(body))
+		}
+
+		for _, printer := range r.config.Printers {
+			printer.Request(r.http)
+		}
+
+		func() {
+			if r.timeout > 0 {
+				var ctx context.Context
+				var cancel context.CancelFunc
+				if r.config.Context != nil {
+					ctx, cancel = context.WithTimeout(r.config.Context, r.timeout)
+				} else {
+					ctx, cancel = context.WithTimeout(context.Background(), r.timeout)
+				}
+
+				defer cancel()
+				r.http = r.http.WithContext(ctx)
+			}
+
+			start := time.Now()
+			resp, err = reqFunc()
+			elapsed = time.Since(start)
+		}()
+
+		if resp != nil {
+			for _, printer := range r.config.Printers {
+				printer.Response(resp, elapsed)
+			}
+		}
+
+		i++
+		if i == r.maxRetries+1 {
+			return
+		}
+
+		if !r.shouldRetry(resp, err) {
+			return
+		}
+
+		time.Sleep(delay)
+
+		delay *= 2
+		if delay > r.maxRetryDelay {
+			delay = r.maxRetryDelay
+		}
+	}
+}
+
+func (r *Request) shouldRetry(resp *http.Response, err error) bool {
+	var (
+		isTemporaryNetworkError bool
+		isTemporaryServerError  bool
+		isHTTPError             bool
+	)
+
+	if netErr, ok := err.(net.Error); ok {
+		isTemporaryNetworkError = netErr.Temporary()
+	}
+
+	if resp != nil {
+		isTemporaryServerError = resp.StatusCode >= 500 && resp.StatusCode <= 599
+		isHTTPError = resp.StatusCode >= 400 && resp.StatusCode <= 599
+	}
+
+	switch r.retryPolicy {
+	case RetryTemporaryNetworkErrors:
+		return isTemporaryNetworkError
+
+	case RetryTemporaryNetworkAndServerErrors:
+		return isTemporaryNetworkError || isTemporaryServerError
+
+	case RetryAllErrors:
+		return err != nil || isHTTPError
+	}
+
+	return false
 }
 
 func (r *Request) setType(newSetter, newType string, overwrite bool) {
@@ -1064,7 +1457,7 @@ func (r *Request) setBody(setter string, reader io.Reader, len int, overwrite bo
 	}
 
 	if reader == nil {
-		r.http.Body = nil
+		r.http.Body = http.NoBody
 		r.http.ContentLength = 0
 	} else {
 		r.http.Body = ioutil.NopCloser(reader)
@@ -1072,6 +1465,60 @@ func (r *Request) setBody(setter string, reader io.Reader, len int, overwrite bo
 	}
 
 	r.bodySetter = setter
+}
+
+func (r *Request) setupRedirects() {
+	httpClient, _ := r.config.Client.(*http.Client)
+
+	if httpClient == nil {
+		if r.redirectPolicy != defaultRedirectPolicy {
+			r.chain.fail(NewErrorFailure(fmt.Errorf("WithRedirectPolicy can be used only if Client is *http.Client")))
+			return
+		}
+
+		if r.maxRedirects != -1 {
+			r.chain.fail(NewErrorFailure(fmt.Errorf("WithMaxRedirects can be used only if Client is *http.Client")))
+			return
+		}
+	} else {
+		if r.redirectPolicy != defaultRedirectPolicy || r.maxRedirects != -1 {
+			clientCopy := *httpClient
+			httpClient = &clientCopy
+			r.config.Client = &clientCopy
+		}
+	}
+
+	if r.redirectPolicy == DontFollowRedirects {
+		httpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		}
+	} else if r.maxRedirects >= 0 {
+		httpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+			if len(via) > r.maxRedirects {
+				return fmt.Errorf("stopped after %d redirects", r.maxRedirects)
+			}
+			return nil
+		}
+	} else if r.redirectPolicy != defaultRedirectPolicy {
+		httpClient.CheckRedirect = nil
+	}
+
+	if r.redirectPolicy == FollowAllRedirects {
+		if r.http.Body != nil && r.http.Body != http.NoBody {
+			bodyBytes, bodyErr := ioutil.ReadAll(r.http.Body)
+
+			r.http.GetBody = func() (io.ReadCloser, error) {
+				if bodyErr != nil {
+					return nil, bodyErr
+				}
+				return ioutil.NopCloser(bytes.NewReader(bodyBytes)), nil
+			}
+		} else {
+			r.http.GetBody = func() (io.ReadCloser, error) {
+				return http.NoBody, nil
+			}
+		}
+	}
 }
 
 func concatPaths(a, b string) string {

@@ -17,20 +17,30 @@ var infiniteTime = time.Time{}
 type Websocket struct {
 	config       Config
 	chain        chain
-	conn         *websocket.Conn
+	conn         WebsocketConn
 	readTimeout  time.Duration
 	writeTimeout time.Duration
 	isClosed     bool
 }
 
+// WebsocketConn is used by Websocket to communicate with actual websocket connection.
+type WebsocketConn interface {
+	ReadMessage() (messageType int, p []byte, err error)
+	WriteMessage(messageType int, data []byte) error
+	Close() error
+	SetReadDeadline(t time.Time) error
+	SetWriteDeadline(t time.Time) error
+	Subprotocol() string
+}
+
 // NewWebsocket returns a new Websocket given a Config with Reporter and
-// Printers, and websocket.Conn to be inspected and handled.
-func NewWebsocket(config Config, conn *websocket.Conn) *Websocket {
+// Printers, and Websocket to be inspected and handled.
+func NewWebsocket(config Config, conn WebsocketConn) *Websocket {
 	config.AssertionHandler = ensureAssertionHandler(config)
 	return makeWebsocket(config, makeChain(config.AssertionHandler), conn)
 }
 
-func makeWebsocket(config Config, chain chain, conn *websocket.Conn) *Websocket {
+func makeWebsocket(config Config, chain chain, conn WebsocketConn) *Websocket {
 	return &Websocket{
 		config: config,
 		chain:  chain,
@@ -38,10 +48,22 @@ func makeWebsocket(config Config, chain chain, conn *websocket.Conn) *Websocket 
 	}
 }
 
-// Raw returns underlying websocket.Conn object.
+// Conn returns underlying WebsocketConn object.
 // This is the value originally passed to NewConnection.
-func (c *Websocket) Raw() *websocket.Conn {
+func (c *Websocket) Conn() WebsocketConn {
 	return c.conn
+}
+
+// Deprecated: use Conn instead.
+func (c *Websocket) Raw() *websocket.Conn {
+	if c.conn == nil {
+		return nil
+	}
+	conn, ok := c.conn.(*websocket.Conn)
+	if !ok {
+		return nil
+	}
+	return conn
 }
 
 // WithReadTimeout sets timeout duration for WebSocket connection reads.

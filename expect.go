@@ -66,6 +66,7 @@
 package httpexpect
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"net/http/cookiejar"
@@ -137,6 +138,14 @@ type Config struct {
 	Printers []Printer
 
 	TestName string
+
+	// Context is passed to all requests. It is typically used for request cancellation,
+	// either explicit or after a time-out.
+	// May be nil.
+	//
+	// You can use the Request.WithContext for per-request context and Request.WithTimeout
+	// for per-request timeout.
+	Context context.Context
 }
 
 // RequestFactory is used to create all http.Request objects.
@@ -408,7 +417,7 @@ func (e *Expect) Matcher(matcher func(*Response)) *Expect {
 // See Builder.
 func (e *Expect) Request(method, path string, pathargs ...interface{}) *Request {
 	req := NewRequest(e.config, method, path, pathargs...).
-		WithContext(e.context)
+		WithReqContext(e.context)
 	e.context.Request = req
 
 	for _, builder := range e.builders {

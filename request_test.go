@@ -11,6 +11,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -36,6 +37,11 @@ func TestRequestFailed(t *testing.T) {
 
 	req.WithClient(&http.Client{})
 	req.WithHandler(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
+	req.WithRedirectPolicy(FollowAllRedirects)
+	req.WithMaxRedirects(1)
+	req.WithRetryPolicy(RetryAllErrors)
+	req.WithMaxRetries(1)
+	req.WithRetryDelay(time.Millisecond, time.Millisecond)
 	req.WithPath("foo", "bar")
 	req.WithPathObject(map[string]interface{}{"foo": "bar"})
 	req.WithQuery("foo", "bar")
@@ -57,6 +63,9 @@ func TestRequestFailed(t *testing.T) {
 	req.WithFile("foo", "bar", strings.NewReader("baz"))
 	req.WithFileBytes("foo", "bar", []byte("baz"))
 	req.WithMultipart()
+	req.WithTransformer(func(r *http.Request) {
+		r.Header.Add("foo", "bar")
+	})
 
 	resp := req.Expect()
 	if resp == nil {
@@ -136,6 +145,75 @@ func TestRequestMatchers(t *testing.T) {
 
 	assert.Equal(t, 1, int(len(resps)))
 	assert.Equal(t, resp, resps[0])
+}
+
+func TestRequestTransformers(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
+	client := &mockClient{}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
+	}
+
+	t.Run("save-ptr", func(t *testing.T) {
+		var savedReq *http.Request
+		transform := func(r *http.Request) {
+			savedReq = r
+		}
+
+		req := NewRequest(config, "METHOD", "/")
+		req.WithTransformer(transform)
+		req.Expect().chain.assertOK(t)
+
+		assert.NotNil(t, savedReq)
+	})
+
+	t.Run("append-header", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+
+		req.WithTransformer(func(r *http.Request) {
+			r.Header.Add("foo", "11")
+		})
+
+		req.WithTransformer(func(r *http.Request) {
+			r.Header.Add("bar", "22")
+		})
+
+		req.Expect().chain.assertOK(t)
+
+		assert.Equal(t, []string{"11"}, client.req.Header["Foo"])
+		assert.Equal(t, []string{"22"}, client.req.Header["Bar"])
+	})
+
+	t.Run("append-url", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/{arg1}/{arg2}")
+
+		req.WithPath("arg1", "11")
+		req.WithPath("arg2", "22")
+
+		req.WithTransformer(func(r *http.Request) {
+			r.URL.Path += "/33"
+		})
+
+		req.WithTransformer(func(r *http.Request) {
+			r.URL.Path += "/44"
+		})
+
+		req.Expect().chain.assertOK(t)
+
+		assert.Equal(t, "/11/22/33/44", client.req.URL.Path)
+	})
+
+	t.Run("nil-func", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.WithTransformer(nil)
+		req.chain.assertFailed(t)
+	})
 }
 
 func TestRequestClient(t *testing.T) {
@@ -633,6 +711,69 @@ func TestRequestBasicAuth(t *testing.T) {
 		req.http.Header.Get("Authorization"))
 }
 
+func TestRequestWithHost(t *testing.T) {
+	factory1 := DefaultRequestFactory{}
+	client1 := &mockClient{}
+	reporter1 := newMockReporter(t)
+
+	config1 := Config{
+		RequestFactory: factory1,
+		Client:         client1,
+		Reporter:       reporter1,
+	}
+
+	req1 := NewRequest(config1, "METHOD", "url")
+
+	req1.WithHost("example.com")
+
+	resp := req1.Expect()
+	resp.chain.assertOK(t)
+
+	assert.Equal(t, "METHOD", client1.req.Method)
+	assert.Equal(t, "example.com", client1.req.Host)
+	assert.Equal(t, "url", client1.req.URL.String())
+
+	assert.Equal(t, &client1.resp, resp.Raw())
+
+	factory2 := DefaultRequestFactory{}
+	client2 := &mockClient{}
+	reporter2 := newMockReporter(t)
+
+	config2 := Config{
+		RequestFactory: factory2,
+		Client:         client2,
+		Reporter:       reporter2,
+	}
+
+	req2 := NewRequest(config2, "METHOD", "url")
+
+	req2.WithHeader("HOST", "example1.com")
+	req2.WithHost("example2.com")
+
+	req2.Expect().chain.assertOK(t)
+
+	assert.Equal(t, "example2.com", client2.req.Host)
+
+	factory3 := DefaultRequestFactory{}
+	client3 := &mockClient{}
+	reporter3 := newMockReporter(t)
+
+	config3 := Config{
+		RequestFactory: factory3,
+		Client:         client3,
+		Reporter:       reporter3,
+	}
+
+	req3 := NewRequest(config3, "METHOD", "url")
+
+	req3.WithHost("example2.com")
+	req3.WithHeader("HOST", "example1.com")
+
+	req3.Expect().chain.assertOK(t)
+
+	assert.Equal(t, "example1.com", client3.req.Host)
+}
+
 func TestRequestBodyChunked(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
@@ -684,7 +825,7 @@ func TestRequestBodyChunkedNil(t *testing.T) {
 	resp := req.Expect()
 	resp.chain.assertOK(t)
 
-	assert.True(t, client.req.Body == nil)
+	assert.True(t, client.req.Body == http.NoBody)
 	assert.Equal(t, int64(0), client.req.ContentLength)
 }
 
@@ -772,7 +913,7 @@ func TestRequestBodyBytesNil(t *testing.T) {
 	resp := req.Expect()
 	resp.chain.assertOK(t)
 
-	assert.True(t, client.req.Body == nil)
+	assert.True(t, client.req.Body == http.NoBody)
 	assert.Equal(t, int64(0), client.req.ContentLength)
 }
 

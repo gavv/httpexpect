@@ -1,0 +1,58 @@
+name: build
+
+on:
+  pull_request:
+    branches:
+      - master
+      - v*
+
+  push:
+    branches:
+      - master
+      - v*
+    tags:
+      - v*
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        go: [ '1.14', '1.x' ]
+
+    name: Go ${{ matrix.go }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ matrix.go }}
+
+      - name: Build
+        run: go get -v .
+
+      - name: Run tests
+        run: go test -covermode=count -coverprofile=coverage.out
+
+      - name: Run linters
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.37
+
+      - name: Build examples
+        run: cd _examples && go get -v .
+
+      - name: Run examples tests
+        run: cd _examples && go test
+
+      - name: Prepare coverage report
+        uses: jandelgado/gcov2lcov-action@v1.0.5
+
+      - name: Send coverage report
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path-to-lcov: coverage.lcov

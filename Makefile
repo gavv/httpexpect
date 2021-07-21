@@ -1,14 +1,18 @@
 GO111MODULE := on
 export GO111MODULE
 
-all: test check
+all: build lint test
+
+build:
+	go build
+	cd _examples && go build
+
+lint:
+	golangci-lint run .
 
 test:
 	go test
 	cd _examples && go test
-
-check:
-	golangci-lint run .
 
 fmt:
 	gofmt -s -w . ./_examples

@@ -1,4 +1,4 @@
-# httpexpect [![GoDev](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white)](https://pkg.go.dev/github.com/gavv/httpexpect) [![Travis](https://img.shields.io/travis/gavv/httpexpect.svg)](https://travis-ci.org/gavv/httpexpect) [![Coveralls](https://coveralls.io/repos/github/gavv/httpexpect/badge.svg?branch=master)](https://coveralls.io/github/gavv/httpexpect?branch=master) [![GitHub release](https://img.shields.io/github/tag/gavv/httpexpect.svg)](https://github.com/gavv/httpexpect/releases)
+# httpexpect [![GoDev](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white)](https://pkg.go.dev/github.com/gavv/httpexpect/v2) [![Build](https://github.com/gavv/httpexpect/workflows/build/badge.svg)](https://github.com/gavv/httpexpect/actions) [![Coveralls](https://coveralls.io/repos/github/gavv/httpexpect/badge.svg?branch=master)](https://coveralls.io/github/gavv/httpexpect?branch=master) [![GitHub release](https://img.shields.io/github/tag/gavv/httpexpect.svg)](https://github.com/gavv/httpexpect/releases)
 
 Concise, declarative, and easy to use end-to-end HTTP and REST API testing for Go (golang).
 
@@ -17,7 +17,7 @@ Workflow:
 * URL path construction, with simple string interpolation provided by [`go-interpol`](https://github.com/imkira/go-interpol) package.
 * URL query parameters (encoding using [`go-querystring`](https://github.com/google/go-querystring) package).
 * Headers, cookies, payload: JSON,  urlencoded or multipart forms (encoding using [`form`](https://github.com/ajg/form) package), plain text.
-* Custom reusable [request builders](#reusable-builders).
+* Custom reusable [request builders](#reusable-builders) and [request transformers](#request-transformers).
 
 ##### Response assertions
 
@@ -72,7 +72,7 @@ import "gopkg.in/gavv/httpexpect.v2"
 
 ## Documentation
 
-Documentation is available on [GoDoc](https://godoc.org/github.com/gavv/httpexpect). It contains an overview and reference.
+Documentation is available on [pkg.go.dev](https://pkg.go.dev/github.com/gavv/httpexpect/v2#section-documentation). It contains an overview and reference.
 
 ## Examples
 
@@ -310,6 +310,45 @@ m.Name("host").Equal("example.com")
 m.Name("user").Equal("john")
 ```
 
+##### Redirection support
+
+```go
+e.POST("/path").
+	WithRedirectPolicy(httpexpect.FollowAllRedirects).
+	WithMaxRedirects(5).
+	Expect().
+	Status(http.StatusOK)
+
+e.POST("/path").
+	WithRedirectPolicy(httpexpect.DontFollowRedirects).
+	Expect().
+	Status(http.StatusPermanentRedirect)
+```
+
+##### Retry support
+
+```go
+// default retry policy
+e.POST("/path").
+	WithMaxRetries(5).
+	Expect().
+	Status(http.StatusOK)
+
+// custom retry policy
+e.POST("/path").
+	WithMaxRetries(5).
+	WithRetryPolicy(httpexpect.RetryAllErrors).
+	Expect().
+	Status(http.StatusOK)
+
+// custom retry delays
+e.POST("/path").
+	WithMaxRetries(5).
+	WithRetryDelay(time.Second, time.Minute).
+	Expect().
+	Status(http.StatusOK)
+```
+
 ##### Subdomains and per-request URL
 
 ```go
@@ -383,6 +422,31 @@ m.GET("/bad-path").
 	Status(http.StatusNotFound)
 ```
 
+##### Request transformers
+
+```go
+e := httpexpect.New(t, "http://example.com")
+
+myTranform := func(r* http.Request) {
+	// modify the underlying http.Request
+}
+
+// apply transformer to a single request
+e.POST("/some-path").
+	WithTransformer(myTranform).
+	Expect().
+	Status(http.StatusOK)
+
+// create a builder that applies transfromer to every request
+myBuilder := e.Builder(func (req *httpexpect.Request) {
+	req.WithTransformer(myTranform)
+})
+
+myBuilder.POST("/some-path").
+	Expect().
+	Status(http.StatusOK)
+```
+
 ##### Custom config
 
 ```go
@@ -414,6 +478,9 @@ e := httpexpect.WithConfig(httpexpect.Config{
 var handler http.Handler = MyHandler()
 
 e := httpexpect.WithConfig(httpexpect.Config{
+	// prepend this url to all requests, required for cookies
+	// to be handled correctly
+	BaseURL: "http://example.com",
 	Reporter: httpexpect.NewAssertReporter(t),
 	Client: &http.Client{
 		Transport: httpexpect.NewBinder(handler),
@@ -425,6 +492,9 @@ e := httpexpect.WithConfig(httpexpect.Config{
 var handler fasthttp.RequestHandler = myHandler()
 
 e := httpexpect.WithConfig(httpexpect.Config{
+	// prepend this url to all requests, required for cookies
+	// to be handled correctly
+	BaseURL: "http://example.com",
 	Reporter: httpexpect.NewAssertReporter(t),
 	Client: &http.Client{
 		Transport: httpexpect.NewFastBinder(handler),
@@ -503,6 +573,67 @@ e := httpexpect.WithConfig(httpexpect.Config{
 })
 ```
 
+##### Proxy support
+
+```go
+e := httpexpect.WithConfig(httpexpect.Config{
+	Reporter: httpexpect.NewAssertReporter(t),
+	Client: &http.Client{
+		Transport: &http.Transport{
+			Proxy: http.ProxyURL("http://proxy.example.com"),
+		},
+	},
+})
+```
+##### Global time-out/cancellation
+
+```go
+handler := FruitsHandler()
+
+server := httptest.NewServer(handler)
+defer server.Close()
+
+ctx, cancel := context.WithCancel(context.Background())
+
+e := WithConfig(Config{
+	BaseURL:  server.URL,
+	Reporter: httpexpect.NewAssertReporter(t),
+	Context:  ctx,
+})
+
+go func() {
+	time.Sleep(time.Duration(5)*time.Second)
+	cancel()
+}()
+
+e.GET("/fruits").
+	Expect().
+	Status(http.StatusOK)
+```
+
+##### Per-request time-out/cancellation
+
+```go
+// per-request context
+e.GET("/fruits").
+	WithContext(context.TODO()).
+	Expect().
+	Status(http.StatusOK)
+
+// per-request timeout
+e.GET("/fruits").
+	WithTimeout(time.Duration(5)*time.Second).
+	Expect().
+	Status(http.StatusOK)
+
+// timeout combined with retries (timeout applies to each try)
+e.POST("/fruits").
+	WithMaxRetries(5).
+	WithTimeout(time.Duration(10)*time.Second).
+	Expect().
+	Status(http.StatusOK)
+```
+
 ## Similar packages
 
 * [`gorequest`](https://github.com/parnurzeal/gorequest)
@@ -519,7 +650,7 @@ e := httpexpect.WithConfig(httpexpect.Config{
 
 Feel free to report bugs, suggest improvements, and send pull requests! Please add documentation and tests for new features.
 
-Update dependencies, build code, and run tests and linters:
+Build code, run linters, run tests:
 
 ```
 $ make
@@ -529,6 +660,12 @@ Format code:
 
 ```
 $ make fmt
+```
+
+Run go mod tidy:
+
+```
+$ make tidy
 ```
 
 ## License

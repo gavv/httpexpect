@@ -116,29 +116,29 @@ func TestBinderTLS(t *testing.T) {
 	resp, err := httpClient.Do(req)
 	assert.Nil(t, err)
 	assert.NotNil(t, resp)
-	assert.Nil(t, req.TLS)
+	assert.Nil(t, resp.Request.TLS)
 
 	handler.https = true
 	req, _ = http.NewRequest("GET", "https://example.com/path", strings.NewReader("body"))
 	resp, err = httpClient.Do(req)
 	assert.Nil(t, err)
 	assert.NotNil(t, resp)
-	assert.Nil(t, req.TLS)
+	assert.Nil(t, resp.Request.TLS)
 
 	handler.https = false
 	req, _ = http.NewRequest("GET", "http://example.com/path", strings.NewReader("body"))
 	resp, err = httpsClient.Do(req)
 	assert.Nil(t, err)
 	assert.NotNil(t, resp)
-	assert.Nil(t, req.TLS)
+	assert.Nil(t, resp.Request.TLS)
 
 	handler.https = true
 	req, _ = http.NewRequest("GET", "https://example.com/path", strings.NewReader("body"))
 	resp, err = httpsClient.Do(req)
 	assert.Nil(t, err)
 	assert.NotNil(t, resp)
-	assert.NotNil(t, req.TLS)
-	assert.Equal(t, tlsState, req.TLS)
+	assert.NotNil(t, resp.Request.TLS)
+	assert.Equal(t, tlsState, resp.Request.TLS)
 }
 
 func TestBinderChunked(t *testing.T) {
@@ -163,7 +163,7 @@ func TestBinderChunked(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	assert.Equal(t, []string{"chunked"}, req.TransferEncoding)
+	assert.Equal(t, []string{"chunked"}, resp.Request.TransferEncoding)
 	assert.Equal(t, []string{"chunked"}, resp.TransferEncoding)
 }
 
@@ -182,6 +182,7 @@ func TestFastBinder(t *testing.T) {
 		})
 
 		expected := map[string][]string{
+			"Host":           {"example.com"},
 			"Content-Type":   {"application/x-www-form-urlencoded"},
 			"Content-Length": {"7"},
 			"Some-Header":    {"foo", "bar"},
@@ -229,6 +230,84 @@ func TestFastBinder(t *testing.T) {
 	assert.Equal(t, `{"hello":"world"}`, string(b))
 
 	assert.Equal(t, []string(nil), resp.TransferEncoding)
+}
+
+func TestFastBinderRemoteAddr(t *testing.T) {
+	handler := func(ctx *fasthttp.RequestCtx) {
+		assert.Equal(t, "8.8.8.8:88", ctx.RemoteAddr().String())
+
+		ctx.Response.SetBody([]byte(`ok`))
+	}
+
+	client := &http.Client{
+		Transport: NewFastBinder(handler),
+	}
+
+	req, err := http.NewRequest(
+		"POST", "http://example.com/path", strings.NewReader("foo=bar"))
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req.RemoteAddr = "8.8.8.8:88"
+
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.Equal(t, `ok`, string(b))
+}
+
+func TestFastBinderProtocol(t *testing.T) {
+	test := func(setProto func(req *http.Request)) {
+		handler := func(ctx *fasthttp.RequestCtx) {
+			assert.Equal(t, "HTTP/1.0", string(ctx.Request.Header.Protocol()))
+
+			ctx.Response.SetBody([]byte(`ok`))
+		}
+
+		client := &http.Client{
+			Transport: NewFastBinder(handler),
+		}
+
+		req, err := http.NewRequest(
+			"POST", "http://example.com/path", strings.NewReader("foo=bar"))
+
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		setProto(req)
+
+		resp, err := client.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		b, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		assert.Equal(t, `ok`, string(b))
+	}
+
+	test(func(req *http.Request) {
+		req.Proto = "HTTP/1.0"
+	})
+
+	test(func(req *http.Request) {
+		req.Proto = ""
+		req.ProtoMajor = 1
+		req.ProtoMinor = 0
+	})
 }
 
 func TestFastBinderTLS(t *testing.T) {
@@ -302,6 +381,7 @@ func TestFastBinderChunked(t *testing.T) {
 		})
 
 		expected := map[string][]string{
+			"Host":              {"example.com"},
 			"Content-Type":      {"application/x-www-form-urlencoded"},
 			"Transfer-Encoding": {"chunked"},
 		}
