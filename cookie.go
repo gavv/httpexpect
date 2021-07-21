@@ -27,7 +27,7 @@ func NewCookie(reporter Reporter, value *http.Cookie) *Cookie {
 	if value == nil {
 		failure := Failure{
 			err:        fmt.Errorf("expected non-nil cookie"),
-			assertType: failureInvalidInput,
+			assertType: FailureInvalidInput,
 		}
 		chain.fail(failure)
 	}

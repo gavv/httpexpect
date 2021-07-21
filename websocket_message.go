@@ -105,7 +105,7 @@ func (m *WebsocketMessage) Type(typ ...int) *WebsocketMessage {
 	if !yes {
 		failure := Failure{
 			assertionName: "websocket.message",
-			assertType:    failureAssertEqual,
+			assertType:    FailureAssertEqual,
 			actual:        m.typ,
 			expected:      typ,
 		}
@@ -137,7 +137,7 @@ func (m *WebsocketMessage) NotType(typ ...int) *WebsocketMessage {
 		if t == m.typ {
 			failure := Failure{
 				assertionName: "websocket.message",
-				assertType:    failureAssertNotEqual,
+				assertType:    FailureAssertNotEqual,
 				expected:      typ,
 				actual:        m.typ,
 			}
@@ -183,7 +183,7 @@ func (m *WebsocketMessage) Code(code ...int) *WebsocketMessage {
 	if !yes {
 		failure := Failure{
 			assertionName: "websocket close code",
-			assertType:    failureAssertNotEqual,
+			assertType:    FailureAssertNotEqual,
 			expected:      code,
 			actual:        m.closeCode,
 		}
@@ -219,7 +219,7 @@ func (m *WebsocketMessage) NotCode(code ...int) *WebsocketMessage {
 		if c == m.closeCode {
 			failure := Failure{
 				assertionName: "websocket close code",
-				assertType:    failureAssertNotEqual,
+				assertType:    FailureAssertNotEqual,
 				expected:      code,
 				actual:        m.closeCode,
 			}
@@ -240,7 +240,7 @@ func (m *WebsocketMessage) checkClosed(where string) bool {
 		failure := Failure{
 			assertionName: "websocket check closed",
 			err:           fmt.Errorf("where: %s", where),
-			assertType:    failureAssertEqual,
+			assertType:    FailureAssertEqual,
 			expected:      websocket.CloseMessage,
 			actual:        m.typ,
 		}
@@ -272,7 +272,7 @@ func (m *WebsocketMessage) NoContent() *WebsocketMessage {
 
 	failure := Failure{
 		assertionName: "websocket message body being empty",
-		assertType:    failureAssertNotEmpty,
+		assertType:    FailureAssertNotEmpty,
 	}
 
 	switch m.typ {

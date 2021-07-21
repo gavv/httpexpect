@@ -1,35 +1,34 @@
 package httpexpect
 
-type failureAssertType uint64
+type FailureAssertType uint64
 
 const (
-	// FIXME: use stringer to provide a string representation and allow those const to be used publicly?
-	failureAssertEqual failureAssertType = iota
-	failureAssertNotEqual
-	failureAssertLt
-	failureAssertLe
-	failureAssertGe
-	failureAssertGt
-	failureAssertInRange
-	failureAssertEmpty
-	failureAssertNotEmpty
-	failureAssertContainsOnly
-	failureAssertContains
-	failureAssertNotContains
-	failureAssertNotNil
-	failureAssertNil
-	failureAssertOutOfBounds
-	failureAssertUNDEFINED // used when err must be used.
-	failureAssertJsonSchema
-	failureAssertEqualDelta
-	failureAssertNotEqualDelta
-	failureAssertKey
-	failureAssertHTTPStatusRange
-	failureAssertCookie
-	failureAssertMatchRe
-	failureAssertNotMatchRe
-	failureAssertBadType
-	failureInvalidInput
+	FailureAssertEqual FailureAssertType = iota
+	FailureAssertNotEqual
+	FailureAssertLt
+	FailureAssertLe
+	FailureAssertGe
+	FailureAssertGt
+	FailureAssertInRange
+	FailureAssertEmpty
+	FailureAssertNotEmpty
+	FailureAssertContainsOnly
+	FailureAssertContains
+	FailureAssertNotContains
+	FailureAssertNotNil
+	FailureAssertNil
+	FailureAssertOutOfBounds
+	FailureAssertUNDEFINED // used when err must be used.
+	FailureAssertJsonSchema
+	FailureAssertEqualDelta
+	FailureAssertNotEqualDelta
+	FailureAssertKey
+	FailureAssertHTTPStatusRange
+	FailureAssertCookie
+	FailureAssertMatchRe
+	FailureAssertNotMatchRe
+	FailureAssertBadType
+	FailureInvalidInput
 )
 
 // Failure contains information about failed assertion.
@@ -43,9 +42,9 @@ type Failure struct {
 	expected         interface{}
 	expectedInRange  []interface{} // [min, max]
 	expectedDelta    interface{}
-	assertType       failureAssertType
+	assertType       FailureAssertType
 }
 
 func newErrorFailure(err error) Failure {
-	return Failure{err: err, assertType: failureAssertUNDEFINED}
+	return Failure{err: err, assertType: FailureAssertUNDEFINED}
 }

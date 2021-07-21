@@ -86,7 +86,7 @@ func (m *Match) Index(index int) *String {
 	if index < 0 || index >= len(m.submatches) {
 		failure := Failure{
 			assertionName: "Match.Index",
-			assertType:    failureAssertOutOfBounds,
+			assertType:    FailureAssertOutOfBounds,
 			expected:      index,
 			actual:        len(m.submatches),
 		}
@@ -115,7 +115,7 @@ func (m *Match) Name(name string) *String {
 	if !ok {
 		failure := Failure{
 			assertionName: "Match.Name",
-			assertType:    failureAssertMatchRe,
+			assertType:    FailureAssertMatchRe,
 			expected:      m.names,
 			actual:        name,
 		}
@@ -134,7 +134,7 @@ func (m *Match) Empty() *Match {
 	if len(m.submatches) != 0 {
 		failure := Failure{
 			assertionName: "Match.Empty",
-			assertType:    failureAssertEmpty,
+			assertType:    FailureAssertEmpty,
 			actual:        m.submatches,
 		}
 		m.chain.fail(failure)
@@ -151,7 +151,7 @@ func (m *Match) NotEmpty() *Match {
 	if len(m.submatches) == 0 {
 		failure := Failure{
 			assertionName: "Match.NotEmpty",
-			assertType:    failureAssertNotEmpty,
+			assertType:    FailureAssertNotEmpty,
 		}
 		m.chain.fail(failure)
 	}
@@ -176,7 +176,7 @@ func (m *Match) Values(values ...string) *Match {
 	if !reflect.DeepEqual(values, m.getValues()) {
 		failure := Failure{
 			assertionName: "Match.Values",
-			assertType:    failureAssertEqual,
+			assertType:    FailureAssertEqual,
 			expected:      values,
 			actual:        m.getValues(),
 		}
@@ -203,7 +203,7 @@ func (m *Match) NotValues(values ...string) *Match {
 	if reflect.DeepEqual(values, m.getValues()) {
 		failure := Failure{
 			assertionName: "Match.NotValues",
-			assertType:    failureAssertNotEqual,
+			assertType:    FailureAssertNotEqual,
 			expected:      values,
 		}
 		m.chain.fail(failure)

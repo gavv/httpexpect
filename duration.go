@@ -44,7 +44,7 @@ func (d *Duration) IsSet() *Duration {
 	if d.value == nil {
 		failure := Failure{
 			assertionName: "Duration.IsSet",
-			assertType:    failureAssertNotEmpty,
+			assertType:    FailureAssertNotEmpty,
 		}
 		d.chain.fail(failure)
 	}
@@ -56,7 +56,7 @@ func (d *Duration) NotSet() *Duration {
 	if d.value != nil {
 		failure := Failure{
 			assertionName: "Duration.NotSet",
-			assertType:    failureAssertEmpty,
+			assertType:    FailureAssertEmpty,
 		}
 		d.chain.fail(failure)
 	}
@@ -76,7 +76,7 @@ func (d *Duration) Equal(value time.Duration) *Duration {
 	if !(*d.value == value) {
 		failure := Failure{
 			assertionName: "Duration.Equal",
-			assertType:    failureAssertEqual,
+			assertType:    FailureAssertEqual,
 			expected:      value,
 			actual:        *d.value,
 		}
@@ -100,7 +100,7 @@ func (d *Duration) NotEqual(value time.Duration) *Duration {
 			assertionName: "Duration.NotEqual",
 			expected:      value,
 			actual:        *d.value,
-			assertType:    failureAssertNotEqual,
+			assertType:    FailureAssertNotEqual,
 		}
 		d.chain.fail(failure)
 	}
@@ -120,7 +120,7 @@ func (d *Duration) Gt(value time.Duration) *Duration {
 	if !(*d.value > value) {
 		failure := Failure{
 			assertionName: "Duration.Gt",
-			assertType:    failureAssertGt,
+			assertType:    FailureAssertGt,
 			expected:      value,
 			actual:        *d.value,
 		}
@@ -142,7 +142,7 @@ func (d *Duration) Ge(value time.Duration) *Duration {
 	if !(*d.value >= value) {
 		failure := Failure{
 			assertionName: "Duration.Ge",
-			assertType:    failureAssertGe,
+			assertType:    FailureAssertGe,
 			expected:      value,
 			actual:        *d.value,
 		}
@@ -164,7 +164,7 @@ func (d *Duration) Lt(value time.Duration) *Duration {
 	if !(*d.value < value) {
 		failure := Failure{
 			assertionName: "Duration.Lt",
-			assertType:    failureAssertLt,
+			assertType:    FailureAssertLt,
 			expected:      value,
 			actual:        *d.value,
 		}
@@ -186,7 +186,7 @@ func (d *Duration) Le(value time.Duration) *Duration {
 	if !(*d.value <= value) {
 		failure := Failure{
 			assertionName: "Duration.Le",
-			assertType:    failureAssertLe,
+			assertType:    FailureAssertLe,
 			expected:      value,
 			actual:        *d.value,
 		}
@@ -209,7 +209,7 @@ func (d *Duration) InRange(min, max time.Duration) *Duration {
 	if !(*d.value >= min && *d.value <= max) {
 		failure := Failure{
 			assertionName:   "Duration.InRange",
-			assertType:      failureAssertInRange,
+			assertType:      FailureAssertInRange,
 			expectedInRange: []interface{}{min, max},
 			actual:          *d.value,
 		}

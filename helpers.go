@@ -61,7 +61,7 @@ func checkSchema(chain *chain, value, schema interface{}) {
 		failure := Failure{
 			assertionName: "Json.Schema",
 			err:           err,
-			assertType:    failureAssertJsonSchema,
+			assertType:    FailureAssertJsonSchema,
 			expected:      schema,
 			actual:        value,
 		}
@@ -72,7 +72,7 @@ func checkSchema(chain *chain, value, schema interface{}) {
 	if !result.Valid() {
 		failure := Failure{
 			assertionName: "Json.Schema",
-			assertType:    failureAssertJsonSchema,
+			assertType:    FailureAssertJsonSchema,
 			expected:      schema,
 			actual:        value,
 		}
@@ -119,7 +119,7 @@ func canonArray(chain *chain, in interface{}) ([]interface{}, bool) {
 		if !ok {
 			chain.fail(Failure{
 				err:        fmt.Errorf("expected array, got %v", out),
-				assertType: failureInvalidInput,
+				assertType: FailureInvalidInput,
 			})
 		}
 	}
@@ -134,7 +134,7 @@ func canonMap(chain *chain, in interface{}) (map[string]interface{}, bool) {
 		if !ok {
 			chain.fail(Failure{
 				err:        fmt.Errorf("expected map, got %v", out),
-				assertType: failureInvalidInput,
+				assertType: FailureInvalidInput,
 			})
 		}
 	}

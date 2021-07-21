@@ -180,7 +180,7 @@ func (r *Response) StatusRange(rn StatusRange) *Response {
 	if actual == "" || actual != expected {
 		failure := Failure{
 			assertionName: "Response.StatusRange",
-			assertType:    failureAssertHTTPStatusRange,
+			assertType:    FailureAssertHTTPStatusRange,
 			expected:      rn,
 			actual:        status,
 		}
@@ -286,7 +286,7 @@ func (r *Response) Cookie(name string) *Cookie {
 
 	failure := Failure{
 		assertionName: "Response.Cookie",
-		assertType:    failureAssertCookie,
+		assertType:    FailureAssertCookie,
 		expected:      name,
 		actual:        names,
 	}
@@ -591,7 +591,7 @@ func (r *Response) checkEqual(what string, expected, actual interface{}) {
 	if !reflect.DeepEqual(expected, actual) {
 		failure := Failure{
 			assertionName: "Response.Equal",
-			assertType:    failureAssertEqual,
+			assertType:    FailureAssertEqual,
 			expected:      expected,
 			actual:        actual,
 		}

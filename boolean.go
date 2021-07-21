@@ -48,7 +48,7 @@ func (b *Boolean) Equal(value bool) *Boolean {
 	if !(b.value == value) {
 		failure := Failure{
 			assertionName: "Boolean.Equal",
-			assertType:    failureAssertEqual,
+			assertType:    FailureAssertEqual,
 			expected:      value,
 			actual:        b.value,
 		}
@@ -66,7 +66,7 @@ func (b *Boolean) NotEqual(value bool) *Boolean {
 	if !(b.value != value) {
 		failure := Failure{
 			assertionName: "Boolean.NotEqual",
-			assertType:    failureAssertNotEqual,
+			assertType:    FailureAssertNotEqual,
 			expected:      value,
 			actual:        b.value,
 		}

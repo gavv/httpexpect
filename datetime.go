@@ -46,7 +46,7 @@ func (dt *DateTime) Equal(value time.Time) *DateTime {
 			assertionName: "Datetime.Equal",
 			expected:      value,
 			actual:        dt.value,
-			assertType:    failureAssertEqual,
+			assertType:    FailureAssertEqual,
 		}
 		dt.chain.fail(failure)
 	}
@@ -64,7 +64,7 @@ func (dt *DateTime) NotEqual(value time.Time) *DateTime {
 			assertionName: "Datetime.NotEqual",
 			expected:      value,
 			actual:        dt.value,
-			assertType:    failureAssertNotEqual,
+			assertType:    FailureAssertNotEqual,
 		}
 		dt.chain.fail(failure)
 	}
@@ -82,7 +82,7 @@ func (dt *DateTime) Gt(value time.Time) *DateTime {
 			assertionName: "Datetime.Gt",
 			expected:      value,
 			actual:        dt.value,
-			assertType:    failureAssertGt,
+			assertType:    FailureAssertGt,
 		}
 		dt.chain.fail(failure)
 	}
@@ -100,7 +100,7 @@ func (dt *DateTime) Ge(value time.Time) *DateTime {
 			assertionName: "Datetime.Ge",
 			expected:      value,
 			actual:        dt.value,
-			assertType:    failureAssertGe,
+			assertType:    FailureAssertGe,
 		}
 		dt.chain.fail(failure)
 	}
@@ -118,7 +118,7 @@ func (dt *DateTime) Lt(value time.Time) *DateTime {
 			assertionName: "Datetime.Lt",
 			expected:      value,
 			actual:        dt.value,
-			assertType:    failureAssertLt,
+			assertType:    FailureAssertLt,
 		}
 		dt.chain.fail(failure)
 	}
@@ -136,7 +136,7 @@ func (dt *DateTime) Le(value time.Time) *DateTime {
 			assertionName: "Datetime.Le",
 			expected:      value,
 			actual:        dt.value,
-			assertType:    failureAssertLe,
+			assertType:    FailureAssertLe,
 		}
 		dt.chain.fail(failure)
 	}
@@ -156,7 +156,7 @@ func (dt *DateTime) InRange(min, max time.Time) *DateTime {
 			assertionName:   "Datetime.InRange",
 			actual:          dt.value,
 			expectedInRange: []interface{}{min, max},
-			assertType:      failureAssertInRange,
+			assertType:      FailureAssertInRange,
 		}
 		dt.chain.fail(failure)
 	}

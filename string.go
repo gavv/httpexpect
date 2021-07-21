@@ -114,7 +114,7 @@ func (s *String) Equal(value string) *String {
 	if !(s.value == value) {
 		failure := Failure{
 			assertionName: "String.Equal",
-			assertType:    failureAssertEqual,
+			assertType:    FailureAssertEqual,
 			expected:      value,
 			actual:        s.value,
 		}
@@ -132,7 +132,7 @@ func (s *String) NotEqual(value string) *String {
 	if !(s.value != value) {
 		failure := Failure{
 			assertionName: "String.NotEqual",
-			assertType:    failureAssertNotEqual,
+			assertType:    FailureAssertNotEqual,
 			expected:      value,
 		}
 		s.chain.fail(failure)
@@ -150,7 +150,7 @@ func (s *String) EqualFold(value string) *String {
 	if !strings.EqualFold(s.value, value) {
 		failure := Failure{
 			assertionName: "String.EqualFold",
-			assertType:    failureAssertEqual,
+			assertType:    FailureAssertEqual,
 			expected:      value,
 			actual:        s.value,
 		}
@@ -169,7 +169,7 @@ func (s *String) NotEqualFold(value string) *String {
 	if strings.EqualFold(s.value, value) {
 		failure := Failure{
 			assertionName: "String.NotEqualFold",
-			assertType:    failureAssertNotEqual,
+			assertType:    FailureAssertNotEqual,
 			expected:      value,
 			actual:        s.value,
 		}
@@ -187,7 +187,7 @@ func (s *String) Contains(value string) *String {
 	if !strings.Contains(s.value, value) {
 		failure := Failure{
 			assertionName: "String.Contains",
-			assertType:    failureAssertContains,
+			assertType:    FailureAssertContains,
 			expected:      value,
 			actual:        s.value,
 		}
@@ -205,7 +205,7 @@ func (s *String) NotContains(value string) *String {
 	if strings.Contains(s.value, value) {
 		failure := Failure{
 			assertionName: "String.NotContains",
-			assertType:    failureAssertNotContains,
+			assertType:    FailureAssertNotContains,
 			expected:      value,
 			actual:        s.value,
 		}
@@ -224,7 +224,7 @@ func (s *String) ContainsFold(value string) *String {
 	if !strings.Contains(strings.ToLower(s.value), strings.ToLower(value)) {
 		failure := Failure{
 			assertionName: "String.ContainsFold",
-			assertType:    failureAssertContains,
+			assertType:    FailureAssertContains,
 			expected:      value,
 			actual:        s.value,
 		}
@@ -243,7 +243,7 @@ func (s *String) NotContainsFold(value string) *String {
 	if strings.Contains(strings.ToLower(s.value), strings.ToLower(value)) {
 		failure := Failure{
 			assertionName: "String.NotContainsFold",
-			assertType:    failureAssertNotContains,
+			assertType:    FailureAssertNotContains,
 			expected:      value,
 			actual:        s.value,
 		}
@@ -283,7 +283,7 @@ func (s *String) Match(re string) *Match {
 	if m == nil {
 		failure := Failure{
 			assertionName: "String.Match",
-			assertType:    failureAssertMatchRe,
+			assertType:    FailureAssertMatchRe,
 			expected:      re,
 			actual:        s.value,
 		}
@@ -320,7 +320,7 @@ func (s *String) MatchAll(re string) []Match {
 	if matches == nil {
 		failure := Failure{
 			assertionName: "String.MatchAll",
-			assertType:    failureAssertMatchRe,
+			assertType:    FailureAssertMatchRe,
 			expected:      re,
 			actual:        s.value,
 		}
@@ -357,7 +357,7 @@ func (s *String) NotMatch(re string) *String {
 	if r.MatchString(s.value) {
 		failure := Failure{
 			assertionName: "String.NotMatch",
-			assertType:    failureAssertNotMatchRe,
+			assertType:    FailureAssertNotMatchRe,
 			expected:      re,
 			actual:        s.value,
 		}
