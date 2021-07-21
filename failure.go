@@ -1,9 +1,9 @@
 package httpexpect
 
-type FailureAssertType uint64
+type FailureType uint64
 
 const (
-	FailureAssertEqual FailureAssertType = iota
+	FailureAssertEqual FailureType = iota
 	FailureAssertNotEqual
 	FailureAssertLt
 	FailureAssertLe
@@ -42,7 +42,7 @@ type Failure struct {
 	expected         interface{}
 	expectedInRange  []interface{} // [min, max]
 	expectedDelta    interface{}
-	assertType       FailureAssertType
+	assertType       FailureType
 }
 
 func newErrorFailure(err error) Failure {
