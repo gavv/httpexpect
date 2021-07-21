@@ -21,7 +21,6 @@ func TestRequestFailed(t *testing.T) {
 	client := &mockClient{}
 
 	chain := makeChain(newMockReporter(t))
-
 	chain.fail(Failure{})
 
 	config := Config{
@@ -29,10 +28,9 @@ func TestRequestFailed(t *testing.T) {
 	}
 
 	req := &Request{
-		config:  config,
-		chain:   chain,
-		http:    nil,
-		context: chain.ctx,
+		config: config,
+		chain:  chain,
+		http:   nil,
 	}
 
 	req.WithClient(&http.Client{})

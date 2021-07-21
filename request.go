@@ -27,9 +27,8 @@ import (
 // Request provides methods to incrementally build http.Request object,
 // send it, and receive response.
 type Request struct {
-	context        *Context
 	config         Config
-	chain          chain
+	chain          chain // chain contains the *Context of this Request
 	http           *http.Request
 	redirectPolicy RedirectPolicy
 	maxRedirects   int
@@ -115,7 +114,6 @@ func NewRequest(config Config, method, path string, pathargs ...interface{}) *Re
 	}
 
 	return &Request{
-		context:        placeholderCtx,
 		config:         config,
 		chain:          chain,
 		path:           path,
@@ -142,8 +140,7 @@ func (r *Request) WithReqContext(ctx *Context) *Request {
 	if ctx == nil {
 		panic("provided request context is nil")
 	}
-	r.chain.ctx = ctx
-	r.context = ctx
+	r.chain.reqContext = ctx
 	return r
 }
 
@@ -1175,7 +1172,7 @@ func (r *Request) WithMultipart() *Request {
 //  resp.Status(http.StatusOK)
 func (r *Request) Expect() *Response {
 	resp := r.roundTrip()
-	r.context.Response = resp
+	r.chain.reqContext.Response = resp
 
 	if resp == nil {
 		return makeResponse(responseOpts{

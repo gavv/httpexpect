@@ -1,8 +1,8 @@
 package httpexpect
 
 type chain struct {
-	ctx     *Context
-	failbit bool
+	reqContext *Context
+	failbit    bool
 }
 
 func makeChain(reporterOrCtx Reporter) chain {
@@ -28,7 +28,7 @@ func (c *chain) fail(failure Failure) {
 		return
 	}
 	c.failbit = true
-	c.ctx.AssertionHandler.Failure(c.ctx, failure)
+	c.reqContext.AssertionHandler.Failure(c.reqContext, failure)
 }
 
 func (c *chain) reset() {
