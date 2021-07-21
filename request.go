@@ -140,7 +140,7 @@ func NewRequest(config Config, method, path string, pathargs ...interface{}) *Re
 // Providing a nil Context will panic.
 func (r *Request) WithReqContext(ctx *Context) *Request {
 	if ctx == nil {
-		panic("provided context is nil")
+		panic("provided request context is nil")
 	}
 	r.chain.ctx = ctx
 	r.context = ctx

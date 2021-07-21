@@ -25,7 +25,7 @@ func NewArray(reporter Reporter, value []interface{}) *Array {
 	if value == nil {
 		failure := Failure{
 			err:        fmt.Errorf("expected non-nil array value"),
-			assertType: failureAssertNotNil,
+			assertType: failureInvalidInput,
 		}
 		chain.fail(failure)
 	} else {
