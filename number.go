@@ -58,13 +58,12 @@ func (n *Number) Equal(value interface{}) *Number {
 		return n
 	}
 	if !(n.value == v) {
-		failure := Failure{
+		n.chain.fail(Failure{
 			assertionName: "Number.Equal",
 			assertType:    FailureAssertEqual,
 			expected:      v,
 			actual:        n.value,
-		}
-		n.chain.fail(failure)
+		})
 	}
 	return n
 }
@@ -84,13 +83,12 @@ func (n *Number) NotEqual(value interface{}) *Number {
 		return n
 	}
 	if !(n.value != v) {
-		failure := Failure{
+		n.chain.fail(Failure{
 			assertionName: "Number.NotEqual",
 			assertType:    FailureAssertNotEqual,
 			expected:      v,
 			actual:        n.value,
-		}
-		n.chain.fail(failure)
+		})
 	}
 	return n
 }
@@ -114,8 +112,7 @@ func (n *Number) EqualDelta(value, delta float64) *Number {
 		return n
 	}
 
-	diff := (n.value - value)
-
+	diff := n.value - value
 	if diff < -delta || diff > delta {
 		n.chain.fail(failure)
 		return n
@@ -143,8 +140,7 @@ func (n *Number) NotEqualDelta(value, delta float64) *Number {
 		return n
 	}
 
-	diff := (n.value - value)
-
+	diff := n.value - value
 	if !(diff < -delta || diff > delta) {
 		n.chain.fail(failure)
 		return n
@@ -168,13 +164,12 @@ func (n *Number) Gt(value interface{}) *Number {
 		return n
 	}
 	if !(n.value > v) {
-		failure := Failure{
+		n.chain.fail(Failure{
 			assertionName: "Number.Gt",
 			assertType:    FailureAssertGt,
 			expected:      v,
 			actual:        n.value,
-		}
-		n.chain.fail(failure)
+		})
 	}
 	return n
 }
@@ -194,13 +189,12 @@ func (n *Number) Ge(value interface{}) *Number {
 		return n
 	}
 	if !(n.value >= v) {
-		failure := Failure{
+		n.chain.fail(Failure{
 			assertionName: "Number.Ge",
 			assertType:    FailureAssertGe,
 			expected:      v,
 			actual:        n.value,
-		}
-		n.chain.fail(failure)
+		})
 	}
 	return n
 }
@@ -220,13 +214,12 @@ func (n *Number) Lt(value interface{}) *Number {
 		return n
 	}
 	if !(n.value < v) {
-		failure := Failure{
+		n.chain.fail(Failure{
 			assertionName: "Number.Lt",
 			assertType:    FailureAssertLt,
 			expected:      v,
 			actual:        n.value,
-		}
-		n.chain.fail(failure)
+		})
 	}
 	return n
 }
@@ -246,13 +239,12 @@ func (n *Number) Le(value interface{}) *Number {
 		return n
 	}
 	if !(n.value <= v) {
-		failure := Failure{
+		n.chain.fail(Failure{
 			assertionName: "Number.Le",
 			assertType:    FailureAssertLe,
 			expected:      v,
 			actual:        n.value,
-		}
-		n.chain.fail(failure)
+		})
 	}
 	return n
 }
@@ -277,13 +269,12 @@ func (n *Number) InRange(min, max interface{}) *Number {
 		return n
 	}
 	if !(n.value >= a && n.value <= b) {
-		failure := Failure{
+		n.chain.fail(Failure{
 			assertionName:   "Number.InRange",
 			assertType:      FailureAssertInRange,
 			expectedInRange: []interface{}{a, b},
 			actual:          n.value,
-		}
-		n.chain.fail(failure)
+		})
 	}
 	return n
 }

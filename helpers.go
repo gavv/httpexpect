@@ -58,14 +58,13 @@ func checkSchema(chain *chain, value, schema interface{}) {
 
 	result, err := gojsonschema.Validate(schemaLoader, valueLoader)
 	if err != nil {
-		failure := Failure{
+		chain.fail(Failure{
 			assertionName: "Json.Schema",
 			err:           err,
 			assertType:    FailureAssertJsonSchema,
 			expected:      schema,
 			actual:        value,
-		}
-		chain.fail(failure)
+		})
 		return
 	}
 

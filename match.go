@@ -84,13 +84,12 @@ func (m *Match) Length() *Number {
 //   m.Index(2).Equal("john")
 func (m *Match) Index(index int) *String {
 	if index < 0 || index >= len(m.submatches) {
-		failure := Failure{
+		m.chain.fail(Failure{
 			assertionName: "Match.Index",
 			assertType:    FailureAssertOutOfBounds,
 			expected:      index,
 			actual:        len(m.submatches),
-		}
-		m.chain.fail(failure)
+		})
 		return &String{m.chain, ""}
 	}
 	return &String{m.chain, m.submatches[index]}
@@ -113,13 +112,12 @@ func (m *Match) Index(index int) *String {
 func (m *Match) Name(name string) *String {
 	index, ok := m.names[name]
 	if !ok {
-		failure := Failure{
+		m.chain.fail(Failure{
 			assertionName: "Match.Name",
 			assertType:    FailureAssertMatchRe,
 			expected:      m.names,
 			actual:        name,
-		}
-		m.chain.fail(failure)
+		})
 		return &String{m.chain, ""}
 	}
 	return m.Index(index)
@@ -132,12 +130,11 @@ func (m *Match) Name(name string) *String {
 //  m.Empty()
 func (m *Match) Empty() *Match {
 	if len(m.submatches) != 0 {
-		failure := Failure{
+		m.chain.fail(Failure{
 			assertionName: "Match.Empty",
 			assertType:    FailureAssertEmpty,
 			actual:        m.submatches,
-		}
-		m.chain.fail(failure)
+		})
 	}
 	return m
 }
@@ -149,11 +146,10 @@ func (m *Match) Empty() *Match {
 //  m.NotEmpty()
 func (m *Match) NotEmpty() *Match {
 	if len(m.submatches) == 0 {
-		failure := Failure{
+		m.chain.fail(Failure{
 			assertionName: "Match.NotEmpty",
 			assertType:    FailureAssertNotEmpty,
-		}
-		m.chain.fail(failure)
+		})
 	}
 	return m
 }
@@ -174,13 +170,12 @@ func (m *Match) Values(values ...string) *Match {
 		values = []string{}
 	}
 	if !reflect.DeepEqual(values, m.getValues()) {
-		failure := Failure{
+		m.chain.fail(Failure{
 			assertionName: "Match.Values",
 			assertType:    FailureAssertEqual,
 			expected:      values,
 			actual:        m.getValues(),
-		}
-		m.chain.fail(failure)
+		})
 	}
 	return m
 }
@@ -201,12 +196,11 @@ func (m *Match) NotValues(values ...string) *Match {
 		values = []string{}
 	}
 	if reflect.DeepEqual(values, m.getValues()) {
-		failure := Failure{
+		m.chain.fail(Failure{
 			assertionName: "Match.NotValues",
 			assertType:    FailureAssertNotEqual,
 			expected:      values,
-		}
-		m.chain.fail(failure)
+		})
 	}
 	return m
 }

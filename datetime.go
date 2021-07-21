@@ -132,13 +132,12 @@ func (dt *DateTime) Lt(value time.Time) *DateTime {
 //  dt.Le(time.Unix(0, 2))
 func (dt *DateTime) Le(value time.Time) *DateTime {
 	if !(dt.value.Before(value) || dt.value.Equal(value)) {
-		failure := Failure{
+		dt.chain.fail(Failure{
 			assertionName: "Datetime.Le",
 			expected:      value,
 			actual:        dt.value,
 			assertType:    FailureAssertLe,
-		}
-		dt.chain.fail(failure)
+		})
 	}
 	return dt
 }
@@ -152,13 +151,12 @@ func (dt *DateTime) Le(value time.Time) *DateTime {
 func (dt *DateTime) InRange(min, max time.Time) *DateTime {
 	if !((dt.value.After(min) || dt.value.Equal(min)) &&
 		(dt.value.Before(max) || dt.value.Equal(max))) {
-		failure := Failure{
+		dt.chain.fail(Failure{
 			assertionName:   "Datetime.InRange",
 			actual:          dt.value,
 			expectedInRange: []interface{}{min, max},
 			assertType:      FailureAssertInRange,
-		}
-		dt.chain.fail(failure)
+		})
 	}
 	return dt
 }

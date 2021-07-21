@@ -42,11 +42,10 @@ func (d *Duration) Raw() time.Duration {
 //  d.IsSet()
 func (d *Duration) IsSet() *Duration {
 	if d.value == nil {
-		failure := Failure{
+		d.chain.fail(Failure{
 			assertionName: "Duration.IsSet",
 			assertType:    FailureAssertNotEmpty,
-		}
-		d.chain.fail(failure)
+		})
 	}
 	return d
 }
@@ -54,11 +53,10 @@ func (d *Duration) IsSet() *Duration {
 // NotSet succeeds if Duration is not set.
 func (d *Duration) NotSet() *Duration {
 	if d.value != nil {
-		failure := Failure{
+		d.chain.fail(Failure{
 			assertionName: "Duration.NotSet",
 			assertType:    FailureAssertEmpty,
-		}
-		d.chain.fail(failure)
+		})
 	}
 	return d
 }
@@ -74,13 +72,12 @@ func (d *Duration) Equal(value time.Duration) *Duration {
 	}
 
 	if !(*d.value == value) {
-		failure := Failure{
+		d.chain.fail(Failure{
 			assertionName: "Duration.Equal",
 			assertType:    FailureAssertEqual,
 			expected:      value,
 			actual:        *d.value,
-		}
-		d.chain.fail(failure)
+		})
 	}
 	return d
 }
@@ -96,13 +93,12 @@ func (d *Duration) NotEqual(value time.Duration) *Duration {
 	}
 
 	if !(*d.value != value) {
-		failure := Failure{
+		d.chain.fail(Failure{
 			assertionName: "Duration.NotEqual",
 			expected:      value,
 			actual:        *d.value,
 			assertType:    FailureAssertNotEqual,
-		}
-		d.chain.fail(failure)
+		})
 	}
 	return d
 }
@@ -118,13 +114,12 @@ func (d *Duration) Gt(value time.Duration) *Duration {
 	}
 
 	if !(*d.value > value) {
-		failure := Failure{
+		d.chain.fail(Failure{
 			assertionName: "Duration.Gt",
 			assertType:    FailureAssertGt,
 			expected:      value,
 			actual:        *d.value,
-		}
-		d.chain.fail(failure)
+		})
 	}
 	return d
 }
@@ -140,13 +135,12 @@ func (d *Duration) Ge(value time.Duration) *Duration {
 	}
 
 	if !(*d.value >= value) {
-		failure := Failure{
+		d.chain.fail(Failure{
 			assertionName: "Duration.Ge",
 			assertType:    FailureAssertGe,
 			expected:      value,
 			actual:        *d.value,
-		}
-		d.chain.fail(failure)
+		})
 	}
 	return d
 }
@@ -162,13 +156,12 @@ func (d *Duration) Lt(value time.Duration) *Duration {
 	}
 
 	if !(*d.value < value) {
-		failure := Failure{
+		d.chain.fail(Failure{
 			assertionName: "Duration.Lt",
 			assertType:    FailureAssertLt,
 			expected:      value,
 			actual:        *d.value,
-		}
-		d.chain.fail(failure)
+		})
 	}
 	return d
 }
@@ -184,13 +177,12 @@ func (d *Duration) Le(value time.Duration) *Duration {
 	}
 
 	if !(*d.value <= value) {
-		failure := Failure{
+		d.chain.fail(Failure{
 			assertionName: "Duration.Le",
 			assertType:    FailureAssertLe,
 			expected:      value,
 			actual:        *d.value,
-		}
-		d.chain.fail(failure)
+		})
 	}
 	return d
 }
@@ -207,13 +199,12 @@ func (d *Duration) InRange(min, max time.Duration) *Duration {
 	}
 
 	if !(*d.value >= min && *d.value <= max) {
-		failure := Failure{
+		d.chain.fail(Failure{
 			assertionName:   "Duration.InRange",
 			assertType:      FailureAssertInRange,
 			expectedInRange: []interface{}{min, max},
 			actual:          *d.value,
-		}
-		d.chain.fail(failure)
+		})
 	}
 	return d
 }

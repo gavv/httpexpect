@@ -46,13 +46,12 @@ func (b *Boolean) Schema(schema interface{}) *Boolean {
 //  boolean.Equal(true)
 func (b *Boolean) Equal(value bool) *Boolean {
 	if !(b.value == value) {
-		failure := Failure{
+		b.chain.fail(Failure{
 			assertionName: "Boolean.Equal",
 			assertType:    FailureAssertEqual,
 			expected:      value,
 			actual:        b.value,
-		}
-		b.chain.fail(failure)
+		})
 	}
 	return b
 }
@@ -64,13 +63,12 @@ func (b *Boolean) Equal(value bool) *Boolean {
 //  boolean.NotEqual(false)
 func (b *Boolean) NotEqual(value bool) *Boolean {
 	if !(b.value != value) {
-		failure := Failure{
+		b.chain.fail(Failure{
 			assertionName: "Boolean.NotEqual",
 			assertType:    FailureAssertNotEqual,
 			expected:      value,
 			actual:        b.value,
-		}
-		b.chain.fail(failure)
+		})
 	}
 	return b
 }
