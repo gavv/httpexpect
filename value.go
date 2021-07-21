@@ -134,7 +134,7 @@ func (v *Value) Object() *Object {
 	data, ok := v.value.(map[string]interface{})
 	if !ok {
 		failure := Failure{
-			assertionName: "value",
+			assertionName: "Value.Object",
 			assertType:    failureAssertBadType,
 			expected:      make(map[string]interface{}),
 			actual:        v.value,
@@ -156,7 +156,7 @@ func (v *Value) Array() *Array {
 	data, ok := v.value.([]interface{})
 	if !ok {
 		failure := Failure{
-			assertionName: "value",
+			assertionName: "Value.Array",
 			assertType:    failureAssertBadType,
 			expected:      make([]interface{}, 0),
 			actual:        v.value,
@@ -178,7 +178,7 @@ func (v *Value) String() *String {
 	data, ok := v.value.(string)
 	if !ok {
 		failure := Failure{
-			assertionName: "value",
+			assertionName: "Value.String",
 			assertType:    failureAssertBadType,
 			expected:      "",
 			actual:        v.value,
@@ -200,7 +200,7 @@ func (v *Value) Number() *Number {
 	data, ok := v.value.(float64)
 	if !ok {
 		failure := Failure{
-			assertionName: "value",
+			assertionName: "Value.Number",
 			assertType:    failureAssertBadType,
 			expected:      float64(0),
 			actual:        v.value,
@@ -222,7 +222,7 @@ func (v *Value) Boolean() *Boolean {
 	data, ok := v.value.(bool)
 	if !ok {
 		failure := Failure{
-			assertionName: "value",
+			assertionName: "Value.Boolean",
 			assertType:    failureAssertBadType,
 			expected:      true, // could be false. it's just the type.
 			actual:        v.value,
@@ -247,7 +247,7 @@ func (v *Value) Boolean() *Boolean {
 func (v *Value) Null() *Value {
 	if v.value != nil {
 		failure := Failure{
-			assertionName: "value",
+			assertionName: "Value.Null",
 			assertType:    failureAssertNil,
 			expected:      nil,
 			actual:        v.value,
@@ -272,7 +272,7 @@ func (v *Value) Null() *Value {
 func (v *Value) NotNull() *Value {
 	if v.value == nil {
 		failure := Failure{
-			assertionName: "value",
+			assertionName: "Value.NotNull",
 			assertType:    failureAssertNotNil,
 			actual:        v.value,
 		}
@@ -294,7 +294,7 @@ func (v *Value) Equal(value interface{}) *Value {
 	}
 	if !reflect.DeepEqual(expected, v.value) {
 		failure := Failure{
-			assertionName: "value",
+			assertionName: "Value.Equal",
 			assertType:    failureAssertEqual,
 			expected:      expected,
 			actual:        v.value,
@@ -317,7 +317,7 @@ func (v *Value) NotEqual(value interface{}) *Value {
 	}
 	if reflect.DeepEqual(expected, v.value) {
 		failure := Failure{
-			assertionName: "value",
+			assertionName: "Value.NotEqual",
 			assertType:    failureAssertNotEqual,
 			expected:      value,
 			actual:        v.value,
