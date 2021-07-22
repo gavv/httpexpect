@@ -1003,7 +1003,7 @@ func TestWebsocketWriteJSON(t *testing.T) {
 
 func TestWebsocket_Subprotocol(t *testing.T) {
 	subproto := "soap"
-	ws := NewWebsocket(Config{}, newMockWebsocketConn().WithSubprotocol(subproto))
+	ws := NewWebsocket(Config{AssertionHandler: NewDefaultAssertionHandler(t)}, newMockWebsocketConn().WithSubprotocol(subproto))
 
 	ws.Subprotocol()
 
