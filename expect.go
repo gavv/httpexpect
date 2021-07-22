@@ -232,14 +232,24 @@ type Reporter interface {
 	Errorf(message string, args ...interface{})
 }
 
-// LoggerReporter combines Logger and Reporter interfaces, and adds the Name()
+// LoggerReporter combines Logger and Reporter interfaces.
 // method requirement in order to provide the name of the current test.
 //
 // Note: all methods are provided when using a *testing.T struct.
 type LoggerReporter interface {
-	Name() string
 	Logger
 	Reporter
+}
+
+// Namer provides an interface to get the name of the currently running test, such as provided by *testing.T.
+type Namer interface {
+	Name() string
+}
+
+// LoggerReporterNamer combines LoggerReporter and Namer interfaces.
+type LoggerReporterNamer interface {
+	LoggerReporter
+	Namer
 }
 
 // DefaultRequestFactory is the default RequestFactory implementation which just
@@ -263,6 +273,10 @@ func (DefaultRequestFactory) NewRequest(
 //  - DefaultRequestFactory as RequestFactory
 //  - DefaultFormatter as Formatter
 //
+// Note that the parameter t (LoggerReporter) can also be a LoggerReporterNamer, such as *testing.T.
+// The LoggerReporter is still used for compatibility.
+//
+//
 // Client is set to a default client with a non-nil Jar:
 //  &http.Client{
 //      Jar: httpexpect.NewJar(),
@@ -277,13 +291,23 @@ func (DefaultRequestFactory) NewRequest(
 //          Status(http.StatusOK)
 //  }
 func New(t LoggerReporter, baseURL string) *Expect {
+	testName := ""
+
+	var assertionHandler AssertionHandler
+	if lrn, ok := t.(LoggerReporterNamer); ok {
+		testName = lrn.Name()
+		assertionHandler = NewDefaultAssertionHandler(lrn)
+	} else {
+		assertionHandler = newDefaultAssertionHandler(t)
+	}
+
 	return WithConfig(Config{
 		BaseURL:          baseURL,
-		AssertionHandler: NewDefaultAssertionHandler(t),
+		AssertionHandler: assertionHandler,
 		Printers: []Printer{
 			NewCompactPrinter(t),
 		},
-		TestName: t.Name(),
+		TestName: testName,
 	})
 }
 

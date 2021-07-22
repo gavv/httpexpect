@@ -54,7 +54,11 @@ type DefaultAssertionHandler struct {
 
 // NewDefaultAssertionHandler uses AssertReporter and DefaultFormatter.
 // The Formatter is called first and provides the string to Reporter.
-func NewDefaultAssertionHandler(t LoggerReporter) AssertionHandler {
+func NewDefaultAssertionHandler(t LoggerReporterNamer) AssertionHandler {
+	return newDefaultAssertionHandler(t)
+}
+
+func newDefaultAssertionHandler(t LoggerReporter) AssertionHandler {
 	return DefaultAssertionHandler{
 		Reporter:  NewAssertReporter(t),
 		Formatter: DefaultFormatter{},
