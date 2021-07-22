@@ -86,7 +86,7 @@ func NewRequest(config Config, method, path string, pathargs ...interface{}) *Re
 
 	placeholderCtx := &Context{AssertionHandler: config.AssertionHandler}
 
-	chain := makeChain(placeholderCtx)
+	chain := makeChain(wrapContext(placeholderCtx))
 
 	n := 0
 	path, err := interpol.WithFunc(path, func(k string, w io.Writer) error {

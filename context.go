@@ -14,8 +14,14 @@ type Context struct {
 	RTT              *time.Duration
 }
 
-// DEPRECATED
-// Errorf implements Reporter for compatibility and shouldn't be used directly.
-func (c *Context) Errorf(message string, args ...interface{}) {
-	c.AssertionHandler.Errorf(message, args...)
+// contextReporterWrapper is used only to keep compatibility with constructors using the Reporter interface.
+// makeChain does a type assertion to extract, if necessary, the wrapped context, or use the Reporter as it is given.
+type contextReporterWrapper struct{ ctx *Context }
+
+func (c contextReporterWrapper) Errorf(message string, args ...interface{}) {
+	panic("contextReporterWrapper is not meant to be called")
+}
+
+func wrapContext(ctx *Context) contextReporterWrapper {
+	return contextReporterWrapper{ctx: ctx}
 }

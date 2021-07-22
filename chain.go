@@ -5,10 +5,10 @@ type chain struct {
 	failbit    bool
 }
 
-func makeChain(reporterOrCtx Reporter) chain {
-	switch v := reporterOrCtx.(type) {
-	case *Context:
-		return chain{v, false}
+func makeChain(reporter Reporter) chain {
+	switch v := reporter.(type) {
+	case contextReporterWrapper:
+		return chain{v.ctx, false}
 	default:
 		return chain{&Context{
 			AssertionHandler: DefaultAssertionHandler{

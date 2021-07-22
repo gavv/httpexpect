@@ -43,7 +43,7 @@ func TestValueFailed(t *testing.T) {
 }
 
 func TestValueCastNull(t *testing.T) {
-	ctx := newMockContext(t)
+	ctx := wrapContext(newMockContext(t))
 
 	var data interface{}
 
@@ -57,7 +57,7 @@ func TestValueCastNull(t *testing.T) {
 }
 
 func TestValueCastIndirectNull(t *testing.T) {
-	ctx := newMockContext(t)
+	ctx := wrapContext(newMockContext(t))
 
 	var data []interface{}
 
@@ -71,7 +71,7 @@ func TestValueCastIndirectNull(t *testing.T) {
 }
 
 func TestValueCastBad(t *testing.T) {
-	ctx := newMockContext(t)
+	ctx := wrapContext(newMockContext(t))
 
 	data := func() {}
 
@@ -85,7 +85,7 @@ func TestValueCastBad(t *testing.T) {
 }
 
 func TestValueCastObject(t *testing.T) {
-	ctx := newMockContext(t)
+	ctx := wrapContext(newMockContext(t))
 
 	data := map[string]interface{}{}
 
@@ -99,7 +99,7 @@ func TestValueCastObject(t *testing.T) {
 }
 
 func TestValueCastArray(t *testing.T) {
-	ctx := newMockContext(t)
+	ctx := wrapContext(newMockContext(t))
 
 	data := []interface{}{}
 
@@ -113,7 +113,7 @@ func TestValueCastArray(t *testing.T) {
 }
 
 func TestValueCastString(t *testing.T) {
-	ctx := newMockContext(t)
+	ctx := wrapContext(newMockContext(t))
 
 	data := ""
 
@@ -127,7 +127,7 @@ func TestValueCastString(t *testing.T) {
 }
 
 func TestValueCastNumber(t *testing.T) {
-	ctx := newMockContext(t)
+	ctx := wrapContext(newMockContext(t))
 
 	data := 0.0
 
@@ -141,7 +141,7 @@ func TestValueCastNumber(t *testing.T) {
 }
 
 func TestValueCastBoolean(t *testing.T) {
-	ctx := newMockContext(t)
+	ctx := wrapContext(newMockContext(t))
 
 	data := false
 
@@ -159,7 +159,7 @@ func TestValueGetObject(t *testing.T) {
 		myMap map[string]interface{}
 	)
 
-	ctx := newMockContext(t)
+	ctx := wrapContext(newMockContext(t))
 
 	data1 := map[string]interface{}{"foo": 123.0}
 
@@ -185,7 +185,7 @@ func TestValueGetArray(t *testing.T) {
 		myArray []interface{}
 	)
 
-	ctx := newMockContext(t)
+	ctx := wrapContext(newMockContext(t))
 
 	data1 := []interface{}{"foo", 123.0}
 
@@ -207,7 +207,7 @@ func TestValueGetArray(t *testing.T) {
 }
 
 func TestValueGetString(t *testing.T) {
-	ctx := newMockContext(t)
+	ctx := wrapContext(newMockContext(t))
 
 	value := NewValue(ctx, "foo")
 	inner := value.String()
@@ -222,7 +222,7 @@ func TestValueGetNumber(t *testing.T) {
 		myInt int
 	)
 
-	ctx := newMockContext(t)
+	ctx := wrapContext(newMockContext(t))
 
 	data1 := 123.0
 
@@ -253,7 +253,7 @@ func TestValueGetNumber(t *testing.T) {
 }
 
 func TestValueGetBoolean(t *testing.T) {
-	ctx := newMockContext(t)
+	ctx := wrapContext(newMockContext(t))
 
 	value1 := NewValue(ctx, true)
 	inner1 := value1.Boolean()
@@ -271,7 +271,7 @@ func TestValueGetBoolean(t *testing.T) {
 }
 
 func TestValueEqual(t *testing.T) {
-	ctx := newMockContext(t)
+	ctx := wrapContext(newMockContext(t))
 
 	data1 := map[string]interface{}{"foo": "bar"}
 	data2 := "baz"
@@ -298,7 +298,7 @@ func TestValueEqual(t *testing.T) {
 }
 
 func TestValuePathObject(t *testing.T) {
-	ctx := newMockContext(t)
+	ctx := wrapContext(newMockContext(t))
 
 	user0 := map[string]interface{}{"name": "john"}
 	user1 := map[string]interface{}{"name": "bob"}
@@ -335,7 +335,7 @@ func TestValuePathObject(t *testing.T) {
 }
 
 func TestValuePathArray(t *testing.T) {
-	ctx := newMockContext(t)
+	ctx := wrapContext(newMockContext(t))
 
 	user0 := map[string]interface{}{"name": "john"}
 	user1 := map[string]interface{}{"name": "bob"}
@@ -356,7 +356,7 @@ func TestValuePathArray(t *testing.T) {
 }
 
 func TestValuePathString(t *testing.T) {
-	ctx := newMockContext(t)
+	ctx := wrapContext(newMockContext(t))
 
 	data := "foo"
 
@@ -367,7 +367,7 @@ func TestValuePathString(t *testing.T) {
 }
 
 func TestValuePathNumber(t *testing.T) {
-	ctx := newMockContext(t)
+	ctx := wrapContext(newMockContext(t))
 
 	data := 123
 
@@ -378,7 +378,7 @@ func TestValuePathNumber(t *testing.T) {
 }
 
 func TestValuePathBoolean(t *testing.T) {
-	ctx := newMockContext(t)
+	ctx := wrapContext(newMockContext(t))
 
 	data := true
 
@@ -389,7 +389,7 @@ func TestValuePathBoolean(t *testing.T) {
 }
 
 func TestValuePathNull(t *testing.T) {
-	ctx := newMockContext(t)
+	ctx := wrapContext(newMockContext(t))
 
 	value := NewValue(ctx, nil)
 
@@ -398,7 +398,7 @@ func TestValuePathNull(t *testing.T) {
 }
 
 func TestValuePathError(t *testing.T) {
-	ctx := newMockContext(t)
+	ctx := wrapContext(newMockContext(t))
 
 	data := "foo"
 
@@ -465,7 +465,7 @@ func TestValuePathExpressions(t *testing.T) {
 		},
 	}
 
-	ctx := newMockContext(t)
+	ctx := wrapContext(newMockContext(t))
 
 	runTests := func(tests map[string]interface{}) {
 		value := NewValue(ctx, data)
@@ -594,7 +594,7 @@ func TestValuePathExpressions(t *testing.T) {
 }
 
 func TestValuePathIntFloat(t *testing.T) {
-	ctx := newMockContext(t)
+	ctx := wrapContext(newMockContext(t))
 
 	data := map[string]interface{}{
 		"A": 123,
@@ -614,7 +614,7 @@ func TestValuePathIntFloat(t *testing.T) {
 }
 
 func TestValueSchema(t *testing.T) {
-	ctx := newMockContext(t)
+	ctx := wrapContext(newMockContext(t))
 
 	schema := `{
 		"type": "object",

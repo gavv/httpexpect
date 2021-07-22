@@ -470,30 +470,30 @@ func (e *Expect) DELETE(path string, pathargs ...interface{}) *Request {
 
 // Value is a shorthand for NewValue(e.config.Reporter, value).
 func (e *Expect) Value(value interface{}) *Value {
-	return NewValue(e.context, value)
+	return NewValue(wrapContext(e.context), value)
 }
 
 // Object is a shorthand for NewObject(e.config.Reporter, value).
 func (e *Expect) Object(value map[string]interface{}) *Object {
-	return NewObject(e.context, value)
+	return NewObject(wrapContext(e.context), value)
 }
 
 // Array is a shorthand for NewArray(e.config.Reporter, value).
 func (e *Expect) Array(value []interface{}) *Array {
-	return NewArray(e.context, value)
+	return NewArray(wrapContext(e.context), value)
 }
 
 // String is a shorthand for NewString(e.config.Reporter, value).
 func (e *Expect) String(value string) *String {
-	return NewString(e.context, value)
+	return NewString(wrapContext(e.context), value)
 }
 
 // Number is a shorthand for NewNumber(e.config.Reporter, value).
 func (e *Expect) Number(value float64) *Number {
-	return NewNumber(e.context, value)
+	return NewNumber(wrapContext(e.context), value)
 }
 
 // Boolean is a shorthand for NewBoolean(e.config.Reporter, value).
 func (e *Expect) Boolean(value bool) *Boolean {
-	return NewBoolean(e.context, value)
+	return NewBoolean(wrapContext(e.context), value)
 }
