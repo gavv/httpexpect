@@ -82,6 +82,7 @@ type Expect struct {
 	config   Config
 	builders []func(*Request)
 	matchers []func(*Response)
+	env      *Env
 }
 
 // Config contains various settings.
@@ -321,6 +322,7 @@ func WithConfig(config Config) *Expect {
 	}
 	return &Expect{
 		config: config,
+		env:    &Env{data: make(map[string]interface{})},
 	}
 }
 

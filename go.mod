@@ -14,6 +14,7 @@ require (
 	github.com/onsi/ginkgo v1.10.1 // indirect
 	github.com/onsi/gomega v1.7.0 // indirect
 	github.com/sergi/go-diff v1.0.0 // indirect
+	github.com/spf13/cast v1.4.1
 	github.com/stretchr/testify v1.3.0
 	github.com/valyala/fasthttp v1.27.0
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f // indirect
