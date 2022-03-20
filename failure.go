@@ -18,7 +18,7 @@ const (
 	FailureAssertNotNil
 	FailureAssertNil
 	FailureAssertOutOfBounds
-	FailureAssertUNDEFINED // used when err must be used.
+	FailureAssertUNDEFINED // used when OriginalError must be used.
 	FailureAssertJsonSchema
 	FailureAssertEqualDelta
 	FailureAssertNotEqualDelta
@@ -35,16 +35,16 @@ const (
 // It will be passed to Formatter when an assertion fails.
 type Failure struct {
 	// Original Error while performing an assertion
-	err              error
-	cumulativeErrors []error
-	assertionName    string
-	actual           interface{}
-	expected         interface{}
-	expectedInRange  []interface{} // [min, max]
-	expectedDelta    interface{}
-	assertType       FailureType
+	OriginalError    error
+	CumulativeErrors []error
+	AssertionName    string
+	Actual           interface{}
+	Expected         interface{}
+	ExpectedInRange  []interface{} // [min, max]
+	ExpectedDelta    interface{}
+	AssertType       FailureType
 }
 
 func newErrorFailure(err error) Failure {
-	return Failure{err: err, assertType: FailureAssertUNDEFINED}
+	return Failure{OriginalError: err, AssertType: FailureAssertUNDEFINED}
 }

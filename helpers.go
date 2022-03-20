@@ -59,21 +59,21 @@ func checkSchema(chain *chain, value, schema interface{}) {
 	result, err := gojsonschema.Validate(schemaLoader, valueLoader)
 	if err != nil {
 		chain.fail(Failure{
-			assertionName: "Json.Schema",
-			err:           err,
-			assertType:    FailureAssertJsonSchema,
-			expected:      schema,
-			actual:        value,
+			AssertionName: "Json.Schema",
+			OriginalError: err,
+			AssertType:    FailureAssertJsonSchema,
+			Expected:      schema,
+			Actual:        value,
 		})
 		return
 	}
 
 	if !result.Valid() {
 		failure := Failure{
-			assertionName: "Json.Schema",
-			assertType:    FailureAssertJsonSchema,
-			expected:      schema,
-			actual:        value,
+			AssertionName: "Json.Schema",
+			AssertType:    FailureAssertJsonSchema,
+			Expected:      schema,
+			Actual:        value,
 		}
 
 		jserr := result.Errors()
@@ -82,7 +82,7 @@ func checkSchema(chain *chain, value, schema interface{}) {
 			errors = append(errors, fmt.Errorf("%s", err))
 		}
 
-		failure.cumulativeErrors = errors
+		failure.CumulativeErrors = errors
 
 		chain.fail(failure)
 
@@ -117,8 +117,8 @@ func canonArray(chain *chain, in interface{}) ([]interface{}, bool) {
 		out, ok = data.([]interface{})
 		if !ok {
 			chain.fail(Failure{
-				err:        fmt.Errorf("expected array, got %v", out),
-				assertType: FailureInvalidInput,
+				OriginalError: fmt.Errorf("expected array, got %v", out),
+				AssertType:    FailureInvalidInput,
 			})
 		}
 	}
@@ -132,8 +132,8 @@ func canonMap(chain *chain, in interface{}) (map[string]interface{}, bool) {
 		out, ok = data.(map[string]interface{})
 		if !ok {
 			chain.fail(Failure{
-				err:        fmt.Errorf("expected map, got %v", out),
-				assertType: FailureInvalidInput,
+				OriginalError: fmt.Errorf("expected map, got %v", out),
+				AssertType:    FailureInvalidInput,
 			})
 		}
 	}

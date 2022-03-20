@@ -179,10 +179,10 @@ func (r *Response) StatusRange(rn StatusRange) *Response {
 
 	if actual == "" || actual != expected {
 		r.chain.fail(Failure{
-			assertionName: "Response.StatusRange",
-			assertType:    FailureAssertHTTPStatusRange,
-			expected:      rn,
-			actual:        status,
+			AssertionName: "Response.StatusRange",
+			AssertType:    FailureAssertHTTPStatusRange,
+			Expected:      rn,
+			Actual:        status,
 		})
 	}
 
@@ -284,10 +284,10 @@ func (r *Response) Cookie(name string) *Cookie {
 	}
 
 	r.chain.fail(Failure{
-		assertionName: "Response.Cookie",
-		assertType:    FailureAssertCookie,
-		expected:      name,
-		actual:        names,
+		AssertionName: "Response.Cookie",
+		AssertType:    FailureAssertCookie,
+		Expected:      name,
+		Actual:        names,
 	})
 	return &Cookie{r.chain, nil}
 }
@@ -587,10 +587,10 @@ func (r *Response) checkContentType(expectedType string, expectedCharset ...stri
 func (r *Response) checkEqual(what string, expected, actual interface{}) {
 	if !reflect.DeepEqual(expected, actual) {
 		r.chain.fail(Failure{
-			assertionName: "Response.Equal",
-			assertType:    FailureAssertEqual,
-			expected:      expected,
-			actual:        actual,
+			AssertionName: "Response.Equal",
+			AssertType:    FailureAssertEqual,
+			Expected:      expected,
+			Actual:        actual,
 		})
 	}
 }

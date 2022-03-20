@@ -49,7 +49,7 @@ func (m *mockFormatter) Success(context *Context) string {
 
 func (m *mockFormatter) Failure(context *Context, failure Failure) string {
 	m.formattedFailure++
-	return context.TestName + "." + failure.assertionName
+	return context.TestName + "." + failure.AssertionName
 }
 
 func newMockFormatter(t *testing.T) *mockFormatter {

@@ -24,17 +24,17 @@ func (DefaultFormatter) Success(ctx *Context) string {
 // a string and passes it to Context.Reporter for reporting.
 func (DefaultFormatter) Failure(ctx *Context, f Failure) string {
 	errString := ""
-	if f.err != nil {
-		errString += "\noriginal error: " + f.err.Error()
+	if f.OriginalError != nil {
+		errString += "\noriginal error: " + f.OriginalError.Error()
 	}
 
 	// FIXME: implement all failureAssert* cases
 	errString += fmt.Sprintf(
 		"\nassertion: %s\nexpected: %s\nactual: %s\ndiff:\n%s",
-		f.assertionName,
-		dumpValue(f.expected),
-		dumpValue(f.actual),
-		diffValues(f.expected, f.actual),
+		f.AssertionName,
+		dumpValue(f.Expected),
+		dumpValue(f.Actual),
+		diffValues(f.Expected, f.Actual),
 	)
 
 	return errString

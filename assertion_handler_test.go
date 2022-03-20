@@ -29,7 +29,7 @@ func TestDefaultAssertionHandler(t *testing.T) {
 
 	t.Run("Failure", func(t *testing.T) {
 		dah := init(t)
-		dah.Failure(&Context{TestName: t.Name()}, Failure{assertionName: "Failure"})
+		dah.Failure(&Context{TestName: t.Name()}, Failure{AssertionName: "Failure"})
 		assert.Equal(t, 1, mf.formattedFailure)
 		assert.Zero(t, mf.formattedSuccess)
 		assert.True(t, mr.reported)

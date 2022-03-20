@@ -26,8 +26,8 @@ func NewCookie(reporter Reporter, value *http.Cookie) *Cookie {
 	chain := makeChain(reporter)
 	if value == nil {
 		chain.fail(Failure{
-			err:        fmt.Errorf("expected non-nil cookie"),
-			assertType: FailureInvalidInput,
+			OriginalError: fmt.Errorf("expected non-nil cookie"),
+			AssertType:    FailureInvalidInput,
 		})
 	}
 	return &Cookie{chain, value}

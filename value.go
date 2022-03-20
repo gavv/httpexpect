@@ -134,10 +134,10 @@ func (v *Value) Object() *Object {
 	data, ok := v.value.(map[string]interface{})
 	if !ok {
 		v.chain.fail(Failure{
-			assertionName: "Value.Object",
-			assertType:    FailureAssertBadType,
-			expected:      make(map[string]interface{}),
-			actual:        v.value,
+			AssertionName: "Value.Object",
+			AssertType:    FailureAssertBadType,
+			Expected:      make(map[string]interface{}),
+			Actual:        v.value,
 		})
 	}
 	return &Object{v.chain, data}
@@ -155,10 +155,10 @@ func (v *Value) Array() *Array {
 	data, ok := v.value.([]interface{})
 	if !ok {
 		v.chain.fail(Failure{
-			assertionName: "Value.Array",
-			assertType:    FailureAssertBadType,
-			expected:      make([]interface{}, 0),
-			actual:        v.value,
+			AssertionName: "Value.Array",
+			AssertType:    FailureAssertBadType,
+			Expected:      make([]interface{}, 0),
+			Actual:        v.value,
 		})
 	}
 	return &Array{v.chain, data}
@@ -176,10 +176,10 @@ func (v *Value) String() *String {
 	data, ok := v.value.(string)
 	if !ok {
 		v.chain.fail(Failure{
-			assertionName: "Value.String",
-			assertType:    FailureAssertBadType,
-			expected:      "",
-			actual:        v.value,
+			AssertionName: "Value.String",
+			AssertType:    FailureAssertBadType,
+			Expected:      "",
+			Actual:        v.value,
 		})
 	}
 	return &String{v.chain, data}
@@ -197,10 +197,10 @@ func (v *Value) Number() *Number {
 	data, ok := v.value.(float64)
 	if !ok {
 		v.chain.fail(Failure{
-			assertionName: "Value.Number",
-			assertType:    FailureAssertBadType,
-			expected:      float64(0),
-			actual:        v.value,
+			AssertionName: "Value.Number",
+			AssertType:    FailureAssertBadType,
+			Expected:      float64(0),
+			Actual:        v.value,
 		})
 	}
 	return &Number{v.chain, data}
@@ -218,10 +218,10 @@ func (v *Value) Boolean() *Boolean {
 	data, ok := v.value.(bool)
 	if !ok {
 		v.chain.fail(Failure{
-			assertionName: "Value.Boolean",
-			assertType:    FailureAssertBadType,
-			expected:      true, // could be false. it's just the type.
-			actual:        v.value,
+			AssertionName: "Value.Boolean",
+			AssertType:    FailureAssertBadType,
+			Expected:      true, // could be false. it's just the type.
+			Actual:        v.value,
 		})
 	}
 	return &Boolean{v.chain, data}
@@ -242,10 +242,10 @@ func (v *Value) Boolean() *Boolean {
 func (v *Value) Null() *Value {
 	if v.value != nil {
 		v.chain.fail(Failure{
-			assertionName: "Value.Null",
-			assertType:    FailureAssertNil,
-			expected:      nil,
-			actual:        v.value,
+			AssertionName: "Value.Null",
+			AssertType:    FailureAssertNil,
+			Expected:      nil,
+			Actual:        v.value,
 		})
 	}
 	return v
@@ -266,9 +266,9 @@ func (v *Value) Null() *Value {
 func (v *Value) NotNull() *Value {
 	if v.value == nil {
 		v.chain.fail(Failure{
-			assertionName: "Value.NotNull",
-			assertType:    FailureAssertNotNil,
-			actual:        v.value,
+			AssertionName: "Value.NotNull",
+			AssertType:    FailureAssertNotNil,
+			Actual:        v.value,
 		})
 	}
 	return v
@@ -287,10 +287,10 @@ func (v *Value) Equal(value interface{}) *Value {
 	}
 	if !reflect.DeepEqual(expected, v.value) {
 		v.chain.fail(Failure{
-			assertionName: "Value.Equal",
-			assertType:    FailureAssertEqual,
-			expected:      expected,
-			actual:        v.value,
+			AssertionName: "Value.Equal",
+			AssertType:    FailureAssertEqual,
+			Expected:      expected,
+			Actual:        v.value,
 		})
 	}
 	return v
@@ -309,10 +309,10 @@ func (v *Value) NotEqual(value interface{}) *Value {
 	}
 	if reflect.DeepEqual(expected, v.value) {
 		v.chain.fail(Failure{
-			assertionName: "Value.NotEqual",
-			assertType:    FailureAssertNotEqual,
-			expected:      value,
-			actual:        v.value,
+			AssertionName: "Value.NotEqual",
+			AssertType:    FailureAssertNotEqual,
+			Expected:      value,
+			Actual:        v.value,
 		})
 	}
 	return v

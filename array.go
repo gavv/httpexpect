@@ -24,8 +24,8 @@ func NewArray(reporter Reporter, value []interface{}) *Array {
 	chain := makeChain(reporter)
 	if value == nil {
 		chain.fail(Failure{
-			err:        fmt.Errorf("expected non-nil array value"),
-			assertType: FailureInvalidInput,
+			OriginalError: fmt.Errorf("expected non-nil array value"),
+			AssertType:    FailureInvalidInput,
 		})
 	} else {
 		value, _ = canonArray(&chain, value)
@@ -76,10 +76,10 @@ func (a *Array) Length() *Number {
 func (a *Array) Element(index int) *Value {
 	if index < 0 || index >= len(a.value) {
 		a.chain.fail(Failure{
-			assertionName:   "Array.Element",
-			actual:          index,
-			assertType:      FailureAssertOutOfBounds,
-			expectedInRange: []interface{}{0, len(a.value) - 1},
+			AssertionName:   "Array.Element",
+			Actual:          index,
+			AssertType:      FailureAssertOutOfBounds,
+			ExpectedInRange: []interface{}{0, len(a.value) - 1},
 		})
 		return &Value{a.chain, nil}
 	}
@@ -98,9 +98,9 @@ func (a *Array) Element(index int) *Value {
 func (a *Array) First() *Value {
 	if len(a.value) < 1 {
 		a.chain.fail(Failure{
-			err:           fmt.Errorf("array is empty"),
-			assertionName: "Array.First",
-			assertType:    FailureAssertNotEmpty,
+			OriginalError: fmt.Errorf("array is empty"),
+			AssertionName: "Array.First",
+			AssertType:    FailureAssertNotEmpty,
 		})
 		return &Value{a.chain, nil}
 	}
@@ -119,9 +119,9 @@ func (a *Array) First() *Value {
 func (a *Array) Last() *Value {
 	if len(a.value) < 1 {
 		a.chain.fail(Failure{
-			err:           fmt.Errorf("array is empty"),
-			assertionName: "Array.Last",
-			assertType:    FailureAssertNotEmpty,
+			OriginalError: fmt.Errorf("array is empty"),
+			AssertionName: "Array.Last",
+			AssertType:    FailureAssertNotEmpty,
 		})
 		return &Value{a.chain, nil}
 	}
@@ -187,10 +187,10 @@ func (a *Array) Equal(value interface{}) *Array {
 	}
 	if !reflect.DeepEqual(expected, a.value) {
 		a.chain.fail(Failure{
-			assertionName: "Array.Equal",
-			actual:        a.value,
-			expected:      expected,
-			assertType:    FailureAssertEqual,
+			AssertionName: "Array.Equal",
+			Actual:        a.value,
+			Expected:      expected,
+			AssertType:    FailureAssertEqual,
 		})
 	}
 	return a
@@ -211,10 +211,10 @@ func (a *Array) NotEqual(value interface{}) *Array {
 	}
 	if reflect.DeepEqual(expected, a.value) {
 		a.chain.fail(Failure{
-			assertionName: "Array.NotEqual",
-			expected:      expected,
-			actual:        a.value,
-			assertType:    FailureAssertNotEqual,
+			AssertionName: "Array.NotEqual",
+			Expected:      expected,
+			Actual:        a.value,
+			AssertType:    FailureAssertNotEqual,
 		})
 	}
 	return a
@@ -250,10 +250,10 @@ func (a *Array) Contains(values ...interface{}) *Array {
 	for _, e := range elements {
 		if !a.containsElement(e) {
 			a.chain.fail(Failure{
-				assertionName: "Array.Contains",
-				expected:      e,
-				actual:        a.value,
-				assertType:    FailureAssertContains,
+				AssertionName: "Array.Contains",
+				Expected:      e,
+				Actual:        a.value,
+				AssertType:    FailureAssertContains,
 			})
 		}
 	}
@@ -275,10 +275,10 @@ func (a *Array) NotContains(values ...interface{}) *Array {
 	for _, e := range elements {
 		if a.containsElement(e) {
 			a.chain.fail(Failure{
-				assertionName: "Array.NotContains",
-				expected:      e,
-				actual:        a.value,
-				assertType:    FailureAssertNotContains,
+				AssertionName: "Array.NotContains",
+				Expected:      e,
+				Actual:        a.value,
+				AssertType:    FailureAssertNotContains,
 			})
 		}
 	}
@@ -302,21 +302,21 @@ func (a *Array) ContainsOnly(values ...interface{}) *Array {
 	}
 	if len(elements) != len(a.value) {
 		a.chain.fail(Failure{
-			assertionName: "Array.ContainsOnly",
-			err:           fmt.Errorf("arrays of different lengths"),
-			expected:      len(elements),
-			actual:        len(a.value),
-			assertType:    FailureAssertNotEqual,
+			AssertionName: "Array.ContainsOnly",
+			OriginalError: fmt.Errorf("arrays of different lengths"),
+			Expected:      len(elements),
+			Actual:        len(a.value),
+			AssertType:    FailureAssertNotEqual,
 		})
 		return a
 	}
 	for _, e := range elements {
 		if !a.containsElement(e) {
 			a.chain.fail(Failure{
-				assertionName: "Array.ContainsOnly",
-				expected:      e,
-				actual:        a.value,
-				assertType:    FailureAssertContainsOnly,
+				AssertionName: "Array.ContainsOnly",
+				Expected:      e,
+				Actual:        a.value,
+				AssertType:    FailureAssertContainsOnly,
 			})
 		}
 	}

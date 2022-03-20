@@ -104,13 +104,13 @@ func (m *WebsocketMessage) Type(typ ...int) *WebsocketMessage {
 	}
 	if !yes {
 		failure := Failure{
-			assertionName: "websocket.message",
-			assertType:    FailureAssertEqual,
-			actual:        m.typ,
-			expected:      typ,
+			AssertionName: "websocket.message",
+			AssertType:    FailureAssertEqual,
+			Actual:        m.typ,
+			Expected:      typ,
 		}
 		if len(typ) == 1 {
-			failure.expected = typ[0]
+			failure.Expected = typ[0]
 		}
 		m.chain.fail(failure)
 	}
@@ -136,13 +136,13 @@ func (m *WebsocketMessage) NotType(typ ...int) *WebsocketMessage {
 	for _, t := range typ {
 		if t == m.typ {
 			failure := Failure{
-				assertionName: "websocket.message",
-				assertType:    FailureAssertNotEqual,
-				expected:      typ,
-				actual:        m.typ,
+				AssertionName: "websocket.message",
+				AssertType:    FailureAssertNotEqual,
+				Expected:      typ,
+				Actual:        m.typ,
 			}
 			if len(typ) == 1 {
-				failure.expected = typ[0]
+				failure.Expected = typ[0]
 			}
 
 			m.chain.fail(failure)
@@ -182,13 +182,13 @@ func (m *WebsocketMessage) Code(code ...int) *WebsocketMessage {
 	}
 	if !yes {
 		failure := Failure{
-			assertionName: "websocket close code",
-			assertType:    FailureAssertNotEqual,
-			expected:      code,
-			actual:        m.closeCode,
+			AssertionName: "websocket close code",
+			AssertType:    FailureAssertNotEqual,
+			Expected:      code,
+			Actual:        m.closeCode,
 		}
 		if len(code) == 1 {
-			failure.expected = code[0]
+			failure.Expected = code[0]
 		}
 		m.chain.fail(failure)
 	}
@@ -218,13 +218,13 @@ func (m *WebsocketMessage) NotCode(code ...int) *WebsocketMessage {
 	for _, c := range code {
 		if c == m.closeCode {
 			failure := Failure{
-				assertionName: "websocket close code",
-				assertType:    FailureAssertNotEqual,
-				expected:      code,
-				actual:        m.closeCode,
+				AssertionName: "websocket close code",
+				AssertType:    FailureAssertNotEqual,
+				Expected:      code,
+				Actual:        m.closeCode,
 			}
 			if len(code) == 1 {
-				failure.expected = code[0]
+				failure.Expected = code[0]
 			}
 
 			m.chain.fail(failure)
@@ -238,11 +238,11 @@ func (m *WebsocketMessage) NotCode(code ...int) *WebsocketMessage {
 func (m *WebsocketMessage) checkClosed(where string) bool {
 	if m.typ != websocket.CloseMessage {
 		failure := Failure{
-			assertionName: "websocket check closed",
-			err:           fmt.Errorf("where: %s", where),
-			assertType:    FailureAssertEqual,
-			expected:      websocket.CloseMessage,
-			actual:        m.typ,
+			AssertionName: "websocket check closed",
+			OriginalError: fmt.Errorf("where: %s", where),
+			AssertType:    FailureAssertEqual,
+			Expected:      websocket.CloseMessage,
+			Actual:        m.typ,
 		}
 		m.chain.fail(failure)
 		return true
@@ -271,15 +271,15 @@ func (m *WebsocketMessage) NoContent() *WebsocketMessage {
 	}
 
 	failure := Failure{
-		assertionName: "websocket message body being empty",
-		assertType:    FailureAssertNotEmpty,
+		AssertionName: "websocket message body being empty",
+		AssertType:    FailureAssertNotEmpty,
 	}
 
 	switch m.typ {
 	case websocket.BinaryMessage:
-		failure.actual = len(m.content)
+		failure.Actual = len(m.content)
 	default:
-		failure.actual = string(m.content)
+		failure.Actual = string(m.content)
 	}
 
 	m.chain.fail(failure)
