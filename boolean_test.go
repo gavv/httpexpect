@@ -11,7 +11,7 @@ func TestBooleanFailed(t *testing.T) {
 
 	chain.fail("fail")
 
-	value := &Boolean{chain, false}
+	value := &Boolean{chain, false, ""}
 
 	value.chain.assertFailed(t)
 

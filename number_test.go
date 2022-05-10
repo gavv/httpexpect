@@ -12,7 +12,7 @@ func TestNumberFailed(t *testing.T) {
 
 	chain.fail("fail")
 
-	value := &Number{chain, 0}
+	value := &Number{chain, 0, ""}
 
 	value.chain.assertFailed(t)
 

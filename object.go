@@ -9,6 +9,7 @@ import (
 type Object struct {
 	chain chain
 	value map[string]interface{}
+	key   string
 }
 
 // NewObject returns a new Object given a reporter used to report failures
@@ -26,7 +27,7 @@ func NewObject(reporter Reporter, value map[string]interface{}) *Object {
 	} else {
 		value, _ = canonMap(&chain, value)
 	}
-	return &Object{chain, value}
+	return &Object{chain, value, ""}
 }
 
 // Raw returns underlying value attached to Object.
@@ -60,7 +61,7 @@ func (o *Object) Keys() *Array {
 	for k := range o.value {
 		keys = append(keys, k)
 	}
-	return &Array{o.chain, keys}
+	return &Array{o.chain, keys, o.key}
 }
 
 // Values returns a new Array object that may be used to inspect objects values.
@@ -73,7 +74,7 @@ func (o *Object) Values() *Array {
 	for _, v := range o.value {
 		values = append(values, v)
 	}
-	return &Array{o.chain, values}
+	return &Array{o.chain, values, o.key}
 }
 
 // Value returns a new Value object that may be used to inspect single value
@@ -87,9 +88,9 @@ func (o *Object) Value(key string) *Value {
 	if !ok {
 		o.chain.fail("\nexpected object containing key '%s', but got:\n%s",
 			key, dumpValue(o.value))
-		return &Value{o.chain, nil}
+		return &Value{o.chain, nil, ""}
 	}
-	return &Value{o.chain, value}
+	return &Value{o.chain, value, ""}
 }
 
 // Empty succeeds if object is empty.

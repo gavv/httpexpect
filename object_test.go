@@ -11,7 +11,7 @@ func TestObjectFailed(t *testing.T) {
 
 	chain.fail("fail")
 
-	value := &Object{chain, nil}
+	value := &Object{chain, nil, ""}
 
 	value.chain.assertFailed(t)
 

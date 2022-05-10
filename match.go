@@ -64,7 +64,7 @@ func (m *Match) Raw() []string {
 //  m := NewMatch(t, submatches, names)
 //  m.Length().Equal(len(submatches))
 func (m *Match) Length() *Number {
-	return &Number{m.chain, float64(len(m.submatches))}
+	return &Number{m.chain, float64(len(m.submatches)), ""}
 }
 
 // Index returns a new String object that may be used to inspect submatch
@@ -89,9 +89,9 @@ func (m *Match) Index(index int) *String {
 			index,
 			0,
 			len(m.submatches))
-		return &String{m.chain, ""}
+		return &String{m.chain, "", ""}
 	}
-	return &String{m.chain, m.submatches[index]}
+	return &String{m.chain, m.submatches[index], ""}
 }
 
 // Name returns a new String object that may be used to inspect submatch
@@ -115,7 +115,7 @@ func (m *Match) Name(name string) *String {
 			"\nsubmatch name not found:\n %q\n\navailable names:\n%s",
 			name,
 			dumpValue(m.names))
-		return &String{m.chain, ""}
+		return &String{m.chain, "", ""}
 	}
 	return m.Index(index)
 }

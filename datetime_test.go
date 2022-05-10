@@ -14,7 +14,7 @@ func TestDateTimeFailed(t *testing.T) {
 
 	ts := time.Unix(0, 0)
 
-	value := &DateTime{chain, ts}
+	value := &DateTime{chain, ts, ""}
 
 	value.chain.assertFailed(t)
 

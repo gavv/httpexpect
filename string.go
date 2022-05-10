@@ -12,6 +12,7 @@ import (
 type String struct {
 	chain chain
 	value string
+	key   string
 }
 
 // NewString returns a new String given a reporter used to report failures
@@ -22,7 +23,7 @@ type String struct {
 // Example:
 //  str := NewString(t, "Hello")
 func NewString(reporter Reporter, value string) *String {
-	return &String{makeChain(reporter), value}
+	return &String{makeChain(reporter), value, ""}
 }
 
 // Raw returns underlying value attached to String.
@@ -52,7 +53,7 @@ func (s *String) Schema(schema interface{}) *String {
 //  str := NewString(t, "Hello")
 //  str.Length().Equal(5)
 func (s *String) Length() *Number {
-	return &Number{s.chain, float64(len(s.value))}
+	return &Number{s.chain, float64(len(s.value)), s.key}
 }
 
 // DateTime parses date/time from string an returns a new DateTime object.
@@ -69,7 +70,7 @@ func (s *String) Length() *Number {
 //   str.DateTime(time.RFC822).Lt(time.Now())
 func (s *String) DateTime(layout ...string) *DateTime {
 	if s.chain.failed() {
-		return &DateTime{s.chain, time.Unix(0, 0)}
+		return &DateTime{s.chain, time.Unix(0, 0), s.key}
 	}
 	var (
 		t   time.Time
@@ -82,9 +83,9 @@ func (s *String) DateTime(layout ...string) *DateTime {
 	}
 	if err != nil {
 		s.chain.fail(err.Error())
-		return &DateTime{s.chain, time.Unix(0, 0)}
+		return &DateTime{s.chain, time.Unix(0, 0), s.key}
 	}
-	return &DateTime{s.chain, t}
+	return &DateTime{s.chain, t, s.key}
 }
 
 // Empty succeeds if string is empty.
@@ -112,8 +113,8 @@ func (s *String) NotEmpty() *String {
 //  str.Equal("Hello")
 func (s *String) Equal(value string) *String {
 	if !(s.value == value) {
-		s.chain.fail("\nexpected string equal to:\n %q\n\nbut got:\n %q",
-			value, s.value)
+		s.chain.fail("\nkey:%s\nexpected string equal to:\n %q\n\nbut got:\n %q",
+			s.key, value, s.value)
 	}
 	return s
 }
@@ -125,7 +126,8 @@ func (s *String) Equal(value string) *String {
 //  str.NotEqual("Goodbye")
 func (s *String) NotEqual(value string) *String {
 	if !(s.value != value) {
-		s.chain.fail("\nexpected string not equal to:\n %q", value)
+		s.chain.fail("\nkey:%s\nexpected string not equal to:\n %q",
+			s.key, value)
 	}
 	return s
 }
@@ -139,8 +141,8 @@ func (s *String) NotEqual(value string) *String {
 func (s *String) EqualFold(value string) *String {
 	if !strings.EqualFold(s.value, value) {
 		s.chain.fail(
-			"\nexpected string equal to (case-insensitive):\n %q\n\nbut got:\n %q",
-			value, s.value)
+			"\nkey:%s\nexpected string equal to (case-insensitive):\n %q\n\nbut got:\n %q",
+			s.key, value, s.value)
 	}
 	return s
 }
@@ -154,8 +156,8 @@ func (s *String) EqualFold(value string) *String {
 func (s *String) NotEqualFold(value string) *String {
 	if strings.EqualFold(s.value, value) {
 		s.chain.fail(
-			"\nexpected string not equal to (case-insensitive):\n %q\n\nbut got:\n %q",
-			value, s.value)
+			"\nkey:%s\nexpected string not equal to (case-insensitive):\n %q\n\nbut got:\n %q",
+			s.key, value, s.value)
 	}
 	return s
 }
@@ -168,8 +170,8 @@ func (s *String) NotEqualFold(value string) *String {
 func (s *String) Contains(value string) *String {
 	if !strings.Contains(s.value, value) {
 		s.chain.fail(
-			"\nexpected string containing substring:\n %q\n\nbut got:\n %q",
-			value, s.value)
+			"\nkey:%s\nexpected string containing substring:\n %q\n\nbut got:\n %q",
+			s.key, value, s.value)
 	}
 	return s
 }
@@ -182,8 +184,8 @@ func (s *String) Contains(value string) *String {
 func (s *String) NotContains(value string) *String {
 	if strings.Contains(s.value, value) {
 		s.chain.fail(
-			"\nexpected string not containing substring:\n %q\n\nbut got:\n %q",
-			value, s.value)
+			"\nkey:%s\nexpected string not containing substring:\n %q\n\nbut got:\n %q",
+			s.key, value, s.value)
 	}
 	return s
 }
@@ -197,8 +199,9 @@ func (s *String) NotContains(value string) *String {
 func (s *String) ContainsFold(value string) *String {
 	if !strings.Contains(strings.ToLower(s.value), strings.ToLower(value)) {
 		s.chain.fail(
-			"\nexpected string containing substring (case-insensitive):\n %q"+
-				"\n\nbut got:\n %q", value, s.value)
+			"\nkey:%s\nexpected string containing substring (case-insensitive):\n %q"+
+				"\n\nbut got:\n %q",
+			s.key, value, s.value)
 	}
 	return s
 }
@@ -212,8 +215,9 @@ func (s *String) ContainsFold(value string) *String {
 func (s *String) NotContainsFold(value string) *String {
 	if strings.Contains(strings.ToLower(s.value), strings.ToLower(value)) {
 		s.chain.fail(
-			"\nexpected string not containing substring (case-insensitive):\n %q"+
-				"\n\nbut got:\n %q", value, s.value)
+			"\nkey:%s\nexpected string not containing substring (case-insensitive):\n %q"+
+				"\n\nbut got:\n %q",
+			s.key, value, s.value)
 	}
 	return s
 }
@@ -247,8 +251,8 @@ func (s *String) Match(re string) *Match {
 
 	m := r.FindStringSubmatch(s.value)
 	if m == nil {
-		s.chain.fail("\nexpected string matching regexp:\n `%s`\n\nbut got:\n %q",
-			re, s.value)
+		s.chain.fail("\nkey:%s\nexpected string matching regexp:\n `%s`\n\nbut got:\n %q",
+			s.key, re, s.value)
 		return makeMatch(s.chain, nil, nil)
 	}
 
@@ -279,8 +283,8 @@ func (s *String) MatchAll(re string) []Match {
 
 	matches := r.FindAllStringSubmatch(s.value, -1)
 	if matches == nil {
-		s.chain.fail("\nexpected string matching regexp:\n `%s`\n\nbut got:\n %q",
-			re, s.value)
+		s.chain.fail("\nkey:%s\nexpected string matching regexp:\n `%s`\n\nbut got:\n %q",
+			s.key, re, s.value)
 		return []Match{}
 	}
 
@@ -311,8 +315,8 @@ func (s *String) NotMatch(re string) *String {
 	}
 
 	if r.MatchString(s.value) {
-		s.chain.fail("\nexpected string not matching regexp:\n `%s`\n\nbut got:\n %q",
-			re, s.value)
+		s.chain.fail("\nkey:%s\nexpected string not matching regexp:\n `%s`\n\nbut got:\n %q",
+			s.key, re, s.value)
 		return s
 	}
 

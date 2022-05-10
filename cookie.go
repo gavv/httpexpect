@@ -47,9 +47,9 @@ func (c *Cookie) Raw() *http.Cookie {
 //  cookie.Name().Equal("session")
 func (c *Cookie) Name() *String {
 	if c.chain.failed() {
-		return &String{c.chain, ""}
+		return &String{c.chain, "", ""}
 	}
-	return &String{c.chain, c.value.Name}
+	return &String{c.chain, c.value.Name, ""}
 }
 
 // Value returns a new String object that may be used to inspect
@@ -60,9 +60,9 @@ func (c *Cookie) Name() *String {
 //  cookie.Value().Equal("gH6z7Y")
 func (c *Cookie) Value() *String {
 	if c.chain.failed() {
-		return &String{c.chain, ""}
+		return &String{c.chain, "", ""}
 	}
-	return &String{c.chain, c.value.Value}
+	return &String{c.chain, c.value.Value, ""}
 }
 
 // Domain returns a new String object that may be used to inspect
@@ -73,9 +73,9 @@ func (c *Cookie) Value() *String {
 //  cookie.Domain().Equal("example.com")
 func (c *Cookie) Domain() *String {
 	if c.chain.failed() {
-		return &String{c.chain, ""}
+		return &String{c.chain, "", ""}
 	}
-	return &String{c.chain, c.value.Domain}
+	return &String{c.chain, c.value.Domain, ""}
 }
 
 // Path returns a new String object that may be used to inspect
@@ -86,9 +86,9 @@ func (c *Cookie) Domain() *String {
 //  cookie.Path().Equal("/foo")
 func (c *Cookie) Path() *String {
 	if c.chain.failed() {
-		return &String{c.chain, ""}
+		return &String{c.chain, "", ""}
 	}
-	return &String{c.chain, c.value.Path}
+	return &String{c.chain, c.value.Path, ""}
 }
 
 // Expires returns a new DateTime object that may be used to inspect
@@ -99,9 +99,9 @@ func (c *Cookie) Path() *String {
 //  cookie.Expires().InRange(time.Now(), time.Now().Add(time.Hour * 24))
 func (c *Cookie) Expires() *DateTime {
 	if c.chain.failed() {
-		return &DateTime{c.chain, time.Unix(0, 0)}
+		return &DateTime{c.chain, time.Unix(0, 0), ""}
 	}
-	return &DateTime{c.chain, c.value.Expires}
+	return &DateTime{c.chain, c.value.Expires, ""}
 }
 
 // MaxAge returns a new Duration object that may be used to inspect

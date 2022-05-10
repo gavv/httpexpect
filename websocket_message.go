@@ -247,7 +247,7 @@ func (m *WebsocketMessage) checkClosed(where string) bool {
 //  msg.Body().NotEmpty()
 //  msg.Body().Length().Equal(100)
 func (m *WebsocketMessage) Body() *String {
-	return &String{m.chain, string(m.content)}
+	return &String{m.chain, string(m.content), ""}
 }
 
 // NoContent succeeds if WebSocket message has no content (is empty).
@@ -280,7 +280,7 @@ func (m *WebsocketMessage) NoContent() *WebsocketMessage {
 //  msg := conn.Expect()
 //  msg.JSON().Array().Elements("foo", "bar")
 func (m *WebsocketMessage) JSON() *Value {
-	return &Value{m.chain, m.getJSON()}
+	return &Value{m.chain, m.getJSON(), ""}
 }
 
 func (m *WebsocketMessage) getJSON() interface{} {

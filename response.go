@@ -134,9 +134,9 @@ func (r *Response) RoundTripTime() *Duration {
 // Deprecated: use RoundTripTime instead.
 func (r *Response) Duration() *Number {
 	if r.rtt == nil {
-		return &Number{r.chain, 0}
+		return &Number{r.chain, 0, ""}
 	}
-	return &Number{r.chain, float64(*r.rtt)}
+	return &Number{r.chain, float64(*r.rtt), ""}
 }
 
 // Status succeeds if response contains given status code.
@@ -224,7 +224,7 @@ func (r *Response) Headers() *Object {
 	if !r.chain.failed() {
 		value, _ = canonMap(&r.chain, r.resp.Header)
 	}
-	return &Object{r.chain, value}
+	return &Object{r.chain, value, ""}
 }
 
 // Header returns a new String object that may be used to inspect given header.
@@ -238,7 +238,7 @@ func (r *Response) Header(header string) *String {
 	if !r.chain.failed() {
 		value = r.resp.Header.Get(header)
 	}
-	return &String{r.chain, value}
+	return &String{r.chain, value, ""}
 }
 
 // Cookies returns a new Array object with all cookie names set by this response.
@@ -253,13 +253,13 @@ func (r *Response) Header(header string) *String {
 //  resp.Cookies().Contains("session")
 func (r *Response) Cookies() *Array {
 	if r.chain.failed() {
-		return &Array{r.chain, nil}
+		return &Array{r.chain, nil, ""}
 	}
 	names := []interface{}{}
 	for _, c := range r.cookies {
 		names = append(names, c.Name)
 	}
-	return &Array{r.chain, names}
+	return &Array{r.chain, names, ""}
 }
 
 // Cookie returns a new Cookie object that may be used to inspect given cookie
@@ -313,7 +313,7 @@ func (r *Response) Websocket() *Websocket {
 //  resp.Body().NotEmpty()
 //  resp.Body().Length().Equal(100)
 func (r *Response) Body() *String {
-	return &String{r.chain, string(r.content)}
+	return &String{r.chain, string(r.content), ""}
 }
 
 // NoContent succeeds if response contains empty Content-Type header and
@@ -390,7 +390,7 @@ func (r *Response) Text(opts ...ContentOpts) *String {
 		content = string(r.content)
 	}
 
-	return &String{r.chain, content}
+	return &String{r.chain, content, ""}
 }
 
 // Form returns a new Object that may be used to inspect form contents
@@ -408,7 +408,7 @@ func (r *Response) Text(opts ...ContentOpts) *String {
 //  }).Value("foo").Equal("bar")
 func (r *Response) Form(opts ...ContentOpts) *Object {
 	object := r.getForm(opts...)
-	return &Object{r.chain, object}
+	return &Object{r.chain, object, ""}
 }
 
 func (r *Response) getForm(opts ...ContentOpts) map[string]interface{} {
@@ -445,7 +445,7 @@ func (r *Response) getForm(opts ...ContentOpts) map[string]interface{} {
 //  }).Array.Elements("foo", "bar")
 func (r *Response) JSON(opts ...ContentOpts) *Value {
 	value := r.getJSON(opts...)
-	return &Value{r.chain, value}
+	return &Value{r.chain, value, ""}
 }
 
 func (r *Response) getJSON(opts ...ContentOpts) interface{} {
@@ -485,7 +485,7 @@ func (r *Response) getJSON(opts ...ContentOpts) interface{} {
 //  }).Array.Elements("foo", "bar")
 func (r *Response) JSONP(callback string, opts ...ContentOpts) *Value {
 	value := r.getJSONP(callback, opts...)
-	return &Value{r.chain, value}
+	return &Value{r.chain, value, ""}
 }
 
 var (

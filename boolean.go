@@ -5,6 +5,7 @@ package httpexpect
 type Boolean struct {
 	chain chain
 	value bool
+	key   string
 }
 
 // NewBoolean returns a new Boolean given a reporter used to report
@@ -15,7 +16,7 @@ type Boolean struct {
 // Example:
 //  boolean := NewBoolean(t, true)
 func NewBoolean(reporter Reporter, value bool) *Boolean {
-	return &Boolean{makeChain(reporter), value}
+	return &Boolean{makeChain(reporter), value, ""}
 }
 
 // Raw returns underlying value attached to Boolean.
@@ -46,7 +47,7 @@ func (b *Boolean) Schema(schema interface{}) *Boolean {
 //  boolean.Equal(true)
 func (b *Boolean) Equal(value bool) *Boolean {
 	if !(b.value == value) {
-		b.chain.fail("expected boolean == %v, but got %v", value, b.value)
+		b.chain.fail("\nkey:%s\nexpected boolean == %v, but got %v", b.key, value, b.value)
 	}
 	return b
 }
@@ -58,7 +59,7 @@ func (b *Boolean) Equal(value bool) *Boolean {
 //  boolean.NotEqual(false)
 func (b *Boolean) NotEqual(value bool) *Boolean {
 	if !(b.value != value) {
-		b.chain.fail("expected boolean != %v, but got %v", value, b.value)
+		b.chain.fail("\nkey:%s\nexpected boolean != %v, but got %v", b.key, value, b.value)
 	}
 	return b
 }

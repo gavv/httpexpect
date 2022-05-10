@@ -12,7 +12,7 @@ func TestStringFailed(t *testing.T) {
 
 	chain.fail("fail")
 
-	value := &String{chain, ""}
+	value := &String{chain, "", ""}
 
 	value.Path("$").chain.assertFailed(t)
 	value.Schema("")

@@ -9,6 +9,7 @@ import (
 type Array struct {
 	chain chain
 	value []interface{}
+	key   string
 }
 
 // NewArray returns a new Array given a reporter used to report failures
@@ -26,7 +27,7 @@ func NewArray(reporter Reporter, value []interface{}) *Array {
 	} else {
 		value, _ = canonArray(&chain, value)
 	}
-	return &Array{chain, value}
+	return &Array{chain, value, ""}
 }
 
 // Raw returns underlying value attached to Array.
@@ -56,7 +57,7 @@ func (a *Array) Schema(schema interface{}) *Array {
 //  array := NewArray(t, []interface{}{1, 2, 3})
 //  array.Length().Equal(3)
 func (a *Array) Length() *Number {
-	return &Number{a.chain, float64(len(a.value))}
+	return &Number{a.chain, float64(len(a.value)), a.key}
 }
 
 // Element returns a new Value object that may be used to inspect array element
@@ -76,9 +77,9 @@ func (a *Array) Element(index int) *Value {
 			index,
 			0,
 			len(a.value))
-		return &Value{a.chain, nil}
+		return &Value{a.chain, nil, ""}
 	}
-	return &Value{a.chain, a.value[index]}
+	return &Value{a.chain, a.value[index], ""}
 }
 
 // First returns a new Value object that may be used to inspect first element
@@ -93,9 +94,9 @@ func (a *Array) Element(index int) *Value {
 func (a *Array) First() *Value {
 	if len(a.value) < 1 {
 		a.chain.fail("\narray is empty")
-		return &Value{a.chain, nil}
+		return &Value{a.chain, nil, ""}
 	}
-	return &Value{a.chain, a.value[0]}
+	return &Value{a.chain, a.value[0], ""}
 }
 
 // Last returns a new Value object that may be used to inspect last element
@@ -110,9 +111,9 @@ func (a *Array) First() *Value {
 func (a *Array) Last() *Value {
 	if len(a.value) < 1 {
 		a.chain.fail("\narray is empty")
-		return &Value{a.chain, nil}
+		return &Value{a.chain, nil, ""}
 	}
-	return &Value{a.chain, a.value[len(a.value)-1]}
+	return &Value{a.chain, a.value[len(a.value)-1], ""}
 }
 
 // Iter returns a new slice of Values attached to array elements.
@@ -130,7 +131,7 @@ func (a *Array) Iter() []Value {
 	}
 	ret := []Value{}
 	for n := range a.value {
-		ret = append(ret, Value{a.chain, a.value[n]})
+		ret = append(ret, Value{a.chain, a.value[n], ""})
 	}
 	return ret
 }

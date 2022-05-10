@@ -25,16 +25,16 @@ func toString(str interface{}) (s string, ok bool) {
 
 func getPath(chain *chain, value interface{}, path string) *Value {
 	if chain.failed() {
-		return &Value{*chain, nil}
+		return &Value{*chain, nil, ""}
 	}
 
 	result, err := jsonpath.Read(value, path)
 	if err != nil {
 		chain.fail(err.Error())
-		return &Value{*chain, nil}
+		return &Value{*chain, nil, ""}
 	}
 
-	return &Value{*chain, result}
+	return &Value{*chain, result, ""}
 }
 
 func checkSchema(chain *chain, value, schema interface{}) {
