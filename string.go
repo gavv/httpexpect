@@ -113,7 +113,7 @@ func (s *String) NotEmpty() *String {
 //  str.Equal("Hello")
 func (s *String) Equal(value string) *String {
 	if !(s.value == value) {
-		s.chain.fail("\nkey:%s\nexpected string equal to:\n %q\n\nbut got:\n %q",
+		s.chain.fail("\nkey:%s\n\nexpected string equal to:\n %q\n\nbut got:\n %q",
 			s.key, value, s.value)
 	}
 	return s
@@ -126,7 +126,7 @@ func (s *String) Equal(value string) *String {
 //  str.NotEqual("Goodbye")
 func (s *String) NotEqual(value string) *String {
 	if !(s.value != value) {
-		s.chain.fail("\nkey:%s\nexpected string not equal to:\n %q",
+		s.chain.fail("\nkey:%s\n\nexpected string not equal to:\n %q",
 			s.key, value)
 	}
 	return s
@@ -141,7 +141,7 @@ func (s *String) NotEqual(value string) *String {
 func (s *String) EqualFold(value string) *String {
 	if !strings.EqualFold(s.value, value) {
 		s.chain.fail(
-			"\nkey:%s\nexpected string equal to (case-insensitive):\n %q\n\nbut got:\n %q",
+			"\nkey:%s\n\nexpected string equal to (case-insensitive):\n %q\n\nbut got:\n %q",
 			s.key, value, s.value)
 	}
 	return s
@@ -156,7 +156,7 @@ func (s *String) EqualFold(value string) *String {
 func (s *String) NotEqualFold(value string) *String {
 	if strings.EqualFold(s.value, value) {
 		s.chain.fail(
-			"\nkey:%s\nexpected string not equal to (case-insensitive):\n %q\n\nbut got:\n %q",
+			"\nkey:%s\n\nexpected string not equal to (case-insensitive):\n %q\n\nbut got:\n %q",
 			s.key, value, s.value)
 	}
 	return s
@@ -170,7 +170,7 @@ func (s *String) NotEqualFold(value string) *String {
 func (s *String) Contains(value string) *String {
 	if !strings.Contains(s.value, value) {
 		s.chain.fail(
-			"\nkey:%s\nexpected string containing substring:\n %q\n\nbut got:\n %q",
+			"\nkey:%s\n\nexpected string containing substring:\n %q\n\nbut got:\n %q",
 			s.key, value, s.value)
 	}
 	return s
@@ -184,7 +184,7 @@ func (s *String) Contains(value string) *String {
 func (s *String) NotContains(value string) *String {
 	if strings.Contains(s.value, value) {
 		s.chain.fail(
-			"\nkey:%s\nexpected string not containing substring:\n %q\n\nbut got:\n %q",
+			"\nkey:%s\n\nexpected string not containing substring:\n %q\n\nbut got:\n %q",
 			s.key, value, s.value)
 	}
 	return s
@@ -199,7 +199,7 @@ func (s *String) NotContains(value string) *String {
 func (s *String) ContainsFold(value string) *String {
 	if !strings.Contains(strings.ToLower(s.value), strings.ToLower(value)) {
 		s.chain.fail(
-			"\nkey:%s\nexpected string containing substring (case-insensitive):\n %q"+
+			"\nkey:%s\n\nexpected string containing substring (case-insensitive):\n %q"+
 				"\n\nbut got:\n %q",
 			s.key, value, s.value)
 	}
@@ -215,7 +215,7 @@ func (s *String) ContainsFold(value string) *String {
 func (s *String) NotContainsFold(value string) *String {
 	if strings.Contains(strings.ToLower(s.value), strings.ToLower(value)) {
 		s.chain.fail(
-			"\nkey:%s\nexpected string not containing substring (case-insensitive):\n %q"+
+			"\nkey:%s\n\nexpected string not containing substring (case-insensitive):\n %q"+
 				"\n\nbut got:\n %q",
 			s.key, value, s.value)
 	}
@@ -251,7 +251,7 @@ func (s *String) Match(re string) *Match {
 
 	m := r.FindStringSubmatch(s.value)
 	if m == nil {
-		s.chain.fail("\nkey:%s\nexpected string matching regexp:\n `%s`\n\nbut got:\n %q",
+		s.chain.fail("\nkey:%s\n\nexpected string matching regexp:\n `%s`\n\nbut got:\n %q",
 			s.key, re, s.value)
 		return makeMatch(s.chain, nil, nil)
 	}
@@ -283,7 +283,7 @@ func (s *String) MatchAll(re string) []Match {
 
 	matches := r.FindAllStringSubmatch(s.value, -1)
 	if matches == nil {
-		s.chain.fail("\nkey:%s\nexpected string matching regexp:\n `%s`\n\nbut got:\n %q",
+		s.chain.fail("\nkey:%s\n\nexpected string matching regexp:\n `%s`\n\nbut got:\n %q",
 			s.key, re, s.value)
 		return []Match{}
 	}
@@ -315,7 +315,7 @@ func (s *String) NotMatch(re string) *String {
 	}
 
 	if r.MatchString(s.value) {
-		s.chain.fail("\nkey:%s\nexpected string not matching regexp:\n `%s`\n\nbut got:\n %q",
+		s.chain.fail("\nkey:%s\n\nexpected string not matching regexp:\n `%s`\n\nbut got:\n %q",
 			s.key, re, s.value)
 		return s
 	}

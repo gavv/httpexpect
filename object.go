@@ -88,9 +88,9 @@ func (o *Object) Value(key string) *Value {
 	if !ok {
 		o.chain.fail("\nexpected object containing key '%s', but got:\n%s",
 			key, dumpValue(o.value))
-		return &Value{o.chain, nil, ""}
+		return &Value{o.chain, nil, key}
 	}
-	return &Value{o.chain, value, ""}
+	return &Value{o.chain, value, key}
 }
 
 // Empty succeeds if object is empty.

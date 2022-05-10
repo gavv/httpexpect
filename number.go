@@ -59,7 +59,7 @@ func (n *Number) Equal(value interface{}) *Number {
 		return n
 	}
 	if !(n.value == v) {
-		n.chain.fail("\nkey:%s\nexpected number equal to:\n %v\n\nbut got:\n %v",
+		n.chain.fail("\nkey:%s\n\nexpected number equal to:\n %v\n\nbut got:\n %v",
 			n.key, v, n.value)
 	}
 	return n
@@ -80,7 +80,7 @@ func (n *Number) NotEqual(value interface{}) *Number {
 		return n
 	}
 	if !(n.value != v) {
-		n.chain.fail("\nkey:%s\nexpected number not equal to:\n %v\n\nbut got:\n %v",
+		n.chain.fail("\nkey:%s\n\nexpected number not equal to:\n %v\n\nbut got:\n %v",
 			v, n.value)
 	}
 	return n
@@ -93,7 +93,7 @@ func (n *Number) NotEqual(value interface{}) *Number {
 //  number.EqualDelta(123.2, 0.3)
 func (n *Number) EqualDelta(value, delta float64) *Number {
 	if math.IsNaN(n.value) || math.IsNaN(value) || math.IsNaN(delta) {
-		n.chain.fail("\nkey:%s\nexpected number equal to:\n %v\n\nbut got:\n %v\n\ndelta:\n %v",
+		n.chain.fail("\nkey:%s\n\nexpected number equal to:\n %v\n\nbut got:\n %v\n\ndelta:\n %v",
 			n.key, value, n.value, delta)
 		return n
 	}
@@ -101,7 +101,7 @@ func (n *Number) EqualDelta(value, delta float64) *Number {
 	diff := (n.value - value)
 
 	if diff < -delta || diff > delta {
-		n.chain.fail("\nkey:%s\nexpected number equal to:\n %v\n\nbut got:\n %v\n\ndelta:\n %v",
+		n.chain.fail("\nkey:%s\n\nexpected number equal to:\n %v\n\nbut got:\n %v\n\ndelta:\n %v",
 			n.key, value, n.value, delta)
 		return n
 	}
@@ -117,7 +117,7 @@ func (n *Number) EqualDelta(value, delta float64) *Number {
 func (n *Number) NotEqualDelta(value, delta float64) *Number {
 	if math.IsNaN(n.value) || math.IsNaN(value) || math.IsNaN(delta) {
 		n.chain.fail(
-			"\nkey:%s\nexpected number not equal to:\n %v\n\nbut got:\n %v\n\ndelta:\n %v",
+			"\nkey:%s\n\nexpected number not equal to:\n %v\n\nbut got:\n %v\n\ndelta:\n %v",
 			n.key, value, n.value, delta)
 		return n
 	}
@@ -126,7 +126,7 @@ func (n *Number) NotEqualDelta(value, delta float64) *Number {
 
 	if !(diff < -delta || diff > delta) {
 		n.chain.fail(
-			"\nkey:%s\nexpected number not equal to:\n %v\n\nbut got:\n %v\n\ndelta:\n %v",
+			"\nkey:%s\n\nexpected number not equal to:\n %v\n\nbut got:\n %v\n\ndelta:\n %v",
 			n.key, value, n.value, delta)
 		return n
 	}
@@ -149,7 +149,7 @@ func (n *Number) Gt(value interface{}) *Number {
 		return n
 	}
 	if !(n.value > v) {
-		n.chain.fail("\nkey:%s\nexpected number > then:\n %v\n\nbut got:\n %v",
+		n.chain.fail("\nkey:%s\n\nexpected number > then:\n %v\n\nbut got:\n %v",
 			n.key, v, n.value)
 	}
 	return n
@@ -170,7 +170,7 @@ func (n *Number) Ge(value interface{}) *Number {
 		return n
 	}
 	if !(n.value >= v) {
-		n.chain.fail("\nkey:%s\nexpected number >= then:\n %v\n\nbut got:\n %v",
+		n.chain.fail("\nkey:%s\n\nexpected number >= then:\n %v\n\nbut got:\n %v",
 			n.key, v, n.value)
 	}
 	return n
@@ -191,7 +191,7 @@ func (n *Number) Lt(value interface{}) *Number {
 		return n
 	}
 	if !(n.value < v) {
-		n.chain.fail("\nkey:%s\nexpected number < then:\n %v\n\nbut got:\n %v",
+		n.chain.fail("\nkey:%s\n\nexpected number < then:\n %v\n\nbut got:\n %v",
 			n.key, v, n.value)
 	}
 	return n
@@ -212,7 +212,7 @@ func (n *Number) Le(value interface{}) *Number {
 		return n
 	}
 	if !(n.value <= v) {
-		n.chain.fail("\nkey:%s\nexpected number <= then:\n %v\n\nbut got:\n %v",
+		n.chain.fail("\nkey:%s\n\nexpected number <= then:\n %v\n\nbut got:\n %v",
 			n.key, v, n.value)
 	}
 	return n
@@ -238,7 +238,7 @@ func (n *Number) InRange(min, max interface{}) *Number {
 		return n
 	}
 	if !(n.value >= a && n.value <= b) {
-		n.chain.fail("\nkey:%s\nexpected number in range:\n [%v; %v]\n\nbut got:\n %v",
+		n.chain.fail("\nkey:%s\n\nexpected number in range:\n [%v; %v]\n\nbut got:\n %v",
 			n.key, a, b, n.value)
 	}
 	return n

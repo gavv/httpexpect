@@ -134,7 +134,7 @@ func (v *Value) Schema(schema interface{}) *Value {
 func (v *Value) Object() *Object {
 	data, ok := v.value.(map[string]interface{})
 	if !ok {
-		v.chain.fail("\nkey:%s\nexpected object value (map or struct), but got:\n%s",
+		v.chain.fail("\nkey:%s\n\nexpected object value (map or struct), but got:\n%s",
 			v.key,
 			dumpValue(v.value))
 	}
@@ -152,7 +152,7 @@ func (v *Value) Object() *Object {
 func (v *Value) Array() *Array {
 	data, ok := v.value.([]interface{})
 	if !ok {
-		v.chain.fail("\nkey:%s\nexpected array value, but got:\n%s",
+		v.chain.fail("\nkey:%s\n\nexpected array value, but got:\n%s",
 			v.key,
 			dumpValue(v.value))
 	}
@@ -170,7 +170,7 @@ func (v *Value) Array() *Array {
 func (v *Value) String() *String {
 	data, ok := v.value.(string)
 	if !ok {
-		v.chain.fail("\nkey:%s\nexpected string value, but got:\n%s",
+		v.chain.fail("\nkey:%s\n\nexpected string value, but got:\n%s",
 			v.key,
 			dumpValue(v.value))
 	}
@@ -188,7 +188,7 @@ func (v *Value) String() *String {
 func (v *Value) Number() *Number {
 	data, ok := v.value.(float64)
 	if !ok {
-		v.chain.fail("\nkey:%s\nexpected numeric value, but got:\n%s",
+		v.chain.fail("\nkey:%s\n\nexpected numeric value, but got:\n%s",
 			v.key,
 			dumpValue(v.value))
 	}
@@ -206,7 +206,7 @@ func (v *Value) Number() *Number {
 func (v *Value) Boolean() *Boolean {
 	data, ok := v.value.(bool)
 	if !ok {
-		v.chain.fail("\nkey:%s\nexpected boolean value, but got:\n%s",
+		v.chain.fail("\nkey:%s\n\nexpected boolean value, but got:\n%s",
 			v.key,
 			dumpValue(v.value))
 	}
@@ -227,7 +227,7 @@ func (v *Value) Boolean() *Boolean {
 //  value.Null()
 func (v *Value) Null() *Value {
 	if v.value != nil {
-		v.chain.fail("\nkey:%s\nexpected nil value, but got:\n%s",
+		v.chain.fail("\nkey:%s\n\nexpected nil value, but got:\n%s",
 			v.key,
 			dumpValue(v.value))
 	}
@@ -248,7 +248,7 @@ func (v *Value) Null() *Value {
 //  value.Null()
 func (v *Value) NotNull() *Value {
 	if v.value == nil {
-		v.chain.fail("\nkey:%s\nexpected non-nil value, but got:\n%s",
+		v.chain.fail("\nkey:%s\n\nexpected non-nil value, but got:\n%s",
 			v.key,
 			dumpValue(v.value))
 	}
@@ -267,7 +267,7 @@ func (v *Value) Equal(value interface{}) *Value {
 		return v
 	}
 	if !reflect.DeepEqual(expected, v.value) {
-		v.chain.fail("\nkey:%s\nexpected value equal to:\n%s\n\nbut got:\n%s\n\ndiff:\n%s",
+		v.chain.fail("\nkey:%s\n\nexpected value equal to:\n%s\n\nbut got:\n%s\n\ndiff:\n%s",
 			v.key,
 			dumpValue(expected),
 			dumpValue(v.value),
@@ -288,7 +288,7 @@ func (v *Value) NotEqual(value interface{}) *Value {
 		return v
 	}
 	if reflect.DeepEqual(expected, v.value) {
-		v.chain.fail("\nkey:%s\nexpected value not equal to:\n%s",
+		v.chain.fail("\nkey:%s\n\nexpected value not equal to:\n%s",
 			v.key,
 			dumpValue(expected))
 	}

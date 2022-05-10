@@ -47,7 +47,7 @@ func (b *Boolean) Schema(schema interface{}) *Boolean {
 //  boolean.Equal(true)
 func (b *Boolean) Equal(value bool) *Boolean {
 	if !(b.value == value) {
-		b.chain.fail("\nkey:%s\nexpected boolean == %v, but got %v", b.key, value, b.value)
+		b.chain.fail("\nkey:%s\n\nexpected boolean == %v, but got %v", b.key, value, b.value)
 	}
 	return b
 }
@@ -59,7 +59,7 @@ func (b *Boolean) Equal(value bool) *Boolean {
 //  boolean.NotEqual(false)
 func (b *Boolean) NotEqual(value bool) *Boolean {
 	if !(b.value != value) {
-		b.chain.fail("\nkey:%s\nexpected boolean != %v, but got %v", b.key, value, b.value)
+		b.chain.fail("\nkey:%s\n\nexpected boolean != %v, but got %v", b.key, value, b.value)
 	}
 	return b
 }
