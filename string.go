@@ -3,6 +3,7 @@ package httpexpect
 import (
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -55,7 +56,20 @@ func (s *String) Length() *Number {
 	return &Number{s.chain, float64(len(s.value))}
 }
 
-// DateTime parses date/time from string an returns a new DateTime object.
+// Number parses float from string and returns a new Number object.
+//
+// Example:
+//  str := NewString(t, "1234")
+//  str.Number()
+func (v *String) Number() *Number {
+	num, err := strconv.ParseFloat(v.value, 64)
+	if err != nil {
+		v.chain.fail(err.Error())
+	}
+	return &Number{v.chain, num}
+}
+
+// DateTime parses date/time from string and returns a new DateTime object.
 //
 // If layout is given, DateTime() uses time.Parse() with given layout.
 // Otherwise, it uses http.ParseTime(). If pasing error occurred,
