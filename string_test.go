@@ -193,6 +193,28 @@ func TestStringLength(t *testing.T) {
 	assert.Equal(t, 7.0, num.Raw())
 }
 
+func TestStringNumber(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value1 := NewString(reporter, "1234567")
+	num1 := value1.Number()
+	value1.chain.assertOK(t)
+	num1.chain.assertOK(t)
+	assert.Equal(t, float64(1234567), num1.Raw())
+
+	value2 := NewString(reporter, "11.22")
+	num2 := value2.Number()
+	value2.chain.assertOK(t)
+	num2.chain.assertOK(t)
+	assert.Equal(t, float64(11.22), num2.Raw())
+
+	value3 := NewString(reporter, "a1")
+	num3 := value3.Number()
+	value3.chain.assertFailed(t)
+	num3.chain.assertFailed(t)
+	assert.Equal(t, float64(0), num3.Raw())
+}
+
 func TestStringDateTime(t *testing.T) {
 	reporter := newMockReporter(t)
 
