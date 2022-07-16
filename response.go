@@ -2,7 +2,9 @@ package httpexpect
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"io"
 	"io/ioutil"
 	"mime"
 	"net/http"
@@ -45,6 +47,21 @@ type Response struct {
 	cookies   []*http.Cookie
 	websocket *websocket.Conn
 	rtt       *time.Duration
+}
+
+// bodyWithCancel is a wrapper for an io.ReadCloser with also a
+// cancel function which is called when the bodyWithCancel.Close is used
+type bodyWithCancel struct {
+	io.ReadCloser
+
+	cancel context.CancelFunc
+}
+
+// Close wraps contest and reader Close method
+func (bwc bodyWithCancel) Close() error {
+	bwc.ReadCloser.Close()
+	bwc.cancel()
+	return nil
 }
 
 // NewResponse returns a new Response given a reporter used to report
@@ -101,6 +118,7 @@ func getContent(chain *chain, resp *http.Response) []byte {
 	if resp.Body == nil {
 		return []byte{}
 	}
+	defer resp.Body.Close()
 
 	content, err := ioutil.ReadAll(resp.Body)
 	if err != nil {

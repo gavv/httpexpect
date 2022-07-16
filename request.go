@@ -1310,6 +1310,8 @@ func (r *Request) retryRequest(reqFunc func() (resp *http.Response, err error)) 
 	resp *http.Response, elapsed time.Duration, err error,
 ) {
 	var body []byte
+	var cancel context.CancelFunc
+
 	if r.maxRetries > 0 && r.http.Body != nil && r.http.Body != http.NoBody {
 		body, _ = ioutil.ReadAll(r.http.Body)
 	}
@@ -1329,26 +1331,31 @@ func (r *Request) retryRequest(reqFunc func() (resp *http.Response, err error)) 
 		func() {
 			if r.timeout > 0 {
 				var ctx context.Context
-				var cancel context.CancelFunc
 				if r.config.Context != nil {
 					ctx, cancel = context.WithTimeout(r.config.Context, r.timeout)
 				} else {
 					ctx, cancel = context.WithTimeout(context.Background(), r.timeout)
 				}
 
-				defer cancel()
 				r.http = r.http.WithContext(ctx)
 			}
 
 			start := time.Now()
 			resp, err = reqFunc()
 			elapsed = time.Since(start)
+
+			// wrap response body with context cancel
+			resp.Body = bodyWithCancel{
+				ReadCloser: resp.Body,
+				cancel:     cancel,
+			}
 		}()
 
 		if resp != nil {
 			for _, printer := range r.config.Printers {
 				printer.Response(resp, elapsed)
 			}
+			cancel()
 		}
 
 		i++
@@ -1357,6 +1364,7 @@ func (r *Request) retryRequest(reqFunc func() (resp *http.Response, err error)) 
 		}
 
 		if !r.shouldRetry(resp, err) {
+			cancel()
 			return
 		}
 
