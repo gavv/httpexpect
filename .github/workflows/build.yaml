@@ -26,15 +26,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Install Go
+      - name: Install Go lang
         uses: actions/setup-go@v2
         with:
           go-version: ${{ matrix.go }}
 
-      - name: Build
+      - name: Build the package
         run: go get -v .
+        
+      - name: clear the cache
+        run:  apt-get clean
 
-      - name: Run tests
+      - name: Run tests case
         run: go test -covermode=count -coverprofile=coverage.out
 
       - name: Run linters
