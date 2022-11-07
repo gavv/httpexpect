@@ -13,9 +13,10 @@ type (
 // FruitsHandler creates http.Handler for the fruits server.
 //
 // Routes:
-//  GET /fruits           get fruit list
-//  GET /fruits/{name}    get fruit
-//  PUT /fruits/{name}    add or update fruit
+//
+//	GET /fruits           get fruit list
+//	GET /fruits/{name}    get fruit
+//	PUT /fruits/{name}    add or update fruit
 func FruitsHandler() http.Handler {
 	fruits := fruitMap{}
 

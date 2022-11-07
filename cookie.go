@@ -17,10 +17,11 @@ type Cookie struct {
 // reporter and value should not be nil.
 //
 // Example:
-//   cookie := NewCookie(reporter, &http.Cookie{...})
-//   cookie.Domain().Equal("example.com")
-//   cookie.Path().Equal("/")
-//   cookie.Expires().InRange(time.Now(), time.Now().Add(time.Hour * 24))
+//
+//	cookie := NewCookie(reporter, &http.Cookie{...})
+//	cookie.Domain().Equal("example.com")
+//	cookie.Path().Equal("/")
+//	cookie.Expires().InRange(time.Now(), time.Now().Add(time.Hour * 24))
 func NewCookie(reporter Reporter, value *http.Cookie) *Cookie {
 	chain := makeChain(reporter)
 	if value == nil {
@@ -33,8 +34,9 @@ func NewCookie(reporter Reporter, value *http.Cookie) *Cookie {
 // This is the value originally passed to NewCookie.
 //
 // Example:
-//  cookie := NewCookie(t, c)
-//  assert.Equal(t, c, cookie.Raw())
+//
+//	cookie := NewCookie(t, c)
+//	assert.Equal(t, c, cookie.Raw())
 func (c *Cookie) Raw() *http.Cookie {
 	return c.value
 }
@@ -43,8 +45,9 @@ func (c *Cookie) Raw() *http.Cookie {
 // cookie name.
 //
 // Example:
-//  cookie := NewCookie(t, &http.Cookie{...})
-//  cookie.Name().Equal("session")
+//
+//	cookie := NewCookie(t, &http.Cookie{...})
+//	cookie.Name().Equal("session")
 func (c *Cookie) Name() *String {
 	if c.chain.failed() {
 		return &String{c.chain, ""}
@@ -56,8 +59,9 @@ func (c *Cookie) Name() *String {
 // cookie value.
 //
 // Example:
-//  cookie := NewCookie(t, &http.Cookie{...})
-//  cookie.Value().Equal("gH6z7Y")
+//
+//	cookie := NewCookie(t, &http.Cookie{...})
+//	cookie.Value().Equal("gH6z7Y")
 func (c *Cookie) Value() *String {
 	if c.chain.failed() {
 		return &String{c.chain, ""}
@@ -69,8 +73,9 @@ func (c *Cookie) Value() *String {
 // cookie domain.
 //
 // Example:
-//  cookie := NewCookie(t, &http.Cookie{...})
-//  cookie.Domain().Equal("example.com")
+//
+//	cookie := NewCookie(t, &http.Cookie{...})
+//	cookie.Domain().Equal("example.com")
 func (c *Cookie) Domain() *String {
 	if c.chain.failed() {
 		return &String{c.chain, ""}
@@ -82,8 +87,9 @@ func (c *Cookie) Domain() *String {
 // cookie path.
 //
 // Example:
-//  cookie := NewCookie(t, &http.Cookie{...})
-//  cookie.Path().Equal("/foo")
+//
+//	cookie := NewCookie(t, &http.Cookie{...})
+//	cookie.Path().Equal("/foo")
 func (c *Cookie) Path() *String {
 	if c.chain.failed() {
 		return &String{c.chain, ""}
@@ -95,8 +101,9 @@ func (c *Cookie) Path() *String {
 // cookie expiration date.
 //
 // Example:
-//  cookie := NewCookie(t, &http.Cookie{...})
-//  cookie.Expires().InRange(time.Now(), time.Now().Add(time.Hour * 24))
+//
+//	cookie := NewCookie(t, &http.Cookie{...})
+//	cookie.Expires().InRange(time.Now(), time.Now().Add(time.Hour * 24))
 func (c *Cookie) Expires() *DateTime {
 	if c.chain.failed() {
 		return &DateTime{c.chain, time.Unix(0, 0)}
@@ -114,9 +121,10 @@ func (c *Cookie) Expires() *DateTime {
 // is set and equals to zero.
 //
 // Example:
-//  cookie := NewCookie(t, &http.Cookie{...})
-//  cookie.MaxAge().IsSet()
-//  cookie.MaxAge().InRange(time.Minute, time.Minute*10)
+//
+//	cookie := NewCookie(t, &http.Cookie{...})
+//	cookie.MaxAge().IsSet()
+//	cookie.MaxAge().InRange(time.Minute, time.Minute*10)
 func (c *Cookie) MaxAge() *Duration {
 	if c.chain.failed() {
 		return &Duration{c.chain, nil}

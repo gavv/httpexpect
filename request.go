@@ -55,20 +55,22 @@ type Request struct {
 // method defines the HTTP method (GET, POST, PUT, etc.). path defines url path.
 //
 // Simple interpolation is allowed for {named} parameters in path:
-//  - if pathargs is given, it's used to substitute first len(pathargs) parameters,
-//    regardless of their names
-//  - if WithPath() or WithPathObject() is called, it's used to substitute given
-//    parameters by name
+//   - if pathargs is given, it's used to substitute first len(pathargs) parameters,
+//     regardless of their names
+//   - if WithPath() or WithPathObject() is called, it's used to substitute given
+//     parameters by name
 //
 // For example:
-//  req := NewRequest(config, "POST", "/repos/{user}/{repo}", "gavv", "httpexpect")
-//  // path will be "/repos/gavv/httpexpect"
+//
+//	req := NewRequest(config, "POST", "/repos/{user}/{repo}", "gavv", "httpexpect")
+//	// path will be "/repos/gavv/httpexpect"
 //
 // Or:
-//  req := NewRequest(config, "POST", "/repos/{user}/{repo}")
-//  req.WithPath("user", "gavv")
-//  req.WithPath("repo", "httpexpect")
-//  // path will be "/repos/gavv/httpexpect"
+//
+//	req := NewRequest(config, "POST", "/repos/{user}/{repo}")
+//	req.WithPath("user", "gavv")
+//	req.WithPath("repo", "httpexpect")
+//	// path will be "/repos/gavv/httpexpect"
 //
 // After interpolation, path is urlencoded and appended to Config.BaseURL,
 // separated by slash. If BaseURL ends with a slash and path (after interpolation)
@@ -130,10 +132,11 @@ func NewRequest(config Config, method, path string, pathargs ...interface{}) *Re
 // created Response.
 //
 // Example:
-//  req := NewRequest(config, "GET", "/path")
-//  req.WithMatcher(func (resp *httpexpect.Response) {
-//      resp.Header("API-Version").NotEmpty()
-//  })
+//
+//	req := NewRequest(config, "GET", "/path")
+//	req.WithMatcher(func (resp *httpexpect.Response) {
+//	    resp.Header("API-Version").NotEmpty()
+//	})
 func (r *Request) WithMatcher(matcher func(*Response)) *Request {
 	if r.chain.failed() {
 		return r
@@ -152,8 +155,9 @@ func (r *Request) WithMatcher(matcher func(*Response)) *Request {
 // http.Request struct, after it's encoded and before it's sent.
 //
 // Example:
-//  req := NewRequest(config, "PUT", "http://example.com/path")
-//  req.WithTransformer(func(r *http.Request) { r.Header.Add("foo", "bar") })
+//
+//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req.WithTransformer(func(r *http.Request) { r.Header.Add("foo", "bar") })
 func (r *Request) WithTransformer(transform func(*http.Request)) *Request {
 	if r.chain.failed() {
 		return r
@@ -173,12 +177,13 @@ func (r *Request) WithTransformer(transform func(*http.Request)) *Request {
 // request and receive a response.
 //
 // Example:
-//  req := NewRequest(config, "GET", "/path")
-//  req.WithClient(&http.Client{
-//    Transport: &http.Transport{
-//      DisableCompression: true,
-//    },
-//  })
+//
+//	req := NewRequest(config, "GET", "/path")
+//	req.WithClient(&http.Client{
+//	  Transport: &http.Transport{
+//	    DisableCompression: true,
+//	  },
+//	})
 func (r *Request) WithClient(client Client) *Request {
 	if r.chain.failed() {
 		return r
@@ -198,8 +203,9 @@ func (r *Request) WithClient(client Client) *Request {
 // jar. Otherwise, the whole client is overwritten with a new client.
 //
 // Example:
-//  req := NewRequest(config, "GET", "/path")
-//  req.WithHandler(myServer.someHandler)
+//
+//	req := NewRequest(config, "GET", "/path")
+//	req.WithHandler(myServer.someHandler)
 func (r *Request) WithHandler(handler http.Handler) *Request {
 	if r.chain.failed() {
 		return r
@@ -265,13 +271,14 @@ const (
 // *http.Client struct, since we rely on it in redirect handling.
 //
 // Example:
-//  req1 := NewRequest(config, "POST", "/path")
-//  req1.WithRedirectPolicy(FollowAllRedirects)
-//  req1.Expect().Status(http.StatusOK)
 //
-//  req2 := NewRequest(config, "POST", "/path")
-//  req2.WithRedirectPolicy(DontFollowRedirects)
-//  req2.Expect().Status(http.StatusPermanentRedirect)
+//	req1 := NewRequest(config, "POST", "/path")
+//	req1.WithRedirectPolicy(FollowAllRedirects)
+//	req1.Expect().Status(http.StatusOK)
+//
+//	req2 := NewRequest(config, "POST", "/path")
+//	req2.WithRedirectPolicy(DontFollowRedirects)
+//	req2.Expect().Status(http.StatusPermanentRedirect)
 func (r *Request) WithRedirectPolicy(policy RedirectPolicy) *Request {
 	if r.chain.failed() {
 		return r
@@ -291,9 +298,10 @@ func (r *Request) WithRedirectPolicy(policy RedirectPolicy) *Request {
 // *http.Client struct, since we rely on it in redirect handling.
 //
 // Example:
-//  req1 := NewRequest(config, "POST", "/path")
-//  req1.WithMaxRedirects(1)
-//  req1.Expect().Status(http.StatusOK)
+//
+//	req1 := NewRequest(config, "POST", "/path")
+//	req1.WithMaxRedirects(1)
+//	req1.Expect().Status(http.StatusOK)
 func (r *Request) WithMaxRedirects(maxRedirects int) *Request {
 	if r.chain.failed() {
 		return r
@@ -342,9 +350,10 @@ const (
 // unless WithMaxRetries() is called.
 //
 // Example:
-//  req := NewRequest(config, "POST", "/path")
-//  req.WithRetryPolicy(RetryAllErrors)
-//  req.Expect().Status(http.StatusOK)
+//
+//	req := NewRequest(config, "POST", "/path")
+//	req.WithRetryPolicy(RetryAllErrors)
+//	req.Expect().Status(http.StatusOK)
 func (r *Request) WithRetryPolicy(policy RetryPolicy) *Request {
 	if r.chain.failed() {
 		return r
@@ -364,9 +373,10 @@ func (r *Request) WithRetryPolicy(policy RetryPolicy) *Request {
 // Default number of retries is zero, i.e. retries are disabled.
 //
 // Example:
-//  req := NewRequest(config, "POST", "/path")
-//  req.WithMaxRetries(1)
-//  req.Expect().Status(http.StatusOK)
+//
+//	req := NewRequest(config, "POST", "/path")
+//	req.WithMaxRetries(1)
+//	req.Expect().Status(http.StatusOK)
 func (r *Request) WithMaxRetries(maxRetries int) *Request {
 	if r.chain.failed() {
 		return r
@@ -387,9 +397,10 @@ func (r *Request) WithMaxRetries(maxRetries int) *Request {
 // Default delay range is [50ms; 5s].
 //
 // Example:
-//  req := NewRequest(config, "POST", "/path")
-//  req.WithRetryDelay(time.Second, time.Minute)
-//  req.Expect().Status(http.StatusOK)
+//
+//	req := NewRequest(config, "POST", "/path")
+//	req.WithRetryDelay(time.Second, time.Minute)
+//	req.Expect().Status(http.StatusOK)
 func (r *Request) WithRetryDelay(minDelay, maxDelay time.Duration) *Request {
 	if r.chain.failed() {
 		return r
@@ -402,8 +413,9 @@ func (r *Request) WithRetryDelay(minDelay, maxDelay time.Duration) *Request {
 // WithWebsocketUpgrade enables upgrades the connection to websocket.
 //
 // At least the following fields are added to the request header:
-//  Upgrade: websocket
-//  Connection: Upgrade
+//
+//	Upgrade: websocket
+//	Connection: Upgrade
 //
 // The actual set of header fields is define by the protocol implementation
 // in the gorilla/websocket package.
@@ -413,10 +425,11 @@ func (r *Request) WithRetryDelay(minDelay, maxDelay time.Duration) *Request {
 // server, to inspect the received messages, and to close the websocket.
 //
 // Example:
-//  req := NewRequest(config, "GET", "/path")
-//  req.WithWebsocketUpgrade()
-//  ws := req.Expect().Status(http.StatusSwitchingProtocols).Websocket()
-//  defer ws.Disconnect()
+//
+//	req := NewRequest(config, "GET", "/path")
+//	req.WithWebsocketUpgrade()
+//	ws := req.Expect().Status(http.StatusSwitchingProtocols).Websocket()
+//	defer ws.Disconnect()
 func (r *Request) WithWebsocketUpgrade() *Request {
 	if r.chain.failed() {
 		return r
@@ -431,13 +444,14 @@ func (r *Request) WithWebsocketUpgrade() *Request {
 // the WebSocket connection and receive a response of handshake result.
 //
 // Example:
-//  req := NewRequest(config, "GET", "/path")
-//  req.WithWebsocketUpgrade()
-//  req.WithWebsocketDialer(&websocket.Dialer{
-//    EnableCompression: false,
-//  })
-//  ws := req.Expect().Status(http.StatusSwitchingProtocols).Websocket()
-//  defer ws.Disconnect()
+//
+//	req := NewRequest(config, "GET", "/path")
+//	req.WithWebsocketUpgrade()
+//	req.WithWebsocketDialer(&websocket.Dialer{
+//	  EnableCompression: false,
+//	})
+//	ws := req.Expect().Status(http.StatusSwitchingProtocols).Websocket()
+//	defer ws.Disconnect()
 func (r *Request) WithWebsocketDialer(dialer WebsocketDialer) *Request {
 	if r.chain.failed() {
 		return r
@@ -458,10 +472,11 @@ func (r *Request) WithWebsocketDialer(dialer WebsocketDialer) *Request {
 // If the intended behavior is to continue any further retries, use WithTimeout.
 //
 // Example:
-//  ctx, _ = context.WithTimeout(context.Background(), time.Duration(3)*time.Second)
-//  req := NewRequest(config, "GET", "/path")
-//  req.WithContext(ctx)
-//  req.Expect().Status(http.StatusOK)
+//
+//	ctx, _ = context.WithTimeout(context.Background(), time.Duration(3)*time.Second)
+//	req := NewRequest(config, "GET", "/path")
+//	req.WithContext(ctx)
+//	req.Expect().Status(http.StatusOK)
 func (r *Request) WithContext(ctx context.Context) *Request {
 	if r.chain.failed() {
 		return r
@@ -487,9 +502,10 @@ func (r *Request) WithContext(ctx context.Context) *Request {
 // Config.Context.
 //
 // Example:
-//  req := NewRequest(config, "GET", "/path")
-//  req.WithTimeout(time.Duration(3)*time.Second)
-//  req.Expect().Status(http.StatusOK)
+//
+//	req := NewRequest(config, "GET", "/path")
+//	req.WithTimeout(time.Duration(3)*time.Second)
+//	req.Expect().Status(http.StatusOK)
 func (r *Request) WithTimeout(timeout time.Duration) *Request {
 	if r.chain.failed() {
 		return r
@@ -508,10 +524,11 @@ func (r *Request) WithTimeout(timeout time.Duration) *Request {
 // Named parameters are case-insensitive.
 //
 // Example:
-//  req := NewRequest(config, "POST", "/repos/{user}/{repo}")
-//  req.WithPath("user", "gavv")
-//  req.WithPath("repo", "httpexpect")
-//  // path will be "/repos/gavv/httpexpect"
+//
+//	req := NewRequest(config, "POST", "/repos/{user}/{repo}")
+//	req.WithPath("user", "gavv")
+//	req.WithPath("repo", "httpexpect")
+//	// path will be "/repos/gavv/httpexpect"
 func (r *Request) WithPath(key string, value interface{}) *Request {
 	if r.chain.failed() {
 		return r
@@ -562,18 +579,19 @@ func (r *Request) WithPath(key string, value interface{}) *Request {
 // Named parameters are case-insensitive.
 //
 // Example:
-//  type MyPath struct {
-//      Login string `path:"user"`
-//      Repo  string
-//  }
 //
-//  req := NewRequest(config, "POST", "/repos/{user}/{repo}")
-//  req.WithPathObject(MyPath{"gavv", "httpexpect"})
-//  // path will be "/repos/gavv/httpexpect"
+//	type MyPath struct {
+//	    Login string `path:"user"`
+//	    Repo  string
+//	}
 //
-//  req := NewRequest(config, "POST", "/repos/{user}/{repo}")
-//  req.WithPathObject(map[string]string{"user": "gavv", "repo": "httpexpect"})
-//  // path will be "/repos/gavv/httpexpect"
+//	req := NewRequest(config, "POST", "/repos/{user}/{repo}")
+//	req.WithPathObject(MyPath{"gavv", "httpexpect"})
+//	// path will be "/repos/gavv/httpexpect"
+//
+//	req := NewRequest(config, "POST", "/repos/{user}/{repo}")
+//	req.WithPathObject(map[string]string{"user": "gavv", "repo": "httpexpect"})
+//	// path will be "/repos/gavv/httpexpect"
 func (r *Request) WithPathObject(object interface{}) *Request {
 	if r.chain.failed() {
 		return r
@@ -606,10 +624,11 @@ func (r *Request) WithPathObject(object interface{}) *Request {
 // value is converted to string using fmt.Sprint() and urlencoded.
 //
 // Example:
-//  req := NewRequest(config, "PUT", "http://example.com/path")
-//  req.WithQuery("a", 123)
-//  req.WithQuery("b", "foo")
-//  // URL is now http://example.com/path?a=123&b=foo
+//
+//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req.WithQuery("a", 123)
+//	req.WithQuery("b", "foo")
+//	// URL is now http://example.com/path?a=123&b=foo
 func (r *Request) WithQuery(key string, value interface{}) *Request {
 	if r.chain.failed() {
 		return r
@@ -630,18 +649,19 @@ func (r *Request) WithQuery(key string, value interface{}) *Request {
 // similar to "json" struct tag for json.Marshal().
 //
 // Example:
-//  type MyURL struct {
-//      A int    `url:"a"`
-//      B string `url:"b"`
-//  }
 //
-//  req := NewRequest(config, "PUT", "http://example.com/path")
-//  req.WithQueryObject(MyURL{A: 123, B: "foo"})
-//  // URL is now http://example.com/path?a=123&b=foo
+//	type MyURL struct {
+//	    A int    `url:"a"`
+//	    B string `url:"b"`
+//	}
 //
-//  req := NewRequest(config, "PUT", "http://example.com/path")
-//  req.WithQueryObject(map[string]interface{}{"a": 123, "b": "foo"})
-//  // URL is now http://example.com/path?a=123&b=foo
+//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req.WithQueryObject(MyURL{A: 123, B: "foo"})
+//	// URL is now http://example.com/path?a=123&b=foo
+//
+//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req.WithQueryObject(map[string]interface{}{"a": 123, "b": "foo"})
+//	// URL is now http://example.com/path?a=123&b=foo
 func (r *Request) WithQueryObject(object interface{}) *Request {
 	if r.chain.failed() {
 		return r
@@ -678,10 +698,11 @@ func (r *Request) WithQueryObject(object interface{}) *Request {
 // WithQueryString parses given query string and adds it to request URL.
 //
 // Example:
-//  req := NewRequest(config, "PUT", "http://example.com/path")
-//  req.WithQuery("a", 11)
-//  req.WithQueryString("b=22&c=33")
-//  // URL is now http://example.com/path?a=11&bb=22&c=33
+//
+//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req.WithQuery("a", 11)
+//	req.WithQueryString("b=22&c=33")
+//	// URL is now http://example.com/path?a=11&bb=22&c=33
 func (r *Request) WithQueryString(query string) *Request {
 	if r.chain.failed() {
 		return r
@@ -706,9 +727,10 @@ func (r *Request) WithQueryString(query string) *Request {
 // is appended to this URL, separated by slash if necessary.
 //
 // Example:
-//  req := NewRequest(config, "PUT", "/path")
-//  req.WithURL("http://example.com")
-//  // URL is now http://example.com/path
+//
+//	req := NewRequest(config, "PUT", "/path")
+//	req.WithURL("http://example.com")
+//	// URL is now http://example.com/path
 func (r *Request) WithURL(urlStr string) *Request {
 	if r.chain.failed() {
 		return r
@@ -724,10 +746,11 @@ func (r *Request) WithURL(urlStr string) *Request {
 // WithHeaders adds given headers to request.
 //
 // Example:
-//  req := NewRequest(config, "PUT", "http://example.com/path")
-//  req.WithHeaders(map[string]string{
-//      "Content-Type": "application/json",
-//  })
+//
+//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req.WithHeaders(map[string]string{
+//	    "Content-Type": "application/json",
+//	})
 func (r *Request) WithHeaders(headers map[string]string) *Request {
 	if r.chain.failed() {
 		return r
@@ -741,8 +764,9 @@ func (r *Request) WithHeaders(headers map[string]string) *Request {
 // WithHeader adds given single header to request.
 //
 // Example:
-//  req := NewRequest(config, "PUT", "http://example.com/path")
-//  req.WithHeader("Content-Type", "application/json")
+//
+//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req.WithHeader("Content-Type", "application/json")
 func (r *Request) WithHeader(k, v string) *Request {
 	if r.chain.failed() {
 		return r
@@ -766,11 +790,12 @@ func (r *Request) WithHeader(k, v string) *Request {
 // WithCookies adds given cookies to request.
 //
 // Example:
-//  req := NewRequest(config, "PUT", "http://example.com/path")
-//  req.WithCookies(map[string]string{
-//      "foo": "aa",
-//      "bar": "bb",
-//  })
+//
+//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req.WithCookies(map[string]string{
+//	    "foo": "aa",
+//	    "bar": "bb",
+//	})
 func (r *Request) WithCookies(cookies map[string]string) *Request {
 	if r.chain.failed() {
 		return r
@@ -784,8 +809,9 @@ func (r *Request) WithCookies(cookies map[string]string) *Request {
 // WithCookie adds given single cookie to request.
 //
 // Example:
-//  req := NewRequest(config, "PUT", "http://example.com/path")
-//  req.WithCookie("name", "value")
+//
+//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req.WithCookie("name", "value")
 func (r *Request) WithCookie(k, v string) *Request {
 	if r.chain.failed() {
 		return r
@@ -804,8 +830,9 @@ func (r *Request) WithCookie(k, v string) *Request {
 // are not encrypted.
 //
 // Example:
-//  req := NewRequest(config, "PUT", "http://example.com/path")
-//  req.WithBasicAuth("john", "secret")
+//
+//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req.WithBasicAuth("john", "secret")
 func (r *Request) WithBasicAuth(username, password string) *Request {
 	if r.chain.failed() {
 		return r
@@ -817,8 +844,9 @@ func (r *Request) WithBasicAuth(username, password string) *Request {
 // WithHost sets request host to given string.
 //
 // Example:
-//  req := NewRequest(config, "PUT", "http://example.com/path")
-//  req.WithHost("example.com")
+//
+//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req.WithHost("example.com")
 func (r *Request) WithHost(host string) *Request {
 	if r.chain.failed() {
 		return r
@@ -834,8 +862,9 @@ func (r *Request) WithHost(host string) *Request {
 // proto should have form of "HTTP/{major}.{minor}", e.g. "HTTP/1.1".
 //
 // Example:
-//  req := NewRequest(config, "PUT", "http://example.com/path")
-//  req.WithProto("HTTP/2.0")
+//
+//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req.WithProto("HTTP/2.0")
 func (r *Request) WithProto(proto string) *Request {
 	if r.chain.failed() {
 		return r
@@ -861,11 +890,12 @@ func (r *Request) WithProto(proto string) *Request {
 // encoding), failure is reported.
 //
 // Example:
-//  req := NewRequest(config, "PUT", "http://example.com/upload")
-//  fh, _ := os.Open("data")
-//  defer fh.Close()
-//  req.WithHeader("Content-Type": "application/octet-stream")
-//  req.WithChunked(fh)
+//
+//	req := NewRequest(config, "PUT", "http://example.com/upload")
+//	fh, _ := os.Open("data")
+//	defer fh.Close()
+//	req.WithHeader("Content-Type": "application/octet-stream")
+//	req.WithChunked(fh)
 func (r *Request) WithChunked(reader io.Reader) *Request {
 	if r.chain.failed() {
 		return r
@@ -882,9 +912,10 @@ func (r *Request) WithChunked(reader io.Reader) *Request {
 // WithBytes sets request body to given slice of bytes.
 //
 // Example:
-//  req := NewRequest(config, "PUT", "http://example.com/path")
-//  req.WithHeader("Content-Type": "application/json")
-//  req.WithBytes([]byte(`{"foo": 123}`))
+//
+//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req.WithHeader("Content-Type": "application/json")
+//	req.WithBytes([]byte(`{"foo": 123}`))
 func (r *Request) WithBytes(b []byte) *Request {
 	if r.chain.failed() {
 		return r
@@ -901,8 +932,9 @@ func (r *Request) WithBytes(b []byte) *Request {
 // sets body to given string.
 //
 // Example:
-//  req := NewRequest(config, "PUT", "http://example.com/path")
-//  req.WithText("hello, world!")
+//
+//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req.WithText("hello, world!")
 func (r *Request) WithText(s string) *Request {
 	if r.chain.failed() {
 		return r
@@ -916,15 +948,16 @@ func (r *Request) WithText(s string) *Request {
 // and sets body to object, marshaled using json.Marshal().
 //
 // Example:
-//  type MyJSON struct {
-//      Foo int `json:"foo"`
-//  }
 //
-//  req := NewRequest(config, "PUT", "http://example.com/path")
-//  req.WithJSON(MyJSON{Foo: 123})
+//	type MyJSON struct {
+//	    Foo int `json:"foo"`
+//	}
 //
-//  req := NewRequest(config, "PUT", "http://example.com/path")
-//  req.WithJSON(map[string]interface{}{"foo": 123})
+//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req.WithJSON(MyJSON{Foo: 123})
+//
+//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req.WithJSON(map[string]interface{}{"foo": 123})
 func (r *Request) WithJSON(object interface{}) *Request {
 	if r.chain.failed() {
 		return r
@@ -953,15 +986,16 @@ func (r *Request) WithJSON(object interface{}) *Request {
 // If WithMultipart() is called, it should be called first.
 //
 // Example:
-//  type MyForm struct {
-//      Foo int `form:"foo"`
-//  }
 //
-//  req := NewRequest(config, "PUT", "http://example.com/path")
-//  req.WithForm(MyForm{Foo: 123})
+//	type MyForm struct {
+//	    Foo int `form:"foo"`
+//	}
 //
-//  req := NewRequest(config, "PUT", "http://example.com/path")
-//  req.WithForm(map[string]interface{}{"foo": 123})
+//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req.WithForm(MyForm{Foo: 123})
+//
+//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req.WithForm(map[string]interface{}{"foo": 123})
 func (r *Request) WithForm(object interface{}) *Request {
 	if r.chain.failed() {
 		return r
@@ -1009,9 +1043,10 @@ func (r *Request) WithForm(object interface{}) *Request {
 // If WithMultipart() is called, it should be called first.
 //
 // Example:
-//  req := NewRequest(config, "PUT", "http://example.com/path")
-//  req.WithFormField("foo", 123).
-//      WithFormField("bar", 456)
+//
+//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req.WithFormField("foo", 123).
+//	    WithFormField("bar", 456)
 func (r *Request) WithFormField(key string, value interface{}) *Request {
 	if r.chain.failed() {
 		return r
@@ -1046,14 +1081,15 @@ func (r *Request) WithFormField(key string, value interface{}) *Request {
 // fails.
 //
 // Example:
-//  req := NewRequest(config, "PUT", "http://example.com/path")
-//  req.WithFile("avatar", "./john.png")
 //
-//  req := NewRequest(config, "PUT", "http://example.com/path")
-//  fh, _ := os.Open("./john.png")
-//  req.WithMultipart().
-//      WithFile("avatar", "john.png", fh)
-//  fh.Close()
+//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req.WithFile("avatar", "./john.png")
+//
+//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	fh, _ := os.Open("./john.png")
+//	req.WithMultipart().
+//	    WithFile("avatar", "john.png", fh)
+//	fh.Close()
 func (r *Request) WithFile(key, path string, reader ...io.Reader) *Request {
 	if r.chain.failed() {
 		return r
@@ -1097,12 +1133,13 @@ func (r *Request) WithFile(key, path string, reader ...io.Reader) *Request {
 // file contents.
 //
 // Example:
-//  req := NewRequest(config, "PUT", "http://example.com/path")
-//  fh, _ := os.Open("./john.png")
-//  b, _ := ioutil.ReadAll(fh)
-//  req.WithMultipart().
-//      WithFileBytes("avatar", "john.png", b)
-//  fh.Close()
+//
+//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	fh, _ := os.Open("./john.png")
+//	b, _ := ioutil.ReadAll(fh)
+//	req.WithMultipart().
+//	    WithFileBytes("avatar", "john.png", b)
+//	fh.Close()
 func (r *Request) WithFileBytes(key, path string, data []byte) *Request {
 	if r.chain.failed() {
 		return r
@@ -1121,9 +1158,10 @@ func (r *Request) WithFileBytes(key, path string, data []byte) *Request {
 // WithFile() always requires WithMultipart() to be called first.
 //
 // Example:
-//  req := NewRequest(config, "PUT", "http://example.com/path")
-//  req.WithMultipart().
-//      WithForm(map[string]interface{}{"foo": 123})
+//
+//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req.WithMultipart().
+//	    WithForm(map[string]interface{}{"foo": 123})
 func (r *Request) WithMultipart() *Request {
 	if r.chain.failed() {
 		return r
@@ -1147,10 +1185,11 @@ func (r *Request) WithMultipart() *Request {
 // WebSocket request.
 //
 // Example:
-//  req := NewRequest(config, "PUT", "http://example.com/path")
-//  req.WithJSON(map[string]interface{}{"foo": 123})
-//  resp := req.Expect()
-//  resp.Status(http.StatusOK)
+//
+//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req.WithJSON(map[string]interface{}{"foo": 123})
+//	resp := req.Expect()
+//	resp.Status(http.StatusOK)
 func (r *Request) Expect() *Response {
 	resp := r.roundTrip()
 

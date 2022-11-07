@@ -20,8 +20,9 @@ type WebsocketMessage struct {
 // reporter should not be nil.
 //
 // Example:
-//   m := NewWebsocketMessage(reporter, websocket.TextMessage, []byte("content"), 0)
-//   m.TextMessage()
+//
+//	m := NewWebsocketMessage(reporter, websocket.TextMessage, []byte("content"), 0)
+//	m.TextMessage()
 func NewWebsocketMessage(
 	reporter Reporter, typ int, content []byte, closeCode ...int,
 ) *WebsocketMessage {
@@ -84,8 +85,9 @@ func (m *WebsocketMessage) NotTextMessage() *WebsocketMessage {
 // See also https://godoc.org/github.com/gorilla/websocket#pkg-constants
 //
 // Example:
-//  msg := conn.Expect()
-//  msg.Type(websocket.TextMessage, websocket.BinaryMessage)
+//
+//	msg := conn.Expect()
+//	msg.Type(websocket.TextMessage, websocket.BinaryMessage)
 func (m *WebsocketMessage) Type(typ ...int) *WebsocketMessage {
 	switch {
 	case m.chain.failed():
@@ -121,8 +123,9 @@ func (m *WebsocketMessage) Type(typ ...int) *WebsocketMessage {
 // See also https://godoc.org/github.com/gorilla/websocket#pkg-constants
 //
 // Example:
-//  msg := conn.Expect()
-//  msg.NotType(websocket.CloseMessage, websocket.BinaryMessage)
+//
+//	msg := conn.Expect()
+//	msg.NotType(websocket.CloseMessage, websocket.BinaryMessage)
 func (m *WebsocketMessage) NotType(typ ...int) *WebsocketMessage {
 	switch {
 	case m.chain.failed():
@@ -156,8 +159,9 @@ func (m *WebsocketMessage) NotType(typ ...int) *WebsocketMessage {
 // See also https://godoc.org/github.com/gorilla/websocket#pkg-constants
 //
 // Example:
-//  msg := conn.Expect().Closed()
-//  msg.Code(websocket.CloseNormalClosure, websocket.CloseGoingAway)
+//
+//	msg := conn.Expect().Closed()
+//	msg.Code(websocket.CloseNormalClosure, websocket.CloseGoingAway)
 func (m *WebsocketMessage) Code(code ...int) *WebsocketMessage {
 	switch {
 	case m.chain.failed():
@@ -197,8 +201,9 @@ func (m *WebsocketMessage) Code(code ...int) *WebsocketMessage {
 // See also https://godoc.org/github.com/gorilla/websocket#pkg-constants
 //
 // Example:
-//  msg := conn.Expect().Closed()
-//  msg.NotCode(websocket.CloseAbnormalClosure, websocket.CloseNoStatusReceived)
+//
+//	msg := conn.Expect().Closed()
+//	msg.NotCode(websocket.CloseAbnormalClosure, websocket.CloseNoStatusReceived)
 func (m *WebsocketMessage) NotCode(code ...int) *WebsocketMessage {
 	switch {
 	case m.chain.failed():
@@ -243,9 +248,10 @@ func (m *WebsocketMessage) checkClosed(where string) bool {
 // WebSocket message content.
 //
 // Example:
-//  msg := conn.Expect()
-//  msg.Body().NotEmpty()
-//  msg.Body().Length().Equal(100)
+//
+//	msg := conn.Expect()
+//	msg.Body().NotEmpty()
+//	msg.Body().Length().Equal(100)
 func (m *WebsocketMessage) Body() *String {
 	return &String{m.chain, string(m.content)}
 }
@@ -277,8 +283,9 @@ func (m *WebsocketMessage) NoContent() *WebsocketMessage {
 // JSON succeeds if JSON may be decoded from message content.
 //
 // Example:
-//  msg := conn.Expect()
-//  msg.JSON().Array().Elements("foo", "bar")
+//
+//	msg := conn.Expect()
+//	msg.JSON().Array().Elements("foo", "bar")
 func (m *WebsocketMessage) JSON() *Value {
 	return &Value{m.chain, m.getJSON()}
 }

@@ -13,7 +13,8 @@ type Boolean struct {
 // reporter should not be nil.
 //
 // Example:
-//  boolean := NewBoolean(t, true)
+//
+//	boolean := NewBoolean(t, true)
 func NewBoolean(reporter Reporter, value bool) *Boolean {
 	return &Boolean{makeChain(reporter), value}
 }
@@ -22,8 +23,9 @@ func NewBoolean(reporter Reporter, value bool) *Boolean {
 // This is the value originally passed to NewBoolean.
 //
 // Example:
-//  boolean := NewBoolean(t, true)
-//  assert.Equal(t, true, boolean.Raw())
+//
+//	boolean := NewBoolean(t, true)
+//	assert.Equal(t, true, boolean.Raw())
 func (b *Boolean) Raw() bool {
 	return b.value
 }
@@ -42,8 +44,9 @@ func (b *Boolean) Schema(schema interface{}) *Boolean {
 // Equal succeeds if boolean is equal to given value.
 //
 // Example:
-//  boolean := NewBoolean(t, true)
-//  boolean.Equal(true)
+//
+//	boolean := NewBoolean(t, true)
+//	boolean.Equal(true)
 func (b *Boolean) Equal(value bool) *Boolean {
 	if !(b.value == value) {
 		b.chain.fail("expected boolean == %v, but got %v", value, b.value)
@@ -54,8 +57,9 @@ func (b *Boolean) Equal(value bool) *Boolean {
 // NotEqual succeeds if boolean is not equal to given value.
 //
 // Example:
-//  boolean := NewBoolean(t, true)
-//  boolean.NotEqual(false)
+//
+//	boolean := NewBoolean(t, true)
+//	boolean.NotEqual(false)
 func (b *Boolean) NotEqual(value bool) *Boolean {
 	if !(b.value != value) {
 		b.chain.fail("expected boolean != %v, but got %v", value, b.value)
@@ -66,8 +70,9 @@ func (b *Boolean) NotEqual(value bool) *Boolean {
 // True succeeds if boolean is true.
 //
 // Example:
-//  boolean := NewBoolean(t, true)
-//  boolean.True()
+//
+//	boolean := NewBoolean(t, true)
+//	boolean.True()
 func (b *Boolean) True() *Boolean {
 	return b.Equal(true)
 }
@@ -75,8 +80,9 @@ func (b *Boolean) True() *Boolean {
 // False succeeds if boolean is false.
 //
 // Example:
-//  boolean := NewBoolean(t, false)
-//  boolean.False()
+//
+//	boolean := NewBoolean(t, false)
+//	boolean.False()
 func (b *Boolean) False() *Boolean {
 	return b.Equal(false)
 }

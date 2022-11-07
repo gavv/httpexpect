@@ -17,7 +17,8 @@ type Number struct {
 // reporter should not be nil.
 //
 // Example:
-//  number := NewNumber(t, 123.4)
+//
+//	number := NewNumber(t, 123.4)
 func NewNumber(reporter Reporter, value float64) *Number {
 	return &Number{makeChain(reporter), value}
 }
@@ -26,8 +27,9 @@ func NewNumber(reporter Reporter, value float64) *Number {
 // This is the value originally passed to NewNumber.
 //
 // Example:
-//  number := NewNumber(t, 123.4)
-//  assert.Equal(t, 123.4, number.Raw())
+//
+//	number := NewNumber(t, 123.4)
+//	assert.Equal(t, 123.4, number.Raw())
 func (n *Number) Raw() float64 {
 	return n.value
 }
@@ -49,9 +51,10 @@ func (n *Number) Schema(schema interface{}) *Number {
 // it is converted to float64.
 //
 // Example:
-//  number := NewNumber(t, 123)
-//  number.Equal(float64(123))
-//  number.Equal(int32(123))
+//
+//	number := NewNumber(t, 123)
+//	number.Equal(float64(123))
+//	number.Equal(int32(123))
 func (n *Number) Equal(value interface{}) *Number {
 	v, ok := canonNumber(&n.chain, value)
 	if !ok {
@@ -70,9 +73,10 @@ func (n *Number) Equal(value interface{}) *Number {
 // it is converted to float64.
 //
 // Example:
-//  number := NewNumber(t, 123)
-//  number.NotEqual(float64(321))
-//  number.NotEqual(int32(321))
+//
+//	number := NewNumber(t, 123)
+//	number.NotEqual(float64(321))
+//	number.NotEqual(int32(321))
 func (n *Number) NotEqual(value interface{}) *Number {
 	v, ok := canonNumber(&n.chain, value)
 	if !ok {
@@ -88,8 +92,9 @@ func (n *Number) NotEqual(value interface{}) *Number {
 // EqualDelta succeeds if two numerals are within delta of each other.
 //
 // Example:
-//  number := NewNumber(t, 123.0)
-//  number.EqualDelta(123.2, 0.3)
+//
+//	number := NewNumber(t, 123.0)
+//	number.EqualDelta(123.2, 0.3)
 func (n *Number) EqualDelta(value, delta float64) *Number {
 	if math.IsNaN(n.value) || math.IsNaN(value) || math.IsNaN(delta) {
 		n.chain.fail("\nexpected number equal to:\n %v\n\nbut got:\n %v\n\ndelta:\n %v",
@@ -111,8 +116,9 @@ func (n *Number) EqualDelta(value, delta float64) *Number {
 // NotEqualDelta succeeds if two numerals are not within delta of each other.
 //
 // Example:
-//  number := NewNumber(t, 123.0)
-//  number.NotEqualDelta(123.2, 0.1)
+//
+//	number := NewNumber(t, 123.0)
+//	number.NotEqualDelta(123.2, 0.1)
 func (n *Number) NotEqualDelta(value, delta float64) *Number {
 	if math.IsNaN(n.value) || math.IsNaN(value) || math.IsNaN(delta) {
 		n.chain.fail(
@@ -139,9 +145,10 @@ func (n *Number) NotEqualDelta(value, delta float64) *Number {
 // it is converted to float64.
 //
 // Example:
-//  number := NewNumber(t, 123)
-//  number.Gt(float64(122))
-//  number.Gt(int32(122))
+//
+//	number := NewNumber(t, 123)
+//	number.Gt(float64(122))
+//	number.Gt(int32(122))
 func (n *Number) Gt(value interface{}) *Number {
 	v, ok := canonNumber(&n.chain, value)
 	if !ok {
@@ -160,9 +167,10 @@ func (n *Number) Gt(value interface{}) *Number {
 // it is converted to float64.
 //
 // Example:
-//  number := NewNumber(t, 123)
-//  number.Ge(float64(122))
-//  number.Ge(int32(122))
+//
+//	number := NewNumber(t, 123)
+//	number.Ge(float64(122))
+//	number.Ge(int32(122))
 func (n *Number) Ge(value interface{}) *Number {
 	v, ok := canonNumber(&n.chain, value)
 	if !ok {
@@ -181,9 +189,10 @@ func (n *Number) Ge(value interface{}) *Number {
 // it is converted to float64.
 //
 // Example:
-//  number := NewNumber(t, 123)
-//  number.Lt(float64(124))
-//  number.Lt(int32(124))
+//
+//	number := NewNumber(t, 123)
+//	number.Lt(float64(124))
+//	number.Lt(int32(124))
 func (n *Number) Lt(value interface{}) *Number {
 	v, ok := canonNumber(&n.chain, value)
 	if !ok {
@@ -202,9 +211,10 @@ func (n *Number) Lt(value interface{}) *Number {
 // it is converted to float64.
 //
 // Example:
-//  number := NewNumber(t, 123)
-//  number.Le(float64(124))
-//  number.Le(int32(124))
+//
+//	number := NewNumber(t, 123)
+//	number.Le(float64(124))
+//	number.Le(int32(124))
 func (n *Number) Le(value interface{}) *Number {
 	v, ok := canonNumber(&n.chain, value)
 	if !ok {
@@ -223,10 +233,11 @@ func (n *Number) Le(value interface{}) *Number {
 // they are converted to float64.
 //
 // Example:
-//  number := NewNumber(t, 123)
-//  number.InRange(float32(100), int32(200))  // success
-//  number.InRange(100, 200)                  // success
-//  number.InRange(123, 123)                  // success
+//
+//	number := NewNumber(t, 123)
+//	number.InRange(float32(100), int32(200))  // success
+//	number.InRange(100, 200)                  // success
+//	number.InRange(123, 123)                  // success
 func (n *Number) InRange(min, max interface{}) *Number {
 	a, ok := canonNumber(&n.chain, min)
 	if !ok {

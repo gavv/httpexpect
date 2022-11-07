@@ -125,8 +125,9 @@ func (r *Response) Raw() *http.Response {
 // WebSocket request), retrieved from a monotonic clock source.
 //
 // Example:
-//  resp := NewResponse(t, response, time.Duration(10000000))
-//  resp.RoundTripTime().Lt(10 * time.Millisecond)
+//
+//	resp := NewResponse(t, response, time.Duration(10000000))
+//	resp.RoundTripTime().Lt(10 * time.Millisecond)
 func (r *Response) RoundTripTime() *Duration {
 	return &Duration{r.chain, r.rtt}
 }
@@ -142,8 +143,9 @@ func (r *Response) Duration() *Number {
 // Status succeeds if response contains given status code.
 //
 // Example:
-//  resp := NewResponse(t, response)
-//  resp.Status(http.StatusOK)
+//
+//	resp := NewResponse(t, response)
+//	resp.Status(http.StatusOK)
 func (r *Response) Status(status int) *Response {
 	if r.chain.failed() {
 		return r
@@ -155,17 +157,18 @@ func (r *Response) Status(status int) *Response {
 // StatusRange succeeds if response status belongs to given range.
 //
 // Supported ranges:
-//  - Status1xx - Informational
-//  - Status2xx - Success
-//  - Status3xx - Redirection
-//  - Status4xx - Client Error
-//  - Status5xx - Server Error
+//   - Status1xx - Informational
+//   - Status2xx - Success
+//   - Status3xx - Redirection
+//   - Status4xx - Client Error
+//   - Status5xx - Server Error
 //
 // See https://en.wikipedia.org/wiki/List_of_HTTP_status_codes.
 //
 // Example:
-//  resp := NewResponse(t, response)
-//  resp.StatusRange(Status2xx)
+//
+//	resp := NewResponse(t, response)
+//	resp.StatusRange(Status2xx)
 func (r *Response) StatusRange(rn StatusRange) *Response {
 	if r.chain.failed() {
 		return r
@@ -217,8 +220,9 @@ func statusRangeText(code int) string {
 // Headers returns a new Object that may be used to inspect header map.
 //
 // Example:
-//  resp := NewResponse(t, response)
-//  resp.Headers().Value("Content-Type").String().Equal("application-json")
+//
+//	resp := NewResponse(t, response)
+//	resp.Headers().Value("Content-Type").String().Equal("application-json")
 func (r *Response) Headers() *Object {
 	var value map[string]interface{}
 	if !r.chain.failed() {
@@ -230,9 +234,10 @@ func (r *Response) Headers() *Object {
 // Header returns a new String object that may be used to inspect given header.
 //
 // Example:
-//  resp := NewResponse(t, response)
-//  resp.Header("Content-Type").Equal("application-json")
-//  resp.Header("Date").DateTime().Le(time.Now())
+//
+//	resp := NewResponse(t, response)
+//	resp.Header("Content-Type").Equal("application-json")
+//	resp.Header("Date").DateTime().Le(time.Now())
 func (r *Response) Header(header string) *String {
 	value := ""
 	if !r.chain.failed() {
@@ -249,8 +254,9 @@ func (r *Response) Header(header string) *String {
 // in a cookie jar.
 //
 // Example:
-//  resp := NewResponse(t, response)
-//  resp.Cookies().Contains("session")
+//
+//	resp := NewResponse(t, response)
+//	resp.Cookies().Contains("session")
 func (r *Response) Cookies() *Array {
 	if r.chain.failed() {
 		return &Array{r.chain, nil}
@@ -270,8 +276,9 @@ func (r *Response) Cookies() *Array {
 // in a cookie jar.
 //
 // Example:
-//  resp := NewResponse(t, response)
-//  resp.Cookie("session").Domain().Equal("example.com")
+//
+//	resp := NewResponse(t, response)
+//	resp.Cookie("session").Domain().Equal("example.com")
 func (r *Response) Cookie(name string) *Cookie {
 	if r.chain.failed() {
 		return &Cookie{r.chain, nil}
@@ -295,10 +302,11 @@ func (r *Response) Cookie(name string) *Cookie {
 // That is responsibility of the caller to explicitly close the websocket after use.
 //
 // Example:
-//  req := NewRequest(config, "GET", "/path")
-//  req.WithWebsocketUpgrade()
-//  ws := req.Expect().Websocket()
-//  defer ws.Disconnect()
+//
+//	req := NewRequest(config, "GET", "/path")
+//	req.WithWebsocketUpgrade()
+//	ws := req.Expect().Websocket()
+//	defer ws.Disconnect()
 func (r *Response) Websocket() *Websocket {
 	if !r.chain.failed() && r.websocket == nil {
 		r.chain.fail("\nunexpected Websocket call for non-WebSocket response")
@@ -309,9 +317,10 @@ func (r *Response) Websocket() *Websocket {
 // Body returns a new String object that may be used to inspect response body.
 //
 // Example:
-//  resp := NewResponse(t, response)
-//  resp.Body().NotEmpty()
-//  resp.Body().Length().Equal(100)
+//
+//	resp := NewResponse(t, response)
+//	resp.Body().NotEmpty()
+//	resp.Body().Length().Equal(100)
 func (r *Response) Body() *String {
 	return &String{r.chain, string(r.content)}
 }
@@ -378,11 +387,12 @@ type ContentOpts struct {
 // with empty or "utf-8" charset.
 //
 // Example:
-//  resp := NewResponse(t, response)
-//  resp.Text().Equal("hello, world!")
-//  resp.Text(ContentOpts{
-//    MediaType: "text/plain",
-//  }).Equal("hello, world!")
+//
+//	resp := NewResponse(t, response)
+//	resp.Text().Equal("hello, world!")
+//	resp.Text(ContentOpts{
+//	  MediaType: "text/plain",
+//	}).Equal("hello, world!")
 func (r *Response) Text(opts ...ContentOpts) *String {
 	var content string
 
@@ -401,11 +411,12 @@ func (r *Response) Text(opts ...ContentOpts) *String {
 // Decoding is performed using https://github.com/ajg/form.
 //
 // Example:
-//  resp := NewResponse(t, response)
-//  resp.Form().Value("foo").Equal("bar")
-//  resp.Form(ContentOpts{
-//    MediaType: "application/x-www-form-urlencoded",
-//  }).Value("foo").Equal("bar")
+//
+//	resp := NewResponse(t, response)
+//	resp.Form().Value("foo").Equal("bar")
+//	resp.Form(ContentOpts{
+//	  MediaType: "application/x-www-form-urlencoded",
+//	}).Value("foo").Equal("bar")
 func (r *Response) Form(opts ...ContentOpts) *Object {
 	object := r.getForm(opts...)
 	return &Object{r.chain, object}
@@ -438,11 +449,12 @@ func (r *Response) getForm(opts ...ContentOpts) map[string]interface{} {
 // with empty or "utf-8" charset and if JSON may be decoded from response body.
 //
 // Example:
-//  resp := NewResponse(t, response)
-//  resp.JSON().Array().Elements("foo", "bar")
-//  resp.JSON(ContentOpts{
-//    MediaType: "application/json",
-//  }).Array.Elements("foo", "bar")
+//
+//	resp := NewResponse(t, response)
+//	resp.JSON().Array().Elements("foo", "bar")
+//	resp.JSON(ContentOpts{
+//	  MediaType: "application/json",
+//	}).Array.Elements("foo", "bar")
 func (r *Response) JSON(opts ...ContentOpts) *Value {
 	value := r.getJSON(opts...)
 	return &Value{r.chain, value}
@@ -471,18 +483,22 @@ func (r *Response) getJSON(opts ...ContentOpts) interface{} {
 //
 // JSONP succeeds if response contains "application/javascript" Content-Type
 // header with empty or "utf-8" charset and response body of the following form:
-//  callback(<valid json>);
+//
+//	callback(<valid json>);
+//
 // or:
-//  callback(<valid json>)
+//
+//	callback(<valid json>)
 //
 // Whitespaces are allowed.
 //
 // Example:
-//  resp := NewResponse(t, response)
-//  resp.JSONP("myCallback").Array().Elements("foo", "bar")
-//  resp.JSONP("myCallback", ContentOpts{
-//    MediaType: "application/javascript",
-//  }).Array.Elements("foo", "bar")
+//
+//	resp := NewResponse(t, response)
+//	resp.JSONP("myCallback").Array().Elements("foo", "bar")
+//	resp.JSONP("myCallback", ContentOpts{
+//	  MediaType: "application/javascript",
+//	}).Array.Elements("foo", "bar")
 func (r *Response) JSONP(callback string, opts ...ContentOpts) *Value {
 	value := r.getJSONP(callback, opts...)
 	return &Value{r.chain, value}

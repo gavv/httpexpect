@@ -30,9 +30,10 @@ type Binder struct {
 // NewBinder returns a new Binder given a http.Handler.
 //
 // Example:
-//   client := &http.Client{
-//       Transport: NewBinder(handler),
-//   }
+//
+//	client := &http.Client{
+//	    Transport: NewBinder(handler),
+//	}
 func NewBinder(handler http.Handler) Binder {
 	return Binder{Handler: handler}
 }
@@ -99,9 +100,10 @@ type FastBinder struct {
 // NewFastBinder returns a new FastBinder given a fasthttp.RequestHandler.
 //
 // Example:
-//   client := &http.Client{
-//       Transport: NewFastBinder(fasthandler),
-//   }
+//
+//	client := &http.Client{
+//	    Transport: NewFastBinder(fasthandler),
+//	}
 func NewFastBinder(handler fasthttp.RequestHandler) FastBinder {
 	return FastBinder{Handler: handler}
 }

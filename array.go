@@ -18,7 +18,8 @@ type Array struct {
 // reported.
 //
 // Example:
-//  array := NewArray(t, []interface{}{"foo", 123})
+//
+//	array := NewArray(t, []interface{}{"foo", 123})
 func NewArray(reporter Reporter, value []interface{}) *Array {
 	chain := makeChain(reporter)
 	if value == nil {
@@ -33,8 +34,9 @@ func NewArray(reporter Reporter, value []interface{}) *Array {
 // This is the value originally passed to NewArray, converted to canonical form.
 //
 // Example:
-//  array := NewArray(t, []interface{}{"foo", 123})
-//  assert.Equal(t, []interface{}{"foo", 123.0}, array.Raw())
+//
+//	array := NewArray(t, []interface{}{"foo", 123})
+//	assert.Equal(t, []interface{}{"foo", 123.0}, array.Raw())
 func (a *Array) Raw() []interface{} {
 	return a.value
 }
@@ -53,8 +55,9 @@ func (a *Array) Schema(schema interface{}) *Array {
 // Length returns a new Number object that may be used to inspect array length.
 //
 // Example:
-//  array := NewArray(t, []interface{}{1, 2, 3})
-//  array.Length().Equal(3)
+//
+//	array := NewArray(t, []interface{}{1, 2, 3})
+//	array.Length().Equal(3)
 func (a *Array) Length() *Number {
 	return &Number{a.chain, float64(len(a.value))}
 }
@@ -66,9 +69,10 @@ func (a *Array) Length() *Number {
 // (but non-nil) value.
 //
 // Example:
-//  array := NewArray(t, []interface{}{"foo", 123})
-//  array.Element(0).String().Equal("foo")
-//  array.Element(1).Number().Equal(123)
+//
+//	array := NewArray(t, []interface{}{"foo", 123})
+//	array.Element(0).String().Equal("foo")
+//	array.Element(1).Number().Equal(123)
 func (a *Array) Element(index int) *Value {
 	if index < 0 || index >= len(a.value) {
 		a.chain.fail(
@@ -88,8 +92,9 @@ func (a *Array) Element(index int) *Value {
 // (but non-nil) value.
 //
 // Example:
-//  array := NewArray(t, []interface{}{"foo", 123})
-//  array.First().String().Equal("foo")
+//
+//	array := NewArray(t, []interface{}{"foo", 123})
+//	array.First().String().Equal("foo")
 func (a *Array) First() *Value {
 	if len(a.value) < 1 {
 		a.chain.fail("\narray is empty")
@@ -105,8 +110,9 @@ func (a *Array) First() *Value {
 // (but non-nil) value.
 //
 // Example:
-//  array := NewArray(t, []interface{}{"foo", 123})
-//  array.Last().Number().Equal(123)
+//
+//	array := NewArray(t, []interface{}{"foo", 123})
+//	array.Last().Number().Equal(123)
 func (a *Array) Last() *Value {
 	if len(a.value) < 1 {
 		a.chain.fail("\narray is empty")
@@ -118,12 +124,13 @@ func (a *Array) Last() *Value {
 // Iter returns a new slice of Values attached to array elements.
 //
 // Example:
-//  strings := []interface{}{"foo", "bar"}
-//  array := NewArray(t, strings)
 //
-//  for n, val := range array.Iter() {
-//      val.String().Equal(strings[n])
-//  }
+//	strings := []interface{}{"foo", "bar"}
+//	array := NewArray(t, strings)
+//
+//	for n, val := range array.Iter() {
+//	    val.String().Equal(strings[n])
+//	}
 func (a *Array) Iter() []Value {
 	if a.chain.failed() {
 		return []Value{}
@@ -138,8 +145,9 @@ func (a *Array) Iter() []Value {
 // Empty succeeds if array is empty.
 //
 // Example:
-//  array := NewArray(t, []interface{}{})
-//  array.Empty()
+//
+//	array := NewArray(t, []interface{}{})
+//	array.Empty()
 func (a *Array) Empty() *Array {
 	return a.Equal([]interface{}{})
 }
@@ -147,8 +155,9 @@ func (a *Array) Empty() *Array {
 // NotEmpty succeeds if array is non-empty.
 //
 // Example:
-//  array := NewArray(t, []interface{}{"foo", 123})
-//  array.NotEmpty()
+//
+//	array := NewArray(t, []interface{}{"foo", 123})
+//	array.NotEmpty()
 func (a *Array) NotEmpty() *Array {
 	return a.NotEqual([]interface{}{})
 }
@@ -159,14 +168,15 @@ func (a *Array) NotEmpty() *Array {
 // value should be a slice of any type.
 //
 // Example:
-//  array := NewArray(t, []interface{}{"foo", 123})
-//  array.Equal([]interface{}{"foo", 123})
 //
-//  array := NewArray(t, []interface{}{"foo", "bar"})
-//  array.Equal([]string{}{"foo", "bar"})
+//	array := NewArray(t, []interface{}{"foo", 123})
+//	array.Equal([]interface{}{"foo", 123})
 //
-//  array := NewArray(t, []interface{}{123, 456})
-//  array.Equal([]int{}{123, 456})
+//	array := NewArray(t, []interface{}{"foo", "bar"})
+//	array.Equal([]string{}{"foo", "bar"})
+//
+//	array := NewArray(t, []interface{}{123, 456})
+//	array.Equal([]int{}{123, 456})
 func (a *Array) Equal(value interface{}) *Array {
 	expected, ok := canonArray(&a.chain, value)
 	if !ok {
@@ -187,8 +197,9 @@ func (a *Array) Equal(value interface{}) *Array {
 // value should be a slice of any type.
 //
 // Example:
-//  array := NewArray(t, []interface{}{"foo", 123})
-//  array.NotEqual([]interface{}{123, "foo"})
+//
+//	array := NewArray(t, []interface{}{"foo", 123})
+//	array.NotEqual([]interface{}{123, "foo"})
 func (a *Array) NotEqual(value interface{}) *Array {
 	expected, ok := canonArray(&a.chain, value)
 	if !ok {
@@ -207,12 +218,14 @@ func (a *Array) NotEqual(value interface{}) *Array {
 // For partial or unordered comparison, see Contains and ContainsOnly.
 //
 // Example:
-//  array := NewArray(t, []interface{}{"foo", 123})
-//  array.Elements("foo", 123)
+//
+//	array := NewArray(t, []interface{}{"foo", 123})
+//	array.Elements("foo", 123)
 //
 // This calls are equivalent:
-//  array.Elements("a", "b")
-//  array.Equal([]interface{}{"a", "b"})
+//
+//	array.Elements("a", "b")
+//	array.Equal([]interface{}{"a", "b"})
 func (a *Array) Elements(values ...interface{}) *Array {
 	return a.Equal(values)
 }
@@ -221,8 +234,9 @@ func (a *Array) Elements(values ...interface{}) *Array {
 // Before comparison, array and all elements are converted to canonical form.
 //
 // Example:
-//  array := NewArray(t, []interface{}{"foo", 123})
-//  array.Contains(123, "foo")
+//
+//	array := NewArray(t, []interface{}{"foo", 123})
+//	array.Contains(123, "foo")
 func (a *Array) Contains(values ...interface{}) *Array {
 	elements, ok := canonArray(&a.chain, values)
 	if !ok {
@@ -241,9 +255,10 @@ func (a *Array) Contains(values ...interface{}) *Array {
 // Before comparison, array and all elements are converted to canonical form.
 //
 // Example:
-//  array := NewArray(t, []interface{}{"foo", 123})
-//  array.NotContains("bar")         // success
-//  array.NotContains("bar", "foo")  // failure (array contains "foo")
+//
+//	array := NewArray(t, []interface{}{"foo", 123})
+//	array.NotContains("bar")         // success
+//	array.NotContains("bar", "foo")  // failure (array contains "foo")
 func (a *Array) NotContains(values ...interface{}) *Array {
 	elements, ok := canonArray(&a.chain, values)
 	if !ok {
@@ -262,12 +277,14 @@ func (a *Array) NotContains(values ...interface{}) *Array {
 // them. Before comparison, array and all elements are converted to canonical form.
 //
 // Example:
-//  array := NewArray(t, []interface{}{"foo", 123})
-//  array.ContainsOnly(123, "foo")
+//
+//	array := NewArray(t, []interface{}{"foo", 123})
+//	array.ContainsOnly(123, "foo")
 //
 // This calls are equivalent:
-//  array.ContainsOnly("a", "b")
-//  array.ContainsOnly("b", "a")
+//
+//	array.ContainsOnly("a", "b")
+//	array.ContainsOnly("b", "a")
 func (a *Array) ContainsOnly(values ...interface{}) *Array {
 	elements, ok := canonArray(&a.chain, values)
 	if !ok {

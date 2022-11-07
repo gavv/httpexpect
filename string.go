@@ -20,7 +20,8 @@ type String struct {
 // reporter should not be nil.
 //
 // Example:
-//  str := NewString(t, "Hello")
+//
+//	str := NewString(t, "Hello")
 func NewString(reporter Reporter, value string) *String {
 	return &String{makeChain(reporter), value}
 }
@@ -29,8 +30,9 @@ func NewString(reporter Reporter, value string) *String {
 // This is the value originally passed to NewString.
 //
 // Example:
-//  str := NewString(t, "Hello")
-//  assert.Equal(t, "Hello", str.Raw())
+//
+//	str := NewString(t, "Hello")
+//	assert.Equal(t, "Hello", str.Raw())
 func (s *String) Raw() string {
 	return s.value
 }
@@ -49,8 +51,9 @@ func (s *String) Schema(schema interface{}) *String {
 // Length returns a new Number object that may be used to inspect string length.
 //
 // Example:
-//  str := NewString(t, "Hello")
-//  str.Length().Equal(5)
+//
+//	str := NewString(t, "Hello")
+//	str.Length().Equal(5)
 func (s *String) Length() *Number {
 	return &Number{s.chain, float64(len(s.value))}
 }
@@ -62,11 +65,12 @@ func (s *String) Length() *Number {
 // DateTime reports failure and returns empty (but non-nil) object.
 //
 // Example:
-//   str := NewString(t, "Tue, 15 Nov 1994 08:12:31 GMT")
-//   str.DateTime().Lt(time.Now())
 //
-//   str := NewString(t, "15 Nov 94 08:12 GMT")
-//   str.DateTime(time.RFC822).Lt(time.Now())
+//	str := NewString(t, "Tue, 15 Nov 1994 08:12:31 GMT")
+//	str.DateTime().Lt(time.Now())
+//
+//	str := NewString(t, "15 Nov 94 08:12 GMT")
+//	str.DateTime(time.RFC822).Lt(time.Now())
 func (s *String) DateTime(layout ...string) *DateTime {
 	if s.chain.failed() {
 		return &DateTime{s.chain, time.Unix(0, 0)}
@@ -90,8 +94,9 @@ func (s *String) DateTime(layout ...string) *DateTime {
 // Empty succeeds if string is empty.
 //
 // Example:
-//  str := NewString(t, "")
-//  str.Empty()
+//
+//	str := NewString(t, "")
+//	str.Empty()
 func (s *String) Empty() *String {
 	return s.Equal("")
 }
@@ -99,8 +104,9 @@ func (s *String) Empty() *String {
 // NotEmpty succeeds if string is non-empty.
 //
 // Example:
-//  str := NewString(t, "Hello")
-//  str.NotEmpty()
+//
+//	str := NewString(t, "Hello")
+//	str.NotEmpty()
 func (s *String) NotEmpty() *String {
 	return s.NotEqual("")
 }
@@ -108,8 +114,9 @@ func (s *String) NotEmpty() *String {
 // Equal succeeds if string is equal to given Go string.
 //
 // Example:
-//  str := NewString(t, "Hello")
-//  str.Equal("Hello")
+//
+//	str := NewString(t, "Hello")
+//	str.Equal("Hello")
 func (s *String) Equal(value string) *String {
 	if !(s.value == value) {
 		s.chain.fail("\nexpected string equal to:\n %q\n\nbut got:\n %q",
@@ -121,8 +128,9 @@ func (s *String) Equal(value string) *String {
 // NotEqual succeeds if string is not equal to given Go string.
 //
 // Example:
-//  str := NewString(t, "Hello")
-//  str.NotEqual("Goodbye")
+//
+//	str := NewString(t, "Hello")
+//	str.NotEqual("Goodbye")
 func (s *String) NotEqual(value string) *String {
 	if !(s.value != value) {
 		s.chain.fail("\nexpected string not equal to:\n %q", value)
@@ -134,8 +142,9 @@ func (s *String) NotEqual(value string) *String {
 // case-folding (so it's a case-insensitive match).
 //
 // Example:
-//  str := NewString(t, "Hello")
-//  str.EqualFold("hELLo")
+//
+//	str := NewString(t, "Hello")
+//	str.EqualFold("hELLo")
 func (s *String) EqualFold(value string) *String {
 	if !strings.EqualFold(s.value, value) {
 		s.chain.fail(
@@ -149,8 +158,9 @@ func (s *String) EqualFold(value string) *String {
 // Unicode case-folding (so it's a case-insensitive match).
 //
 // Example:
-//  str := NewString(t, "Hello")
-//  str.NotEqualFold("gOODBYe")
+//
+//	str := NewString(t, "Hello")
+//	str.NotEqualFold("gOODBYe")
 func (s *String) NotEqualFold(value string) *String {
 	if strings.EqualFold(s.value, value) {
 		s.chain.fail(
@@ -163,8 +173,9 @@ func (s *String) NotEqualFold(value string) *String {
 // Contains succeeds if string contains given Go string as a substring.
 //
 // Example:
-//  str := NewString(t, "Hello")
-//  str.Contains("ell")
+//
+//	str := NewString(t, "Hello")
+//	str.Contains("ell")
 func (s *String) Contains(value string) *String {
 	if !strings.Contains(s.value, value) {
 		s.chain.fail(
@@ -177,8 +188,9 @@ func (s *String) Contains(value string) *String {
 // NotContains succeeds if string doesn't contain Go string as a substring.
 //
 // Example:
-//  str := NewString(t, "Hello")
-//  str.NotContains("bye")
+//
+//	str := NewString(t, "Hello")
+//	str.NotContains("bye")
 func (s *String) NotContains(value string) *String {
 	if strings.Contains(s.value, value) {
 		s.chain.fail(
@@ -192,8 +204,9 @@ func (s *String) NotContains(value string) *String {
 // applying Unicode case-folding (so it's a case-insensitive match).
 //
 // Example:
-//  str := NewString(t, "Hello")
-//  str.ContainsFold("ELL")
+//
+//	str := NewString(t, "Hello")
+//	str.ContainsFold("ELL")
 func (s *String) ContainsFold(value string) *String {
 	if !strings.Contains(strings.ToLower(s.value), strings.ToLower(value)) {
 		s.chain.fail(
@@ -207,8 +220,9 @@ func (s *String) ContainsFold(value string) *String {
 // after applying Unicode case-folding (so it's a case-insensitive match).
 //
 // Example:
-//  str := NewString(t, "Hello")
-//  str.NotContainsFold("BYE")
+//
+//	str := NewString(t, "Hello")
+//	str.NotContainsFold("BYE")
 func (s *String) NotContainsFold(value string) *String {
 	if strings.Contains(strings.ToLower(s.value), strings.ToLower(value)) {
 		s.chain.fail(
@@ -226,18 +240,19 @@ func (s *String) NotContainsFold(value string) *String {
 // Regexp.FindStringSubmatch is used to construct matches.
 //
 // Example:
-//   s := NewString(t, "http://example.com/users/john")
-//   m := s.Match(`http://(?P<host>.+)/users/(?P<user>.+)`)
 //
-//   m.NotEmpty()
-//   m.Length().Equal(3)
+//	s := NewString(t, "http://example.com/users/john")
+//	m := s.Match(`http://(?P<host>.+)/users/(?P<user>.+)`)
 //
-//   m.Index(0).Equal("http://example.com/users/john")
-//   m.Index(1).Equal("example.com")
-//   m.Index(2).Equal("john")
+//	m.NotEmpty()
+//	m.Length().Equal(3)
 //
-//   m.Name("host").Equal("example.com")
-//   m.Name("user").Equal("john")
+//	m.Index(0).Equal("http://example.com/users/john")
+//	m.Index(1).Equal("example.com")
+//	m.Index(2).Equal("john")
+//
+//	m.Name("host").Equal("example.com")
+//	m.Name("user").Equal("john")
 func (s *String) Match(re string) *Match {
 	r, err := regexp.Compile(re)
 	if err != nil {
@@ -263,13 +278,14 @@ func (s *String) Match(re string) *Match {
 // regexp, and Regexp.FindAllStringSubmatch is used to find matches.
 //
 // Example:
-//   s := NewString(t,
-//      "http://example.com/users/john http://example.com/users/bob")
 //
-//   m := s.MatchAll(`http://(?P<host>\S+)/users/(?P<user>\S+)`)
+//	s := NewString(t,
+//	   "http://example.com/users/john http://example.com/users/bob")
 //
-//   m[0].Name("user").Equal("john")
-//   m[1].Name("user").Equal("bob")
+//	m := s.MatchAll(`http://(?P<host>\S+)/users/(?P<user>\S+)`)
+//
+//	m[0].Name("user").Equal("john")
+//	m[1].Name("user").Equal("bob")
 func (s *String) MatchAll(re string) []Match {
 	r, err := regexp.Compile(re)
 	if err != nil {
@@ -301,8 +317,9 @@ func (s *String) MatchAll(re string) []Match {
 // is used to perform match.
 //
 // Example:
-//   s := NewString(t, "a")
-//   s.NotMatch(`[^a]`)
+//
+//	s := NewString(t, "a")
+//	s.NotMatch(`[^a]`)
 func (s *String) NotMatch(re string) *String {
 	r, err := regexp.Compile(re)
 	if err != nil {

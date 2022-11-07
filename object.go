@@ -18,7 +18,8 @@ type Object struct {
 // reported.
 //
 // Example:
-//  object := NewObject(t, map[string]interface{}{"foo": 123})
+//
+//	object := NewObject(t, map[string]interface{}{"foo": 123})
 func NewObject(reporter Reporter, value map[string]interface{}) *Object {
 	chain := makeChain(reporter)
 	if value == nil {
@@ -33,8 +34,9 @@ func NewObject(reporter Reporter, value map[string]interface{}) *Object {
 // This is the value originally passed to NewObject, converted to canonical form.
 //
 // Example:
-//  object := NewObject(t, map[string]interface{}{"foo": 123})
-//  assert.Equal(t, map[string]interface{}{"foo": 123.0}, object.Raw())
+//
+//	object := NewObject(t, map[string]interface{}{"foo": 123})
+//	assert.Equal(t, map[string]interface{}{"foo": 123.0}, object.Raw())
 func (o *Object) Raw() map[string]interface{} {
 	return o.value
 }
@@ -53,8 +55,9 @@ func (o *Object) Schema(schema interface{}) *Object {
 // Keys returns a new Array object that may be used to inspect objects keys.
 //
 // Example:
-//  object := NewObject(t, map[string]interface{}{"foo": 123, "bar": 456})
-//  object.Keys().ContainsOnly("foo", "bar")
+//
+//	object := NewObject(t, map[string]interface{}{"foo": 123, "bar": 456})
+//	object.Keys().ContainsOnly("foo", "bar")
 func (o *Object) Keys() *Array {
 	keys := []interface{}{}
 	for k := range o.value {
@@ -66,8 +69,9 @@ func (o *Object) Keys() *Array {
 // Values returns a new Array object that may be used to inspect objects values.
 //
 // Example:
-//  object := NewObject(t, map[string]interface{}{"foo": 123, "bar": 456})
-//  object.Values().ContainsOnly(123, 456)
+//
+//	object := NewObject(t, map[string]interface{}{"foo": 123, "bar": 456})
+//	object.Values().ContainsOnly(123, 456)
 func (o *Object) Values() *Array {
 	values := []interface{}{}
 	for _, v := range o.value {
@@ -80,8 +84,9 @@ func (o *Object) Values() *Array {
 // for given key.
 //
 // Example:
-//  object := NewObject(t, map[string]interface{}{"foo": 123})
-//  object.Value("foo").Number().Equal(123)
+//
+//	object := NewObject(t, map[string]interface{}{"foo": 123})
+//	object.Value("foo").Number().Equal(123)
 func (o *Object) Value(key string) *Value {
 	value, ok := o.value[key]
 	if !ok {
@@ -95,8 +100,9 @@ func (o *Object) Value(key string) *Value {
 // Empty succeeds if object is empty.
 //
 // Example:
-//  object := NewObject(t, map[string]interface{}{})
-//  object.Empty()
+//
+//	object := NewObject(t, map[string]interface{}{})
+//	object.Empty()
 func (o *Object) Empty() *Object {
 	return o.Equal(map[string]interface{}{})
 }
@@ -104,8 +110,9 @@ func (o *Object) Empty() *Object {
 // NotEmpty succeeds if object is non-empty.
 //
 // Example:
-//  object := NewObject(t, map[string]interface{}{"foo": 123})
-//  object.NotEmpty()
+//
+//	object := NewObject(t, map[string]interface{}{"foo": 123})
+//	object.NotEmpty()
 func (o *Object) NotEmpty() *Object {
 	return o.NotEqual(map[string]interface{}{})
 }
@@ -116,8 +123,9 @@ func (o *Object) NotEmpty() *Object {
 // value should be map[string]interface{} or struct.
 //
 // Example:
-//  object := NewObject(t, map[string]interface{}{"foo": 123})
-//  object.Equal(map[string]interface{}{"foo": 123})
+//
+//	object := NewObject(t, map[string]interface{}{"foo": 123})
+//	object.Equal(map[string]interface{}{"foo": 123})
 func (o *Object) Equal(value interface{}) *Object {
 	expected, ok := canonMap(&o.chain, value)
 	if !ok {
@@ -138,8 +146,9 @@ func (o *Object) Equal(value interface{}) *Object {
 // value should be map[string]interface{} or struct.
 //
 // Example:
-//  object := NewObject(t, map[string]interface{}{"foo": 123})
-//  object.Equal(map[string]interface{}{"bar": 123})
+//
+//	object := NewObject(t, map[string]interface{}{"foo": 123})
+//	object.Equal(map[string]interface{}{"bar": 123})
 func (o *Object) NotEqual(v interface{}) *Object {
 	expected, ok := canonMap(&o.chain, v)
 	if !ok {
@@ -155,8 +164,9 @@ func (o *Object) NotEqual(v interface{}) *Object {
 // ContainsKey succeeds if object contains given key.
 //
 // Example:
-//  object := NewObject(t, map[string]interface{}{"foo": 123})
-//  object.ContainsKey("foo")
+//
+//	object := NewObject(t, map[string]interface{}{"foo": 123})
+//	object.ContainsKey("foo")
 func (o *Object) ContainsKey(key string) *Object {
 	if !o.containsKey(key) {
 		o.chain.fail("\nexpected object containing key '%s', but got:\n%s",
@@ -168,8 +178,9 @@ func (o *Object) ContainsKey(key string) *Object {
 // NotContainsKey succeeds if object doesn't contain given key.
 //
 // Example:
-//  object := NewObject(t, map[string]interface{}{"foo": 123})
-//  object.NotContainsKey("bar")
+//
+//	object := NewObject(t, map[string]interface{}{"foo": 123})
+//	object.NotContainsKey("bar")
 func (o *Object) NotContainsKey(key string) *Object {
 	if o.containsKey(key) {
 		o.chain.fail(
@@ -185,30 +196,31 @@ func (o *Object) NotContainsKey(key string) *Object {
 // value should be map[string]interface{} or struct.
 //
 // Example:
-//  object := NewObject(t, map[string]interface{}{
-//      "foo": 123,
-//      "bar": []interface{}{"x", "y"},
-//      "bar": map[string]interface{}{
-//          "a": true,
-//          "b": false,
-//      },
-//  })
 //
-//  object.ContainsMap(map[string]interface{}{  // success
-//      "foo": 123,
-//      "bar": map[string]interface{}{
-//          "a": true,
-//      },
-//  })
+//	object := NewObject(t, map[string]interface{}{
+//	    "foo": 123,
+//	    "bar": []interface{}{"x", "y"},
+//	    "bar": map[string]interface{}{
+//	        "a": true,
+//	        "b": false,
+//	    },
+//	})
 //
-//  object.ContainsMap(map[string]interface{}{  // failure
-//      "foo": 123,
-//      "qux": 456,
-//  })
+//	object.ContainsMap(map[string]interface{}{  // success
+//	    "foo": 123,
+//	    "bar": map[string]interface{}{
+//	        "a": true,
+//	    },
+//	})
 //
-//  object.ContainsMap(map[string]interface{}{  // failure, slices should match exactly
-//      "bar": []interface{}{"x"},
-//  })
+//	object.ContainsMap(map[string]interface{}{  // failure
+//	    "foo": 123,
+//	    "qux": 456,
+//	})
+//
+//	object.ContainsMap(map[string]interface{}{  // failure, slices should match exactly
+//	    "bar": []interface{}{"x"},
+//	})
 func (o *Object) ContainsMap(value interface{}) *Object {
 	if !o.containsMap(value) {
 		o.chain.fail("\nexpected object containing sub-object:\n%s\n\nbut got:\n%s",
@@ -223,8 +235,9 @@ func (o *Object) ContainsMap(value interface{}) *Object {
 // value should be map[string]interface{} or struct.
 //
 // Example:
-//  object := NewObject(t, map[string]interface{}{"foo": 123, "bar": 456})
-//  object.NotContainsMap(map[string]interface{}{"foo": 123, "bar": "no-no-no"})
+//
+//	object := NewObject(t, map[string]interface{}{"foo": 123, "bar": 456})
+//	object.NotContainsMap(map[string]interface{}{"foo": 123, "bar": "no-no-no"})
 func (o *Object) NotContainsMap(value interface{}) *Object {
 	if o.containsMap(value) {
 		o.chain.fail("\nexpected object not containing sub-object:\n%s\n\nbut got:\n%s",
@@ -239,8 +252,9 @@ func (o *Object) NotContainsMap(value interface{}) *Object {
 // value should be map[string]interface{} or struct.
 //
 // Example:
-//  object := NewObject(t, map[string]interface{}{"foo": 123})
-//  object.ValueEqual("foo", 123)
+//
+//	object := NewObject(t, map[string]interface{}{"foo": 123})
+//	object.ValueEqual("foo", 123)
 func (o *Object) ValueEqual(key string, value interface{}) *Object {
 	if !o.containsKey(key) {
 		o.chain.fail("\nexpected object containing key '%s', but got:\n%s",
@@ -270,9 +284,10 @@ func (o *Object) ValueEqual(key string, value interface{}) *Object {
 // If object doesn't contain any value for given key, failure is reported.
 //
 // Example:
-//  object := NewObject(t, map[string]interface{}{"foo": 123})
-//  object.ValueNotEqual("foo", "bad value")  // success
-//  object.ValueNotEqual("bar", "bad value")  // failure! (key is missing)
+//
+//	object := NewObject(t, map[string]interface{}{"foo": 123})
+//	object.ValueNotEqual("foo", "bad value")  // success
+//	object.ValueNotEqual("bar", "bad value")  // failure! (key is missing)
 func (o *Object) ValueNotEqual(key string, value interface{}) *Object {
 	if !o.containsKey(key) {
 		o.chain.fail("\nexpected object containing key '%s', but got:\n%s",

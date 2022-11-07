@@ -1,16 +1,16 @@
 // Package httpexpect helps with end-to-end HTTP and REST API testing.
 //
-// Usage examples
+// # Usage examples
 //
 // See example directory:
-//  - https://godoc.org/github.com/gavv/httpexpect/_examples
-//  - https://github.com/gavv/httpexpect/tree/master/_examples
+//   - https://godoc.org/github.com/gavv/httpexpect/_examples
+//   - https://github.com/gavv/httpexpect/tree/master/_examples
 //
-// Communication mode
+// # Communication mode
 //
 // There are two common ways to test API with httpexpect:
-//  - start HTTP server and instruct httpexpect to use HTTP client for communication
-//  - don't start server and instruct httpexpect to invoke http handler directly
+//   - start HTTP server and instruct httpexpect to use HTTP client for communication
+//   - don't start server and instruct httpexpect to invoke http handler directly
 //
 // The second approach works only if the server is a Go module and its handler can
 // be imported in tests.
@@ -30,20 +30,20 @@
 //
 // If you're starting server from tests, it's very handy to use net/http/httptest.
 //
-// Value equality
+// # Value equality
 //
 // Whenever values are checked for equality in httpexpect, they are converted
 // to "canonical form":
-//  - structs are converted to map[string]interface{}
-//  - type aliases are removed
-//  - numeric types are converted to float64
-//  - non-nil interfaces pointing to nil slices and maps are replaced with
-//    nil interfaces
+//   - structs are converted to map[string]interface{}
+//   - type aliases are removed
+//   - numeric types are converted to float64
+//   - non-nil interfaces pointing to nil slices and maps are replaced with
+//     nil interfaces
 //
 // This is equivalent to subsequently json.Marshal() and json.Unmarshal() the value
 // and currently is implemented so.
 //
-// Failure handling
+// # Failure handling
 //
 // When some check fails, failure is reported. If non-fatal failures are used
 // (see Reporter interface), execution is continued and instance that was checked
@@ -53,16 +53,17 @@
 // for this instance and for any child instances retrieved after failure.
 //
 // Example:
-//  array := NewArray(NewAssertReporter(t), []interface{}{"foo", 123})
 //
-//  e0 := array.Element(0)  // success
-//  e1 := array.Element(1)  // success
+//	array := NewArray(NewAssertReporter(t), []interface{}{"foo", 123})
 //
-//  s0 := e0.String()  // success
-//  s1 := e1.String()  // failure; e1 and s1 are marked as failed, e0 and s0 are not
+//	e0 := array.Element(0)  // success
+//	e1 := array.Element(1)  // success
 //
-//  s0.Equal("foo")    // success
-//  s1.Equal("bar")    // this check is ignored because s1 is marked as failed
+//	s0 := e0.String()  // success
+//	s1 := e1.String()  // failure; e1 and s1 are marked as failed, e0 and s0 are not
+//
+//	s0.Equal("foo")    // success
+//	s1.Equal("bar")    // this check is ignored because s1 is marked as failed
 package httpexpect
 
 import (
@@ -152,12 +153,13 @@ type RequestFactory interface {
 // Binder and FastBinder may be used to obtain this interface implementation.
 //
 // Example:
-//  httpBinderClient := &http.Client{
-//    Transport: httpexpect.NewBinder(HTTPHandler),
-//  }
-//  fastBinderClient := &http.Client{
-//    Transport: httpexpect.NewFastBinder(FastHTTPHandler),
-//  }
+//
+//	httpBinderClient := &http.Client{
+//	  Transport: httpexpect.NewBinder(HTTPHandler),
+//	}
+//	fastBinderClient := &http.Client{
+//	  Transport: httpexpect.NewFastBinder(FastHTTPHandler),
+//	}
 type Client interface {
 	// Do sends request and returns response.
 	Do(*http.Request) (*http.Response, error)
@@ -171,10 +173,11 @@ type Client interface {
 // interface implementation.
 //
 // Example:
-//  e := httpexpect.WithConfig(httpexpect.Config{
-//    BaseURL:         "http://example.com",
-//    WebsocketDialer: httpexpect.NewWebsocketDialer(myHandler),
-//	})
+//
+//	 e := httpexpect.WithConfig(httpexpect.Config{
+//	   BaseURL:         "http://example.com",
+//	   WebsocketDialer: httpexpect.NewWebsocketDialer(myHandler),
+//		})
 type WebsocketDialer interface {
 	// Dial establishes new WebSocket connection and returns response
 	// of handshake result.
@@ -244,23 +247,25 @@ func (DefaultRequestFactory) NewRequest(
 // trailing slash is allowed but not required and is appended automatically.
 //
 // New is a shorthand for WithConfig. It uses:
-//  - CompactPrinter as Printer, with testing.TB as Logger
-//  - AssertReporter as Reporter
-//  - DefaultRequestFactory as RequestFactory
+//   - CompactPrinter as Printer, with testing.TB as Logger
+//   - AssertReporter as Reporter
+//   - DefaultRequestFactory as RequestFactory
 //
 // Client is set to a default client with a non-nil Jar:
-//  &http.Client{
-//      Jar: httpexpect.NewJar(),
-//  }
+//
+//	&http.Client{
+//	    Jar: httpexpect.NewJar(),
+//	}
 //
 // Example:
-//  func TestSomething(t *testing.T) {
-//      e := httpexpect.New(t, "http://example.com/")
 //
-//      e.GET("/path").
-//          Expect().
-//          Status(http.StatusOK)
-//  }
+//	func TestSomething(t *testing.T) {
+//	    e := httpexpect.New(t, "http://example.com/")
+//
+//	    e.GET("/path").
+//	        Expect().
+//	        Status(http.StatusOK)
+//	}
 func New(t LoggerReporter, baseURL string) *Expect {
 	return WithConfig(Config{
 		BaseURL:  baseURL,
@@ -278,32 +283,35 @@ func New(t LoggerReporter, baseURL string) *Expect {
 // If RequestFactory is nil, it's set to a DefaultRequestFactory instance.
 //
 // If Client is nil, it's set to a default client with a non-nil Jar:
-//  &http.Client{
-//      Jar: httpexpect.NewJar(),
-//  }
+//
+//	&http.Client{
+//	    Jar: httpexpect.NewJar(),
+//	}
 //
 // If WebsocketDialer is nil, it's set to a default dialer:
-//  &websocket.Dialer{}
+//
+//	&websocket.Dialer{}
 //
 // Example:
-//  func TestSomething(t *testing.T) {
-//      e := httpexpect.WithConfig(httpexpect.Config{
-//          BaseURL:  "http://example.com/",
-//          Client:   &http.Client{
-//              Transport: httpexpect.NewBinder(myHandler()),
-//              Jar:       httpexpect.NewJar(),
-//          },
-//          Reporter: httpexpect.NewAssertReporter(t),
-//          Printers: []httpexpect.Printer{
-//              httpexpect.NewCurlPrinter(t),
-//              httpexpect.NewDebugPrinter(t, true)
-//          },
-//      })
 //
-//      e.GET("/path").
-//          Expect().
-//          Status(http.StatusOK)
-//  }
+//	func TestSomething(t *testing.T) {
+//	    e := httpexpect.WithConfig(httpexpect.Config{
+//	        BaseURL:  "http://example.com/",
+//	        Client:   &http.Client{
+//	            Transport: httpexpect.NewBinder(myHandler()),
+//	            Jar:       httpexpect.NewJar(),
+//	        },
+//	        Reporter: httpexpect.NewAssertReporter(t),
+//	        Printers: []httpexpect.Printer{
+//	            httpexpect.NewCurlPrinter(t),
+//	            httpexpect.NewDebugPrinter(t, true)
+//	        },
+//	    })
+//
+//	    e.GET("/path").
+//	        Expect().
+//	        Status(http.StatusOK)
+//	}
 func WithConfig(config Config) *Expect {
 	if config.Reporter == nil {
 		panic("config.Reporter is nil")
@@ -345,19 +353,20 @@ func NewJar() http.CookieJar {
 // Builders are invoked from Request method, after constructing every new request.
 //
 // Example:
-//  e := httpexpect.New(t, "http://example.com")
 //
-//  token := e.POST("/login").WithForm(Login{"ford", "betelgeuse7"}).
-//      Expect().
-//      Status(http.StatusOK).JSON().Object().Value("token").String().Raw()
+//	e := httpexpect.New(t, "http://example.com")
 //
-//  auth := e.Builder(func (req *httpexpect.Request) {
-//      req.WithHeader("Authorization", "Bearer "+token)
-//  })
+//	token := e.POST("/login").WithForm(Login{"ford", "betelgeuse7"}).
+//	    Expect().
+//	    Status(http.StatusOK).JSON().Object().Value("token").String().Raw()
 //
-//  auth.GET("/restricted").
-//     Expect().
-//     Status(http.StatusOK)
+//	auth := e.Builder(func (req *httpexpect.Request) {
+//	    req.WithHeader("Authorization", "Bearer "+token)
+//	})
+//
+//	auth.GET("/restricted").
+//	   Expect().
+//	   Status(http.StatusOK)
 func (e *Expect) Builder(builder func(*Request)) *Expect {
 	ret := *e
 	ret.builders = append(e.builders, builder)
@@ -369,19 +378,20 @@ func (e *Expect) Builder(builder func(*Request)) *Expect {
 // Matchers are invoked from Request.Expect method, after retrieving a new response.
 //
 // Example:
-//  e := httpexpect.New(t, "http://example.com")
 //
-//  m := e.Matcher(func (resp *httpexpect.Response) {
-//      resp.Header("API-Version").NotEmpty()
-//  })
+//	 e := httpexpect.New(t, "http://example.com")
 //
-//  m.GET("/some-path").
-// 	    Expect().
-// 	    Status(http.StatusOK)
+//	 m := e.Matcher(func (resp *httpexpect.Response) {
+//	     resp.Header("API-Version").NotEmpty()
+//	 })
 //
-//  m.GET("/bad-path").
-// 	    Expect().
-// 	    Status(http.StatusNotFound)
+//	 m.GET("/some-path").
+//		    Expect().
+//		    Status(http.StatusOK)
+//
+//	 m.GET("/bad-path").
+//		    Expect().
+//		    Status(http.StatusNotFound)
 func (e *Expect) Matcher(matcher func(*Response)) *Expect {
 	ret := *e
 	ret.matchers = append(e.matchers, matcher)

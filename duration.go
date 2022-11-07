@@ -16,8 +16,9 @@ type Duration struct {
 // reporter should not be nil.
 //
 // Example:
-//   d := NewDuration(reporter, time.Second)
-//   d.Le(time.Minute)
+//
+//	d := NewDuration(reporter, time.Second)
+//	d.Le(time.Minute)
 func NewDuration(reporter Reporter, value time.Duration) *Duration {
 	return &Duration{makeChain(reporter), &value}
 }
@@ -26,8 +27,9 @@ func NewDuration(reporter Reporter, value time.Duration) *Duration {
 // This is the value originally passed to NewDuration.
 //
 // Example:
-//  d := NewDuration(t, duration)
-//  assert.Equal(t, timestamp, d.Raw())
+//
+//	d := NewDuration(t, duration)
+//	assert.Equal(t, timestamp, d.Raw())
 func (d *Duration) Raw() time.Duration {
 	if d.value == nil {
 		return 0
@@ -38,8 +40,9 @@ func (d *Duration) Raw() time.Duration {
 // IsSet succeeds if Duration is set.
 //
 // Example:
-//  d := NewDuration(t, time.Second)
-//  d.IsSet()
+//
+//	d := NewDuration(t, time.Second)
+//	d.IsSet()
 func (d *Duration) IsSet() *Duration {
 	if d.value == nil {
 		d.chain.fail("expected duration is set, but it is not")
@@ -58,8 +61,9 @@ func (d *Duration) NotSet() *Duration {
 // Equal succeeds if Duration is equal to given value.
 //
 // Example:
-//  d := NewDuration(t, time.Second)
-//  d.Equal(time.Second)
+//
+//	d := NewDuration(t, time.Second)
+//	d.Equal(time.Second)
 func (d *Duration) Equal(value time.Duration) *Duration {
 	if d.value == nil {
 		d.chain.fail("expected duration is set, but it is not")
@@ -75,8 +79,9 @@ func (d *Duration) Equal(value time.Duration) *Duration {
 // NotEqual succeeds if Duration is not equal to given value.
 //
 // Example:
-//  d := NewDuration(t, time.Second)
-//  d.NotEqual(time.Minute)
+//
+//	d := NewDuration(t, time.Second)
+//	d.NotEqual(time.Minute)
 func (d *Duration) NotEqual(value time.Duration) *Duration {
 	if d.value == nil {
 		d.chain.fail("expected duration is set, but it is not")
@@ -91,8 +96,9 @@ func (d *Duration) NotEqual(value time.Duration) *Duration {
 // Gt succeeds if Duration is greater than given value.
 //
 // Example:
-//  d := NewDuration(t, time.Minute)
-//  d.Gt(time.Second)
+//
+//	d := NewDuration(t, time.Minute)
+//	d.Gt(time.Second)
 func (d *Duration) Gt(value time.Duration) *Duration {
 	if d.value == nil {
 		d.chain.fail("expected duration is set, but it is not")
@@ -108,8 +114,9 @@ func (d *Duration) Gt(value time.Duration) *Duration {
 // Ge succeeds if Duration is greater than or equal to given value.
 //
 // Example:
-//  d := NewDuration(t, time.Minute)
-//  d.Ge(time.Second)
+//
+//	d := NewDuration(t, time.Minute)
+//	d.Ge(time.Second)
 func (d *Duration) Ge(value time.Duration) *Duration {
 	if d.value == nil {
 		d.chain.fail("expected duration is set, but it is not")
@@ -125,8 +132,9 @@ func (d *Duration) Ge(value time.Duration) *Duration {
 // Lt succeeds if Duration is lesser than given value.
 //
 // Example:
-//  d := NewDuration(t, time.Second)
-//  d.Lt(time.Minute)
+//
+//	d := NewDuration(t, time.Second)
+//	d.Lt(time.Minute)
 func (d *Duration) Lt(value time.Duration) *Duration {
 	if d.value == nil {
 		d.chain.fail("expected duration is set, but it is not")
@@ -142,8 +150,9 @@ func (d *Duration) Lt(value time.Duration) *Duration {
 // Le succeeds if Duration is lesser than or equal to given value.
 //
 // Example:
-//  d := NewDuration(t, time.Second)
-//  d.Le(time.Minute)
+//
+//	d := NewDuration(t, time.Second)
+//	d.Le(time.Minute)
 func (d *Duration) Le(value time.Duration) *Duration {
 	if d.value == nil {
 		d.chain.fail("expected duration is set, but it is not")
@@ -159,9 +168,10 @@ func (d *Duration) Le(value time.Duration) *Duration {
 // InRange succeeds if Duration is in given range [min; max].
 //
 // Example:
-//  d := NewDuration(t, time.Minute)
-//  d.InRange(time.Second, time.Hour)
-//  d.InRange(time.Minute, time.Minute)
+//
+//	d := NewDuration(t, time.Minute)
+//	d.InRange(time.Second, time.Hour)
+//	d.InRange(time.Minute, time.Minute)
 func (d *Duration) InRange(min, max time.Duration) *Duration {
 	if d.value == nil {
 		d.chain.fail("expected duration is set, but it is not")

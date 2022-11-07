@@ -11,8 +11,8 @@ import (
 // Echo JWT token authentication tests.
 //
 // This test is executed for the EchoHandler() in two modes:
-//  - via http client
-//  - via http.Handler
+//   - via http client
+//   - via http.Handler
 func testEcho(e *httpexpect.Expect) {
 	type Login struct {
 		Username string `form:"username"`

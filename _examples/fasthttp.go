@@ -7,7 +7,8 @@ import (
 // FastHTTPHandler creates fasthttp.RequestHandler.
 //
 // Routes:
-//  GET /ping   return "pong"
+//
+//	GET /ping   return "pong"
 func FastHTTPHandler() fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		switch string(ctx.Path()) {
