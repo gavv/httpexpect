@@ -61,12 +61,12 @@ func (s *String) Length() *Number {
 // Example:
 //  str := NewString(t, "1234")
 //  str.Number()
-func (v *String) Number() *Number {
-	num, err := strconv.ParseFloat(v.value, 64)
+func (s *String) Number() *Number {
+	num, err := strconv.ParseFloat(s.value, 64)
 	if err != nil {
-		v.chain.fail(err.Error())
+		s.chain.fail(err.Error())
 	}
-	return &Number{v.chain, num}
+	return &Number{s.chain, num}
 }
 
 // DateTime parses date/time from string and returns a new DateTime object.

@@ -4,6 +4,6 @@ linters-settings:
 
 linters:
   enable:
-    - golint
+    - revive
     - lll
     - misspell

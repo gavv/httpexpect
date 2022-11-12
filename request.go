@@ -1377,6 +1377,7 @@ func (r *Request) shouldRetry(resp *http.Response, err error) bool {
 	)
 
 	if netErr, ok := err.(net.Error); ok {
+		//nolint
 		isTemporaryNetworkError = netErr.Temporary()
 	}
 
