@@ -16,7 +16,7 @@ require (
 	github.com/moul/http2curl v1.0.0 // indirect
 	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/smartystreets/goconvey v0.0.0-20190731233626-505e41936337 // indirect
-	github.com/valyala/fasthttp v1.41.0
+	github.com/valyala/fasthttp v1.34.0
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	google.golang.org/appengine v1.0.0
 )
