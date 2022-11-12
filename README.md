@@ -638,6 +638,7 @@ e.POST("/fruits").
 
 * [`gorequest`](https://github.com/parnurzeal/gorequest)
 * [`baloo`](https://github.com/h2non/baloo)
+* [`apitest`](https://github.com/steinfletcher/apitest)
 * [`gofight`](https://github.com/appleboy/gofight)
 * [`frisby`](https://github.com/verdverm/frisby)
 * [`forest`](https://github.com/emicklei/forest)
