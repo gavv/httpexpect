@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"moul.io/http2curl"
+	"moul.io/http2curl/v2"
 )
 
 // CurlPrinter implements Printer. Uses http2curl to dump requests as
