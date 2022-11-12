@@ -1212,19 +1212,19 @@ func TestRequestBodyMultipartFile(t *testing.T) {
 
 	part2, _ := reader.NextPart()
 	assert.Equal(t, "b", part2.FormName())
-	assert.Equal(t, filepath.Base(filename2), part2.FileName())
+	assert.Equal(t, filepath.Base(filename2), filepath.Base(part2.FileName()))
 	b2, _ := ioutil.ReadAll(part2)
 	assert.Equal(t, "2", string(b2))
 
 	part3, _ := reader.NextPart()
 	assert.Equal(t, "c", part3.FormName())
-	assert.Equal(t, "filename3", part3.FileName())
+	assert.Equal(t, "filename3", filepath.Base(part3.FileName()))
 	b3, _ := ioutil.ReadAll(part3)
 	assert.Equal(t, "3", string(b3))
 
 	part4, _ := reader.NextPart()
 	assert.Equal(t, "d", part4.FormName())
-	assert.Equal(t, "filename4", part4.FileName())
+	assert.Equal(t, "filename4", filepath.Base(part4.FileName()))
 	b4, _ := ioutil.ReadAll(part4)
 	assert.Equal(t, "4", string(b4))
 
