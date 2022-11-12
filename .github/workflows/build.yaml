@@ -19,7 +19,11 @@ jobs:
 
     strategy:
       matrix:
-        go: [ '1.17', '1.x' ]
+        include:
+          - go: 1.17
+            coverage: no
+          - go: 1.x
+            coverage: yes
 
     name: Go ${{ matrix.go }}
     steps:
@@ -49,9 +53,11 @@ jobs:
         run: cd _examples && go test
 
       - name: Prepare coverage report
+        if: ${{ matrix.coverage == 'yes' }}
         uses: jandelgado/gcov2lcov-action@v1.0.5
 
       - name: Send coverage report
+        if: ${{ matrix.coverage == 'yes' }}
         uses: coverallsapp/github-action@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
