@@ -5,9 +5,8 @@ go 1.14
 require (
 	github.com/dgrijalva/jwt-go v3.0.0+incompatible
 	github.com/fasthttp/websocket v1.4.2
-	github.com/gavv/httpexpect v2.0.0+incompatible // indirect
 	github.com/gavv/httpexpect/v2 v2.0.3
-	github.com/gin-gonic/gin v1.5.0
+	github.com/gin-gonic/gin v1.7.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/kataras/iris/v12 v12.1.8
 	github.com/klauspost/compress v1.9.8 // indirect
@@ -20,5 +19,4 @@ require (
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	golang.org/x/net v0.0.0-20210614182718-04defd469f4e // indirect
 	google.golang.org/appengine v1.0.0
-	gopkg.in/yaml.v2 v2.2.8 // indirect
 )
