@@ -360,7 +360,11 @@ func NewJar() http.CookieJar {
 //     Status(http.StatusOK)
 func (e *Expect) Builder(builder func(*Request)) *Expect {
 	ret := *e
-	ret.builders = append(e.builders, builder)
+
+	ret.builders = nil
+	ret.builders = append(ret.builders, e.builders...)
+	ret.builders = append(ret.builders, builder)
+
 	return &ret
 }
 
@@ -384,7 +388,11 @@ func (e *Expect) Builder(builder func(*Request)) *Expect {
 // 	    Status(http.StatusNotFound)
 func (e *Expect) Matcher(matcher func(*Response)) *Expect {
 	ret := *e
-	ret.matchers = append(e.matchers, matcher)
+
+	ret.matchers = nil
+	ret.matchers = append(ret.matchers, e.matchers...)
+	ret.matchers = append(ret.matchers, matcher)
+
 	return &ret
 }
 

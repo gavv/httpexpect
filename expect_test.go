@@ -81,6 +81,62 @@ func TestExpectBuilders(t *testing.T) {
 	assert.Equal(t, r1, reqs2[0])
 }
 
+func TestExpectBuildersCopying(t *testing.T) {
+	client := &mockClient{}
+
+	reporter := NewAssertReporter(t)
+
+	config := Config{
+		Client:   client,
+		Reporter: reporter,
+	}
+
+	counter1 := 0
+	counter2a := 0
+	counter2b := 0
+
+	e0 := WithConfig(config)
+
+	// Simulate the case when many builders are added, and the builders slice
+	// have some additioonal capacity. We are going to check that the slice
+	// is cloned properly when a new builder is appended.
+	for i := 0; i < 10; i++ {
+		e0 = e0.Builder(func(r *Request) {})
+	}
+
+	e1 := e0.Builder(func(r *Request) {
+		counter1++
+	})
+
+	e2a := e1.Builder(func(r *Request) {
+		counter2a++
+	})
+
+	e2b := e1.Builder(func(r *Request) {
+		counter2b++
+	})
+
+	e0.Request("METHOD", "/url")
+	assert.Equal(t, 0, counter1)
+	assert.Equal(t, 0, counter2a)
+	assert.Equal(t, 0, counter2b)
+
+	e1.Request("METHOD", "/url")
+	assert.Equal(t, 1, counter1)
+	assert.Equal(t, 0, counter2a)
+	assert.Equal(t, 0, counter2b)
+
+	e2a.Request("METHOD", "/url")
+	assert.Equal(t, 2, counter1)
+	assert.Equal(t, 1, counter2a)
+	assert.Equal(t, 0, counter2b)
+
+	e2b.Request("METHOD", "/url")
+	assert.Equal(t, 3, counter1)
+	assert.Equal(t, 1, counter2a)
+	assert.Equal(t, 1, counter2b)
+}
+
 func TestExpectMatchers(t *testing.T) {
 	client := &mockClient{}
 
@@ -122,6 +178,62 @@ func TestExpectMatchers(t *testing.T) {
 	assert.Equal(t, resp1, resps1[0])
 	assert.Equal(t, resp2, resps1[1])
 	assert.Equal(t, resp2, resps2[0])
+}
+
+func TestExpectMatchersCopying(t *testing.T) {
+	client := &mockClient{}
+
+	reporter := NewAssertReporter(t)
+
+	config := Config{
+		Client:   client,
+		Reporter: reporter,
+	}
+
+	counter1 := 0
+	counter2a := 0
+	counter2b := 0
+
+	e0 := WithConfig(config)
+
+	// Simulate the case when many builders are added, and the builders slice
+	// have some additioonal capacity. We are going to check that the slice
+	// is cloned properly when a new builder is appended.
+	for i := 0; i < 10; i++ {
+		e0 = e0.Matcher(func(r *Response) {})
+	}
+
+	e1 := e0.Matcher(func(r *Response) {
+		counter1++
+	})
+
+	e2a := e1.Matcher(func(r *Response) {
+		counter2a++
+	})
+
+	e2b := e1.Matcher(func(r *Response) {
+		counter2b++
+	})
+
+	e0.Request("METHOD", "/url").Expect()
+	assert.Equal(t, 0, counter1)
+	assert.Equal(t, 0, counter2a)
+	assert.Equal(t, 0, counter2b)
+
+	e1.Request("METHOD", "/url").Expect()
+	assert.Equal(t, 1, counter1)
+	assert.Equal(t, 0, counter2a)
+	assert.Equal(t, 0, counter2b)
+
+	e2a.Request("METHOD", "/url").Expect()
+	assert.Equal(t, 2, counter1)
+	assert.Equal(t, 1, counter2a)
+	assert.Equal(t, 0, counter2b)
+
+	e2b.Request("METHOD", "/url").Expect()
+	assert.Equal(t, 3, counter1)
+	assert.Equal(t, 1, counter2a)
+	assert.Equal(t, 1, counter2b)
 }
 
 func TestExpectValues(t *testing.T) {
