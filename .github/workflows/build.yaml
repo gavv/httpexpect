@@ -19,16 +19,12 @@ jobs:
 
     strategy:
       matrix:
-        include:
-          - go: 1.17
-            coverage: no
-          - go: 1.x
-            coverage: yes
+        go: [1.17, 1.x]
 
     name: Go ${{ matrix.go }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install Go
         uses: actions/setup-go@v3
@@ -39,12 +35,7 @@ jobs:
         run: go get -v .
 
       - name: Run tests
-        run: go test -covermode=count -coverprofile=coverage.out
-
-      - name: Run linters
-        uses: golangci/golangci-lint-action@v3
-        with:
-          version: v1.50.1
+        run: go test
 
       - name: Build examples
         run: cd _examples && go get -v .
@@ -52,12 +43,44 @@ jobs:
       - name: Run examples tests
         run: cd _examples && go test
 
+  linters:
+    runs-on: ubuntu-latest
+
+    name: Linters
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.x
+
+      - name: Run linters
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.50.1
+
+  coverage:
+    runs-on: ubuntu-latest
+
+    name: Coverage
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.x
+
+      - name: Run tests
+        run: go test -covermode=count -coverprofile=coverage.out
+
       - name: Prepare coverage report
-        if: ${{ matrix.coverage == 'yes' }}
         uses: jandelgado/gcov2lcov-action@v1.0.5
 
       - name: Send coverage report
-        if: ${{ matrix.coverage == 'yes' }}
         uses: coverallsapp/github-action@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
