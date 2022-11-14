@@ -1065,3 +1065,21 @@ func TestResponseContentOpts(t *testing.T) {
 			})
 	})
 }
+
+func TestResponseBodyClosing(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	body := newMockBody("test_body")
+
+	httpResp := &http.Response{
+		StatusCode: http.StatusOK,
+		Body:       body,
+	}
+
+	resp := NewResponse(reporter, httpResp)
+
+	assert.Equal(t, "test_body", resp.Body().Raw())
+	assert.True(t, body.closed)
+
+	resp.chain.assertOK(t)
+}

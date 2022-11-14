@@ -45,12 +45,12 @@ func (binder Binder) RoundTrip(origReq *http.Request) (*http.Response, error) {
 		req.Proto = fmt.Sprintf("HTTP/%d.%d", req.ProtoMajor, req.ProtoMinor)
 	}
 
-	if req.Body != nil {
+	if req.Body != nil && req.Body != http.NoBody {
 		if req.ContentLength == -1 {
 			req.TransferEncoding = []string{"chunked"}
 		}
 	} else {
-		req.Body = ioutil.NopCloser(bytes.NewReader(nil))
+		req.Body = http.NoBody
 	}
 
 	if req.URL != nil && req.URL.Scheme == "https" && binder.TLS != nil {

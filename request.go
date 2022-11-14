@@ -1306,58 +1306,75 @@ func (r *Request) sendWebsocketRequest() (
 	return resp, conn, elapsed
 }
 
-func (r *Request) retryRequest(reqFunc func() (resp *http.Response, err error)) (
-	resp *http.Response, elapsed time.Duration, err error,
+func (r *Request) retryRequest(reqFunc func() (*http.Response, error)) (
+	*http.Response, time.Duration, error,
 ) {
-	var body []byte
-	if r.maxRetries > 0 && r.http.Body != nil && r.http.Body != http.NoBody {
-		body, _ = ioutil.ReadAll(r.http.Body)
+	if r.http.Body != nil && r.http.Body != http.NoBody {
+		if _, ok := r.http.Body.(*bodyWrapper); !ok {
+			r.http.Body = newBodyWrapper(r.http.Body, nil)
+		}
 	}
+
+	reqBody, _ := r.http.Body.(*bodyWrapper)
 
 	delay := r.minRetryDelay
 	i := 0
 
 	for {
-		if body != nil {
-			r.http.Body = ioutil.NopCloser(bytes.NewReader(body))
-		}
-
 		for _, printer := range r.config.Printers {
+			if reqBody != nil {
+				reqBody.Rewind()
+			}
 			printer.Request(r.http)
 		}
 
-		func() {
-			if r.timeout > 0 {
-				var ctx context.Context
-				var cancel context.CancelFunc
-				if r.config.Context != nil {
-					ctx, cancel = context.WithTimeout(r.config.Context, r.timeout)
-				} else {
-					ctx, cancel = context.WithTimeout(context.Background(), r.timeout)
-				}
+		if reqBody != nil {
+			reqBody.Rewind()
+		}
 
-				defer cancel()
-				r.http = r.http.WithContext(ctx)
+		var cancelFn context.CancelFunc
+
+		if r.timeout > 0 {
+			var ctx context.Context
+			if r.config.Context != nil {
+				ctx, cancelFn = context.WithTimeout(r.config.Context, r.timeout)
+			} else {
+				ctx, cancelFn = context.WithTimeout(context.Background(), r.timeout)
 			}
 
-			start := time.Now()
-			resp, err = reqFunc()
-			elapsed = time.Since(start)
-		}()
+			r.http = r.http.WithContext(ctx)
+		}
+
+		start := time.Now()
+		resp, err := reqFunc()
+		elapsed := time.Since(start)
+
+		if resp != nil && resp.Body != nil {
+			resp.Body = newBodyWrapper(resp.Body, cancelFn)
+		} else if cancelFn != nil {
+			cancelFn()
+		}
 
 		if resp != nil {
 			for _, printer := range r.config.Printers {
+				if resp.Body != nil {
+					resp.Body.(*bodyWrapper).Rewind()
+				}
 				printer.Response(resp, elapsed)
 			}
 		}
 
 		i++
 		if i == r.maxRetries+1 {
-			return
+			return resp, elapsed, err
 		}
 
 		if !r.shouldRetry(resp, err) {
-			return
+			return resp, elapsed, err
+		}
+
+		if resp != nil && resp.Body != nil {
+			resp.Body.Close()
 		}
 
 		time.Sleep(delay)
@@ -1483,19 +1500,17 @@ func (r *Request) setupRedirects() {
 
 	if r.redirectPolicy == FollowAllRedirects {
 		if r.http.Body != nil && r.http.Body != http.NoBody {
-			bodyBytes, bodyErr := ioutil.ReadAll(r.http.Body)
-
-			r.http.GetBody = func() (io.ReadCloser, error) {
-				if bodyErr != nil {
-					return nil, bodyErr
-				}
-				return ioutil.NopCloser(bytes.NewReader(bodyBytes)), nil
+			if _, ok := r.http.Body.(*bodyWrapper); !ok {
+				r.http.Body = newBodyWrapper(r.http.Body, nil)
 			}
+			r.http.GetBody = r.http.Body.(*bodyWrapper).GetBody
 		} else {
 			r.http.GetBody = func() (io.ReadCloser, error) {
 				return http.NoBody, nil
 			}
 		}
+	} else if r.redirectPolicy != defaultRedirectPolicy {
+		r.http.GetBody = nil
 	}
 }
 

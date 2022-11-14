@@ -102,7 +102,17 @@ func getContent(chain *chain, resp *http.Response) []byte {
 		return []byte{}
 	}
 
+	if bw, ok := resp.Body.(*bodyWrapper); ok {
+		bw.Rewind()
+	}
+
 	content, err := ioutil.ReadAll(resp.Body)
+
+	closeErr := resp.Body.Close()
+	if err == nil {
+		err = closeErr
+	}
+
 	if err != nil {
 		chain.fail(err.Error())
 		return nil

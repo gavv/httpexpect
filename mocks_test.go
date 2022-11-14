@@ -1,6 +1,9 @@
 package httpexpect
 
 import (
+	"bytes"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"testing"
 	"time"
@@ -22,6 +25,23 @@ func (c *mockClient) Do(req *http.Request) (*http.Response, error) {
 	return nil, c.err
 }
 
+type mockBody struct {
+	io.Reader
+	closed bool
+}
+
+func newMockBody(body string) *mockBody {
+	return &mockBody{
+		Reader: bytes.NewBufferString(body),
+		closed: false,
+	}
+}
+
+func (b *mockBody) Close() error {
+	b.closed = true
+	return nil
+}
+
 type mockReporter struct {
 	testing  *testing.T
 	reported bool
@@ -34,6 +54,27 @@ func newMockReporter(t *testing.T) *mockReporter {
 func (r *mockReporter) Errorf(message string, args ...interface{}) {
 	r.testing.Logf("Fail: "+message, args...)
 	r.reported = true
+}
+
+type mockPrinter struct {
+	reqBody  []byte
+	respBody []byte
+	rtt      time.Duration
+}
+
+func (p *mockPrinter) Request(req *http.Request) {
+	if req.Body != nil {
+		p.reqBody, _ = ioutil.ReadAll(req.Body)
+		req.Body.Close()
+	}
+}
+
+func (p *mockPrinter) Response(resp *http.Response, rtt time.Duration) {
+	if resp.Body != nil {
+		p.respBody, _ = ioutil.ReadAll(resp.Body)
+		resp.Body.Close()
+	}
+	p.rtt = rtt
 }
 
 type mockWebsocketConn struct {
