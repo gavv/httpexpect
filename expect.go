@@ -340,6 +340,18 @@ func NewJar() http.CookieJar {
 	return jar
 }
 
+func (e *Expect) clone() *Expect {
+	ret := *e
+
+	ret.builders = nil
+	ret.builders = append(ret.builders, e.builders...)
+
+	ret.matchers = nil
+	ret.matchers = append(ret.matchers, e.matchers...)
+
+	return &ret
+}
+
 // Builder returns a copy of Expect instance with given builder attached to it.
 // Returned copy contains all previously attached builders plus a new one.
 // Builders are invoked from Request method, after constructing every new request.
@@ -359,13 +371,10 @@ func NewJar() http.CookieJar {
 //     Expect().
 //     Status(http.StatusOK)
 func (e *Expect) Builder(builder func(*Request)) *Expect {
-	ret := *e
+	ret := e.clone()
 
-	ret.builders = nil
-	ret.builders = append(ret.builders, e.builders...)
 	ret.builders = append(ret.builders, builder)
-
-	return &ret
+	return ret
 }
 
 // Matcher returns a copy of Expect instance with given matcher attached to it.
@@ -387,13 +396,10 @@ func (e *Expect) Builder(builder func(*Request)) *Expect {
 // 	    Expect().
 // 	    Status(http.StatusNotFound)
 func (e *Expect) Matcher(matcher func(*Response)) *Expect {
-	ret := *e
+	ret := e.clone()
 
-	ret.matchers = nil
-	ret.matchers = append(ret.matchers, e.matchers...)
 	ret.matchers = append(ret.matchers, matcher)
-
-	return &ret
+	return ret
 }
 
 // Request returns a new Request object.
