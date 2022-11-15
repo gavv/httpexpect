@@ -19,11 +19,7 @@ jobs:
 
     strategy:
       matrix:
-        include:
-          - go: 1.14
-            examples: no
-          - go: 1.x
-            examples: yes
+        go: [1.14, 1.x]
 
     name: Go ${{ matrix.go }}
     steps:
@@ -41,12 +37,23 @@ jobs:
       - name: Run tests
         run: go test
 
+  examples:
+    runs-on: ubuntu-latest
+
+    name: Examples
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.x
+
       - name: Build examples
-        if: matrix.examples == 'yes'
         run: cd _examples && go get -v .
 
       - name: Run examples tests
-        if: matrix.examples == 'yes'
         run: cd _examples && go test
 
   linters:
