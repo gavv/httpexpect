@@ -19,7 +19,11 @@ jobs:
 
     strategy:
       matrix:
-        go: [1.17, 1.x]
+        include:
+          - go: 1.14
+            examples: no
+          - go: 1.x
+            examples: yes
 
     name: Go ${{ matrix.go }}
     steps:
@@ -38,9 +42,11 @@ jobs:
         run: go test
 
       - name: Build examples
+        if: matrix.examples == 'yes'
         run: cd _examples && go get -v .
 
       - name: Run examples tests
+        if: matrix.examples == 'yes'
         run: cd _examples && go test
 
   linters:
