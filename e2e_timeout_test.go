@@ -24,7 +24,7 @@ func createTimeoutHandler() http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/sleep", func(w http.ResponseWriter, r *http.Request) {
-		time.Sleep(time.Duration(time.Second))
+		time.Sleep(time.Second)
 	})
 
 	mux.HandleFunc("/small", func(w http.ResponseWriter, r *http.Request) {

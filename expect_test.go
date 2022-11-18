@@ -73,8 +73,8 @@ func TestExpectBuilders(t *testing.T) {
 	r1 := e1.Request("METHOD", "/url")
 	r2 := e2.Request("METHOD", "/url")
 
-	assert.Equal(t, 2, int(len(reqs1)))
-	assert.Equal(t, 1, int(len(reqs2)))
+	assert.Equal(t, 2, len(reqs1))
+	assert.Equal(t, 1, len(reqs2))
 
 	assert.Equal(t, r1, reqs1[0])
 	assert.Equal(t, r2, reqs1[1])
@@ -166,14 +166,14 @@ func TestExpectMatchers(t *testing.T) {
 	req1 := e1.Request("METHOD", "/url")
 	req2 := e2.Request("METHOD", "/url")
 
-	assert.Equal(t, 0, int(len(resps1)))
-	assert.Equal(t, 0, int(len(resps2)))
+	assert.Equal(t, 0, len(resps1))
+	assert.Equal(t, 0, len(resps2))
 
 	resp1 := req1.Expect()
 	resp2 := req2.Expect()
 
-	assert.Equal(t, 2, int(len(resps1)))
-	assert.Equal(t, 1, int(len(resps2)))
+	assert.Equal(t, 2, len(resps1))
+	assert.Equal(t, 1, len(resps2))
 
 	assert.Equal(t, resp1, resps1[0])
 	assert.Equal(t, resp2, resps1[1])

@@ -145,11 +145,11 @@ func TestRequestMatchers(t *testing.T) {
 		resps = append(resps, r)
 	})
 
-	assert.Equal(t, 0, int(len(resps)))
+	assert.Equal(t, 0, len(resps))
 
 	resp := req.Expect()
 
-	assert.Equal(t, 1, int(len(resps)))
+	assert.Equal(t, 1, len(resps))
 	assert.Equal(t, resp, resps[0])
 }
 

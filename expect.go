@@ -66,10 +66,10 @@
 //
 // Assertion handling
 //
-// If you want to be informed about every asserion made, successfull or failed, you
+// If you want to be informed about every asserion made, successful or failed, you
 // can use AssertionHandler interface.
 //
-// Default implementation of this interface ignores successfull assertions and reports
+// Default implementation of this interface ignores successful assertions and reports
 // failed assertions using Formatter and Reporter objects.
 //
 // Custom AssertionHandler can handle all assertions (e.g. dump them in JSON format)
@@ -171,14 +171,14 @@ type Config struct {
 	// relatively big task.
 	Formatter Formatter
 
-	// AssertionHandler handles both successfull and failed assertions.
+	// AssertionHandler handles both successful and failed assertions.
 	// May be nil.
 	//
 	// If nil, DefaultAssertionHandler is used.
 	//
 	// Every time an assertion is made, AssertionHandler in invoked with detailed
 	// info about the assertion and failure. On failure, AssertionHandler is
-	// reponsible to format and report error.
+	// responsible to format and report error.
 	//
 	// DefaultAssertionHandler uses Config.Formatter to format failure and
 	// Config.Reporter to report it.
@@ -467,37 +467,37 @@ func (e *Expect) Request(method, path string, pathargs ...interface{}) *Request 
 
 // OPTIONS is a shorthand for e.Request("OPTIONS", path, pathargs...).
 func (e *Expect) OPTIONS(path string, pathargs ...interface{}) *Request {
-	return e.Request("OPTIONS", path, pathargs...)
+	return e.Request(http.MethodOptions, path, pathargs...)
 }
 
 // HEAD is a shorthand for e.Request("HEAD", path, pathargs...).
 func (e *Expect) HEAD(path string, pathargs ...interface{}) *Request {
-	return e.Request("HEAD", path, pathargs...)
+	return e.Request(http.MethodHead, path, pathargs...)
 }
 
 // GET is a shorthand for e.Request("GET", path, pathargs...).
 func (e *Expect) GET(path string, pathargs ...interface{}) *Request {
-	return e.Request("GET", path, pathargs...)
+	return e.Request(http.MethodGet, path, pathargs...)
 }
 
 // POST is a shorthand for e.Request("POST", path, pathargs...).
 func (e *Expect) POST(path string, pathargs ...interface{}) *Request {
-	return e.Request("POST", path, pathargs...)
+	return e.Request(http.MethodPost, path, pathargs...)
 }
 
 // PUT is a shorthand for e.Request("PUT", path, pathargs...).
 func (e *Expect) PUT(path string, pathargs ...interface{}) *Request {
-	return e.Request("PUT", path, pathargs...)
+	return e.Request(http.MethodPut, path, pathargs...)
 }
 
 // PATCH is a shorthand for e.Request("PATCH", path, pathargs...).
 func (e *Expect) PATCH(path string, pathargs ...interface{}) *Request {
-	return e.Request("PATCH", path, pathargs...)
+	return e.Request(http.MethodPatch, path, pathargs...)
 }
 
 // DELETE is a shorthand for e.Request("DELETE", path, pathargs...).
 func (e *Expect) DELETE(path string, pathargs ...interface{}) *Request {
-	return e.Request("DELETE", path, pathargs...)
+	return e.Request(http.MethodDelete, path, pathargs...)
 }
 
 // Value is a shorthand for NewValue(e.config.Reporter, value).
