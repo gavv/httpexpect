@@ -79,7 +79,7 @@ func TestCookieGetters(t *testing.T) {
 	assert.Equal(t, "example.com", value.Domain().Raw())
 	assert.Equal(t, "/path", value.Path().Raw())
 	assert.True(t, time.Unix(1234, 0).Equal(value.Expires().Raw()))
-	assert.Equal(t, time.Duration(123*time.Second), value.MaxAge().Raw())
+	assert.Equal(t, 123*time.Second, value.MaxAge().Raw())
 
 	value.chain.assertOK(t)
 }

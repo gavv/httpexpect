@@ -11,8 +11,8 @@ lint:
 	golangci-lint run .
 
 test:
-	go test
-	cd _examples && go test
+	gotest
+	cd _examples && gotest
 
 gen:
 	go generate
