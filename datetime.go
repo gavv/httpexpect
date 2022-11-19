@@ -17,11 +17,12 @@ type DateTime struct {
 // reporter should not be nil.
 //
 // Example:
-//   dt := NewDateTime(reporter, time.Now())
-//   dt.Le(time.Now())
 //
-//   time.Sleep(time.Second)
-//   dt.Lt(time.Now())
+//	dt := NewDateTime(reporter, time.Now())
+//	dt.Le(time.Now())
+//
+//	time.Sleep(time.Second)
+//	dt.Lt(time.Now())
 func NewDateTime(reporter Reporter, value time.Time) *DateTime {
 	return newDateTime(newDefaultChain("DateTime()", reporter), value)
 }
@@ -34,8 +35,9 @@ func newDateTime(parent *chain, val time.Time) *DateTime {
 // This is the value originally passed to NewDateTime.
 //
 // Example:
-//  dt := NewDateTime(t, timestamp)
-//  assert.Equal(t, timestamp, dt.Raw())
+//
+//	dt := NewDateTime(t, timestamp)
+//	assert.Equal(t, timestamp, dt.Raw())
 func (dt *DateTime) Raw() time.Time {
 	return dt.value
 }
@@ -43,8 +45,9 @@ func (dt *DateTime) Raw() time.Time {
 // Equal succeeds if DateTime is equal to given value.
 //
 // Example:
-//  dt := NewDateTime(t, time.Unix(0, 1))
-//  dt.Equal(time.Unix(0, 1))
+//
+//	dt := NewDateTime(t, time.Unix(0, 1))
+//	dt.Equal(time.Unix(0, 1))
 func (dt *DateTime) Equal(value time.Time) *DateTime {
 	dt.chain.enter("Equal()")
 	defer dt.chain.leave()
@@ -70,8 +73,9 @@ func (dt *DateTime) Equal(value time.Time) *DateTime {
 // NotEqual succeeds if DateTime is not equal to given value.
 //
 // Example:
-//  dt := NewDateTime(t, time.Unix(0, 1))
-//  dt.NotEqual(time.Unix(0, 2))
+//
+//	dt := NewDateTime(t, time.Unix(0, 1))
+//	dt.NotEqual(time.Unix(0, 2))
 func (dt *DateTime) NotEqual(value time.Time) *DateTime {
 	dt.chain.enter("NotEqual()")
 	defer dt.chain.leave()
@@ -97,8 +101,9 @@ func (dt *DateTime) NotEqual(value time.Time) *DateTime {
 // Gt succeeds if DateTime is greater than given value.
 //
 // Example:
-//  dt := NewDateTime(t, time.Unix(0, 2))
-//  dt.Gt(time.Unix(0, 1))
+//
+//	dt := NewDateTime(t, time.Unix(0, 2))
+//	dt.Gt(time.Unix(0, 1))
 func (dt *DateTime) Gt(value time.Time) *DateTime {
 	dt.chain.enter("Gt()")
 	defer dt.chain.leave()
@@ -124,8 +129,9 @@ func (dt *DateTime) Gt(value time.Time) *DateTime {
 // Ge succeeds if DateTime is greater than or equal to given value.
 //
 // Example:
-//  dt := NewDateTime(t, time.Unix(0, 2))
-//  dt.Ge(time.Unix(0, 1))
+//
+//	dt := NewDateTime(t, time.Unix(0, 2))
+//	dt.Ge(time.Unix(0, 1))
 func (dt *DateTime) Ge(value time.Time) *DateTime {
 	dt.chain.enter("Ge()")
 	defer dt.chain.leave()
@@ -151,8 +157,9 @@ func (dt *DateTime) Ge(value time.Time) *DateTime {
 // Lt succeeds if DateTime is lesser than given value.
 //
 // Example:
-//  dt := NewDateTime(t, time.Unix(0, 1))
-//  dt.Lt(time.Unix(0, 2))
+//
+//	dt := NewDateTime(t, time.Unix(0, 1))
+//	dt.Lt(time.Unix(0, 2))
 func (dt *DateTime) Lt(value time.Time) *DateTime {
 	dt.chain.enter("Lt()")
 	defer dt.chain.leave()
@@ -178,8 +185,9 @@ func (dt *DateTime) Lt(value time.Time) *DateTime {
 // Le succeeds if DateTime is lesser than or equal to given value.
 //
 // Example:
-//  dt := NewDateTime(t, time.Unix(0, 1))
-//  dt.Le(time.Unix(0, 2))
+//
+//	dt := NewDateTime(t, time.Unix(0, 1))
+//	dt.Le(time.Unix(0, 2))
 func (dt *DateTime) Le(value time.Time) *DateTime {
 	dt.chain.enter("Le()")
 	defer dt.chain.leave()
@@ -205,9 +213,10 @@ func (dt *DateTime) Le(value time.Time) *DateTime {
 // InRange succeeds if DateTime is in given range [min; max].
 //
 // Example:
-//  dt := NewDateTime(t, time.Unix(0, 2))
-//  dt.InRange(time.Unix(0, 1), time.Unix(0, 3))
-//  dt.InRange(time.Unix(0, 2), time.Unix(0, 2))
+//
+//	dt := NewDateTime(t, time.Unix(0, 2))
+//	dt.InRange(time.Unix(0, 1), time.Unix(0, 3))
+//	dt.InRange(time.Unix(0, 2), time.Unix(0, 2))
 func (dt *DateTime) InRange(min, max time.Time) *DateTime {
 	dt.chain.enter("InRange()")
 	defer dt.chain.leave()

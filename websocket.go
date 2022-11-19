@@ -164,8 +164,9 @@ func (c *Websocket) Subprotocol() *String {
 // returns a new WebsocketMessage object to inspect received message.
 //
 // Example:
-//  msg := conn.Expect()
-//  msg.JSON().Object().ValueEqual("message", "hi")
+//
+//	msg := conn.Expect()
+//	msg.JSON().Object().ValueEqual("message", "hi")
 func (c *Websocket) Expect() *WebsocketMessage {
 	c.chain.enter("Expect()")
 	defer c.chain.leave()
@@ -191,8 +192,9 @@ func (c *Websocket) Expect() *WebsocketMessage {
 // to ensure that no resource leaks will happen.
 //
 // Example:
-//  conn := resp.Connection()
-//  defer conn.Disconnect()
+//
+//	conn := resp.Connection()
+//	defer conn.Disconnect()
 func (c *Websocket) Disconnect() *Websocket {
 	c.chain.enter("Disconnect()")
 	defer c.chain.leave()
@@ -229,8 +231,9 @@ func (c *Websocket) Disconnect() *Websocket {
 // It's okay to call this function multiple times.
 //
 // Example:
-//  conn := resp.Connection()
-//  conn.Close(websocket.CloseUnsupportedData)
+//
+//	conn := resp.Connection()
+//	conn.Close(websocket.CloseUnsupportedData)
 func (c *Websocket) Close(code ...int) *Websocket {
 	c.chain.enter("Close()")
 	defer c.chain.leave()
@@ -267,8 +270,9 @@ func (c *Websocket) Close(code ...int) *Websocket {
 // It's okay to call this function multiple times.
 //
 // Example:
-//  conn := resp.Connection()
-//  conn.CloseWithBytes([]byte("bye!"), websocket.CloseGoingAway)
+//
+//	conn := resp.Connection()
+//	conn.CloseWithBytes([]byte("bye!"), websocket.CloseGoingAway)
 func (c *Websocket) CloseWithBytes(b []byte, code ...int) *Websocket {
 	c.chain.enter("CloseWithBytes()")
 	defer c.chain.leave()
@@ -305,12 +309,13 @@ func (c *Websocket) CloseWithBytes(b []byte, code ...int) *Websocket {
 // It's okay to call this function multiple times.
 //
 // Example:
-//  type MyJSON struct {
-//    Foo int `json:"foo"`
-//  }
 //
-//  conn := resp.Connection()
-//  conn.CloseWithJSON(MyJSON{Foo: 123}, websocket.CloseUnsupportedData)
+//	type MyJSON struct {
+//	  Foo int `json:"foo"`
+//	}
+//
+//	conn := resp.Connection()
+//	conn.CloseWithJSON(MyJSON{Foo: 123}, websocket.CloseUnsupportedData)
 func (c *Websocket) CloseWithJSON(
 	object interface{}, code ...int,
 ) *Websocket {
@@ -362,8 +367,9 @@ func (c *Websocket) CloseWithJSON(
 // It's okay to call this function multiple times.
 //
 // Example:
-//  conn := resp.Connection()
-//  conn.CloseWithText("bye!")
+//
+//	conn := resp.Connection()
+//	conn.CloseWithText("bye!")
 func (c *Websocket) CloseWithText(s string, code ...int) *Websocket {
 	c.chain.enter("CloseWithText()")
 	defer c.chain.leave()
@@ -398,8 +404,9 @@ func (c *Websocket) CloseWithText(s string, code ...int) *Websocket {
 // See also https://godoc.org/github.com/gorilla/websocket#pkg-constants
 //
 // Example:
-//  conn := resp.Connection()
-//  conn.WriteMessage(websocket.CloseMessage, []byte("Namárië..."))
+//
+//	conn := resp.Connection()
+//	conn.WriteMessage(websocket.CloseMessage, []byte("Namárië..."))
 func (c *Websocket) WriteMessage(typ int, content []byte, closeCode ...int) *Websocket {
 	c.chain.enter("WriteMessage()")
 	defer c.chain.leave()

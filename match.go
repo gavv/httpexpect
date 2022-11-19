@@ -18,19 +18,20 @@ type Match struct {
 // reporter should not be nil. submatches and names may be nil.
 //
 // Example:
-//   s := "http://example.com/users/john"
-//   r := regexp.MustCompile(`http://(?P<host>.+)/users/(?P<user>.+)`)
-//   m := NewMatch(reporter, r.FindStringSubmatch(s), r.SubexpNames())
 //
-//   m.NotEmpty()
-//   m.Length().Equal(3)
+//	s := "http://example.com/users/john"
+//	r := regexp.MustCompile(`http://(?P<host>.+)/users/(?P<user>.+)`)
+//	m := NewMatch(reporter, r.FindStringSubmatch(s), r.SubexpNames())
 //
-//   m.Index(0).Equal("http://example.com/users/john")
-//   m.Index(1).Equal("example.com")
-//   m.Index(2).Equal("john")
+//	m.NotEmpty()
+//	m.Length().Equal(3)
 //
-//   m.Name("host").Equal("example.com")
-//   m.Name("user").Equal("john")
+//	m.Index(0).Equal("http://example.com/users/john")
+//	m.Index(1).Equal("example.com")
+//	m.Index(2).Equal("john")
+//
+//	m.Name("host").Equal("example.com")
+//	m.Name("user").Equal("john")
 func NewMatch(reporter Reporter, submatches []string, names []string) *Match {
 	return newMatch(newDefaultChain("Match()", reporter), submatches, names)
 }
@@ -58,8 +59,9 @@ func newMatch(parent *chain, matchList []string, nameList []string) *Match {
 // This is the value originally passed to NewMatch.
 //
 // Example:
-//  m := NewMatch(t, submatches, names)
-//  assert.Equal(t, submatches, m.Raw())
+//
+//	m := NewMatch(t, submatches, names)
+//	assert.Equal(t, submatches, m.Raw())
 func (m *Match) Raw() []string {
 	return m.submatches
 }
@@ -68,8 +70,9 @@ func (m *Match) Raw() []string {
 // number of submatches.
 //
 // Example:
-//  m := NewMatch(t, submatches, names)
-//  m.Length().Equal(len(submatches))
+//
+//	m := NewMatch(t, submatches, names)
+//	m.Length().Equal(len(submatches))
 func (m *Match) Length() *Number {
 	m.chain.enter("Length()")
 	defer m.chain.leave()
@@ -88,14 +91,15 @@ func (m *Match) Length() *Number {
 // of bounds, Index reports failure and returns empty (but non-nil) value.
 //
 // Example:
-//   s := "http://example.com/users/john"
 //
-//   r := regexp.MustCompile(`http://(.+)/users/(.+)`)
-//   m := NewMatch(t, r.FindStringSubmatch(s), nil)
+//	s := "http://example.com/users/john"
 //
-//   m.Index(0).Equal("http://example.com/users/john")
-//   m.Index(1).Equal("example.com")
-//   m.Index(2).Equal("john")
+//	r := regexp.MustCompile(`http://(.+)/users/(.+)`)
+//	m := NewMatch(t, r.FindStringSubmatch(s), nil)
+//
+//	m.Index(0).Equal("http://example.com/users/john")
+//	m.Index(1).Equal("example.com")
+//	m.Index(2).Equal("john")
 func (m *Match) Index(index int) *String {
 	m.chain.enter("Index(%d)", index)
 	defer m.chain.leave()
@@ -126,13 +130,14 @@ func (m *Match) Index(index int) *String {
 // empty (but non-nil) value.
 //
 // Example:
-//   s := "http://example.com/users/john"
 //
-//   r := regexp.MustCompile(`http://(?P<host>.+)/users/(?P<user>.+)`)
-//   m := NewMatch(t, r.FindStringSubmatch(s), r.SubexpNames())
+//	s := "http://example.com/users/john"
 //
-//   m.Name("host").Equal("example.com")
-//   m.Name("user").Equal("john")
+//	r := regexp.MustCompile(`http://(?P<host>.+)/users/(?P<user>.+)`)
+//	m := NewMatch(t, r.FindStringSubmatch(s), r.SubexpNames())
+//
+//	m.Name("host").Equal("example.com")
+//	m.Name("user").Equal("john")
 func (m *Match) Name(name string) *String {
 	m.chain.enter("Name(%q)", name)
 	defer m.chain.leave()
@@ -164,8 +169,9 @@ func (m *Match) Name(name string) *String {
 // Empty succeeds if submatches array is empty.
 //
 // Example:
-//  m := NewMatch(t, submatches, names)
-//  m.Empty()
+//
+//	m := NewMatch(t, submatches, names)
+//	m.Empty()
 func (m *Match) Empty() *Match {
 	m.chain.enter("Empty()")
 	defer m.chain.leave()
@@ -190,8 +196,9 @@ func (m *Match) Empty() *Match {
 // NotEmpty succeeds if submatches array is non-empty.
 //
 // Example:
-//  m := NewMatch(t, submatches, names)
-//  m.NotEmpty()
+//
+//	m := NewMatch(t, submatches, names)
+//	m.NotEmpty()
 func (m *Match) NotEmpty() *Match {
 	m.chain.enter("NotEmpty()")
 	defer m.chain.leave()
@@ -220,10 +227,11 @@ func (m *Match) NotEmpty() *Match {
 // included into this check.
 //
 // Example:
-//   s := "http://example.com/users/john"
-//   r := regexp.MustCompile(`http://(.+)/users/(.+)`)
-//   m := NewMatch(t, r.FindStringSubmatch(s), nil)
-//   m.Values("example.com", "john")
+//
+//	s := "http://example.com/users/john"
+//	r := regexp.MustCompile(`http://(.+)/users/(.+)`)
+//	m := NewMatch(t, r.FindStringSubmatch(s), nil)
+//	m.Values("example.com", "john")
 func (m *Match) Values(values ...string) *Match {
 	m.chain.enter("Values()")
 	defer m.chain.leave()
@@ -257,10 +265,11 @@ func (m *Match) Values(values ...string) *Match {
 // included into this check.
 //
 // Example:
-//   s := "http://example.com/users/john"
-//   r := regexp.MustCompile(`http://(.+)/users/(.+)`)
-//   m := NewMatch(t, r.FindStringSubmatch(s), nil)
-//   m.NotValues("example.com", "bob")
+//
+//	s := "http://example.com/users/john"
+//	r := regexp.MustCompile(`http://(.+)/users/(.+)`)
+//	m := NewMatch(t, r.FindStringSubmatch(s), nil)
+//	m.NotValues("example.com", "bob")
 func (m *Match) NotValues(values ...string) *Match {
 	m.chain.enter("NotValues()")
 	defer m.chain.leave()

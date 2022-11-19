@@ -9,7 +9,8 @@ import (
 // GaeHandler creates http.Handler to run in the Google App Engine.
 //
 // Routes:
-//  GET /ping   return "pong"
+//
+//	GET /ping   return "pong"
 func GaeHandler() http.Handler {
 	m := http.NewServeMux()
 

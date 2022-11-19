@@ -1,8 +1,8 @@
 package httpexpect
 
 import (
-	"net/http/cookiejar"
 	"net/http"
+	"net/http/cookiejar"
 
 	"golang.org/x/net/publicsuffix"
 )

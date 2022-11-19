@@ -11,8 +11,8 @@ import (
 
 // Wrapper for request or response body reader
 // Allows to read body multiple times using two approaches:
-//  - use Read to read body contents and Rewind to restart reading from beginning
-//  - use GetBody to get new reader for body contents
+//   - use Read to read body contents and Rewind to restart reading from beginning
+//   - use GetBody to get new reader for body contents
 type bodyWrapper struct {
 	currReader io.Reader
 

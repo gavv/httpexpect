@@ -22,7 +22,8 @@ type String struct {
 // reporter should not be nil.
 //
 // Example:
-//  str := NewString(t, "Hello")
+//
+//	str := NewString(t, "Hello")
 func NewString(reporter Reporter, value string) *String {
 	return newString(newDefaultChain("String()", reporter), value)
 }
@@ -35,8 +36,9 @@ func newString(parent *chain, val string) *String {
 // This is the value originally passed to NewString.
 //
 // Example:
-//  str := NewString(t, "Hello")
-//  assert.Equal(t, "Hello", str.Raw())
+//
+//	str := NewString(t, "Hello")
+//	assert.Equal(t, "Hello", str.Raw())
 func (s *String) Raw() string {
 	return s.value
 }
@@ -61,8 +63,9 @@ func (s *String) Schema(schema interface{}) *String {
 // Length returns a new Number object that may be used to inspect string length.
 //
 // Example:
-//  str := NewString(t, "Hello")
-//  str.Length().Equal(5)
+//
+//	str := NewString(t, "Hello")
+//	str.Length().Equal(5)
 func (s *String) Length() *Number {
 	s.chain.enter("Length()")
 	defer s.chain.leave()
@@ -77,8 +80,9 @@ func (s *String) Length() *Number {
 // Number parses float from string and returns a new Number object.
 //
 // Example:
-//  str := NewString(t, "1234")
-//  str.Number()
+//
+//	str := NewString(t, "1234")
+//	str.Number()
 func (s *String) Number() *Number {
 	s.chain.enter("Number()")
 	defer s.chain.leave()
@@ -111,11 +115,12 @@ func (s *String) Number() *Number {
 // DateTime reports failure and returns empty (but non-nil) object.
 //
 // Example:
-//   str := NewString(t, "Tue, 15 Nov 1994 08:12:31 GMT")
-//   str.DateTime().Lt(time.Now())
 //
-//   str := NewString(t, "15 Nov 94 08:12 GMT")
-//   str.DateTime(time.RFC822).Lt(time.Now())
+//	str := NewString(t, "Tue, 15 Nov 1994 08:12:31 GMT")
+//	str.DateTime().Lt(time.Now())
+//
+//	str := NewString(t, "15 Nov 94 08:12 GMT")
+//	str.DateTime(time.RFC822).Lt(time.Now())
 func (s *String) DateTime(layout ...string) *DateTime {
 	if len(layout) != 0 {
 		s.chain.enter("DateTime(%q)", layout[0])
@@ -156,8 +161,9 @@ func (s *String) DateTime(layout ...string) *DateTime {
 // Empty succeeds if string is empty.
 //
 // Example:
-//  str := NewString(t, "")
-//  str.Empty()
+//
+//	str := NewString(t, "")
+//	str.Empty()
 func (s *String) Empty() *String {
 	s.chain.enter("Empty()")
 	defer s.chain.leave()
@@ -182,8 +188,9 @@ func (s *String) Empty() *String {
 // NotEmpty succeeds if string is non-empty.
 //
 // Example:
-//  str := NewString(t, "Hello")
-//  str.NotEmpty()
+//
+//	str := NewString(t, "Hello")
+//	str.NotEmpty()
 func (s *String) NotEmpty() *String {
 	s.chain.enter("NotEmpty()")
 	defer s.chain.leave()
@@ -208,8 +215,9 @@ func (s *String) NotEmpty() *String {
 // Equal succeeds if string is equal to given Go string.
 //
 // Example:
-//  str := NewString(t, "Hello")
-//  str.Equal("Hello")
+//
+//	str := NewString(t, "Hello")
+//	str.Equal("Hello")
 func (s *String) Equal(value string) *String {
 	s.chain.enter("Equal()")
 	defer s.chain.leave()
@@ -235,8 +243,9 @@ func (s *String) Equal(value string) *String {
 // NotEqual succeeds if string is not equal to given Go string.
 //
 // Example:
-//  str := NewString(t, "Hello")
-//  str.NotEqual("Goodbye")
+//
+//	str := NewString(t, "Hello")
+//	str.NotEqual("Goodbye")
 func (s *String) NotEqual(value string) *String {
 	s.chain.enter("NotEqual()")
 	defer s.chain.leave()
@@ -263,8 +272,9 @@ func (s *String) NotEqual(value string) *String {
 // case-folding (so it's a case-insensitive match).
 //
 // Example:
-//  str := NewString(t, "Hello")
-//  str.EqualFold("hELLo")
+//
+//	str := NewString(t, "Hello")
+//	str.EqualFold("hELLo")
 func (s *String) EqualFold(value string) *String {
 	s.chain.enter("EqualFold()")
 	defer s.chain.leave()
@@ -291,8 +301,9 @@ func (s *String) EqualFold(value string) *String {
 // Unicode case-folding (so it's a case-insensitive match).
 //
 // Example:
-//  str := NewString(t, "Hello")
-//  str.NotEqualFold("gOODBYe")
+//
+//	str := NewString(t, "Hello")
+//	str.NotEqualFold("gOODBYe")
 func (s *String) NotEqualFold(value string) *String {
 	s.chain.enter("NotEqualFold()")
 	defer s.chain.leave()
@@ -318,8 +329,9 @@ func (s *String) NotEqualFold(value string) *String {
 // Contains succeeds if string contains given Go string as a substring.
 //
 // Example:
-//  str := NewString(t, "Hello")
-//  str.Contains("ell")
+//
+//	str := NewString(t, "Hello")
+//	str.Contains("ell")
 func (s *String) Contains(value string) *String {
 	s.chain.enter("Contains()")
 	defer s.chain.leave()
@@ -345,8 +357,9 @@ func (s *String) Contains(value string) *String {
 // NotContains succeeds if string doesn't contain Go string as a substring.
 //
 // Example:
-//  str := NewString(t, "Hello")
-//  str.NotContains("bye")
+//
+//	str := NewString(t, "Hello")
+//	str.NotContains("bye")
 func (s *String) NotContains(value string) *String {
 	s.chain.enter("NotContains()")
 	defer s.chain.leave()
@@ -373,8 +386,9 @@ func (s *String) NotContains(value string) *String {
 // applying Unicode case-folding (so it's a case-insensitive match).
 //
 // Example:
-//  str := NewString(t, "Hello")
-//  str.ContainsFold("ELL")
+//
+//	str := NewString(t, "Hello")
+//	str.ContainsFold("ELL")
 func (s *String) ContainsFold(value string) *String {
 	s.chain.enter("ContainsFold()")
 	defer s.chain.leave()
@@ -401,8 +415,9 @@ func (s *String) ContainsFold(value string) *String {
 // after applying Unicode case-folding (so it's a case-insensitive match).
 //
 // Example:
-//  str := NewString(t, "Hello")
-//  str.NotContainsFold("BYE")
+//
+//	str := NewString(t, "Hello")
+//	str.NotContainsFold("BYE")
 func (s *String) NotContainsFold(value string) *String {
 	s.chain.enter("NotContainsFold()")
 	defer s.chain.leave()
@@ -433,18 +448,19 @@ func (s *String) NotContainsFold(value string) *String {
 // Regexp.FindStringSubmatch is used to construct matches.
 //
 // Example:
-//   s := NewString(t, "http://example.com/users/john")
-//   m := s.Match(`http://(?P<host>.+)/users/(?P<user>.+)`)
 //
-//   m.NotEmpty()
-//   m.Length().Equal(3)
+//	s := NewString(t, "http://example.com/users/john")
+//	m := s.Match(`http://(?P<host>.+)/users/(?P<user>.+)`)
 //
-//   m.Index(0).Equal("http://example.com/users/john")
-//   m.Index(1).Equal("example.com")
-//   m.Index(2).Equal("john")
+//	m.NotEmpty()
+//	m.Length().Equal(3)
 //
-//   m.Name("host").Equal("example.com")
-//   m.Name("user").Equal("john")
+//	m.Index(0).Equal("http://example.com/users/john")
+//	m.Index(1).Equal("example.com")
+//	m.Index(2).Equal("john")
+//
+//	m.Name("host").Equal("example.com")
+//	m.Name("user").Equal("john")
 func (s *String) Match(re string) *Match {
 	s.chain.enter("Match()")
 	defer s.chain.leave()
@@ -488,8 +504,9 @@ func (s *String) Match(re string) *Match {
 // is used to perform match.
 //
 // Example:
-//  s := NewString(t, "a")
-//  s.NotMatch(`[^a]`)
+//
+//	s := NewString(t, "a")
+//	s.NotMatch(`[^a]`)
 func (s *String) NotMatch(re string) *String {
 	s.chain.enter("NotMatch()")
 	defer s.chain.leave()
@@ -530,13 +547,14 @@ func (s *String) NotMatch(re string) *String {
 // regexp, and Regexp.FindAllStringSubmatch is used to find matches.
 //
 // Example:
-//   s := NewString(t,
-//      "http://example.com/users/john http://example.com/users/bob")
 //
-//   m := s.MatchAll(`http://(?P<host>\S+)/users/(?P<user>\S+)`)
+//	s := NewString(t,
+//	   "http://example.com/users/john http://example.com/users/bob")
 //
-//   m[0].Name("user").Equal("john")
-//   m[1].Name("user").Equal("bob")
+//	m := s.MatchAll(`http://(?P<host>\S+)/users/(?P<user>\S+)`)
+//
+//	m[0].Name("user").Equal("john")
+//	m[1].Name("user").Equal("bob")
 func (s *String) MatchAll(re string) []Match {
 	s.chain.enter("MatchAll()")
 	defer s.chain.leave()
