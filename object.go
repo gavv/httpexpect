@@ -1,6 +1,7 @@
 package httpexpect
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 )
@@ -8,7 +9,7 @@ import (
 // Object provides methods to inspect attached map[string]interface{} object
 // (Go representation of JSON object).
 type Object struct {
-	chain chain
+	chain *chain
 	value map[string]interface{}
 }
 
@@ -21,16 +22,25 @@ type Object struct {
 // Example:
 //  object := NewObject(t, map[string]interface{}{"foo": 123})
 func NewObject(reporter Reporter, value map[string]interface{}) *Object {
-	chain := makeChain(reporter)
-	if value == nil {
-		chain.fail(Failure{
-			OriginalError: fmt.Errorf("expected non-nil map value"),
-			AssertType:    FailureInvalidInput,
+	return newObject(newDefaultChain("Object()", reporter), value)
+}
+
+func newObject(parent *chain, val map[string]interface{}) *Object {
+	o := &Object{parent.clone(), nil}
+
+	if val == nil {
+		o.chain.fail(&AssertionFailure{
+			Type:   AssertNotNil,
+			Actual: &AssertionValue{val},
+			Errors: []error{
+				errors.New("expected: non-nil map"),
+			},
 		})
 	} else {
-		value, _ = canonMap(&chain, value)
+		o.value, _ = canonMap(o.chain, val)
 	}
-	return &Object{chain, value}
+
+	return o
 }
 
 // Raw returns underlying value attached to Object.
@@ -45,12 +55,18 @@ func (o *Object) Raw() map[string]interface{} {
 
 // Path is similar to Value.Path.
 func (o *Object) Path(path string) *Value {
-	return getPath(&o.chain, o.value, path)
+	o.chain.enter("Path(%q)", path)
+	defer o.chain.leave()
+
+	return jsonPath(o.chain, o.value, path)
 }
 
 // Schema is similar to Value.Schema.
 func (o *Object) Schema(schema interface{}) *Object {
-	checkSchema(&o.chain, o.value, schema)
+	o.chain.enter("Schema()")
+	defer o.chain.leave()
+
+	jsonSchema(o.chain, o.value, schema)
 	return o
 }
 
@@ -60,11 +76,19 @@ func (o *Object) Schema(schema interface{}) *Object {
 //  object := NewObject(t, map[string]interface{}{"foo": 123, "bar": 456})
 //  object.Keys().ContainsOnly("foo", "bar")
 func (o *Object) Keys() *Array {
+	o.chain.enter("Keys()")
+	defer o.chain.leave()
+
+	if o.chain.failed() {
+		return newArray(o.chain, nil)
+	}
+
 	keys := []interface{}{}
 	for k := range o.value {
 		keys = append(keys, k)
 	}
-	return &Array{o.chain, keys}
+
+	return newArray(o.chain, keys)
 }
 
 // Values returns a new Array object that may be used to inspect objects values.
@@ -73,11 +97,19 @@ func (o *Object) Keys() *Array {
 //  object := NewObject(t, map[string]interface{}{"foo": 123, "bar": 456})
 //  object.Values().ContainsOnly(123, 456)
 func (o *Object) Values() *Array {
+	o.chain.enter("Values()")
+	defer o.chain.leave()
+
+	if o.chain.failed() {
+		return newArray(o.chain, nil)
+	}
+
 	values := []interface{}{}
 	for _, v := range o.value {
 		values = append(values, v)
 	}
-	return &Array{o.chain, values}
+
+	return newArray(o.chain, values)
 }
 
 // Value returns a new Value object that may be used to inspect single value
@@ -87,17 +119,28 @@ func (o *Object) Values() *Array {
 //  object := NewObject(t, map[string]interface{}{"foo": 123})
 //  object.Value("foo").Number().Equal(123)
 func (o *Object) Value(key string) *Value {
-	value, ok := o.value[key]
-	if !ok {
-		o.chain.fail(Failure{
-			AssertionName: "Object.Value",
-			AssertType:    FailureAssertKey,
-			Expected:      key,
-			Actual:        o.value,
-		})
-		return &Value{o.chain, nil}
+	o.chain.enter("Value(%q)", key)
+	defer o.chain.leave()
+
+	if o.chain.failed() {
+		return newValue(o.chain, nil)
 	}
-	return &Value{o.chain, value}
+
+	value, ok := o.value[key]
+
+	if !ok {
+		o.chain.fail(&AssertionFailure{
+			Type:     AssertContainsKey,
+			Actual:   &AssertionValue{o.value},
+			Expected: &AssertionValue{key},
+			Errors: []error{
+				errors.New("expected: map contains key"),
+			},
+		})
+		return newValue(o.chain, nil)
+	}
+
+	return newValue(o.chain, value)
 }
 
 // Empty succeeds if object is empty.
@@ -106,7 +149,24 @@ func (o *Object) Value(key string) *Value {
 //  object := NewObject(t, map[string]interface{}{})
 //  object.Empty()
 func (o *Object) Empty() *Object {
-	return o.Equal(map[string]interface{}{})
+	o.chain.enter("Empty()")
+	defer o.chain.leave()
+
+	if o.chain.failed() {
+		return o
+	}
+
+	if !(len(o.value) == 0) {
+		o.chain.fail(&AssertionFailure{
+			Type:   AssertEmpty,
+			Actual: &AssertionValue{o.value},
+			Errors: []error{
+				errors.New("expected: map is empty"),
+			},
+		})
+	}
+
+	return o
 }
 
 // NotEmpty succeeds if object is non-empty.
@@ -115,7 +175,24 @@ func (o *Object) Empty() *Object {
 //  object := NewObject(t, map[string]interface{}{"foo": 123})
 //  object.NotEmpty()
 func (o *Object) NotEmpty() *Object {
-	return o.NotEqual(map[string]interface{}{})
+	o.chain.enter("NotEmpty()")
+	defer o.chain.leave()
+
+	if o.chain.failed() {
+		return o
+	}
+
+	if !(len(o.value) != 0) {
+		o.chain.fail(&AssertionFailure{
+			Type:   AssertNotEmpty,
+			Actual: &AssertionValue{o.value},
+			Errors: []error{
+				errors.New("expected: map is non-empty"),
+			},
+		})
+	}
+
+	return o
 }
 
 // Equal succeeds if object is equal to given Go map or struct.
@@ -127,18 +204,29 @@ func (o *Object) NotEmpty() *Object {
 //  object := NewObject(t, map[string]interface{}{"foo": 123})
 //  object.Equal(map[string]interface{}{"foo": 123})
 func (o *Object) Equal(value interface{}) *Object {
-	expected, ok := canonMap(&o.chain, value)
+	o.chain.enter("Equal()")
+	defer o.chain.leave()
+
+	if o.chain.failed() {
+		return o
+	}
+
+	expected, ok := canonMap(o.chain, value)
 	if !ok {
 		return o
 	}
+
 	if !reflect.DeepEqual(expected, o.value) {
-		o.chain.fail(Failure{
-			AssertionName: "Object.Equal",
-			AssertType:    FailureAssertEqual,
-			Expected:      expected,
-			Actual:        o.value,
+		o.chain.fail(&AssertionFailure{
+			Type:     AssertEqual,
+			Actual:   &AssertionValue{o.value},
+			Expected: &AssertionValue{expected},
+			Errors: []error{
+				errors.New("expected: maps are equal"),
+			},
 		})
 	}
+
 	return o
 }
 
@@ -151,17 +239,29 @@ func (o *Object) Equal(value interface{}) *Object {
 //  object := NewObject(t, map[string]interface{}{"foo": 123})
 //  object.Equal(map[string]interface{}{"bar": 123})
 func (o *Object) NotEqual(v interface{}) *Object {
-	expected, ok := canonMap(&o.chain, v)
+	o.chain.enter("NotEqual()")
+	defer o.chain.leave()
+
+	if o.chain.failed() {
+		return o
+	}
+
+	expected, ok := canonMap(o.chain, v)
 	if !ok {
 		return o
 	}
+
 	if reflect.DeepEqual(expected, o.value) {
-		o.chain.fail(Failure{
-			AssertionName: "Object.NotEqual",
-			AssertType:    FailureAssertNotEqual,
-			Expected:      v,
+		o.chain.fail(&AssertionFailure{
+			Type:     AssertNotEqual,
+			Actual:   &AssertionValue{o.value},
+			Expected: &AssertionValue{expected},
+			Errors: []error{
+				errors.New("expected: maps are non-equal"),
+			},
 		})
 	}
+
 	return o
 }
 
@@ -171,14 +271,24 @@ func (o *Object) NotEqual(v interface{}) *Object {
 //  object := NewObject(t, map[string]interface{}{"foo": 123})
 //  object.ContainsKey("foo")
 func (o *Object) ContainsKey(key string) *Object {
+	o.chain.enter("ContainsKey()")
+	defer o.chain.leave()
+
+	if o.chain.failed() {
+		return o
+	}
+
 	if !o.containsKey(key) {
-		o.chain.fail(Failure{
-			AssertionName: "Object.ContainsKey",
-			AssertType:    FailureAssertKey,
-			Expected:      key,
-			Actual:        o.value,
+		o.chain.fail(&AssertionFailure{
+			Type:     AssertContainsKey,
+			Actual:   &AssertionValue{o.value},
+			Expected: &AssertionValue{key},
+			Errors: []error{
+				errors.New("expected: map contains key"),
+			},
 		})
 	}
+
 	return o
 }
 
@@ -188,14 +298,24 @@ func (o *Object) ContainsKey(key string) *Object {
 //  object := NewObject(t, map[string]interface{}{"foo": 123})
 //  object.NotContainsKey("bar")
 func (o *Object) NotContainsKey(key string) *Object {
+	o.chain.enter("NotContainsKey()")
+	defer o.chain.leave()
+
+	if o.chain.failed() {
+		return o
+	}
+
 	if o.containsKey(key) {
-		o.chain.fail(Failure{
-			AssertionName: "Object.NotContainsKey",
-			AssertType:    FailureAssertKey,
-			Expected:      key,
-			Actual:        o.value,
+		o.chain.fail(&AssertionFailure{
+			Type:     AssertNotContainsKey,
+			Actual:   &AssertionValue{o.value},
+			Expected: &AssertionValue{key},
+			Errors: []error{
+				errors.New("expected: map does not contain key"),
+			},
 		})
 	}
+
 	return o
 }
 
@@ -230,14 +350,24 @@ func (o *Object) NotContainsKey(key string) *Object {
 //      "bar": []interface{}{"x"},
 //  })
 func (o *Object) ContainsMap(value interface{}) *Object {
+	o.chain.enter("ContainsMap()")
+	defer o.chain.leave()
+
+	if o.chain.failed() {
+		return o
+	}
+
 	if !o.containsMap(value) {
-		o.chain.fail(Failure{
-			AssertionName: "Object.ContainsMap",
-			AssertType:    FailureAssertContains,
-			Expected:      value,
-			Actual:        o.value,
+		o.chain.fail(&AssertionFailure{
+			Type:     AssertContainsSubset,
+			Actual:   &AssertionValue{o.value},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				errors.New("expected: map contains sub-map"),
+			},
 		})
 	}
+
 	return o
 }
 
@@ -250,14 +380,24 @@ func (o *Object) ContainsMap(value interface{}) *Object {
 //  object := NewObject(t, map[string]interface{}{"foo": 123, "bar": 456})
 //  object.NotContainsMap(map[string]interface{}{"foo": 123, "bar": "no-no-no"})
 func (o *Object) NotContainsMap(value interface{}) *Object {
+	o.chain.enter("NotContainsMap()")
+	defer o.chain.leave()
+
+	if o.chain.failed() {
+		return o
+	}
+
 	if o.containsMap(value) {
-		o.chain.fail(Failure{
-			AssertionName: "Object.NotContainsMap",
-			AssertType:    FailureAssertNotContains,
-			Expected:      value,
-			Actual:        o.value,
+		o.chain.fail(&AssertionFailure{
+			Type:     AssertNotContainsSubset,
+			Actual:   &AssertionValue{o.value},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				errors.New("expected: map does not contain sub-map"),
+			},
 		})
 	}
+
 	return o
 }
 
@@ -270,23 +410,44 @@ func (o *Object) NotContainsMap(value interface{}) *Object {
 //  object := NewObject(t, map[string]interface{}{"foo": 123})
 //  object.ValueEqual("foo", 123)
 func (o *Object) ValueEqual(key string, value interface{}) *Object {
-	o.ContainsKey(key)
+	o.chain.enter("ValueEqual(%q)", key)
+	defer o.chain.leave()
+
 	if o.chain.failed() {
 		return o
 	}
 
-	expected, ok := canonValue(&o.chain, value)
+	if !o.containsKey(key) {
+		o.chain.fail(&AssertionFailure{
+			Type:     AssertContainsKey,
+			Actual:   &AssertionValue{o.value},
+			Expected: &AssertionValue{key},
+			Errors: []error{
+				errors.New("expected: map contains key"),
+			},
+		})
+		return o
+	}
+
+	expected, ok := canonValue(o.chain, value)
 	if !ok {
 		return o
 	}
+
 	if !reflect.DeepEqual(expected, o.value[key]) {
-		o.chain.fail(Failure{
-			AssertionName: "Object.ValueEqual",
-			AssertType:    FailureAssertEqual,
-			Expected:      expected,
-			Actual:        o.value[key],
+		o.chain.fail(&AssertionFailure{
+			Type:     AssertEqual,
+			Actual:   &AssertionValue{o.value[key]},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				fmt.Errorf(
+					"expected: map value for key %q is equal to given value",
+					key),
+			},
 		})
+		return o
 	}
+
 	return o
 }
 
@@ -302,22 +463,44 @@ func (o *Object) ValueEqual(key string, value interface{}) *Object {
 //  object.ValueNotEqual("foo", "bad value")  // success
 //  object.ValueNotEqual("bar", "bad value")  // failure! (key is missing)
 func (o *Object) ValueNotEqual(key string, value interface{}) *Object {
-	o.ContainsKey(key)
+	o.chain.enter("ValueNotEqual(%q)", key)
+	defer o.chain.leave()
+
 	if o.chain.failed() {
 		return o
 	}
 
-	expected, ok := canonValue(&o.chain, value)
+	if !o.containsKey(key) {
+		o.chain.fail(&AssertionFailure{
+			Type:     AssertContainsKey,
+			Actual:   &AssertionValue{o.value},
+			Expected: &AssertionValue{key},
+			Errors: []error{
+				errors.New("expected: map contains key"),
+			},
+		})
+		return o
+	}
+
+	expected, ok := canonValue(o.chain, value)
 	if !ok {
 		return o
 	}
+
 	if reflect.DeepEqual(expected, o.value[key]) {
-		o.chain.fail(Failure{
-			AssertionName: "Object.ValueNotEqual",
-			AssertType:    FailureAssertNotEqual,
-			Expected:      expected,
+		o.chain.fail(&AssertionFailure{
+			Type:     AssertNotEqual,
+			Actual:   &AssertionValue{o.value[key]},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				fmt.Errorf(
+					"expected: map value for key %q is non-equal to given value",
+					key),
+			},
 		})
+		return o
 	}
+
 	return o
 }
 
@@ -331,7 +514,7 @@ func (o *Object) containsKey(key string) bool {
 }
 
 func (o *Object) containsMap(sm interface{}) bool {
-	submap, ok := canonMap(&o.chain, sm)
+	submap, ok := canonMap(o.chain, sm)
 	if !ok {
 		return false
 	}

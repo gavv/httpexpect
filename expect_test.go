@@ -34,14 +34,14 @@ func TestExpectMethods(t *testing.T) {
 	reqs[6] = e.PATCH("/url")
 	reqs[7] = e.DELETE("/url")
 
-	assert.Equal(t, "METHOD", reqs[0].http.Method)
-	assert.Equal(t, "OPTIONS", reqs[1].http.Method)
-	assert.Equal(t, "HEAD", reqs[2].http.Method)
-	assert.Equal(t, "GET", reqs[3].http.Method)
-	assert.Equal(t, "POST", reqs[4].http.Method)
-	assert.Equal(t, "PUT", reqs[5].http.Method)
-	assert.Equal(t, "PATCH", reqs[6].http.Method)
-	assert.Equal(t, "DELETE", reqs[7].http.Method)
+	assert.Equal(t, "METHOD", reqs[0].httpReq.Method)
+	assert.Equal(t, "OPTIONS", reqs[1].httpReq.Method)
+	assert.Equal(t, "HEAD", reqs[2].httpReq.Method)
+	assert.Equal(t, "GET", reqs[3].httpReq.Method)
+	assert.Equal(t, "POST", reqs[4].httpReq.Method)
+	assert.Equal(t, "PUT", reqs[5].httpReq.Method)
+	assert.Equal(t, "PATCH", reqs[6].httpReq.Method)
+	assert.Equal(t, "DELETE", reqs[7].httpReq.Method)
 }
 
 func TestExpectBuilders(t *testing.T) {
@@ -341,9 +341,9 @@ func TestExpectBranches(t *testing.T) {
 }
 
 func TestExpectStdCompat(_ *testing.T) {
-	New(&testing.T{}, "")
-	New(&testing.B{}, "")
-	New(testing.TB(&testing.T{}), "")
+	Default(&testing.T{}, "")
+	Default(&testing.B{}, "")
+	Default(testing.TB(&testing.T{}), "")
 }
 
 type testRequestFactory struct {
@@ -367,7 +367,7 @@ func TestExpectRequestFactory(t *testing.T) {
 	})
 	r1 := e1.Request("GET", "/")
 	r1.chain.assertOK(t)
-	assert.NotNil(t, r1.http)
+	assert.NotNil(t, r1.httpReq)
 
 	f2 := &testRequestFactory{}
 	e2 := WithConfig(Config{
@@ -378,7 +378,7 @@ func TestExpectRequestFactory(t *testing.T) {
 	r2 := e2.Request("GET", "/")
 	r2.chain.assertOK(t)
 	assert.NotNil(t, f2.lastreq)
-	assert.True(t, f2.lastreq == r2.http)
+	assert.True(t, f2.lastreq == r2.httpReq)
 
 	f3 := &testRequestFactory{
 		fail: true,

@@ -1,9 +1,13 @@
 package httpexpect
 
+import (
+	"errors"
+)
+
 // Boolean provides methods to inspect attached bool value
 // (Go representation of JSON boolean).
 type Boolean struct {
-	chain chain
+	chain *chain
 	value bool
 }
 
@@ -15,7 +19,11 @@ type Boolean struct {
 // Example:
 //  boolean := NewBoolean(t, true)
 func NewBoolean(reporter Reporter, value bool) *Boolean {
-	return &Boolean{makeChain(reporter), value}
+	return newBoolean(newDefaultChain("Boolean()", reporter), value)
+}
+
+func newBoolean(parent *chain, val bool) *Boolean {
+	return &Boolean{parent.clone(), val}
 }
 
 // Raw returns underlying value attached to Boolean.
@@ -30,12 +38,18 @@ func (b *Boolean) Raw() bool {
 
 // Path is similar to Value.Path.
 func (b *Boolean) Path(path string) *Value {
-	return getPath(&b.chain, b.value, path)
+	b.chain.enter("Path(%q)", path)
+	defer b.chain.leave()
+
+	return jsonPath(b.chain, b.value, path)
 }
 
 // Schema is similar to Value.Schema.
 func (b *Boolean) Schema(schema interface{}) *Boolean {
-	checkSchema(&b.chain, b.value, schema)
+	b.chain.enter("Schema()")
+	defer b.chain.leave()
+
+	jsonSchema(b.chain, b.value, schema)
 	return b
 }
 
@@ -45,14 +59,24 @@ func (b *Boolean) Schema(schema interface{}) *Boolean {
 //  boolean := NewBoolean(t, true)
 //  boolean.Equal(true)
 func (b *Boolean) Equal(value bool) *Boolean {
+	b.chain.enter("Equal()")
+	defer b.chain.leave()
+
+	if b.chain.failed() {
+		return b
+	}
+
 	if !(b.value == value) {
-		b.chain.fail(Failure{
-			AssertionName: "Boolean.Equal",
-			AssertType:    FailureAssertEqual,
-			Expected:      value,
-			Actual:        b.value,
+		b.chain.fail(&AssertionFailure{
+			Type:     AssertEqual,
+			Actual:   &AssertionValue{b.value},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				errors.New("expected: booleans are equal"),
+			},
 		})
 	}
+
 	return b
 }
 
@@ -62,14 +86,24 @@ func (b *Boolean) Equal(value bool) *Boolean {
 //  boolean := NewBoolean(t, true)
 //  boolean.NotEqual(false)
 func (b *Boolean) NotEqual(value bool) *Boolean {
+	b.chain.enter("NotEqual()")
+	defer b.chain.leave()
+
+	if b.chain.failed() {
+		return b
+	}
+
 	if !(b.value != value) {
-		b.chain.fail(Failure{
-			AssertionName: "Boolean.NotEqual",
-			AssertType:    FailureAssertNotEqual,
-			Expected:      value,
-			Actual:        b.value,
+		b.chain.fail(&AssertionFailure{
+			Type:     AssertNotEqual,
+			Actual:   &AssertionValue{b.value},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				errors.New("expected: booleans are non-equal"),
+			},
 		})
 	}
+
 	return b
 }
 
@@ -79,7 +113,25 @@ func (b *Boolean) NotEqual(value bool) *Boolean {
 //  boolean := NewBoolean(t, true)
 //  boolean.True()
 func (b *Boolean) True() *Boolean {
-	return b.Equal(true)
+	b.chain.enter("True()")
+	defer b.chain.leave()
+
+	if b.chain.failed() {
+		return b
+	}
+
+	if !(b.value == true) {
+		b.chain.fail(&AssertionFailure{
+			Type:     AssertEqual,
+			Actual:   &AssertionValue{b.value},
+			Expected: &AssertionValue{true},
+			Errors: []error{
+				errors.New("expected: boolean is true"),
+			},
+		})
+	}
+
+	return b
 }
 
 // False succeeds if boolean is false.
@@ -88,5 +140,23 @@ func (b *Boolean) True() *Boolean {
 //  boolean := NewBoolean(t, false)
 //  boolean.False()
 func (b *Boolean) False() *Boolean {
-	return b.Equal(false)
+	b.chain.enter("False()")
+	defer b.chain.leave()
+
+	if b.chain.failed() {
+		return b
+	}
+
+	if !(b.value == false) {
+		b.chain.fail(&AssertionFailure{
+			Type:     AssertEqual,
+			Actual:   &AssertionValue{b.value},
+			Expected: &AssertionValue{false},
+			Errors: []error{
+				errors.New("expected: boolean is false"),
+			},
+		})
+	}
+
+	return b
 }

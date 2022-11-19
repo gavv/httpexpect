@@ -8,23 +8,22 @@ import (
 )
 
 func TestDateTimeFailed(t *testing.T) {
-	chain := makeChain(newMockReporter(t))
+	chain := newMockChain(t)
+	chain.fail(&AssertionFailure{})
 
-	chain.fail(Failure{})
+	tm := time.Unix(0, 0)
 
-	ts := time.Unix(0, 0)
-
-	value := &DateTime{chain, ts}
+	value := newDateTime(chain, tm)
 
 	value.chain.assertFailed(t)
 
-	value.Equal(ts)
-	value.NotEqual(ts)
-	value.Gt(ts)
-	value.Ge(ts)
-	value.Lt(ts)
-	value.Le(ts)
-	value.InRange(ts, ts)
+	value.Equal(tm)
+	value.NotEqual(tm)
+	value.Gt(tm)
+	value.Ge(tm)
+	value.Lt(tm)
+	value.Le(tm)
+	value.InRange(tm, tm)
 }
 
 func TestDateTimeEqual(t *testing.T) {

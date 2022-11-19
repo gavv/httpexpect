@@ -2,6 +2,7 @@ package httpexpect
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -19,28 +20,36 @@ import (
 )
 
 func TestRequestFailed(t *testing.T) {
-	client := &mockClient{}
+	reporter := newMockReporter(t)
 
-	chain := makeChain(newMockReporter(t))
-	chain.fail(Failure{})
+	chain := newDefaultChain("test", reporter)
+	chain.fail(&AssertionFailure{})
 
 	config := Config{
-		Client: client,
+		Reporter: reporter,
 	}
 
-	req := &Request{
-		config: config,
-		chain:  chain,
-		http:   nil,
-	}
+	config.fillDefaults()
 
+	req := newRequest(chain, config, "GET", "")
+
+	req.WithMatcher(func(resp *Response) {
+	})
+	req.WithTransformer(func(r *http.Request) {
+	})
 	req.WithClient(&http.Client{})
 	req.WithHandler(http.HandlerFunc(func(http.ResponseWriter, *http.Request) {}))
+	req.WithContext(context.TODO())
+	req.WithTimeout(0)
 	req.WithRedirectPolicy(FollowAllRedirects)
 	req.WithMaxRedirects(1)
 	req.WithRetryPolicy(RetryAllErrors)
 	req.WithMaxRetries(1)
 	req.WithRetryDelay(time.Millisecond, time.Millisecond)
+	req.WithWebsocketUpgrade()
+	req.WithWebsocketDialer(
+		NewWebsocketDialer(
+			http.HandlerFunc(func(http.ResponseWriter, *http.Request) {})))
 	req.WithPath("foo", "bar")
 	req.WithPathObject(map[string]interface{}{"foo": "bar"})
 	req.WithQuery("foo", "bar")
@@ -52,6 +61,7 @@ func TestRequestFailed(t *testing.T) {
 	req.WithCookies(map[string]string{"foo": "bar"})
 	req.WithCookie("foo", "bar")
 	req.WithBasicAuth("foo", "bar")
+	req.WithHost("127.0.0.1")
 	req.WithProto("HTTP/1.1")
 	req.WithChunked(strings.NewReader("foo"))
 	req.WithBytes([]byte("foo"))
@@ -62,9 +72,6 @@ func TestRequestFailed(t *testing.T) {
 	req.WithFile("foo", "bar", strings.NewReader("baz"))
 	req.WithFileBytes("foo", "bar", []byte("baz"))
 	req.WithMultipart()
-	req.WithTransformer(func(r *http.Request) {
-		r.Header.Add("foo", "bar")
-	})
 
 	resp := req.Expect()
 	if resp == nil {
@@ -345,24 +352,24 @@ func TestRequestProto(t *testing.T) {
 
 	req := NewRequest(config, "METHOD", "/")
 
-	assert.Equal(t, 1, req.http.ProtoMajor)
-	assert.Equal(t, 1, req.http.ProtoMinor)
+	assert.Equal(t, 1, req.httpReq.ProtoMajor)
+	assert.Equal(t, 1, req.httpReq.ProtoMinor)
 
 	req.WithProto("HTTP/2.0")
 
-	assert.Equal(t, 2, req.http.ProtoMajor)
-	assert.Equal(t, 0, req.http.ProtoMinor)
+	assert.Equal(t, 2, req.httpReq.ProtoMajor)
+	assert.Equal(t, 0, req.httpReq.ProtoMinor)
 
 	req.WithProto("HTTP/1.0")
 
-	assert.Equal(t, 1, req.http.ProtoMajor)
-	assert.Equal(t, 0, req.http.ProtoMinor)
+	assert.Equal(t, 1, req.httpReq.ProtoMajor)
+	assert.Equal(t, 0, req.httpReq.ProtoMinor)
 
 	req.WithProto("bad")
 	req.chain.assertFailed(t)
 
-	assert.Equal(t, 1, req.http.ProtoMajor)
-	assert.Equal(t, 0, req.http.ProtoMinor)
+	assert.Equal(t, 1, req.httpReq.ProtoMajor)
+	assert.Equal(t, 0, req.httpReq.ProtoMinor)
 }
 
 func TestRequestURLConcatenate(t *testing.T) {
@@ -415,9 +422,9 @@ func TestRequestURLConcatenate(t *testing.T) {
 	empty2.Expect().chain.assertOK(t)
 	empty3.Expect().chain.assertOK(t)
 
-	assert.Equal(t, "", empty1.http.URL.String())
-	assert.Equal(t, "http://example.com", empty2.http.URL.String())
-	assert.Equal(t, "http://example.com/", empty3.http.URL.String())
+	assert.Equal(t, "", empty1.httpReq.URL.String())
+	assert.Equal(t, "http://example.com", empty2.httpReq.URL.String())
+	assert.Equal(t, "http://example.com/", empty3.httpReq.URL.String())
 }
 
 func TestRequestURLOverwrite(t *testing.T) {
@@ -707,7 +714,7 @@ func TestRequestBasicAuth(t *testing.T) {
 	req.chain.assertOK(t)
 
 	assert.Equal(t, "Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==",
-		req.http.Header.Get("Authorization"))
+		req.httpReq.Header.Get("Authorization"))
 }
 
 func TestRequestWithHost(t *testing.T) {
@@ -844,8 +851,8 @@ func TestRequestBodyChunkedProto(t *testing.T) {
 	req1 := NewRequest(config, "METHOD", "url")
 
 	req1.WithProto("HTTP/1.0")
-	assert.Equal(t, 1, req1.http.ProtoMajor)
-	assert.Equal(t, 0, req1.http.ProtoMinor)
+	assert.Equal(t, 1, req1.httpReq.ProtoMajor)
+	assert.Equal(t, 0, req1.httpReq.ProtoMinor)
 
 	req1.WithChunked(bytes.NewBufferString("body"))
 	req1.chain.assertFailed(t)
@@ -853,12 +860,12 @@ func TestRequestBodyChunkedProto(t *testing.T) {
 	req2 := NewRequest(config, "METHOD", "url")
 
 	req2.WithProto("HTTP/2.0")
-	assert.Equal(t, 2, req2.http.ProtoMajor)
-	assert.Equal(t, 0, req2.http.ProtoMinor)
+	assert.Equal(t, 2, req2.httpReq.ProtoMajor)
+	assert.Equal(t, 0, req2.httpReq.ProtoMinor)
 
 	req2.WithChunked(bytes.NewBufferString("body"))
-	assert.Equal(t, 2, req2.http.ProtoMajor)
-	assert.Equal(t, 0, req2.http.ProtoMinor)
+	assert.Equal(t, 2, req2.httpReq.ProtoMajor)
+	assert.Equal(t, 0, req2.httpReq.ProtoMinor)
 }
 
 func TestRequestBodyBytes(t *testing.T) {

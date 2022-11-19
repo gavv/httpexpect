@@ -2,7 +2,6 @@ package httpexpect
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -94,27 +93,39 @@ func (h *waitHandler) waitForRetries() {
 // the expErrorSuppressor is used as a Reporter to suppress an expected error
 type expErrorSuppressor struct {
 	backend          *assert.Assertions
+	formatter        Formatter
 	isExpError       isExpErrorFunc
 	expErrorOccurred bool
 }
 
-type isExpErrorFunc func(message string, args ...interface{}) bool
+type isExpErrorFunc func(err error) bool
 
-func newExpErrorSuppressor(t assert.TestingT,
-	isExpectedErr isExpErrorFunc) *expErrorSuppressor {
-	return &expErrorSuppressor{backend: assert.New(t),
-		isExpError: isExpectedErr}
-}
-
-func (r *expErrorSuppressor) Errorf(message string, args ...interface{}) {
-	if !r.isExpError(message, args) {
-		r.backend.Fail(fmt.Sprintf(message, args...))
-	} else {
-		r.expErrorOccurred = true
+func newExpErrorSuppressor(
+	t assert.TestingT, isExpectedErr isExpErrorFunc,
+) *expErrorSuppressor {
+	return &expErrorSuppressor{
+		backend:    assert.New(t),
+		formatter:  &DefaultFormatter{},
+		isExpError: isExpectedErr,
 	}
 }
 
-func TestGlobalContextCancel(t *testing.T) {
+func (h *expErrorSuppressor) Success(ctx *AssertionContext) {
+}
+
+func (h *expErrorSuppressor) Failure(
+	ctx *AssertionContext, failure *AssertionFailure,
+) {
+	for _, e := range failure.Errors {
+		if h.isExpError(e) {
+			h.expErrorOccurred = true
+			return
+		}
+	}
+	h.backend.Fail(h.formatter.FormatFailure(ctx, failure))
+}
+
+func TestContextGlobalCancel(t *testing.T) {
 	handler := newWaitHandler(0)
 
 	server := httptest.NewServer(handler)
@@ -124,14 +135,14 @@ func TestGlobalContextCancel(t *testing.T) {
 	defer cancel()
 
 	// config with context cancel suppression
-	reporter := newExpErrorSuppressor(t,
-		func(message string, args ...interface{}) bool {
-			return strings.Contains(message, "context canceled")
+	suppressor := newExpErrorSuppressor(t,
+		func(err error) bool {
+			return strings.Contains(err.Error(), "context canceled")
 		})
 	e := WithConfig(Config{
-		BaseURL:  server.URL,
-		Reporter: reporter,
-		Context:  ctx,
+		BaseURL:          server.URL,
+		Context:          ctx,
+		AssertionHandler: suppressor,
 	})
 
 	done := make(chan struct{})
@@ -147,10 +158,10 @@ func TestGlobalContextCancel(t *testing.T) {
 	<-done
 
 	// expected error should occur
-	assert.True(t, reporter.expErrorOccurred)
+	assert.True(t, suppressor.expErrorOccurred)
 }
 
-func TestGlobalContextWithRetries(t *testing.T) {
+func TestContextGlobalWithRetries(t *testing.T) {
 	maxRetries := 3
 	retriesToFail := 2
 	handler := newWaitHandler(retriesToFail)
@@ -162,14 +173,14 @@ func TestGlobalContextWithRetries(t *testing.T) {
 	defer cancel()
 
 	// config with context cancel suppression
-	reporter := newExpErrorSuppressor(t,
-		func(message string, args ...interface{}) bool {
-			return strings.Contains(message, "context canceled")
+	suppressor := newExpErrorSuppressor(t,
+		func(err error) bool {
+			return strings.Contains(err.Error(), "context canceled")
 		})
 	e := WithConfig(Config{
-		BaseURL:  server.URL,
-		Reporter: reporter,
-		Context:  ctx,
+		BaseURL:          server.URL,
+		Context:          ctx,
+		AssertionHandler: suppressor,
 	})
 
 	done := make(chan struct{})
@@ -187,12 +198,12 @@ func TestGlobalContextWithRetries(t *testing.T) {
 	<-done
 
 	// expected error should occur
-	assert.True(t, reporter.expErrorOccurred)
+	assert.True(t, suppressor.expErrorOccurred)
 	// first call + retries to fail should be the call count
 	assert.Equal(t, retriesToFail+1, handler.GetCallCount())
 }
 
-func TestPerRequestContext(t *testing.T) {
+func TestContextPerRequest(t *testing.T) {
 	handler := newWaitHandler(0)
 
 	server := httptest.NewServer(handler)
@@ -202,13 +213,13 @@ func TestPerRequestContext(t *testing.T) {
 	defer cancel()
 
 	// config with context cancel suppression
-	reporter := newExpErrorSuppressor(t,
-		func(message string, args ...interface{}) bool {
-			return strings.Contains(message, "context canceled")
+	suppressor := newExpErrorSuppressor(t,
+		func(err error) bool {
+			return strings.Contains(err.Error(), "context canceled")
 		})
 	e := WithConfig(Config{
-		BaseURL:  server.URL,
-		Reporter: reporter,
+		BaseURL:          server.URL,
+		AssertionHandler: suppressor,
 	})
 
 	done := make(chan struct{})
@@ -225,10 +236,10 @@ func TestPerRequestContext(t *testing.T) {
 	<-done
 
 	// expected error should occur
-	assert.True(t, reporter.expErrorOccurred)
+	assert.True(t, suppressor.expErrorOccurred)
 }
 
-func TestPerRequestContextWithRetries(t *testing.T) {
+func TestContextPerRequestWithRetries(t *testing.T) {
 	maxRetries := 3
 	retriesToFail := 2
 	handler := newWaitHandler(retriesToFail)
@@ -240,13 +251,13 @@ func TestPerRequestContextWithRetries(t *testing.T) {
 	defer cancel()
 
 	// config with context cancel suppression
-	reporter := newExpErrorSuppressor(t,
-		func(message string, args ...interface{}) bool {
-			return strings.Contains(message, "context canceled")
+	suppressor := newExpErrorSuppressor(t,
+		func(err error) bool {
+			return strings.Contains(err.Error(), "context canceled")
 		})
 	e := WithConfig(Config{
-		BaseURL:  server.URL,
-		Reporter: reporter,
+		BaseURL:          server.URL,
+		AssertionHandler: suppressor,
 	})
 
 	done := make(chan struct{})
@@ -265,25 +276,25 @@ func TestPerRequestContextWithRetries(t *testing.T) {
 	<-done
 
 	// expected error should occur
-	assert.True(t, reporter.expErrorOccurred)
+	assert.True(t, suppressor.expErrorOccurred)
 	// first call + retries to fail should be the call count
 	assert.Equal(t, retriesToFail+1, handler.GetCallCount())
 }
 
-func TestPerRequestWithTimeout(t *testing.T) {
+func TestContextPerRequestWithTimeout(t *testing.T) {
 	handler := newWaitHandler(0)
 
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
 	// config with context deadline expected error
-	reporter := newExpErrorSuppressor(t,
-		func(message string, args ...interface{}) bool {
-			return strings.Contains(message, "context deadline exceeded")
+	suppressor := newExpErrorSuppressor(t,
+		func(err error) bool {
+			return strings.Contains(err.Error(), "context deadline exceeded")
 		})
 	e := WithConfig(Config{
-		BaseURL:  server.URL,
-		Reporter: reporter,
+		BaseURL:          server.URL,
+		AssertionHandler: suppressor,
 	})
 
 	e.GET("/WaitForPerRequestTimeout").
@@ -291,10 +302,10 @@ func TestPerRequestWithTimeout(t *testing.T) {
 		Expect()
 
 	// expected error should occur
-	assert.True(t, reporter.expErrorOccurred)
+	assert.True(t, suppressor.expErrorOccurred)
 }
 
-func TestPerRequestWithTimeoutAndWithRetries(t *testing.T) {
+func TestContextPerRequestWithTimeoutAndRetries(t *testing.T) {
 	maxRetries := 3
 	retriesToFail := 2
 	handler := newWaitHandler(retriesToFail)
@@ -318,7 +329,7 @@ func TestPerRequestWithTimeoutAndWithRetries(t *testing.T) {
 	assert.Equal(t, retriesToFail+1, handler.GetCallCount())
 }
 
-func TestPerRequestWithContextAndTimeout_CancelledByTimeout(t *testing.T) {
+func TestContextPerRequestWithTimeoutCancelledByTimeout(t *testing.T) {
 	handler := newWaitHandler(0)
 
 	server := httptest.NewServer(handler)
@@ -328,13 +339,13 @@ func TestPerRequestWithContextAndTimeout_CancelledByTimeout(t *testing.T) {
 	defer cancel()
 
 	// config with context deadline expected error
-	reporter := newExpErrorSuppressor(t,
-		func(message string, args ...interface{}) bool {
-			return strings.Contains(message, "context deadline exceeded")
+	suppressor := newExpErrorSuppressor(t,
+		func(err error) bool {
+			return strings.Contains(err.Error(), "context deadline exceeded")
 		})
 	e := WithConfig(Config{
-		BaseURL:  server.URL,
-		Reporter: reporter,
+		BaseURL:          server.URL,
+		AssertionHandler: suppressor,
 	})
 
 	e.GET("/WaitForPerRequestTimeout").
@@ -343,10 +354,10 @@ func TestPerRequestWithContextAndTimeout_CancelledByTimeout(t *testing.T) {
 		Expect()
 
 	// expected error should occur
-	assert.True(t, reporter.expErrorOccurred)
+	assert.True(t, suppressor.expErrorOccurred)
 }
 
-func TestPerRequestWithContextAndTimeout_CancelledByContext(t *testing.T) {
+func TestContextPerRequestWithTimeoutCancelledByContext(t *testing.T) {
 	handler := newWaitHandler(0)
 
 	server := httptest.NewServer(handler)
@@ -356,13 +367,13 @@ func TestPerRequestWithContextAndTimeout_CancelledByContext(t *testing.T) {
 	defer cancel()
 
 	// config with context deadline expected error
-	reporter := newExpErrorSuppressor(t,
-		func(message string, args ...interface{}) bool {
-			return strings.Contains(message, "context canceled")
+	suppressor := newExpErrorSuppressor(t,
+		func(err error) bool {
+			return strings.Contains(err.Error(), "context canceled")
 		})
 	e := WithConfig(Config{
-		BaseURL:  server.URL,
-		Reporter: reporter,
+		BaseURL:          server.URL,
+		AssertionHandler: suppressor,
 	})
 
 	done := make(chan struct{})
@@ -380,5 +391,5 @@ func TestPerRequestWithContextAndTimeout_CancelledByContext(t *testing.T) {
 	<-done
 
 	// expected error should occur
-	assert.True(t, reporter.expErrorOccurred)
+	assert.True(t, suppressor.expErrorOccurred)
 }

@@ -1,12 +1,13 @@
 package httpexpect
 
 import (
+	"errors"
 	"time"
 )
 
 // Duration provides methods to inspect attached time.Duration value.
 type Duration struct {
-	chain chain
+	chain *chain
 	value *time.Duration
 }
 
@@ -19,7 +20,11 @@ type Duration struct {
 //   d := NewDuration(reporter, time.Second)
 //   d.Le(time.Minute)
 func NewDuration(reporter Reporter, value time.Duration) *Duration {
-	return &Duration{makeChain(reporter), &value}
+	return newDuration(newDefaultChain("Duration()", reporter), &value)
+}
+
+func newDuration(parent *chain, val *time.Duration) *Duration {
+	return &Duration{parent.clone(), val}
 }
 
 // Raw returns underlying time.Duration value attached to Duration.
@@ -41,23 +46,45 @@ func (d *Duration) Raw() time.Duration {
 //  d := NewDuration(t, time.Second)
 //  d.IsSet()
 func (d *Duration) IsSet() *Duration {
+	d.chain.enter("IsSet()")
+	defer d.chain.leave()
+
+	if d.chain.failed() {
+		return d
+	}
+
 	if d.value == nil {
-		d.chain.fail(Failure{
-			AssertionName: "Duration.IsSet",
-			AssertType:    FailureAssertNotNil,
+		d.chain.fail(&AssertionFailure{
+			Type:   AssertNotNil,
+			Actual: &AssertionValue{d.value},
+			Errors: []error{
+				errors.New("expected: duration is present"),
+			},
 		})
 	}
+
 	return d
 }
 
 // NotSet succeeds if Duration is not set.
 func (d *Duration) NotSet() *Duration {
-	if d.value != nil {
-		d.chain.fail(Failure{
-			AssertionName: "Duration.NotSet",
-			AssertType:    FailureAssertNil,
+	d.chain.enter("NotSet()")
+	defer d.chain.leave()
+
+	if d.chain.failed() {
+		return d
+	}
+
+	if !(d.value == nil) {
+		d.chain.fail(&AssertionFailure{
+			Type:   AssertNotNil,
+			Actual: &AssertionValue{d.value},
+			Errors: []error{
+				errors.New("expected: duration is not present"),
+			},
 		})
 	}
+
 	return d
 }
 
@@ -67,18 +94,35 @@ func (d *Duration) NotSet() *Duration {
 //  d := NewDuration(t, time.Second)
 //  d.Equal(time.Second)
 func (d *Duration) Equal(value time.Duration) *Duration {
-	if d.IsSet().chain.failed() {
+	d.chain.enter("Equal()")
+	defer d.chain.leave()
+
+	if d.chain.failed() {
+		return d
+	}
+
+	if d.value == nil {
+		d.chain.fail(&AssertionFailure{
+			Type:   AssertNotNil,
+			Actual: &AssertionValue{d.value},
+			Errors: []error{
+				errors.New("expected: duration is present"),
+			},
+		})
 		return d
 	}
 
 	if !(*d.value == value) {
-		d.chain.fail(Failure{
-			AssertionName: "Duration.Equal",
-			AssertType:    FailureAssertEqual,
-			Expected:      value,
-			Actual:        *d.value,
+		d.chain.fail(&AssertionFailure{
+			Type:     AssertEqual,
+			Actual:   &AssertionValue{d.value},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				errors.New("expected: durations are equal"),
+			},
 		})
 	}
+
 	return d
 }
 
@@ -88,18 +132,35 @@ func (d *Duration) Equal(value time.Duration) *Duration {
 //  d := NewDuration(t, time.Second)
 //  d.NotEqual(time.Minute)
 func (d *Duration) NotEqual(value time.Duration) *Duration {
-	if d.IsSet().chain.failed() {
+	d.chain.enter("NotEqual()")
+	defer d.chain.leave()
+
+	if d.chain.failed() {
+		return d
+	}
+
+	if d.value == nil {
+		d.chain.fail(&AssertionFailure{
+			Type:   AssertNotNil,
+			Actual: &AssertionValue{d.value},
+			Errors: []error{
+				errors.New("expected: duration is present"),
+			},
+		})
 		return d
 	}
 
 	if !(*d.value != value) {
-		d.chain.fail(Failure{
-			AssertionName: "Duration.NotEqual",
-			Expected:      value,
-			Actual:        *d.value,
-			AssertType:    FailureAssertNotEqual,
+		d.chain.fail(&AssertionFailure{
+			Type:     AssertNotEqual,
+			Actual:   &AssertionValue{d.value},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				errors.New("expected: durations are non-equal"),
+			},
 		})
 	}
+
 	return d
 }
 
@@ -109,18 +170,35 @@ func (d *Duration) NotEqual(value time.Duration) *Duration {
 //  d := NewDuration(t, time.Minute)
 //  d.Gt(time.Second)
 func (d *Duration) Gt(value time.Duration) *Duration {
-	if d.IsSet().chain.failed() {
+	d.chain.enter("Gt()")
+	defer d.chain.leave()
+
+	if d.chain.failed() {
+		return d
+	}
+
+	if d.value == nil {
+		d.chain.fail(&AssertionFailure{
+			Type:   AssertNotNil,
+			Actual: &AssertionValue{d.value},
+			Errors: []error{
+				errors.New("expected: duration is present"),
+			},
+		})
 		return d
 	}
 
 	if !(*d.value > value) {
-		d.chain.fail(Failure{
-			AssertionName: "Duration.Gt",
-			AssertType:    FailureAssertGt,
-			Expected:      value,
-			Actual:        *d.value,
+		d.chain.fail(&AssertionFailure{
+			Type:     AssertGt,
+			Actual:   &AssertionValue{d.value},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				errors.New("expected: duration is larger than given value"),
+			},
 		})
 	}
+
 	return d
 }
 
@@ -130,18 +208,35 @@ func (d *Duration) Gt(value time.Duration) *Duration {
 //  d := NewDuration(t, time.Minute)
 //  d.Ge(time.Second)
 func (d *Duration) Ge(value time.Duration) *Duration {
-	if d.IsSet().chain.failed() {
+	d.chain.enter("Ge()")
+	defer d.chain.leave()
+
+	if d.chain.failed() {
+		return d
+	}
+
+	if d.value == nil {
+		d.chain.fail(&AssertionFailure{
+			Type:   AssertNotNil,
+			Actual: &AssertionValue{d.value},
+			Errors: []error{
+				errors.New("expected: duration is present"),
+			},
+		})
 		return d
 	}
 
 	if !(*d.value >= value) {
-		d.chain.fail(Failure{
-			AssertionName: "Duration.Ge",
-			AssertType:    FailureAssertGe,
-			Expected:      value,
-			Actual:        *d.value,
+		d.chain.fail(&AssertionFailure{
+			Type:     AssertGe,
+			Actual:   &AssertionValue{d.value},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				errors.New("expected: duration is larger than or equal to given value"),
+			},
 		})
 	}
+
 	return d
 }
 
@@ -151,18 +246,35 @@ func (d *Duration) Ge(value time.Duration) *Duration {
 //  d := NewDuration(t, time.Second)
 //  d.Lt(time.Minute)
 func (d *Duration) Lt(value time.Duration) *Duration {
-	if d.IsSet().chain.failed() {
+	d.chain.enter("Lt()")
+	defer d.chain.leave()
+
+	if d.chain.failed() {
+		return d
+	}
+
+	if d.value == nil {
+		d.chain.fail(&AssertionFailure{
+			Type:   AssertNotNil,
+			Actual: &AssertionValue{d.value},
+			Errors: []error{
+				errors.New("expected: duration is present"),
+			},
+		})
 		return d
 	}
 
 	if !(*d.value < value) {
-		d.chain.fail(Failure{
-			AssertionName: "Duration.Lt",
-			AssertType:    FailureAssertLt,
-			Expected:      value,
-			Actual:        *d.value,
+		d.chain.fail(&AssertionFailure{
+			Type:     AssertLt,
+			Actual:   &AssertionValue{d.value},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				errors.New("expected: duration is less than given value"),
+			},
 		})
 	}
+
 	return d
 }
 
@@ -172,18 +284,35 @@ func (d *Duration) Lt(value time.Duration) *Duration {
 //  d := NewDuration(t, time.Second)
 //  d.Le(time.Minute)
 func (d *Duration) Le(value time.Duration) *Duration {
-	if d.IsSet().chain.failed() {
+	d.chain.enter("Le()")
+	defer d.chain.leave()
+
+	if d.chain.failed() {
+		return d
+	}
+
+	if d.value == nil {
+		d.chain.fail(&AssertionFailure{
+			Type:   AssertNotNil,
+			Actual: &AssertionValue{d.value},
+			Errors: []error{
+				errors.New("expected: duration is present"),
+			},
+		})
 		return d
 	}
 
 	if !(*d.value <= value) {
-		d.chain.fail(Failure{
-			AssertionName: "Duration.Le",
-			AssertType:    FailureAssertLe,
-			Expected:      value,
-			Actual:        *d.value,
+		d.chain.fail(&AssertionFailure{
+			Type:     AssertLe,
+			Actual:   &AssertionValue{d.value},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				errors.New("expected: duration is less than or equal to given value"),
+			},
 		})
 	}
+
 	return d
 }
 
@@ -194,17 +323,34 @@ func (d *Duration) Le(value time.Duration) *Duration {
 //  d.InRange(time.Second, time.Hour)
 //  d.InRange(time.Minute, time.Minute)
 func (d *Duration) InRange(min, max time.Duration) *Duration {
-	if d.IsSet().chain.failed() {
+	d.chain.enter("InRange()")
+	defer d.chain.leave()
+
+	if d.chain.failed() {
+		return d
+	}
+
+	if d.value == nil {
+		d.chain.fail(&AssertionFailure{
+			Type:   AssertNotNil,
+			Actual: &AssertionValue{d.value},
+			Errors: []error{
+				errors.New("expected: duration is present"),
+			},
+		})
 		return d
 	}
 
 	if !(*d.value >= min && *d.value <= max) {
-		d.chain.fail(Failure{
-			AssertionName:   "Duration.InRange",
-			AssertType:      FailureAssertInRange,
-			ExpectedInRange: []interface{}{min, max},
-			Actual:          *d.value,
+		d.chain.fail(&AssertionFailure{
+			Type:     AssertInRange,
+			Actual:   &AssertionValue{d.value},
+			Expected: &AssertionValue{AssertionRange{min, max}},
+			Errors: []error{
+				errors.New("expected: duration is within given range"),
+			},
 		})
 	}
+
 	return d
 }

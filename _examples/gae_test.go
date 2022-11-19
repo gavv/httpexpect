@@ -1,4 +1,4 @@
-// +build never
+//go:build never
 
 package examples
 

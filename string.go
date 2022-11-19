@@ -1,6 +1,7 @@
 package httpexpect
 
 import (
+	"errors"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -11,7 +12,7 @@ import (
 // String provides methods to inspect attached string value
 // (Go representation of JSON string).
 type String struct {
-	chain chain
+	chain *chain
 	value string
 }
 
@@ -23,7 +24,11 @@ type String struct {
 // Example:
 //  str := NewString(t, "Hello")
 func NewString(reporter Reporter, value string) *String {
-	return &String{makeChain(reporter), value}
+	return newString(newDefaultChain("String()", reporter), value)
+}
+
+func newString(parent *chain, val string) *String {
+	return &String{parent.clone(), val}
 }
 
 // Raw returns underlying value attached to String.
@@ -38,12 +43,18 @@ func (s *String) Raw() string {
 
 // Path is similar to Value.Path.
 func (s *String) Path(path string) *Value {
-	return getPath(&s.chain, s.value, path)
+	s.chain.enter("Path(%q)", path)
+	defer s.chain.leave()
+
+	return jsonPath(s.chain, s.value, path)
 }
 
 // Schema is similar to Value.Schema.
 func (s *String) Schema(schema interface{}) *String {
-	checkSchema(&s.chain, s.value, schema)
+	s.chain.enter("Schema()")
+	defer s.chain.leave()
+
+	jsonSchema(s.chain, s.value, schema)
 	return s
 }
 
@@ -53,7 +64,14 @@ func (s *String) Schema(schema interface{}) *String {
 //  str := NewString(t, "Hello")
 //  str.Length().Equal(5)
 func (s *String) Length() *Number {
-	return &Number{s.chain, float64(len(s.value))}
+	s.chain.enter("Length()")
+	defer s.chain.leave()
+
+	if s.chain.failed() {
+		return newNumber(s.chain, 0)
+	}
+
+	return newNumber(s.chain, float64(len(s.value)))
 }
 
 // Number parses float from string and returns a new Number object.
@@ -62,11 +80,28 @@ func (s *String) Length() *Number {
 //  str := NewString(t, "1234")
 //  str.Number()
 func (s *String) Number() *Number {
-	num, err := strconv.ParseFloat(s.value, 64)
-	if err != nil {
-		s.chain.fail(err.Error())
+	s.chain.enter("Number()")
+	defer s.chain.leave()
+
+	if s.chain.failed() {
+		return newNumber(s.chain, 0)
 	}
-	return &Number{s.chain, num}
+
+	num, err := strconv.ParseFloat(s.value, 64)
+
+	if err != nil {
+		s.chain.fail(&AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{s.value},
+			Errors: []error{
+				errors.New("expected: string can be parsed to number"),
+				err,
+			},
+		})
+		return newNumber(s.chain, 0)
+	}
+
+	return newNumber(s.chain, num)
 }
 
 // DateTime parses date/time from string and returns a new DateTime object.
@@ -82,23 +117,40 @@ func (s *String) Number() *Number {
 //   str := NewString(t, "15 Nov 94 08:12 GMT")
 //   str.DateTime(time.RFC822).Lt(time.Now())
 func (s *String) DateTime(layout ...string) *DateTime {
-	if s.chain.failed() {
-		return &DateTime{s.chain, time.Unix(0, 0)}
+	if len(layout) != 0 {
+		s.chain.enter("DateTime(%q)", layout[0])
+	} else {
+		s.chain.enter("DateTime()")
 	}
+	defer s.chain.leave()
+
+	if s.chain.failed() {
+		return newDateTime(s.chain, time.Unix(0, 0))
+	}
+
 	var (
-		t   time.Time
+		tm  time.Time
 		err error
 	)
 	if len(layout) != 0 {
-		t, err = time.Parse(layout[0], s.value)
+		tm, err = time.Parse(layout[0], s.value)
 	} else {
-		t, err = http.ParseTime(s.value)
+		tm, err = http.ParseTime(s.value)
 	}
+
 	if err != nil {
-		s.chain.fail(newErrorFailure(err))
-		return &DateTime{s.chain, time.Unix(0, 0)}
+		s.chain.fail(&AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{s.value},
+			Errors: []error{
+				errors.New("expected: string can be parsed to datetime"),
+				err,
+			},
+		})
+		return newDateTime(s.chain, time.Unix(0, 0))
 	}
-	return &DateTime{s.chain, t}
+
+	return newDateTime(s.chain, tm)
 }
 
 // Empty succeeds if string is empty.
@@ -107,7 +159,24 @@ func (s *String) DateTime(layout ...string) *DateTime {
 //  str := NewString(t, "")
 //  str.Empty()
 func (s *String) Empty() *String {
-	return s.Equal("")
+	s.chain.enter("Empty()")
+	defer s.chain.leave()
+
+	if s.chain.failed() {
+		return s
+	}
+
+	if !(s.value == "") {
+		s.chain.fail(&AssertionFailure{
+			Type:   AssertEmpty,
+			Actual: &AssertionValue{s.value},
+			Errors: []error{
+				errors.New("expected: string is empty"),
+			},
+		})
+	}
+
+	return s
 }
 
 // NotEmpty succeeds if string is non-empty.
@@ -116,7 +185,24 @@ func (s *String) Empty() *String {
 //  str := NewString(t, "Hello")
 //  str.NotEmpty()
 func (s *String) NotEmpty() *String {
-	return s.NotEqual("")
+	s.chain.enter("NotEmpty()")
+	defer s.chain.leave()
+
+	if s.chain.failed() {
+		return s
+	}
+
+	if !(s.value != "") {
+		s.chain.fail(&AssertionFailure{
+			Type:   AssertNotEmpty,
+			Actual: &AssertionValue{s.value},
+			Errors: []error{
+				errors.New("expected: string is non-empty"),
+			},
+		})
+	}
+
+	return s
 }
 
 // Equal succeeds if string is equal to given Go string.
@@ -125,14 +211,24 @@ func (s *String) NotEmpty() *String {
 //  str := NewString(t, "Hello")
 //  str.Equal("Hello")
 func (s *String) Equal(value string) *String {
+	s.chain.enter("Equal()")
+	defer s.chain.leave()
+
+	if s.chain.failed() {
+		return s
+	}
+
 	if !(s.value == value) {
-		s.chain.fail(Failure{
-			AssertionName: "String.Equal",
-			AssertType:    FailureAssertEqual,
-			Expected:      value,
-			Actual:        s.value,
+		s.chain.fail(&AssertionFailure{
+			Type:     AssertEqual,
+			Actual:   &AssertionValue{s.value},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				errors.New("expected: strings are equal"),
+			},
 		})
 	}
+
 	return s
 }
 
@@ -142,13 +238,24 @@ func (s *String) Equal(value string) *String {
 //  str := NewString(t, "Hello")
 //  str.NotEqual("Goodbye")
 func (s *String) NotEqual(value string) *String {
+	s.chain.enter("NotEqual()")
+	defer s.chain.leave()
+
+	if s.chain.failed() {
+		return s
+	}
+
 	if !(s.value != value) {
-		s.chain.fail(Failure{
-			AssertionName: "String.NotEqual",
-			AssertType:    FailureAssertNotEqual,
-			Expected:      value,
+		s.chain.fail(&AssertionFailure{
+			Type:     AssertNotEqual,
+			Actual:   &AssertionValue{s.value},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				errors.New("expected: strings are non-equal"),
+			},
 		})
 	}
+
 	return s
 }
 
@@ -157,16 +264,26 @@ func (s *String) NotEqual(value string) *String {
 //
 // Example:
 //  str := NewString(t, "Hello")
-//  str.EqualFold("hELLo")"\nexpected string not equal to:\n %q", value
+//  str.EqualFold("hELLo")
 func (s *String) EqualFold(value string) *String {
+	s.chain.enter("EqualFold()")
+	defer s.chain.leave()
+
+	if s.chain.failed() {
+		return s
+	}
+
 	if !strings.EqualFold(s.value, value) {
-		s.chain.fail(Failure{
-			AssertionName: "String.EqualFold",
-			AssertType:    FailureAssertEqual,
-			Expected:      value,
-			Actual:        s.value,
+		s.chain.fail(&AssertionFailure{
+			Type:     AssertEqual,
+			Actual:   &AssertionValue{s.value},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				errors.New("expected: strings are equal (if folded)"),
+			},
 		})
 	}
+
 	return s
 }
 
@@ -177,14 +294,24 @@ func (s *String) EqualFold(value string) *String {
 //  str := NewString(t, "Hello")
 //  str.NotEqualFold("gOODBYe")
 func (s *String) NotEqualFold(value string) *String {
+	s.chain.enter("NotEqualFold()")
+	defer s.chain.leave()
+
+	if s.chain.failed() {
+		return s
+	}
+
 	if strings.EqualFold(s.value, value) {
-		s.chain.fail(Failure{
-			AssertionName: "String.NotEqualFold",
-			AssertType:    FailureAssertNotEqual,
-			Expected:      value,
-			Actual:        s.value,
+		s.chain.fail(&AssertionFailure{
+			Type:     AssertNotEqual,
+			Actual:   &AssertionValue{s.value},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				errors.New("expected: strings are non-equal (if folded)"),
+			},
 		})
 	}
+
 	return s
 }
 
@@ -194,14 +321,24 @@ func (s *String) NotEqualFold(value string) *String {
 //  str := NewString(t, "Hello")
 //  str.Contains("ell")
 func (s *String) Contains(value string) *String {
+	s.chain.enter("Contains()")
+	defer s.chain.leave()
+
+	if s.chain.failed() {
+		return s
+	}
+
 	if !strings.Contains(s.value, value) {
-		s.chain.fail(Failure{
-			AssertionName: "String.Contains",
-			AssertType:    FailureAssertContains,
-			Expected:      value,
-			Actual:        s.value,
+		s.chain.fail(&AssertionFailure{
+			Type:     AssertContainsSubset,
+			Actual:   &AssertionValue{s.value},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				errors.New("expected: string contains sub-string"),
+			},
 		})
 	}
+
 	return s
 }
 
@@ -211,14 +348,24 @@ func (s *String) Contains(value string) *String {
 //  str := NewString(t, "Hello")
 //  str.NotContains("bye")
 func (s *String) NotContains(value string) *String {
+	s.chain.enter("NotContains()")
+	defer s.chain.leave()
+
+	if s.chain.failed() {
+		return s
+	}
+
 	if strings.Contains(s.value, value) {
-		s.chain.fail(Failure{
-			AssertionName: "String.NotContains",
-			AssertType:    FailureAssertNotContains,
-			Expected:      value,
-			Actual:        s.value,
+		s.chain.fail(&AssertionFailure{
+			Type:     AssertNotContainsSubset,
+			Actual:   &AssertionValue{s.value},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				errors.New("expected: string does not contain sub-string"),
+			},
 		})
 	}
+
 	return s
 }
 
@@ -229,14 +376,24 @@ func (s *String) NotContains(value string) *String {
 //  str := NewString(t, "Hello")
 //  str.ContainsFold("ELL")
 func (s *String) ContainsFold(value string) *String {
+	s.chain.enter("ContainsFold()")
+	defer s.chain.leave()
+
+	if s.chain.failed() {
+		return s
+	}
+
 	if !strings.Contains(strings.ToLower(s.value), strings.ToLower(value)) {
-		s.chain.fail(Failure{
-			AssertionName: "String.ContainsFold",
-			AssertType:    FailureAssertContains,
-			Expected:      value,
-			Actual:        s.value,
+		s.chain.fail(&AssertionFailure{
+			Type:     AssertContainsSubset,
+			Actual:   &AssertionValue{s.value},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				errors.New("expected: string contains sub-string (if folded)"),
+			},
 		})
 	}
+
 	return s
 }
 
@@ -247,14 +404,24 @@ func (s *String) ContainsFold(value string) *String {
 //  str := NewString(t, "Hello")
 //  str.NotContainsFold("BYE")
 func (s *String) NotContainsFold(value string) *String {
+	s.chain.enter("NotContainsFold()")
+	defer s.chain.leave()
+
+	if s.chain.failed() {
+		return s
+	}
+
 	if strings.Contains(strings.ToLower(s.value), strings.ToLower(value)) {
-		s.chain.fail(Failure{
-			AssertionName: "String.NotContainsFold",
-			AssertType:    FailureAssertNotContains,
-			Expected:      value,
-			Actual:        s.value,
+		s.chain.fail(&AssertionFailure{
+			Type:     AssertNotContainsSubset,
+			Actual:   &AssertionValue{s.value},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				errors.New("expected: string does not contain sub-string (if folded)"),
+			},
 		})
 	}
+
 	return s
 }
 
@@ -279,24 +446,80 @@ func (s *String) NotContainsFold(value string) *String {
 //   m.Name("host").Equal("example.com")
 //   m.Name("user").Equal("john")
 func (s *String) Match(re string) *Match {
-	r, err := regexp.Compile(re)
+	s.chain.enter("Match()")
+	defer s.chain.leave()
+
+	if s.chain.failed() {
+		return newMatch(s.chain, nil, nil)
+	}
+
+	rx, err := regexp.Compile(re)
 	if err != nil {
-		s.chain.fail(newErrorFailure(err))
-		return makeMatch(s.chain, nil, nil)
-	}
-
-	m := r.FindStringSubmatch(s.value)
-	if m == nil {
-		s.chain.fail(Failure{
-			AssertionName: "String.Match",
-			AssertType:    FailureAssertMatchRe,
-			Expected:      re,
-			Actual:        s.value,
+		s.chain.fail(&AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{re},
+			Errors: []error{
+				errors.New("expected: valid regexp"),
+				err,
+			},
 		})
-		return makeMatch(s.chain, nil, nil)
+		return newMatch(s.chain, nil, nil)
 	}
 
-	return makeMatch(s.chain, m, r.SubexpNames())
+	match := rx.FindStringSubmatch(s.value)
+	if match == nil {
+		s.chain.fail(&AssertionFailure{
+			Type:     AssertMatchRegexp,
+			Actual:   &AssertionValue{s.value},
+			Expected: &AssertionValue{re},
+			Errors: []error{
+				errors.New("expected: string matches regexp"),
+			},
+		})
+		return newMatch(s.chain, nil, nil)
+	}
+
+	return newMatch(s.chain, match, rx.SubexpNames())
+}
+
+// NotMatch succeeds if the string doesn't match to given regexp.
+//
+// regexp.Compile is used to construct regexp, and Regexp.MatchString
+// is used to perform match.
+//
+// Example:
+//  s := NewString(t, "a")
+//  s.NotMatch(`[^a]`)
+func (s *String) NotMatch(re string) *String {
+	s.chain.enter("NotMatch()")
+	defer s.chain.leave()
+
+	rx, err := regexp.Compile(re)
+	if err != nil {
+		s.chain.fail(&AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{re},
+			Errors: []error{
+				errors.New("expected: valid regexp"),
+				err,
+			},
+		})
+		return s
+	}
+
+	if rx.MatchString(s.value) {
+		s.chain.fail(&AssertionFailure{
+			Type:     AssertNotMatchRegexp,
+			Actual:   &AssertionValue{s.value},
+			Expected: &AssertionValue{re},
+			Errors: []error{
+				errors.New("expected: string does not match regexp"),
+			},
+		})
+		return s
+	}
+
+	return s
 }
 
 // MatchAll find all matches in string for given regexp and returns a list
@@ -315,58 +538,46 @@ func (s *String) Match(re string) *Match {
 //   m[0].Name("user").Equal("john")
 //   m[1].Name("user").Equal("bob")
 func (s *String) MatchAll(re string) []Match {
-	r, err := regexp.Compile(re)
-	if err != nil {
-		s.chain.fail(newErrorFailure(err))
+	s.chain.enter("MatchAll()")
+	defer s.chain.leave()
+
+	if s.chain.failed() {
 		return []Match{}
 	}
 
-	matches := r.FindAllStringSubmatch(s.value, -1)
+	rx, err := regexp.Compile(re)
+	if err != nil {
+		s.chain.fail(&AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{re},
+			Errors: []error{
+				errors.New("expected: valid regexp"),
+				err,
+			},
+		})
+		return []Match{}
+	}
+
+	matches := rx.FindAllStringSubmatch(s.value, -1)
 	if matches == nil {
-		s.chain.fail(Failure{
-			AssertionName: "String.MatchAll",
-			AssertType:    FailureAssertMatchRe,
-			Expected:      re,
-			Actual:        s.value,
+		s.chain.fail(&AssertionFailure{
+			Type:     AssertMatchRegexp,
+			Actual:   &AssertionValue{s.value},
+			Expected: &AssertionValue{re},
+			Errors: []error{
+				errors.New("expected: string matches regexp"),
+			},
 		})
 		return []Match{}
 	}
 
 	ret := []Match{}
-	for _, m := range matches {
-		ret = append(ret, *makeMatch(
+	for _, match := range matches {
+		ret = append(ret, *newMatch(
 			s.chain,
-			m,
-			r.SubexpNames()))
+			match,
+			rx.SubexpNames()))
 	}
 
 	return ret
-}
-
-// NotMatch succeeds if the string doesn't match to given regexp.
-//
-// regexp.Compile is used to construct regexp, and Regexp.MatchString
-// is used to perform match.
-//
-// Example:
-//   s := NewString(t, "a")
-//   s.NotMatch(`[^a]`)
-func (s *String) NotMatch(re string) *String {
-	r, err := regexp.Compile(re)
-	if err != nil {
-		s.chain.fail(newErrorFailure(err))
-		return s
-	}
-
-	if r.MatchString(s.value) {
-		s.chain.fail(Failure{
-			AssertionName: "String.NotMatch",
-			AssertType:    FailureAssertNotMatchRe,
-			Expected:      re,
-			Actual:        s.value,
-		})
-		return s
-	}
-
-	return s
 }
