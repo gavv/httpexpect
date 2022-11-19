@@ -10,25 +10,51 @@ import (
 )
 
 func TestCookieFailed(t *testing.T) {
-	chain := makeChain(newMockReporter(t))
+	check := func(value *Cookie, isNil bool) {
+		value.chain.assertFailed(t)
 
-	chain.fail(Failure{})
+		if isNil {
+			assert.Nil(t, value.Raw())
+		} else {
+			assert.NotNil(t, value.Raw())
+		}
+		assert.NotNil(t, value.Name())
+		assert.NotNil(t, value.Value())
+		assert.NotNil(t, value.Domain())
+		assert.NotNil(t, value.Path())
+		assert.NotNil(t, value.Expires())
+		assert.NotNil(t, value.MaxAge())
+	}
 
-	value := &Cookie{chain, nil}
+	t.Run("failed_chain", func(t *testing.T) {
+		chain := newMockChain(t)
+		chain.fail(&AssertionFailure{})
 
-	assert.True(t, value.Raw() == nil)
-	assert.True(t, value.Name() != nil)
-	assert.True(t, value.Value() != nil)
-	assert.True(t, value.Domain() != nil)
-	assert.True(t, value.Path() != nil)
-	assert.True(t, value.Expires() != nil)
-	assert.True(t, value.MaxAge() != nil)
+		value := newCookie(chain, &http.Cookie{})
+
+		check(value, false)
+	})
+
+	t.Run("nil_value", func(t *testing.T) {
+		chain := newMockChain(t)
+
+		value := newCookie(chain, nil)
+
+		check(value, true)
+	})
+
+	t.Run("failed_chain_nil_value", func(t *testing.T) {
+		chain := newMockChain(t)
+		chain.fail(&AssertionFailure{})
+
+		value := newCookie(chain, nil)
+
+		check(value, true)
+	})
 }
 
 func TestCookieGetters(t *testing.T) {
 	reporter := newMockReporter(t)
-
-	NewCookie(reporter, nil).chain.assertFailed(t)
 
 	value := NewCookie(reporter, &http.Cookie{
 		Name:    "name",

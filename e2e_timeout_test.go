@@ -72,7 +72,7 @@ func TestE2ETimeoutSmallBody(t *testing.T) {
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
-	e := New(t, server.URL)
+	e := Default(t, server.URL)
 
 	for i := 0; i < 100; i++ {
 		e.GET("/small").
@@ -90,7 +90,7 @@ func TestE2ETimeoutLargeBody(t *testing.T) {
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
-	e := New(t, server.URL)
+	e := Default(t, server.URL)
 
 	for i := 0; i < 100; i++ {
 		e.GET("/large").

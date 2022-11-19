@@ -63,83 +63,83 @@
 //
 //  s0.Equal("foo")    // success
 //  s1.Equal("bar")    // this check is ignored because s1 is marked as failed
+//
+// Assertion handling
+//
+// If you want to be informed about every asserion made, successfull or failed, you
+// can use AssertionHandler interface.
+//
+// Default implementation of this interface ignores successfull assertions and reports
+// failed assertions using Formatter and Reporter objects.
+//
+// Custom AssertionHandler can handle all assertions (e.g. dump them in JSON format)
+// and is free to use or not to use Formatter and Reporter in its sole discretion.
 package httpexpect
 
 import (
 	"context"
 	"io"
 	"net/http"
-	"net/http/cookiejar"
-	"time"
 
 	"github.com/gorilla/websocket"
-	"golang.org/x/net/publicsuffix"
 )
 
 // Expect is a toplevel object that contains user Config and allows
 // to construct Request objects.
 type Expect struct {
 	config   Config
-	context  *Context
+	chain    *chain
 	builders []func(*Request)
 	matchers []func(*Response)
 }
 
 // Config contains various settings.
 type Config struct {
-	// BaseURL is a URL to prepended to all request. My be empty. If
-	// non-empty, trailing slash is allowed but not required and is
-	// appended automatically.
+	// TestName defines the name of the currently running test.
+	// May be empty.
+	//
+	// If empty, and if Config.Reporter implements Namer, name will be retrieved
+	// from it. In particular, this is true when Reporter is *testing.T.
+	TestName string
+
+	// BaseURL is a URL to prepended to all request.
+	// My be empty.
+	//
+	// If non-empty, trailing slash is allowed but not required and is appended
+	// automatically.
 	BaseURL string
 
 	// RequestFactory is used to pass in a custom *http.Request generation func.
 	// May be nil.
+	//
+	// If nil, DefaultRequestFactory is used.
 	//
 	// You can use DefaultRequestFactory, or provide custom implementation.
 	// Useful for Google App Engine testing for example.
 	RequestFactory RequestFactory
 
 	// Client is used to send http.Request and receive http.Response.
-	// Should not be nil.
+	// May be nil.
+	//
+	// If nil, set to a default client with a non-nil Jar:
+	//  &http.Client{
+	//      Jar: httpexpect.NewJar(),
+	//  }
 	//
 	// You can use http.DefaultClient or http.Client, or provide
 	// custom implementation.
 	Client Client
 
-	// WebsocketDialer is used to establish websocket.Conn and receive
-	// http.Response of handshake result.
-	// Should not be nil.
+	// WebsocketDialer is used to establish websocket.Conn and receive http.Response
+	// of handshake result.
+	// May be nil.
+	//
+	// If nil, set to a default dialer:
+	//  &websocket.Dialer{}
 	//
 	// You can use websocket.DefaultDialer or websocket.Dialer, or provide
 	// custom implementation.
 	WebsocketDialer WebsocketDialer
-
-	// DEPRECATED. Use AssertionHandler instead. Please note that a Formatter
-	// can only be passed with an AssertionHandler. This is provided for compatibility.
-	//
-	// Reporter is used to report failures.
-	// Should not be nil.
-	//
-	// You can use AssertReporter, RequireReporter (they use testify),
-	// or testing.TB, or provide custom implementation.
-	Reporter Reporter
-
-	// AssertionHandler replaces Reporter. The AssertionHandler is used to report failures.
-	AssertionHandler AssertionHandler
-
-	// Printers are used to print requests and responses.
-	// May be nil.
-	//
-	// You can use CompactPrinter, DebugPrinter, CurlPrinter, or provide
-	// custom implementation.
-	//
-	// You can also use builtin printers with alternative Logger if
-	// you're happy with their format, but want to send logs somewhere
-	// else instead of testing.TB.
-	Printers []Printer
-
-	// TestName of the currently running test case.
-	TestName string
 
 	// Context is passed to all requests. It is typically used for request cancellation,
 	// either explicit or after a time-out.
@@ -148,12 +148,94 @@ type Config struct {
 	// You can use the Request.WithContext for per-request context and Request.WithTimeout
 	// for per-request timeout.
 	Context context.Context
+
+	// Reporter is used to report formatted failure messages.
+	// Should NOT be nil, unless custom AssertionHandler is used.
+	//
+	// Reporter is used when AssertionHandler is nil or explicitly set to
+	// DefaultAssertionHandler.
+	//
+	// You can use AssertReporter, RequireReporter (they use testify),
+	// or *testing.T, or provide custom implementation.
+	Reporter Reporter
+
+	// Formatter is used to format failure message.
+	// May be nil.
+	//
+	// If nil, DefaultFormatter is used.
+	//
+	// Formatter is used when AssertionHandler is nil or explicitly set to
+	// DefaultAssertionHandler.
+	//
+	// Usually you don't need custom formatter. Implementing one is
+	// relatively big task.
+	Formatter Formatter
+
+	// AssertionHandler handles both successfull and failed assertions.
+	// May be nil.
+	//
+	// If nil, DefaultAssertionHandler is used.
+	//
+	// Every time an assertion is made, AssertionHandler in invoked with detailed
+	// info about the assertion and failure. On failure, AssertionHandler is
+	// reponsible to format and report error.
+	//
+	// DefaultAssertionHandler uses Config.Formatter to format failure and
+	// Config.Reporter to report it.
+	//
+	// Usually you don't need custom AssertionHandler and it's enough just to
+	// set Reporter. Use AssertionHandler for more precise control of reports.
+	AssertionHandler AssertionHandler
+
+	// Printers are used to print requests and responses.
+	// May be nil.
+	//
+	// If printer implements WebsocketPrinter interface, it will be also used
+	// to print websocket messages.
+	//
+	// You can use CompactPrinter, DebugPrinter, CurlPrinter, or provide
+	// custom implementation.
+	//
+	// You can also use builtin printers with alternative Logger if you're happy
+	// with their format, but want to send logs somewhere else than *testing.T.
+	Printers []Printer
+}
+
+func (config *Config) fillDefaults() {
+	if config.RequestFactory == nil {
+		config.RequestFactory = DefaultRequestFactory{}
+	}
+
+	if config.Client == nil {
+		config.Client = &http.Client{
+			Jar: NewJar(),
+		}
+	}
+
+	if config.WebsocketDialer == nil {
+		config.WebsocketDialer = &websocket.Dialer{}
+	}
+
+	if config.AssertionHandler == nil {
+		if config.Formatter == nil {
+			config.Formatter = &DefaultFormatter{}
+		}
+
+		if config.Reporter == nil {
+			panic("either Reporter or AssertionHandler should be non-nil")
+		}
+
+		config.AssertionHandler = &DefaultAssertionHandler{
+			Reporter:  config.Reporter,
+			Formatter: config.Formatter,
+		}
+	}
 }
 
 // RequestFactory is used to create all http.Request objects.
 // aetest.Instance from the Google App Engine implements this interface.
 type RequestFactory interface {
-	NewRequest(method, urlStr string, body io.Reader) (*http.Request, error)
+	NewRequest(method, url string, body io.Reader) (*http.Request, error)
 }
 
 // Client is used to send http.Request and receive http.Response.
@@ -184,150 +266,93 @@ type Client interface {
 //  e := httpexpect.WithConfig(httpexpect.Config{
 //    BaseURL:         "http://example.com",
 //    WebsocketDialer: httpexpect.NewWebsocketDialer(myHandler),
-//	})
+//  })
 type WebsocketDialer interface {
 	// Dial establishes new WebSocket connection and returns response
 	// of handshake result.
 	Dial(url string, reqH http.Header) (*websocket.Conn, *http.Response, error)
 }
 
-// Printer is used to print requests and responses.
-// CompactPrinter, DebugPrinter, and CurlPrinter implement this interface.
-type Printer interface {
-	// Request is called before request is sent.
-	Request(*http.Request)
-
-	// Response is called after response is received.
-	Response(*http.Response, time.Duration)
-}
-
-// WebsocketPrinter is used to print writes and reads of WebSocket connection.
-//
-// If WebSocket connection is used, all Printers that also implement WebsocketPrinter
-// are invoked on every WebSocket message read or written.
-//
-// DebugPrinter implements this interface.
-type WebsocketPrinter interface {
-	Printer
-
-	// WebsocketWrite is called before writes to WebSocket connection.
-	WebsocketWrite(typ int, content []byte, closeCode int)
-
-	// WebsocketRead is called after reads from WebSocket connection.
-	WebsocketRead(typ int, content []byte, closeCode int)
-}
-
-// Logger is used as output backend for Printer.
-// testing.TB implements this interface.
-type Logger interface {
-	// Logf writes message to log.
-	Logf(fmt string, args ...interface{})
-}
-
 // Reporter is used to report failures.
-// testing.TB, AssertReporter, and RequireReporter implement this interface.
+// *testing.T, AssertReporter, and RequireReporter implement this interface.
 type Reporter interface {
 	// Errorf reports failure.
 	// Allowed to return normally or terminate test using t.FailNow().
 	Errorf(message string, args ...interface{})
 }
 
-// LoggerReporter combines Logger and Reporter interfaces.
-// method requirement in order to provide the name of the current test.
-//
-// Note: all methods are provided when using a *testing.T struct.
+// Logger is used as output backend for Printer.
+// *testing.T implements this interface.
+type Logger interface {
+	// Logf writes message to test log.
+	Logf(fmt string, args ...interface{})
+}
+
+// TestingTB is a subset of testing.TB interface used by httpexpect.
+// You can use *testing.T or pass custom implementation.
+type TestingTB interface {
+	Reporter
+	Logger
+	Name() string // Returns current test name.
+}
+
+// Deprecated: use TestingTB instead.
 type LoggerReporter interface {
 	Logger
 	Reporter
 }
 
-// Namer provides an interface to get the name of the currently running test, such as provided by *testing.T.
-type Namer interface {
-	Name() string
+// Deprecated: use Default instead.
+func New(t LoggerReporter, baseURL string) *Expect {
+	return WithConfig(Config{
+		BaseURL:  baseURL,
+		Reporter: NewAssertReporter(t),
+		Printers: []Printer{
+			NewCompactPrinter(t),
+		},
+	})
 }
 
-// LoggerReporterNamer combines LoggerReporter and Namer interfaces.
-type LoggerReporterNamer interface {
-	LoggerReporter
-	Namer
-}
-
-// DefaultRequestFactory is the default RequestFactory implementation which just
-// calls http.NewRequest.
-type DefaultRequestFactory struct{}
-
-// NewRequest implements RequestFactory.NewRequest.
-func (DefaultRequestFactory) NewRequest(
-	method, urlStr string, body io.Reader) (*http.Request, error) {
-	return http.NewRequest(method, urlStr, body)
-}
-
-// New returns a new Expect object.
+// Default returns a new Expect instance with default config.
+//
+// t is usually *testing.T, but can be any matching implementation.
 //
 // baseURL specifies URL to prepended to all request. My be empty. If non-empty,
 // trailing slash is allowed but not required and is appended automatically.
 //
-// New is a shorthand for WithConfig. It uses:
-//  - CompactPrinter as Printer, with testing.TB as Logger
-//  - AssertReporter as Reporter
-//  - DefaultRequestFactory as RequestFactory
-//  - DefaultFormatter as Formatter
-//
-// Note that the parameter t (LoggerReporter) can also be a LoggerReporterNamer, such as *testing.T.
-// The LoggerReporter is still used for compatibility.
-//
-//
-// Client is set to a default client with a non-nil Jar:
-//  &http.Client{
-//      Jar: httpexpect.NewJar(),
-//  }
+// Default is a shorthand for WithConfig. It uses:
+//   - baseURL for Config.BaseURL
+//   - t.Name() for Config.TestName
+//   - NewAssertReporter(t) for Config.Reporter
+//   - NewCompactPrinter(t) for Config.Printers
 //
 // Example:
 //  func TestSomething(t *testing.T) {
-//      e := httpexpect.New(t, "http://example.com/")
+//      e := httpexpect.Default(t, "http://example.com/")
 //
 //      e.GET("/path").
 //          Expect().
 //          Status(http.StatusOK)
 //  }
-func New(t LoggerReporter, baseURL string) *Expect {
-	testName := ""
-
-	var assertionHandler AssertionHandler
-	if lrn, ok := t.(LoggerReporterNamer); ok {
-		testName = lrn.Name()
-		assertionHandler = NewDefaultAssertionHandler(lrn)
-	} else {
-		assertionHandler = newDefaultAssertionHandler(t)
-	}
-
+func Default(t TestingTB, baseURL string) *Expect {
 	return WithConfig(Config{
-		BaseURL:          baseURL,
-		AssertionHandler: assertionHandler,
+		TestName: t.Name(),
+		BaseURL:  baseURL,
+		Reporter: NewAssertReporter(t),
 		Printers: []Printer{
 			NewCompactPrinter(t),
 		},
-		TestName: testName,
 	})
 }
 
-// WithConfig returns a new Expect object with given config.
+// WithConfig returns a new Expect instance with custom config.
 //
-// Reporter should not be nil.
-//
-// If RequestFactory is nil, it's set to a DefaultRequestFactory instance.
-//
-// If Client is nil, it's set to a default client with a non-nil Jar:
-//  &http.Client{
-//      Jar: httpexpect.NewJar(),
-//  }
-//
-// If WebsocketDialer is nil, it's set to a default dialer:
-//  &websocket.Dialer{}
+// Either Reporter or AssertionHandler should not be nil.
 //
 // Example:
 //  func TestSomething(t *testing.T) {
 //      e := httpexpect.WithConfig(httpexpect.Config{
+//          TestName: t.Name(),
 //          BaseURL:  "http://example.com/",
 //          Client:   &http.Client{
 //              Transport: httpexpect.NewBinder(myHandler()),
@@ -345,48 +370,16 @@ func New(t LoggerReporter, baseURL string) *Expect {
 //          Status(http.StatusOK)
 //  }
 func WithConfig(config Config) *Expect {
-	config.AssertionHandler = ensureAssertionHandler(config)
+	config.fillDefaults()
 
-	if config.RequestFactory == nil {
-		config.RequestFactory = DefaultRequestFactory{}
-	}
-
-	if config.Client == nil {
-		config.Client = &http.Client{
-			Jar: NewJar(),
-		}
-	}
-
-	if config.WebsocketDialer == nil {
-		config.WebsocketDialer = &websocket.Dialer{}
+	context := AssertionContext{
+		TestName: config.TestName,
 	}
 
 	return &Expect{
 		config: config,
-		context: &Context{
-			TestName:         config.TestName,
-			Request:          nil,
-			Response:         nil,
-			AssertionHandler: config.AssertionHandler,
-			RTT:              nil,
-		},
+		chain:  newChain(context, config.AssertionHandler),
 	}
-}
-
-// NewJar returns a new http.CookieJar.
-//
-// Returned jar is implemented in net/http/cookiejar. PublicSuffixList is
-// implemented in golang.org/x/net/publicsuffix.
-//
-// Note that this jar ignores cookies when request url is empty.
-func NewJar() http.CookieJar {
-	jar, err := cookiejar.New(&cookiejar.Options{
-		PublicSuffixList: publicsuffix.List,
-	})
-	if err != nil {
-		panic(err)
-	}
-	return jar
 }
 
 func (e *Expect) clone() *Expect {
@@ -406,7 +399,7 @@ func (e *Expect) clone() *Expect {
 // Builders are invoked from Request method, after constructing every new request.
 //
 // Example:
-//  e := httpexpect.New(t, "http://example.com")
+//  e := httpexpect.Default(t, "http://example.com")
 //
 //  token := e.POST("/login").WithForm(Login{"ford", "betelgeuse7"}).
 //      Expect().
@@ -431,7 +424,7 @@ func (e *Expect) Builder(builder func(*Request)) *Expect {
 // Matchers are invoked from Request.Expect method, after retrieving a new response.
 //
 // Example:
-//  e := httpexpect.New(t, "http://example.com")
+//  e := httpexpect.Default(t, "http://example.com")
 //
 //  m := e.Matcher(func (resp *httpexpect.Response) {
 //      resp.Header("API-Version").NotEmpty()
@@ -453,12 +446,13 @@ func (e *Expect) Matcher(matcher func(*Response)) *Expect {
 
 // Request returns a new Request object.
 // Arguments a similar to NewRequest.
-// After creating request, all builders attached to Expect object are invoked.
+// After creating request, all builders attached to Expect instance are invoked.
 // See Builder.
 func (e *Expect) Request(method, path string, pathargs ...interface{}) *Request {
-	req := NewRequest(e.config, method, path, pathargs...).
-		WithContext(e.context)
-	e.context.Request = req
+	e.chain.enter("Request(%q)", method)
+	defer e.chain.leave()
+
+	req := newRequest(e.chain, e.config, method, path, pathargs...)
 
 	for _, builder := range e.builders {
 		builder(req)
@@ -508,30 +502,48 @@ func (e *Expect) DELETE(path string, pathargs ...interface{}) *Request {
 
 // Value is a shorthand for NewValue(e.config.Reporter, value).
 func (e *Expect) Value(value interface{}) *Value {
-	return NewValue(wrapContext(e.context), value)
+	e.chain.enter("Value()")
+	defer e.chain.leave()
+
+	return newValue(e.chain, value)
 }
 
 // Object is a shorthand for NewObject(e.config.Reporter, value).
 func (e *Expect) Object(value map[string]interface{}) *Object {
-	return NewObject(wrapContext(e.context), value)
+	e.chain.enter("Object()")
+	defer e.chain.leave()
+
+	return newObject(e.chain, value)
 }
 
 // Array is a shorthand for NewArray(e.config.Reporter, value).
 func (e *Expect) Array(value []interface{}) *Array {
-	return NewArray(wrapContext(e.context), value)
+	e.chain.enter("Array()")
+	defer e.chain.leave()
+
+	return newArray(e.chain, value)
 }
 
 // String is a shorthand for NewString(e.config.Reporter, value).
 func (e *Expect) String(value string) *String {
-	return NewString(wrapContext(e.context), value)
+	e.chain.enter("String()")
+	defer e.chain.leave()
+
+	return newString(e.chain, value)
 }
 
 // Number is a shorthand for NewNumber(e.config.Reporter, value).
 func (e *Expect) Number(value float64) *Number {
-	return NewNumber(wrapContext(e.context), value)
+	e.chain.enter("Number()")
+	defer e.chain.leave()
+
+	return newNumber(e.chain, value)
 }
 
 // Boolean is a shorthand for NewBoolean(e.config.Reporter, value).
 func (e *Expect) Boolean(value bool) *Boolean {
-	return NewBoolean(wrapContext(e.context), value)
+	e.chain.enter("Boolean()")
+	defer e.chain.leave()
+
+	return newBoolean(e.chain, value)
 }

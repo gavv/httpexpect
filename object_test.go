@@ -7,35 +7,53 @@ import (
 )
 
 func TestObjectFailed(t *testing.T) {
-	chain := makeChain(newMockReporter(t))
+	check := func(value *Object) {
+		value.chain.assertFailed(t)
 
-	chain.fail(Failure{})
+		value.Path("$")
+		value.Schema("")
 
-	value := &Object{chain, nil}
+		assert.NotNil(t, value.Keys())
+		assert.NotNil(t, value.Values())
+		assert.NotNil(t, value.Value("foo"))
 
-	value.chain.assertFailed(t)
+		value.Empty()
+		value.NotEmpty()
+		value.Equal(nil)
+		value.NotEqual(nil)
+		value.ContainsKey("foo")
+		value.NotContainsKey("foo")
+		value.ContainsMap(nil)
+		value.NotContainsMap(nil)
+		value.ValueEqual("foo", nil)
+		value.ValueNotEqual("foo", nil)
+	}
 
-	value.Path("$").chain.assertFailed(t)
-	value.Schema("")
+	t.Run("failed_chain", func(t *testing.T) {
+		chain := newMockChain(t)
+		chain.fail(&AssertionFailure{})
 
-	assert.False(t, value.Keys() == nil)
-	assert.False(t, value.Values() == nil)
-	assert.False(t, value.Value("foo") == nil)
+		value := newObject(chain, map[string]interface{}{})
 
-	value.Keys().chain.assertFailed(t)
-	value.Values().chain.assertFailed(t)
-	value.Value("foo").chain.assertFailed(t)
+		check(value)
+	})
 
-	value.Empty()
-	value.NotEmpty()
-	value.Equal(nil)
-	value.NotEqual(nil)
-	value.ContainsKey("foo")
-	value.NotContainsKey("foo")
-	value.ContainsMap(nil)
-	value.NotContainsMap(nil)
-	value.ValueEqual("foo", nil)
-	value.ValueNotEqual("foo", nil)
+	t.Run("nil_value", func(t *testing.T) {
+		chain := newMockChain(t)
+
+		value := newObject(chain, nil)
+
+		check(value)
+	})
+
+	t.Run("failed_chain_nil_value", func(t *testing.T) {
+		chain := newMockChain(t)
+		chain.fail(&AssertionFailure{})
+
+		value := newObject(chain, nil)
+
+		check(value)
+	})
 }
 
 func TestObjectGetters(t *testing.T) {

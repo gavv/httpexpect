@@ -1,6 +1,7 @@
 package httpexpect
 
 import (
+	"errors"
 	"reflect"
 )
 
@@ -8,7 +9,7 @@ import (
 // (Go representation of arbitrary JSON value) and cast it to
 // concrete type.
 type Value struct {
-	chain chain
+	chain *chain
 	value interface{}
 }
 
@@ -35,12 +36,18 @@ type Value struct {
 //
 //  value := NewValue(t, nil)
 //  value.Null()
-func NewValue(r Reporter, value interface{}) *Value {
-	chain := makeChain(r)
-	if value != nil {
-		value, _ = canonValue(&chain, value)
+func NewValue(reporter Reporter, value interface{}) *Value {
+	return newValue(newDefaultChain("Value()", reporter), value)
+}
+
+func newValue(parent *chain, val interface{}) *Value {
+	v := &Value{parent.clone(), nil}
+
+	if val != nil {
+		v.value, _ = canonValue(v.chain, val)
 	}
-	return &Value{chain, value}
+
+	return v
 }
 
 // Raw returns underlying value attached to Value.
@@ -78,7 +85,10 @@ func (v *Value) Raw() interface{} {
 //      user.String().Equal("john")
 //  }
 func (v *Value) Path(path string) *Value {
-	return getPath(&v.chain, v.value, path)
+	v.chain.enter("Path(%q)", path)
+	defer v.chain.leave()
+
+	return jsonPath(v.chain, v.value, path)
 }
 
 // Schema succeeds if value matches given JSON Schema.
@@ -118,7 +128,10 @@ func (v *Value) Path(path string) *Value {
 //  value := NewValue(t, data)
 //  value.Schema("http://example.com/schema.json")
 func (v *Value) Schema(schema interface{}) *Value {
-	checkSchema(&v.chain, v.value, schema)
+	v.chain.enter("Schema()")
+	defer v.chain.leave()
+
+	jsonSchema(v.chain, v.value, schema)
 	return v
 }
 
@@ -131,16 +144,27 @@ func (v *Value) Schema(schema interface{}) *Value {
 //  value := NewValue(t, map[string]interface{}{"foo": 123})
 //  value.Object().ContainsKey("foo")
 func (v *Value) Object() *Object {
-	data, ok := v.value.(map[string]interface{})
-	if !ok {
-		v.chain.fail(Failure{
-			AssertionName: "Value.Object",
-			AssertType:    FailureAssertBadType,
-			Expected:      make(map[string]interface{}),
-			Actual:        v.value,
-		})
+	v.chain.enter("Object()")
+	defer v.chain.leave()
+
+	if v.chain.failed() {
+		return newObject(v.chain, nil)
 	}
-	return &Object{v.chain, data}
+
+	data, ok := v.value.(map[string]interface{})
+
+	if !ok {
+		v.chain.fail(&AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{v.value},
+			Errors: []error{
+				errors.New("expected: value is map"),
+			},
+		})
+		return newObject(v.chain, nil)
+	}
+
+	return newObject(v.chain, data)
 }
 
 // Array returns a new Array attached to underlying value.
@@ -152,16 +176,27 @@ func (v *Value) Object() *Object {
 //  value := NewValue(t, []interface{}{"foo", 123})
 //  value.Array().Elements("foo", 123)
 func (v *Value) Array() *Array {
-	data, ok := v.value.([]interface{})
-	if !ok {
-		v.chain.fail(Failure{
-			AssertionName: "Value.Array",
-			AssertType:    FailureAssertBadType,
-			Expected:      make([]interface{}, 0),
-			Actual:        v.value,
-		})
+	v.chain.enter("Array()")
+	defer v.chain.leave()
+
+	if v.chain.failed() {
+		return newArray(v.chain, nil)
 	}
-	return &Array{v.chain, data}
+
+	data, ok := v.value.([]interface{})
+
+	if !ok {
+		v.chain.fail(&AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{v.value},
+			Errors: []error{
+				errors.New("expected: value is array"),
+			},
+		})
+		return newArray(v.chain, nil)
+	}
+
+	return newArray(v.chain, data)
 }
 
 // String returns a new String attached to underlying value.
@@ -173,16 +208,27 @@ func (v *Value) Array() *Array {
 //  value := NewValue(t, "foo")
 //  value.String().EqualFold("FOO")
 func (v *Value) String() *String {
-	data, ok := v.value.(string)
-	if !ok {
-		v.chain.fail(Failure{
-			AssertionName: "Value.String",
-			AssertType:    FailureAssertBadType,
-			Expected:      "",
-			Actual:        v.value,
-		})
+	v.chain.enter("String()")
+	defer v.chain.leave()
+
+	if v.chain.failed() {
+		return newString(v.chain, "")
 	}
-	return &String{v.chain, data}
+
+	data, ok := v.value.(string)
+
+	if !ok {
+		v.chain.fail(&AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{v.value},
+			Errors: []error{
+				errors.New("expected: value is string"),
+			},
+		})
+		return newString(v.chain, "")
+	}
+
+	return newString(v.chain, data)
 }
 
 // Number returns a new Number attached to underlying value.
@@ -194,16 +240,27 @@ func (v *Value) String() *String {
 //  value := NewValue(t, 123)
 //  value.Number().InRange(100, 200)
 func (v *Value) Number() *Number {
-	data, ok := v.value.(float64)
-	if !ok {
-		v.chain.fail(Failure{
-			AssertionName: "Value.Number",
-			AssertType:    FailureAssertBadType,
-			Expected:      float64(0),
-			Actual:        v.value,
-		})
+	v.chain.enter("Number()")
+	defer v.chain.leave()
+
+	if v.chain.failed() {
+		return newNumber(v.chain, 0)
 	}
-	return &Number{v.chain, data}
+
+	data, ok := v.value.(float64)
+
+	if !ok {
+		v.chain.fail(&AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{v.value},
+			Errors: []error{
+				errors.New("expected: value is number"),
+			},
+		})
+		return newNumber(v.chain, 0)
+	}
+
+	return newNumber(v.chain, data)
 }
 
 // Boolean returns a new Boolean attached to underlying value.
@@ -215,16 +272,27 @@ func (v *Value) Number() *Number {
 //  value := NewValue(t, true)
 //  value.Boolean().True()
 func (v *Value) Boolean() *Boolean {
-	data, ok := v.value.(bool)
-	if !ok {
-		v.chain.fail(Failure{
-			AssertionName: "Value.Boolean",
-			AssertType:    FailureAssertBadType,
-			Expected:      true, // could be false. it's just the type.
-			Actual:        v.value,
-		})
+	v.chain.enter("Boolean()")
+	defer v.chain.leave()
+
+	if v.chain.failed() {
+		return newBoolean(v.chain, false)
 	}
-	return &Boolean{v.chain, data}
+
+	data, ok := v.value.(bool)
+
+	if !ok {
+		v.chain.fail(&AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{v.value},
+			Errors: []error{
+				errors.New("expected: value is boolean"),
+			},
+		})
+		return newBoolean(v.chain, false)
+	}
+
+	return newBoolean(v.chain, data)
 }
 
 // Null succeeds if value is nil.
@@ -240,14 +308,23 @@ func (v *Value) Boolean() *Boolean {
 //  value := NewValue(t, []interface{}(nil))
 //  value.Null()
 func (v *Value) Null() *Value {
-	if v.value != nil {
-		v.chain.fail(Failure{
-			AssertionName: "Value.Null",
-			AssertType:    FailureAssertNil,
-			Expected:      nil,
-			Actual:        v.value,
+	v.chain.enter("Null()")
+	defer v.chain.leave()
+
+	if v.chain.failed() {
+		return v
+	}
+
+	if !(v.value == nil) {
+		v.chain.fail(&AssertionFailure{
+			Type:   AssertNil,
+			Actual: &AssertionValue{v.value},
+			Errors: []error{
+				errors.New("expected: value is null"),
+			},
 		})
 	}
+
 	return v
 }
 
@@ -264,13 +341,23 @@ func (v *Value) Null() *Value {
 //  value := NewValue(t, make([]interface{}, 0)
 //  value.Null()
 func (v *Value) NotNull() *Value {
-	if v.value == nil {
-		v.chain.fail(Failure{
-			AssertionName: "Value.NotNull",
-			AssertType:    FailureAssertNotNil,
-			Actual:        v.value,
+	v.chain.enter("NotNull()")
+	defer v.chain.leave()
+
+	if v.chain.failed() {
+		return v
+	}
+
+	if !(v.value != nil) {
+		v.chain.fail(&AssertionFailure{
+			Type:   AssertNotNil,
+			Actual: &AssertionValue{v.value},
+			Errors: []error{
+				errors.New("expected: value is non-null"),
+			},
 		})
 	}
+
 	return v
 }
 
@@ -281,18 +368,29 @@ func (v *Value) NotNull() *Value {
 //  value := NewValue(t, "foo")
 //  value.Equal("foo")
 func (v *Value) Equal(value interface{}) *Value {
-	expected, ok := canonValue(&v.chain, value)
+	v.chain.enter("Equal()")
+	defer v.chain.leave()
+
+	if v.chain.failed() {
+		return v
+	}
+
+	expected, ok := canonValue(v.chain, value)
 	if !ok {
 		return v
 	}
+
 	if !reflect.DeepEqual(expected, v.value) {
-		v.chain.fail(Failure{
-			AssertionName: "Value.Equal",
-			AssertType:    FailureAssertEqual,
-			Expected:      expected,
-			Actual:        v.value,
+		v.chain.fail(&AssertionFailure{
+			Type:     AssertEqual,
+			Actual:   &AssertionValue{v.value},
+			Expected: &AssertionValue{expected},
+			Errors: []error{
+				errors.New("expected: values are equal"),
+			},
 		})
 	}
+
 	return v
 }
 
@@ -303,17 +401,28 @@ func (v *Value) Equal(value interface{}) *Value {
 //  value := NewValue(t, "foo")
 //  value.NorEqual("bar")
 func (v *Value) NotEqual(value interface{}) *Value {
-	expected, ok := canonValue(&v.chain, value)
+	v.chain.enter("NotEqual()")
+	defer v.chain.leave()
+
+	if v.chain.failed() {
+		return v
+	}
+
+	expected, ok := canonValue(v.chain, value)
 	if !ok {
 		return v
 	}
+
 	if reflect.DeepEqual(expected, v.value) {
-		v.chain.fail(Failure{
-			AssertionName: "Value.NotEqual",
-			AssertType:    FailureAssertNotEqual,
-			Expected:      value,
-			Actual:        v.value,
+		v.chain.fail(&AssertionFailure{
+			Type:     AssertNotEqual,
+			Actual:   &AssertionValue{v.value},
+			Expected: &AssertionValue{expected},
+			Errors: []error{
+				errors.New("expected: values are non-equal"),
+			},
 		})
 	}
+
 	return v
 }

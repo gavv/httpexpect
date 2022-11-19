@@ -42,6 +42,10 @@ func (b *mockBody) Close() error {
 	return nil
 }
 
+func newMockChain(t *testing.T) *chain {
+	return newDefaultChain("test", newMockReporter(t))
+}
+
 type mockReporter struct {
 	testing  *testing.T
 	reported bool
@@ -62,34 +66,20 @@ type mockFormatter struct {
 	formattedFailure int
 }
 
-func (m *mockFormatter) Success(context *Context) string {
-	m.formattedSuccess++
-	return context.TestName
-}
-
-func (m *mockFormatter) Failure(context *Context, failure Failure) string {
-	m.formattedFailure++
-	return context.TestName + "." + failure.AssertionName
-}
-
 func newMockFormatter(t *testing.T) *mockFormatter {
 	return &mockFormatter{testing: t}
 }
 
-func newMockAssertionHandler(t *testing.T) AssertionHandler {
-	return DefaultAssertionHandler{
-		Reporter:  newMockReporter(t),
-		Formatter: DefaultFormatter{},
-	}
+func (m *mockFormatter) FormatSuccess(ctx *AssertionContext) string {
+	m.formattedSuccess++
+	return ctx.TestName
 }
 
-func newMockContext(t *testing.T) *Context {
-	return &Context{AssertionHandler: newMockAssertionHandler(t)}
-}
-
-func (r *mockReporter) Errorf(message string, args ...interface{}) {
-	r.testing.Logf("Fail: "+message, args...)
-	r.reported = true
+func (m *mockFormatter) FormatFailure(
+	ctx *AssertionContext, failure *AssertionFailure,
+) string {
+	m.formattedFailure++
+	return ctx.TestName
 }
 
 type mockPrinter struct {
@@ -111,6 +101,32 @@ func (p *mockPrinter) Response(resp *http.Response, rtt time.Duration) {
 		resp.Body.Close()
 	}
 	p.rtt = rtt
+}
+
+type mockWebsocketPrinter struct {
+	isWrittenTo bool
+	isReadFrom  bool
+}
+
+func newMockWsPrinter() *mockWebsocketPrinter {
+	return &mockWebsocketPrinter{
+		isWrittenTo: false,
+		isReadFrom:  false,
+	}
+}
+
+func (p *mockWebsocketPrinter) Request(*http.Request) {
+}
+
+func (p *mockWebsocketPrinter) Response(*http.Response, time.Duration) {
+}
+
+func (p *mockWebsocketPrinter) WebsocketWrite(typ int, content []byte, closeCode int) {
+	p.isWrittenTo = true
+}
+
+func (p *mockWebsocketPrinter) WebsocketRead(typ int, content []byte, closeCode int) {
+	p.isReadFrom = true
 }
 
 type mockWebsocketConn struct {
@@ -171,44 +187,24 @@ func (wc *mockWebsocketConn) WithMessage(msg []byte) *mockWebsocketConn {
 func (wc *mockWebsocketConn) ReadMessage() (messageType int, p []byte, err error) {
 	return wc.msgType, []byte{}, wc.readMsgErr
 }
+
 func (wc *mockWebsocketConn) WriteMessage(messageType int, data []byte) error {
 	return wc.writeMsgErr
 
 }
+
 func (wc *mockWebsocketConn) Close() error {
 	return wc.closeError
 }
+
 func (wc *mockWebsocketConn) SetReadDeadline(t time.Time) error {
 	return wc.readDlError
 }
+
 func (wc *mockWebsocketConn) SetWriteDeadline(t time.Time) error {
 	return wc.writeDlError
 }
+
 func (wc *mockWebsocketConn) Subprotocol() string {
 	return wc.subprotocol
-}
-
-type MockWsPrinter struct {
-	isWrittenTo bool
-	isReadFrom  bool
-}
-
-func newMockWsPrinter() *MockWsPrinter {
-	return &MockWsPrinter{
-		isWrittenTo: false,
-		isReadFrom:  false,
-	}
-}
-
-func (pr *MockWsPrinter) Request(*http.Request) {}
-
-// Response is called after response is received.
-func (pr *MockWsPrinter) Response(*http.Response, time.Duration) {}
-
-func (pr *MockWsPrinter) WebsocketWrite(typ int, content []byte, closeCode int) {
-	pr.isWrittenTo = true
-}
-
-func (pr *MockWsPrinter) WebsocketRead(typ int, content []byte, closeCode int) {
-	pr.isReadFrom = true
 }

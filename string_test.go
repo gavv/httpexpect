@@ -8,15 +8,16 @@ import (
 )
 
 func TestStringFailed(t *testing.T) {
-	chain := makeChain(newMockReporter(t))
+	chain := newMockChain(t)
+	chain.fail(&AssertionFailure{})
 
-	chain.fail(Failure{})
+	value := newString(chain, "")
 
-	value := &String{chain, ""}
-
-	value.Path("$").chain.assertFailed(t)
+	value.Path("$")
 	value.Schema("")
 
+	value.Length()
+	value.Number()
 	value.DateTime()
 	value.Empty()
 	value.NotEmpty()
@@ -28,6 +29,9 @@ func TestStringFailed(t *testing.T) {
 	value.NotContains("")
 	value.ContainsFold("")
 	value.NotContainsFold("")
+	value.Match("")
+	value.NotMatch("")
+	value.MatchAll("")
 }
 
 func TestStringGetters(t *testing.T) {

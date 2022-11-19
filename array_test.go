@@ -7,35 +7,57 @@ import (
 )
 
 func TestArrayFailed(t *testing.T) {
-	chain := makeChain(newMockReporter(t))
+	check := func(value *Array) {
+		value.chain.assertFailed(t)
 
-	chain.fail(Failure{})
+		value.Path("$")
+		value.Schema("")
 
-	value := &Array{chain, nil}
+		assert.NotNil(t, value.Length())
+		assert.NotNil(t, value.Element(0))
+		assert.NotNil(t, value.Iter())
+		assert.Equal(t, 0, len(value.Iter()))
 
-	value.chain.assertFailed(t)
+		value.Length().chain.assertFailed(t)
+		value.Element(0).chain.assertFailed(t)
+		value.First().chain.assertFailed(t)
+		value.Last().chain.assertFailed(t)
 
-	value.Path("$").chain.assertFailed(t)
-	value.Schema("")
+		value.Empty()
+		value.NotEmpty()
+		value.Equal(nil)
+		value.NotEqual(nil)
+		value.Elements("foo")
+		value.Contains("foo")
+		value.NotContains("foo")
+		value.ContainsOnly("foo")
+	}
 
-	assert.False(t, value.Length() == nil)
-	assert.False(t, value.Element(0) == nil)
-	assert.False(t, value.Iter() == nil)
-	assert.True(t, len(value.Iter()) == 0)
+	t.Run("failed_chain", func(t *testing.T) {
+		chain := newMockChain(t)
+		chain.fail(&AssertionFailure{})
 
-	value.Length().chain.assertFailed(t)
-	value.Element(0).chain.assertFailed(t)
-	value.First().chain.assertFailed(t)
-	value.Last().chain.assertFailed(t)
+		value := newArray(chain, []interface{}{})
 
-	value.Empty()
-	value.NotEmpty()
-	value.Equal(nil)
-	value.NotEqual(nil)
-	value.Elements("foo")
-	value.Contains("foo")
-	value.NotContains("foo")
-	value.ContainsOnly("foo")
+		check(value)
+	})
+
+	t.Run("nil_value", func(t *testing.T) {
+		chain := newMockChain(t)
+
+		value := newArray(chain, nil)
+
+		check(value)
+	})
+
+	t.Run("failed_chain_nil_value", func(t *testing.T) {
+		chain := newMockChain(t)
+		chain.fail(&AssertionFailure{})
+
+		value := newArray(chain, nil)
+
+		check(value)
+	})
 }
 
 func TestArrayGetters(t *testing.T) {

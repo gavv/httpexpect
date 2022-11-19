@@ -8,49 +8,26 @@ import (
 )
 
 func TestDurationFailed(t *testing.T) {
-	chain := makeChain(newMockReporter(t))
+	chain := newMockChain(t)
+	chain.fail(&AssertionFailure{})
 
-	chain.fail(Failure{})
+	tm := time.Second
+	value := newDuration(chain, &tm)
 
-	ts := time.Second
-
-	value := &Duration{chain, &ts}
-
-	value.chain.assertFailed(t)
-
-	value.Equal(ts)
-	value.NotEqual(ts)
-	value.Gt(ts)
-	value.Ge(ts)
-	value.Lt(ts)
-	value.Le(ts)
-	value.InRange(ts, ts)
-}
-
-func TestDurationNil(t *testing.T) {
-	chain := makeChain(newMockReporter(t))
-
-	ts := time.Second
-
-	value := &Duration{chain, nil}
-
-	value.chain.assertOK(t)
-
-	value.Equal(ts)
-	value.NotEqual(ts)
-	value.Gt(ts)
-	value.Ge(ts)
-	value.Lt(ts)
-	value.Le(ts)
-	value.InRange(ts, ts)
+	value.Equal(tm)
+	value.NotEqual(tm)
+	value.Gt(tm)
+	value.Ge(tm)
+	value.Lt(tm)
+	value.Le(tm)
+	value.InRange(tm, tm)
 }
 
 func TestDurationSet(t *testing.T) {
-	chain := makeChain(newMockReporter(t))
+	chain := newMockChain(t)
 
-	ts := time.Second
-
-	value := &Duration{chain, &ts}
+	tm := time.Second
+	value := newDuration(chain, &tm)
 
 	value.IsSet()
 	value.chain.assertOK(t)
@@ -62,9 +39,9 @@ func TestDurationSet(t *testing.T) {
 }
 
 func TestDurationUnset(t *testing.T) {
-	chain := makeChain(newMockReporter(t))
+	chain := newMockChain(t)
 
-	value := &Duration{chain, nil}
+	value := newDuration(chain, nil)
 
 	value.IsSet()
 	value.chain.assertFailed(t)

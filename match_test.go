@@ -7,21 +7,14 @@ import (
 )
 
 func TestMatchFailed(t *testing.T) {
-	chain := makeChain(newMockReporter(t))
+	chain := newMockChain(t)
+	chain.fail(&AssertionFailure{})
 
-	chain.fail(Failure{})
+	value := newMatch(chain, nil, nil)
 
-	value := &Match{chain, nil, nil}
-
-	value.chain.assertFailed(t)
-
-	assert.False(t, value.Length() == nil)
-	assert.False(t, value.Index(0) == nil)
-	assert.False(t, value.Name("") == nil)
-
-	value.Length().chain.assertFailed(t)
-	value.Index(0).chain.assertFailed(t)
-	value.Name("").chain.assertFailed(t)
+	assert.NotNil(t, value.Length())
+	assert.NotNil(t, value.Index(0))
+	assert.NotNil(t, value.Name(""))
 
 	value.Empty()
 	value.NotEmpty()

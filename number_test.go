@@ -8,19 +8,18 @@ import (
 )
 
 func TestNumberFailed(t *testing.T) {
-	chain := makeChain(newMockReporter(t))
+	chain := newMockChain(t)
+	chain.fail(&AssertionFailure{})
 
-	chain.fail(Failure{})
+	value := newNumber(chain, 0)
 
-	value := &Number{chain, 0}
-
-	value.chain.assertFailed(t)
-
-	value.Path("$").chain.assertFailed(t)
+	value.Path("$")
 	value.Schema("")
 
 	value.Equal(0)
 	value.NotEqual(0)
+	value.EqualDelta(0, 0)
+	value.NotEqualDelta(0, 0)
 	value.Gt(0)
 	value.Ge(0)
 	value.Lt(0)

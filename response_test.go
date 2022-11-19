@@ -12,38 +12,74 @@ import (
 )
 
 func TestResponseFailed(t *testing.T) {
-	chain := makeChain(newMockReporter(t))
+	check := func(resp *Response) {
+		resp.chain.assertFailed(t)
 
-	chain.fail(Failure{})
+		assert.NotNil(t, resp.RoundTripTime())
+		assert.NotNil(t, resp.Headers())
+		assert.NotNil(t, resp.Header("foo"))
+		assert.NotNil(t, resp.Cookies())
+		assert.NotNil(t, resp.Cookie("foo"))
+		assert.NotNil(t, resp.Body())
+		assert.NotNil(t, resp.Text())
+		assert.NotNil(t, resp.Form())
+		assert.NotNil(t, resp.JSON())
+		assert.NotNil(t, resp.JSONP(""))
+		assert.NotNil(t, resp.Websocket())
 
-	resp := &Response{chain: chain}
+		resp.Headers().chain.assertFailed(t)
+		resp.Header("foo").chain.assertFailed(t)
+		resp.Cookies().chain.assertFailed(t)
+		resp.Cookie("foo").chain.assertFailed(t)
+		resp.Body().chain.assertFailed(t)
+		resp.Text().chain.assertFailed(t)
+		resp.Form().chain.assertFailed(t)
+		resp.JSON().chain.assertFailed(t)
+		resp.JSONP("").chain.assertFailed(t)
+		resp.Websocket().chain.assertFailed(t)
 
-	resp.chain.assertFailed(t)
+		resp.Status(123)
+		resp.StatusRange(Status2xx)
+		resp.NoContent()
+		resp.ContentType("", "")
+		resp.ContentEncoding("")
+		resp.TransferEncoding("")
+	}
 
-	assert.False(t, resp.Duration() == nil)
-	assert.False(t, resp.Headers() == nil)
-	assert.False(t, resp.Header("foo") == nil)
-	assert.False(t, resp.Cookies() == nil)
-	assert.False(t, resp.Cookie("foo") == nil)
-	assert.False(t, resp.Body() == nil)
-	assert.False(t, resp.JSON() == nil)
-	assert.False(t, resp.JSONP("") == nil)
+	t.Run("failed_chain", func(t *testing.T) {
+		chain := newMockChain(t)
+		chain.fail(&AssertionFailure{})
 
-	resp.Headers().chain.assertFailed(t)
-	resp.Header("foo").chain.assertFailed(t)
-	resp.Cookies().chain.assertFailed(t)
-	resp.Cookie("foo").chain.assertFailed(t)
-	resp.Body().chain.assertFailed(t)
-	resp.Text().chain.assertFailed(t)
-	resp.JSON().chain.assertFailed(t)
-	resp.JSONP("").chain.assertFailed(t)
+		resp := newResponse(responseOpts{
+			chain:    chain,
+			httpResp: &http.Response{},
+		})
 
-	resp.Status(123)
-	resp.StatusRange(Status2xx)
-	resp.NoContent()
-	resp.ContentType("", "")
-	resp.ContentEncoding("")
-	resp.TransferEncoding("")
+		check(resp)
+	})
+
+	t.Run("nil_value", func(t *testing.T) {
+		chain := newMockChain(t)
+
+		resp := newResponse(responseOpts{
+			chain:    chain,
+			httpResp: nil,
+		})
+
+		check(resp)
+	})
+
+	t.Run("failed_chain_nil_value", func(t *testing.T) {
+		chain := newMockChain(t)
+		chain.fail(&AssertionFailure{})
+
+		resp := newResponse(responseOpts{
+			chain:    chain,
+			httpResp: nil,
+		})
+
+		check(resp)
+	})
 }
 
 func TestResponseRoundTripTime(t *testing.T) {
@@ -929,7 +965,7 @@ func TestResponseContentOpts(t *testing.T) {
 		expectedMediaType string
 		expectedCharset   string
 		match             bool
-		chainFunc         func(*Response, ContentOpts) chain
+		chainFunc         func(*Response, ContentOpts) *chain
 	}
 
 	runTest := func(tc testCase) {
@@ -959,7 +995,7 @@ func TestResponseContentOpts(t *testing.T) {
 
 	check := func(
 		defaultType, defaultCharset, respBody string,
-		chainFunc func(*Response, ContentOpts) chain,
+		chainFunc func(*Response, ContentOpts) *chain,
 	) {
 		runTest(testCase{
 			respContentType:   "test-type; charset=test-charset",
@@ -1033,7 +1069,7 @@ func TestResponseContentOpts(t *testing.T) {
 		check("text/plain",
 			"utf-8",
 			"test text",
-			func(resp *Response, opts ContentOpts) chain {
+			func(resp *Response, opts ContentOpts) *chain {
 				return resp.Text(opts).chain
 			})
 	})
@@ -1042,7 +1078,7 @@ func TestResponseContentOpts(t *testing.T) {
 		check("application/x-www-form-urlencoded",
 			"",
 			"a=b",
-			func(resp *Response, opts ContentOpts) chain {
+			func(resp *Response, opts ContentOpts) *chain {
 				return resp.Form(opts).chain
 			})
 	})
@@ -1051,7 +1087,7 @@ func TestResponseContentOpts(t *testing.T) {
 		check("application/json",
 			"utf-8",
 			"{}",
-			func(resp *Response, opts ContentOpts) chain {
+			func(resp *Response, opts ContentOpts) *chain {
 				return resp.JSON(opts).chain
 			})
 	})
@@ -1060,7 +1096,7 @@ func TestResponseContentOpts(t *testing.T) {
 		check("application/javascript",
 			"utf-8",
 			"cb({})",
-			func(resp *Response, opts ContentOpts) chain {
+			func(resp *Response, opts ContentOpts) *chain {
 				return resp.JSONP("cb", opts).chain
 			})
 	})

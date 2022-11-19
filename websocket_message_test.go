@@ -8,15 +8,10 @@ import (
 )
 
 func TestWebsocketMessageFailed(t *testing.T) {
-	chain := makeChain(newMockReporter(t))
+	chain := newMockChain(t)
+	chain.fail(&AssertionFailure{})
 
-	chain.fail(Failure{})
-
-	msg := &WebsocketMessage{
-		chain: chain,
-	}
-
-	msg.chain.assertFailed(t)
+	msg := newWebsocketMessage(chain)
 
 	msg.Raw()
 	msg.CloseMessage()
@@ -36,11 +31,11 @@ func TestWebsocketMessageFailed(t *testing.T) {
 }
 
 func TestWebsocketMessageBadUsage(t *testing.T) {
-	chain := makeChain(newMockReporter(t))
+	chain := newMockChain(t)
 
-	msg := &WebsocketMessage{
-		chain: chain,
-	}
+	msg := newWebsocketMessage(chain)
+
+	msg.chain.assertOK(t)
 
 	msg.Type()
 	msg.chain.assertFailed(t)

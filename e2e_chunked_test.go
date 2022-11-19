@@ -71,7 +71,7 @@ func TestE2EChunkedLive(t *testing.T) {
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
-	testChunkedHandler(New(t, server.URL))
+	testChunkedHandler(Default(t, server.URL))
 }
 
 func TestE2EChunkedBinderStandard(t *testing.T) {

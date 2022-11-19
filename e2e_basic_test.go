@@ -97,7 +97,7 @@ func TestE2EBasicLiveDefault(t *testing.T) {
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
-	testBasicHandler(New(t, server.URL))
+	testBasicHandler(Default(t, server.URL))
 }
 
 func TestE2EBasicLiveConfig(t *testing.T) {
@@ -145,7 +145,7 @@ func TestE2EBasicLiveLongRun(t *testing.T) {
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
-	e := New(t, server.URL)
+	e := Default(t, server.URL)
 
 	for i := 0; i < 2; i++ {
 		testBasicHandler(e)

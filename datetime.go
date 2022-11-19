@@ -1,12 +1,13 @@
 package httpexpect
 
 import (
+	"errors"
 	"time"
 )
 
 // DateTime provides methods to inspect attached time.Time value.
 type DateTime struct {
-	chain chain
+	chain *chain
 	value time.Time
 }
 
@@ -22,7 +23,11 @@ type DateTime struct {
 //   time.Sleep(time.Second)
 //   dt.Lt(time.Now())
 func NewDateTime(reporter Reporter, value time.Time) *DateTime {
-	return &DateTime{makeChain(reporter), value}
+	return newDateTime(newDefaultChain("DateTime()", reporter), value)
+}
+
+func newDateTime(parent *chain, val time.Time) *DateTime {
+	return &DateTime{parent.clone(), val}
 }
 
 // Raw returns underlying time.Time value attached to DateTime.
@@ -41,15 +46,24 @@ func (dt *DateTime) Raw() time.Time {
 //  dt := NewDateTime(t, time.Unix(0, 1))
 //  dt.Equal(time.Unix(0, 1))
 func (dt *DateTime) Equal(value time.Time) *DateTime {
-	if !dt.value.Equal(value) {
-		failure := Failure{
-			AssertionName: "Datetime.Equal",
-			Expected:      value,
-			Actual:        dt.value,
-			AssertType:    FailureAssertEqual,
-		}
-		dt.chain.fail(failure)
+	dt.chain.enter("Equal()")
+	defer dt.chain.leave()
+
+	if dt.chain.failed() {
+		return dt
 	}
+
+	if !dt.value.Equal(value) {
+		dt.chain.fail(&AssertionFailure{
+			Type:     AssertEqual,
+			Actual:   &AssertionValue{dt.value},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				errors.New("expected: time points are equal"),
+			},
+		})
+	}
+
 	return dt
 }
 
@@ -59,15 +73,24 @@ func (dt *DateTime) Equal(value time.Time) *DateTime {
 //  dt := NewDateTime(t, time.Unix(0, 1))
 //  dt.NotEqual(time.Unix(0, 2))
 func (dt *DateTime) NotEqual(value time.Time) *DateTime {
-	if dt.value.Equal(value) {
-		failure := Failure{
-			AssertionName: "Datetime.NotEqual",
-			Expected:      value,
-			Actual:        dt.value,
-			AssertType:    FailureAssertNotEqual,
-		}
-		dt.chain.fail(failure)
+	dt.chain.enter("NotEqual()")
+	defer dt.chain.leave()
+
+	if dt.chain.failed() {
+		return dt
 	}
+
+	if dt.value.Equal(value) {
+		dt.chain.fail(&AssertionFailure{
+			Type:     AssertNotEqual,
+			Actual:   &AssertionValue{dt.value},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				errors.New("expected: time points are non-equal"),
+			},
+		})
+	}
+
 	return dt
 }
 
@@ -77,15 +100,24 @@ func (dt *DateTime) NotEqual(value time.Time) *DateTime {
 //  dt := NewDateTime(t, time.Unix(0, 2))
 //  dt.Gt(time.Unix(0, 1))
 func (dt *DateTime) Gt(value time.Time) *DateTime {
-	if !dt.value.After(value) {
-		failure := Failure{
-			AssertionName: "Datetime.Gt",
-			Expected:      value,
-			Actual:        dt.value,
-			AssertType:    FailureAssertGt,
-		}
-		dt.chain.fail(failure)
+	dt.chain.enter("Gt()")
+	defer dt.chain.leave()
+
+	if dt.chain.failed() {
+		return dt
 	}
+
+	if !dt.value.After(value) {
+		dt.chain.fail(&AssertionFailure{
+			Type:     AssertGt,
+			Actual:   &AssertionValue{dt.value},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				errors.New("expected: time point is after given time"),
+			},
+		})
+	}
+
 	return dt
 }
 
@@ -95,15 +127,24 @@ func (dt *DateTime) Gt(value time.Time) *DateTime {
 //  dt := NewDateTime(t, time.Unix(0, 2))
 //  dt.Ge(time.Unix(0, 1))
 func (dt *DateTime) Ge(value time.Time) *DateTime {
-	if !(dt.value.After(value) || dt.value.Equal(value)) {
-		failure := Failure{
-			AssertionName: "Datetime.Ge",
-			Expected:      value,
-			Actual:        dt.value,
-			AssertType:    FailureAssertGe,
-		}
-		dt.chain.fail(failure)
+	dt.chain.enter("Ge()")
+	defer dt.chain.leave()
+
+	if dt.chain.failed() {
+		return dt
 	}
+
+	if !(dt.value.After(value) || dt.value.Equal(value)) {
+		dt.chain.fail(&AssertionFailure{
+			Type:     AssertGe,
+			Actual:   &AssertionValue{dt.value},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				errors.New("expected: time point is after or equal to given time"),
+			},
+		})
+	}
+
 	return dt
 }
 
@@ -113,15 +154,24 @@ func (dt *DateTime) Ge(value time.Time) *DateTime {
 //  dt := NewDateTime(t, time.Unix(0, 1))
 //  dt.Lt(time.Unix(0, 2))
 func (dt *DateTime) Lt(value time.Time) *DateTime {
-	if !dt.value.Before(value) {
-		failure := Failure{
-			AssertionName: "Datetime.Lt",
-			Expected:      value,
-			Actual:        dt.value,
-			AssertType:    FailureAssertLt,
-		}
-		dt.chain.fail(failure)
+	dt.chain.enter("Lt()")
+	defer dt.chain.leave()
+
+	if dt.chain.failed() {
+		return dt
 	}
+
+	if !dt.value.Before(value) {
+		dt.chain.fail(&AssertionFailure{
+			Type:     AssertLt,
+			Actual:   &AssertionValue{dt.value},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				errors.New("expected: time point is before given time"),
+			},
+		})
+	}
+
 	return dt
 }
 
@@ -131,14 +181,24 @@ func (dt *DateTime) Lt(value time.Time) *DateTime {
 //  dt := NewDateTime(t, time.Unix(0, 1))
 //  dt.Le(time.Unix(0, 2))
 func (dt *DateTime) Le(value time.Time) *DateTime {
+	dt.chain.enter("Le()")
+	defer dt.chain.leave()
+
+	if dt.chain.failed() {
+		return dt
+	}
+
 	if !(dt.value.Before(value) || dt.value.Equal(value)) {
-		dt.chain.fail(Failure{
-			AssertionName: "Datetime.Le",
-			Expected:      value,
-			Actual:        dt.value,
-			AssertType:    FailureAssertLe,
+		dt.chain.fail(&AssertionFailure{
+			Type:     AssertLe,
+			Actual:   &AssertionValue{dt.value},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				errors.New("expected: time point is before or equal to given time"),
+			},
 		})
 	}
+
 	return dt
 }
 
@@ -149,14 +209,24 @@ func (dt *DateTime) Le(value time.Time) *DateTime {
 //  dt.InRange(time.Unix(0, 1), time.Unix(0, 3))
 //  dt.InRange(time.Unix(0, 2), time.Unix(0, 2))
 func (dt *DateTime) InRange(min, max time.Time) *DateTime {
+	dt.chain.enter("InRange()")
+	defer dt.chain.leave()
+
+	if dt.chain.failed() {
+		return dt
+	}
+
 	if !((dt.value.After(min) || dt.value.Equal(min)) &&
 		(dt.value.Before(max) || dt.value.Equal(max))) {
-		dt.chain.fail(Failure{
-			AssertionName:   "Datetime.InRange",
-			Actual:          dt.value,
-			ExpectedInRange: []interface{}{min, max},
-			AssertType:      FailureAssertInRange,
+		dt.chain.fail(&AssertionFailure{
+			Type:     AssertInRange,
+			Actual:   &AssertionValue{dt.value},
+			Expected: &AssertionValue{AssertionRange{min, max}},
+			Errors: []error{
+				errors.New("expected: time point is within given range"),
+			},
 		})
 	}
+
 	return dt
 }

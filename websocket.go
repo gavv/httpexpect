@@ -2,6 +2,7 @@ package httpexpect
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -15,15 +16,18 @@ var infiniteTime = time.Time{}
 // Websocket provides methods to read from, write into and close WebSocket
 // connection.
 type Websocket struct {
-	config       Config
-	chain        chain
-	conn         WebsocketConn
+	config Config
+	chain  *chain
+
+	conn WebsocketConn
+
 	readTimeout  time.Duration
 	writeTimeout time.Duration
-	isClosed     bool
+
+	isClosed bool
 }
 
-// WebsocketConn is used by Websocket to communicate with actual websocket connection.
+// WebsocketConn is used by Websocket to communicate with actual WebSocket connection.
 type WebsocketConn interface {
 	ReadMessage() (messageType int, p []byte, err error)
 	WriteMessage(messageType int, data []byte) error
@@ -36,11 +40,22 @@ type WebsocketConn interface {
 // NewWebsocket returns a new Websocket given a Config with Reporter and
 // Printers, and Websocket to be inspected and handled.
 func NewWebsocket(config Config, conn WebsocketConn) *Websocket {
-	config.AssertionHandler = ensureAssertionHandler(config)
-	return makeWebsocket(config, makeChain(config.AssertionHandler), conn)
+	config.fillDefaults()
+
+	context := AssertionContext{
+		Path: []string{"Websocket()"},
+	}
+
+	return newWebsocket(
+		newChain(context, config.AssertionHandler),
+		config,
+		conn,
+	)
 }
 
-func makeWebsocket(config Config, chain chain, conn WebsocketConn) *Websocket {
+func newWebsocket(parent *chain, config Config, conn WebsocketConn) *Websocket {
+	chain := parent.clone()
+
 	return &Websocket{
 		config: config,
 		chain:  chain,
@@ -70,13 +85,29 @@ func (c *Websocket) Raw() *websocket.Conn {
 //
 // By default no timeout is used.
 func (c *Websocket) WithReadTimeout(timeout time.Duration) *Websocket {
+	c.chain.enter("WithReadTimeout()")
+	defer c.chain.leave()
+
+	if c.chain.failed() {
+		return c
+	}
+
 	c.readTimeout = timeout
+
 	return c
 }
 
 // WithoutReadTimeout removes timeout for WebSocket connection reads.
 func (c *Websocket) WithoutReadTimeout() *Websocket {
+	c.chain.enter("WithoutReadTimeout()")
+	defer c.chain.leave()
+
+	if c.chain.failed() {
+		return c
+	}
+
 	c.readTimeout = noDuration
+
 	return c
 }
 
@@ -84,7 +115,15 @@ func (c *Websocket) WithoutReadTimeout() *Websocket {
 //
 // By default no timeout is used.
 func (c *Websocket) WithWriteTimeout(timeout time.Duration) *Websocket {
+	c.chain.enter("WithWriteTimeout()")
+	defer c.chain.leave()
+
+	if c.chain.failed() {
+		return c
+	}
+
 	c.writeTimeout = timeout
+
 	return c
 }
 
@@ -92,18 +131,33 @@ func (c *Websocket) WithWriteTimeout(timeout time.Duration) *Websocket {
 //
 // If not used then DefaultWebsocketTimeout will be used.
 func (c *Websocket) WithoutWriteTimeout() *Websocket {
+	c.chain.enter("WithoutWriteTimeout()")
+	defer c.chain.leave()
+
+	if c.chain.failed() {
+		return c
+	}
+
 	c.writeTimeout = noDuration
+
 	return c
 }
 
 // Subprotocol returns a new String object that may be used to inspect
 // negotiated protocol for the connection.
 func (c *Websocket) Subprotocol() *String {
-	s := &String{chain: c.chain}
-	if c.conn != nil {
-		s.value = c.conn.Subprotocol()
+	c.chain.enter("Subprotocol()")
+	defer c.chain.leave()
+
+	if c.chain.failed() {
+		return newString(c.chain, "")
 	}
-	return s
+
+	if c.conn == nil {
+		return newString(c.chain, "")
+	}
+
+	return newString(c.chain, c.conn.Subprotocol())
 }
 
 // Expect reads next message from WebSocket connection and
@@ -113,59 +167,19 @@ func (c *Websocket) Subprotocol() *String {
 //  msg := conn.Expect()
 //  msg.JSON().Object().ValueEqual("message", "hi")
 func (c *Websocket) Expect() *WebsocketMessage {
-	switch {
-	case c.chain.failed():
-		return makeWebsocketMessage(c.chain)
-	case c.conn == nil:
-		c.chain.fail(newErrorFailure(fmt.Errorf("unexpected read from failed WebSocket connection")))
-		return makeWebsocketMessage(c.chain)
-	case c.isClosed:
-		c.chain.fail(newErrorFailure(fmt.Errorf("unexpected read from closed WebSocket connection")))
-		return makeWebsocketMessage(c.chain)
-	case !c.setReadDeadline():
-		return makeWebsocketMessage(c.chain)
+	c.chain.enter("Expect()")
+	defer c.chain.leave()
+
+	if c.checkUnusable("Expect") {
+		return newWebsocketMessage(c.chain)
 	}
-	var err error
-	m := makeWebsocketMessage(c.chain)
-	m.typ, m.content, err = c.conn.ReadMessage()
-	if err != nil {
-		if cls, ok := err.(*websocket.CloseError); ok {
-			m.typ = websocket.CloseMessage
-			m.closeCode = cls.Code
-			m.content = []byte(cls.Text)
-			c.printRead(m.typ, m.content, m.closeCode)
-		} else {
-			c.chain.fail(newErrorFailure(fmt.Errorf(
-				"expected read WebSocket connection, "+
-					"but got failure: %w", err)))
-			return makeWebsocketMessage(c.chain)
-		}
-	} else {
-		c.printRead(m.typ, m.content, m.closeCode)
+
+	m := c.readMessage()
+	if m == nil {
+		return newWebsocketMessage(c.chain)
 	}
+
 	return m
-}
-
-func (c *Websocket) setReadDeadline() bool {
-	deadline := infiniteTime
-	if c.readTimeout != noDuration {
-		deadline = time.Now().Add(c.readTimeout)
-	}
-	if err := c.conn.SetReadDeadline(deadline); err != nil {
-		c.chain.fail(newErrorFailure(fmt.Errorf(
-			"unexpected failure when setting "+
-				"read WebSocket connection deadline: %w", err)))
-		return false
-	}
-	return true
-}
-
-func (c *Websocket) printRead(typ int, content []byte, closeCode int) {
-	for _, printer := range c.config.Printers {
-		if p, ok := printer.(WebsocketPrinter); ok {
-			p.WebsocketRead(typ, content, closeCode)
-		}
-	}
 }
 
 // Disconnect closes the underlying WebSocket connection without sending or
@@ -180,13 +194,25 @@ func (c *Websocket) printRead(typ int, content []byte, closeCode int) {
 //  conn := resp.Connection()
 //  defer conn.Disconnect()
 func (c *Websocket) Disconnect() *Websocket {
+	c.chain.enter("Disconnect()")
+	defer c.chain.leave()
+
 	if c.conn == nil || c.isClosed {
 		return c
 	}
+
 	c.isClosed = true
+
 	if err := c.conn.Close(); err != nil {
-		c.chain.fail(newErrorFailure(fmt.Errorf("close error when disconnecting websocket: %w", err)))
+		c.chain.fail(&AssertionFailure{
+			Type: AssertOperation,
+			Errors: []error{
+				errors.New("got close error when disconnecting websocket"),
+				err,
+			},
+		})
 	}
+
 	return c
 }
 
@@ -206,14 +232,26 @@ func (c *Websocket) Disconnect() *Websocket {
 //  conn := resp.Connection()
 //  conn.Close(websocket.CloseUnsupportedData)
 func (c *Websocket) Close(code ...int) *Websocket {
+	c.chain.enter("Close()")
+	defer c.chain.leave()
+
 	switch {
 	case c.checkUnusable("Close"):
 		return c
+
 	case len(code) > 1:
-		c.chain.fail(newErrorFailure(fmt.Errorf("unexpected multiple code arguments passed to Close")))
+		c.chain.fail(&AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected multiple code arguments"),
+			},
+		})
 		return c
 	}
-	return c.CloseWithBytes(nil, code...)
+
+	c.writeMessage(websocket.CloseMessage, nil, code...)
+
+	return c
 }
 
 // CloseWithBytes cleanly closes the underlying WebSocket connection
@@ -232,16 +270,24 @@ func (c *Websocket) Close(code ...int) *Websocket {
 //  conn := resp.Connection()
 //  conn.CloseWithBytes([]byte("bye!"), websocket.CloseGoingAway)
 func (c *Websocket) CloseWithBytes(b []byte, code ...int) *Websocket {
+	c.chain.enter("CloseWithBytes()")
+	defer c.chain.leave()
+
 	switch {
 	case c.checkUnusable("CloseWithBytes"):
 		return c
+
 	case len(code) > 1:
-		c.chain.fail(newErrorFailure(fmt.Errorf(
-			"unexpected multiple code arguments passed to CloseWithBytes")))
+		c.chain.fail(&AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected multiple code arguments"),
+			},
+		})
 		return c
 	}
 
-	c.WriteMessage(websocket.CloseMessage, b, code...)
+	c.writeMessage(websocket.CloseMessage, b, code...)
 
 	return c
 }
@@ -268,21 +314,39 @@ func (c *Websocket) CloseWithBytes(b []byte, code ...int) *Websocket {
 func (c *Websocket) CloseWithJSON(
 	object interface{}, code ...int,
 ) *Websocket {
+	c.chain.enter("CloseWithJSON()")
+	defer c.chain.leave()
+
 	switch {
 	case c.checkUnusable("CloseWithJSON"):
 		return c
+
 	case len(code) > 1:
-		c.chain.fail(newErrorFailure(fmt.Errorf(
-			"unexpected multiple code arguments passed to CloseWithJSON")))
+		c.chain.fail(&AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected multiple code arguments"),
+			},
+		})
 		return c
 	}
 
 	b, err := json.Marshal(object)
+
 	if err != nil {
-		c.chain.fail(newErrorFailure(err))
+		c.chain.fail(&AssertionFailure{
+			Type: AssertValid,
+			Errors: []error{
+				errors.New("invalid json object"),
+				err,
+			},
+		})
 		return c
 	}
-	return c.CloseWithBytes(b, code...)
+
+	c.writeMessage(websocket.CloseMessage, b, code...)
+
+	return c
 }
 
 // CloseWithText cleanly closes the underlying WebSocket connection
@@ -301,15 +365,26 @@ func (c *Websocket) CloseWithJSON(
 //  conn := resp.Connection()
 //  conn.CloseWithText("bye!")
 func (c *Websocket) CloseWithText(s string, code ...int) *Websocket {
+	c.chain.enter("CloseWithText()")
+	defer c.chain.leave()
+
 	switch {
 	case c.checkUnusable("CloseWithText"):
 		return c
+
 	case len(code) > 1:
-		c.chain.fail(newErrorFailure(fmt.Errorf(
-			"unexpected multiple code arguments passed to CloseWithText")))
+		c.chain.fail(&AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected multiple code arguments"),
+			},
+		})
 		return c
 	}
-	return c.CloseWithBytes([]byte(s), code...)
+
+	c.writeMessage(websocket.CloseMessage, []byte(s), code...)
+
+	return c
 }
 
 // WriteMessage writes to the underlying WebSocket connection a message
@@ -325,20 +400,162 @@ func (c *Websocket) CloseWithText(s string, code ...int) *Websocket {
 // Example:
 //  conn := resp.Connection()
 //  conn.WriteMessage(websocket.CloseMessage, []byte("Namárië..."))
-func (c *Websocket) WriteMessage(
-	typ int, content []byte, closeCode ...int,
-) *Websocket {
+func (c *Websocket) WriteMessage(typ int, content []byte, closeCode ...int) *Websocket {
+	c.chain.enter("WriteMessage()")
+	defer c.chain.leave()
+
 	if c.checkUnusable("WriteMessage") {
 		return c
 	}
 
+	c.writeMessage(typ, content, closeCode...)
+
+	return c
+}
+
+// WriteBytesBinary is a shorthand for c.WriteMessage(websocket.BinaryMessage, b).
+func (c *Websocket) WriteBytesBinary(b []byte) *Websocket {
+	c.chain.enter("WriteBytesBinary()")
+	defer c.chain.leave()
+
+	if c.checkUnusable("WriteBytesBinary") {
+		return c
+	}
+
+	c.writeMessage(websocket.BinaryMessage, b)
+
+	return c
+}
+
+// WriteBytesText is a shorthand for c.WriteMessage(websocket.TextMessage, b).
+func (c *Websocket) WriteBytesText(b []byte) *Websocket {
+	c.chain.enter("WriteBytesText()")
+	defer c.chain.leave()
+
+	if c.checkUnusable("WriteBytesText") {
+		return c
+	}
+
+	c.writeMessage(websocket.TextMessage, b)
+
+	return c
+}
+
+// WriteText is a shorthand for
+// c.WriteMessage(websocket.TextMessage, []byte(s)).
+func (c *Websocket) WriteText(s string) *Websocket {
+	c.chain.enter("WriteText()")
+	defer c.chain.leave()
+
+	if c.checkUnusable("WriteText") {
+		return c
+	}
+
+	return c.WriteMessage(websocket.TextMessage, []byte(s))
+}
+
+// WriteJSON writes to the underlying WebSocket connection given object,
+// marshaled using json.Marshal().
+func (c *Websocket) WriteJSON(object interface{}) *Websocket {
+	c.chain.enter("WriteJSON()")
+	defer c.chain.leave()
+
+	if c.checkUnusable("WriteJSON") {
+		return c
+	}
+
+	b, err := json.Marshal(object)
+
+	if err != nil {
+		c.chain.fail(&AssertionFailure{
+			Type: AssertValid,
+			Errors: []error{
+				errors.New("invalid json object"),
+				err,
+			},
+		})
+		return c
+	}
+
+	c.writeMessage(websocket.TextMessage, b)
+
+	return c
+}
+
+func (c *Websocket) checkUnusable(where string) bool {
+	switch {
+	case c.chain.failed():
+		return true
+
+	case c.conn == nil:
+		c.chain.fail(&AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				fmt.Errorf("unexpected %s call for failed websocket connection", where),
+			},
+		})
+		return true
+
+	case c.isClosed:
+		c.chain.fail(&AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				fmt.Errorf("unexpected %s call for closed websocket connection", where),
+			},
+		})
+		return true
+	}
+
+	return false
+}
+
+func (c *Websocket) readMessage() *WebsocketMessage {
+	m := newWebsocketMessage(c.chain)
+
+	if !c.setReadDeadline() {
+		return nil
+	}
+
+	var err error
+	m.typ, m.content, err = c.conn.ReadMessage()
+
+	if err != nil {
+		closeErr, ok := err.(*websocket.CloseError)
+		if !ok {
+			c.chain.fail(&AssertionFailure{
+				Type: AssertOperation,
+				Errors: []error{
+					errors.New("failed to read from websocket"),
+					err,
+				},
+			})
+			return nil
+		}
+
+		m.typ = websocket.CloseMessage
+		m.closeCode = closeErr.Code
+		m.content = []byte(closeErr.Text)
+	}
+
+	c.printRead(m.typ, m.content, m.closeCode)
+
+	return m
+}
+
+func (c *Websocket) writeMessage(typ int, content []byte, closeCode ...int) {
 	switch typ {
 	case websocket.TextMessage, websocket.BinaryMessage:
 		c.printWrite(typ, content, 0)
+
 	case websocket.CloseMessage:
 		if len(closeCode) > 1 {
-			c.chain.fail(newErrorFailure(fmt.Errorf("unexpected multiple closeCode arguments passed to WriteMessage")))
-			return c
+			c.chain.fail(&AssertionFailure{
+				Type: AssertUsage,
+				Errors: []error{
+					errors.New("unexpected multiple closeCode arguments"),
+				},
+			})
+			return
 		}
 
 		code := websocket.CloseNormalClosure
@@ -349,76 +566,52 @@ func (c *Websocket) WriteMessage(
 		c.printWrite(typ, content, code)
 
 		content = websocket.FormatCloseMessage(code, string(content))
+
 	default:
-		c.chain.fail(newErrorFailure(fmt.Errorf("unexpected WebSocket message type '%s' "+
-			"passed to WriteMessage", wsMessageTypeName(typ))))
-		return c
+		c.chain.fail(&AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				fmt.Errorf("unexpected websocket message type %s",
+					wsMessageType(typ)),
+			},
+		})
+		return
 	}
 
 	if !c.setWriteDeadline() {
-		return c
+		return
 	}
+
 	if err := c.conn.WriteMessage(typ, content); err != nil {
-		c.chain.fail(newErrorFailure(fmt.Errorf("expected write into WebSocket connection, "+
-			"but got failure: %s", err.Error())))
+		c.chain.fail(&AssertionFailure{
+			Type: AssertOperation,
+			Errors: []error{
+				errors.New("failed to write to websocket"),
+				err,
+			},
+		})
+		return
 	}
-
-	return c
 }
 
-// WriteBytesBinary is a shorthand for c.WriteMessage(websocket.BinaryMessage, b).
-func (c *Websocket) WriteBytesBinary(b []byte) *Websocket {
-	if c.checkUnusable("WriteBytesBinary") {
-		return c
-	}
-	return c.WriteMessage(websocket.BinaryMessage, b)
-}
-
-// WriteBytesText is a shorthand for c.WriteMessage(websocket.TextMessage, b).
-func (c *Websocket) WriteBytesText(b []byte) *Websocket {
-	if c.checkUnusable("WriteBytesText") {
-		return c
-	}
-	return c.WriteMessage(websocket.TextMessage, b)
-}
-
-// WriteText is a shorthand for
-// c.WriteMessage(websocket.TextMessage, []byte(s)).
-func (c *Websocket) WriteText(s string) *Websocket {
-	if c.checkUnusable("WriteText") {
-		return c
-	}
-	return c.WriteMessage(websocket.TextMessage, []byte(s))
-}
-
-// WriteJSON writes to the underlying WebSocket connection given object,
-// marshaled using json.Marshal().
-func (c *Websocket) WriteJSON(object interface{}) *Websocket {
-	if c.checkUnusable("WriteJSON") {
-		return c
+func (c *Websocket) setReadDeadline() bool {
+	deadline := infiniteTime
+	if c.readTimeout != noDuration {
+		deadline = time.Now().Add(c.readTimeout)
 	}
 
-	b, err := json.Marshal(object)
-	if err != nil {
-		c.chain.fail(newErrorFailure(err))
-		return c
+	if err := c.conn.SetReadDeadline(deadline); err != nil {
+		c.chain.fail(&AssertionFailure{
+			Type: AssertOperation,
+			Errors: []error{
+				errors.New("failed to set read deadline for websocket"),
+				err,
+			},
+		})
+		return false
 	}
 
-	return c.WriteMessage(websocket.TextMessage, b)
-}
-
-func (c *Websocket) checkUnusable(where string) bool {
-	switch {
-	case c.chain.failed():
-		return true
-	case c.conn == nil:
-		c.chain.fail(newErrorFailure(fmt.Errorf("unexpected %s call for failed WebSocket connection", where)))
-		return true
-	case c.isClosed:
-		c.chain.fail(newErrorFailure(fmt.Errorf("unexpected %s call for closed WebSocket connection", where)))
-		return true
-	}
-	return false
+	return true
 }
 
 func (c *Websocket) setWriteDeadline() bool {
@@ -426,11 +619,27 @@ func (c *Websocket) setWriteDeadline() bool {
 	if c.writeTimeout != noDuration {
 		deadline = time.Now().Add(c.writeTimeout)
 	}
+
 	if err := c.conn.SetWriteDeadline(deadline); err != nil {
-		c.chain.fail(newErrorFailure(fmt.Errorf("unexpected failure when setting write WebSocket connection deadline: %w", err)))
+		c.chain.fail(&AssertionFailure{
+			Type: AssertOperation,
+			Errors: []error{
+				errors.New("failed to set write deadline for websocket"),
+				err,
+			},
+		})
 		return false
 	}
+
 	return true
+}
+
+func (c *Websocket) printRead(typ int, content []byte, closeCode int) {
+	for _, printer := range c.config.Printers {
+		if p, ok := printer.(WebsocketPrinter); ok {
+			p.WebsocketRead(typ, content, closeCode)
+		}
+	}
 }
 
 func (c *Websocket) printWrite(typ int, content []byte, closeCode int) {

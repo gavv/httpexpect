@@ -1,12 +1,13 @@
 package httpexpect
 
 import (
+	"errors"
 	"reflect"
 )
 
 // Match provides methods to inspect attached regexp match results.
 type Match struct {
-	chain      chain
+	chain      *chain
 	submatches []string
 	names      map[string]int
 }
@@ -31,20 +32,26 @@ type Match struct {
 //   m.Name("host").Equal("example.com")
 //   m.Name("user").Equal("john")
 func NewMatch(reporter Reporter, submatches []string, names []string) *Match {
-	return makeMatch(makeChain(reporter), submatches, names)
+	return newMatch(newDefaultChain("Match()", reporter), submatches, names)
 }
 
-func makeMatch(chain chain, submatches []string, names []string) *Match {
-	if submatches == nil {
-		submatches = []string{}
+func newMatch(parent *chain, matchList []string, nameList []string) *Match {
+	m := &Match{parent.clone(), nil, nil}
+
+	if matchList != nil {
+		m.submatches = matchList
+	} else {
+		m.submatches = []string{}
 	}
-	namemap := map[string]int{}
-	for n, name := range names {
+
+	m.names = map[string]int{}
+	for n, name := range nameList {
 		if name != "" {
-			namemap[name] = n
+			m.names[name] = n
 		}
 	}
-	return &Match{chain, submatches, namemap}
+
+	return m
 }
 
 // Raw returns underlying submatches attached to Match.
@@ -64,7 +71,14 @@ func (m *Match) Raw() []string {
 //  m := NewMatch(t, submatches, names)
 //  m.Length().Equal(len(submatches))
 func (m *Match) Length() *Number {
-	return &Number{m.chain, float64(len(m.submatches))}
+	m.chain.enter("Length()")
+	defer m.chain.leave()
+
+	if m.chain.failed() {
+		return newNumber(m.chain, 0)
+	}
+
+	return newNumber(m.chain, float64(len(m.submatches)))
 }
 
 // Index returns a new String object that may be used to inspect submatch
@@ -83,16 +97,26 @@ func (m *Match) Length() *Number {
 //   m.Index(1).Equal("example.com")
 //   m.Index(2).Equal("john")
 func (m *Match) Index(index int) *String {
-	if index < 0 || index >= len(m.submatches) {
-		m.chain.fail(Failure{
-			AssertionName: "Match.Index",
-			AssertType:    FailureAssertOutOfBounds,
-			Expected:      index,
-			Actual:        len(m.submatches),
-		})
-		return &String{m.chain, ""}
+	m.chain.enter("Index(%d)", index)
+	defer m.chain.leave()
+
+	if m.chain.failed() {
+		return newString(m.chain, "")
 	}
-	return &String{m.chain, m.submatches[index]}
+
+	if index < 0 || index >= len(m.submatches) {
+		m.chain.fail(&AssertionFailure{
+			Type:     AssertInRange,
+			Actual:   &AssertionValue{index},
+			Expected: &AssertionValue{AssertionRange{0, len(m.submatches) - 1}},
+			Errors: []error{
+				errors.New("expected: valid sub-match index"),
+			},
+		})
+		return newString(m.chain, "")
+	}
+
+	return newString(m.chain, m.submatches[index])
 }
 
 // Name returns a new String object that may be used to inspect submatch
@@ -110,17 +134,31 @@ func (m *Match) Index(index int) *String {
 //   m.Name("host").Equal("example.com")
 //   m.Name("user").Equal("john")
 func (m *Match) Name(name string) *String {
+	m.chain.enter("Name(%q)", name)
+	defer m.chain.leave()
+
+	if m.chain.failed() {
+		return newString(m.chain, "")
+	}
+
 	index, ok := m.names[name]
 	if !ok {
-		m.chain.fail(Failure{
-			AssertionName: "Match.Name",
-			AssertType:    FailureAssertMatchRe,
-			Expected:      m.names,
-			Actual:        name,
+		names := make([]interface{}, 0, len(m.names))
+		for nm := range m.names {
+			names = append(names, nm)
+		}
+		m.chain.fail(&AssertionFailure{
+			Type:     AssertBelongs,
+			Actual:   &AssertionValue{name},
+			Expected: &AssertionValue{AssertionList(names)},
+			Errors: []error{
+				errors.New("expected: existing sub-match name"),
+			},
 		})
-		return &String{m.chain, ""}
+		return newString(m.chain, "")
 	}
-	return m.Index(index)
+
+	return newString(m.chain, m.submatches[index])
 }
 
 // Empty succeeds if submatches array is empty.
@@ -129,13 +167,23 @@ func (m *Match) Name(name string) *String {
 //  m := NewMatch(t, submatches, names)
 //  m.Empty()
 func (m *Match) Empty() *Match {
-	if len(m.submatches) != 0 {
-		m.chain.fail(Failure{
-			AssertionName: "Match.Empty",
-			AssertType:    FailureAssertEmpty,
-			Actual:        m.submatches,
+	m.chain.enter("Empty()")
+	defer m.chain.leave()
+
+	if m.chain.failed() {
+		return m
+	}
+
+	if !(len(m.submatches) == 0) {
+		m.chain.fail(&AssertionFailure{
+			Type:   AssertEmpty,
+			Actual: &AssertionValue{m.submatches},
+			Errors: []error{
+				errors.New("expected: empty sub-match list"),
+			},
 		})
 	}
+
 	return m
 }
 
@@ -145,12 +193,23 @@ func (m *Match) Empty() *Match {
 //  m := NewMatch(t, submatches, names)
 //  m.NotEmpty()
 func (m *Match) NotEmpty() *Match {
-	if len(m.submatches) == 0 {
-		m.chain.fail(Failure{
-			AssertionName: "Match.NotEmpty",
-			AssertType:    FailureAssertNotEmpty,
+	m.chain.enter("NotEmpty()")
+	defer m.chain.leave()
+
+	if m.chain.failed() {
+		return m
+	}
+
+	if !(len(m.submatches) != 0) {
+		m.chain.fail(&AssertionFailure{
+			Type:   AssertNotEmpty,
+			Actual: &AssertionValue{m.submatches},
+			Errors: []error{
+				errors.New("expected: non-empty sub-match list"),
+			},
 		})
 	}
+
 	return m
 }
 
@@ -166,17 +225,28 @@ func (m *Match) NotEmpty() *Match {
 //   m := NewMatch(t, r.FindStringSubmatch(s), nil)
 //   m.Values("example.com", "john")
 func (m *Match) Values(values ...string) *Match {
+	m.chain.enter("Values()")
+	defer m.chain.leave()
+
+	if m.chain.failed() {
+		return m
+	}
+
 	if values == nil {
 		values = []string{}
 	}
+
 	if !reflect.DeepEqual(values, m.getValues()) {
-		m.chain.fail(Failure{
-			AssertionName: "Match.Values",
-			AssertType:    FailureAssertEqual,
-			Expected:      values,
-			Actual:        m.getValues(),
+		m.chain.fail(&AssertionFailure{
+			Type:     AssertEqual,
+			Actual:   &AssertionValue{m.submatches},
+			Expected: &AssertionValue{values},
+			Errors: []error{
+				errors.New("expected: sub-match lists are equal"),
+			},
 		})
 	}
+
 	return m
 }
 
@@ -192,16 +262,24 @@ func (m *Match) Values(values ...string) *Match {
 //   m := NewMatch(t, r.FindStringSubmatch(s), nil)
 //   m.NotValues("example.com", "bob")
 func (m *Match) NotValues(values ...string) *Match {
+	m.chain.enter("NotValues()")
+	defer m.chain.leave()
+
 	if values == nil {
 		values = []string{}
 	}
+
 	if reflect.DeepEqual(values, m.getValues()) {
-		m.chain.fail(Failure{
-			AssertionName: "Match.NotValues",
-			AssertType:    FailureAssertNotEqual,
-			Expected:      values,
+		m.chain.fail(&AssertionFailure{
+			Type:     AssertNotEqual,
+			Actual:   &AssertionValue{m.submatches},
+			Expected: &AssertionValue{values},
+			Errors: []error{
+				errors.New("expected: sub-match lists are non-equal"),
+			},
 		})
 	}
+
 	return m
 }
 

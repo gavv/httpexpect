@@ -7,30 +7,30 @@ import (
 )
 
 func TestChainFail(t *testing.T) {
-	chain := makeChain(newMockReporter(t))
+	chain := newMockChain(t)
 
 	assert.False(t, chain.failed())
 
-	chain.fail(Failure{})
+	chain.fail(&AssertionFailure{})
 	assert.True(t, chain.failed())
 
-	chain.fail(Failure{})
+	chain.fail(&AssertionFailure{})
 	assert.True(t, chain.failed())
 }
 
-func TestChainCopy(t *testing.T) {
-	chain1 := makeChain(newMockReporter(t))
-	chain2 := chain1
+func TestChainClone(t *testing.T) {
+	chain1 := newMockChain(t)
+	chain2 := chain1.clone()
 
 	assert.False(t, chain1.failed())
 	assert.False(t, chain2.failed())
 
-	chain1.fail(Failure{})
+	chain1.fail(&AssertionFailure{})
 
 	assert.True(t, chain1.failed())
 	assert.False(t, chain2.failed())
 
-	chain2.fail(Failure{})
+	chain2.fail(&AssertionFailure{})
 
 	assert.True(t, chain1.failed())
 	assert.True(t, chain2.failed())
@@ -39,7 +39,7 @@ func TestChainCopy(t *testing.T) {
 func TestChainReport(t *testing.T) {
 	r0 := newMockReporter(t)
 
-	chain := makeChain(r0)
+	chain := newDefaultChain("", r0)
 
 	r1 := newMockReporter(t)
 
@@ -51,7 +51,7 @@ func TestChainReport(t *testing.T) {
 
 	assert.False(t, chain.failed())
 
-	chain.fail(Failure{})
+	chain.fail(&AssertionFailure{})
 	assert.True(t, r0.reported)
 
 	r2 := newMockReporter(t)

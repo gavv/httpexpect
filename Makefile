@@ -14,6 +14,9 @@ test:
 	go test
 	cd _examples && go test
 
+gen:
+	go generate
+
 fmt:
 	gofmt -s -w . ./_examples
 

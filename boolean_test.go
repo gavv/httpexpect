@@ -7,15 +7,12 @@ import (
 )
 
 func TestBooleanFailed(t *testing.T) {
-	chain := makeChain(newMockReporter(t))
+	chain := newMockChain(t)
+	chain.fail(&AssertionFailure{})
 
-	chain.fail(Failure{})
+	value := newBoolean(chain, false)
 
-	value := &Boolean{chain, false}
-
-	value.chain.assertFailed(t)
-
-	value.Path("$").chain.assertFailed(t)
+	value.Path("$")
 	value.Schema("")
 
 	value.Equal(false)
