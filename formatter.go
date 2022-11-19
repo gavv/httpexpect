@@ -102,6 +102,18 @@ type FormatData struct {
 	Diff     string
 }
 
+const (
+	kindRange     = "range"
+	kindSchema    = "schema"
+	kindPath      = "path"
+	kindRegexp    = "regexp"
+	kindKey       = "key"
+	kindElement   = "element"
+	kindSubset    = "subset"
+	kindValue     = "value"
+	kindValueList = "values"
+)
+
 func (f *DefaultFormatter) formatTemplate(
 	templateName string,
 	templateString string,
@@ -109,7 +121,7 @@ func (f *DefaultFormatter) formatTemplate(
 	ctx *AssertionContext,
 	failure *AssertionFailure,
 ) string {
-	templateData := f.formatData(ctx, failure)
+	templateData := f.buildFormatData(ctx, failure)
 
 	t, err := template.New(templateName).Funcs(templateFuncs).Parse(templateString)
 	if err != nil {
@@ -126,23 +138,39 @@ func (f *DefaultFormatter) formatTemplate(
 	return b.String()
 }
 
-const (
-	kindRange     = "range"
-	kindSchema    = "schema"
-	kindPath      = "path"
-	kindRegexp    = "regexp"
-	kindKey       = "key"
-	kindElement   = "element"
-	kindSubset    = "subset"
-	kindValue     = "value"
-	kindValueList = "values"
-)
-
-func (f *DefaultFormatter) formatData(
+func (f *DefaultFormatter) buildFormatData(
 	ctx *AssertionContext, failure *AssertionFailure,
 ) *FormatData {
 	data := FormatData{}
 
+	f.fillDescription(&data, ctx)
+
+	if failure != nil {
+		data.AssertType = failure.Type.String()
+
+		f.fillErrors(&data, ctx, failure)
+
+		if failure.Actual != nil {
+			f.fillActual(&data, ctx, failure)
+		}
+
+		if failure.Expected != nil {
+			f.fillExpected(&data, ctx, failure)
+			f.fillIsUnexpected(&data, ctx, failure)
+			f.fillIsComparison(&data, ctx, failure)
+		}
+
+		if failure.Delta != 0 {
+			f.fillDelta(&data, ctx, failure)
+		}
+	}
+
+	return &data
+}
+
+func (f *DefaultFormatter) fillDescription(
+	data *FormatData, ctx *AssertionContext,
+) {
 	if !f.DisableName {
 		data.TestName = ctx.TestName
 	}
@@ -150,151 +178,163 @@ func (f *DefaultFormatter) formatData(
 	if !f.DisablePath {
 		data.AssertPath = formatPath(ctx.Path)
 	}
+}
 
-	if failure != nil {
-		data.AssertType = failure.Type.String()
-
-		for _, err := range failure.Errors {
-			if err == nil {
-				continue
-			}
-			data.Errors = append(data.Errors, err.Error())
+func (f *DefaultFormatter) fillErrors(
+	data *FormatData, ctx *AssertionContext, failure *AssertionFailure,
+) {
+	for _, err := range failure.Errors {
+		if err == nil {
+			continue
 		}
-
-		if failure.Actual != nil {
-			switch failure.Type { //nolint
-			case AssertUsage, AssertOperation:
-				data.HaveActual = false
-
-			default:
-				data.HaveActual = true
-				data.Actual = formatValue(failure.Actual.Value)
-			}
-		}
-
-		if failure.Expected != nil {
-			switch failure.Type {
-			case AssertUsage, AssertOperation,
-				AssertValid, AssertNotValid,
-				AssertNil, AssertNotNil,
-				AssertEmpty, AssertNotEmpty:
-				data.HaveExpected = false
-
-			case AssertNotEqual:
-				data.HaveExpected = false
-
-			case AssertEqual, AssertLt, AssertLe, AssertGt, AssertGe:
-				data.HaveExpected = true
-				data.ExpectedKind = kindValue
-				data.Expected = []string{
-					formatValue(failure.Expected.Value),
-				}
-
-				if !f.DisableDiff && failure.Actual != nil && failure.Expected != nil {
-					data.Diff, data.HaveDiff = formatDiff(
-						failure.Expected.Value, failure.Actual.Value)
-				}
-
-			case AssertInRange, AssertNotInRange:
-				data.HaveExpected = true
-				data.ExpectedKind = kindRange
-				data.Expected = []string{
-					formatRange(failure.Expected.Value),
-				}
-
-			case AssertMatchSchema, AssertNotMatchSchema:
-				data.HaveExpected = true
-				data.ExpectedKind = kindSchema
-				data.Expected = []string{
-					formatString(failure.Expected.Value),
-				}
-
-			case AssertMatchPath, AssertNotMatchPath:
-				data.HaveExpected = true
-				data.ExpectedKind = kindPath
-				data.Expected = []string{
-					formatString(failure.Expected.Value),
-				}
-
-			case AssertMatchRegexp, AssertNotMatchRegexp:
-				data.HaveExpected = true
-				data.ExpectedKind = kindRegexp
-				data.Expected = []string{
-					formatString(failure.Expected.Value),
-				}
-
-			case AssertContainsKey, AssertNotContainsKey:
-				data.HaveExpected = true
-				data.ExpectedKind = kindKey
-				data.Expected = []string{
-					formatValue(failure.Expected.Value),
-				}
-
-			case AssertContainsElement, AssertNotContainsElement:
-				data.HaveExpected = true
-				data.ExpectedKind = kindElement
-				data.Expected = []string{
-					formatValue(failure.Expected.Value),
-				}
-
-			case AssertContainsSubset, AssertNotContainsSubset:
-				data.HaveExpected = true
-				data.ExpectedKind = kindSubset
-				data.Expected = []string{
-					formatValue(failure.Expected.Value),
-				}
-
-			case AssertBelongs, AssertNotBelongs:
-				data.HaveExpected = true
-				data.ExpectedKind = kindValueList
-				data.Expected = formatList(failure.Expected.Value)
-			}
-
-			switch failure.Type {
-			case AssertUsage, AssertOperation,
-				AssertValid,
-				AssertNil,
-				AssertEmpty,
-				AssertEqual,
-				AssertLt, AssertLe, AssertGt, AssertGe,
-				AssertInRange,
-				AssertMatchSchema,
-				AssertMatchPath,
-				AssertMatchRegexp,
-				AssertContainsKey,
-				AssertContainsElement,
-				AssertContainsSubset,
-				AssertBelongs:
-				break
-
-			case AssertNotValid,
-				AssertNotNil,
-				AssertNotEmpty,
-				AssertNotEqual,
-				AssertNotInRange,
-				AssertNotMatchSchema,
-				AssertNotMatchPath,
-				AssertNotMatchRegexp,
-				AssertNotContainsKey,
-				AssertNotContainsElement,
-				AssertNotContainsSubset,
-				AssertNotBelongs:
-				data.IsUnexpected = true
-			}
-
-			switch failure.Type { //nolint
-			case AssertLt, AssertLe, AssertGt, AssertGe:
-				data.IsComparison = true
-			}
-		}
-
-		if failure.Delta != 0 {
-			data.HaveDelta = true
-			data.Delta = fmt.Sprintf("%f", failure.Delta)
-		}
+		data.Errors = append(data.Errors, err.Error())
 	}
+}
 
-	return &data
+func (f *DefaultFormatter) fillActual(
+	data *FormatData, ctx *AssertionContext, failure *AssertionFailure,
+) {
+	switch failure.Type { //nolint
+	case AssertUsage, AssertOperation:
+		data.HaveActual = false
+
+	default:
+		data.HaveActual = true
+		data.Actual = formatValue(failure.Actual.Value)
+	}
+}
+
+func (f *DefaultFormatter) fillExpected(
+	data *FormatData, ctx *AssertionContext, failure *AssertionFailure,
+) {
+	switch failure.Type {
+	case AssertUsage, AssertOperation,
+		AssertValid, AssertNotValid,
+		AssertNil, AssertNotNil,
+		AssertEmpty, AssertNotEmpty:
+		data.HaveExpected = false
+
+	case AssertNotEqual:
+		data.HaveExpected = false
+
+	case AssertEqual, AssertLt, AssertLe, AssertGt, AssertGe:
+		data.HaveExpected = true
+		data.ExpectedKind = kindValue
+		data.Expected = []string{
+			formatValue(failure.Expected.Value),
+		}
+
+		if !f.DisableDiff && failure.Actual != nil && failure.Expected != nil {
+			data.Diff, data.HaveDiff = formatDiff(
+				failure.Expected.Value, failure.Actual.Value)
+		}
+
+	case AssertInRange, AssertNotInRange:
+		data.HaveExpected = true
+		data.ExpectedKind = kindRange
+		data.Expected = []string{
+			formatRange(failure.Expected.Value),
+		}
+
+	case AssertMatchSchema, AssertNotMatchSchema:
+		data.HaveExpected = true
+		data.ExpectedKind = kindSchema
+		data.Expected = []string{
+			formatString(failure.Expected.Value),
+		}
+
+	case AssertMatchPath, AssertNotMatchPath:
+		data.HaveExpected = true
+		data.ExpectedKind = kindPath
+		data.Expected = []string{
+			formatString(failure.Expected.Value),
+		}
+
+	case AssertMatchRegexp, AssertNotMatchRegexp:
+		data.HaveExpected = true
+		data.ExpectedKind = kindRegexp
+		data.Expected = []string{
+			formatString(failure.Expected.Value),
+		}
+
+	case AssertContainsKey, AssertNotContainsKey:
+		data.HaveExpected = true
+		data.ExpectedKind = kindKey
+		data.Expected = []string{
+			formatValue(failure.Expected.Value),
+		}
+
+	case AssertContainsElement, AssertNotContainsElement:
+		data.HaveExpected = true
+		data.ExpectedKind = kindElement
+		data.Expected = []string{
+			formatValue(failure.Expected.Value),
+		}
+
+	case AssertContainsSubset, AssertNotContainsSubset:
+		data.HaveExpected = true
+		data.ExpectedKind = kindSubset
+		data.Expected = []string{
+			formatValue(failure.Expected.Value),
+		}
+
+	case AssertBelongs, AssertNotBelongs:
+		data.HaveExpected = true
+		data.ExpectedKind = kindValueList
+		data.Expected = formatList(failure.Expected.Value)
+	}
+}
+
+func (f *DefaultFormatter) fillIsUnexpected(
+	data *FormatData, ctx *AssertionContext, failure *AssertionFailure,
+) {
+	switch failure.Type {
+	case AssertUsage, AssertOperation,
+		AssertValid,
+		AssertNil,
+		AssertEmpty,
+		AssertEqual,
+		AssertLt, AssertLe, AssertGt, AssertGe,
+		AssertInRange,
+		AssertMatchSchema,
+		AssertMatchPath,
+		AssertMatchRegexp,
+		AssertContainsKey,
+		AssertContainsElement,
+		AssertContainsSubset,
+		AssertBelongs:
+		break
+
+	case AssertNotValid,
+		AssertNotNil,
+		AssertNotEmpty,
+		AssertNotEqual,
+		AssertNotInRange,
+		AssertNotMatchSchema,
+		AssertNotMatchPath,
+		AssertNotMatchRegexp,
+		AssertNotContainsKey,
+		AssertNotContainsElement,
+		AssertNotContainsSubset,
+		AssertNotBelongs:
+		data.IsUnexpected = true
+	}
+}
+
+func (f *DefaultFormatter) fillIsComparison(
+	data *FormatData, ctx *AssertionContext, failure *AssertionFailure,
+) {
+	switch failure.Type { //nolint
+	case AssertLt, AssertLe, AssertGt, AssertGe:
+		data.IsComparison = true
+	}
+}
+
+func (f *DefaultFormatter) fillDelta(
+	data *FormatData, ctx *AssertionContext, failure *AssertionFailure,
+) {
+	data.HaveDelta = true
+	data.Delta = fmt.Sprintf("%f", failure.Delta)
 }
 
 func formatPath(path []string) string {
