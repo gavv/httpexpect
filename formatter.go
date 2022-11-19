@@ -162,7 +162,7 @@ func (f *DefaultFormatter) formatData(
 		}
 
 		if failure.Actual != nil {
-			switch failure.Type {
+			switch failure.Type { //nolint
 			case AssertUsage, AssertOperation:
 				data.HaveActual = false
 
@@ -183,8 +183,7 @@ func (f *DefaultFormatter) formatData(
 			case AssertNotEqual:
 				data.HaveExpected = false
 
-			case AssertEqual,
-				AssertLt, AssertLe, AssertGt, AssertGe:
+			case AssertEqual, AssertLt, AssertLe, AssertGt, AssertGe:
 				data.HaveExpected = true
 				data.ExpectedKind = kindValue
 				data.Expected = []string{
@@ -266,7 +265,7 @@ func (f *DefaultFormatter) formatData(
 				AssertContainsElement,
 				AssertContainsSubset,
 				AssertBelongs:
-				data.IsUnexpected = false
+				break
 
 			case AssertNotValid,
 				AssertNotNil,
@@ -283,12 +282,9 @@ func (f *DefaultFormatter) formatData(
 				data.IsUnexpected = true
 			}
 
-			switch failure.Type {
+			switch failure.Type { //nolint
 			case AssertLt, AssertLe, AssertGt, AssertGe:
 				data.IsComparison = true
-
-			default:
-				data.IsComparison = false
 			}
 		}
 

@@ -1915,6 +1915,9 @@ func (r *Request) shouldRetry(resp *http.Response, err error) bool {
 	}
 
 	switch r.retryPolicy {
+	case DontRetry:
+		break
+
 	case RetryTemporaryNetworkErrors:
 		return isTemporaryNetworkError
 

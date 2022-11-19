@@ -3,6 +3,7 @@ linters:
     - govet
     - revive
     - staticcheck
+    - exhaustive
     - exportloopref
     - lll
     - misspell
