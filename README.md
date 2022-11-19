@@ -651,13 +651,19 @@ e.POST("/fruits").
 
 Feel free to report bugs, suggest improvements, and send pull requests! Please add documentation and tests for new features.
 
-Build code, run linters, run tests:
+Build code and examples, run linters, run tests:
 
 ```
 make
 ```
 
-Format code:
+Run go generate:
+
+```
+make gen
+```
+
+Run gofmt:
 
 ```
 make fmt
