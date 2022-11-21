@@ -407,7 +407,7 @@ func (r *Response) Websocket() *Websocket {
 			Type: AssertUsage,
 			Errors: []error{
 				errors.New(
-					"Websocket requires WithWebsocketUpgrade to be called on request"),
+					"Websocket() requires WithWebsocketUpgrade() to be called on request"),
 			},
 		})
 		return newWebsocket(r.chain, r.config, nil)

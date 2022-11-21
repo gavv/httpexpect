@@ -211,13 +211,11 @@ func (f *DefaultFormatter) fillExpected(
 	case AssertUsage, AssertOperation,
 		AssertValid, AssertNotValid,
 		AssertNil, AssertNotNil,
-		AssertEmpty, AssertNotEmpty:
+		AssertEmpty, AssertNotEmpty,
+		AssertNotEqual:
 		data.HaveExpected = false
 
-	case AssertNotEqual:
-		data.HaveExpected = false
-
-	case AssertEqual, AssertLt, AssertLe, AssertGt, AssertGe:
+	case AssertEqual:
 		data.HaveExpected = true
 		data.ExpectedKind = kindValue
 		data.Expected = []string{
@@ -227,6 +225,13 @@ func (f *DefaultFormatter) fillExpected(
 		if !f.DisableDiff && failure.Actual != nil && failure.Expected != nil {
 			data.Diff, data.HaveDiff = formatDiff(
 				failure.Expected.Value, failure.Actual.Value)
+		}
+
+	case AssertLt, AssertLe, AssertGt, AssertGe:
+		data.HaveExpected = true
+		data.ExpectedKind = kindValue
+		data.Expected = []string{
+			formatValue(failure.Expected.Value),
 		}
 
 	case AssertInRange, AssertNotInRange:
@@ -369,7 +374,7 @@ func formatString(v interface{}) string {
 
 func formatRange(v interface{}) string {
 	if r, ok := v.(AssertionRange); ok {
-		return fmt.Sprintf("[%v; %v]", r[0], r[1])
+		return fmt.Sprintf("[%v; %v]", r.Min, r.Max)
 	} else {
 		return formatValue(v)
 	}

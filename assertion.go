@@ -24,7 +24,7 @@ const (
 	AssertNotEmpty
 
 	// Check expression: [Actual] is equal to [Expected]
-	// If non-zero, [Delta] specifies allowed difference between values
+	// [Delta] specifies allowed difference between values (may be zero)
 	AssertEqual
 	AssertNotEqual
 
@@ -38,19 +38,22 @@ const (
 	AssertGe
 
 	// Check expression: [Actual] belongs to inclusive range [Expected]
-	// [Expected] value stores AssertionRange
+	// [Expected] stores AssertionRange with Min and Max values
 	AssertInRange
 	AssertNotInRange
 
 	// Check expression: [Actual] matches json schema [Expected]
+	// [Expected] stores map with parsed schema or string with schema uri
 	AssertMatchSchema
 	AssertNotMatchSchema
 
 	// Check expression: [Actual] matches json path [Expected]
+	// [Expected] stores a string with json path
 	AssertMatchPath
 	AssertNotMatchPath
 
 	// Check expression: [Actual] matches regex [Expected]
+	// [Expected] stores a string with regular expression
 	AssertMatchRegexp
 	AssertNotMatchRegexp
 
@@ -67,7 +70,7 @@ const (
 	AssertNotContainsSubset
 
 	// Check expression: [Actual] belongs to list [Expected]
-	// [Expected] value stores AssertionList
+	// [Expected] stores AssertionList with allowed values
 	AssertBelongs
 	AssertNotBelongs
 )
@@ -131,8 +134,11 @@ type AssertionValue struct {
 	Value interface{}
 }
 
-// AssertionRange holds [min; max] range for value
-type AssertionRange [2]interface{}
+// AssertionRange holds inclusive range for allowed values
+type AssertionRange struct {
+	Min interface{}
+	Max interface{}
+}
 
 // AssertionList holds list of allowed values
 type AssertionList []interface{}

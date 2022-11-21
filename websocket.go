@@ -171,7 +171,7 @@ func (c *Websocket) Expect() *WebsocketMessage {
 	c.chain.enter("Expect()")
 	defer c.chain.leave()
 
-	if c.checkUnusable("Expect") {
+	if c.checkUnusable("Expect()") {
 		return newWebsocketMessage(c.chain)
 	}
 
@@ -239,7 +239,7 @@ func (c *Websocket) Close(code ...int) *Websocket {
 	defer c.chain.leave()
 
 	switch {
-	case c.checkUnusable("Close"):
+	case c.checkUnusable("Close()"):
 		return c
 
 	case len(code) > 1:
@@ -278,7 +278,7 @@ func (c *Websocket) CloseWithBytes(b []byte, code ...int) *Websocket {
 	defer c.chain.leave()
 
 	switch {
-	case c.checkUnusable("CloseWithBytes"):
+	case c.checkUnusable("CloseWithBytes()"):
 		return c
 
 	case len(code) > 1:
@@ -323,7 +323,7 @@ func (c *Websocket) CloseWithJSON(
 	defer c.chain.leave()
 
 	switch {
-	case c.checkUnusable("CloseWithJSON"):
+	case c.checkUnusable("CloseWithJSON()"):
 		return c
 
 	case len(code) > 1:
@@ -375,7 +375,7 @@ func (c *Websocket) CloseWithText(s string, code ...int) *Websocket {
 	defer c.chain.leave()
 
 	switch {
-	case c.checkUnusable("CloseWithText"):
+	case c.checkUnusable("CloseWithText()"):
 		return c
 
 	case len(code) > 1:
@@ -411,7 +411,7 @@ func (c *Websocket) WriteMessage(typ int, content []byte, closeCode ...int) *Web
 	c.chain.enter("WriteMessage()")
 	defer c.chain.leave()
 
-	if c.checkUnusable("WriteMessage") {
+	if c.checkUnusable("WriteMessage()") {
 		return c
 	}
 
@@ -425,7 +425,7 @@ func (c *Websocket) WriteBytesBinary(b []byte) *Websocket {
 	c.chain.enter("WriteBytesBinary()")
 	defer c.chain.leave()
 
-	if c.checkUnusable("WriteBytesBinary") {
+	if c.checkUnusable("WriteBytesBinary()") {
 		return c
 	}
 
@@ -439,7 +439,7 @@ func (c *Websocket) WriteBytesText(b []byte) *Websocket {
 	c.chain.enter("WriteBytesText()")
 	defer c.chain.leave()
 
-	if c.checkUnusable("WriteBytesText") {
+	if c.checkUnusable("WriteBytesText()") {
 		return c
 	}
 
@@ -454,7 +454,7 @@ func (c *Websocket) WriteText(s string) *Websocket {
 	c.chain.enter("WriteText()")
 	defer c.chain.leave()
 
-	if c.checkUnusable("WriteText") {
+	if c.checkUnusable("WriteText()") {
 		return c
 	}
 
@@ -467,7 +467,7 @@ func (c *Websocket) WriteJSON(object interface{}) *Websocket {
 	c.chain.enter("WriteJSON()")
 	defer c.chain.leave()
 
-	if c.checkUnusable("WriteJSON") {
+	if c.checkUnusable("WriteJSON()") {
 		return c
 	}
 

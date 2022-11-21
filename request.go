@@ -1086,7 +1086,7 @@ func (r *Request) withHeader(k, v string) {
 			delete(r.httpReq.Header, "Content-Type")
 		}
 		r.forceType = true
-		r.typeSetter = "WithHeader"
+		r.typeSetter = "WithHeader()"
 		r.httpReq.Header.Add(k, v)
 
 	default:
@@ -1257,7 +1257,7 @@ func (r *Request) WithChunked(reader io.Reader) *Request {
 		return r
 	}
 
-	r.setBody("WithChunked", reader, -1, false)
+	r.setBody("WithChunked()", reader, -1, false)
 
 	return r
 }
@@ -1278,9 +1278,9 @@ func (r *Request) WithBytes(b []byte) *Request {
 	}
 
 	if b == nil {
-		r.setBody("WithBytes", nil, 0, false)
+		r.setBody("WithBytes()", nil, 0, false)
 	} else {
-		r.setBody("WithBytes", bytes.NewReader(b), len(b), false)
+		r.setBody("WithBytes()", bytes.NewReader(b), len(b), false)
 	}
 
 	return r
@@ -1301,8 +1301,8 @@ func (r *Request) WithText(s string) *Request {
 		return r
 	}
 
-	r.setType("WithText", "text/plain; charset=utf-8", false)
-	r.setBody("WithText", strings.NewReader(s), len(s), false)
+	r.setType("WithText()", "text/plain; charset=utf-8", false)
+	r.setBody("WithText()", strings.NewReader(s), len(s), false)
 
 	return r
 }
@@ -1343,8 +1343,8 @@ func (r *Request) WithJSON(object interface{}) *Request {
 		return r
 	}
 
-	r.setType("WithJSON", "application/json; charset=utf-8", false)
-	r.setBody("WithJSON", bytes.NewReader(b), len(b), false)
+	r.setType("WithJSON()", "application/json; charset=utf-8", false)
+	r.setBody("WithJSON()", bytes.NewReader(b), len(b), false)
 
 	return r
 }
@@ -1394,7 +1394,7 @@ func (r *Request) WithForm(object interface{}) *Request {
 	}
 
 	if r.multipart != nil {
-		r.setType("WithForm", "multipart/form-data", false)
+		r.setType("WithForm()", "multipart/form-data", false)
 
 		var keys []string
 		for k := range f {
@@ -1415,7 +1415,7 @@ func (r *Request) WithForm(object interface{}) *Request {
 			}
 		}
 	} else {
-		r.setType("WithForm", "application/x-www-form-urlencoded", false)
+		r.setType("WithForm()", "application/x-www-form-urlencoded", false)
 
 		if r.form == nil {
 			r.form = make(url.Values)
@@ -1449,7 +1449,7 @@ func (r *Request) WithFormField(key string, value interface{}) *Request {
 	}
 
 	if r.multipart != nil {
-		r.setType("WithFormField", "multipart/form-data", false)
+		r.setType("WithFormField()", "multipart/form-data", false)
 
 		err := r.multipart.WriteField(key, fmt.Sprint(value))
 		if err != nil {
@@ -1463,7 +1463,7 @@ func (r *Request) WithFormField(key string, value interface{}) *Request {
 			return r
 		}
 	} else {
-		r.setType("WithFormField", "application/x-www-form-urlencoded", false)
+		r.setType("WithFormField()", "application/x-www-form-urlencoded", false)
 
 		if r.form == nil {
 			r.form = make(url.Values)
@@ -1502,7 +1502,7 @@ func (r *Request) WithFile(key, path string, reader ...io.Reader) *Request {
 		return r
 	}
 
-	r.withFile("WithFile", key, path, reader...)
+	r.withFile("WithFile()", key, path, reader...)
 
 	return r
 }
@@ -1526,7 +1526,7 @@ func (r *Request) WithFileBytes(key, path string, data []byte) *Request {
 		return r
 	}
 
-	r.withFile("WithFileBytes", key, path, bytes.NewReader(data))
+	r.withFile("WithFileBytes()", key, path, bytes.NewReader(data))
 
 	return r
 }
@@ -1538,7 +1538,7 @@ func (r *Request) withFile(method, key, path string, reader ...io.Reader) {
 		r.chain.fail(&AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
-				fmt.Errorf("%s requires WithMultipart to be called first", method),
+				fmt.Errorf("%s requires WithMultipart() to be called first", method),
 			},
 		})
 		return
@@ -1612,12 +1612,12 @@ func (r *Request) WithMultipart() *Request {
 		return r
 	}
 
-	r.setType("WithMultipart", "multipart/form-data", false)
+	r.setType("WithMultipart()", "multipart/form-data", false)
 
 	if r.multipart == nil {
 		r.formbuf = &bytes.Buffer{}
 		r.multipart = multipart.NewWriter(r.formbuf)
-		r.setBody("WithMultipart", r.formbuf, 0, false)
+		r.setBody("WithMultipart()", r.formbuf, 0, false)
 	}
 
 	return r
@@ -1717,11 +1717,11 @@ func (r *Request) encodeRequest() bool {
 			return false
 		}
 
-		r.setType("Expect", r.multipart.FormDataContentType(), true)
-		r.setBody("Expect", r.formbuf, r.formbuf.Len(), true)
+		r.setType("Expect()", r.multipart.FormDataContentType(), true)
+		r.setBody("Expect()", r.formbuf, r.formbuf.Len(), true)
 	} else if r.form != nil {
 		s := r.form.Encode()
-		r.setBody("WithForm or WithFormField", strings.NewReader(s), len(s), false)
+		r.setBody("WithForm() or WithFormField()", strings.NewReader(s), len(s), false)
 	}
 
 	if r.httpReq.Body == nil {
@@ -1739,7 +1739,7 @@ func (r *Request) encodeRequest() bool {
 
 var websocketErr = `webocket request can not have body:
   body was set by %s
-  webocket was enabled by WithWebsocketUpgrade`
+  webocket was enabled by WithWebsocketUpgrade()`
 
 func (r *Request) encodeWebsocketRequest() bool {
 	if r.chain.failed() {
@@ -1998,7 +1998,7 @@ func (r *Request) setupRedirects() {
 				Type: AssertUsage,
 				Errors: []error{
 					errors.New(
-						"WithRedirectPolicy can be used only if Client is *http.Client"),
+						"WithRedirectPolicy() can be used only if Client is *http.Client"),
 				},
 			})
 			return
@@ -2009,7 +2009,7 @@ func (r *Request) setupRedirects() {
 				Type: AssertUsage,
 				Errors: []error{
 					errors.New(
-						"WithMaxRedirects can be used only if Client is *http.Client"),
+						"WithMaxRedirects() can be used only if Client is *http.Client"),
 				},
 			})
 			return

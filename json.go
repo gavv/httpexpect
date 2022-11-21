@@ -1,8 +1,6 @@
 package httpexpect
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"regexp"
@@ -51,19 +49,23 @@ func jsonSchema(chain *chain, value, schema interface{}) {
 		return
 	}
 
-	valueLoader := gojsonschema.NewGoLoader(value)
-
 	var schemaLoader gojsonschema.JSONLoader
+	var schemaData interface{}
 
 	if str, ok := canonString(schema); ok {
 		if ok, _ := regexp.MatchString(`^\w+://`, str); ok {
 			schemaLoader = gojsonschema.NewReferenceLoader(str)
+			schemaData = str
 		} else {
 			schemaLoader = gojsonschema.NewStringLoader(str)
+			schemaData, _ = schemaLoader.LoadJSON()
 		}
 	} else {
 		schemaLoader = gojsonschema.NewGoLoader(schema)
+		schemaData = schema
 	}
+
+	valueLoader := gojsonschema.NewGoLoader(value)
 
 	result, err := gojsonschema.Validate(schemaLoader, valueLoader)
 	if err != nil {
@@ -85,23 +87,11 @@ func jsonSchema(chain *chain, value, schema interface{}) {
 		for _, err := range result.Errors() {
 			errors = append(errors, fmt.Errorf("%s", err))
 		}
-		if s, ok := schema.(string); ok {
-			var buf bytes.Buffer
-			if err := json.Indent(&buf, []byte(s), "", "  "); err == nil {
-				schema = buf.String()
-			}
-		} else if b, ok := schema.([]byte); ok {
-			var buf bytes.Buffer
-			if err := json.Indent(&buf, b, "", "  "); err == nil {
-				schema = buf.String()
-			}
-		}
 		chain.fail(&AssertionFailure{
 			Type:     AssertMatchSchema,
 			Actual:   &AssertionValue{value},
-			Expected: &AssertionValue{schema},
+			Expected: &AssertionValue{schemaData},
 			Errors:   errors,
 		})
-		return
 	}
 }

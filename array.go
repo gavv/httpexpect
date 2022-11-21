@@ -109,9 +109,12 @@ func (a *Array) Element(index int) *Value {
 
 	if index < 0 || index >= len(a.value) {
 		a.chain.fail(&AssertionFailure{
-			Type:     AssertInRange,
-			Actual:   &AssertionValue{index},
-			Expected: &AssertionValue{AssertionRange{0, len(a.value) - 1}},
+			Type:   AssertInRange,
+			Actual: &AssertionValue{index},
+			Expected: &AssertionValue{AssertionRange{
+				Min: 0,
+				Max: len(a.value) - 1,
+			}},
 			Errors: []error{
 				errors.New("expected: valid element index"),
 			},

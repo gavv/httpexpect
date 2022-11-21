@@ -110,9 +110,12 @@ func (m *Match) Index(index int) *String {
 
 	if index < 0 || index >= len(m.submatches) {
 		m.chain.fail(&AssertionFailure{
-			Type:     AssertInRange,
-			Actual:   &AssertionValue{index},
-			Expected: &AssertionValue{AssertionRange{0, len(m.submatches) - 1}},
+			Type:   AssertInRange,
+			Actual: &AssertionValue{index},
+			Expected: &AssertionValue{AssertionRange{
+				Min: 0,
+				Max: len(m.submatches) - 1,
+			}},
 			Errors: []error{
 				errors.New("expected: valid sub-match index"),
 			},
