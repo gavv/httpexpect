@@ -1283,7 +1283,7 @@ func (r *Request) WithChunked(reader io.Reader) *Request {
 // Example:
 //
 //	req := NewRequest(config, "PUT", "http://example.com/path")
-//	req.WithHeader("Content-Type": "application/json")
+//	req.WithHeader("Content-Type", "application/json")
 //	req.WithBytes([]byte(`{"foo": 123}`))
 func (r *Request) WithBytes(b []byte) *Request {
 	r.chain.enter("WithBytes()")
