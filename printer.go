@@ -16,9 +16,11 @@ import (
 // CompactPrinter, DebugPrinter, and CurlPrinter implement this interface.
 type Printer interface {
 	// Request is called before request is sent.
+	// It is allowed to read and close request body, or ignore it.
 	Request(*http.Request)
 
 	// Response is called after response is received.
+	// It is allowed to read and close response body, or ignore it.
 	Response(*http.Response, time.Duration)
 }
 
