@@ -49,8 +49,9 @@ Workflow:
 ##### Tuning
 
 * Tests can communicate with server via real HTTP client or invoke `net/http` or [`fasthttp`](https://github.com/valyala/fasthttp/) handler directly.
-* Custom HTTP client, logger, printer, and failure reporter may be provided by user.
+* Custom HTTP client and WebSocket dialer may be provided by user.
 * Custom HTTP request factory may be provided, e.g. from the Google App Engine testing.
+* Custom handlers may be provided for printing requests and responses, logging, formatting and reporting failures.
 
 ## Versions
 
@@ -130,7 +131,7 @@ func TestFruits(t *testing.T) {
 	defer server.Close()
 
 	// create httpexpect instance
-	e := httpexpect.New(t, server.URL)
+	e := httpexpect.Default(t, server.URL)
 
 	// is it working?
 	e.GET("/fruits").
@@ -382,7 +383,7 @@ ws.CloseWithText("bye").
 ##### Reusable builders
 
 ```go
-e := httpexpect.New(t, "http://example.com")
+e := httpexpect.Default(t, "http://example.com")
 
 r := e.POST("/login").WithForm(Login{"ford", "betelgeuse7"}).
 	Expect().
@@ -406,7 +407,7 @@ e.GET("/restricted").
 ##### Reusable matchers
 
 ```go
-e := httpexpect.New(t, "http://example.com")
+e := httpexpect.Default(t, "http://example.com")
 
 // every response should have this header
 m := e.Matcher(func (resp *httpexpect.Response) {
@@ -425,7 +426,7 @@ m.GET("/bad-path").
 ##### Request transformers
 
 ```go
-e := httpexpect.New(t, "http://example.com")
+e := httpexpect.Default(t, "http://example.com")
 
 myTranform := func(r* http.Request) {
 	// modify the underlying http.Request
@@ -451,6 +452,9 @@ myBuilder.POST("/some-path").
 
 ```go
 e := httpexpect.WithConfig(httpexpect.Config{
+	// include test name in failures (optional)
+	TestName: t.Name(),
+
 	// prepend this url to all requests
 	BaseURL: "http://example.com",
 
@@ -463,9 +467,8 @@ e := httpexpect.WithConfig(httpexpect.Config{
 	// use fatal failures
 	Reporter: httpexpect.NewRequireReporter(t),
 
-	// use verbose logging
+	// print all requests and responses
 	Printers: []httpexpect.Printer{
-		httpexpect.NewCurlPrinter(t),
 		httpexpect.NewDebugPrinter(t, true),
 	},
 })
@@ -506,7 +509,7 @@ e := httpexpect.WithConfig(httpexpect.Config{
 ##### Per-request client or handler
 
 ```go
-e := httpexpect.New(t, server.URL)
+e := httpexpect.Default(t, server.URL)
 
 client := &http.Client{
 	Transport: &http.Transport{
@@ -585,6 +588,7 @@ e := httpexpect.WithConfig(httpexpect.Config{
 	},
 })
 ```
+
 ##### Global time-out/cancellation
 
 ```go
@@ -632,6 +636,85 @@ e.POST("/fruits").
 	WithTimeout(time.Duration(10)*time.Second).
 	Expect().
 	Status(http.StatusOK)
+```
+
+##### Printing requests and responses
+
+```go
+// print requests in short form, don't print responses
+e := httpexpect.WithConfig(httpexpect.Config{
+	Reporter: httpexpect.NewAssertReporter(t),
+	Printers: []httpexpect.Printer{
+		httpexpect.NewCompactPrinter(t),
+	},
+})
+
+// print requests as curl commands that can be inserted into terminal
+e := httpexpect.WithConfig(httpexpect.Config{
+	Reporter: httpexpect.NewAssertReporter(t),
+	Printers: []httpexpect.Printer{
+		httpexpect.NewCurlPrinter(t),
+	},
+})
+
+// print requests and responses in verbose form
+// also print all incoming and outgoing websocket messages
+e := httpexpect.WithConfig(httpexpect.Config{
+	Reporter: httpexpect.NewAssertReporter(t),
+	Printers: []httpexpect.Printer{
+		httpexpect.NewDebugPrinter(t, true),
+	},
+})
+```
+
+##### Customize failure formatting
+
+```go
+// customize formatting options
+e := httpexpect.WithConfig(httpexpect.Config{
+	Reporter:  httpexpect.NewAssertReporter(t),
+	Formatter: &httpexpect.DefaultFormatter{
+		DisablePath: true,
+		DisableDiff: true,
+	},
+})
+
+// customize formatting template
+e := httpexpect.WithConfig(httpexpect.Config{
+	Reporter:  httpexpect.NewAssertReporter(t),
+	Formatter: &httpexpect.DefaultFormatter{
+		SuccessTemplate: "...",
+		FailureTemplate: "...",
+		TemplateFuncs:   template.FuncMap{ ... },
+	},
+})
+
+// provide custom formatter
+e := httpexpect.WithConfig(httpexpect.Config{
+	Reporter:  httpexpect.NewAssertReporter(t),
+	Formatter: &MyFormatter{},
+})
+```
+
+##### Customize assertion handling
+
+```go
+// enable printing of succeeded assertions
+e := httpexpect.WithConfig(httpexpect.Config{
+	AssertionHandler: &httpexpect.DefaultAssertionHandler{
+		Formatter: &httpexpect.DefaultFormatter{},
+		Reporter:  httpexpect.NewAssertReporter(t),
+		Logger:    t, // specify logger to enable printing of succeeded assertions
+	},
+})
+
+// provide custom assertion handler
+// here you can implement custom handling of succeeded and failed assertions
+// this may be useful for integrating httpexpect with other testing libs
+// if desired, you can completely ignore builtin Formatter, Reporter, and Logger
+e := httpexpect.WithConfig(httpexpect.Config{
+	AssertionHandler: &MyAssertionHandler{},
+})
 ```
 
 ## Similar packages
