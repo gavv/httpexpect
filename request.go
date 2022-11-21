@@ -1931,64 +1931,6 @@ func (r *Request) shouldRetry(resp *http.Response, err error) bool {
 	return false
 }
 
-var typeErr = `ambiguous request "Content-Type" header values:
-  first set by %s: %q
-  then overwritten by %s: %q`
-
-func (r *Request) setType(newSetter, newType string, overwrite bool) {
-	if r.forceType {
-		return
-	}
-
-	if !overwrite {
-		previousType := r.httpReq.Header.Get("Content-Type")
-
-		if previousType != "" && previousType != newType {
-			r.chain.fail(&AssertionFailure{
-				Type: AssertUsage,
-				Errors: []error{
-					fmt.Errorf(typeErr,
-						r.typeSetter, previousType, newSetter, newType),
-				},
-			})
-			return
-		}
-	}
-
-	r.typeSetter = newSetter
-	r.httpReq.Header["Content-Type"] = []string{newType}
-}
-
-var bodyErr = `ambiguous request body contents:
-  first set by %s
-  then overwritten by %s`
-
-func (r *Request) setBody(setter string, reader io.Reader, len int, overwrite bool) {
-	if !overwrite && r.bodySetter != "" {
-		r.chain.fail(&AssertionFailure{
-			Type: AssertUsage,
-			Errors: []error{
-				fmt.Errorf(bodyErr, r.bodySetter, setter),
-			},
-		})
-		return
-	}
-
-	if len > 0 && reader == nil {
-		panic("invalid length")
-	}
-
-	if reader == nil {
-		r.httpReq.Body = http.NoBody
-		r.httpReq.ContentLength = 0
-	} else {
-		r.httpReq.Body = ioutil.NopCloser(reader)
-		r.httpReq.ContentLength = int64(len)
-	}
-
-	r.bodySetter = setter
-}
-
 func (r *Request) setupRedirects() {
 	httpClient, _ := r.config.Client.(*http.Client)
 
@@ -2051,6 +1993,64 @@ func (r *Request) setupRedirects() {
 	} else if r.redirectPolicy != defaultRedirectPolicy {
 		r.httpReq.GetBody = nil
 	}
+}
+
+var typeErr = `ambiguous request "Content-Type" header values:
+  first set by %s: %q
+  then overwritten by %s: %q`
+
+func (r *Request) setType(newSetter, newType string, overwrite bool) {
+	if r.forceType {
+		return
+	}
+
+	if !overwrite {
+		previousType := r.httpReq.Header.Get("Content-Type")
+
+		if previousType != "" && previousType != newType {
+			r.chain.fail(&AssertionFailure{
+				Type: AssertUsage,
+				Errors: []error{
+					fmt.Errorf(typeErr,
+						r.typeSetter, previousType, newSetter, newType),
+				},
+			})
+			return
+		}
+	}
+
+	r.typeSetter = newSetter
+	r.httpReq.Header["Content-Type"] = []string{newType}
+}
+
+var bodyErr = `ambiguous request body contents:
+  first set by %s
+  then overwritten by %s`
+
+func (r *Request) setBody(setter string, reader io.Reader, len int, overwrite bool) {
+	if !overwrite && r.bodySetter != "" {
+		r.chain.fail(&AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				fmt.Errorf(bodyErr, r.bodySetter, setter),
+			},
+		})
+		return
+	}
+
+	if len > 0 && reader == nil {
+		panic("invalid length")
+	}
+
+	if reader == nil {
+		r.httpReq.Body = http.NoBody
+		r.httpReq.ContentLength = 0
+	} else {
+		r.httpReq.Body = ioutil.NopCloser(reader)
+		r.httpReq.ContentLength = int64(len)
+	}
+
+	r.bodySetter = setter
 }
 
 func concatPaths(a, b string) string {

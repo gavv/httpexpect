@@ -78,14 +78,14 @@ func (c *chain) reset() {
 	c.failbit = false
 }
 
-func (c *chain) assertFailed(r Reporter) {
-	if !c.failbit {
-		r.Errorf("failbit is false, but should be true")
-	}
-}
-
 func (c *chain) assertOK(r Reporter) {
 	if c.failbit {
 		r.Errorf("failbit is true, but should be false")
+	}
+}
+
+func (c *chain) assertFailed(r Reporter) {
+	if !c.failbit {
+		r.Errorf("failbit is false, but should be true")
 	}
 }
