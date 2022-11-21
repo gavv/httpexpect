@@ -161,7 +161,7 @@ func (v *Value) Object() *Object {
 	data, ok := v.value.(map[string]interface{})
 
 	if !ok {
-		v.chain.fail(&AssertionFailure{
+		v.chain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{v.value},
 			Errors: []error{
@@ -194,7 +194,7 @@ func (v *Value) Array() *Array {
 	data, ok := v.value.([]interface{})
 
 	if !ok {
-		v.chain.fail(&AssertionFailure{
+		v.chain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{v.value},
 			Errors: []error{
@@ -227,7 +227,7 @@ func (v *Value) String() *String {
 	data, ok := v.value.(string)
 
 	if !ok {
-		v.chain.fail(&AssertionFailure{
+		v.chain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{v.value},
 			Errors: []error{
@@ -260,7 +260,7 @@ func (v *Value) Number() *Number {
 	data, ok := v.value.(float64)
 
 	if !ok {
-		v.chain.fail(&AssertionFailure{
+		v.chain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{v.value},
 			Errors: []error{
@@ -293,7 +293,7 @@ func (v *Value) Boolean() *Boolean {
 	data, ok := v.value.(bool)
 
 	if !ok {
-		v.chain.fail(&AssertionFailure{
+		v.chain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{v.value},
 			Errors: []error{
@@ -328,7 +328,7 @@ func (v *Value) Null() *Value {
 	}
 
 	if !(v.value == nil) {
-		v.chain.fail(&AssertionFailure{
+		v.chain.fail(AssertionFailure{
 			Type:   AssertNil,
 			Actual: &AssertionValue{v.value},
 			Errors: []error{
@@ -362,7 +362,7 @@ func (v *Value) NotNull() *Value {
 	}
 
 	if !(v.value != nil) {
-		v.chain.fail(&AssertionFailure{
+		v.chain.fail(AssertionFailure{
 			Type:   AssertNotNil,
 			Actual: &AssertionValue{v.value},
 			Errors: []error{
@@ -395,7 +395,7 @@ func (v *Value) Equal(value interface{}) *Value {
 	}
 
 	if !reflect.DeepEqual(expected, v.value) {
-		v.chain.fail(&AssertionFailure{
+		v.chain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{v.value},
 			Expected: &AssertionValue{expected},
@@ -429,7 +429,7 @@ func (v *Value) NotEqual(value interface{}) *Value {
 	}
 
 	if reflect.DeepEqual(expected, v.value) {
-		v.chain.fail(&AssertionFailure{
+		v.chain.fail(AssertionFailure{
 			Type:     AssertNotEqual,
 			Actual:   &AssertionValue{v.value},
 			Expected: &AssertionValue{expected},

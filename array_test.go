@@ -35,7 +35,7 @@ func TestArrayFailed(t *testing.T) {
 
 	t.Run("failed_chain", func(t *testing.T) {
 		chain := newMockChain(t)
-		chain.fail(&AssertionFailure{})
+		chain.fail(AssertionFailure{})
 
 		value := newArray(chain, []interface{}{})
 
@@ -52,7 +52,7 @@ func TestArrayFailed(t *testing.T) {
 
 	t.Run("failed_chain_nil_value", func(t *testing.T) {
 		chain := newMockChain(t)
-		chain.fail(&AssertionFailure{})
+		chain.fail(AssertionFailure{})
 
 		value := newArray(chain, nil)
 

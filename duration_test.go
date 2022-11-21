@@ -9,7 +9,7 @@ import (
 
 func TestDurationFailed(t *testing.T) {
 	chain := newMockChain(t)
-	chain.fail(&AssertionFailure{})
+	chain.fail(AssertionFailure{})
 
 	tm := time.Second
 	value := newDuration(chain, &tm)

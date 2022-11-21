@@ -29,7 +29,7 @@ func newArray(parent *chain, val []interface{}) *Array {
 	a := &Array{parent.clone(), nil}
 
 	if val == nil {
-		a.chain.fail(&AssertionFailure{
+		a.chain.fail(AssertionFailure{
 			Type:   AssertNotNil,
 			Actual: &AssertionValue{val},
 			Errors: []error{
@@ -108,7 +108,7 @@ func (a *Array) Element(index int) *Value {
 	}
 
 	if index < 0 || index >= len(a.value) {
-		a.chain.fail(&AssertionFailure{
+		a.chain.fail(AssertionFailure{
 			Type:   AssertInRange,
 			Actual: &AssertionValue{index},
 			Expected: &AssertionValue{AssertionRange{
@@ -144,7 +144,7 @@ func (a *Array) First() *Value {
 	}
 
 	if len(a.value) == 0 {
-		a.chain.fail(&AssertionFailure{
+		a.chain.fail(AssertionFailure{
 			Type:   AssertNotEmpty,
 			Actual: &AssertionValue{a.value},
 			Errors: []error{
@@ -176,7 +176,7 @@ func (a *Array) Last() *Value {
 	}
 
 	if len(a.value) == 0 {
-		a.chain.fail(&AssertionFailure{
+		a.chain.fail(AssertionFailure{
 			Type:   AssertNotEmpty,
 			Actual: &AssertionValue{a.value},
 			Errors: []error{
@@ -230,7 +230,7 @@ func (a *Array) Empty() *Array {
 	}
 
 	if !(len(a.value) == 0) {
-		a.chain.fail(&AssertionFailure{
+		a.chain.fail(AssertionFailure{
 			Type:   AssertEmpty,
 			Actual: &AssertionValue{a.value},
 			Errors: []error{
@@ -257,7 +257,7 @@ func (a *Array) NotEmpty() *Array {
 	}
 
 	if !(len(a.value) != 0) {
-		a.chain.fail(&AssertionFailure{
+		a.chain.fail(AssertionFailure{
 			Type:   AssertNotEmpty,
 			Actual: &AssertionValue{a.value},
 			Errors: []error{
@@ -298,7 +298,7 @@ func (a *Array) Equal(value interface{}) *Array {
 	}
 
 	if !reflect.DeepEqual(expected, a.value) {
-		a.chain.fail(&AssertionFailure{
+		a.chain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{a.value},
 			Expected: &AssertionValue{expected},
@@ -334,7 +334,7 @@ func (a *Array) NotEqual(value interface{}) *Array {
 	}
 
 	if reflect.DeepEqual(expected, a.value) {
-		a.chain.fail(&AssertionFailure{
+		a.chain.fail(AssertionFailure{
 			Type:     AssertNotEqual,
 			Actual:   &AssertionValue{a.value},
 			Expected: &AssertionValue{expected},
@@ -375,7 +375,7 @@ func (a *Array) Elements(values ...interface{}) *Array {
 	}
 
 	if !reflect.DeepEqual(expected, a.value) {
-		a.chain.fail(&AssertionFailure{
+		a.chain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{a.value},
 			Expected: &AssertionValue{expected},
@@ -410,7 +410,7 @@ func (a *Array) Contains(values ...interface{}) *Array {
 
 	for _, expected := range elements {
 		if !a.containsElement(expected) {
-			a.chain.fail(&AssertionFailure{
+			a.chain.fail(AssertionFailure{
 				Type:     AssertContainsElement,
 				Actual:   &AssertionValue{a.value},
 				Expected: &AssertionValue{expected},
@@ -448,7 +448,7 @@ func (a *Array) NotContains(values ...interface{}) *Array {
 
 	for _, expected := range elements {
 		if a.containsElement(expected) {
-			a.chain.fail(&AssertionFailure{
+			a.chain.fail(AssertionFailure{
 				Type:     AssertNotContainsElement,
 				Actual:   &AssertionValue{a.value},
 				Expected: &AssertionValue{expected},
@@ -489,7 +489,7 @@ func (a *Array) ContainsOnly(values ...interface{}) *Array {
 	}
 
 	if len(elements) != len(a.value) {
-		a.chain.fail(&AssertionFailure{
+		a.chain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{len(a.value)},
 			Expected: &AssertionValue{len(elements)},
@@ -502,7 +502,7 @@ func (a *Array) ContainsOnly(values ...interface{}) *Array {
 
 	for _, expected := range elements {
 		if !a.containsElement(expected) {
-			a.chain.fail(&AssertionFailure{
+			a.chain.fail(AssertionFailure{
 				Type:     AssertContainsElement,
 				Actual:   &AssertionValue{a.value},
 				Expected: &AssertionValue{expected},

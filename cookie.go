@@ -31,7 +31,7 @@ func newCookie(parent *chain, val *http.Cookie) *Cookie {
 	c := &Cookie{parent.clone(), nil}
 
 	if val == nil {
-		c.chain.fail(&AssertionFailure{
+		c.chain.fail(AssertionFailure{
 			Type:   AssertNotNil,
 			Actual: &AssertionValue{val},
 			Errors: []error{

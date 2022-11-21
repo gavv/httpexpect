@@ -70,7 +70,7 @@ func (b *Boolean) Equal(value bool) *Boolean {
 	}
 
 	if !(b.value == value) {
-		b.chain.fail(&AssertionFailure{
+		b.chain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{b.value},
 			Expected: &AssertionValue{value},
@@ -98,7 +98,7 @@ func (b *Boolean) NotEqual(value bool) *Boolean {
 	}
 
 	if !(b.value != value) {
-		b.chain.fail(&AssertionFailure{
+		b.chain.fail(AssertionFailure{
 			Type:     AssertNotEqual,
 			Actual:   &AssertionValue{b.value},
 			Expected: &AssertionValue{value},
@@ -126,7 +126,7 @@ func (b *Boolean) True() *Boolean {
 	}
 
 	if !(b.value == true) {
-		b.chain.fail(&AssertionFailure{
+		b.chain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{b.value},
 			Expected: &AssertionValue{true},
@@ -154,7 +154,7 @@ func (b *Boolean) False() *Boolean {
 	}
 
 	if !(b.value == false) {
-		b.chain.fail(&AssertionFailure{
+		b.chain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{b.value},
 			Expected: &AssertionValue{false},

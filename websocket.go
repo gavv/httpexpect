@@ -206,7 +206,7 @@ func (c *Websocket) Disconnect() *Websocket {
 	c.isClosed = true
 
 	if err := c.conn.Close(); err != nil {
-		c.chain.fail(&AssertionFailure{
+		c.chain.fail(AssertionFailure{
 			Type: AssertOperation,
 			Errors: []error{
 				errors.New("got close error when disconnecting websocket"),
@@ -243,7 +243,7 @@ func (c *Websocket) Close(code ...int) *Websocket {
 		return c
 
 	case len(code) > 1:
-		c.chain.fail(&AssertionFailure{
+		c.chain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
 				errors.New("unexpected multiple code arguments"),
@@ -282,7 +282,7 @@ func (c *Websocket) CloseWithBytes(b []byte, code ...int) *Websocket {
 		return c
 
 	case len(code) > 1:
-		c.chain.fail(&AssertionFailure{
+		c.chain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
 				errors.New("unexpected multiple code arguments"),
@@ -327,7 +327,7 @@ func (c *Websocket) CloseWithJSON(
 		return c
 
 	case len(code) > 1:
-		c.chain.fail(&AssertionFailure{
+		c.chain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
 				errors.New("unexpected multiple code arguments"),
@@ -339,7 +339,7 @@ func (c *Websocket) CloseWithJSON(
 	b, err := json.Marshal(object)
 
 	if err != nil {
-		c.chain.fail(&AssertionFailure{
+		c.chain.fail(AssertionFailure{
 			Type: AssertValid,
 			Errors: []error{
 				errors.New("invalid json object"),
@@ -379,7 +379,7 @@ func (c *Websocket) CloseWithText(s string, code ...int) *Websocket {
 		return c
 
 	case len(code) > 1:
-		c.chain.fail(&AssertionFailure{
+		c.chain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
 				errors.New("unexpected multiple code arguments"),
@@ -474,7 +474,7 @@ func (c *Websocket) WriteJSON(object interface{}) *Websocket {
 	b, err := json.Marshal(object)
 
 	if err != nil {
-		c.chain.fail(&AssertionFailure{
+		c.chain.fail(AssertionFailure{
 			Type: AssertValid,
 			Errors: []error{
 				errors.New("invalid json object"),
@@ -495,7 +495,7 @@ func (c *Websocket) checkUnusable(where string) bool {
 		return true
 
 	case c.conn == nil:
-		c.chain.fail(&AssertionFailure{
+		c.chain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
 				fmt.Errorf("unexpected %s call for failed websocket connection", where),
@@ -504,7 +504,7 @@ func (c *Websocket) checkUnusable(where string) bool {
 		return true
 
 	case c.isClosed:
-		c.chain.fail(&AssertionFailure{
+		c.chain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
 				fmt.Errorf("unexpected %s call for closed websocket connection", where),
@@ -529,7 +529,7 @@ func (c *Websocket) readMessage() *WebsocketMessage {
 	if err != nil {
 		closeErr, ok := err.(*websocket.CloseError)
 		if !ok {
-			c.chain.fail(&AssertionFailure{
+			c.chain.fail(AssertionFailure{
 				Type: AssertOperation,
 				Errors: []error{
 					errors.New("failed to read from websocket"),
@@ -556,7 +556,7 @@ func (c *Websocket) writeMessage(typ int, content []byte, closeCode ...int) {
 
 	case websocket.CloseMessage:
 		if len(closeCode) > 1 {
-			c.chain.fail(&AssertionFailure{
+			c.chain.fail(AssertionFailure{
 				Type: AssertUsage,
 				Errors: []error{
 					errors.New("unexpected multiple closeCode arguments"),
@@ -575,7 +575,7 @@ func (c *Websocket) writeMessage(typ int, content []byte, closeCode ...int) {
 		content = websocket.FormatCloseMessage(code, string(content))
 
 	default:
-		c.chain.fail(&AssertionFailure{
+		c.chain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
 				fmt.Errorf("unexpected websocket message type %s",
@@ -590,7 +590,7 @@ func (c *Websocket) writeMessage(typ int, content []byte, closeCode ...int) {
 	}
 
 	if err := c.conn.WriteMessage(typ, content); err != nil {
-		c.chain.fail(&AssertionFailure{
+		c.chain.fail(AssertionFailure{
 			Type: AssertOperation,
 			Errors: []error{
 				errors.New("failed to write to websocket"),
@@ -608,7 +608,7 @@ func (c *Websocket) setReadDeadline() bool {
 	}
 
 	if err := c.conn.SetReadDeadline(deadline); err != nil {
-		c.chain.fail(&AssertionFailure{
+		c.chain.fail(AssertionFailure{
 			Type: AssertOperation,
 			Errors: []error{
 				errors.New("failed to set read deadline for websocket"),
@@ -628,7 +628,7 @@ func (c *Websocket) setWriteDeadline() bool {
 	}
 
 	if err := c.conn.SetWriteDeadline(deadline); err != nil {
-		c.chain.fail(&AssertionFailure{
+		c.chain.fail(AssertionFailure{
 			Type: AssertOperation,
 			Errors: []error{
 				errors.New("failed to set write deadline for websocket"),

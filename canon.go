@@ -22,7 +22,7 @@ func canonNumber(chain *chain, in interface{}) (out float64, ok bool) {
 	ok = true
 	defer func() {
 		if err := recover(); err != nil {
-			chain.fail(&AssertionFailure{
+			chain.fail(AssertionFailure{
 				Type:   AssertValid,
 				Actual: &AssertionValue{in},
 				Errors: []error{
@@ -43,7 +43,7 @@ func canonArray(chain *chain, in interface{}) ([]interface{}, bool) {
 	if ok {
 		out, ok = data.([]interface{})
 		if !ok {
-			chain.fail(&AssertionFailure{
+			chain.fail(AssertionFailure{
 				Type:   AssertValid,
 				Actual: &AssertionValue{in},
 				Errors: []error{
@@ -61,7 +61,7 @@ func canonMap(chain *chain, in interface{}) (map[string]interface{}, bool) {
 	if ok {
 		out, ok = data.(map[string]interface{})
 		if !ok {
-			chain.fail(&AssertionFailure{
+			chain.fail(AssertionFailure{
 				Type:   AssertValid,
 				Actual: &AssertionValue{in},
 				Errors: []error{
@@ -76,7 +76,7 @@ func canonMap(chain *chain, in interface{}) (map[string]interface{}, bool) {
 func canonValue(chain *chain, in interface{}) (interface{}, bool) {
 	b, err := json.Marshal(in)
 	if err != nil {
-		chain.fail(&AssertionFailure{
+		chain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{in},
 			Errors: []error{
@@ -89,7 +89,7 @@ func canonValue(chain *chain, in interface{}) (interface{}, bool) {
 
 	var out interface{}
 	if err := json.Unmarshal(b, &out); err != nil {
-		chain.fail(&AssertionFailure{
+		chain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{in},
 			Errors: []error{

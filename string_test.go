@@ -9,7 +9,7 @@ import (
 
 func TestStringFailed(t *testing.T) {
 	chain := newMockChain(t)
-	chain.fail(&AssertionFailure{})
+	chain.fail(AssertionFailure{})
 
 	value := newString(chain, "")
 

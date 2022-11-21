@@ -57,7 +57,7 @@ func (d *Duration) IsSet() *Duration {
 	}
 
 	if d.value == nil {
-		d.chain.fail(&AssertionFailure{
+		d.chain.fail(AssertionFailure{
 			Type:   AssertNotNil,
 			Actual: &AssertionValue{d.value},
 			Errors: []error{
@@ -79,7 +79,7 @@ func (d *Duration) NotSet() *Duration {
 	}
 
 	if !(d.value == nil) {
-		d.chain.fail(&AssertionFailure{
+		d.chain.fail(AssertionFailure{
 			Type:   AssertNotNil,
 			Actual: &AssertionValue{d.value},
 			Errors: []error{
@@ -106,7 +106,7 @@ func (d *Duration) Equal(value time.Duration) *Duration {
 	}
 
 	if d.value == nil {
-		d.chain.fail(&AssertionFailure{
+		d.chain.fail(AssertionFailure{
 			Type:   AssertNotNil,
 			Actual: &AssertionValue{d.value},
 			Errors: []error{
@@ -117,7 +117,7 @@ func (d *Duration) Equal(value time.Duration) *Duration {
 	}
 
 	if !(*d.value == value) {
-		d.chain.fail(&AssertionFailure{
+		d.chain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{d.value},
 			Expected: &AssertionValue{value},
@@ -145,7 +145,7 @@ func (d *Duration) NotEqual(value time.Duration) *Duration {
 	}
 
 	if d.value == nil {
-		d.chain.fail(&AssertionFailure{
+		d.chain.fail(AssertionFailure{
 			Type:   AssertNotNil,
 			Actual: &AssertionValue{d.value},
 			Errors: []error{
@@ -156,7 +156,7 @@ func (d *Duration) NotEqual(value time.Duration) *Duration {
 	}
 
 	if !(*d.value != value) {
-		d.chain.fail(&AssertionFailure{
+		d.chain.fail(AssertionFailure{
 			Type:     AssertNotEqual,
 			Actual:   &AssertionValue{d.value},
 			Expected: &AssertionValue{value},
@@ -184,7 +184,7 @@ func (d *Duration) Gt(value time.Duration) *Duration {
 	}
 
 	if d.value == nil {
-		d.chain.fail(&AssertionFailure{
+		d.chain.fail(AssertionFailure{
 			Type:   AssertNotNil,
 			Actual: &AssertionValue{d.value},
 			Errors: []error{
@@ -195,7 +195,7 @@ func (d *Duration) Gt(value time.Duration) *Duration {
 	}
 
 	if !(*d.value > value) {
-		d.chain.fail(&AssertionFailure{
+		d.chain.fail(AssertionFailure{
 			Type:     AssertGt,
 			Actual:   &AssertionValue{d.value},
 			Expected: &AssertionValue{value},
@@ -223,7 +223,7 @@ func (d *Duration) Ge(value time.Duration) *Duration {
 	}
 
 	if d.value == nil {
-		d.chain.fail(&AssertionFailure{
+		d.chain.fail(AssertionFailure{
 			Type:   AssertNotNil,
 			Actual: &AssertionValue{d.value},
 			Errors: []error{
@@ -234,7 +234,7 @@ func (d *Duration) Ge(value time.Duration) *Duration {
 	}
 
 	if !(*d.value >= value) {
-		d.chain.fail(&AssertionFailure{
+		d.chain.fail(AssertionFailure{
 			Type:     AssertGe,
 			Actual:   &AssertionValue{d.value},
 			Expected: &AssertionValue{value},
@@ -262,7 +262,7 @@ func (d *Duration) Lt(value time.Duration) *Duration {
 	}
 
 	if d.value == nil {
-		d.chain.fail(&AssertionFailure{
+		d.chain.fail(AssertionFailure{
 			Type:   AssertNotNil,
 			Actual: &AssertionValue{d.value},
 			Errors: []error{
@@ -273,7 +273,7 @@ func (d *Duration) Lt(value time.Duration) *Duration {
 	}
 
 	if !(*d.value < value) {
-		d.chain.fail(&AssertionFailure{
+		d.chain.fail(AssertionFailure{
 			Type:     AssertLt,
 			Actual:   &AssertionValue{d.value},
 			Expected: &AssertionValue{value},
@@ -301,7 +301,7 @@ func (d *Duration) Le(value time.Duration) *Duration {
 	}
 
 	if d.value == nil {
-		d.chain.fail(&AssertionFailure{
+		d.chain.fail(AssertionFailure{
 			Type:   AssertNotNil,
 			Actual: &AssertionValue{d.value},
 			Errors: []error{
@@ -312,7 +312,7 @@ func (d *Duration) Le(value time.Duration) *Duration {
 	}
 
 	if !(*d.value <= value) {
-		d.chain.fail(&AssertionFailure{
+		d.chain.fail(AssertionFailure{
 			Type:     AssertLe,
 			Actual:   &AssertionValue{d.value},
 			Expected: &AssertionValue{value},
@@ -341,7 +341,7 @@ func (d *Duration) InRange(min, max time.Duration) *Duration {
 	}
 
 	if d.value == nil {
-		d.chain.fail(&AssertionFailure{
+		d.chain.fail(AssertionFailure{
 			Type:   AssertNotNil,
 			Actual: &AssertionValue{d.value},
 			Errors: []error{
@@ -352,7 +352,7 @@ func (d *Duration) InRange(min, max time.Duration) *Duration {
 	}
 
 	if !(*d.value >= min && *d.value <= max) {
-		d.chain.fail(&AssertionFailure{
+		d.chain.fail(AssertionFailure{
 			Type:     AssertInRange,
 			Actual:   &AssertionValue{d.value},
 			Expected: &AssertionValue{AssertionRange{min, max}},

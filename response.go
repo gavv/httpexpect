@@ -74,7 +74,7 @@ func newResponse(opts responseOpts) *Response {
 		r.content = getContent(r.chain, r.httpResp)
 		r.cookies = r.httpResp.Cookies()
 	} else {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type:   AssertNotNil,
 			Actual: &AssertionValue{r.httpResp},
 			Errors: []error{
@@ -105,7 +105,7 @@ func getContent(chain *chain, resp *http.Response) []byte {
 	}
 
 	if err != nil {
-		chain.fail(&AssertionFailure{
+		chain.fail(AssertionFailure{
 			Type: AssertOperation,
 			Errors: []error{
 				errors.New("failed to read response body"),
@@ -231,7 +231,7 @@ func (r *Response) StatusRange(rn StatusRange) *Response {
 	expected := statusRangeText(int(rn))
 
 	if actual == "" || actual != expected {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type:   AssertBelongs,
 			Actual: &AssertionValue{status},
 			Expected: &AssertionValue{AssertionList{
@@ -368,7 +368,7 @@ func (r *Response) Cookie(name string) *Cookie {
 	}
 
 	if cookie == nil {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type:     AssertContainsElement,
 			Actual:   &AssertionValue{names},
 			Expected: &AssertionValue{name},
@@ -403,7 +403,7 @@ func (r *Response) Websocket() *Websocket {
 	}
 
 	if r.websocket == nil {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
 				errors.New(
@@ -578,7 +578,7 @@ func (r *Response) getForm(opts ...ContentOpts) map[string]interface{} {
 	var object map[string]interface{}
 
 	if err := decoder.Decode(&object); err != nil {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type: AssertValid,
 			Actual: &AssertionValue{
 				string(r.content),
@@ -628,7 +628,7 @@ func (r *Response) getJSON(opts ...ContentOpts) interface{} {
 	var value interface{}
 
 	if err := json.Unmarshal(r.content, &value); err != nil {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type: AssertValid,
 			Actual: &AssertionValue{
 				string(r.content),
@@ -690,7 +690,7 @@ func (r *Response) getJSONP(callback string, opts ...ContentOpts) interface{} {
 	m := jsonp.FindSubmatch(r.content)
 
 	if len(m) != 3 || string(m[1]) != callback {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type: AssertValid,
 			Actual: &AssertionValue{
 				string(r.content),
@@ -706,7 +706,7 @@ func (r *Response) getJSONP(callback string, opts ...ContentOpts) interface{} {
 	var value interface{}
 
 	if err := json.Unmarshal(m[2], &value); err != nil {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type: AssertValid,
 			Actual: &AssertionValue{
 				string(r.content),
@@ -751,7 +751,7 @@ func (r *Response) checkContentType(expectedType string, expectedCharset ...stri
 
 	mediaType, params, err := mime.ParseMediaType(contentType)
 	if err != nil {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{contentType},
 			Errors: []error{
@@ -763,7 +763,7 @@ func (r *Response) checkContentType(expectedType string, expectedCharset ...stri
 	}
 
 	if mediaType != expectedType {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{mediaType},
 			Expected: &AssertionValue{expectedType},
@@ -778,7 +778,7 @@ func (r *Response) checkContentType(expectedType string, expectedCharset ...stri
 
 	if len(expectedCharset) == 0 {
 		if charset != "" && !strings.EqualFold(charset, "utf-8") {
-			r.chain.fail(&AssertionFailure{
+			r.chain.fail(AssertionFailure{
 				Type:     AssertBelongs,
 				Actual:   &AssertionValue{charset},
 				Expected: &AssertionValue{AssertionList{"", "utf-8"}},
@@ -790,7 +790,7 @@ func (r *Response) checkContentType(expectedType string, expectedCharset ...stri
 		}
 	} else {
 		if !strings.EqualFold(charset, expectedCharset[0]) {
-			r.chain.fail(&AssertionFailure{
+			r.chain.fail(AssertionFailure{
 				Type:     AssertEqual,
 				Actual:   &AssertionValue{charset},
 				Expected: &AssertionValue{expectedCharset[0]},
@@ -807,7 +807,7 @@ func (r *Response) checkContentType(expectedType string, expectedCharset ...stri
 
 func (r *Response) checkEqual(what string, expected, actual interface{}) {
 	if !reflect.DeepEqual(expected, actual) {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{actual},
 			Expected: &AssertionValue{expected},

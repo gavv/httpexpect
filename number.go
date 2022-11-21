@@ -80,7 +80,7 @@ func (n *Number) Equal(value interface{}) *Number {
 	}
 
 	if !(n.value == num) {
-		n.chain.fail(&AssertionFailure{
+		n.chain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{num},
@@ -117,7 +117,7 @@ func (n *Number) NotEqual(value interface{}) *Number {
 	}
 
 	if !(n.value != num) {
-		n.chain.fail(&AssertionFailure{
+		n.chain.fail(AssertionFailure{
 			Type:     AssertNotEqual,
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{num},
@@ -145,7 +145,7 @@ func (n *Number) EqualDelta(value, delta float64) *Number {
 	}
 
 	if math.IsNaN(n.value) || math.IsNaN(value) || math.IsNaN(delta) {
-		n.chain.fail(&AssertionFailure{
+		n.chain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{value},
@@ -160,7 +160,7 @@ func (n *Number) EqualDelta(value, delta float64) *Number {
 	diff := n.value - value
 
 	if diff < -delta || diff > delta {
-		n.chain.fail(&AssertionFailure{
+		n.chain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{value},
@@ -190,7 +190,7 @@ func (n *Number) NotEqualDelta(value, delta float64) *Number {
 	}
 
 	if math.IsNaN(n.value) || math.IsNaN(value) || math.IsNaN(delta) {
-		n.chain.fail(&AssertionFailure{
+		n.chain.fail(AssertionFailure{
 			Type:     AssertNotEqual,
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{value},
@@ -205,7 +205,7 @@ func (n *Number) NotEqualDelta(value, delta float64) *Number {
 	diff := n.value - value
 
 	if !(diff < -delta || diff > delta) {
-		n.chain.fail(&AssertionFailure{
+		n.chain.fail(AssertionFailure{
 			Type:     AssertNotEqual,
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{value},
@@ -244,7 +244,7 @@ func (n *Number) Gt(value interface{}) *Number {
 	}
 
 	if !(n.value > num) {
-		n.chain.fail(&AssertionFailure{
+		n.chain.fail(AssertionFailure{
 			Type:     AssertGt,
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{num},
@@ -281,7 +281,7 @@ func (n *Number) Ge(value interface{}) *Number {
 	}
 
 	if !(n.value >= num) {
-		n.chain.fail(&AssertionFailure{
+		n.chain.fail(AssertionFailure{
 			Type:     AssertGe,
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{num},
@@ -318,7 +318,7 @@ func (n *Number) Lt(value interface{}) *Number {
 	}
 
 	if !(n.value < num) {
-		n.chain.fail(&AssertionFailure{
+		n.chain.fail(AssertionFailure{
 			Type:     AssertLt,
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{num},
@@ -355,7 +355,7 @@ func (n *Number) Le(value interface{}) *Number {
 	}
 
 	if !(n.value <= num) {
-		n.chain.fail(&AssertionFailure{
+		n.chain.fail(AssertionFailure{
 			Type:     AssertLe,
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{num},
@@ -398,7 +398,7 @@ func (n *Number) InRange(min, max interface{}) *Number {
 	}
 
 	if !(n.value >= a && n.value <= b) {
-		n.chain.fail(&AssertionFailure{
+		n.chain.fail(AssertionFailure{
 			Type:     AssertInRange,
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{AssertionRange{a, b}},

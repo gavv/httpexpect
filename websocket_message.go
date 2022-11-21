@@ -153,7 +153,7 @@ func (m *WebsocketMessage) checkType(typ ...int) {
 	}
 
 	if len(typ) == 0 {
-		m.chain.fail(&AssertionFailure{
+		m.chain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
 				errors.New("missing type argument"),
@@ -172,7 +172,7 @@ func (m *WebsocketMessage) checkType(typ ...int) {
 
 	if !found {
 		if len(typ) == 1 {
-			m.chain.fail(&AssertionFailure{
+			m.chain.fail(AssertionFailure{
 				Type:     AssertEqual,
 				Actual:   &AssertionValue{wsMessageType(m.typ)},
 				Expected: &AssertionValue{wsMessageType(typ[0])},
@@ -181,7 +181,7 @@ func (m *WebsocketMessage) checkType(typ ...int) {
 				},
 			})
 		} else {
-			m.chain.fail(&AssertionFailure{
+			m.chain.fail(AssertionFailure{
 				Type:     AssertBelongs,
 				Actual:   &AssertionValue{wsMessageType(m.typ)},
 				Expected: &AssertionValue{AssertionList(wsMessageTypes(typ))},
@@ -199,7 +199,7 @@ func (m *WebsocketMessage) checkNotType(typ ...int) {
 	}
 
 	if len(typ) == 0 {
-		m.chain.fail(&AssertionFailure{
+		m.chain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
 				errors.New("missing type argument"),
@@ -218,7 +218,7 @@ func (m *WebsocketMessage) checkNotType(typ ...int) {
 
 	if found {
 		if len(typ) == 1 {
-			m.chain.fail(&AssertionFailure{
+			m.chain.fail(AssertionFailure{
 				Type:     AssertNotEqual,
 				Actual:   &AssertionValue{wsMessageType(m.typ)},
 				Expected: &AssertionValue{wsMessageType(typ[0])},
@@ -227,7 +227,7 @@ func (m *WebsocketMessage) checkNotType(typ ...int) {
 				},
 			})
 		} else {
-			m.chain.fail(&AssertionFailure{
+			m.chain.fail(AssertionFailure{
 				Type:     AssertNotBelongs,
 				Actual:   &AssertionValue{wsMessageType(m.typ)},
 				Expected: &AssertionValue{AssertionList(wsMessageTypes(typ))},
@@ -259,7 +259,7 @@ func (m *WebsocketMessage) Code(code ...int) *WebsocketMessage {
 	}
 
 	if len(code) == 0 {
-		m.chain.fail(&AssertionFailure{
+		m.chain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
 				errors.New("missing code argument"),
@@ -269,7 +269,7 @@ func (m *WebsocketMessage) Code(code ...int) *WebsocketMessage {
 	}
 
 	if m.typ != websocket.CloseMessage {
-		m.chain.fail(&AssertionFailure{
+		m.chain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{wsMessageType(m.typ)},
 			Expected: &AssertionValue{wsMessageType(websocket.CloseMessage)},
@@ -290,7 +290,7 @@ func (m *WebsocketMessage) Code(code ...int) *WebsocketMessage {
 
 	if !found {
 		if len(code) == 1 {
-			m.chain.fail(&AssertionFailure{
+			m.chain.fail(AssertionFailure{
 				Type:     AssertEqual,
 				Actual:   &AssertionValue{wsCloseCode(m.closeCode)},
 				Expected: &AssertionValue{wsCloseCode(code[0])},
@@ -299,7 +299,7 @@ func (m *WebsocketMessage) Code(code ...int) *WebsocketMessage {
 				},
 			})
 		} else {
-			m.chain.fail(&AssertionFailure{
+			m.chain.fail(AssertionFailure{
 				Type:     AssertBelongs,
 				Actual:   &AssertionValue{wsCloseCode(m.closeCode)},
 				Expected: &AssertionValue{AssertionList(wsCloseCodes(code))},
@@ -333,7 +333,7 @@ func (m *WebsocketMessage) NotCode(code ...int) *WebsocketMessage {
 	}
 
 	if len(code) == 0 {
-		m.chain.fail(&AssertionFailure{
+		m.chain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
 				errors.New("missing code argument"),
@@ -343,7 +343,7 @@ func (m *WebsocketMessage) NotCode(code ...int) *WebsocketMessage {
 	}
 
 	if m.typ != websocket.CloseMessage {
-		m.chain.fail(&AssertionFailure{
+		m.chain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{wsMessageType(m.typ)},
 			Expected: &AssertionValue{wsMessageType(websocket.CloseMessage)},
@@ -364,7 +364,7 @@ func (m *WebsocketMessage) NotCode(code ...int) *WebsocketMessage {
 
 	if found {
 		if len(code) == 1 {
-			m.chain.fail(&AssertionFailure{
+			m.chain.fail(AssertionFailure{
 				Type:     AssertNotEqual,
 				Actual:   &AssertionValue{wsCloseCode(m.closeCode)},
 				Expected: &AssertionValue{wsCloseCode(code[0])},
@@ -373,7 +373,7 @@ func (m *WebsocketMessage) NotCode(code ...int) *WebsocketMessage {
 				},
 			})
 		} else {
-			m.chain.fail(&AssertionFailure{
+			m.chain.fail(AssertionFailure{
 				Type:     AssertNotBelongs,
 				Actual:   &AssertionValue{wsCloseCode(m.closeCode)},
 				Expected: &AssertionValue{AssertionList(wsCloseCodes(code))},
@@ -425,7 +425,7 @@ func (m *WebsocketMessage) NoContent() *WebsocketMessage {
 			actual = string(m.content)
 		}
 
-		m.chain.fail(&AssertionFailure{
+		m.chain.fail(AssertionFailure{
 			Type:   AssertEmpty,
 			Actual: &AssertionValue{actual},
 			Errors: []error{
@@ -457,7 +457,7 @@ func (m *WebsocketMessage) JSON() *Value {
 	var value interface{}
 
 	if err := json.Unmarshal(m.content, &value); err != nil {
-		m.chain.fail(&AssertionFailure{
+		m.chain.fail(AssertionFailure{
 			Type: AssertValid,
 			Actual: &AssertionValue{
 				string(m.content),

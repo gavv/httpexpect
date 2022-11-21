@@ -142,7 +142,7 @@ func (r *Request) initPath(path string, pathargs ...interface{}) {
 	path, err := interpol.WithFunc(path, func(k string, w io.Writer) error {
 		if n < len(pathargs) {
 			if pathargs[n] == nil {
-				r.chain.fail(&AssertionFailure{
+				r.chain.fail(AssertionFailure{
 					Type:   AssertValid,
 					Actual: &AssertionValue{pathargs},
 					Errors: []error{
@@ -162,7 +162,7 @@ func (r *Request) initPath(path string, pathargs ...interface{}) {
 	})
 
 	if err != nil {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{path},
 			Errors: []error{
@@ -179,7 +179,7 @@ func (r *Request) initReq(method string) {
 	httpReq, err := r.config.RequestFactory.NewRequest(method, r.config.BaseURL, nil)
 
 	if err != nil {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type: AssertOperation,
 			Errors: []error{
 				errors.New("failed to create http request"),
@@ -210,7 +210,7 @@ func (r *Request) WithMatcher(matcher func(*Response)) *Request {
 	}
 
 	if matcher == nil {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
 				errors.New("unexpected nil argument"),
@@ -240,7 +240,7 @@ func (r *Request) WithTransformer(transform func(*http.Request)) *Request {
 	}
 
 	if transform == nil {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
 				errors.New("unexpected nil argument"),
@@ -276,7 +276,7 @@ func (r *Request) WithClient(client Client) *Request {
 	}
 
 	if client == nil {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
 				errors.New("unexpected nil argument"),
@@ -309,7 +309,7 @@ func (r *Request) WithHandler(handler http.Handler) *Request {
 	}
 
 	if handler == nil {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
 				errors.New("unexpected nil argument"),
@@ -354,7 +354,7 @@ func (r *Request) WithContext(ctx context.Context) *Request {
 	}
 
 	if ctx == nil {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
 				errors.New("unexpected nil argument"),
@@ -485,7 +485,7 @@ func (r *Request) WithMaxRedirects(maxRedirects int) *Request {
 	}
 
 	if maxRedirects < 0 {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{maxRedirects},
 			Errors: []error{
@@ -577,7 +577,7 @@ func (r *Request) WithMaxRetries(maxRetries int) *Request {
 	}
 
 	if maxRetries < 0 {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{maxRetries},
 			Errors: []error{
@@ -613,7 +613,7 @@ func (r *Request) WithRetryDelay(minDelay, maxDelay time.Duration) *Request {
 	}
 
 	if !(minDelay <= maxDelay) {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type: AssertValid,
 			Actual: &AssertionValue{
 				[2]time.Duration{minDelay, maxDelay},
@@ -687,7 +687,7 @@ func (r *Request) WithWebsocketDialer(dialer WebsocketDialer) *Request {
 	}
 
 	if dialer == nil {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
 				errors.New("unexpected nil argument"),
@@ -723,7 +723,7 @@ func (r *Request) WithPath(key string, value interface{}) *Request {
 	}
 
 	if value == nil {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
 				errors.New("unexpected nil argument"),
@@ -803,7 +803,7 @@ func (r *Request) withPath(key string, value interface{}) {
 	path, err := interpol.WithFunc(r.path, func(k string, w io.Writer) error {
 		if strings.EqualFold(k, key) {
 			if value == nil {
-				r.chain.fail(&AssertionFailure{
+				r.chain.fail(AssertionFailure{
 					Type: AssertUsage,
 					Errors: []error{
 						errors.New("unexpected nil interpol argument"),
@@ -822,7 +822,7 @@ func (r *Request) withPath(key string, value interface{}) {
 	})
 
 	if err != nil {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{path},
 			Errors: []error{
@@ -834,7 +834,7 @@ func (r *Request) withPath(key string, value interface{}) {
 	}
 
 	if !found {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
 				fmt.Errorf("key %q not found in interpol string", key),
@@ -865,7 +865,7 @@ func (r *Request) WithQuery(key string, value interface{}) *Request {
 	}
 
 	if value == nil {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
 				errors.New("unexpected nil argument"),
@@ -923,7 +923,7 @@ func (r *Request) WithQueryObject(object interface{}) *Request {
 	if reflect.Indirect(reflect.ValueOf(object)).Kind() == reflect.Struct {
 		q, err = query.Values(object)
 		if err != nil {
-			r.chain.fail(&AssertionFailure{
+			r.chain.fail(AssertionFailure{
 				Type:   AssertValid,
 				Actual: &AssertionValue{object},
 				Errors: []error{
@@ -936,7 +936,7 @@ func (r *Request) WithQueryObject(object interface{}) *Request {
 	} else {
 		q, err = form.EncodeToValues(object)
 		if err != nil {
-			r.chain.fail(&AssertionFailure{
+			r.chain.fail(AssertionFailure{
 				Type:   AssertValid,
 				Actual: &AssertionValue{object},
 				Errors: []error{
@@ -977,7 +977,7 @@ func (r *Request) WithQueryString(query string) *Request {
 	v, err := url.ParseQuery(query)
 
 	if err != nil {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{query},
 			Errors: []error{
@@ -1018,7 +1018,7 @@ func (r *Request) WithURL(urlStr string) *Request {
 
 	u, err := url.Parse(urlStr)
 	if err != nil {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{urlStr},
 			Errors: []error{
@@ -1204,7 +1204,7 @@ func (r *Request) WithProto(proto string) *Request {
 	major, minor, ok := http.ParseHTTPVersion(proto)
 
 	if !ok {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
 				fmt.Errorf(
@@ -1245,7 +1245,7 @@ func (r *Request) WithChunked(reader io.Reader) *Request {
 	}
 
 	if !r.httpReq.ProtoAtLeast(1, 1) {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
 				fmt.Errorf(
@@ -1332,7 +1332,7 @@ func (r *Request) WithJSON(object interface{}) *Request {
 	b, err := json.Marshal(object)
 
 	if err != nil {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{object},
 			Errors: []error{
@@ -1382,7 +1382,7 @@ func (r *Request) WithForm(object interface{}) *Request {
 	f, err := form.EncodeToValues(object)
 
 	if err != nil {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{object},
 			Errors: []error{
@@ -1404,7 +1404,7 @@ func (r *Request) WithForm(object interface{}) *Request {
 
 		for _, k := range keys {
 			if err := r.multipart.WriteField(k, f[k][0]); err != nil {
-				r.chain.fail(&AssertionFailure{
+				r.chain.fail(AssertionFailure{
 					Type: AssertOperation,
 					Errors: []error{
 						fmt.Errorf("failed to write multipart form field %q", k),
@@ -1453,7 +1453,7 @@ func (r *Request) WithFormField(key string, value interface{}) *Request {
 
 		err := r.multipart.WriteField(key, fmt.Sprint(value))
 		if err != nil {
-			r.chain.fail(&AssertionFailure{
+			r.chain.fail(AssertionFailure{
 				Type: AssertOperation,
 				Errors: []error{
 					fmt.Errorf("failed to write multipart form field %q", key),
@@ -1535,7 +1535,7 @@ func (r *Request) withFile(method, key, path string, reader ...io.Reader) {
 	r.setType(method, "multipart/form-data", false)
 
 	if r.multipart == nil {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
 				fmt.Errorf("%s requires WithMultipart() to be called first", method),
@@ -1546,7 +1546,7 @@ func (r *Request) withFile(method, key, path string, reader ...io.Reader) {
 
 	wr, err := r.multipart.CreateFormFile(key, path)
 	if err != nil {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type: AssertOperation,
 			Errors: []error{
 				fmt.Errorf(
@@ -1564,7 +1564,7 @@ func (r *Request) withFile(method, key, path string, reader ...io.Reader) {
 	} else {
 		f, err := os.Open(path)
 		if err != nil {
-			r.chain.fail(&AssertionFailure{
+			r.chain.fail(AssertionFailure{
 				Type: AssertOperation,
 				Errors: []error{
 					fmt.Errorf("failed to open file %q", path),
@@ -1578,7 +1578,7 @@ func (r *Request) withFile(method, key, path string, reader ...io.Reader) {
 	}
 
 	if _, err := io.Copy(wr, rd); err != nil {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type: AssertOperation,
 			Errors: []error{
 				fmt.Errorf("failed to read file %q", path),
@@ -1707,7 +1707,7 @@ func (r *Request) encodeRequest() bool {
 
 	if r.multipart != nil {
 		if err := r.multipart.Close(); err != nil {
-			r.chain.fail(&AssertionFailure{
+			r.chain.fail(AssertionFailure{
 				Type: AssertOperation,
 				Errors: []error{
 					errors.New("failed to close multipart form"),
@@ -1747,7 +1747,7 @@ func (r *Request) encodeWebsocketRequest() bool {
 	}
 
 	if r.bodySetter != "" {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
 				fmt.Errorf(websocketErr, r.bodySetter),
@@ -1776,7 +1776,7 @@ func (r *Request) sendRequest() (*http.Response, time.Duration) {
 	})
 
 	if err != nil {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type: AssertOperation,
 			Errors: []error{
 				errors.New("failed to send http request"),
@@ -1804,7 +1804,7 @@ func (r *Request) sendWebsocketRequest() (
 	})
 
 	if err != nil && err != websocket.ErrBadHandshake {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type: AssertOperation,
 			Errors: []error{
 				errors.New("failed to send websocket request"),
@@ -1936,7 +1936,7 @@ func (r *Request) setupRedirects() {
 
 	if httpClient == nil {
 		if r.redirectPolicy != defaultRedirectPolicy {
-			r.chain.fail(&AssertionFailure{
+			r.chain.fail(AssertionFailure{
 				Type: AssertUsage,
 				Errors: []error{
 					errors.New(
@@ -1947,7 +1947,7 @@ func (r *Request) setupRedirects() {
 		}
 
 		if r.maxRedirects != -1 {
-			r.chain.fail(&AssertionFailure{
+			r.chain.fail(AssertionFailure{
 				Type: AssertUsage,
 				Errors: []error{
 					errors.New(
@@ -2008,7 +2008,7 @@ func (r *Request) setType(newSetter, newType string, overwrite bool) {
 		previousType := r.httpReq.Header.Get("Content-Type")
 
 		if previousType != "" && previousType != newType {
-			r.chain.fail(&AssertionFailure{
+			r.chain.fail(AssertionFailure{
 				Type: AssertUsage,
 				Errors: []error{
 					fmt.Errorf(typeErr,
@@ -2029,7 +2029,7 @@ var bodyErr = `ambiguous request body contents:
 
 func (r *Request) setBody(setter string, reader io.Reader, len int, overwrite bool) {
 	if !overwrite && r.bodySetter != "" {
-		r.chain.fail(&AssertionFailure{
+		r.chain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
 				fmt.Errorf(bodyErr, r.bodySetter, setter),

@@ -71,7 +71,7 @@ func (c *chain) leave() {
 	c.context.Path = c.context.Path[:len(c.context.Path)-1]
 }
 
-func (c *chain) fail(failure *AssertionFailure) {
+func (c *chain) fail(failure AssertionFailure) {
 	if c.failbit {
 		return
 	}
@@ -81,7 +81,7 @@ func (c *chain) fail(failure *AssertionFailure) {
 		failure.IsFatal = true
 	}
 
-	c.handler.Failure(&c.context, failure)
+	c.handler.Failure(&c.context, &failure)
 }
 
 func (c *chain) failed() bool {

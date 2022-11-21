@@ -109,7 +109,7 @@ func (m *Match) Index(index int) *String {
 	}
 
 	if index < 0 || index >= len(m.submatches) {
-		m.chain.fail(&AssertionFailure{
+		m.chain.fail(AssertionFailure{
 			Type:   AssertInRange,
 			Actual: &AssertionValue{index},
 			Expected: &AssertionValue{AssertionRange{
@@ -155,7 +155,7 @@ func (m *Match) Name(name string) *String {
 		for nm := range m.names {
 			names = append(names, nm)
 		}
-		m.chain.fail(&AssertionFailure{
+		m.chain.fail(AssertionFailure{
 			Type:     AssertBelongs,
 			Actual:   &AssertionValue{name},
 			Expected: &AssertionValue{AssertionList(names)},
@@ -184,7 +184,7 @@ func (m *Match) Empty() *Match {
 	}
 
 	if !(len(m.submatches) == 0) {
-		m.chain.fail(&AssertionFailure{
+		m.chain.fail(AssertionFailure{
 			Type:   AssertEmpty,
 			Actual: &AssertionValue{m.submatches},
 			Errors: []error{
@@ -211,7 +211,7 @@ func (m *Match) NotEmpty() *Match {
 	}
 
 	if !(len(m.submatches) != 0) {
-		m.chain.fail(&AssertionFailure{
+		m.chain.fail(AssertionFailure{
 			Type:   AssertNotEmpty,
 			Actual: &AssertionValue{m.submatches},
 			Errors: []error{
@@ -248,7 +248,7 @@ func (m *Match) Values(values ...string) *Match {
 	}
 
 	if !reflect.DeepEqual(values, m.getValues()) {
-		m.chain.fail(&AssertionFailure{
+		m.chain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{m.submatches},
 			Expected: &AssertionValue{values},
@@ -282,7 +282,7 @@ func (m *Match) NotValues(values ...string) *Match {
 	}
 
 	if reflect.DeepEqual(values, m.getValues()) {
-		m.chain.fail(&AssertionFailure{
+		m.chain.fail(AssertionFailure{
 			Type:     AssertNotEqual,
 			Actual:   &AssertionValue{m.submatches},
 			Expected: &AssertionValue{values},

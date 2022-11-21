@@ -57,7 +57,7 @@ func (dt *DateTime) Equal(value time.Time) *DateTime {
 	}
 
 	if !dt.value.Equal(value) {
-		dt.chain.fail(&AssertionFailure{
+		dt.chain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{dt.value},
 			Expected: &AssertionValue{value},
@@ -85,7 +85,7 @@ func (dt *DateTime) NotEqual(value time.Time) *DateTime {
 	}
 
 	if dt.value.Equal(value) {
-		dt.chain.fail(&AssertionFailure{
+		dt.chain.fail(AssertionFailure{
 			Type:     AssertNotEqual,
 			Actual:   &AssertionValue{dt.value},
 			Expected: &AssertionValue{value},
@@ -113,7 +113,7 @@ func (dt *DateTime) Gt(value time.Time) *DateTime {
 	}
 
 	if !dt.value.After(value) {
-		dt.chain.fail(&AssertionFailure{
+		dt.chain.fail(AssertionFailure{
 			Type:     AssertGt,
 			Actual:   &AssertionValue{dt.value},
 			Expected: &AssertionValue{value},
@@ -141,7 +141,7 @@ func (dt *DateTime) Ge(value time.Time) *DateTime {
 	}
 
 	if !(dt.value.After(value) || dt.value.Equal(value)) {
-		dt.chain.fail(&AssertionFailure{
+		dt.chain.fail(AssertionFailure{
 			Type:     AssertGe,
 			Actual:   &AssertionValue{dt.value},
 			Expected: &AssertionValue{value},
@@ -169,7 +169,7 @@ func (dt *DateTime) Lt(value time.Time) *DateTime {
 	}
 
 	if !dt.value.Before(value) {
-		dt.chain.fail(&AssertionFailure{
+		dt.chain.fail(AssertionFailure{
 			Type:     AssertLt,
 			Actual:   &AssertionValue{dt.value},
 			Expected: &AssertionValue{value},
@@ -197,7 +197,7 @@ func (dt *DateTime) Le(value time.Time) *DateTime {
 	}
 
 	if !(dt.value.Before(value) || dt.value.Equal(value)) {
-		dt.chain.fail(&AssertionFailure{
+		dt.chain.fail(AssertionFailure{
 			Type:     AssertLe,
 			Actual:   &AssertionValue{dt.value},
 			Expected: &AssertionValue{value},
@@ -227,7 +227,7 @@ func (dt *DateTime) InRange(min, max time.Time) *DateTime {
 
 	if !((dt.value.After(min) || dt.value.Equal(min)) &&
 		(dt.value.Before(max) || dt.value.Equal(max))) {
-		dt.chain.fail(&AssertionFailure{
+		dt.chain.fail(AssertionFailure{
 			Type:     AssertInRange,
 			Actual:   &AssertionValue{dt.value},
 			Expected: &AssertionValue{AssertionRange{min, max}},

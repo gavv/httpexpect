@@ -16,7 +16,7 @@ func jsonPath(chain *chain, value interface{}, path string) *Value {
 
 	filterFn, err := jsonpath.Prepare(path)
 	if err != nil {
-		chain.fail(&AssertionFailure{
+		chain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{path},
 			Errors: []error{
@@ -29,7 +29,7 @@ func jsonPath(chain *chain, value interface{}, path string) *Value {
 
 	result, err := filterFn(value)
 	if err != nil {
-		chain.fail(&AssertionFailure{
+		chain.fail(AssertionFailure{
 			Type:     AssertMatchPath,
 			Actual:   &AssertionValue{value},
 			Expected: &AssertionValue{path},
@@ -69,7 +69,7 @@ func jsonSchema(chain *chain, value, schema interface{}) {
 
 	result, err := gojsonschema.Validate(schemaLoader, valueLoader)
 	if err != nil {
-		chain.fail(&AssertionFailure{
+		chain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{schema},
 			Errors: []error{
@@ -87,7 +87,7 @@ func jsonSchema(chain *chain, value, schema interface{}) {
 		for _, err := range result.Errors() {
 			errors = append(errors, fmt.Errorf("%s", err))
 		}
-		chain.fail(&AssertionFailure{
+		chain.fail(AssertionFailure{
 			Type:     AssertMatchSchema,
 			Actual:   &AssertionValue{value},
 			Expected: &AssertionValue{schemaData},
