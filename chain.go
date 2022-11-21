@@ -7,6 +7,7 @@ import (
 type chain struct {
 	context AssertionContext
 	handler AssertionHandler
+	isFatal bool
 	failbit bool
 }
 
@@ -14,6 +15,7 @@ func newChain(context AssertionContext, handler AssertionHandler) *chain {
 	return &chain{
 		context: context,
 		handler: handler,
+		isFatal: true,
 	}
 }
 
@@ -28,7 +30,12 @@ func newDefaultChain(name string, reporter Reporter) *chain {
 			Formatter: &DefaultFormatter{},
 			Reporter:  reporter,
 		},
+		isFatal: true,
 	}
+}
+
+func (c *chain) setFatal(isFatal bool) {
+	c.isFatal = isFatal
 }
 
 func (c *chain) setRequest(req *Request) {
@@ -56,9 +63,11 @@ func (c *chain) leave() {
 	if len(c.context.Path) == 0 {
 		panic("unpaired enter/leave")
 	}
+
 	if !c.failbit {
 		c.handler.Success(&c.context)
 	}
+
 	c.context.Path = c.context.Path[:len(c.context.Path)-1]
 }
 
@@ -67,6 +76,11 @@ func (c *chain) fail(failure *AssertionFailure) {
 		return
 	}
 	c.failbit = true
+
+	if c.isFatal {
+		failure.IsFatal = true
+	}
+
 	c.handler.Failure(&c.context, failure)
 }
 

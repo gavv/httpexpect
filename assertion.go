@@ -116,6 +116,9 @@ type AssertionFailure struct {
 	// Type of failed assertion
 	Type AssertionType
 
+	// Defines if failure should be reported as fatal
+	IsFatal bool
+
 	// List of error messages
 	Errors []error
 
@@ -148,17 +151,24 @@ type AssertionList []interface{}
 // You can log every performed assertion, or report only failures. You can implement
 // custom formatting, for example, provide a JSON output for ulterior processing.
 type AssertionHandler interface {
+	// Invoked every time when an assertion succeeded.
+	// May print failure to log or ignore it.
 	Success(*AssertionContext)
+
+	// Invoked every time when an assertion failed.
+	// If Failure.IsFatal is false, may print failure to log or ignore it.
+	// If Failure.IsFatal is true, should report failure to testing suite.
 	Failure(*AssertionContext, *AssertionFailure)
 }
 
 // DefaultAssertionHandler is default implementation for AssertionHandler.
 //
-// Uses Formatter to format failure message, Reporter to report failure messages,
-// and Logger to report success messages.
+// - Formatter is used to format success and failure messages
+// - Reporter is used to report formatted fatal failure messages
+// - Logger is used to print formatted success and non-fatal failure messages
 //
-// Logger is optional. Set it if you want to log every successful assertion.
-// Formatter and Reporter are required.
+// Formatter and Reporter are required. Logger is optional.
+// By default httpexpect creates DefaultAssertionHandler without Logger.
 type DefaultAssertionHandler struct {
 	Formatter Formatter
 	Reporter  Reporter
@@ -167,6 +177,10 @@ type DefaultAssertionHandler struct {
 
 // Success implements AssertionHandler.Success.
 func (h *DefaultAssertionHandler) Success(ctx *AssertionContext) {
+	if h.Formatter == nil {
+		panic("DefaultAssertionHandler.Formatter is nil")
+	}
+
 	if h.Logger == nil {
 		return
 	}
@@ -183,11 +197,22 @@ func (h *DefaultAssertionHandler) Failure(
 	if h.Formatter == nil {
 		panic("DefaultAssertionHandler.Formatter is nil")
 	}
-	if h.Reporter == nil {
-		panic("DefaultAssertionHandler.Reporter is nil")
+
+	if failure.IsFatal {
+		if h.Reporter == nil {
+			panic("DefaultAssertionHandler.Reporter is nil")
+		}
+
+		msg := h.Formatter.FormatFailure(ctx, failure)
+
+		h.Reporter.Errorf("%s", msg)
+	} else {
+		if h.Logger == nil {
+			return
+		}
+
+		msg := h.Formatter.FormatFailure(ctx, failure)
+
+		h.Logger.Logf("%s", msg)
 	}
-
-	msg := h.Formatter.FormatFailure(ctx, failure)
-
-	h.Reporter.Errorf("%s", msg)
 }

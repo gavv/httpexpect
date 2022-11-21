@@ -7,15 +7,19 @@ import (
 )
 
 func TestDefaultAssertionHandler(t *testing.T) {
-	var rep *mockReporter
 	var fmt *mockFormatter
+	var rep *mockReporter
+	var log *mockLogger
 
 	init := func(t *testing.T) AssertionHandler {
-		rep = newMockReporter(t)
 		fmt = newMockFormatter(t)
+		rep = newMockReporter(t)
+		log = newMockLogger(t)
+
 		return &DefaultAssertionHandler{
-			Reporter:  rep,
 			Formatter: fmt,
+			Reporter:  rep,
+			Logger:    log,
 		}
 	}
 
@@ -26,11 +30,14 @@ func TestDefaultAssertionHandler(t *testing.T) {
 			TestName: t.Name(),
 		})
 
+		assert.Equal(t, 1, fmt.formattedSuccess)
+		assert.Equal(t, 0, fmt.formattedFailure)
+
+		assert.True(t, log.logged)
 		assert.False(t, rep.reported)
-		assert.Zero(t, fmt.formattedFailure)
 	})
 
-	t.Run("Failure", func(t *testing.T) {
+	t.Run("Failure/NonFatal", func(t *testing.T) {
 		dah := init(t)
 
 		dah.Failure(
@@ -38,11 +45,33 @@ func TestDefaultAssertionHandler(t *testing.T) {
 				TestName: t.Name(),
 			},
 			&AssertionFailure{
-				Type: AssertValid,
+				Type:    AssertValid,
+				IsFatal: false,
 			})
 
+		assert.Equal(t, 0, fmt.formattedSuccess)
 		assert.Equal(t, 1, fmt.formattedFailure)
-		assert.Zero(t, fmt.formattedSuccess)
+
+		assert.True(t, log.logged)
+		assert.False(t, rep.reported)
+	})
+
+	t.Run("Failure/Fatal", func(t *testing.T) {
+		dah := init(t)
+
+		dah.Failure(
+			&AssertionContext{
+				TestName: t.Name(),
+			},
+			&AssertionFailure{
+				Type:    AssertValid,
+				IsFatal: true,
+			})
+
+		assert.Equal(t, 0, fmt.formattedSuccess)
+		assert.Equal(t, 1, fmt.formattedFailure)
+
+		assert.False(t, log.logged)
 		assert.True(t, rep.reported)
 	})
 }

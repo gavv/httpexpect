@@ -46,6 +46,20 @@ func newMockChain(t *testing.T) *chain {
 	return newDefaultChain("test", newMockReporter(t))
 }
 
+type mockLogger struct {
+	testing *testing.T
+	logged  bool
+}
+
+func newMockLogger(t *testing.T) *mockLogger {
+	return &mockLogger{t, false}
+}
+
+func (r *mockLogger) Logf(message string, args ...interface{}) {
+	r.testing.Logf(message, args...)
+	r.logged = true
+}
+
 type mockReporter struct {
 	testing  *testing.T
 	reported bool
