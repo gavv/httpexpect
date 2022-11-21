@@ -191,6 +191,22 @@ func (r *Request) initReq(method string) {
 	r.httpReq = httpReq
 }
 
+// WithName sets convenient request name.
+// This name will be included in assertion reports for this request.
+//
+// Example:
+//
+//	req := NewRequest(config, "POST", "/api/login")
+//	req.WithName("Login Request")
+func (r *Request) WithName(name string) *Request {
+	r.chain.enter("WithName()")
+	defer r.chain.leave()
+
+	r.chain.setRequestName(name)
+
+	return r
+}
+
 // WithMatcher attaches a matcher to the request.
 // All attached matchers are invoked in the Expect method for a newly
 // created Response.

@@ -674,8 +674,8 @@ e := httpexpect.WithConfig(httpexpect.Config{
 e := httpexpect.WithConfig(httpexpect.Config{
 	Reporter:  httpexpect.NewAssertReporter(t),
 	Formatter: &httpexpect.DefaultFormatter{
-		DisablePath: true,
-		DisableDiff: true,
+		DisablePaths: true,
+		DisableDiffs: true,
 	},
 })
 

@@ -38,6 +38,10 @@ func (c *chain) setFatal(isFatal bool) {
 	c.isFatal = isFatal
 }
 
+func (c *chain) setRequestName(name string) {
+	c.context.RequestName = name
+}
+
 func (c *chain) setRequest(req *Request) {
 	c.context.Request = req
 }

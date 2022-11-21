@@ -30,14 +30,14 @@ type Formatter interface {
 // If desired, you can provide custom templates and function map. This may
 // be easier than creating your own formatter from scratch.
 type DefaultFormatter struct {
-	// Exclude test name from failure report.
-	DisableName bool
+	// Exclude test name and request name from failure report.
+	DisableNames bool
 
 	// Exclude assertion path from failure report.
-	DisablePath bool
+	DisablePaths bool
 
 	// Exclude diff from failure report.
-	DisableDiff bool
+	DisableDiffs bool
 
 	// If not empty, used to format success messages.
 	// If empty, default template is used.
@@ -79,7 +79,8 @@ func (f *DefaultFormatter) FormatFailure(
 
 // FormatData defines data passed to template engine.
 type FormatData struct {
-	TestName string
+	TestName    string
+	RequestName string
 
 	AssertPath string
 	AssertType string
@@ -171,11 +172,12 @@ func (f *DefaultFormatter) buildFormatData(
 func (f *DefaultFormatter) fillDescription(
 	data *FormatData, ctx *AssertionContext,
 ) {
-	if !f.DisableName {
+	if !f.DisableNames {
 		data.TestName = ctx.TestName
+		data.RequestName = ctx.RequestName
 	}
 
-	if !f.DisablePath {
+	if !f.DisablePaths {
 		data.AssertPath = formatPath(ctx.Path)
 	}
 }
@@ -222,7 +224,7 @@ func (f *DefaultFormatter) fillExpected(
 			formatValue(failure.Expected.Value),
 		}
 
-		if !f.DisableDiff && failure.Actual != nil && failure.Expected != nil {
+		if !f.DisableDiffs && failure.Actual != nil && failure.Expected != nil {
 			data.Diff, data.HaveDiff = formatDiff(
 				failure.Expected.Value, failure.Actual.Value)
 		}
@@ -462,7 +464,11 @@ var defaultFailureTemplate = `
 {{- end -}}
 {{- if .TestName }}
 
-test: {{ .TestName }}
+test name: {{ .TestName }}
+{{- end -}}
+{{- if .RequestName }}
+
+request name: {{ .RequestName }}
 {{- end -}}
 {{- if .AssertPath }}
 

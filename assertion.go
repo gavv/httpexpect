@@ -81,6 +81,10 @@ type AssertionContext struct {
 	// Usually comes from testing.T
 	TestName string
 
+	// Name of request being sent
+	// Comes from Request.WithName()
+	RequestName string
+
 	// Chain of nested assertion names
 	// Example value:
 	//   {`Request("GET")`, `Expect()`, `JSON()`, `NotNull()`}
