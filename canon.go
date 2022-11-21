@@ -7,17 +7,6 @@ import (
 	"reflect"
 )
 
-func canonString(in interface{}) (out string, ok bool) {
-	ok = true
-	defer func() {
-		if err := recover(); err != nil {
-			ok = false
-		}
-	}()
-	out = reflect.ValueOf(in).Convert(reflect.TypeOf("")).String()
-	return
-}
-
 func canonNumber(chain *chain, in interface{}) (out float64, ok bool) {
 	ok = true
 	defer func() {

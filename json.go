@@ -3,6 +3,7 @@ package httpexpect
 import (
 	"errors"
 	"fmt"
+	"reflect"
 	"regexp"
 
 	"github.com/xeipuuv/gojsonschema"
@@ -49,10 +50,21 @@ func jsonSchema(chain *chain, value, schema interface{}) {
 		return
 	}
 
+	getString := func(in interface{}) (out string, ok bool) {
+		ok = true
+		defer func() {
+			if err := recover(); err != nil {
+				ok = false
+			}
+		}()
+		out = reflect.ValueOf(in).Convert(reflect.TypeOf("")).String()
+		return
+	}
+
 	var schemaLoader gojsonschema.JSONLoader
 	var schemaData interface{}
 
-	if str, ok := canonString(schema); ok {
+	if str, ok := getString(schema); ok {
 		if ok, _ := regexp.MatchString(`^\w+://`, str); ok {
 			schemaLoader = gojsonschema.NewReferenceLoader(str)
 			schemaData = str
