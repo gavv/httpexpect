@@ -274,9 +274,9 @@ func TestExpectTraverse(t *testing.T) {
 	}
 
 	data := map[string]interface{}{
-		"foo": []interface{}{"bar", 123, false, nil},
-		"bar": "hello",
-		"baz": 456,
+		"aaa": []interface{}{"bbb", 123, false, nil},
+		"bbb": "hello",
+		"ccc": 456,
 	}
 
 	resp := WithConfig(config).GET("/url").WithJSON(data).Expect()
@@ -285,23 +285,23 @@ func TestExpectTraverse(t *testing.T) {
 
 	m.Equal(data)
 
-	m.ContainsKey("foo")
-	m.ContainsKey("bar")
-	m.ContainsKey("foo")
+	m.ContainsKey("aaa")
+	m.ContainsKey("bbb")
+	m.ContainsKey("aaa")
 
-	m.ValueEqual("foo", data["foo"])
-	m.ValueEqual("bar", data["bar"])
-	m.ValueEqual("baz", data["baz"])
+	m.ValueEqual("aaa", data["aaa"])
+	m.ValueEqual("bbb", data["bbb"])
+	m.ValueEqual("ccc", data["ccc"])
 
-	m.Keys().ContainsOnly("foo", "bar", "baz")
-	m.Values().ContainsOnly(data["foo"], data["bar"], data["baz"])
+	m.Keys().Elements("aaa", "bbb", "ccc")
+	m.Values().Elements(data["aaa"], data["bbb"], data["ccc"])
 
-	m.Value("foo").Array().Elements("bar", 123, false, nil)
-	m.Value("bar").String().Equal("hello")
-	m.Value("baz").Number().Equal(456)
+	m.Value("aaa").Array().Elements("bbb", 123, false, nil)
+	m.Value("bbb").String().Equal("hello")
+	m.Value("ccc").Number().Equal(456)
 
-	m.Value("foo").Array().Element(2).Boolean().False()
-	m.Value("foo").Array().Element(3).Null()
+	m.Value("aaa").Array().Element(2).Boolean().False()
+	m.Value("aaa").Array().Element(3).Null()
 }
 
 func TestExpectBranches(t *testing.T) {

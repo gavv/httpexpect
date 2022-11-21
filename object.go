@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"sort"
 )
 
 // Object provides methods to inspect attached map[string]interface{} object
@@ -91,6 +92,10 @@ func (o *Object) Keys() *Array {
 		keys = append(keys, k)
 	}
 
+	sort.Slice(keys, func(i, j int) bool {
+		return keys[i].(string) < keys[j].(string)
+	})
+
 	return newArray(o.chain, keys)
 }
 
@@ -108,9 +113,18 @@ func (o *Object) Values() *Array {
 		return newArray(o.chain, nil)
 	}
 
+	keys := []string{}
+	for k := range o.value {
+		keys = append(keys, k)
+	}
+
+	sort.Slice(keys, func(i, j int) bool {
+		return keys[i] < keys[j]
+	})
+
 	values := []interface{}{}
-	for _, v := range o.value {
-		values = append(values, v)
+	for _, k := range keys {
+		values = append(values, o.value[k])
 	}
 
 	return newArray(o.chain, values)
