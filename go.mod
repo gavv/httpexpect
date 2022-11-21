@@ -9,6 +9,7 @@ require (
 	github.com/google/go-querystring v1.0.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/imkira/go-interpol v1.0.0
+	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/stretchr/testify v1.4.0
 	github.com/valyala/fasthttp v1.34.0
 	github.com/xeipuuv/gojsonschema v1.1.0

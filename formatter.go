@@ -8,6 +8,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/mitchellh/go-wordwrap"
 	"github.com/yudai/gojsondiff"
 	"github.com/yudai/gojsondiff/formatter"
 )
@@ -38,6 +39,10 @@ type DefaultFormatter struct {
 
 	// Exclude diff from failure report.
 	DisableDiffs bool
+
+	// Wrap text to keep lines below given width.
+	// Use zero for default width, and negative value to disable wrapping.
+	LineWidth int
 
 	// If not empty, used to format success messages.
 	// If empty, default template is used.
@@ -82,7 +87,7 @@ type FormatData struct {
 	TestName    string
 	RequestName string
 
-	AssertPath string
+	AssertPath []string
 	AssertType string
 
 	Errors []string
@@ -101,6 +106,8 @@ type FormatData struct {
 
 	HaveDiff bool
 	Diff     string
+
+	LineWidth int
 }
 
 const (
@@ -178,7 +185,13 @@ func (f *DefaultFormatter) fillDescription(
 	}
 
 	if !f.DisablePaths {
-		data.AssertPath = formatPath(ctx.Path)
+		data.AssertPath = ctx.Path
+	}
+
+	if f.LineWidth != 0 {
+		data.LineWidth = f.LineWidth
+	} else {
+		data.LineWidth = defaultLineWidth
 	}
 }
 
@@ -239,9 +252,7 @@ func (f *DefaultFormatter) fillExpected(
 	case AssertInRange, AssertNotInRange:
 		data.HaveExpected = true
 		data.ExpectedKind = kindRange
-		data.Expected = []string{
-			formatRange(failure.Expected.Value),
-		}
+		data.Expected = formatRange(failure.Expected.Value)
 
 	case AssertMatchSchema, AssertNotMatchSchema:
 		data.HaveExpected = true
@@ -344,10 +355,6 @@ func (f *DefaultFormatter) fillDelta(
 	data.Delta = fmt.Sprintf("%f", failure.Delta)
 }
 
-func formatPath(path []string) string {
-	return strings.Join(path, ".")
-}
-
 func formatValue(v interface{}) string {
 	isNil := func(a interface{}) bool {
 		defer func() {
@@ -374,11 +381,29 @@ func formatString(v interface{}) string {
 	}
 }
 
-func formatRange(v interface{}) string {
+func formatRange(v interface{}) []string {
+	isNumber := func(a interface{}) bool {
+		defer func() {
+			_ = recover()
+		}()
+		reflect.ValueOf(a).Convert(reflect.TypeOf(float64(0))).Float()
+		return true
+	}
 	if r, ok := v.(AssertionRange); ok {
-		return fmt.Sprintf("[%v; %v]", r.Min, r.Max)
+		if isNumber(r.Min) && isNumber(r.Max) {
+			return []string{
+				fmt.Sprintf("[%v; %v]", r.Min, r.Max),
+			}
+		} else {
+			return []string{
+				fmt.Sprintf("%v", r.Min),
+				fmt.Sprintf("%v", r.Max),
+			}
+		}
 	} else {
-		return formatValue(v)
+		return []string{
+			formatValue(v),
+		}
 	}
 }
 
@@ -436,30 +461,74 @@ func formatDiff(expected, actual interface{}) (string, bool) {
 	return diffText, true
 }
 
+const defaultLineWidth = 60
+
 var defaultTemplateFuncs = template.FuncMap{
-	"strip": func(in string) string {
-		return strings.TrimSpace(in)
-	},
-	"indent": func(in string) string {
-		out := ""
-		for _, s := range strings.Split(in, "\n") {
-			if out != "" {
-				out += "\n"
+	"indent": func(s string) string {
+		var sb strings.Builder
+
+		for _, s := range strings.Split(s, "\n") {
+			if sb.Len() != 0 {
+				sb.WriteString("\n")
 			}
-			out += "  " + s
+			sb.WriteString("  ")
+			sb.WriteString(s)
 		}
-		return out
+
+		return sb.String()
+	},
+	"wrap": func(s string, width int) string {
+		s = strings.TrimSpace(s)
+		if width < 0 {
+			return s
+		}
+
+		return wordwrap.WrapString(s, uint(width))
+	},
+	"join": func(strs []string, width int) string {
+		if width < 0 {
+			return strings.Join(strs, ".")
+		}
+
+		var sb strings.Builder
+
+		lineLen := 0
+		lineNum := 0
+
+		write := func(s string) {
+			sb.WriteString(s)
+			lineLen += len(s)
+		}
+
+		for n, s := range strs {
+			if lineLen > width {
+				write("\n")
+				lineLen = 0
+				lineNum++
+			}
+			if lineLen == 0 {
+				for l := 0; l < lineNum; l++ {
+					write("  ")
+				}
+			}
+			write(s)
+			if n != len(strs)-1 {
+				write(".")
+			}
+		}
+
+		return sb.String()
 	},
 }
 
-var defaultSuccessTemplate = `[OK] {{ .AssertPath }}`
+var defaultSuccessTemplate = `[OK] {{ join .AssertPath .LineWidth }}`
 
 var defaultFailureTemplate = `
 {{- range $n, $err := .Errors }}
 {{ if eq $n 0 -}}
-{{ $err | strip }}
+{{ wrap $err $.LineWidth }}
 {{- else -}}
-{{ $err | indent }}
+{{ wrap $err $.LineWidth | indent }}
 {{- end -}}
 {{- end -}}
 {{- if .TestName }}
@@ -473,7 +542,7 @@ request name: {{ .RequestName }}
 {{- if .AssertPath }}
 
 assertion:
-{{ .AssertPath | indent }}
+{{ join .AssertPath .LineWidth | indent }}
 {{- end -}}
 {{- if .HaveExpected }}
 
