@@ -87,12 +87,8 @@ type Request struct {
 func NewRequest(config Config, method, path string, pathargs ...interface{}) *Request {
 	config.fillDefaults()
 
-	context := AssertionContext{
-		Path: []string{"Request()"},
-	}
-
 	return newRequest(
-		newChain(context, config.AssertionHandler),
+		newChainWithConfig("Request()", config),
 		config,
 		method,
 		path,

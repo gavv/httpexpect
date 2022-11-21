@@ -20,7 +20,7 @@ type Boolean struct {
 //
 //	boolean := NewBoolean(t, true)
 func NewBoolean(reporter Reporter, value bool) *Boolean {
-	return newBoolean(newDefaultChain("Boolean()", reporter), value)
+	return newBoolean(newChainWithDefaults("Boolean()", reporter), value)
 }
 
 func newBoolean(parent *chain, val bool) *Boolean {

@@ -43,7 +43,7 @@ func (b *mockBody) Close() error {
 }
 
 func newMockChain(t *testing.T) *chain {
-	return newDefaultChain("test", newMockReporter(t))
+	return newChainWithDefaults("test", newMockReporter(t))
 }
 
 type mockLogger struct {

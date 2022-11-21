@@ -22,7 +22,7 @@ import (
 func TestRequestFailed(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	chain := newDefaultChain("test", reporter)
+	chain := newChainWithDefaults("test", reporter)
 	chain.fail(AssertionFailure{})
 
 	config := Config{

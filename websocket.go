@@ -42,12 +42,8 @@ type WebsocketConn interface {
 func NewWebsocket(config Config, conn WebsocketConn) *Websocket {
 	config.fillDefaults()
 
-	context := AssertionContext{
-		Path: []string{"Websocket()"},
-	}
-
 	return newWebsocket(
-		newChain(context, config.AssertionHandler),
+		newChainWithConfig("Websocket()", config),
 		config,
 		conn,
 	)

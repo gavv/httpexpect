@@ -33,7 +33,7 @@ type Match struct {
 //	m.Name("host").Equal("example.com")
 //	m.Name("user").Equal("john")
 func NewMatch(reporter Reporter, submatches []string, names []string) *Match {
-	return newMatch(newDefaultChain("Match()", reporter), submatches, names)
+	return newMatch(newChainWithDefaults("Match()", reporter), submatches, names)
 }
 
 func newMatch(parent *chain, matchList []string, nameList []string) *Match {

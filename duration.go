@@ -21,7 +21,7 @@ type Duration struct {
 //	d := NewDuration(reporter, time.Second)
 //	d.Le(time.Minute)
 func NewDuration(reporter Reporter, value time.Duration) *Duration {
-	return newDuration(newDefaultChain("Duration()", reporter), &value)
+	return newDuration(newChainWithDefaults("Duration()", reporter), &value)
 }
 
 func newDuration(parent *chain, val *time.Duration) *Duration {

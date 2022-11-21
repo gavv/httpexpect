@@ -47,7 +47,7 @@ func NewResponse(
 		rttPtr = &rtt[0]
 	}
 	return newResponse(responseOpts{
-		chain:    newDefaultChain("Response()", reporter),
+		chain:    newChainWithDefaults("Response()", reporter),
 		httpResp: response,
 		rtt:      rttPtr,
 	})

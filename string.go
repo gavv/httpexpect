@@ -25,7 +25,7 @@ type String struct {
 //
 //	str := NewString(t, "Hello")
 func NewString(reporter Reporter, value string) *String {
-	return newString(newDefaultChain("String()", reporter), value)
+	return newString(newChainWithDefaults("String()", reporter), value)
 }
 
 func newString(parent *chain, val string) *String {

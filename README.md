@@ -448,6 +448,32 @@ myBuilder.POST("/some-path").
 	Status(http.StatusOK)
 ```
 
+##### Shared environment
+
+```go
+e := httpexpect.Default(t, "http://example.com")
+
+t.Run("/users", func(t *testing.T) {
+	obj := e.GET("/users").
+		Expect().
+		Status(http.StatusOK).JSON().Object()
+
+	// store user id for next tests
+	userID := obj.Path("$.users[1].id").String().Raw()
+	e.Env().Put("user1.id", userID)
+})
+
+t.Run("/user/{userId}", func(t *testing.T) {
+	// read user id from previous tests
+	userID := e.Env().GetString("user1.id")
+
+	e.GET("/user/{userId}").
+		WithPath("userId", userID)
+		Expect().
+		Status(http.StatusOK)
+})
+```
+
 ##### Custom config
 
 ```go

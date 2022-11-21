@@ -39,7 +39,7 @@ func TestChainClone(t *testing.T) {
 func TestChainReport(t *testing.T) {
 	r0 := newMockReporter(t)
 
-	chain := newDefaultChain("", r0)
+	chain := newChainWithDefaults("", r0)
 
 	r1 := newMockReporter(t)
 

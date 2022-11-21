@@ -24,7 +24,7 @@ type DateTime struct {
 //	time.Sleep(time.Second)
 //	dt.Lt(time.Now())
 func NewDateTime(reporter Reporter, value time.Time) *DateTime {
-	return newDateTime(newDefaultChain("DateTime()", reporter), value)
+	return newDateTime(newChainWithDefaults("DateTime()", reporter), value)
 }
 
 func newDateTime(parent *chain, val time.Time) *DateTime {

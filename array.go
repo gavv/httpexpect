@@ -22,7 +22,7 @@ type Array struct {
 //
 //	array := NewArray(t, []interface{}{"foo", 123})
 func NewArray(reporter Reporter, value []interface{}) *Array {
-	return newArray(newDefaultChain("Array()", reporter), value)
+	return newArray(newChainWithDefaults("Array()", reporter), value)
 }
 
 func newArray(parent *chain, val []interface{}) *Array {

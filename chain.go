@@ -11,27 +11,55 @@ type chain struct {
 	failbit bool
 }
 
-func newChain(context AssertionContext, handler AssertionHandler) *chain {
-	return &chain{
-		context: context,
-		handler: handler,
+func newChainWithConfig(name string, config Config) *chain {
+	c := &chain{
+		context: AssertionContext{},
+		handler: config.AssertionHandler,
 		isFatal: true,
+		failbit: false,
 	}
+
+	c.context.TestName = config.TestName
+
+	if name != "" {
+		c.context.Path = []string{name}
+	} else {
+		c.context.Path = []string{}
+	}
+
+	if config.Environment != nil {
+		c.context.Environment = config.Environment
+	} else {
+		c.context.Environment = newEnvironment(c)
+	}
+
+	return c
 }
 
-func newDefaultChain(name string, reporter Reporter) *chain {
-	return &chain{
-		context: AssertionContext{
-			Path: []string{
-				name,
-			},
-		},
+func newChainWithDefaults(name string, reporter Reporter) *chain {
+	c := &chain{
+		context: AssertionContext{},
 		handler: &DefaultAssertionHandler{
 			Formatter: &DefaultFormatter{},
 			Reporter:  reporter,
 		},
 		isFatal: true,
+		failbit: false,
 	}
+
+	if name != "" {
+		c.context.Path = []string{name}
+	} else {
+		c.context.Path = []string{}
+	}
+
+	c.context.Environment = newEnvironment(c)
+
+	return c
+}
+
+func (c *chain) getEnv() *Environment {
+	return c.context.Environment
 }
 
 func (c *chain) setFatal(isFatal bool) {

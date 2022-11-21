@@ -24,7 +24,7 @@ type Cookie struct {
 //	cookie.Path().Equal("/")
 //	cookie.Expires().InRange(time.Now(), time.Now().Add(time.Hour * 24))
 func NewCookie(reporter Reporter, value *http.Cookie) *Cookie {
-	return newCookie(newDefaultChain("Cookie()", reporter), value)
+	return newCookie(newChainWithDefaults("Cookie()", reporter), value)
 }
 
 func newCookie(parent *chain, val *http.Cookie) *Cookie {

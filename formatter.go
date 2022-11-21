@@ -213,6 +213,10 @@ func (f *DefaultFormatter) fillActual(
 	case AssertUsage, AssertOperation:
 		data.HaveActual = false
 
+	case AssertType, AssertNotType:
+		data.HaveActual = true
+		data.Actual = formatTyped(failure.Actual.Value)
+
 	default:
 		data.HaveActual = true
 		data.Actual = formatValue(failure.Actual.Value)
@@ -224,6 +228,7 @@ func (f *DefaultFormatter) fillExpected(
 ) {
 	switch failure.Type {
 	case AssertUsage, AssertOperation,
+		AssertType, AssertNotType,
 		AssertValid, AssertNotValid,
 		AssertNil, AssertNotNil,
 		AssertEmpty, AssertNotEmpty,
@@ -308,6 +313,7 @@ func (f *DefaultFormatter) fillIsUnexpected(
 ) {
 	switch failure.Type {
 	case AssertUsage, AssertOperation,
+		AssertType,
 		AssertValid,
 		AssertNil,
 		AssertEmpty,
@@ -323,7 +329,8 @@ func (f *DefaultFormatter) fillIsUnexpected(
 		AssertBelongs:
 		break
 
-	case AssertNotValid,
+	case AssertNotType,
+		AssertNotValid,
 		AssertNotNil,
 		AssertNotEmpty,
 		AssertNotEqual,
@@ -353,6 +360,10 @@ func (f *DefaultFormatter) fillDelta(
 ) {
 	data.HaveDelta = true
 	data.Delta = fmt.Sprintf("%f", failure.Delta)
+}
+
+func formatTyped(v interface{}) string {
+	return fmt.Sprintf("%T(%#v)", v, v)
 }
 
 func formatValue(v interface{}) string {

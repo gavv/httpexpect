@@ -11,7 +11,11 @@ const (
 	// Check if the operation succeeded
 	AssertOperation
 
-	// Check expression: [Actual] has valid layout
+	// Check expression: [Actual] has appropriate type
+	AssertType
+	AssertNotType
+
+	// Check expression: [Actual] has valid value
 	AssertValid
 	AssertNotValid
 
@@ -97,6 +101,10 @@ type AssertionContext struct {
 	// Response being matched
 	// May be nil if request was not yet received
 	Response *Response
+
+	// Environment shared between tests
+	// Comes from Expect instance
+	Environment *Environment
 }
 
 // AssertionFailure provides detailed information about failed assertion.

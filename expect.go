@@ -200,6 +200,16 @@ type Config struct {
 	// You can also use builtin printers with alternative Logger if you're happy
 	// with their format, but want to send logs somewhere else than *testing.T.
 	Printers []Printer
+
+	// Environment provides a container for arbitrary data shared between tests.
+	// May be nil.
+	//
+	// Environment is not by httpexpect itself, but can be used by tests to store
+	// and load arbitrary values. Tests can access Environment via Expect.Env()
+	// and AssertionContext.Env.
+	//
+	// If Environment is nil, a new environment is automatically created.
+	Environment *Environment
 }
 
 func (config *Config) fillDefaults() {
@@ -377,14 +387,23 @@ func Default(t TestingTB, baseURL string) *Expect {
 func WithConfig(config Config) *Expect {
 	config.fillDefaults()
 
-	context := AssertionContext{
-		TestName: config.TestName,
-	}
-
 	return &Expect{
+		chain:  newChainWithConfig("", config),
 		config: config,
-		chain:  newChain(context, config.AssertionHandler),
 	}
+}
+
+// Env returns Environment associated with Expect instance.
+// Tests can use it to store arbitrary data.
+//
+// Example:
+//
+//	e := httpexpect.Default(t, "http://example.com")
+//
+//	e.Env().Put("key", "value")
+//	value := e.Env().GetString("key")
+func (e *Expect) Env() *Environment {
+	return e.chain.getEnv()
 }
 
 func (e *Expect) clone() *Expect {

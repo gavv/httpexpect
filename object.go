@@ -23,7 +23,7 @@ type Object struct {
 //
 //	object := NewObject(t, map[string]interface{}{"foo": 123})
 func NewObject(reporter Reporter, value map[string]interface{}) *Object {
-	return newObject(newDefaultChain("Object()", reporter), value)
+	return newObject(newChainWithDefaults("Object()", reporter), value)
 }
 
 func newObject(parent *chain, val map[string]interface{}) *Object {

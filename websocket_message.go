@@ -27,7 +27,7 @@ type WebsocketMessage struct {
 func NewWebsocketMessage(
 	reporter Reporter, typ int, content []byte, closeCode ...int,
 ) *WebsocketMessage {
-	m := newWebsocketMessage(newDefaultChain("WebsocketMessage()", reporter))
+	m := newWebsocketMessage(newChainWithDefaults("WebsocketMessage()", reporter))
 
 	m.typ = typ
 	m.content = content

@@ -21,7 +21,7 @@ type Number struct {
 //
 //	number := NewNumber(t, 123.4)
 func NewNumber(reporter Reporter, value float64) *Number {
-	return newNumber(newDefaultChain("Number()", reporter), value)
+	return newNumber(newChainWithDefaults("Number()", reporter), value)
 }
 
 func newNumber(parent *chain, val float64) *Number {

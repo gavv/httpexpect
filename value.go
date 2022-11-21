@@ -38,7 +38,7 @@ type Value struct {
 //	value := NewValue(t, nil)
 //	value.Null()
 func NewValue(reporter Reporter, value interface{}) *Value {
-	return newValue(newDefaultChain("Value()", reporter), value)
+	return newValue(newChainWithDefaults("Value()", reporter), value)
 }
 
 func newValue(parent *chain, val interface{}) *Value {
