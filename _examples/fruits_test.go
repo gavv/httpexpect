@@ -14,7 +14,7 @@ func TestFruits(t *testing.T) {
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
-	e := httpexpect.New(t, server.URL)
+	e := httpexpect.Default(t, server.URL)
 
 	e.GET("/fruits").
 		Expect().
