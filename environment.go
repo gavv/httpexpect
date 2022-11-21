@@ -2,7 +2,6 @@ package httpexpect
 
 import (
 	"errors"
-	"math"
 	"time"
 )
 
@@ -132,38 +131,44 @@ func (e *Environment) GetInt(key string) int {
 
 	var casted int
 
+	const (
+		intSize = 32 << (^uint(0) >> 63) // 32 or 64
+		maxInt  = 1<<(intSize-1) - 1
+		minInt  = -1 << (intSize - 1)
+	)
+
 	switch num := value.(type) {
 	case int8:
 		casted = int(num)
-		ok = (int64(num) >= math.MinInt) && (int64(num) <= math.MaxInt)
+		ok = (int64(num) >= minInt) && (int64(num) <= maxInt)
 	case int16:
 		casted = int(num)
-		ok = (int64(num) >= math.MinInt) && (int64(num) <= math.MaxInt)
+		ok = (int64(num) >= minInt) && (int64(num) <= maxInt)
 	case int32:
 		casted = int(num)
-		ok = (int64(num) >= math.MinInt) && (int64(num) <= math.MaxInt)
+		ok = (int64(num) >= minInt) && (int64(num) <= maxInt)
 	case int64:
 		casted = int(num)
-		ok = (int64(num) >= math.MinInt) && (int64(num) <= math.MaxInt)
+		ok = (int64(num) >= minInt) && (int64(num) <= maxInt)
 	case int:
 		casted = num
-		ok = (int64(num) >= math.MinInt) && (int64(num) <= math.MaxInt)
+		ok = (int64(num) >= minInt) && (int64(num) <= maxInt)
 
 	case uint8:
 		casted = int(num)
-		ok = (uint64(num) <= math.MaxInt)
+		ok = (uint64(num) <= maxInt)
 	case uint16:
 		casted = int(num)
-		ok = (uint64(num) <= math.MaxInt)
+		ok = (uint64(num) <= maxInt)
 	case uint32:
 		casted = int(num)
-		ok = (uint64(num) <= math.MaxInt)
+		ok = (uint64(num) <= maxInt)
 	case uint64:
 		casted = int(num)
-		ok = (uint64(num) <= math.MaxInt)
+		ok = (uint64(num) <= maxInt)
 	case uint:
 		casted = int(num)
-		ok = (uint64(num) <= math.MaxInt)
+		ok = (uint64(num) <= maxInt)
 
 	default:
 		e.chain.fail(AssertionFailure{
@@ -180,7 +185,7 @@ func (e *Environment) GetInt(key string) int {
 		e.chain.fail(AssertionFailure{
 			Type:     AssertInRange,
 			Actual:   &AssertionValue{value},
-			Expected: &AssertionValue{AssertionRange{math.MinInt, math.MaxInt}},
+			Expected: &AssertionValue{AssertionRange{minInt, maxInt}},
 			Errors: []error{
 				errors.New(
 					"expected: value can be represented as int without overflow"),
