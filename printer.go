@@ -38,6 +38,28 @@ type WebsocketPrinter interface {
 	WebsocketRead(typ int, content []byte, closeCode int)
 }
 
+// CompactPrinter implements Printer.
+// Prints requests in compact form. Does not print responses.
+type CompactPrinter struct {
+	logger Logger
+}
+
+// NewCompactPrinter returns a new CompactPrinter given a logger.
+func NewCompactPrinter(logger Logger) CompactPrinter {
+	return CompactPrinter{logger}
+}
+
+// Request implements Printer.Request.
+func (p CompactPrinter) Request(req *http.Request) {
+	if req != nil {
+		p.logger.Logf("%s %s", req.Method, req.URL)
+	}
+}
+
+// Response implements Printer.Response.
+func (CompactPrinter) Response(*http.Response, time.Duration) {
+}
+
 // CurlPrinter implements Printer.
 // Uses http2curl to dump requests as curl commands that can be inserted
 // into terminal.
@@ -63,28 +85,6 @@ func (p CurlPrinter) Request(req *http.Request) {
 
 // Response implements Printer.Response.
 func (CurlPrinter) Response(*http.Response, time.Duration) {
-}
-
-// CompactPrinter implements Printer.
-// Prints requests in compact form. Does not print responses.
-type CompactPrinter struct {
-	logger Logger
-}
-
-// NewCompactPrinter returns a new CompactPrinter given a logger.
-func NewCompactPrinter(logger Logger) CompactPrinter {
-	return CompactPrinter{logger}
-}
-
-// Request implements Printer.Request.
-func (p CompactPrinter) Request(req *http.Request) {
-	if req != nil {
-		p.logger.Logf("%s %s", req.Method, req.URL)
-	}
-}
-
-// Response implements Printer.Response.
-func (CompactPrinter) Response(*http.Response, time.Duration) {
 }
 
 // DebugPrinter implements Printer and WebsocketPrinter.

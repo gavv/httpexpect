@@ -158,11 +158,11 @@ type AssertionHandler interface {
 // and Logger to report success messages.
 //
 // Logger is optional. Set it if you want to log every successful assertion.
-// Reporter and Formatter are required.
+// Formatter and Reporter are required.
 type DefaultAssertionHandler struct {
+	Formatter Formatter
 	Reporter  Reporter
 	Logger    Logger
-	Formatter Formatter
 }
 
 // Success implements AssertionHandler.Success.
