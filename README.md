@@ -504,7 +504,7 @@ e := httpexpect.WithConfig(httpexpect.Config{
 
 ```go
 // invoke http.Handler directly using httpexpect.Binder
-var handler http.Handler = MyHandler()
+var handler http.Handler = myHandler()
 
 e := httpexpect.WithConfig(httpexpect.Config{
 	// prepend this url to all requests, required for cookies
@@ -552,6 +552,28 @@ e.GET("/path").WithClient(client).
 e.GET("/path").WithHandler(handler).
 	Expect().
 	Status(http.StatusOK)
+```
+
+##### WebSocket dialer
+
+```go
+// invoke http.Handler directly using websocket.Dialer
+var handler http.Handler = myHandler()
+
+e := httpexpect.WithConfig(httpexpect.Config{
+	BaseURL:         "http://example.com",
+	Reporter:        httpexpect.NewAssertReporter(t),
+	WebsocketDialer: httpexpect.NewWebsocketDialer(handler),
+})
+
+// invoke fasthttp.RequestHandler directly using websocket.Dialer
+var handler fasthttp.RequestHandler = myHandler()
+
+e := httpexpect.WithConfig(httpexpect.Config{
+	BaseURL:         "http://example.com",
+	Reporter:        httpexpect.NewAssertReporter(t),
+	WebsocketDialer: httpexpect.NewFastWebsocketDialer(handler),
+})
 ```
 
 ##### Session support
