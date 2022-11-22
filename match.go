@@ -12,8 +12,7 @@ type Match struct {
 	names      map[string]int
 }
 
-// NewMatch returns a new Match object given a reporter used to report
-// failures and submatches to be inspected.
+// NewMatch returns a new Match instance.
 //
 // reporter should not be nil. submatches and names may be nil.
 //
@@ -66,8 +65,7 @@ func (m *Match) Raw() []string {
 	return m.submatches
 }
 
-// Length returns a new Number object that may be used to inspect
-// number of submatches.
+// Length returns a new Number instance with number of submatches.
 //
 // Example:
 //
@@ -84,11 +82,10 @@ func (m *Match) Length() *Number {
 	return newNumber(m.chain, float64(len(m.submatches)))
 }
 
-// Index returns a new String object that may be used to inspect submatch
-// with given index.
+// Index returns a new String instance with submatch for given index.
 //
 // Note that submatch with index 0 contains the whole match. If index is out
-// of bounds, Index reports failure and returns empty (but non-nil) value.
+// of bounds, Index reports failure and returns empty (but non-nil) instance.
 //
 // Example:
 //
@@ -126,11 +123,10 @@ func (m *Match) Index(index int) *String {
 	return newString(m.chain, m.submatches[index])
 }
 
-// Name returns a new String object that may be used to inspect submatch
-// with given name.
+// Name returns a new String instance with submatch for given name.
 //
 // If there is no submatch with given name, Name reports failure and returns
-// empty (but non-nil) value.
+// empty (but non-nil) instance.
 //
 // Example:
 //

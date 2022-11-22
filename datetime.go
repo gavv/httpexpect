@@ -11,8 +11,7 @@ type DateTime struct {
 	value time.Time
 }
 
-// NewDateTime returns a new DateTime object given a reporter used to report
-// failures and time.Time value to be inspected.
+// NewDateTime returns a new DateTime instance.
 //
 // reporter should not be nil.
 //
@@ -210,7 +209,7 @@ func (dt *DateTime) Le(value time.Time) *DateTime {
 	return dt
 }
 
-// InRange succeeds if DateTime is in given range [min; max].
+// InRange succeeds if DateTime is within given range [min; max].
 //
 // Example:
 //

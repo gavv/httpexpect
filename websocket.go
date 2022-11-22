@@ -37,8 +37,7 @@ type WebsocketConn interface {
 	Subprotocol() string
 }
 
-// NewWebsocket returns a new Websocket given a Config with Reporter and
-// Printers, and Websocket to be inspected and handled.
+// NewWebsocket returns a new Websocket instance.
 func NewWebsocket(config Config, conn WebsocketConn) *Websocket {
 	config.fillDefaults()
 
@@ -139,8 +138,8 @@ func (c *Websocket) WithoutWriteTimeout() *Websocket {
 	return c
 }
 
-// Subprotocol returns a new String object that may be used to inspect
-// negotiated protocol for the connection.
+// Subprotocol returns a new String instance with negotiated protocol
+// for the connection.
 func (c *Websocket) Subprotocol() *String {
 	c.chain.enter("Subprotocol()")
 	defer c.chain.leave()
@@ -157,7 +156,7 @@ func (c *Websocket) Subprotocol() *String {
 }
 
 // Expect reads next message from WebSocket connection and
-// returns a new WebsocketMessage object to inspect received message.
+// returns a new WebsocketMessage instance.
 //
 // Example:
 //

@@ -11,8 +11,7 @@ type Boolean struct {
 	value bool
 }
 
-// NewBoolean returns a new Boolean given a reporter used to report
-// failures and value to be inspected.
+// NewBoolean returns a new Boolean instance.
 //
 // reporter should not be nil.
 //

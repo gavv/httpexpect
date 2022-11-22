@@ -15,8 +15,7 @@ type WebsocketMessage struct {
 	closeCode int
 }
 
-// NewWebsocketMessage returns a new WebsocketMessage object given a reporter used to
-// report failures and the message parameters to be inspected.
+// NewWebsocketMessage returns a new WebsocketMessage instance.
 //
 // reporter should not be nil.
 //
@@ -387,8 +386,7 @@ func (m *WebsocketMessage) NotCode(code ...int) *WebsocketMessage {
 	return m
 }
 
-// Body returns a new String object that may be used to inspect
-// WebSocket message content.
+// Body returns a new String instance with WebSocket message content.
 //
 // Example:
 //
@@ -437,8 +435,7 @@ func (m *WebsocketMessage) NoContent() *WebsocketMessage {
 	return m
 }
 
-// JSON returns a new Value object that may be used to inspect JSON contents
-// of WebSocket message.
+// JSON returns a new Value instance with JSON contents of WebSocket message.
 //
 // JSON succeeds if JSON may be decoded from message content.
 //

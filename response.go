@@ -31,8 +31,7 @@ type Response struct {
 	cookies []*http.Cookie
 }
 
-// NewResponse returns a new Response given a reporter used to report
-// failures and http.Response to be inspected.
+// NewResponse returns a new Response instance.
 //
 // Both reporter and response should not be nil. If response is nil,
 // failure is reported.
@@ -124,10 +123,9 @@ func (r *Response) Raw() *http.Response {
 	return r.httpResp
 }
 
-// RoundTripTime returns a new Duration object that may be used to inspect
-// the round-trip time.
+// RoundTripTime returns a new Duration instance with response round-trip time.
 //
-// The returned duration is a time interval starting just before request is
+// The returned duration is the time interval starting just before request is
 // sent and ending right after response is received (handshake finished for
 // WebSocket request), retrieved from a monotonic clock source.
 //
@@ -270,7 +268,7 @@ func statusRangeText(code int) string {
 	}
 }
 
-// Headers returns a new Object that may be used to inspect header map.
+// Headers returns a new Object instance with response header map.
 //
 // Example:
 //
@@ -290,7 +288,7 @@ func (r *Response) Headers() *Object {
 	return newObject(r.chain, value)
 }
 
-// Header returns a new String object that may be used to inspect given header.
+// Header returns a new String instance with given header field.
 //
 // Example:
 //
@@ -310,7 +308,7 @@ func (r *Response) Header(header string) *String {
 	return newString(r.chain, value)
 }
 
-// Cookies returns a new Array object with all cookie names set by this response.
+// Cookies returns a new Array instance with all cookie names set by this response.
 // Returned Array contains a String value for every cookie name.
 //
 // Note that this returns only cookies set by Set-Cookie headers of this response.
@@ -337,8 +335,7 @@ func (r *Response) Cookies() *Array {
 	return newArray(r.chain, names)
 }
 
-// Cookie returns a new Cookie object that may be used to inspect given cookie
-// set by this response.
+// Cookie returns a new Cookie instance with specified cookie from response.
 //
 // Note that this returns only cookies set by Set-Cookie headers of this response.
 // It doesn't return session cookies from previous responses, which may be stored
@@ -382,11 +379,10 @@ func (r *Response) Cookie(name string) *Cookie {
 	return cookie
 }
 
-// Websocket returns Websocket object that can be used to interact with
-// WebSocket server.
+// Websocket returns Websocket instance for interaction with WebSocket server.
 //
 // May be called only if the WithWebsocketUpgrade was called on the request.
-// That is responsibility of the caller to explicitly close the websocket after use.
+// That is responsibility of the caller to explicitly disconnect websocket after use.
 //
 // Example:
 //
@@ -416,7 +412,7 @@ func (r *Response) Websocket() *Websocket {
 	return newWebsocket(r.chain, r.config, r.websocket)
 }
 
-// Body returns a new String object that may be used to inspect response body.
+// Body returns a new String instance with response body.
 //
 // Example:
 //
@@ -508,7 +504,7 @@ type ContentOpts struct {
 	Charset string
 }
 
-// Text returns a new String object that may be used to inspect response body.
+// Text returns a new String instance with response body.
 //
 // Text succeeds if response contains "text/plain" Content-Type header
 // with empty or "utf-8" charset.
@@ -537,8 +533,7 @@ func (r *Response) Text(opts ...ContentOpts) *String {
 	return newString(r.chain, content)
 }
 
-// Form returns a new Object that may be used to inspect form contents
-// of response.
+// Form returns a new Object instance with form decoded from response body.
 //
 // Form succeeds if response contains "application/x-www-form-urlencoded"
 // Content-Type header and if form may be decoded from response body.
@@ -590,8 +585,7 @@ func (r *Response) getForm(opts ...ContentOpts) map[string]interface{} {
 	return object
 }
 
-// JSON returns a new Value object that may be used to inspect JSON contents
-// of response.
+// JSON returns a new Value instance with JSON decoded from response body.
 //
 // JSON succeeds if response contains "application/json" Content-Type header
 // with empty or "utf-8" charset and if JSON may be decoded from response body.
@@ -640,8 +634,7 @@ func (r *Response) getJSON(opts ...ContentOpts) interface{} {
 	return value
 }
 
-// JSONP returns a new Value object that may be used to inspect JSONP contents
-// of response.
+// JSON returns a new Value instance with JSONP decoded from response body.
 //
 // JSONP succeeds if response contains "application/javascript" Content-Type
 // header with empty or "utf-8" charset and response body of the following form:

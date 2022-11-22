@@ -16,8 +16,7 @@ type String struct {
 	value string
 }
 
-// NewString returns a new String given a reporter used to report failures
-// and value to be inspected.
+// NewString returns a new String instance.
 //
 // reporter should not be nil.
 //
@@ -60,7 +59,7 @@ func (s *String) Schema(schema interface{}) *String {
 	return s
 }
 
-// Length returns a new Number object that may be used to inspect string length.
+// Length returns a new Number instance with string length.
 //
 // Example:
 //
@@ -77,7 +76,8 @@ func (s *String) Length() *Number {
 	return newNumber(s.chain, float64(len(s.value)))
 }
 
-// Number parses float from string and returns a new Number object.
+// Number parses float from string and returns a new Number instance
+// with result.
 //
 // Example:
 //
@@ -108,11 +108,12 @@ func (s *String) Number() *Number {
 	return newNumber(s.chain, num)
 }
 
-// DateTime parses date/time from string and returns a new DateTime object.
+// DateTime parses date/time from string and returns a new DateTime instance
+// with result.
 //
 // If layout is given, DateTime() uses time.Parse() with given layout.
 // Otherwise, it uses http.ParseTime(). If pasing error occurred,
-// DateTime reports failure and returns empty (but non-nil) object.
+// DateTime reports failure and returns empty (but non-nil) instance.
 //
 // Example:
 //
@@ -440,11 +441,11 @@ func (s *String) NotContainsFold(value string) *String {
 	return s
 }
 
-// Match matches the string with given regexp and returns a new Match object
+// Match matches the string with given regexp and returns a new Match instance
 // with found submatches.
 //
 // If regexp is invalid or string doesn't match regexp, Match fails and returns
-// empty (but non-nil) object. regexp.Compile is used to construct regexp, and
+// empty (but non-nil) instance. regexp.Compile is used to construct regexp, and
 // Regexp.FindStringSubmatch is used to construct matches.
 //
 // Example:

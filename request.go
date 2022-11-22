@@ -59,7 +59,7 @@ type Request struct {
 	matchers   []func(*Response)
 }
 
-// NewRequest returns a new Request object.
+// NewRequest returns a new Request instance.
 //
 // method defines the HTTP method (GET, POST, PUT, etc.). path defines url path.
 //
@@ -654,7 +654,7 @@ func (r *Request) WithRetryDelay(minDelay, maxDelay time.Duration) *Request {
 // in the gorilla/websocket package.
 //
 // The user should then call the Response.Websocket() method which returns
-// the Websocket object. This object can be used to send messages to the
+// the Websocket instance. This instance can be used to send messages to the
 // server, to inspect the received messages, and to close the websocket.
 //
 // Example:
@@ -1636,9 +1636,9 @@ func (r *Request) WithMultipart() *Request {
 }
 
 // Expect constructs http.Request, sends it, receives http.Response, and
-// returns a new Response object to inspect received response.
+// returns a new Response instance.
 //
-// Request is sent using Client interface, or Dialer interface in case of
+// Request is sent using Client interface, or WebsocketDialer in case of
 // WebSocket request.
 //
 // Example:

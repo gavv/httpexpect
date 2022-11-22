@@ -11,8 +11,7 @@ type Duration struct {
 	value *time.Duration
 }
 
-// NewDuration returns a new Duration object given a reporter used to report
-// failures and time.Duration value to be inspected.
+// NewDuration returns a new Duration instance.
 //
 // reporter should not be nil.
 //
@@ -325,7 +324,7 @@ func (d *Duration) Le(value time.Duration) *Duration {
 	return d
 }
 
-// InRange succeeds if Duration is in given range [min; max].
+// InRange succeeds if Duration is within given range [min; max].
 //
 // Example:
 //

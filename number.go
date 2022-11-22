@@ -12,8 +12,7 @@ type Number struct {
 	value float64
 }
 
-// NewNumber returns a new Number given a reporter used to report
-// failures and value to be inspected.
+// NewNumber returns a new Number instance.
 //
 // reporter should not be nil.
 //
@@ -368,7 +367,7 @@ func (n *Number) Le(value interface{}) *Number {
 	return n
 }
 
-// InRange succeeds if number is in given range [min; max].
+// InRange succeeds if number is within given range [min; max].
 //
 // min and max should have numeric type convertible to float64. Before comparison,
 // they are converted to float64.

@@ -470,8 +470,8 @@ func (e *Expect) Matcher(matcher func(*Response)) *Expect {
 	return ret
 }
 
-// Request returns a new Request object.
-// Arguments a similar to NewRequest.
+// Request returns a new Request instance.
+// Arguments are similar to NewRequest.
 // After creating request, all builders attached to Expect instance are invoked.
 // See Builder.
 func (e *Expect) Request(method, path string, pathargs ...interface{}) *Request {

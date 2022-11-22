@@ -12,8 +12,7 @@ type Cookie struct {
 	value *http.Cookie
 }
 
-// NewCookie returns a new Cookie object given a reporter used to report
-// failures and cookie value to be inspected.
+// NewCookie returns a new Cookie instance.
 //
 // reporter and value should not be nil.
 //
@@ -56,8 +55,7 @@ func (c *Cookie) Raw() *http.Cookie {
 	return c.value
 }
 
-// Name returns a new String object that may be used to inspect
-// cookie name.
+// Name returns a new String instance with cookie name.
 //
 // Example:
 //
@@ -74,8 +72,7 @@ func (c *Cookie) Name() *String {
 	return newString(c.chain, c.value.Name)
 }
 
-// Value returns a new String object that may be used to inspect
-// cookie value.
+// Value returns a new String instance with cookie value.
 //
 // Example:
 //
@@ -92,8 +89,7 @@ func (c *Cookie) Value() *String {
 	return newString(c.chain, c.value.Value)
 }
 
-// Domain returns a new String object that may be used to inspect
-// cookie domain.
+// Domain returns a new String instance with cookie domain.
 //
 // Example:
 //
@@ -110,8 +106,7 @@ func (c *Cookie) Domain() *String {
 	return newString(c.chain, c.value.Domain)
 }
 
-// Path returns a new String object that may be used to inspect
-// cookie path.
+// Path returns a new String instance with cookie path.
 //
 // Example:
 //
@@ -128,8 +123,7 @@ func (c *Cookie) Path() *String {
 	return newString(c.chain, c.value.Path)
 }
 
-// Expires returns a new DateTime object that may be used to inspect
-// cookie expiration date.
+// Expires returns a new DateTime instance with cookie expiration date.
 //
 // Example:
 //
@@ -146,13 +140,12 @@ func (c *Cookie) Expires() *DateTime {
 	return newDateTime(c.chain, c.value.Expires)
 }
 
-// MaxAge returns a new Duration object that may be used to inspect
-// cookie Max-age field.
+// MaxAge returns a new Duration instance with cookie Max-Age field.
 //
-// If MaxAge is not set, the returned Duration is unset. Whether a Duration
+// If Max-Age is not set, the returned Duration is unset. Whether a Duration
 // is set or not can be checked using its IsSet and NotSet methods.
 //
-// If MaxAge is zero (which means delete cookie now), the returned Duration
+// If Max-Age is zero (which means delete cookie now), the returned Duration
 // is set and equals to zero.
 //
 // Example:

@@ -12,8 +12,7 @@ type Array struct {
 	value []interface{}
 }
 
-// NewArray returns a new Array given a reporter used to report failures
-// and value to be inspected.
+// NewArray returns a new Array instance.
 //
 // Both reporter and value should not be nil. If value is nil, failure is
 // reported.
@@ -71,7 +70,7 @@ func (a *Array) Schema(schema interface{}) *Array {
 	return a
 }
 
-// Length returns a new Number object that may be used to inspect array length.
+// Length returns a new Number instance with array length.
 //
 // Example:
 //
@@ -88,11 +87,10 @@ func (a *Array) Length() *Number {
 	return newNumber(a.chain, float64(len(a.value)))
 }
 
-// Element returns a new Value object that may be used to inspect array element
-// for given index.
+// Element returns a new Value instance with array element for given index.
 //
 // If index is out of array bounds, Element reports failure and returns empty
-// (but non-nil) value.
+// (but non-nil) instance.
 //
 // Example:
 //
@@ -125,11 +123,10 @@ func (a *Array) Element(index int) *Value {
 	return newValue(a.chain, a.value[index])
 }
 
-// First returns a new Value object that may be used to inspect first element
-// of given array.
+// First returns a new Value instance for the first element of array.
 //
 // If given array is empty, First reports failure and returns empty
-// (but non-nil) value.
+// (but non-nil) instance.
 //
 // Example:
 //
@@ -157,11 +154,10 @@ func (a *Array) First() *Value {
 	return newValue(a.chain, a.value[0])
 }
 
-// Last returns a new Value object that may be used to inspect last element
-// of given array.
+// Last returns a new Value instance for the last element of array.
 //
 // If given array is empty, Last reports failure and returns empty
-// (but non-nil) value.
+// (but non-nil) instance.
 //
 // Example:
 //
@@ -357,7 +353,7 @@ func (a *Array) NotEqual(value interface{}) *Array {
 //	array := NewArray(t, []interface{}{"foo", 123})
 //	array.Elements("foo", 123)
 //
-// This calls are equivalent:
+// These calls are equivalent:
 //
 //	array.Elements("a", "b")
 //	array.Equal([]interface{}{"a", "b"})
@@ -471,7 +467,7 @@ func (a *Array) NotContains(values ...interface{}) *Array {
 //	array := NewArray(t, []interface{}{"foo", 123})
 //	array.ContainsOnly(123, "foo")
 //
-// This calls are equivalent:
+// These calls are equivalent:
 //
 //	array.ContainsOnly("a", "b")
 //	array.ContainsOnly("b", "a")

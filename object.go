@@ -14,8 +14,7 @@ type Object struct {
 	value map[string]interface{}
 }
 
-// NewObject returns a new Object given a reporter used to report failures
-// and value to be inspected.
+// NewObject returns a new Object instance.
 //
 // Both reporter and value should not be nil. If value is nil, failure is
 // reported.
@@ -73,7 +72,7 @@ func (o *Object) Schema(schema interface{}) *Object {
 	return o
 }
 
-// Keys returns a new Array object that may be used to inspect objects keys.
+// Keys returns a new Array instance with object's keys.
 // Keys are sorted.
 //
 // Example:
@@ -100,7 +99,7 @@ func (o *Object) Keys() *Array {
 	return newArray(o.chain, keys)
 }
 
-// Values returns a new Array object that may be used to inspect objects values.
+// Values returns a new Array instance with object's values.
 // Values are sorted by keys.
 //
 // Example:
@@ -132,8 +131,7 @@ func (o *Object) Values() *Array {
 	return newArray(o.chain, values)
 }
 
-// Value returns a new Value object that may be used to inspect single value
-// for given key.
+// Value returns a new Value instance with value for given key.
 //
 // Example:
 //

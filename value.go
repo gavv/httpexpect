@@ -13,8 +13,7 @@ type Value struct {
 	value interface{}
 }
 
-// NewValue returns a new Value given a reporter used to report failures
-// and value to be inspected.
+// NewValue returns a new Value instance.
 //
 // reporter should not be nil, but value may be nil.
 //
