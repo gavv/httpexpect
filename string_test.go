@@ -17,9 +17,9 @@ func TestStringFailed(t *testing.T) {
 	value.Schema("")
 
 	value.Length()
-	value.Boolean()
-	value.Number()
-	value.DateTime()
+	value.AsBoolean()
+	value.AsNumber()
+	value.AsDateTime()
 	value.Empty()
 	value.NotEmpty()
 	value.Equal("")
@@ -55,6 +55,17 @@ func TestStringGetters(t *testing.T) {
 	value.Schema(`{"type": "object"}`)
 	value.chain.assertFailed(t)
 	value.chain.reset()
+}
+
+func TestStringLength(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewString(reporter, "1234567")
+
+	num := value.Length()
+	value.chain.assertOK(t)
+	num.chain.assertOK(t)
+	assert.Equal(t, 7.0, num.Raw())
 }
 
 func TestStringEmpty(t *testing.T) {
@@ -187,124 +198,6 @@ func TestStringContainsFold(t *testing.T) {
 	value.chain.reset()
 }
 
-func TestStringLength(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	value := NewString(reporter, "1234567")
-
-	num := value.Length()
-	value.chain.assertOK(t)
-	num.chain.assertOK(t)
-	assert.Equal(t, 7.0, num.Raw())
-}
-
-func TestStringBoolean(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	trueValues := []string{"true", "True"}
-	falseValues := []string{"false", "False"}
-	badValues := []string{"TRUE", "FALSE", "t", "f", "1", "0", "bad"}
-
-	for _, str := range trueValues {
-		value := NewString(reporter, str)
-
-		b := value.Boolean()
-		b.chain.assertOK(t)
-
-		assert.True(t, b.Raw())
-	}
-
-	for _, str := range falseValues {
-		value := NewString(reporter, str)
-
-		b := value.Boolean()
-		b.chain.assertOK(t)
-
-		assert.False(t, b.Raw())
-	}
-
-	for _, str := range badValues {
-		value := NewString(reporter, str)
-
-		b := value.Boolean()
-		b.chain.assertFailed(t)
-	}
-}
-
-func TestStringNumber(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	t.Run("default_base", func(t *testing.T) {
-		value1 := NewString(reporter, "1234567")
-		num1 := value1.Number()
-		value1.chain.assertOK(t)
-		num1.chain.assertOK(t)
-		assert.Equal(t, float64(1234567), num1.Raw())
-
-		value2 := NewString(reporter, "11.22")
-		num2 := value2.Number()
-		value2.chain.assertOK(t)
-		num2.chain.assertOK(t)
-		assert.Equal(t, float64(11.22), num2.Raw())
-
-		value3 := NewString(reporter, "a1")
-		num3 := value3.Number()
-		value3.chain.assertFailed(t)
-		num3.chain.assertFailed(t)
-		assert.Equal(t, float64(0), num3.Raw())
-	})
-
-	t.Run("base10", func(t *testing.T) {
-		value1 := NewString(reporter, "100")
-		num1 := value1.Number(10)
-		value1.chain.assertOK(t)
-		num1.chain.assertOK(t)
-		assert.Equal(t, float64(100), num1.Raw())
-
-		value2 := NewString(reporter, "11.22")
-		num2 := value2.Number(10)
-		value2.chain.assertOK(t)
-		num2.chain.assertOK(t)
-		assert.Equal(t, float64(11.22), num2.Raw())
-	})
-
-	t.Run("base16", func(t *testing.T) {
-		value1 := NewString(reporter, "100")
-		num1 := value1.Number(16)
-		value1.chain.assertOK(t)
-		num1.chain.assertOK(t)
-		assert.Equal(t, float64(256), num1.Raw())
-
-		value2 := NewString(reporter, "11.22")
-		num2 := value2.Number(16)
-		value2.chain.assertFailed(t)
-		num2.chain.assertFailed(t)
-		assert.Equal(t, float64(0), num2.Raw())
-	})
-}
-
-func TestStringDateTime(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	value1 := NewString(reporter, "Tue, 15 Nov 1994 08:12:31 GMT")
-	dt1 := value1.DateTime()
-	value1.chain.assertOK(t)
-	dt1.chain.assertOK(t)
-	assert.True(t, time.Date(1994, 11, 15, 8, 12, 31, 0, time.UTC).Equal(dt1.Raw()))
-
-	value2 := NewString(reporter, "15 Nov 94 08:12 GMT")
-	dt2 := value2.DateTime(time.RFC822)
-	value2.chain.assertOK(t)
-	dt2.chain.assertOK(t)
-	assert.True(t, time.Date(1994, 11, 15, 8, 12, 0, 0, time.UTC).Equal(dt2.Raw()))
-
-	value3 := NewString(reporter, "bad")
-	dt3 := value3.DateTime()
-	value3.chain.assertFailed(t)
-	dt3.chain.assertFailed(t)
-	assert.True(t, time.Unix(0, 0).Equal(dt3.Raw()))
-}
-
 func TestStringMatchOne(t *testing.T) {
 	reporter := newMockReporter(t)
 
@@ -396,4 +289,111 @@ func TestStringMatchInvalid(t *testing.T) {
 	value.NotMatch(`[`)
 	value.chain.assertFailed(t)
 	value.chain.reset()
+}
+
+func TestStringAsNumber(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	t.Run("default_base", func(t *testing.T) {
+		value1 := NewString(reporter, "1234567")
+		num1 := value1.AsNumber()
+		value1.chain.assertOK(t)
+		num1.chain.assertOK(t)
+		assert.Equal(t, float64(1234567), num1.Raw())
+
+		value2 := NewString(reporter, "11.22")
+		num2 := value2.AsNumber()
+		value2.chain.assertOK(t)
+		num2.chain.assertOK(t)
+		assert.Equal(t, float64(11.22), num2.Raw())
+
+		value3 := NewString(reporter, "a1")
+		num3 := value3.AsNumber()
+		value3.chain.assertFailed(t)
+		num3.chain.assertFailed(t)
+		assert.Equal(t, float64(0), num3.Raw())
+	})
+
+	t.Run("base10", func(t *testing.T) {
+		value1 := NewString(reporter, "100")
+		num1 := value1.AsNumber(10)
+		value1.chain.assertOK(t)
+		num1.chain.assertOK(t)
+		assert.Equal(t, float64(100), num1.Raw())
+
+		value2 := NewString(reporter, "11.22")
+		num2 := value2.AsNumber(10)
+		value2.chain.assertOK(t)
+		num2.chain.assertOK(t)
+		assert.Equal(t, float64(11.22), num2.Raw())
+	})
+
+	t.Run("base16", func(t *testing.T) {
+		value1 := NewString(reporter, "100")
+		num1 := value1.AsNumber(16)
+		value1.chain.assertOK(t)
+		num1.chain.assertOK(t)
+		assert.Equal(t, float64(256), num1.Raw())
+
+		value2 := NewString(reporter, "11.22")
+		num2 := value2.AsNumber(16)
+		value2.chain.assertFailed(t)
+		num2.chain.assertFailed(t)
+		assert.Equal(t, float64(0), num2.Raw())
+	})
+}
+
+func TestStringAsBoolean(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	trueValues := []string{"true", "True"}
+	falseValues := []string{"false", "False"}
+	badValues := []string{"TRUE", "FALSE", "t", "f", "1", "0", "bad"}
+
+	for _, str := range trueValues {
+		value := NewString(reporter, str)
+
+		b := value.AsBoolean()
+		b.chain.assertOK(t)
+
+		assert.True(t, b.Raw())
+	}
+
+	for _, str := range falseValues {
+		value := NewString(reporter, str)
+
+		b := value.AsBoolean()
+		b.chain.assertOK(t)
+
+		assert.False(t, b.Raw())
+	}
+
+	for _, str := range badValues {
+		value := NewString(reporter, str)
+
+		b := value.AsBoolean()
+		b.chain.assertFailed(t)
+	}
+}
+
+func TestStringAsDateTime(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value1 := NewString(reporter, "Tue, 15 Nov 1994 08:12:31 GMT")
+	dt1 := value1.AsDateTime()
+	value1.chain.assertOK(t)
+	dt1.chain.assertOK(t)
+	assert.True(t, time.Date(1994, 11, 15, 8, 12, 31, 0, time.UTC).Equal(dt1.Raw()))
+
+	value2 := NewString(reporter, "15 Nov 94 08:12 GMT")
+	dt2 := value2.AsDateTime(time.RFC822)
+	value2.chain.assertOK(t)
+	dt2.chain.assertOK(t)
+	assert.True(t, time.Date(1994, 11, 15, 8, 12, 0, 0, time.UTC).Equal(dt2.Raw()))
+
+	value3 := NewString(reporter, "bad")
+	dt3 := value3.AsDateTime()
+	value3.chain.assertFailed(t)
+	dt3.chain.assertFailed(t)
+	assert.True(t, time.Unix(0, 0).Equal(dt3.Raw()))
 }

@@ -77,163 +77,6 @@ func (s *String) Length() *Number {
 	return newNumber(s.chain, float64(len(s.value)))
 }
 
-// Number parses float from string and returns a new Number instance
-// with result.
-//
-// If base is 10 or omitted, uses strconv.ParseFloat.
-// Otherwise, uses strconv.ParseInt or strconv.ParseUint with given base.
-//
-// Example:
-//
-//	str := NewString(t, "100")
-//	str.Number().Equal(100)
-//
-// Specifying base:
-//
-//	str.Number(10).Equal(100)
-//	str.Number(16).Equal(256)
-func (s *String) Number(base ...int) *Number {
-	s.chain.enter("Number()")
-	defer s.chain.leave()
-
-	if s.chain.failed() {
-		return newNumber(s.chain, 0)
-	}
-
-	var num float64
-	var err error
-
-	if len(base) == 0 || base[0] == 10 {
-		num, err = strconv.ParseFloat(s.value, 64)
-	} else {
-		var inum int64
-
-		inum, err = strconv.ParseInt(s.value, base[0], 64)
-		num = float64(inum)
-
-		if err == strconv.ErrRange {
-			var unum uint64
-
-			unum, err = strconv.ParseUint(s.value, base[0], 64)
-			num = float64(unum)
-		}
-	}
-
-	if err != nil {
-		if len(base) == 0 || base[0] == 10 {
-			s.chain.fail(AssertionFailure{
-				Type:   AssertValid,
-				Actual: &AssertionValue{s.value},
-				Errors: []error{
-					errors.New("expected: string can be parsed to float"),
-					err,
-				},
-			})
-		} else {
-			s.chain.fail(AssertionFailure{
-				Type:   AssertValid,
-				Actual: &AssertionValue{s.value},
-				Errors: []error{
-					fmt.Errorf(
-						"expected: string can be parsed to integer with base %d",
-						base[0]),
-					err,
-				},
-			})
-		}
-		return newNumber(s.chain, 0)
-	}
-
-	return newNumber(s.chain, num)
-}
-
-// Boolean parses true/false value string and returns a new Boolean instance
-// with result.
-//
-// Accepts string values "true", "True", "false", "False".
-//
-// Example:
-//
-//	str := NewString(t, "true")
-//	str.Boolean().True()
-func (s *String) Boolean() *Boolean {
-	s.chain.enter("Boolean()")
-	defer s.chain.leave()
-
-	if s.chain.failed() {
-		return newBoolean(s.chain, false)
-	}
-
-	switch s.value {
-	case "true", "True":
-		return newBoolean(s.chain, true)
-
-	case "false", "False":
-		return newBoolean(s.chain, false)
-	}
-
-	s.chain.fail(AssertionFailure{
-		Type:   AssertValid,
-		Actual: &AssertionValue{s.value},
-		Errors: []error{
-			errors.New("expected: string can be parsed to boolean"),
-		},
-	})
-
-	return newBoolean(s.chain, false)
-}
-
-// DateTime parses date/time from string and returns a new DateTime instance
-// with result.
-//
-// If layout is given, DateTime() uses time.Parse() with given layout.
-// Otherwise, it uses http.ParseTime(). If pasing error occurred,
-// DateTime reports failure and returns empty (but non-nil) instance.
-//
-// Example:
-//
-//	str := NewString(t, "Tue, 15 Nov 1994 08:12:31 GMT")
-//	str.DateTime().Lt(time.Now())
-//
-//	str := NewString(t, "15 Nov 94 08:12 GMT")
-//	str.DateTime(time.RFC822).Lt(time.Now())
-func (s *String) DateTime(layout ...string) *DateTime {
-	if len(layout) != 0 {
-		s.chain.enter("DateTime(%q)", layout[0])
-	} else {
-		s.chain.enter("DateTime()")
-	}
-	defer s.chain.leave()
-
-	if s.chain.failed() {
-		return newDateTime(s.chain, time.Unix(0, 0))
-	}
-
-	var (
-		tm  time.Time
-		err error
-	)
-	if len(layout) != 0 {
-		tm, err = time.Parse(layout[0], s.value)
-	} else {
-		tm, err = http.ParseTime(s.value)
-	}
-
-	if err != nil {
-		s.chain.fail(AssertionFailure{
-			Type:   AssertValid,
-			Actual: &AssertionValue{s.value},
-			Errors: []error{
-				errors.New("expected: string can be parsed to datetime"),
-				err,
-			},
-		})
-		return newDateTime(s.chain, time.Unix(0, 0))
-	}
-
-	return newDateTime(s.chain, tm)
-}
-
 // Empty succeeds if string is empty.
 //
 // Example:
@@ -674,4 +517,171 @@ func (s *String) MatchAll(re string) []Match {
 	}
 
 	return ret
+}
+
+// AsNumber parses float from string and returns a new Number instance
+// with result.
+//
+// If base is 10 or omitted, uses strconv.ParseFloat.
+// Otherwise, uses strconv.ParseInt or strconv.ParseUint with given base.
+//
+// Example:
+//
+//	str := NewString(t, "100")
+//	str.AsNumber().Equal(100)
+//
+// Specifying base:
+//
+//	str.AsNumber(10).Equal(100)
+//	str.AsNumber(16).Equal(256)
+func (s *String) AsNumber(base ...int) *Number {
+	s.chain.enter("AsNumber()")
+	defer s.chain.leave()
+
+	if s.chain.failed() {
+		return newNumber(s.chain, 0)
+	}
+
+	var num float64
+	var err error
+
+	if len(base) == 0 || base[0] == 10 {
+		num, err = strconv.ParseFloat(s.value, 64)
+	} else {
+		var inum int64
+
+		inum, err = strconv.ParseInt(s.value, base[0], 64)
+		num = float64(inum)
+
+		if err == strconv.ErrRange {
+			var unum uint64
+
+			unum, err = strconv.ParseUint(s.value, base[0], 64)
+			num = float64(unum)
+		}
+	}
+
+	if err != nil {
+		if len(base) == 0 || base[0] == 10 {
+			s.chain.fail(AssertionFailure{
+				Type:   AssertValid,
+				Actual: &AssertionValue{s.value},
+				Errors: []error{
+					errors.New("expected: string can be parsed to float"),
+					err,
+				},
+			})
+		} else {
+			s.chain.fail(AssertionFailure{
+				Type:   AssertValid,
+				Actual: &AssertionValue{s.value},
+				Errors: []error{
+					fmt.Errorf(
+						"expected: string can be parsed to integer with base %d",
+						base[0]),
+					err,
+				},
+			})
+		}
+		return newNumber(s.chain, 0)
+	}
+
+	return newNumber(s.chain, num)
+}
+
+// AsBoolean parses true/false value string and returns a new Boolean instance
+// with result.
+//
+// Accepts string values "true", "True", "false", "False".
+//
+// Example:
+//
+//	str := NewString(t, "true")
+//	str.AsBoolean().True()
+func (s *String) AsBoolean() *Boolean {
+	s.chain.enter("AsBoolean()")
+	defer s.chain.leave()
+
+	if s.chain.failed() {
+		return newBoolean(s.chain, false)
+	}
+
+	switch s.value {
+	case "true", "True":
+		return newBoolean(s.chain, true)
+
+	case "false", "False":
+		return newBoolean(s.chain, false)
+	}
+
+	s.chain.fail(AssertionFailure{
+		Type:   AssertValid,
+		Actual: &AssertionValue{s.value},
+		Errors: []error{
+			errors.New("expected: string can be parsed to boolean"),
+		},
+	})
+
+	return newBoolean(s.chain, false)
+}
+
+// AsDateTime parses date/time from string and returns a new DateTime instance
+// with result.
+//
+// If layout is given, AsDateTime() uses time.Parse() with given layout.
+// Otherwise, it uses http.ParseTime(). If pasing error occurred,
+// AsDateTime reports failure and returns empty (but non-nil) instance.
+//
+// Example:
+//
+//	str := NewString(t, "Tue, 15 Nov 1994 08:12:31 GMT")
+//	str.AsDateTime().Lt(time.Now())
+//
+//	str := NewString(t, "15 Nov 94 08:12 GMT")
+//	str.AsDateTime(time.RFC822).Lt(time.Now())
+func (s *String) AsDateTime(layout ...string) *DateTime {
+	if len(layout) != 0 {
+		s.chain.enter("AsDateTime(%q)", layout[0])
+	} else {
+		s.chain.enter("AsDateTime()")
+	}
+	defer s.chain.leave()
+
+	if s.chain.failed() {
+		return newDateTime(s.chain, time.Unix(0, 0))
+	}
+
+	var (
+		tm  time.Time
+		err error
+	)
+	if len(layout) != 0 {
+		tm, err = time.Parse(layout[0], s.value)
+	} else {
+		tm, err = http.ParseTime(s.value)
+	}
+
+	if err != nil {
+		s.chain.fail(AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{s.value},
+			Errors: []error{
+				errors.New("expected: string can be parsed to datetime"),
+				err,
+			},
+		})
+		return newDateTime(s.chain, time.Unix(0, 0))
+	}
+
+	return newDateTime(s.chain, tm)
+}
+
+// Deprecated: use AsNumber instead.
+func (s *String) Number() *Number {
+	return s.AsNumber()
+}
+
+// Deprecated: use AsDateTime instead.
+func (s *String) DateTime(layout ...string) *DateTime {
+	return s.AsDateTime(layout...)
 }

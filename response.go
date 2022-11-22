@@ -294,7 +294,7 @@ func (r *Response) Headers() *Object {
 //
 //	resp := NewResponse(t, response)
 //	resp.Header("Content-Type").Equal("application-json")
-//	resp.Header("Date").DateTime().Le(time.Now())
+//	resp.Header("Date").AsDateTime().Le(time.Now())
 func (r *Response) Header(header string) *String {
 	r.chain.enter("Header(%q)", header)
 	defer r.chain.leave()

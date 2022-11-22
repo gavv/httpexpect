@@ -265,7 +265,7 @@ t := time.Now()
 
 e.GET("/users/john").
 	Expect().
-	Status(http.StatusOK).Header("Date").DateTime().InRange(t, time.Now())
+	Status(http.StatusOK).Header("Date").AsDateTime().InRange(t, time.Now())
 ```
 
 ##### Cookies
