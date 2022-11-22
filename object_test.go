@@ -23,10 +23,10 @@ func TestObjectFailed(t *testing.T) {
 		value.NotEqual(nil)
 		value.ContainsKey("foo")
 		value.NotContainsKey("foo")
-		value.ContainsMap(nil)
-		value.NotContainsMap(nil)
+		value.ContainsSubset(nil)
+		value.NotContainsSubset(nil)
 		value.ValueEqual("foo", nil)
-		value.ValueNotEqual("foo", nil)
+		value.NotValueEqual("foo", nil)
 	}
 
 	t.Run("failed_chain", func(t *testing.T) {
@@ -297,7 +297,7 @@ func TestObjectContainsKey(t *testing.T) {
 	value.chain.reset()
 }
 
-func TestObjectContainsMapSuccess(t *testing.T) {
+func TestObjectContainsSubsetSuccess(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewObject(reporter, map[string]interface{}{
@@ -316,11 +316,11 @@ func TestObjectContainsMapSuccess(t *testing.T) {
 		"bar": []interface{}{"456", 789},
 	}
 
-	value.ContainsMap(submap1)
+	value.ContainsSubset(submap1)
 	value.chain.assertOK(t)
 	value.chain.reset()
 
-	value.NotContainsMap(submap1)
+	value.NotContainsSubset(submap1)
 	value.chain.assertFailed(t)
 	value.chain.reset()
 
@@ -333,16 +333,16 @@ func TestObjectContainsMapSuccess(t *testing.T) {
 		},
 	}
 
-	value.ContainsMap(submap2)
+	value.ContainsSubset(submap2)
 	value.chain.assertOK(t)
 	value.chain.reset()
 
-	value.NotContainsMap(submap2)
+	value.NotContainsSubset(submap2)
 	value.chain.assertFailed(t)
 	value.chain.reset()
 }
 
-func TestObjectContainsMapFailed(t *testing.T) {
+func TestObjectContainsSubsetFailed(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewObject(reporter, map[string]interface{}{
@@ -361,11 +361,11 @@ func TestObjectContainsMapFailed(t *testing.T) {
 		"qux": 456,
 	}
 
-	value.ContainsMap(submap1)
+	value.ContainsSubset(submap1)
 	value.chain.assertFailed(t)
 	value.chain.reset()
 
-	value.NotContainsMap(submap1)
+	value.NotContainsSubset(submap1)
 	value.chain.assertOK(t)
 	value.chain.reset()
 
@@ -374,11 +374,11 @@ func TestObjectContainsMapFailed(t *testing.T) {
 		"bar": []interface{}{"456", "789"},
 	}
 
-	value.ContainsMap(submap2)
+	value.ContainsSubset(submap2)
 	value.chain.assertFailed(t)
 	value.chain.reset()
 
-	value.NotContainsMap(submap2)
+	value.NotContainsSubset(submap2)
 	value.chain.assertOK(t)
 	value.chain.reset()
 
@@ -391,24 +391,24 @@ func TestObjectContainsMapFailed(t *testing.T) {
 		},
 	}
 
-	value.ContainsMap(submap3)
+	value.ContainsSubset(submap3)
 	value.chain.assertFailed(t)
 	value.chain.reset()
 
-	value.NotContainsMap(submap3)
+	value.NotContainsSubset(submap3)
 	value.chain.assertOK(t)
 	value.chain.reset()
 
-	value.ContainsMap(nil)
+	value.ContainsSubset(nil)
 	value.chain.assertFailed(t)
 	value.chain.reset()
 
-	value.NotContainsMap(nil)
+	value.NotContainsSubset(nil)
 	value.chain.assertFailed(t)
 	value.chain.reset()
 }
 
-func TestObjectContainsMapStruct(t *testing.T) {
+func TestObjectContainsSubsetStruct(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewObject(reporter, map[string]interface{}{
@@ -446,19 +446,19 @@ func TestObjectContainsMapStruct(t *testing.T) {
 		},
 	}
 
-	value.ContainsMap(submap)
+	value.ContainsSubset(submap)
 	value.chain.assertOK(t)
 	value.chain.reset()
 
-	value.NotContainsMap(submap)
+	value.NotContainsSubset(submap)
 	value.chain.assertFailed(t)
 	value.chain.reset()
 
-	value.ContainsMap(S{})
+	value.ContainsSubset(S{})
 	value.chain.assertFailed(t)
 	value.chain.reset()
 
-	value.NotContainsMap(S{})
+	value.NotContainsSubset(S{})
 	value.chain.assertOK(t)
 	value.chain.reset()
 }
@@ -478,7 +478,7 @@ func TestObjectValueEqual(t *testing.T) {
 	value.chain.assertOK(t)
 	value.chain.reset()
 
-	value.ValueNotEqual("foo", 123)
+	value.NotValueEqual("foo", 123)
 	value.chain.assertFailed(t)
 	value.chain.reset()
 
@@ -486,7 +486,7 @@ func TestObjectValueEqual(t *testing.T) {
 	value.chain.assertOK(t)
 	value.chain.reset()
 
-	value.ValueNotEqual("bar", []interface{}{"456", 789})
+	value.NotValueEqual("bar", []interface{}{"456", 789})
 	value.chain.assertFailed(t)
 	value.chain.reset()
 
@@ -494,7 +494,7 @@ func TestObjectValueEqual(t *testing.T) {
 	value.chain.assertOK(t)
 	value.chain.reset()
 
-	value.ValueNotEqual("baz", map[string]interface{}{"a": "b"})
+	value.NotValueEqual("baz", map[string]interface{}{"a": "b"})
 	value.chain.assertFailed(t)
 	value.chain.reset()
 
@@ -502,7 +502,7 @@ func TestObjectValueEqual(t *testing.T) {
 	value.chain.assertFailed(t)
 	value.chain.reset()
 
-	value.ValueNotEqual("baz", func() {})
+	value.NotValueEqual("baz", func() {})
 	value.chain.assertFailed(t)
 	value.chain.reset()
 
@@ -510,7 +510,7 @@ func TestObjectValueEqual(t *testing.T) {
 	value.chain.assertFailed(t)
 	value.chain.reset()
 
-	value.ValueNotEqual("BAZ", 777)
+	value.NotValueEqual("BAZ", 777)
 	value.chain.assertFailed(t)
 	value.chain.reset()
 }
@@ -551,7 +551,7 @@ func TestObjectValueEqualStruct(t *testing.T) {
 	value.chain.assertOK(t)
 	value.chain.reset()
 
-	value.ValueNotEqual("baz", baz)
+	value.NotValueEqual("baz", baz)
 	value.chain.assertFailed(t)
 	value.chain.reset()
 
@@ -559,7 +559,7 @@ func TestObjectValueEqualStruct(t *testing.T) {
 	value.chain.assertFailed(t)
 	value.chain.reset()
 
-	value.ValueNotEqual("baz", Baz{})
+	value.NotValueEqual("baz", Baz{})
 	value.chain.assertOK(t)
 	value.chain.reset()
 }
@@ -607,7 +607,7 @@ func TestObjectConvertEqual(t *testing.T) {
 	value.chain.reset()
 }
 
-func TestObjectConvertContainsMap(t *testing.T) {
+func TestObjectConvertContainsSubset(t *testing.T) {
 	type (
 		myArray []interface{}
 		myMap   map[string]interface{}
@@ -629,11 +629,11 @@ func TestObjectConvertContainsMap(t *testing.T) {
 		"bar": myArray{"456", myInt(789)},
 	}
 
-	value.ContainsMap(submap)
+	value.ContainsSubset(submap)
 	value.chain.assertOK(t)
 	value.chain.reset()
 
-	value.NotContainsMap(submap)
+	value.NotContainsSubset(submap)
 	value.chain.assertFailed(t)
 	value.chain.reset()
 }
@@ -659,7 +659,7 @@ func TestObjectConvertValueEqual(t *testing.T) {
 	value.chain.assertOK(t)
 	value.chain.reset()
 
-	value.ValueNotEqual("bar", myArray{"456", myInt(789)})
+	value.NotValueEqual("bar", myArray{"456", myInt(789)})
 	value.chain.assertFailed(t)
 	value.chain.reset()
 
@@ -667,7 +667,7 @@ func TestObjectConvertValueEqual(t *testing.T) {
 	value.chain.assertOK(t)
 	value.chain.reset()
 
-	value.ValueNotEqual("baz", myMap{"a": "b"})
+	value.NotValueEqual("baz", myMap{"a": "b"})
 	value.chain.assertFailed(t)
 	value.chain.reset()
 }
