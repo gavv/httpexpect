@@ -21,6 +21,7 @@ func TestDurationFailed(t *testing.T) {
 	value.Lt(tm)
 	value.Le(tm)
 	value.InRange(tm, tm)
+	value.NotInRange(tm, tm)
 }
 
 func TestDurationSet(t *testing.T) {
@@ -137,23 +138,47 @@ func TestDurationInRange(t *testing.T) {
 	value.chain.assertOK(t)
 	value.chain.reset()
 
+	value.NotInRange(time.Second, time.Second)
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
 	value.InRange(time.Second-1, time.Second)
 	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.NotInRange(time.Second-1, time.Second)
+	value.chain.assertFailed(t)
 	value.chain.reset()
 
 	value.InRange(time.Second, time.Second+1)
 	value.chain.assertOK(t)
 	value.chain.reset()
 
+	value.NotInRange(time.Second, time.Second+1)
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
 	value.InRange(time.Second+1, time.Second+2)
 	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.NotInRange(time.Second+1, time.Second+2)
+	value.chain.assertOK(t)
 	value.chain.reset()
 
 	value.InRange(time.Second-2, time.Second-1)
 	value.chain.assertFailed(t)
 	value.chain.reset()
 
+	value.NotInRange(time.Second-2, time.Second-1)
+	value.chain.assertOK(t)
+	value.chain.reset()
+
 	value.InRange(time.Second+1, time.Second-1)
 	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.NotInRange(time.Second+1, time.Second-1)
+	value.chain.assertOK(t)
 	value.chain.reset()
 }

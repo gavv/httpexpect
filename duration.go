@@ -363,3 +363,43 @@ func (d *Duration) InRange(min, max time.Duration) *Duration {
 
 	return d
 }
+
+// NotInRange succeeds if Duration is not within given range [min; max].
+//
+// Example:
+//
+//	d := NewDuration(t, time.Minute*10)
+//	d.NotInRange(time.Minute, time.Minute-time.Nanosecond)
+//	d.NotInRange(time.Minute+time.Nanosecond, time.Minute*10)
+func (d *Duration) NotInRange(min, max time.Duration) *Duration {
+	d.chain.enter("NotInRange()")
+	defer d.chain.leave()
+
+	if d.chain.failed() {
+		return d
+	}
+
+	if d.value == nil {
+		d.chain.fail(AssertionFailure{
+			Type:   AssertNotNil,
+			Actual: &AssertionValue{d.value},
+			Errors: []error{
+				errors.New("expected: duration is present"),
+			},
+		})
+		return d
+	}
+
+	if *d.value >= min && *d.value <= max {
+		d.chain.fail(AssertionFailure{
+			Type:     AssertNotInRange,
+			Actual:   &AssertionValue{d.value},
+			Expected: &AssertionValue{AssertionRange{min, max}},
+			Errors: []error{
+				errors.New("expected: duration is not within given range"),
+			},
+		})
+	}
+
+	return d
+}

@@ -409,3 +409,45 @@ func (n *Number) InRange(min, max interface{}) *Number {
 
 	return n
 }
+
+// NotInRange succeeds if number is not within given range [min; max].
+//
+// min and max should have numeric type convertible to float64. Before comparison,
+// they are converted to float64.
+//
+// Example:
+//
+//	number := NewNumber(t, 100)
+//	number.NotInRange(0, 99)
+//	number.NotInRange(101, 200)
+func (n *Number) NotInRange(min, max interface{}) *Number {
+	n.chain.enter("NotInRange()")
+	defer n.chain.leave()
+
+	if n.chain.failed() {
+		return n
+	}
+
+	a, ok := canonNumber(n.chain, min)
+	if !ok {
+		return n
+	}
+
+	b, ok := canonNumber(n.chain, max)
+	if !ok {
+		return n
+	}
+
+	if n.value >= a && n.value <= b {
+		n.chain.fail(AssertionFailure{
+			Type:     AssertNotInRange,
+			Actual:   &AssertionValue{n.value},
+			Expected: &AssertionValue{AssertionRange{a, b}},
+			Errors: []error{
+				errors.New("expected: number is not within given range"),
+			},
+		})
+	}
+
+	return n
+}

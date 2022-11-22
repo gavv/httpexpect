@@ -25,6 +25,7 @@ func TestNumberFailed(t *testing.T) {
 	value.Lt(0)
 	value.Le(0)
 	value.InRange(0, 0)
+	value.NotInRange(0, 0)
 }
 
 func TestNumberGetters(t *testing.T) {
@@ -208,24 +209,48 @@ func TestNumberInRange(t *testing.T) {
 	value.chain.assertOK(t)
 	value.chain.reset()
 
+	value.NotInRange(1234, 1234)
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
 	value.InRange(1234-1, 1234)
 	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.NotInRange(1234-1, 1234)
+	value.chain.assertFailed(t)
 	value.chain.reset()
 
 	value.InRange(1234, 1234+1)
 	value.chain.assertOK(t)
 	value.chain.reset()
 
+	value.NotInRange(1234, 1234+1)
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
 	value.InRange(1234+1, 1234+2)
 	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.NotInRange(1234+1, 1234+2)
+	value.chain.assertOK(t)
 	value.chain.reset()
 
 	value.InRange(1234-2, 1234-1)
 	value.chain.assertFailed(t)
 	value.chain.reset()
 
+	value.NotInRange(1234-2, 1234-1)
+	value.chain.assertOK(t)
+	value.chain.reset()
+
 	value.InRange(1234+1, 1234-1)
 	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.NotInRange(1234+1, 1234-1)
+	value.chain.assertOK(t)
 	value.chain.reset()
 }
 

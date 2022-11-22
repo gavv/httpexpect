@@ -238,3 +238,33 @@ func (dt *DateTime) InRange(min, max time.Time) *DateTime {
 
 	return dt
 }
+
+// NotInRange succeeds if DateTime is not within given range [min; max].
+//
+// Example:
+//
+//	dt := NewDateTime(t, time.Unix(0, 10))
+//	dt.NotInRange(time.Unix(0, 1), time.Unix(0, 9))
+//	dt.NotInRange(time.Unix(0, 11), time.Unix(0, 20))
+func (dt *DateTime) NotInRange(min, max time.Time) *DateTime {
+	dt.chain.enter("NotInRange()")
+	defer dt.chain.leave()
+
+	if dt.chain.failed() {
+		return dt
+	}
+
+	if (dt.value.After(min) || dt.value.Equal(min)) &&
+		(dt.value.Before(max) || dt.value.Equal(max)) {
+		dt.chain.fail(AssertionFailure{
+			Type:     AssertNotInRange,
+			Actual:   &AssertionValue{dt.value},
+			Expected: &AssertionValue{AssertionRange{min, max}},
+			Errors: []error{
+				errors.New("expected: time point is not within given range"),
+			},
+		})
+	}
+
+	return dt
+}

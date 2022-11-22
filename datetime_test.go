@@ -24,6 +24,7 @@ func TestDateTimeFailed(t *testing.T) {
 	value.Lt(tm)
 	value.Le(tm)
 	value.InRange(tm, tm)
+	value.NotInRange(tm, tm)
 }
 
 func TestDateTimeEqual(t *testing.T) {
@@ -111,23 +112,47 @@ func TestDateTimeInRange(t *testing.T) {
 	value.chain.assertOK(t)
 	value.chain.reset()
 
+	value.NotInRange(time.Unix(0, 1234), time.Unix(0, 1234))
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
 	value.InRange(time.Unix(0, 1234-1), time.Unix(0, 1234))
 	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.NotInRange(time.Unix(0, 1234-1), time.Unix(0, 1234))
+	value.chain.assertFailed(t)
 	value.chain.reset()
 
 	value.InRange(time.Unix(0, 1234), time.Unix(0, 1234+1))
 	value.chain.assertOK(t)
 	value.chain.reset()
 
+	value.NotInRange(time.Unix(0, 1234), time.Unix(0, 1234+1))
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
 	value.InRange(time.Unix(0, 1234+1), time.Unix(0, 1234+2))
 	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.NotInRange(time.Unix(0, 1234+1), time.Unix(0, 1234+2))
+	value.chain.assertOK(t)
 	value.chain.reset()
 
 	value.InRange(time.Unix(0, 1234-2), time.Unix(0, 1234-1))
 	value.chain.assertFailed(t)
 	value.chain.reset()
 
+	value.NotInRange(time.Unix(0, 1234-2), time.Unix(0, 1234-1))
+	value.chain.assertOK(t)
+	value.chain.reset()
+
 	value.InRange(time.Unix(0, 1234+1), time.Unix(0, 1234-1))
 	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.NotInRange(time.Unix(0, 1234+1), time.Unix(0, 1234-1))
+	value.chain.assertOK(t)
 	value.chain.reset()
 }
