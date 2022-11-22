@@ -2,6 +2,7 @@ package httpexpect
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 )
 
@@ -343,10 +344,149 @@ func (a *Array) NotEqual(value interface{}) *Array {
 	return a
 }
 
+// EqualUnordered succeeds if array is equal to another array, ignoring element
+// order. Before comparison, both arrays are converted to canonical form.
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{"foo", 123})
+//	array.EqualUnordered([]interface{}{123, "foo"})
+func (a *Array) EqualUnordered(value interface{}) *Array {
+	a.chain.enter("EqualUnordered()")
+	defer a.chain.leave()
+
+	if a.chain.failed() {
+		return a
+	}
+
+	expected, ok := canonArray(a.chain, value)
+	if !ok {
+		return a
+	}
+
+	for _, element := range expected {
+		expectedCount := countElement(expected, element)
+		actualCount := countElement(a.value, element)
+
+		if actualCount != expectedCount {
+			if expectedCount == 1 && actualCount == 0 {
+				a.chain.fail(AssertionFailure{
+					Type:     AssertContainsElement,
+					Actual:   &AssertionValue{a.value},
+					Expected: &AssertionValue{element},
+					Errors: []error{
+						errors.New("expected: array contains element"),
+					},
+				})
+			} else {
+				a.chain.fail(AssertionFailure{
+					Type:     AssertContainsElement,
+					Actual:   &AssertionValue{a.value},
+					Expected: &AssertionValue{element},
+					Errors: []error{
+						fmt.Errorf(
+							"expected: element occurs %d times, but it occurs %d times",
+							expectedCount,
+							actualCount),
+					},
+				})
+			}
+			return a
+		}
+	}
+
+	for _, element := range a.value {
+		expectedCount := countElement(expected, element)
+		actualCount := countElement(a.value, element)
+
+		if actualCount != expectedCount {
+			if expectedCount == 0 && actualCount == 1 {
+				a.chain.fail(AssertionFailure{
+					Type:     AssertNotContainsElement,
+					Actual:   &AssertionValue{a.value},
+					Expected: &AssertionValue{element},
+					Errors: []error{
+						errors.New("expected: array does not contain element"),
+					},
+				})
+			} else {
+				a.chain.fail(AssertionFailure{
+					Type:     AssertContainsElement,
+					Actual:   &AssertionValue{a.value},
+					Expected: &AssertionValue{element},
+					Errors: []error{
+						fmt.Errorf(
+							"expected: element occurs %d times, but it occurs %d times",
+							expectedCount,
+							actualCount),
+					},
+				})
+			}
+			return a
+		}
+	}
+
+	return a
+}
+
+// NotEqualUnordered succeeds if array is not equal to another array, ignoring
+// element order. Before comparison, both arrays are converted to canonical form.
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{"foo", 123})
+//	array.NotEqualUnordered([]interface{}{123, "foo", "bar"})
+func (a *Array) NotEqualUnordered(value interface{}) *Array {
+	a.chain.enter("NotEqualUnordered()")
+	defer a.chain.leave()
+
+	if a.chain.failed() {
+		return a
+	}
+
+	expected, ok := canonArray(a.chain, value)
+	if !ok {
+		return a
+	}
+
+	different := false
+
+	for _, element := range expected {
+		expectedCount := countElement(expected, element)
+		actualCount := countElement(a.value, element)
+
+		if actualCount != expectedCount {
+			different = true
+			break
+		}
+	}
+
+	for _, element := range a.value {
+		expectedCount := countElement(expected, element)
+		actualCount := countElement(a.value, element)
+
+		if actualCount != expectedCount {
+			different = true
+			break
+		}
+	}
+
+	if !different {
+		a.chain.fail(AssertionFailure{
+			Type:     AssertNotEqual,
+			Actual:   &AssertionValue{a.value},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				errors.New("expected: arrays are non-equal (ignoring order)"),
+			},
+		})
+	}
+
+	return a
+}
+
 // Elements succeeds if array contains all given elements, in given order, and only
 // them. Before comparison, array and all elements are converted to canonical form.
-//
-// For partial or unordered comparison, see Contains and ContainsOnly.
 //
 // Example:
 //
@@ -384,6 +524,46 @@ func (a *Array) Elements(values ...interface{}) *Array {
 	return a
 }
 
+// NotElements is oppisite to Elements.
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{"foo", 123})
+//	array.NotElements("foo")
+//	array.NotElements("foo", 123, 456)
+//	array.NotElements(123, "foo")
+//
+// These calls are equivalent:
+//
+//	array.NotElements("a", "b")
+//	array.NotEqual([]interface{}{"a", "b"})
+func (a *Array) NotElements(values ...interface{}) *Array {
+	a.chain.enter("Elements()")
+	defer a.chain.leave()
+
+	if a.chain.failed() {
+		return a
+	}
+
+	expected, ok := canonArray(a.chain, values)
+	if !ok {
+		return a
+	}
+
+	if reflect.DeepEqual(expected, a.value) {
+		a.chain.fail(AssertionFailure{
+			Type:     AssertNotEqual,
+			Actual:   &AssertionValue{a.value},
+			Expected: &AssertionValue{expected},
+			Errors: []error{
+				errors.New("expected: arrays are non-equal"),
+			},
+		})
+	}
+
+	return a
+}
+
 // Contains succeeds if array contains all given elements (in any order).
 // Before comparison, array and all elements are converted to canonical form.
 //
@@ -405,7 +585,7 @@ func (a *Array) Contains(values ...interface{}) *Array {
 	}
 
 	for _, expected := range elements {
-		if !a.containsElement(expected) {
+		if !(countElement(a.value, expected) != 0) {
 			a.chain.fail(AssertionFailure{
 				Type:     AssertContainsElement,
 				Actual:   &AssertionValue{a.value},
@@ -443,7 +623,7 @@ func (a *Array) NotContains(values ...interface{}) *Array {
 	}
 
 	for _, expected := range elements {
-		if a.containsElement(expected) {
+		if !(countElement(a.value, expected) == 0) {
 			a.chain.fail(AssertionFailure{
 				Type:     AssertNotContainsElement,
 				Actual:   &AssertionValue{a.value},
@@ -460,11 +640,12 @@ func (a *Array) NotContains(values ...interface{}) *Array {
 }
 
 // ContainsOnly succeeds if array contains all given elements, in any order, and only
-// them. Before comparison, array and all elements are converted to canonical form.
+// them, ignoring duplicates. Before comparison, array and all elements are converted
+// to canonical form.
 //
 // Example:
 //
-//	array := NewArray(t, []interface{}{"foo", 123})
+//	array := NewArray(t, []interface{}{"foo", 123, 123})
 //	array.ContainsOnly(123, "foo")
 //
 // These calls are equivalent:
@@ -484,40 +665,98 @@ func (a *Array) ContainsOnly(values ...interface{}) *Array {
 		return a
 	}
 
-	if len(elements) != len(a.value) {
-		a.chain.fail(AssertionFailure{
-			Type:     AssertEqual,
-			Actual:   &AssertionValue{len(a.value)},
-			Expected: &AssertionValue{len(elements)},
-			Errors: []error{
-				errors.New("expected: array length is equal to number of elements"),
-			},
-		})
-		return a
-	}
-
-	for _, expected := range elements {
-		if !a.containsElement(expected) {
+	for _, element := range elements {
+		if countElement(a.value, element) == 0 {
 			a.chain.fail(AssertionFailure{
 				Type:     AssertContainsElement,
 				Actual:   &AssertionValue{a.value},
-				Expected: &AssertionValue{expected},
+				Expected: &AssertionValue{element},
 				Errors: []error{
 					errors.New("expected: array contains element"),
 				},
 			})
-			break
+			return a
+		}
+	}
+
+	for _, element := range a.value {
+		if countElement(elements, element) == 0 {
+			a.chain.fail(AssertionFailure{
+				Type:     AssertNotContainsElement,
+				Actual:   &AssertionValue{a.value},
+				Expected: &AssertionValue{element},
+				Errors: []error{
+					errors.New("expected: array does not contain element"),
+				},
+			})
+			return a
 		}
 	}
 
 	return a
 }
 
-func (a *Array) containsElement(expected interface{}) bool {
-	for _, e := range a.value {
-		if reflect.DeepEqual(expected, e) {
-			return true
+// NotContainsOnly is opposite to ContainsOnly.
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{"foo", 123})
+//	array.NotContainsOnly(123)
+//	array.NotContainsOnly(123, "foo", "bar")
+//
+// These calls are equivalent:
+//
+//	array.NotContainsOnly("a", "b")
+//	array.NotContainsOnly("b", "a")
+func (a *Array) NotContainsOnly(values ...interface{}) *Array {
+	a.chain.enter("NotContainsOnly()")
+	defer a.chain.leave()
+
+	if a.chain.failed() {
+		return a
+	}
+
+	elements, ok := canonArray(a.chain, values)
+	if !ok {
+		return a
+	}
+
+	different := false
+
+	for _, element := range elements {
+		if countElement(a.value, element) == 0 {
+			different = true
+			break
 		}
 	}
-	return false
+
+	for _, element := range a.value {
+		if countElement(elements, element) == 0 {
+			different = true
+			break
+		}
+	}
+
+	if !different {
+		a.chain.fail(AssertionFailure{
+			Type:     AssertNotEqual,
+			Actual:   &AssertionValue{a.value},
+			Expected: &AssertionValue{values},
+			Errors: []error{
+				errors.New("expected: array does not contain only given elements"),
+			},
+		})
+	}
+
+	return a
+}
+
+func countElement(array []interface{}, element interface{}) int {
+	count := 0
+	for _, e := range array {
+		if reflect.DeepEqual(element, e) {
+			count++
+		}
+	}
+	return count
 }

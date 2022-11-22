@@ -25,12 +25,16 @@ func TestArrayFailed(t *testing.T) {
 
 		value.Empty()
 		value.NotEmpty()
-		value.Equal(nil)
-		value.NotEqual(nil)
+		value.Equal([]interface{}{})
+		value.NotEqual([]interface{}{})
+		value.EqualUnordered([]interface{}{})
+		value.NotEqualUnordered([]interface{}{})
 		value.Elements("foo")
+		value.NotElements("foo")
 		value.Contains("foo")
 		value.NotContains("foo")
 		value.ContainsOnly("foo")
+		value.NotContainsOnly("foo")
 	}
 
 	t.Run("failed_chain", func(t *testing.T) {
@@ -290,6 +294,90 @@ func TestArrayEqualTypes(t *testing.T) {
 	value3.chain.reset()
 }
 
+func TestArrayEqualUnordered(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	t.Run("without_duplicates", func(t *testing.T) {
+		value := NewArray(reporter, []interface{}{123, "foo"})
+
+		value.EqualUnordered([]interface{}{123})
+		value.chain.assertFailed(t)
+		value.chain.reset()
+
+		value.NotEqualUnordered([]interface{}{123})
+		value.chain.assertOK(t)
+		value.chain.reset()
+
+		value.EqualUnordered([]interface{}{"foo"})
+		value.chain.assertFailed(t)
+		value.chain.reset()
+
+		value.NotEqualUnordered([]interface{}{"foo"})
+		value.chain.assertOK(t)
+		value.chain.reset()
+
+		value.EqualUnordered([]interface{}{123, "foo", "foo"})
+		value.chain.assertFailed(t)
+		value.chain.reset()
+
+		value.NotEqualUnordered([]interface{}{123, "foo", "foo"})
+		value.chain.assertOK(t)
+		value.chain.reset()
+
+		value.EqualUnordered([]interface{}{123, "foo"})
+		value.chain.assertOK(t)
+		value.chain.reset()
+
+		value.NotEqualUnordered([]interface{}{123, "foo"})
+		value.chain.assertFailed(t)
+		value.chain.reset()
+
+		value.EqualUnordered([]interface{}{"foo", 123})
+		value.chain.assertOK(t)
+		value.chain.reset()
+
+		value.NotEqualUnordered([]interface{}{"foo", 123})
+		value.chain.assertFailed(t)
+		value.chain.reset()
+	})
+
+	t.Run("with_duplicates", func(t *testing.T) {
+		value := NewArray(reporter, []interface{}{123, "foo", "foo"})
+
+		value.EqualUnordered([]interface{}{123, "foo"})
+		value.chain.assertFailed(t)
+		value.chain.reset()
+
+		value.NotEqualUnordered([]interface{}{123, "foo"})
+		value.chain.assertOK(t)
+		value.chain.reset()
+
+		value.EqualUnordered([]interface{}{123, 123, "foo"})
+		value.chain.assertFailed(t)
+		value.chain.reset()
+
+		value.NotEqualUnordered([]interface{}{123, 123, "foo"})
+		value.chain.assertOK(t)
+		value.chain.reset()
+
+		value.EqualUnordered([]interface{}{123, "foo", "foo"})
+		value.chain.assertOK(t)
+		value.chain.reset()
+
+		value.NotEqualUnordered([]interface{}{123, "foo", "foo"})
+		value.chain.assertFailed(t)
+		value.chain.reset()
+
+		value.EqualUnordered([]interface{}{"foo", 123, "foo"})
+		value.chain.assertOK(t)
+		value.chain.reset()
+
+		value.NotEqualUnordered([]interface{}{"foo", 123, "foo"})
+		value.chain.assertFailed(t)
+		value.chain.reset()
+	})
+}
+
 func TestArrayElements(t *testing.T) {
 	reporter := newMockReporter(t)
 
@@ -313,6 +401,32 @@ func TestArrayElements(t *testing.T) {
 
 	value.Elements(123, "foo")
 	value.chain.assertOK(t)
+	value.chain.reset()
+}
+
+func TestArrayNotElements(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewArray(reporter, []interface{}{123, "foo"})
+
+	value.NotElements(123)
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.NotElements("foo")
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.NotElements("foo", 123)
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.NotElements(123, "foo", "foo")
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.NotElements(123, "foo")
+	value.chain.assertFailed(t)
 	value.chain.reset()
 }
 
@@ -369,27 +483,85 @@ func TestArrayContains(t *testing.T) {
 func TestArrayContainsOnly(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	value := NewArray(reporter, []interface{}{123, "foo"})
+	t.Run("without_duplicates", func(t *testing.T) {
+		value := NewArray(reporter, []interface{}{123, "foo"})
 
-	value.ContainsOnly(123)
-	value.chain.assertFailed(t)
-	value.chain.reset()
+		value.ContainsOnly(123)
+		value.chain.assertFailed(t)
+		value.chain.reset()
 
-	value.ContainsOnly("foo")
-	value.chain.assertFailed(t)
-	value.chain.reset()
+		value.NotContainsOnly(123)
+		value.chain.assertOK(t)
+		value.chain.reset()
 
-	value.ContainsOnly(123, "foo", "foo")
-	value.chain.assertFailed(t)
-	value.chain.reset()
+		value.ContainsOnly("foo")
+		value.chain.assertFailed(t)
+		value.chain.reset()
 
-	value.ContainsOnly(123, "foo")
-	value.chain.assertOK(t)
-	value.chain.reset()
+		value.NotContainsOnly("foo")
+		value.chain.assertOK(t)
+		value.chain.reset()
 
-	value.ContainsOnly("foo", 123)
-	value.chain.assertOK(t)
-	value.chain.reset()
+		value.ContainsOnly(123, "foo", "foo")
+		value.chain.assertOK(t)
+		value.chain.reset()
+
+		value.NotContainsOnly(123, "foo", "foo")
+		value.chain.assertFailed(t)
+		value.chain.reset()
+
+		value.ContainsOnly(123, "foo")
+		value.chain.assertOK(t)
+		value.chain.reset()
+
+		value.NotContainsOnly(123, "foo")
+		value.chain.assertFailed(t)
+		value.chain.reset()
+
+		value.ContainsOnly("foo", 123)
+		value.chain.assertOK(t)
+		value.chain.reset()
+
+		value.NotContainsOnly("foo", 123)
+		value.chain.assertFailed(t)
+		value.chain.reset()
+	})
+
+	t.Run("with_duplicates", func(t *testing.T) {
+		value := NewArray(reporter, []interface{}{123, "foo", "foo"})
+
+		value.ContainsOnly(123, "foo")
+		value.chain.assertOK(t)
+		value.chain.reset()
+
+		value.NotContainsOnly(123, "foo")
+		value.chain.assertFailed(t)
+		value.chain.reset()
+
+		value.ContainsOnly(123, 123, "foo")
+		value.chain.assertOK(t)
+		value.chain.reset()
+
+		value.NotContainsOnly(123, 123, "foo")
+		value.chain.assertFailed(t)
+		value.chain.reset()
+
+		value.ContainsOnly(123, "foo", "foo")
+		value.chain.assertOK(t)
+		value.chain.reset()
+
+		value.NotContainsOnly(123, "foo", "foo")
+		value.chain.assertFailed(t)
+		value.chain.reset()
+
+		value.ContainsOnly("foo", 123, "foo")
+		value.chain.assertOK(t)
+		value.chain.reset()
+
+		value.NotContainsOnly("foo", 123, "foo")
+		value.chain.assertFailed(t)
+		value.chain.reset()
+	})
 }
 
 func TestArrayConvertEqual(t *testing.T) {
