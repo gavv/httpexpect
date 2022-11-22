@@ -1,4 +1,4 @@
-all: tidy gen build lint test
+all: tidy gen build lint test spell
 
 tidy:
 	go mod tidy -v
@@ -6,6 +6,9 @@ tidy:
 
 gen:
 	go generate
+
+fmt:
+	gofmt -s -w . ./_examples
 
 build:
 	go build
@@ -18,5 +21,5 @@ test:
 	gotest
 	cd _examples && gotest
 
-fmt:
-	gofmt -s -w . ./_examples
+spell:
+	mdspell README.md

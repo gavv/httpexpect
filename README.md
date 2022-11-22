@@ -51,7 +51,8 @@ Workflow:
 * Tests can communicate with server via real HTTP client or invoke `net/http` or [`fasthttp`](https://github.com/valyala/fasthttp/) handler directly.
 * Custom HTTP client and WebSocket dialer may be provided by user.
 * Custom HTTP request factory may be provided, e.g. from the Google App Engine testing.
-* Custom handlers may be provided for printing requests and responses, logging, formatting and reporting failures.
+* User can configure formatting options or provide custom templates based on `text/template` engine.
+* Custom handlers may be provided for printing logs, printing requests and responses, handling succeeded and failed assertions.
 
 ## Versions
 
