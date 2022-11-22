@@ -97,7 +97,7 @@ type FormatData struct {
 	Actual     string
 
 	HaveExpected bool
-	IsUnexpected bool
+	IsNegation   bool
 	IsComparison bool
 	ExpectedKind string
 	Expected     []string
@@ -165,7 +165,7 @@ func (f *DefaultFormatter) buildFormatData(
 
 		if failure.Expected != nil {
 			f.fillExpected(&data, ctx, failure)
-			f.fillIsUnexpected(&data, ctx, failure)
+			f.fillIsNegation(&data, ctx, failure)
 			f.fillIsComparison(&data, ctx, failure)
 		}
 
@@ -309,7 +309,7 @@ func (f *DefaultFormatter) fillExpected(
 	}
 }
 
-func (f *DefaultFormatter) fillIsUnexpected(
+func (f *DefaultFormatter) fillIsNegation(
 	data *FormatData, ctx *AssertionContext, failure *AssertionFailure,
 ) {
 	switch failure.Type {
@@ -343,7 +343,7 @@ func (f *DefaultFormatter) fillIsUnexpected(
 		AssertNotContainsElement,
 		AssertNotContainsSubset,
 		AssertNotBelongs:
-		data.IsUnexpected = true
+		data.IsNegation = true
 	}
 }
 
@@ -558,7 +558,7 @@ assertion:
 {{- end -}}
 {{- if .HaveExpected }}
 
-{{ if .IsUnexpected }}denied
+{{ if .IsNegation }}denied
 {{- else if .IsComparison }}compared
 {{- else }}expected
 {{- end }} {{ .ExpectedKind }}:
