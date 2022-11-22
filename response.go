@@ -565,10 +565,6 @@ func (r *Response) Form(opts ...ContentOpts) *Object {
 }
 
 func (r *Response) getForm(opts ...ContentOpts) map[string]interface{} {
-	if r.chain.failed() {
-		return nil
-	}
-
 	if !r.checkContentOpts(opts, "application/x-www-form-urlencoded", "") {
 		return nil
 	}
@@ -737,10 +733,6 @@ func (r *Response) checkContentOpts(
 }
 
 func (r *Response) checkContentType(expectedType string, expectedCharset ...string) bool {
-	if r.chain.failed() {
-		return false
-	}
-
 	contentType := r.httpResp.Header.Get("Content-Type")
 
 	if expectedType == "" && len(expectedCharset) == 0 {
