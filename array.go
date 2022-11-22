@@ -269,7 +269,7 @@ func (a *Array) NotEmpty() *Array {
 	return a
 }
 
-// Equal succeeds if array is equal to given Go slice.
+// Equal succeeds if array is equal to given value.
 // Before comparison, both array and value are converted to canonical form.
 //
 // value should be a slice of any type.
@@ -311,7 +311,7 @@ func (a *Array) Equal(value interface{}) *Array {
 	return a
 }
 
-// NotEqual succeeds if array is not equal to given Go slice.
+// NotEqual succeeds if array is not equal to given value.
 // Before comparison, both array and value are converted to canonical form.
 //
 // value should be a slice of any type.

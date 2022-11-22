@@ -374,7 +374,7 @@ func (v *Value) NotNull() *Value {
 	return v
 }
 
-// Equal succeeds if value is equal to given Go value (e.g. map, slice, string, etc).
+// Equal succeeds if value is equal to another value (e.g. map, slice, string, etc).
 // Before comparison, both values are converted to canonical form.
 //
 // Example:
@@ -408,7 +408,7 @@ func (v *Value) Equal(value interface{}) *Value {
 	return v
 }
 
-// NotEqual succeeds if value is not equal to given Go value (e.g. map, slice,
+// NotEqual succeeds if value is not equal to another value (e.g. map, slice,
 // string, etc). Before comparison, both values are converted to canonical form.
 //
 // Example:

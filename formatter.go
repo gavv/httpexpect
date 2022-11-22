@@ -82,7 +82,8 @@ func (f *DefaultFormatter) FormatFailure(
 	}
 }
 
-// FormatData defines data passed to template engine.
+// FormatData defines data passed to template engine when DefaultFormatter
+// formats assertion. You can use these fields in your custom templates.
 type FormatData struct {
 	TestName    string
 	RequestName string

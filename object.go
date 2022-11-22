@@ -74,6 +74,7 @@ func (o *Object) Schema(schema interface{}) *Object {
 }
 
 // Keys returns a new Array object that may be used to inspect objects keys.
+// Keys are sorted.
 //
 // Example:
 //
@@ -100,6 +101,7 @@ func (o *Object) Keys() *Array {
 }
 
 // Values returns a new Array object that may be used to inspect objects values.
+// Values are sorted by keys.
 //
 // Example:
 //
@@ -216,7 +218,7 @@ func (o *Object) NotEmpty() *Object {
 	return o
 }
 
-// Equal succeeds if object is equal to given Go map or struct.
+// Equal succeeds if object is equal to given value.
 // Before comparison, both object and value are converted to canonical form.
 //
 // value should be map[string]interface{} or struct.
@@ -252,7 +254,7 @@ func (o *Object) Equal(value interface{}) *Object {
 	return o
 }
 
-// NotEqual succeeds if object is not equal to given Go map or struct.
+// NotEqual succeeds if object is not equal to given value.
 // Before comparison, both object and value are converted to canonical form.
 //
 // value should be map[string]interface{} or struct.
@@ -261,7 +263,7 @@ func (o *Object) Equal(value interface{}) *Object {
 //
 //	object := NewObject(t, map[string]interface{}{"foo": 123})
 //	object.Equal(map[string]interface{}{"bar": 123})
-func (o *Object) NotEqual(v interface{}) *Object {
+func (o *Object) NotEqual(value interface{}) *Object {
 	o.chain.enter("NotEqual()")
 	defer o.chain.leave()
 
@@ -269,7 +271,7 @@ func (o *Object) NotEqual(v interface{}) *Object {
 		return o
 	}
 
-	expected, ok := canonMap(o.chain, v)
+	expected, ok := canonMap(o.chain, value)
 	if !ok {
 		return o
 	}
@@ -428,7 +430,7 @@ func (o *Object) NotContainsMap(value interface{}) *Object {
 	return o
 }
 
-// ValueEqual succeeds if object's value for given key is equal to given Go value.
+// ValueEqual succeeds if object's value for given key is equal to given value.
 // Before comparison, both values are converted to canonical form.
 //
 // value should be map[string]interface{} or struct.
