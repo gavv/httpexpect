@@ -57,7 +57,7 @@ func TestWebsocketMessageBadUsage(t *testing.T) {
 func TestWebsocketMessageCloseMessage(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	msg := NewWebsocketMessage(reporter, websocket.CloseMessage, nil, 0)
+	msg := NewWebsocketMessage(reporter, websocket.CloseMessage, nil, 1000)
 
 	msg.CloseMessage()
 	msg.chain.assertOK(t)
@@ -96,6 +96,22 @@ func TestWebsocketMessageCloseMessage(t *testing.T) {
 	msg.chain.reset()
 
 	msg.NotType(websocket.TextMessage)
+	msg.chain.assertOK(t)
+	msg.chain.reset()
+
+	msg.Code(1000)
+	msg.chain.assertOK(t)
+	msg.chain.reset()
+
+	msg.NotCode(1000)
+	msg.chain.assertFailed(t)
+	msg.chain.reset()
+
+	msg.Code(1001)
+	msg.chain.assertFailed(t)
+	msg.chain.reset()
+
+	msg.NotCode(1001)
 	msg.chain.assertOK(t)
 	msg.chain.reset()
 }
@@ -295,17 +311,33 @@ func TestWebsocketMessageCodeAndType(t *testing.T) {
 func TestWebsocketMessageNoContent(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	m1 := NewWebsocketMessage(reporter, websocket.TextMessage, nil)
-	m1.NoContent()
-	m1.chain.assertOK(t)
+	t.Run("text", func(t *testing.T) {
+		m1 := NewWebsocketMessage(reporter, websocket.TextMessage, nil)
+		m1.NoContent()
+		m1.chain.assertOK(t)
 
-	m2 := NewWebsocketMessage(reporter, websocket.TextMessage, []byte(""))
-	m2.NoContent()
-	m2.chain.assertOK(t)
+		m2 := NewWebsocketMessage(reporter, websocket.TextMessage, []byte(""))
+		m2.NoContent()
+		m2.chain.assertOK(t)
 
-	m3 := NewWebsocketMessage(reporter, websocket.TextMessage, []byte("test"))
-	m3.NoContent()
-	m3.chain.assertFailed(t)
+		m3 := NewWebsocketMessage(reporter, websocket.TextMessage, []byte("test"))
+		m3.NoContent()
+		m3.chain.assertFailed(t)
+	})
+
+	t.Run("binary", func(t *testing.T) {
+		m1 := NewWebsocketMessage(reporter, websocket.BinaryMessage, nil)
+		m1.NoContent()
+		m1.chain.assertOK(t)
+
+		m2 := NewWebsocketMessage(reporter, websocket.BinaryMessage, []byte(""))
+		m2.NoContent()
+		m2.chain.assertOK(t)
+
+		m3 := NewWebsocketMessage(reporter, websocket.BinaryMessage, []byte("test"))
+		m3.NoContent()
+		m3.chain.assertFailed(t)
+	})
 }
 
 func TestWebsocketMessageBody(t *testing.T) {

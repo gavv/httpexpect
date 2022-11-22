@@ -30,6 +30,42 @@ func TestEnvironmentGeneric(t *testing.T) {
 	env.chain.assertFailed(t)
 }
 
+func TestEnvironmentNotFound(t *testing.T) {
+	env := newEnvironment(newMockChain(t))
+
+	assert.Nil(t, env.Get("bad_key"))
+	env.chain.assertFailed(t)
+	env.chain.reset()
+
+	assert.Equal(t, false, env.GetBool("bad_key"))
+	env.chain.assertFailed(t)
+	env.chain.reset()
+
+	assert.Equal(t, 0, env.GetInt("bad_key"))
+	env.chain.assertFailed(t)
+	env.chain.reset()
+
+	assert.Equal(t, 0.0, env.GetFloat("bad_key"))
+	env.chain.assertFailed(t)
+	env.chain.reset()
+
+	assert.Equal(t, "", env.GetString("bad_key"))
+	env.chain.assertFailed(t)
+	env.chain.reset()
+
+	assert.Nil(t, env.GetBytes("bad_key"))
+	env.chain.assertFailed(t)
+	env.chain.reset()
+
+	assert.Equal(t, time.Duration(0), env.GetDuration("bad_key"))
+	env.chain.assertFailed(t)
+	env.chain.reset()
+
+	assert.Equal(t, time.Unix(0, 0), env.GetTime("bad_key"))
+	env.chain.assertFailed(t)
+	env.chain.reset()
+}
+
 func TestEnvironmentBool(t *testing.T) {
 	tests := []struct {
 		put interface{}

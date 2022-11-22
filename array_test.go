@@ -137,6 +137,28 @@ func TestArrayEmpty(t *testing.T) {
 	value3.chain.reset()
 }
 
+func TestArrayEmptyGetters(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewArray(reporter, []interface{}{})
+
+	assert.NotNil(t, value.Element(0))
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	assert.NotNil(t, value.First())
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	assert.NotNil(t, value.Last())
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	assert.NotNil(t, value.Iter())
+	value.chain.assertOK(t)
+	value.chain.reset()
+}
+
 func TestArrayEqualEmpty(t *testing.T) {
 	reporter := newMockReporter(t)
 

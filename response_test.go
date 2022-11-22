@@ -2,6 +2,7 @@ package httpexpect
 
 import (
 	"bytes"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -16,6 +17,7 @@ func TestResponseFailed(t *testing.T) {
 		resp.chain.assertFailed(t)
 
 		assert.NotNil(t, resp.RoundTripTime())
+		assert.NotNil(t, resp.Duration())
 		assert.NotNil(t, resp.Headers())
 		assert.NotNil(t, resp.Header("foo"))
 		assert.NotNil(t, resp.Cookies())
@@ -314,6 +316,62 @@ func TestResponseBody(t *testing.T) {
 	assert.Equal(t, "body", resp.Body().Raw())
 	resp.chain.assertOK(t)
 	resp.chain.reset()
+}
+
+func TestResponseBodyClose(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	body := newMockBody("test_body")
+
+	httpResp := &http.Response{
+		StatusCode: http.StatusOK,
+		Body:       body,
+	}
+
+	resp := NewResponse(reporter, httpResp)
+
+	assert.Equal(t, "test_body", resp.Body().Raw())
+	assert.True(t, body.closed)
+
+	resp.chain.assertOK(t)
+}
+
+func TestResponseBodyError(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	t.Run("read_err", func(t *testing.T) {
+		body := newMockBody("test_body")
+		body.readErr = errors.New("test_error")
+
+		httpResp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       body,
+		}
+
+		resp := NewResponse(reporter, httpResp)
+
+		assert.Equal(t, "", resp.Body().Raw())
+		assert.True(t, body.closed)
+
+		resp.chain.assertFailed(t)
+	})
+
+	t.Run("close_err", func(t *testing.T) {
+		body := newMockBody("test_body")
+		body.closeErr = errors.New("test_error")
+
+		httpResp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       body,
+		}
+
+		resp := NewResponse(reporter, httpResp)
+
+		assert.Equal(t, "", resp.Body().Raw())
+		assert.True(t, body.closed)
+
+		resp.chain.assertFailed(t)
+	})
 }
 
 func TestResponseNoContentEmpty(t *testing.T) {
@@ -1100,22 +1158,4 @@ func TestResponseContentOpts(t *testing.T) {
 				return resp.JSONP("cb", opts).chain
 			})
 	})
-}
-
-func TestResponseBodyClosing(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	body := newMockBody("test_body")
-
-	httpResp := &http.Response{
-		StatusCode: http.StatusOK,
-		Body:       body,
-	}
-
-	resp := NewResponse(reporter, httpResp)
-
-	assert.Equal(t, "test_body", resp.Body().Raw())
-	assert.True(t, body.closed)
-
-	resp.chain.assertOK(t)
 }

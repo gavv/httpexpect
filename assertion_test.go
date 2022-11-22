@@ -7,40 +7,65 @@ import (
 )
 
 func TestDefaultAssertionHandler(t *testing.T) {
-	var fmt *mockFormatter
-	var rep *mockReporter
-	var log *mockLogger
+	type test struct {
+		formatter *mockFormatter
+		reporter  *mockReporter
+		logger    *mockLogger
 
-	init := func(t *testing.T) AssertionHandler {
-		fmt = newMockFormatter(t)
-		rep = newMockReporter(t)
-		log = newMockLogger(t)
-
-		return &DefaultAssertionHandler{
-			Formatter: fmt,
-			Reporter:  rep,
-			Logger:    log,
-		}
+		handler *DefaultAssertionHandler
 	}
 
-	t.Run("Success", func(t *testing.T) {
-		dah := init(t)
+	createTest := func(t *testing.T, enableLogger bool) test {
+		var test test
 
-		dah.Success(&AssertionContext{
+		test.handler = &DefaultAssertionHandler{}
+
+		test.formatter = newMockFormatter(t)
+		test.handler.Formatter = test.formatter
+
+		test.reporter = newMockReporter(t)
+		test.handler.Reporter = test.reporter
+
+		if enableLogger {
+			test.logger = newMockLogger(t)
+			test.handler.Logger = test.logger
+		}
+
+		return test
+	}
+
+	t.Run("success", func(t *testing.T) {
+		test := createTest(t, true)
+
+		test.handler.Success(&AssertionContext{
 			TestName: t.Name(),
 		})
 
-		assert.Equal(t, 1, fmt.formattedSuccess)
-		assert.Equal(t, 0, fmt.formattedFailure)
+		assert.Equal(t, 1, test.formatter.formattedSuccess)
+		assert.Equal(t, 0, test.formatter.formattedFailure)
 
-		assert.True(t, log.logged)
-		assert.False(t, rep.reported)
+		assert.True(t, test.logger.logged)
+		assert.False(t, test.reporter.reported)
 	})
 
-	t.Run("Failure/NonFatal", func(t *testing.T) {
-		dah := init(t)
+	t.Run("success_nologger", func(t *testing.T) {
+		test := createTest(t, false)
 
-		dah.Failure(
+		test.handler.Success(&AssertionContext{
+			TestName: t.Name(),
+		})
+
+		assert.Equal(t, 0, test.formatter.formattedSuccess)
+		assert.Equal(t, 0, test.formatter.formattedFailure)
+
+		assert.Nil(t, test.logger)
+		assert.False(t, test.reporter.reported)
+	})
+
+	t.Run("failure_nonfatal", func(t *testing.T) {
+		test := createTest(t, true)
+
+		test.handler.Failure(
 			&AssertionContext{
 				TestName: t.Name(),
 			},
@@ -49,17 +74,36 @@ func TestDefaultAssertionHandler(t *testing.T) {
 				IsFatal: false,
 			})
 
-		assert.Equal(t, 0, fmt.formattedSuccess)
-		assert.Equal(t, 1, fmt.formattedFailure)
+		assert.Equal(t, 0, test.formatter.formattedSuccess)
+		assert.Equal(t, 1, test.formatter.formattedFailure)
 
-		assert.True(t, log.logged)
-		assert.False(t, rep.reported)
+		assert.True(t, test.logger.logged)
+		assert.False(t, test.reporter.reported)
 	})
 
-	t.Run("Failure/Fatal", func(t *testing.T) {
-		dah := init(t)
+	t.Run("failure_nonfatal_nologger", func(t *testing.T) {
+		test := createTest(t, false)
 
-		dah.Failure(
+		test.handler.Failure(
+			&AssertionContext{
+				TestName: t.Name(),
+			},
+			&AssertionFailure{
+				Type:    AssertValid,
+				IsFatal: false,
+			})
+
+		assert.Equal(t, 0, test.formatter.formattedSuccess)
+		assert.Equal(t, 0, test.formatter.formattedFailure)
+
+		assert.Nil(t, test.logger)
+		assert.False(t, test.reporter.reported)
+	})
+
+	t.Run("failure_fatal", func(t *testing.T) {
+		test := createTest(t, true)
+
+		test.handler.Failure(
 			&AssertionContext{
 				TestName: t.Name(),
 			},
@@ -68,10 +112,29 @@ func TestDefaultAssertionHandler(t *testing.T) {
 				IsFatal: true,
 			})
 
-		assert.Equal(t, 0, fmt.formattedSuccess)
-		assert.Equal(t, 1, fmt.formattedFailure)
+		assert.Equal(t, 0, test.formatter.formattedSuccess)
+		assert.Equal(t, 1, test.formatter.formattedFailure)
 
-		assert.False(t, log.logged)
-		assert.True(t, rep.reported)
+		assert.False(t, test.logger.logged)
+		assert.True(t, test.reporter.reported)
+	})
+
+	t.Run("failure_fatal_nologger", func(t *testing.T) {
+		test := createTest(t, false)
+
+		test.handler.Failure(
+			&AssertionContext{
+				TestName: t.Name(),
+			},
+			&AssertionFailure{
+				Type:    AssertValid,
+				IsFatal: true,
+			})
+
+		assert.Equal(t, 0, test.formatter.formattedSuccess)
+		assert.Equal(t, 1, test.formatter.formattedFailure)
+
+		assert.Nil(t, test.logger)
+		assert.True(t, test.reporter.reported)
 	})
 }
