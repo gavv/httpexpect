@@ -39,7 +39,7 @@ func TestChainClone(t *testing.T) {
 func TestChainReport(t *testing.T) {
 	r0 := newMockReporter(t)
 
-	chain := newChainWithDefaults("", r0)
+	chain := newChainWithDefaults("test", r0)
 
 	r1 := newMockReporter(t)
 
@@ -61,4 +61,69 @@ func TestChainReport(t *testing.T) {
 
 	chain.assertOK(r2)
 	assert.True(t, r2.reported)
+}
+
+func TestChainHandler(t *testing.T) {
+	handler := &mockAssertionHandler{}
+
+	chain := newChainWithConfig("test", Config{
+		AssertionHandler: handler,
+	})
+
+	chain.enter("test")
+	chain.fail(AssertionFailure{})
+	chain.leave()
+
+	assert.NotNil(t, handler.ctx)
+	assert.NotNil(t, handler.failure)
+
+	chain.reset()
+
+	handler.ctx = nil
+	handler.failure = nil
+
+	chain.enter("test")
+	chain.leave()
+
+	assert.NotNil(t, handler.ctx)
+	assert.Nil(t, handler.failure)
+}
+
+func TestChainFatal(t *testing.T) {
+	handler := &mockAssertionHandler{}
+
+	chain := newChainWithConfig("test", Config{
+		AssertionHandler: handler,
+	})
+
+	chain.setFatal(true)
+	chain.fail(AssertionFailure{})
+
+	assert.NotNil(t, handler.failure)
+	assert.True(t, handler.failure.IsFatal)
+
+	chain.reset()
+
+	chain.setFatal(false)
+	chain.fail(AssertionFailure{})
+
+	assert.NotNil(t, handler.failure)
+	assert.False(t, handler.failure.IsFatal)
+}
+
+func TestChainCallback(t *testing.T) {
+	handler := &mockAssertionHandler{}
+
+	chain := newChainWithConfig("test", Config{
+		AssertionHandler: handler,
+	})
+
+	called := false
+
+	chain.setFailCallback(func() {
+		called = true
+	})
+
+	chain.fail(AssertionFailure{})
+	assert.True(t, called)
 }

@@ -107,6 +107,22 @@ func (m *mockFormatter) FormatFailure(
 	return ctx.TestName
 }
 
+type mockAssertionHandler struct {
+	ctx *AssertionContext
+	failure *AssertionFailure
+}
+
+func (h *mockAssertionHandler) Success(ctx *AssertionContext) {
+	h.ctx = ctx
+}
+
+func (h *mockAssertionHandler) Failure(
+	ctx *AssertionContext, failure *AssertionFailure,
+) {
+	h.ctx = ctx
+	h.failure = failure
+}
+
 type mockPrinter struct {
 	reqBody  []byte
 	respBody []byte

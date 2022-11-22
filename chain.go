@@ -8,6 +8,7 @@ type chain struct {
 	context AssertionContext
 	handler AssertionHandler
 	isFatal bool
+	failCb  func()
 	failbit bool
 }
 
@@ -66,6 +67,10 @@ func (c *chain) setFatal(isFatal bool) {
 	c.isFatal = isFatal
 }
 
+func (c *chain) setFailCallback(failCb func()) {
+	c.failCb = failCb
+}
+
 func (c *chain) setRequestName(name string) {
 	c.context.RequestName = name
 }
@@ -114,6 +119,10 @@ func (c *chain) fail(failure AssertionFailure) {
 	}
 
 	c.handler.Failure(&c.context, &failure)
+
+	if c.failCb != nil {
+		c.failCb()
+	}
 }
 
 func (c *chain) failed() bool {
