@@ -1826,6 +1826,16 @@ func (r *Request) sendWebsocketRequest() (
 		return nil, nil, 0
 	}
 
+	if conn == nil {
+		r.chain.fail(AssertionFailure{
+			Type: AssertOperation,
+			Errors: []error{
+				errors.New("failed to upgrade connection to websocket"),
+			},
+		})
+		return nil, nil, 0
+	}
+
 	return resp, conn, elapsed
 }
 

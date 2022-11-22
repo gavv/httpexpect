@@ -19,6 +19,9 @@ type wsHandlerOpts struct {
 func createWebsocketHandler(opts wsHandlerOpts) http.Handler {
 	mux := http.NewServeMux()
 
+	mux.HandleFunc("/empty", func(w http.ResponseWriter, r *http.Request) {
+	})
+
 	mux.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
 		upgrader := &websocket.Upgrader{}
 		c, err := upgrader.Upgrade(w, r, nil)
@@ -419,5 +422,42 @@ func TestE2EWebsocketDisconnected(t *testing.T) {
 
 		ws.Disconnect()
 		ws.chain.assertOK(t)
+	})
+}
+
+func TestE2EWebsocketInvalid(t *testing.T) {
+	handler := createWebsocketHandler(wsHandlerOpts{})
+
+	server := httptest.NewServer(handler)
+	defer server.Close()
+
+	t.Run("no_upgrade_on_client", func(t *testing.T) {
+		e := WithConfig(Config{
+			BaseURL:  server.URL,
+			Reporter: newMockReporter(t),
+		})
+
+		// missing WithWebsocketUpgrade()
+		resp := e.GET("/empty").
+			Expect().
+			Status(http.StatusOK)
+
+		ws := resp.Websocket()
+		defer ws.Disconnect()
+
+		resp.chain.assertFailed(t)
+		ws.chain.assertFailed(t)
+	})
+
+	t.Run("no_upgrade_on_server", func(t *testing.T) {
+		e := WithConfig(Config{
+			BaseURL:  server.URL,
+			Reporter: newMockReporter(t),
+		})
+
+		resp := e.GET("/empty").WithWebsocketUpgrade().
+			Expect()
+
+		resp.chain.assertFailed(t)
 	})
 }
