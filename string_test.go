@@ -17,6 +17,7 @@ func TestStringFailed(t *testing.T) {
 	value.Schema("")
 
 	value.Length()
+	value.Boolean()
 	value.Number()
 	value.DateTime()
 	value.Empty()
@@ -197,26 +198,89 @@ func TestStringLength(t *testing.T) {
 	assert.Equal(t, 7.0, num.Raw())
 }
 
+func TestStringBoolean(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	trueValues := []string{"true", "True"}
+	falseValues := []string{"false", "False"}
+	badValues := []string{"TRUE", "FALSE", "t", "f", "1", "0", "bad"}
+
+	for _, str := range trueValues {
+		value := NewString(reporter, str)
+
+		b := value.Boolean()
+		b.chain.assertOK(t)
+
+		assert.True(t, b.Raw())
+	}
+
+	for _, str := range falseValues {
+		value := NewString(reporter, str)
+
+		b := value.Boolean()
+		b.chain.assertOK(t)
+
+		assert.False(t, b.Raw())
+	}
+
+	for _, str := range badValues {
+		value := NewString(reporter, str)
+
+		b := value.Boolean()
+		b.chain.assertFailed(t)
+	}
+}
+
 func TestStringNumber(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	value1 := NewString(reporter, "1234567")
-	num1 := value1.Number()
-	value1.chain.assertOK(t)
-	num1.chain.assertOK(t)
-	assert.Equal(t, float64(1234567), num1.Raw())
+	t.Run("default_base", func(t *testing.T) {
+		value1 := NewString(reporter, "1234567")
+		num1 := value1.Number()
+		value1.chain.assertOK(t)
+		num1.chain.assertOK(t)
+		assert.Equal(t, float64(1234567), num1.Raw())
 
-	value2 := NewString(reporter, "11.22")
-	num2 := value2.Number()
-	value2.chain.assertOK(t)
-	num2.chain.assertOK(t)
-	assert.Equal(t, float64(11.22), num2.Raw())
+		value2 := NewString(reporter, "11.22")
+		num2 := value2.Number()
+		value2.chain.assertOK(t)
+		num2.chain.assertOK(t)
+		assert.Equal(t, float64(11.22), num2.Raw())
 
-	value3 := NewString(reporter, "a1")
-	num3 := value3.Number()
-	value3.chain.assertFailed(t)
-	num3.chain.assertFailed(t)
-	assert.Equal(t, float64(0), num3.Raw())
+		value3 := NewString(reporter, "a1")
+		num3 := value3.Number()
+		value3.chain.assertFailed(t)
+		num3.chain.assertFailed(t)
+		assert.Equal(t, float64(0), num3.Raw())
+	})
+
+	t.Run("base10", func(t *testing.T) {
+		value1 := NewString(reporter, "100")
+		num1 := value1.Number(10)
+		value1.chain.assertOK(t)
+		num1.chain.assertOK(t)
+		assert.Equal(t, float64(100), num1.Raw())
+
+		value2 := NewString(reporter, "11.22")
+		num2 := value2.Number(10)
+		value2.chain.assertOK(t)
+		num2.chain.assertOK(t)
+		assert.Equal(t, float64(11.22), num2.Raw())
+	})
+
+	t.Run("base16", func(t *testing.T) {
+		value1 := NewString(reporter, "100")
+		num1 := value1.Number(16)
+		value1.chain.assertOK(t)
+		num1.chain.assertOK(t)
+		assert.Equal(t, float64(256), num1.Raw())
+
+		value2 := NewString(reporter, "11.22")
+		num2 := value2.Number(16)
+		value2.chain.assertFailed(t)
+		num2.chain.assertFailed(t)
+		assert.Equal(t, float64(0), num2.Raw())
+	})
 }
 
 func TestStringDateTime(t *testing.T) {

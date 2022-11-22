@@ -2,6 +2,7 @@ package httpexpect
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -79,11 +80,19 @@ func (s *String) Length() *Number {
 // Number parses float from string and returns a new Number instance
 // with result.
 //
+// If base is 10 or omitted, uses strconv.ParseFloat.
+// Otherwise, uses strconv.ParseInt or strconv.ParseUint with given base.
+//
 // Example:
 //
-//	str := NewString(t, "1234")
-//	str.Number()
-func (s *String) Number() *Number {
+//	str := NewString(t, "100")
+//	str.Number().Equal(100)
+//
+// Specifying base:
+//
+//	str.Number(10).Equal(100)
+//	str.Number(16).Equal(256)
+func (s *String) Number(base ...int) *Number {
 	s.chain.enter("Number()")
 	defer s.chain.leave()
 
@@ -91,21 +100,87 @@ func (s *String) Number() *Number {
 		return newNumber(s.chain, 0)
 	}
 
-	num, err := strconv.ParseFloat(s.value, 64)
+	var num float64
+	var err error
+
+	if len(base) == 0 || base[0] == 10 {
+		num, err = strconv.ParseFloat(s.value, 64)
+	} else {
+		var inum int64
+
+		inum, err = strconv.ParseInt(s.value, base[0], 64)
+		num = float64(inum)
+
+		if err == strconv.ErrRange {
+			var unum uint64
+
+			unum, err = strconv.ParseUint(s.value, base[0], 64)
+			num = float64(unum)
+		}
+	}
 
 	if err != nil {
-		s.chain.fail(AssertionFailure{
-			Type:   AssertValid,
-			Actual: &AssertionValue{s.value},
-			Errors: []error{
-				errors.New("expected: string can be parsed to number"),
-				err,
-			},
-		})
+		if len(base) == 0 || base[0] == 10 {
+			s.chain.fail(AssertionFailure{
+				Type:   AssertValid,
+				Actual: &AssertionValue{s.value},
+				Errors: []error{
+					errors.New("expected: string can be parsed to float"),
+					err,
+				},
+			})
+		} else {
+			s.chain.fail(AssertionFailure{
+				Type:   AssertValid,
+				Actual: &AssertionValue{s.value},
+				Errors: []error{
+					fmt.Errorf(
+						"expected: string can be parsed to integer with base %d",
+						base[0]),
+					err,
+				},
+			})
+		}
 		return newNumber(s.chain, 0)
 	}
 
 	return newNumber(s.chain, num)
+}
+
+// Boolean parses true/false value string and returns a new Boolean instance
+// with result.
+//
+// Accepts string values "true", "True", "false", "False".
+//
+// Example:
+//
+//	str := NewString(t, "true")
+//	str.Boolean().True()
+func (s *String) Boolean() *Boolean {
+	s.chain.enter("Boolean()")
+	defer s.chain.leave()
+
+	if s.chain.failed() {
+		return newBoolean(s.chain, false)
+	}
+
+	switch s.value {
+	case "true", "True":
+		return newBoolean(s.chain, true)
+
+	case "false", "False":
+		return newBoolean(s.chain, false)
+	}
+
+	s.chain.fail(AssertionFailure{
+		Type:   AssertValid,
+		Actual: &AssertionValue{s.value},
+		Errors: []error{
+			errors.New("expected: string can be parsed to boolean"),
+		},
+	})
+
+	return newBoolean(s.chain, false)
 }
 
 // DateTime parses date/time from string and returns a new DateTime instance
