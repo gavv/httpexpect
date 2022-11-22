@@ -23,6 +23,8 @@ func TestObjectFailed(t *testing.T) {
 		value.NotEqual(nil)
 		value.ContainsKey("foo")
 		value.NotContainsKey("foo")
+		value.ContainsValue("foo")
+		value.NotContainsValue("foo")
 		value.ContainsSubset(nil)
 		value.NotContainsSubset(nil)
 		value.ValueEqual("foo", nil)
@@ -294,6 +296,86 @@ func TestObjectContainsKey(t *testing.T) {
 
 	value.NotContainsKey("BAR")
 	value.chain.assertOK(t)
+	value.chain.reset()
+}
+
+func TestObjectContainsValue(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewObject(reporter, map[string]interface{}{"foo": 123, "bar": "xxx"})
+
+	value.ContainsValue(123)
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.NotContainsValue(123)
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.ContainsValue("xxx")
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.NotContainsValue("xxx")
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.ContainsValue("XXX")
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.NotContainsValue("XXX")
+	value.chain.assertOK(t)
+	value.chain.reset()
+}
+
+func TestObjectContainsValueStruct(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewObject(reporter, map[string]interface{}{
+		"foo": 123,
+		"bar": []interface{}{"456", 789},
+		"baz": map[string]interface{}{
+			"a": map[string]interface{}{
+				"b": 333,
+				"c": 444,
+			},
+		},
+	})
+
+	type (
+		A struct {
+			B int `json:"b"`
+			C int `json:"c"`
+		}
+
+		Baz struct {
+			A A `json:"a"`
+		}
+	)
+
+	barValue := []interface{}{"456", 789}
+	bazValue := Baz{
+		A: A{
+			B: 333,
+			C: 444,
+		},
+	}
+
+	value.ContainsValue(barValue)
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.NotContainsValue(barValue)
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.ContainsValue(bazValue)
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.NotContainsValue(bazValue)
+	value.chain.assertFailed(t)
 	value.chain.reset()
 }
 

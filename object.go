@@ -346,9 +346,63 @@ func (o *Object) NotContainsKey(key string) *Object {
 	return o
 }
 
-// Deprecated: use ContainsSubset instead.
-func (o *Object) ContainsMap(value interface{}) *Object {
-	return o.ContainsSubset(value)
+// ContainsValue succeeds if object contains given value with any key.
+// Before comparison, both object and value are converted to canonical form.
+//
+// Example:
+//
+//	object := NewObject(t, map[string]interface{}{"foo": 123})
+//	object.ContainsValue(123)
+func (o *Object) ContainsValue(value interface{}) *Object {
+	o.chain.enter("ContainsValue()")
+	defer o.chain.leave()
+
+	if o.chain.failed() {
+		return o
+	}
+
+	if _, ok := o.containsValue(value); !ok {
+		o.chain.fail(AssertionFailure{
+			Type:     AssertContainsElement,
+			Actual:   &AssertionValue{o.value},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				errors.New("expected: map contains value"),
+			},
+		})
+	}
+
+	return o
+}
+
+// NotContainsValue succeeds if object does not contain given value with any key.
+// Before comparison, both object and value are converted to canonical form.
+//
+// Example:
+//
+//	object := NewObject(t, map[string]interface{}{"foo": 123})
+//	object.NotContainsValue(456)
+func (o *Object) NotContainsValue(value interface{}) *Object {
+	o.chain.enter("NotContainsValue()")
+	defer o.chain.leave()
+
+	if o.chain.failed() {
+		return o
+	}
+
+	if key, ok := o.containsValue(value); ok {
+		o.chain.fail(AssertionFailure{
+			Type:     AssertNotContainsElement,
+			Actual:   &AssertionValue{o.value},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				errors.New("expected: map does not contain value"),
+				fmt.Errorf("found matching value with key %q", key),
+			},
+		})
+	}
+
+	return o
 }
 
 // ContainsSubset succeeds if given value is a subset of object.
@@ -404,11 +458,6 @@ func (o *Object) ContainsSubset(value interface{}) *Object {
 	return o
 }
 
-// Deprecated: use NotContainsSubset instead.
-func (o *Object) NotContainsMap(value interface{}) *Object {
-	return o.NotContainsSubset(value)
-}
-
 // NotContainsSubset succeeds if given value is not a subset of object.
 // Before comparison, both object and value are converted to canonical form.
 //
@@ -438,6 +487,16 @@ func (o *Object) NotContainsSubset(value interface{}) *Object {
 	}
 
 	return o
+}
+
+// Deprecated: use ContainsSubset instead.
+func (o *Object) ContainsMap(value interface{}) *Object {
+	return o.ContainsSubset(value)
+}
+
+// Deprecated: use NotContainsSubset instead.
+func (o *Object) NotContainsMap(value interface{}) *Object {
+	return o.NotContainsSubset(value)
 }
 
 // ValueEqual succeeds if object's value for given key is equal to given value.
@@ -489,11 +548,6 @@ func (o *Object) ValueEqual(key string, value interface{}) *Object {
 	}
 
 	return o
-}
-
-// Deprecated: use NotValueEqual instead.
-func (o *Object) ValueNotEqual(key string, value interface{}) *Object {
-	return o.NotValueEqual(key, value)
 }
 
 // NotValueEqual succeeds if object's value for given key is not equal to given
@@ -550,24 +604,42 @@ func (o *Object) NotValueEqual(key string, value interface{}) *Object {
 	return o
 }
 
-func (o *Object) containsKey(key string) bool {
+// Deprecated: use NotValueEqual instead.
+func (o *Object) ValueNotEqual(key string, value interface{}) *Object {
+	return o.NotValueEqual(key, value)
+}
+
+func (o *Object) containsKey(arg string) bool {
 	for k := range o.value {
-		if k == key {
+		if k == arg {
 			return true
 		}
 	}
 	return false
 }
 
-func (o *Object) containsSubset(sm interface{}) bool {
-	submap, ok := canonMap(o.chain, sm)
+func (o *Object) containsValue(arg interface{}) (string, bool) {
+	value, ok := canonValue(o.chain, arg)
+	if !ok {
+		return "", false
+	}
+	for k, v := range o.value {
+		if reflect.DeepEqual(value, v) {
+			return k, true
+		}
+	}
+	return "", false
+}
+
+func (o *Object) containsSubset(arg interface{}) bool {
+	value, ok := canonMap(o.chain, arg)
 	if !ok {
 		return false
 	}
-	return checkContainsSubset(o.value, submap)
+	return checkSubset(o.value, value)
 }
 
-func checkContainsSubset(outer, inner map[string]interface{}) bool {
+func checkSubset(outer, inner map[string]interface{}) bool {
 	for k, iv := range inner {
 		ov, ok := outer[k]
 		if !ok {
@@ -575,7 +647,7 @@ func checkContainsSubset(outer, inner map[string]interface{}) bool {
 		}
 		if ovm, ok := ov.(map[string]interface{}); ok {
 			if ivm, ok := iv.(map[string]interface{}); ok {
-				if !checkContainsSubset(ovm, ivm) {
+				if !checkSubset(ovm, ivm) {
 					return false
 				}
 				continue
