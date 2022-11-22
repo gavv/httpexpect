@@ -26,19 +26,30 @@ func (c *mockClient) Do(req *http.Request) (*http.Response, error) {
 }
 
 type mockBody struct {
-	io.Reader
-	closed bool
+	reader   io.Reader
+	closed   bool
+	readErr  error
+	closeErr error
 }
 
 func newMockBody(body string) *mockBody {
 	return &mockBody{
-		Reader: bytes.NewBufferString(body),
-		closed: false,
+		reader: bytes.NewBufferString(body),
 	}
+}
+
+func (b *mockBody) Read(p []byte) (int, error) {
+	if b.readErr != nil {
+		return 0, b.readErr
+	}
+	return b.reader.Read(p)
 }
 
 func (b *mockBody) Close() error {
 	b.closed = true
+	if b.closeErr != nil {
+		return b.closeErr
+	}
 	return nil
 }
 

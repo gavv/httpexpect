@@ -18,7 +18,9 @@ type bodyWrapper struct {
 
 	origReader io.ReadCloser
 	origBytes  []byte
-	origErr    error
+
+	readErr  error
+	closeErr error
 
 	cancelFunc context.CancelFunc
 
@@ -46,14 +48,14 @@ func (bw *bodyWrapper) Read(p []byte) (n int, err error) {
 	defer bw.mu.Unlock()
 
 	// Preserve original reader error
-	if bw.origErr != nil {
-		return 0, bw.origErr
+	if bw.readErr != nil {
+		return 0, bw.readErr
 	}
 
 	// Lazy initialization
 	if !bw.isInitialized {
-		if err := bw.initialize(); err != nil {
-			return 0, err
+		if initErr := bw.initialize(); initErr != nil {
+			return 0, initErr
 		}
 	}
 
@@ -68,7 +70,7 @@ func (bw *bodyWrapper) Close() error {
 	bw.mu.Lock()
 	defer bw.mu.Unlock()
 
-	err := bw.origErr
+	err := bw.closeErr
 
 	// Rewind or GetBody may be called later, so be sure to
 	// read body into memory before closing
@@ -110,14 +112,14 @@ func (bw *bodyWrapper) GetBody() (io.ReadCloser, error) {
 	defer bw.mu.Unlock()
 
 	// Preserve original reader error
-	if bw.origErr != nil {
-		return nil, bw.origErr
+	if bw.readErr != nil {
+		return nil, bw.readErr
 	}
 
 	// Lazy initialization
 	if !bw.isInitialized {
-		if err := bw.initialize(); err != nil {
-			return nil, err
+		if initErr := bw.initialize(); initErr != nil {
+			return nil, initErr
 		}
 	}
 
@@ -129,32 +131,30 @@ func (bw *bodyWrapper) initialize() error {
 		bw.isInitialized = true
 
 		if bw.origReader != nil {
-			bw.origBytes, bw.origErr = ioutil.ReadAll(bw.origReader)
+			bw.origBytes, bw.readErr = ioutil.ReadAll(bw.origReader)
 
 			_ = bw.closeAndCancel()
-
-			if bw.origErr != nil {
-				return bw.origErr
-			}
 		}
 	}
 
-	return nil
+	return bw.readErr
 }
 
 func (bw *bodyWrapper) closeAndCancel() error {
 	if bw.origReader == nil && bw.cancelFunc == nil {
-		return nil
+		return bw.closeErr
 	}
 
-	var err error
-
 	if bw.origReader != nil {
-		err = bw.origReader.Close()
+		err := bw.origReader.Close()
 		bw.origReader = nil
 
-		if bw.origErr == nil {
-			bw.origErr = err
+		if bw.readErr == nil {
+			bw.readErr = err
+		}
+
+		if bw.closeErr == nil {
+			bw.closeErr = err
 		}
 	}
 
@@ -166,5 +166,5 @@ func (bw *bodyWrapper) closeAndCancel() error {
 	// Finalizer is not needed anymore.
 	runtime.SetFinalizer(bw, nil)
 
-	return err
+	return bw.closeErr
 }
