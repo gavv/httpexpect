@@ -5,6 +5,7 @@ datetime
 dialer
 gofmt
 golang
+golangci-lint
 go.mod
 gopkg.in
 httpexpect
