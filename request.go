@@ -2028,8 +2028,10 @@ func (r *Request) setupRedirects() {
 }
 
 var typeErr = `ambiguous request "Content-Type" header values:
-  first set by %s: %q
-  then overwritten by %s: %q`
+  first set by %s:
+    %q
+  then replaced by %s:
+    %q`
 
 func (r *Request) setType(newSetter, newType string, overwrite bool) {
 	if r.forceType {
@@ -2057,7 +2059,7 @@ func (r *Request) setType(newSetter, newType string, overwrite bool) {
 
 var bodyErr = `ambiguous request body contents:
   first set by %s
-  then overwritten by %s`
+  then replaced by %s`
 
 func (r *Request) setBody(setter string, reader io.Reader, len int, overwrite bool) {
 	if !overwrite && r.bodySetter != "" {
