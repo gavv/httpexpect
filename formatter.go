@@ -363,72 +363,91 @@ func (f *DefaultFormatter) fillDelta(
 	data.Delta = fmt.Sprintf("%f", failure.Delta)
 }
 
-func formatTyped(v interface{}) string {
-	return fmt.Sprintf("%T(%#v)", v, v)
+func formatTyped(value interface{}) string {
+	return fmt.Sprintf("%T(%#v)", value, value)
 }
 
-func formatValue(v interface{}) string {
-	isNil := func(a interface{}) bool {
+func formatValue(value interface{}) string {
+	isNil := func(val interface{}) bool {
 		defer func() {
 			_ = recover()
 		}()
-		return a == nil || reflect.ValueOf(a).IsNil()
+		return val == nil || reflect.ValueOf(val).IsNil()
 	}
-	if !isNil(v) {
-		if s, _ := v.(fmt.Stringer); s != nil {
+
+	if !isNil(value) {
+		if s, _ := value.(fmt.Stringer); s != nil {
 			return s.String()
 		}
-		if b, err := json.MarshalIndent(v, "", "  "); err == nil {
+		if b, err := json.MarshalIndent(value, "", "  "); err == nil {
 			return string(b)
 		}
 	}
-	return fmt.Sprintf("%#v", v)
+
+	return fmt.Sprintf("%#v", value)
 }
 
-func formatString(v interface{}) string {
-	if s, ok := v.(string); ok {
+func formatString(value interface{}) string {
+	if s, ok := value.(string); ok {
 		return s
 	} else {
-		return formatValue(v)
+		return formatValue(value)
 	}
 }
 
-func formatRange(v interface{}) []string {
-	isNumber := func(a interface{}) bool {
+func formatRange(value interface{}) []string {
+	isNumber := func(val interface{}) bool {
 		defer func() {
 			_ = recover()
 		}()
-		reflect.ValueOf(a).Convert(reflect.TypeOf(float64(0))).Float()
+		reflect.ValueOf(val).Convert(reflect.TypeOf(float64(0))).Float()
 		return true
 	}
-	if r, ok := v.(AssertionRange); ok {
-		if isNumber(r.Min) && isNumber(r.Max) {
+
+	var rng *AssertionRange
+	switch r := value.(type) {
+	case AssertionRange:
+		rng = &r
+	case *AssertionRange:
+		rng = r
+	}
+
+	if rng != nil {
+		if isNumber(rng.Min) && isNumber(rng.Max) {
 			return []string{
-				fmt.Sprintf("[%v; %v]", r.Min, r.Max),
+				fmt.Sprintf("[%v; %v]", rng.Min, rng.Max),
 			}
 		} else {
 			return []string{
-				fmt.Sprintf("%v", r.Min),
-				fmt.Sprintf("%v", r.Max),
+				fmt.Sprintf("%v", rng.Min),
+				fmt.Sprintf("%v", rng.Max),
 			}
 		}
 	} else {
 		return []string{
-			formatValue(v),
+			formatValue(value),
 		}
 	}
 }
 
-func formatList(v interface{}) []string {
-	if l, ok := v.(AssertionList); ok {
-		s := make([]string, 0, len(l))
-		for _, e := range l {
+func formatList(value interface{}) []string {
+	var lst *AssertionList
+	switch l := value.(type) {
+	case AssertionList:
+		lst = &l
+	case *AssertionList:
+		lst = l
+	}
+
+	if lst != nil {
+		s := make([]string, 0, len(*lst))
+		for _, e := range *lst {
 			s = append(s, formatValue(e))
 		}
 		return s
 	} else {
 		return []string{
-			formatValue(v),
+			formatValue(value),
 		}
 	}
 }
