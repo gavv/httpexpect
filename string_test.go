@@ -1,6 +1,7 @@
 package httpexpect
 
 import (
+	"net/http"
 	"testing"
 	"time"
 
@@ -396,4 +397,40 @@ func TestStringAsDateTime(t *testing.T) {
 	value3.chain.assertFailed(t)
 	dt3.chain.assertFailed(t)
 	assert.True(t, time.Unix(0, 0).Equal(dt3.Raw()))
+
+	formats := []string{
+		http.TimeFormat,
+		time.RFC850,
+		time.ANSIC,
+		time.UnixDate,
+		time.RubyDate,
+		time.RFC1123,
+		time.RFC1123Z,
+		time.RFC822,
+		time.RFC822Z,
+		time.RFC3339,
+		time.RFC3339Nano,
+	}
+
+	for n, f := range formats {
+		str := time.Now().Format(f)
+
+		value1 := NewString(reporter, str)
+		dt1 := value1.AsDateTime()
+		dt1.chain.assertOK(t)
+
+		value2 := NewString(reporter, str)
+		dt2 := value2.AsDateTime(formats...)
+		dt2.chain.assertOK(t)
+
+		value3 := NewString(reporter, str)
+		dt3 := value3.AsDateTime(f)
+		dt3.chain.assertOK(t)
+
+		if n != 0 {
+			value4 := NewString(reporter, str)
+			dt4 := value4.AsDateTime(formats[0])
+			dt4.chain.assertFailed(t)
+		}
+	}
 }

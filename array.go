@@ -371,21 +371,24 @@ func (a *Array) EqualUnordered(value interface{}) *Array {
 		if actualCount != expectedCount {
 			if expectedCount == 1 && actualCount == 0 {
 				a.chain.fail(AssertionFailure{
-					Type:     AssertContainsElement,
-					Actual:   &AssertionValue{a.value},
-					Expected: &AssertionValue{element},
+					Type:      AssertContainsElement,
+					Actual:    &AssertionValue{a.value},
+					Expected:  &AssertionValue{element},
+					Reference: &AssertionValue{value},
 					Errors: []error{
-						errors.New("expected: array contains element"),
+						errors.New("expected: array contains element from reference array"),
 					},
 				})
 			} else {
 				a.chain.fail(AssertionFailure{
-					Type:     AssertContainsElement,
-					Actual:   &AssertionValue{a.value},
-					Expected: &AssertionValue{element},
+					Type:      AssertNotContainsElement,
+					Actual:    &AssertionValue{a.value},
+					Expected:  &AssertionValue{element},
+					Reference: &AssertionValue{value},
 					Errors: []error{
 						fmt.Errorf(
-							"expected: element occurs %d times, but it occurs %d times",
+							"expected: element occurs %d time(s), as in reference array,"+
+								" but it occurs %d time(s)",
 							expectedCount,
 							actualCount),
 					},
@@ -402,21 +405,25 @@ func (a *Array) EqualUnordered(value interface{}) *Array {
 		if actualCount != expectedCount {
 			if expectedCount == 0 && actualCount == 1 {
 				a.chain.fail(AssertionFailure{
-					Type:     AssertNotContainsElement,
-					Actual:   &AssertionValue{a.value},
-					Expected: &AssertionValue{element},
+					Type:      AssertNotContainsElement,
+					Actual:    &AssertionValue{a.value},
+					Expected:  &AssertionValue{element},
+					Reference: &AssertionValue{value},
 					Errors: []error{
-						errors.New("expected: array does not contain element"),
+						errors.New("expected: array does not contain elements" +
+							" that are not present in reference array"),
 					},
 				})
 			} else {
 				a.chain.fail(AssertionFailure{
-					Type:     AssertContainsElement,
-					Actual:   &AssertionValue{a.value},
-					Expected: &AssertionValue{element},
+					Type:      AssertNotContainsElement,
+					Actual:    &AssertionValue{a.value},
+					Expected:  &AssertionValue{element},
+					Reference: &AssertionValue{value},
 					Errors: []error{
 						fmt.Errorf(
-							"expected: element occurs %d times, but it occurs %d times",
+							"expected: element occurs %d time(s), as in reference array,"+
+								" but it occurs %d time(s)",
 							expectedCount,
 							actualCount),
 					},
@@ -587,11 +594,12 @@ func (a *Array) Contains(values ...interface{}) *Array {
 	for _, expected := range elements {
 		if !(countElement(a.value, expected) != 0) {
 			a.chain.fail(AssertionFailure{
-				Type:     AssertContainsElement,
-				Actual:   &AssertionValue{a.value},
-				Expected: &AssertionValue{expected},
+				Type:      AssertContainsElement,
+				Actual:    &AssertionValue{a.value},
+				Expected:  &AssertionValue{expected},
+				Reference: &AssertionValue{values},
 				Errors: []error{
-					errors.New("expected: array contains element"),
+					errors.New("expected: array contains element from reference array"),
 				},
 			})
 			break
@@ -625,11 +633,13 @@ func (a *Array) NotContains(values ...interface{}) *Array {
 	for _, expected := range elements {
 		if !(countElement(a.value, expected) == 0) {
 			a.chain.fail(AssertionFailure{
-				Type:     AssertNotContainsElement,
-				Actual:   &AssertionValue{a.value},
-				Expected: &AssertionValue{expected},
+				Type:      AssertNotContainsElement,
+				Actual:    &AssertionValue{a.value},
+				Expected:  &AssertionValue{expected},
+				Reference: &AssertionValue{values},
 				Errors: []error{
-					errors.New("expected: array doesn't contain element"),
+					errors.New("expected:" +
+						" array does not contain any elements from reference array"),
 				},
 			})
 			break
@@ -668,11 +678,12 @@ func (a *Array) ContainsOnly(values ...interface{}) *Array {
 	for _, element := range elements {
 		if countElement(a.value, element) == 0 {
 			a.chain.fail(AssertionFailure{
-				Type:     AssertContainsElement,
-				Actual:   &AssertionValue{a.value},
-				Expected: &AssertionValue{element},
+				Type:      AssertContainsElement,
+				Actual:    &AssertionValue{a.value},
+				Expected:  &AssertionValue{element},
+				Reference: &AssertionValue{values},
 				Errors: []error{
-					errors.New("expected: array contains element"),
+					errors.New("expected: array contains element from reference array"),
 				},
 			})
 			return a
@@ -682,11 +693,13 @@ func (a *Array) ContainsOnly(values ...interface{}) *Array {
 	for _, element := range a.value {
 		if countElement(elements, element) == 0 {
 			a.chain.fail(AssertionFailure{
-				Type:     AssertNotContainsElement,
-				Actual:   &AssertionValue{a.value},
-				Expected: &AssertionValue{element},
+				Type:      AssertNotContainsElement,
+				Actual:    &AssertionValue{a.value},
+				Expected:  &AssertionValue{element},
+				Reference: &AssertionValue{values},
 				Errors: []error{
-					errors.New("expected: array does not contain element"),
+					errors.New("expected: array does not contain elements" +
+						" that are not present in reference array"),
 				},
 			})
 			return a
@@ -739,11 +752,14 @@ func (a *Array) NotContainsOnly(values ...interface{}) *Array {
 
 	if !different {
 		a.chain.fail(AssertionFailure{
-			Type:     AssertNotEqual,
-			Actual:   &AssertionValue{a.value},
-			Expected: &AssertionValue{values},
+			Type:      AssertNotEqual,
+			Actual:    &AssertionValue{a.value},
+			Expected:  &AssertionValue{values},
+			Reference: &AssertionValue{values},
 			Errors: []error{
-				errors.New("expected: array does not contain only given elements"),
+				errors.New("expected:" +
+					" array does not contain only elements from reference array" +
+					" (at least one distinguishing element needed)"),
 			},
 		})
 	}

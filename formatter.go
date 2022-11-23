@@ -102,6 +102,9 @@ type FormatData struct {
 	ExpectedKind string
 	Expected     []string
 
+	HaveReference bool
+	Reference     string
+
 	HaveDelta bool
 	Delta     string
 
@@ -112,15 +115,17 @@ type FormatData struct {
 }
 
 const (
-	kindRange     = "range"
-	kindSchema    = "schema"
-	kindPath      = "path"
-	kindRegexp    = "regexp"
-	kindKey       = "key"
-	kindElement   = "element"
-	kindSubset    = "subset"
-	kindValue     = "value"
-	kindValueList = "values"
+	kindRange      = "range"
+	kindSchema     = "schema"
+	kindPath       = "path"
+	kindRegexp     = "regexp"
+	kindFormat     = "format"
+	kindFormatList = "formats"
+	kindKey        = "key"
+	kindElement    = "element"
+	kindSubset     = "subset"
+	kindValue      = "value"
+	kindValueList  = "values"
 )
 
 func (f *DefaultFormatter) formatTemplate(
@@ -167,6 +172,10 @@ func (f *DefaultFormatter) buildFormatData(
 			f.fillExpected(&data, ctx, failure)
 			f.fillIsNegation(&data, ctx, failure)
 			f.fillIsComparison(&data, ctx, failure)
+		}
+
+		if failure.Reference != nil {
+			f.fillReference(&data, ctx, failure)
 		}
 
 		if failure.Delta != 0 {
@@ -281,6 +290,15 @@ func (f *DefaultFormatter) fillExpected(
 			formatString(failure.Expected.Value),
 		}
 
+	case AssertMatchFormat, AssertNotMatchFormat:
+		data.HaveExpected = true
+		if extractList(failure.Expected.Value) != nil {
+			data.ExpectedKind = kindFormatList
+		} else {
+			data.ExpectedKind = kindFormat
+		}
+		data.Expected = formatList(failure.Expected.Value)
+
 	case AssertContainsKey, AssertNotContainsKey:
 		data.HaveExpected = true
 		data.ExpectedKind = kindKey
@@ -324,6 +342,7 @@ func (f *DefaultFormatter) fillIsNegation(
 		AssertMatchSchema,
 		AssertMatchPath,
 		AssertMatchRegexp,
+		AssertMatchFormat,
 		AssertContainsKey,
 		AssertContainsElement,
 		AssertContainsSubset,
@@ -339,6 +358,7 @@ func (f *DefaultFormatter) fillIsNegation(
 		AssertNotMatchSchema,
 		AssertNotMatchPath,
 		AssertNotMatchRegexp,
+		AssertNotMatchFormat,
 		AssertNotContainsKey,
 		AssertNotContainsElement,
 		AssertNotContainsSubset,
@@ -354,6 +374,13 @@ func (f *DefaultFormatter) fillIsComparison(
 	case AssertLt, AssertLe, AssertGt, AssertGe:
 		data.IsComparison = true
 	}
+}
+
+func (f *DefaultFormatter) fillReference(
+	data *FormatData, ctx *AssertionContext, failure *AssertionFailure,
+) {
+	data.HaveReference = true
+	data.Reference = formatValue(failure.Reference.Value)
 }
 
 func (f *DefaultFormatter) fillDelta(
@@ -404,15 +431,7 @@ func formatRange(value interface{}) []string {
 		return true
 	}
 
-	var rng *AssertionRange
-	switch r := value.(type) {
-	case AssertionRange:
-		rng = &r
-	case *AssertionRange:
-		rng = r
-	}
-
-	if rng != nil {
+	if rng := exctractRange(value); rng != nil {
 		if isNumber(rng.Min) && isNumber(rng.Max) {
 			return []string{
 				fmt.Sprintf("[%v; %v]", rng.Min, rng.Max),
@@ -431,15 +450,7 @@ func formatRange(value interface{}) []string {
 }
 
 func formatList(value interface{}) []string {
-	var lst *AssertionList
-	switch l := value.(type) {
-	case AssertionList:
-		lst = &l
-	case *AssertionList:
-		lst = l
-	}
-
-	if lst != nil {
+	if lst := extractList(value); lst != nil {
 		s := make([]string, 0, len(*lst))
 		for _, e := range *lst {
 			s = append(s, formatValue(e))
@@ -490,6 +501,28 @@ func formatDiff(expected, actual interface{}) (string, bool) {
 	diffText := "--- expected\n+++ actual\n" + str
 
 	return diffText, true
+}
+
+func exctractRange(value interface{}) *AssertionRange {
+	switch rng := value.(type) {
+	case AssertionRange:
+		return &rng
+	case *AssertionRange: // invalid, but we handle it
+		return rng
+	default:
+		return nil
+	}
+}
+
+func extractList(value interface{}) *AssertionList {
+	switch lst := value.(type) {
+	case AssertionList:
+		return &lst
+	case *AssertionList: // invalid, but we handle it
+		return lst
+	default:
+		return nil
+	}
 }
 
 const defaultLineWidth = 60
@@ -589,6 +622,11 @@ assertion:
 
 actual value:
 {{ .Actual | indent }}
+{{- end -}}
+{{- if .HaveReference }}
+
+reference value:
+{{ .Reference | indent }}
 {{- end -}}
 {{- if .HaveDelta }}
 

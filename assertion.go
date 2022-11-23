@@ -61,6 +61,11 @@ const (
 	AssertMatchRegexp
 	AssertNotMatchRegexp
 
+	// Check expression: [Actual] matches format [Expected]
+	// [Expected] stores expected format or format list (AssertionList)
+	AssertMatchFormat
+	AssertNotMatchFormat
+
 	// Check expression: [Actual] contains key [Expected]
 	AssertContainsKey
 	AssertNotContainsKey
@@ -110,11 +115,12 @@ type AssertionContext struct {
 // AssertionFailure provides detailed information about failed assertion.
 //
 // [Type] and [Errors] fields are set for all assertions.
-// [Actual] and [Expected] fields are set only for certain assertion types.
+// [Actual], [Expected], and [Reference] fields are set only for certain
+// assertion types.
 //
-// The value itself is stored in [Actual.Value] and [Expected.Value], which
-// allows to distinguish whether [Actual] or [Expected] is not present at
-// all, or is present but contains nil value.
+// The value itself is stored in [Actual.Value], [Expected.Value], and
+// [Reference.Value], which allows to distinguish whether the value is not
+// present at all, or is present but is nil.
 //
 // [Actual] stores the value being examined.
 //
@@ -123,7 +129,14 @@ type AssertionContext struct {
 // or pattern with which [Actual] should match, or element which [Actual]
 // should contain, and so on.
 //
-// For details, see comments for corresponding AssertionType constant.
+// If [Reference] is set, it stores the value from which the check originated.
+// For example, the user asked to check for unordered equality of arrays
+// A and B. During comparison, a check failed that array A contains element E
+// from array B. In this case [Actual] will be set to A (actually observed array),
+// [Expected] will be set to E (expected but missing element), and [Reference]
+// will be set to B (reference array that originated the check).
+//
+// For further details, see comments for corresponding AssertionType constant.
 type AssertionFailure struct {
 	// Type of failed assertion
 	Type AssertionType
@@ -139,6 +152,9 @@ type AssertionFailure struct {
 
 	// Expected value
 	Expected *AssertionValue
+
+	// Reference value
+	Reference *AssertionValue
 
 	// Allowed delta between actual and expected
 	Delta float64

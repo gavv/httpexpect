@@ -32,19 +32,21 @@ func _() {
 	_ = x[AssertNotMatchPath-21]
 	_ = x[AssertMatchRegexp-22]
 	_ = x[AssertNotMatchRegexp-23]
-	_ = x[AssertContainsKey-24]
-	_ = x[AssertNotContainsKey-25]
-	_ = x[AssertContainsElement-26]
-	_ = x[AssertNotContainsElement-27]
-	_ = x[AssertContainsSubset-28]
-	_ = x[AssertNotContainsSubset-29]
-	_ = x[AssertBelongs-30]
-	_ = x[AssertNotBelongs-31]
+	_ = x[AssertMatchFormat-24]
+	_ = x[AssertNotMatchFormat-25]
+	_ = x[AssertContainsKey-26]
+	_ = x[AssertNotContainsKey-27]
+	_ = x[AssertContainsElement-28]
+	_ = x[AssertNotContainsElement-29]
+	_ = x[AssertContainsSubset-30]
+	_ = x[AssertNotContainsSubset-31]
+	_ = x[AssertBelongs-32]
+	_ = x[AssertNotBelongs-33]
 }
 
-const _AssertionType_name = "AssertUsageAssertOperationAssertTypeAssertNotTypeAssertValidAssertNotValidAssertNilAssertNotNilAssertEmptyAssertNotEmptyAssertEqualAssertNotEqualAssertLtAssertLeAssertGtAssertGeAssertInRangeAssertNotInRangeAssertMatchSchemaAssertNotMatchSchemaAssertMatchPathAssertNotMatchPathAssertMatchRegexpAssertNotMatchRegexpAssertContainsKeyAssertNotContainsKeyAssertContainsElementAssertNotContainsElementAssertContainsSubsetAssertNotContainsSubsetAssertBelongsAssertNotBelongs"
+const _AssertionType_name = "AssertUsageAssertOperationAssertTypeAssertNotTypeAssertValidAssertNotValidAssertNilAssertNotNilAssertEmptyAssertNotEmptyAssertEqualAssertNotEqualAssertLtAssertLeAssertGtAssertGeAssertInRangeAssertNotInRangeAssertMatchSchemaAssertNotMatchSchemaAssertMatchPathAssertNotMatchPathAssertMatchRegexpAssertNotMatchRegexpAssertMatchFormatAssertNotMatchFormatAssertContainsKeyAssertNotContainsKeyAssertContainsElementAssertNotContainsElementAssertContainsSubsetAssertNotContainsSubsetAssertBelongsAssertNotBelongs"
 
-var _AssertionType_index = [...]uint16{0, 11, 26, 36, 49, 60, 74, 83, 95, 106, 120, 131, 145, 153, 161, 169, 177, 190, 206, 223, 243, 258, 276, 293, 313, 330, 350, 371, 395, 415, 438, 451, 467}
+var _AssertionType_index = [...]uint16{0, 11, 26, 36, 49, 60, 74, 83, 95, 106, 120, 131, 145, 153, 161, 169, 177, 190, 206, 223, 243, 258, 276, 293, 313, 330, 350, 367, 387, 408, 432, 452, 475, 488, 504}
 
 func (i AssertionType) String() string {
 	if i >= AssertionType(len(_AssertionType_index)-1) {

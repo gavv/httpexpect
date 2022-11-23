@@ -165,7 +165,7 @@ func (n *Number) EqualDelta(value, delta float64) *Number {
 			Expected: &AssertionValue{value},
 			Delta:    delta,
 			Errors: []error{
-				errors.New("expected: numbers are close"),
+				errors.New("expected: numbers lie within delta"),
 			},
 		})
 		return n
@@ -210,7 +210,7 @@ func (n *Number) NotEqualDelta(value, delta float64) *Number {
 			Expected: &AssertionValue{value},
 			Delta:    delta,
 			Errors: []error{
-				errors.New("expected: numbers are not close"),
+				errors.New("expected: numbers do not lie within delta"),
 			},
 		})
 		return n

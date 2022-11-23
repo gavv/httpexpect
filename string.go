@@ -542,6 +542,16 @@ func (s *String) AsNumber(base ...int) *Number {
 		return newNumber(s.chain, 0)
 	}
 
+	if len(base) > 1 {
+		s.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected multiple base arguments"),
+			},
+		})
+		return newNumber(s.chain, 0)
+	}
+
 	var num float64
 	var err error
 
@@ -628,9 +638,11 @@ func (s *String) AsBoolean() *Boolean {
 // AsDateTime parses date/time from string and returns a new DateTime instance
 // with result.
 //
-// If layout is given, AsDateTime() uses time.Parse() with given layout.
-// Otherwise, it uses http.ParseTime(). If pasing error occurred,
-// AsDateTime reports failure and returns empty (but non-nil) instance.
+// If format is given, AsDateTime() uses time.Parse() with every given format.
+// Otherwise, it uses the list of predefined common formats.
+//
+// If the string can't be parsed with any format, AsDateTime reports failure
+// and returns empty (but non-nil) instance.
 //
 // Example:
 //
@@ -639,41 +651,93 @@ func (s *String) AsBoolean() *Boolean {
 //
 //	str := NewString(t, "15 Nov 94 08:12 GMT")
 //	str.AsDateTime(time.RFC822).Lt(time.Now())
-func (s *String) AsDateTime(layout ...string) *DateTime {
-	if len(layout) != 0 {
-		s.chain.enter("AsDateTime(%q)", layout[0])
-	} else {
-		s.chain.enter("AsDateTime()")
-	}
+func (s *String) AsDateTime(format ...string) *DateTime {
+	s.chain.enter("AsDateTime()")
 	defer s.chain.leave()
 
 	if s.chain.failed() {
 		return newDateTime(s.chain, time.Unix(0, 0))
 	}
 
+	var formatList []datetimeFormat
+
+	if len(format) != 0 {
+		for _, f := range format {
+			formatList = append(formatList, datetimeFormat{layout: f})
+		}
+	} else {
+		formatList = []datetimeFormat{
+			{http.TimeFormat, "RFC1123+GMT"},
+
+			{time.RFC850, "RFC850"},
+
+			{time.ANSIC, "ANSIC"},
+			{time.UnixDate, "Unix"},
+			{time.RubyDate, "Ruby"},
+
+			{time.RFC1123, "RFC1123"},
+			{time.RFC1123Z, "RFC1123Z"},
+			{time.RFC822, "RFC822"},
+			{time.RFC822Z, "RFC822Z"},
+			{time.RFC3339, "RFC3339"},
+			{time.RFC3339Nano, "RFC3339+nano"},
+		}
+	}
+
 	var (
 		tm  time.Time
 		err error
 	)
-	if len(layout) != 0 {
-		tm, err = time.Parse(layout[0], s.value)
-	} else {
-		tm, err = http.ParseTime(s.value)
+	for _, f := range formatList {
+		tm, err = time.Parse(f.layout, s.value)
+		if err == nil {
+			break
+		}
 	}
 
 	if err != nil {
-		s.chain.fail(AssertionFailure{
-			Type:   AssertValid,
-			Actual: &AssertionValue{s.value},
-			Errors: []error{
-				errors.New("expected: string can be parsed to datetime"),
-				err,
-			},
-		})
+		if len(formatList) == 1 {
+			s.chain.fail(AssertionFailure{
+				Type:     AssertMatchFormat,
+				Actual:   &AssertionValue{s.value},
+				Expected: &AssertionValue{formatList[0]},
+				Errors: []error{
+					errors.New("expected: string can be parsed to datetime" +
+						" with given format"),
+				},
+			})
+		} else {
+			var expectedFormats []interface{}
+			for _, f := range formatList {
+				expectedFormats = append(expectedFormats, f)
+			}
+			s.chain.fail(AssertionFailure{
+				Type:     AssertMatchFormat,
+				Actual:   &AssertionValue{s.value},
+				Expected: &AssertionValue{AssertionList(expectedFormats)},
+				Errors: []error{
+					errors.New("expected: string can be parsed to datetime" +
+						" with one of the formats from list"),
+				},
+			})
+		}
 		return newDateTime(s.chain, time.Unix(0, 0))
 	}
 
 	return newDateTime(s.chain, tm)
+}
+
+type datetimeFormat struct {
+	layout string
+	name   string
+}
+
+func (f datetimeFormat) String() string {
+	if f.name != "" {
+		return fmt.Sprintf("%q (%s)", f.layout, f.name)
+	} else {
+		return fmt.Sprintf("%q", f.layout)
+	}
 }
 
 // Deprecated: use AsNumber instead.

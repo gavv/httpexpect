@@ -365,7 +365,7 @@ func (o *Object) ContainsValue(value interface{}) *Object {
 			Actual:   &AssertionValue{o.value},
 			Expected: &AssertionValue{value},
 			Errors: []error{
-				errors.New("expected: map contains value"),
+				errors.New("expected: map contains element (with any key)"),
 			},
 		})
 	}
@@ -394,8 +394,8 @@ func (o *Object) NotContainsValue(value interface{}) *Object {
 			Actual:   &AssertionValue{o.value},
 			Expected: &AssertionValue{value},
 			Errors: []error{
-				errors.New("expected: map does not contain value"),
-				fmt.Errorf("found matching value with key %q", key),
+				errors.New("expected: map does not contain element (with any key)"),
+				fmt.Errorf("found matching element with key %q", key),
 			},
 		})
 	}
