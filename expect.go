@@ -3,7 +3,7 @@
 // # Usage examples
 //
 // See example directory:
-//   - https://godoc.org/github.com/gavv/httpexpect/_examples
+//   - https://pkg.go.dev/github.com/gavv/httpexpect/_examples
 //   - https://github.com/gavv/httpexpect/tree/master/_examples
 //
 // # Communication mode
