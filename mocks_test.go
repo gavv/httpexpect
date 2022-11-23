@@ -108,7 +108,7 @@ func (m *mockFormatter) FormatFailure(
 }
 
 type mockAssertionHandler struct {
-	ctx *AssertionContext
+	ctx     *AssertionContext
 	failure *AssertionFailure
 }
 
