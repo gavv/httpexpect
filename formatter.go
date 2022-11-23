@@ -180,7 +180,7 @@ func (f *DefaultFormatter) buildFormatData(
 			f.fillReference(&data, ctx, failure)
 		}
 
-		if failure.Delta != 0 {
+		if failure.Delta != nil {
 			f.fillDelta(&data, ctx, failure)
 		}
 	}
@@ -389,7 +389,7 @@ func (f *DefaultFormatter) fillDelta(
 	data *FormatData, ctx *AssertionContext, failure *AssertionFailure,
 ) {
 	data.HaveDelta = true
-	data.Delta = fmt.Sprintf("%f", failure.Delta)
+	data.Delta = formatFloat(failure.Delta.Value)
 }
 
 func formatTyped(value interface{}) string {
@@ -397,27 +397,6 @@ func formatTyped(value interface{}) string {
 }
 
 func formatValue(value interface{}) string {
-	isNil := func(val interface{}) bool {
-		defer func() {
-			_ = recover()
-		}()
-		return val == nil || reflect.ValueOf(val).IsNil()
-	}
-
-	isHTTP := func(val interface{}) bool {
-		switch val.(type) {
-		case *http.Client, http.Client,
-			*http.Transport, http.Transport,
-			*http.Request, http.Request,
-			*http.Response, http.Response,
-			*http.Header, http.Header,
-			*http.Cookie, http.Cookie:
-			return true
-		default:
-			return false
-		}
-	}
-
 	if !isNil(value) && !isHTTP(value) {
 		if s, _ := value.(fmt.Stringer); s != nil {
 			if ss := s.String(); strings.TrimSpace(ss) != "" {
@@ -437,22 +416,28 @@ func formatValue(value interface{}) string {
 }
 
 func formatString(value interface{}) string {
-	if s, ok := value.(string); ok {
-		return s
-	} else {
-		return formatValue(value)
+	switch v := value.(type) {
+	case string:
+		return v
 	}
+
+	return formatValue(value)
+}
+
+func formatFloat(value interface{}) string {
+	switch value.(type) {
+	case float32, float64:
+		return fmt.Sprintf("%f", value)
+	}
+
+	if isNumber(value) {
+		return fmt.Sprintf("%v", value)
+	}
+
+	return formatValue(value)
 }
 
 func formatRange(value interface{}) []string {
-	isNumber := func(val interface{}) bool {
-		defer func() {
-			_ = recover()
-		}()
-		reflect.ValueOf(val).Convert(reflect.TypeOf(float64(0))).Float()
-		return true
-	}
-
 	if rng := exctractRange(value); rng != nil {
 		if isNumber(rng.Min) && isNumber(rng.Max) {
 			return []string{
@@ -544,6 +529,35 @@ func extractList(value interface{}) *AssertionList {
 		return lst
 	default:
 		return nil
+	}
+}
+
+func isNil(value interface{}) bool {
+	defer func() {
+		_ = recover()
+	}()
+	return value == nil || reflect.ValueOf(value).IsNil()
+}
+
+func isNumber(value interface{}) bool {
+	defer func() {
+		_ = recover()
+	}()
+	reflect.ValueOf(value).Convert(reflect.TypeOf(float64(0))).Float()
+	return true
+}
+
+func isHTTP(value interface{}) bool {
+	switch value.(type) {
+	case *http.Client, http.Client,
+		*http.Transport, http.Transport,
+		*http.Request, http.Request,
+		*http.Response, http.Response,
+		*http.Header, http.Header,
+		*http.Cookie, http.Cookie:
+		return true
+	default:
+		return false
 	}
 }
 

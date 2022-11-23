@@ -115,12 +115,12 @@ type AssertionContext struct {
 // AssertionFailure provides detailed information about failed assertion.
 //
 // [Type] and [Errors] fields are set for all assertions.
-// [Actual], [Expected], and [Reference] fields are set only for certain
-// assertion types.
+// [Actual], [Expected], [Reference], and [Delta] fields are set only for
+// certain assertion types.
 //
-// The value itself is stored in [Actual.Value], [Expected.Value], and
-// [Reference.Value], which allows to distinguish whether the value is not
-// present at all, or is present but is nil.
+// The value itself is stored in [Actual.Value], [Expected.Value], etc.
+// It allows to distinguish whether the value is not present at all,
+// or is present but is nil.
 //
 // [Actual] stores the value being examined.
 //
@@ -135,6 +135,9 @@ type AssertionContext struct {
 // from array B. In this case [Actual] will be set to A (actually observed array),
 // [Expected] will be set to E (expected but missing element), and [Reference]
 // will be set to B (reference array that originated the check).
+//
+// If [Delta] is set, it stores maximum allowed difference between [Actual]
+// and [Expected] values.
 //
 // For further details, see comments for corresponding AssertionType constant.
 type AssertionFailure struct {
@@ -157,7 +160,7 @@ type AssertionFailure struct {
 	Reference *AssertionValue
 
 	// Allowed delta between actual and expected
-	Delta float64
+	Delta *AssertionValue
 }
 
 // AssertionValue holds expected or actual value

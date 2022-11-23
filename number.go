@@ -148,7 +148,7 @@ func (n *Number) EqualDelta(value, delta float64) *Number {
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{value},
-			Delta:    delta,
+			Delta:    &AssertionValue{delta},
 			Errors: []error{
 				errors.New("expected: numbers are comparable"),
 			},
@@ -163,7 +163,7 @@ func (n *Number) EqualDelta(value, delta float64) *Number {
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{value},
-			Delta:    delta,
+			Delta:    &AssertionValue{delta},
 			Errors: []error{
 				errors.New("expected: numbers lie within delta"),
 			},
@@ -193,7 +193,7 @@ func (n *Number) NotEqualDelta(value, delta float64) *Number {
 			Type:     AssertNotEqual,
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{value},
-			Delta:    delta,
+			Delta:    &AssertionValue{delta},
 			Errors: []error{
 				errors.New("expected: numbers are comparable"),
 			},
@@ -208,7 +208,7 @@ func (n *Number) NotEqualDelta(value, delta float64) *Number {
 			Type:     AssertNotEqual,
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{value},
-			Delta:    delta,
+			Delta:    &AssertionValue{delta},
 			Errors: []error{
 				errors.New("expected: numbers do not lie within delta"),
 			},
