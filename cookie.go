@@ -140,18 +140,77 @@ func (c *Cookie) Expires() *DateTime {
 	return newDateTime(c.chain, c.value.Expires)
 }
 
-// MaxAge returns a new Duration instance with cookie Max-Age field.
+// HaveMaxAge succeeds if cookie has Max-Age field.
 //
-// If Max-Age is not set, the returned Duration is unset. Whether a Duration
-// is set or not can be checked using its IsSet and NotSet methods.
-//
-// If Max-Age is zero (which means delete cookie now), the returned Duration
-// is set and equals to zero.
+// In particular, if Max-Age is present and is zero (which means delete
+// cookie now), method succeeds.
 //
 // Example:
 //
 //	cookie := NewCookie(t, &http.Cookie{...})
-//	cookie.MaxAge().IsSet()
+//	cookie.HaveMaxAge()
+func (c *Cookie) HaveMaxAge() *Cookie {
+	c.chain.enter("HaveMaxAge()")
+	defer c.chain.leave()
+
+	if c.chain.failed() {
+		return c
+	}
+
+	if c.value.MaxAge == 0 {
+		c.chain.fail(AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{c.value},
+			Errors: []error{
+				errors.New("expected: cookie has Max-Age field"),
+			},
+		})
+	}
+
+	return c
+}
+
+// NotHaveMaxAge succeeds if cookie does not have Max-Age field.
+//
+// In particular, if Max-Age is present and is zero (which means delete
+// cookie now), method fails.
+//
+// Example:
+//
+//	cookie := NewCookie(t, &http.Cookie{...})
+//	cookie.NotHaveMaxAge()
+func (c *Cookie) NotHaveMaxAge() *Cookie {
+	c.chain.enter("NotHaveMaxAge()")
+	defer c.chain.leave()
+
+	if c.chain.failed() {
+		return c
+	}
+
+	if c.value.MaxAge != 0 {
+		c.chain.fail(AssertionFailure{
+			Type:   AssertNotValid,
+			Actual: &AssertionValue{c.value},
+			Errors: []error{
+				errors.New("expected: cookie does not have Max-Age field"),
+			},
+		})
+	}
+
+	return c
+}
+
+// MaxAge returns a new Duration instance with cookie Max-Age field.
+//
+// If Max-Age is not present, method fails.
+//
+// If Max-Age is present and is zero (which means delete cookie now),
+// methods succeeds and the returned Duration is equal to zero.
+//
+// Example:
+//
+//	cookie := NewCookie(t, &http.Cookie{...})
+//	cookie.HaveMaxAge()
 //	cookie.MaxAge().InRange(time.Minute, time.Minute*10)
 func (c *Cookie) MaxAge() *Duration {
 	c.chain.enter("MaxAge()")
@@ -161,14 +220,19 @@ func (c *Cookie) MaxAge() *Duration {
 		return newDuration(c.chain, nil)
 	}
 
-	if c.value.MaxAge == 0 {
-		return newDuration(c.chain, nil)
-	}
-	if c.value.MaxAge < 0 {
-		var zero time.Duration
-		return newDuration(c.chain, &zero)
-	}
+	switch {
+	case c.value.MaxAge == 0: // zero value means not present
+		// TODO: after removing Duration.IsSet, add failure here (breaking change)
+		_ = (*Duration).IsSet
 
-	d := time.Duration(c.value.MaxAge) * time.Second
-	return newDuration(c.chain, &d)
+		return newDuration(c.chain, nil)
+
+	case c.value.MaxAge < 0: // negative value means present and zero
+		age := time.Duration(0)
+		return newDuration(c.chain, &age)
+
+	default:
+		age := time.Duration(c.value.MaxAge) * time.Second
+		return newDuration(c.chain, &age)
+	}
 }

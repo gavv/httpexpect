@@ -41,12 +41,9 @@ func (d *Duration) Raw() time.Duration {
 	return *d.value
 }
 
-// IsSet succeeds if Duration is set.
-//
-// Example:
-//
-//	d := NewDuration(t, time.Second)
-//	d.IsSet()
+// Deprecated: support for unset durations will be removed. The only method that
+// can create unset duration is Cookie.MaxAge. Instead of Cookie.MaxAge().IsSet(),
+// please use Cookie.HaveMaxAge().
 func (d *Duration) IsSet() *Duration {
 	d.chain.enter("IsSet()")
 	defer d.chain.leave()
@@ -68,7 +65,9 @@ func (d *Duration) IsSet() *Duration {
 	return d
 }
 
-// NotSet succeeds if Duration is not set.
+// Deprecated: support for unset durations will be removed. The only method that
+// can create unset duration is Cookie.MaxAge. Instead of Cookie.MaxAge().NotSet(),
+// please use Cookie.NotHaveMaxAge().
 func (d *Duration) NotSet() *Duration {
 	d.chain.enter("NotSet()")
 	defer d.chain.leave()
