@@ -1514,6 +1514,16 @@ func (r *Request) WithFile(key, path string, reader ...io.Reader) *Request {
 		return r
 	}
 
+	if len(reader) > 1 {
+		r.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected multiple reader arguments"),
+			},
+		})
+		return r
+	}
+
 	r.withFile("WithFile()", key, path, reader...)
 
 	return r
@@ -1702,7 +1712,7 @@ func (r *Request) roundTrip() *Response {
 		chain:     r.chain,
 		httpResp:  httpResp,
 		websocket: websock,
-		rtt:       &elapsed,
+		rtt:       []time.Duration{elapsed},
 	})
 }
 

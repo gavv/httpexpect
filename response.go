@@ -41,14 +41,16 @@ type Response struct {
 func NewResponse(
 	reporter Reporter, response *http.Response, rtt ...time.Duration,
 ) *Response {
-	var rttPtr *time.Duration
-	if len(rtt) > 0 {
-		rttPtr = &rtt[0]
+	config := Config{
+		Reporter: reporter,
 	}
+	config.fillDefaults()
+
 	return newResponse(responseOpts{
-		chain:    newChainWithDefaults("Response()", reporter),
+		config:   config,
+		chain:    newChainWithConfig("Response()", config),
 		httpResp: response,
-		rtt:      rttPtr,
+		rtt:      rtt,
 	})
 }
 
@@ -57,29 +59,45 @@ type responseOpts struct {
 	chain     *chain
 	httpResp  *http.Response
 	websocket *websocket.Conn
-	rtt       *time.Duration
+	rtt       []time.Duration
 }
 
 func newResponse(opts responseOpts) *Response {
 	r := &Response{
-		config:    opts.config,
-		chain:     opts.chain.clone(),
-		httpResp:  opts.httpResp,
-		websocket: opts.websocket,
-		rtt:       opts.rtt,
+		config: opts.config,
+		chain:  opts.chain.clone(),
 	}
 
-	if r.httpResp != nil {
-		r.content = getContent(r.chain, r.httpResp)
-		r.cookies = r.httpResp.Cookies()
-	} else {
+	if opts.httpResp == nil {
 		r.chain.fail(AssertionFailure{
 			Type:   AssertNotNil,
-			Actual: &AssertionValue{r.httpResp},
+			Actual: &AssertionValue{opts.httpResp},
 			Errors: []error{
 				errors.New("expected: non-nil response"),
 			},
 		})
+		return r
+	}
+
+	if len(opts.rtt) > 1 {
+		r.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected multiple rtt arguments"),
+			},
+		})
+		return r
+	}
+
+	r.httpResp = opts.httpResp
+	r.websocket = opts.websocket
+
+	r.content = getContent(r.chain, r.httpResp)
+	r.cookies = r.httpResp.Cookies()
+
+	if len(opts.rtt) > 0 {
+		rtt := opts.rtt[0]
+		r.rtt = &rtt
 	}
 
 	r.chain.setResponse(r)
@@ -457,6 +475,16 @@ func (r *Response) ContentType(mediaType string, charset ...string) *Response {
 		return r
 	}
 
+	if len(charset) > 1 {
+		r.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected multiple charset arguments"),
+			},
+		})
+		return r
+	}
+
 	r.checkContentType(mediaType, charset...)
 
 	return r
@@ -516,7 +544,7 @@ type ContentOpts struct {
 //	resp.Text(ContentOpts{
 //	  MediaType: "text/plain",
 //	}).Equal("hello, world!")
-func (r *Response) Text(opts ...ContentOpts) *String {
+func (r *Response) Text(options ...ContentOpts) *String {
 	r.chain.enter("Text()")
 	defer r.chain.leave()
 
@@ -524,7 +552,17 @@ func (r *Response) Text(opts ...ContentOpts) *String {
 		return newString(r.chain, "")
 	}
 
-	if !r.checkContentOpts(opts, "text/plain") {
+	if len(options) > 1 {
+		r.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected multiple options arguments"),
+			},
+		})
+		return newString(r.chain, "")
+	}
+
+	if !r.checkContentOptions(options, "text/plain") {
 		return newString(r.chain, "")
 	}
 
@@ -546,7 +584,7 @@ func (r *Response) Text(opts ...ContentOpts) *String {
 //	resp.Form(ContentOpts{
 //	  MediaType: "application/x-www-form-urlencoded",
 //	}).Value("foo").Equal("bar")
-func (r *Response) Form(opts ...ContentOpts) *Object {
+func (r *Response) Form(options ...ContentOpts) *Object {
 	r.chain.enter("Form()")
 	defer r.chain.leave()
 
@@ -554,13 +592,23 @@ func (r *Response) Form(opts ...ContentOpts) *Object {
 		return newObject(r.chain, nil)
 	}
 
-	object := r.getForm(opts...)
+	if len(options) > 1 {
+		r.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected multiple options arguments"),
+			},
+		})
+		return newObject(r.chain, nil)
+	}
+
+	object := r.getForm(options...)
 
 	return newObject(r.chain, object)
 }
 
-func (r *Response) getForm(opts ...ContentOpts) map[string]interface{} {
-	if !r.checkContentOpts(opts, "application/x-www-form-urlencoded", "") {
+func (r *Response) getForm(options ...ContentOpts) map[string]interface{} {
+	if !r.checkContentOptions(options, "application/x-www-form-urlencoded", "") {
 		return nil
 	}
 
@@ -597,7 +645,7 @@ func (r *Response) getForm(opts ...ContentOpts) map[string]interface{} {
 //	resp.JSON(ContentOpts{
 //	  MediaType: "application/json",
 //	}).Array.Elements("foo", "bar")
-func (r *Response) JSON(opts ...ContentOpts) *Value {
+func (r *Response) JSON(options ...ContentOpts) *Value {
 	r.chain.enter("JSON()")
 	defer r.chain.leave()
 
@@ -605,13 +653,23 @@ func (r *Response) JSON(opts ...ContentOpts) *Value {
 		return newValue(r.chain, nil)
 	}
 
-	value := r.getJSON(opts...)
+	if len(options) > 1 {
+		r.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected multiple options arguments"),
+			},
+		})
+		return newValue(r.chain, nil)
+	}
+
+	value := r.getJSON(options...)
 
 	return newValue(r.chain, value)
 }
 
-func (r *Response) getJSON(opts ...ContentOpts) interface{} {
-	if !r.checkContentOpts(opts, "application/json") {
+func (r *Response) getJSON(options ...ContentOpts) interface{} {
+	if !r.checkContentOptions(options, "application/json") {
 		return nil
 	}
 
@@ -654,7 +712,7 @@ func (r *Response) getJSON(opts ...ContentOpts) interface{} {
 //	resp.JSONP("myCallback", ContentOpts{
 //	  MediaType: "application/javascript",
 //	}).Array.Elements("foo", "bar")
-func (r *Response) JSONP(callback string, opts ...ContentOpts) *Value {
+func (r *Response) JSONP(callback string, options ...ContentOpts) *Value {
 	r.chain.enter("JSONP()")
 	defer r.chain.leave()
 
@@ -662,7 +720,17 @@ func (r *Response) JSONP(callback string, opts ...ContentOpts) *Value {
 		return newValue(r.chain, nil)
 	}
 
-	value := r.getJSONP(callback, opts...)
+	if len(options) > 1 {
+		r.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected multiple options arguments"),
+			},
+		})
+		return newValue(r.chain, nil)
+	}
+
+	value := r.getJSONP(callback, options...)
 
 	return newValue(r.chain, value)
 }
@@ -671,8 +739,8 @@ var (
 	jsonp = regexp.MustCompile(`^\s*([^\s(]+)\s*\((.*)\)\s*;*\s*$`)
 )
 
-func (r *Response) getJSONP(callback string, opts ...ContentOpts) interface{} {
-	if !r.checkContentOpts(opts, "application/javascript") {
+func (r *Response) getJSONP(callback string, options ...ContentOpts) interface{} {
+	if !r.checkContentOptions(options, "application/javascript") {
 		return nil
 	}
 
@@ -711,15 +779,15 @@ func (r *Response) getJSONP(callback string, opts ...ContentOpts) interface{} {
 	return value
 }
 
-func (r *Response) checkContentOpts(
-	opts []ContentOpts, expectedType string, expectedCharset ...string,
+func (r *Response) checkContentOptions(
+	options []ContentOpts, expectedType string, expectedCharset ...string,
 ) bool {
-	if len(opts) != 0 {
-		if opts[0].MediaType != "" {
-			expectedType = opts[0].MediaType
+	if len(options) != 0 {
+		if options[0].MediaType != "" {
+			expectedType = options[0].MediaType
 		}
-		if opts[0].Charset != "" {
-			expectedCharset = []string{opts[0].Charset}
+		if options[0].Charset != "" {
+			expectedCharset = []string{options[0].Charset}
 		}
 	}
 	return r.checkContentType(expectedType, expectedCharset...)
