@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"reflect"
 	"strings"
 	"text/template"
 
 	"github.com/mitchellh/go-wordwrap"
+	"github.com/sanity-io/litter"
 	"github.com/yudai/gojsondiff"
 	"github.com/yudai/gojsondiff/formatter"
 )
@@ -402,16 +404,36 @@ func formatValue(value interface{}) string {
 		return val == nil || reflect.ValueOf(val).IsNil()
 	}
 
-	if !isNil(value) {
-		if s, _ := value.(fmt.Stringer); s != nil {
-			return s.String()
+	isHTTP := func(val interface{}) bool {
+		switch val.(type) {
+		case *http.Client, http.Client,
+			*http.Transport, http.Transport,
+			*http.Request, http.Request,
+			*http.Response, http.Response,
+			*http.Header, http.Header,
+			*http.Cookie, http.Cookie:
+			return true
+		default:
+			return false
 		}
-		if b, err := json.MarshalIndent(value, "", "  "); err == nil {
+	}
+
+	if !isNil(value) && !isHTTP(value) {
+		if s, _ := value.(fmt.Stringer); s != nil {
+			if ss := s.String(); strings.TrimSpace(ss) != "" {
+				return ss
+			}
+		}
+		if b, err := json.MarshalIndent(value, "", defaultIndent); err == nil {
 			return string(b)
 		}
 	}
 
-	return fmt.Sprintf("%#v", value)
+	sq := litter.Options{
+		Separator: defaultIndent,
+	}
+
+	return sq.Sdump(value)
 }
 
 func formatString(value interface{}) string {
@@ -525,7 +547,10 @@ func extractList(value interface{}) *AssertionList {
 	}
 }
 
-const defaultLineWidth = 60
+const (
+	defaultIndent    = "  "
+	defaultLineWidth = 60
+)
 
 var defaultTemplateFuncs = template.FuncMap{
 	"indent": func(s string) string {
@@ -535,7 +560,7 @@ var defaultTemplateFuncs = template.FuncMap{
 			if sb.Len() != 0 {
 				sb.WriteString("\n")
 			}
-			sb.WriteString("  ")
+			sb.WriteString(defaultIndent)
 			sb.WriteString(s)
 		}
 
@@ -572,7 +597,7 @@ var defaultTemplateFuncs = template.FuncMap{
 			}
 			if lineLen == 0 {
 				for l := 0; l < lineNum; l++ {
-					write("  ")
+					write(defaultIndent)
 				}
 			}
 			write(s)
