@@ -782,22 +782,30 @@ e := httpexpect.WithConfig(httpexpect.Config{
 
 Feel free to report bugs, suggest improvements, and send pull requests! Please add documentation and tests for new features.
 
-Build code and examples, run linters, run tests:
+Install developer dependencies:
+
+* [golangci-lint](https://golangci-lint.run/usage/install/#local-installation)
+
+* [stringer](https://github.com/golang/tools)
+
+    `go install golang.org/x/tools/cmd/stringer@latest`
+
+Re-generate, build, lint, and test everything:
 
 ```
 make
-```
-
-Run go generate:
-
-```
-make gen
 ```
 
 Run gofmt:
 
 ```
 make fmt
+```
+
+Run go generate:
+
+```
+make gen
 ```
 
 Run go mod tidy:
