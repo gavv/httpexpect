@@ -803,11 +803,10 @@ func (a *Array) ContainsAny(values ...interface{}) *Array {
 		a.chain.fail(AssertionFailure{
 			Type:      AssertContainsElement,
 			Actual:    &AssertionValue{a.value},
-			Expected:  &AssertionValue{values},
 			Reference: &AssertionValue{values},
 			Errors: []error{
 				errors.New("expected:" +
-					" array should contain at least one element from reference array"),
+					" array contains at least one element from reference array"),
 			},
 		})
 	}
@@ -835,25 +834,19 @@ func (a *Array) NotContainsAny(values ...interface{}) *Array {
 		return a
 	}
 
-	foundAny := false
-
 	for _, expected := range elements {
 		if countElement(a.value, expected) > 0 {
-			foundAny = true
-			break
+			a.chain.fail(AssertionFailure{
+				Type:      AssertNotContainsElement,
+				Actual:    &AssertionValue{a.value},
+				Expected:  &AssertionValue{expected},
+				Reference: &AssertionValue{values},
+				Errors: []error{
+					errors.New("expected: array does not contain any elements from reference array"),
+				},
+			})
+			return a
 		}
-	}
-
-	if foundAny {
-		a.chain.fail(AssertionFailure{
-			Type:      AssertContainsElement,
-			Actual:    &AssertionValue{a.value},
-			Expected:  &AssertionValue{values},
-			Reference: &AssertionValue{values},
-			Errors: []error{
-				errors.New("expected: array should not contain any elements from reference array"),
-			},
-		})
 	}
 
 	return a
