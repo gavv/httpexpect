@@ -603,6 +603,10 @@ func TestArrayContainsAny(t *testing.T) {
 	value.chain.assertFailed(t)
 	value.chain.reset()
 
+	value.ContainsAny("FOO")
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
 	value.NotContainsAny("FOO")
 	value.chain.assertOK(t)
 	value.chain.reset()
@@ -722,10 +726,6 @@ func TestArrayConvertContains(t *testing.T) {
 
 	value.NotContainsAny("123.0", "456.0")
 	value.chain.assertOK(t)
-	value.chain.reset()
-
-	value.ContainsAny("bar")
-	value.chain.assertFailed(t)
 	value.chain.reset()
 
 	value.Contains(func() {})
