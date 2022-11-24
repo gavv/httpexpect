@@ -480,9 +480,10 @@ func (a *Array) NotEqualUnordered(value interface{}) *Array {
 
 	if !different {
 		a.chain.fail(AssertionFailure{
-			Type:     AssertNotEqual,
-			Actual:   &AssertionValue{a.value},
-			Expected: &AssertionValue{value},
+			Type:      AssertNotEqual,
+			Actual:    &AssertionValue{a.value},
+			Expected:  &AssertionValue{value},
+			Reference: &AssertionValue{value},
 			Errors: []error{
 				errors.New("expected: arrays are non-equal (ignoring order)"),
 			},
