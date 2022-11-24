@@ -724,6 +724,10 @@ func TestArrayConvertContains(t *testing.T) {
 	value.chain.assertOK(t)
 	value.chain.reset()
 
+	value.ContainsAny("bar")
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
 	value.Contains(func() {})
 	value.chain.assertFailed(t)
 	value.chain.reset()
