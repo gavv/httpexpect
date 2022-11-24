@@ -532,7 +532,7 @@ func (a *Array) Elements(values ...interface{}) *Array {
 	return a
 }
 
-// NotElements is oppisite to Elements.
+// NotElements is opposite to Elements.
 //
 // Example:
 //
