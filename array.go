@@ -806,7 +806,8 @@ func (a *Array) ContainsAny(values ...interface{}) *Array {
 			Expected:  &AssertionValue{values},
 			Reference: &AssertionValue{values},
 			Errors: []error{
-				errors.New("expected: array should contain at least one element from reference array"),
+				errors.New("expected:" +
+					" array should contain at least one element from reference array"),
 			},
 		})
 	}
