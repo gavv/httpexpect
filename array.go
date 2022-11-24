@@ -819,8 +819,8 @@ func (a *Array) ContainsAny(values ...interface{}) *Array {
 // Example:
 //
 //	array := NewArray(t, []interface{}{"foo", 123})
-//	array.NotContainsAny(123) // success
-//	array.NotContainsAny("bar", 124) // failure
+//	array.NotContainsAny("bar", 124) // success
+//	array.NotContainsAny(123) // failure
 func (a *Array) NotContainsAny(values ...interface{}) *Array {
 	a.chain.enter("NotContainsAny()")
 	defer a.chain.leave()
