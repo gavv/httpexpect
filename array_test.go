@@ -35,6 +35,8 @@ func TestArrayFailed(t *testing.T) {
 		value.NotContains("foo")
 		value.ContainsOnly("foo")
 		value.NotContainsOnly("foo")
+		value.ContainsAny("foo")
+		value.NotContainsAny("foo")
 	}
 
 	t.Run("failed_chain", func(t *testing.T) {
@@ -564,6 +566,56 @@ func TestArrayContainsOnly(t *testing.T) {
 	})
 }
 
+func TestArrayContainsAny(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewArray(reporter, []interface{}{123, "foo"})
+
+	value.ContainsAny(123)
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.NotContainsAny(123)
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.ContainsAny("foo", 123)
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.NotContainsAny("foo", 123)
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.ContainsAny("foo", "foo")
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.NotContainsAny("foo", "foo")
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.ContainsAny(123, "foo", "FOO")
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.NotContainsAny(123, "foo", "FOO")
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.NotContainsAny("FOO")
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.ContainsAny([]interface{}{123, "foo"})
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.NotContainsAny([]interface{}{123, "foo"})
+	value.chain.assertOK(t)
+	value.chain.reset()
+}
+
 func TestArrayConvertEqual(t *testing.T) {
 	type (
 		myArray []interface{}
@@ -644,6 +696,14 @@ func TestArrayConvertContains(t *testing.T) {
 	value.chain.assertOK(t)
 	value.chain.reset()
 
+	value.ContainsAny(myInt(123), 456.0)
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.NotContainsAny(myInt(123), 456.0)
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
 	value.Contains("123")
 	value.chain.assertFailed(t)
 	value.chain.reset()
@@ -656,6 +716,14 @@ func TestArrayConvertContains(t *testing.T) {
 	value.chain.assertFailed(t)
 	value.chain.reset()
 
+	value.ContainsAny("123.0", "456.0")
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.NotContainsAny("123.0", "456.0")
+	value.chain.assertOK(t)
+	value.chain.reset()
+
 	value.Contains(func() {})
 	value.chain.assertFailed(t)
 	value.chain.reset()
@@ -665,6 +733,14 @@ func TestArrayConvertContains(t *testing.T) {
 	value.chain.reset()
 
 	value.ContainsOnly(func() {})
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.ContainsAny(func() {})
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.NotContainsAny(func() {})
 	value.chain.assertFailed(t)
 	value.chain.reset()
 }
