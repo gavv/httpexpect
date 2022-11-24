@@ -814,6 +814,50 @@ func (a *Array) ContainsAny(values ...interface{}) *Array {
 	return a
 }
 
+// NotContainsAny succeeds if none of the given elements are in the array.
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{"foo", 123})
+//	array.NotContainsAny(123)
+//	array.NotContainsAny("bar", 124)
+func (a *Array) NotContainsAny(values ...interface{}) *Array {
+	a.chain.enter("NotContainsAny()")
+	defer a.chain.leave()
+
+	if a.chain.failed() {
+		return a
+	}
+
+	elements, ok := canonArray(a.chain, values)
+	if !ok {
+		return a
+	}
+
+	foundAny := false
+
+	for _, expected := range elements {
+		if countElement(a.value, expected) > 0 {
+			foundAny = true
+			break
+		}
+	}
+
+	if foundAny {
+		a.chain.fail(AssertionFailure{
+			Type:      AssertContainsElement,
+			Actual:    &AssertionValue{a.value},
+			Expected:  &AssertionValue{values},
+			Reference: &AssertionValue{values},
+			Errors: []error{
+				errors.New("expected: array contains at no elements from reference array"),
+			},
+		})
+	}
+
+	return a
+}
+
 func countElement(array []interface{}, element interface{}) int {
 	count := 0
 	for _, e := range array {
