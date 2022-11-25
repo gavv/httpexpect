@@ -532,7 +532,7 @@ func (a *Array) Elements(values ...interface{}) *Array {
 	return a
 }
 
-// NotElements is oppisite to Elements.
+// NotElements is opposite to Elements.
 //
 // Example:
 //
@@ -763,6 +763,90 @@ func (a *Array) NotContainsOnly(values ...interface{}) *Array {
 					" (at least one distinguishing element needed)"),
 			},
 		})
+	}
+
+	return a
+}
+
+// ContainsAny succeeds if array contains at least one element from the given elements.
+// Before comparison, array and all elements are converted
+// to canonical form.
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{"foo", 123, 123})
+//	array.ContainsAny(123, "foo", "FOO") // success
+//	array.ContainsAny("FOO") // failure
+func (a *Array) ContainsAny(values ...interface{}) *Array {
+	a.chain.enter("ContainsAny()")
+	defer a.chain.leave()
+
+	if a.chain.failed() {
+		return a
+	}
+
+	elements, ok := canonArray(a.chain, values)
+	if !ok {
+		return a
+	}
+
+	foundAny := false
+
+	for _, expected := range elements {
+		if countElement(a.value, expected) > 0 {
+			foundAny = true
+			break
+		}
+	}
+
+	if !foundAny {
+		a.chain.fail(AssertionFailure{
+			Type:      AssertContainsElement,
+			Actual:    &AssertionValue{a.value},
+			Reference: &AssertionValue{values},
+			Errors: []error{
+				errors.New("expected:" +
+					" array contains at least one element from reference array"),
+			},
+		})
+	}
+
+	return a
+}
+
+// NotContainsAny succeeds if none of the given elements are in the array.
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{"foo", 123})
+//	array.NotContainsAny("bar", 124) // success
+//	array.NotContainsAny(123) // failure
+func (a *Array) NotContainsAny(values ...interface{}) *Array {
+	a.chain.enter("NotContainsAny()")
+	defer a.chain.leave()
+
+	if a.chain.failed() {
+		return a
+	}
+
+	elements, ok := canonArray(a.chain, values)
+	if !ok {
+		return a
+	}
+
+	for _, expected := range elements {
+		if countElement(a.value, expected) > 0 {
+			a.chain.fail(AssertionFailure{
+				Type:      AssertNotContainsElement,
+				Actual:    &AssertionValue{a.value},
+				Expected:  &AssertionValue{expected},
+				Reference: &AssertionValue{values},
+				Errors: []error{
+					errors.New("expected: array does not contain any elements from reference array"),
+				},
+			})
+			return a
+		}
 	}
 
 	return a
