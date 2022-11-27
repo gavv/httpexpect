@@ -1,6 +1,7 @@
 package httpexpect
 
 import (
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -752,4 +753,78 @@ func TestObjectConvertValueEqual(t *testing.T) {
 	value.NotValueEqual("baz", myMap{"a": "b"})
 	value.chain.assertFailed(t)
 	value.chain.reset()
+}
+
+func TestObjectEvery(t *testing.T) {
+	type (
+		myArray []interface{}
+		myMap   map[string]interface{}
+		myInt   int
+	)
+
+	reporter := newMockReporter(t)
+
+	convertIntToStr := func(key string, value *Value) {
+		switch key {
+		case "foo":
+			if v, ok := value.value.(float64); ok {
+				value.value = strconv.Itoa(int(v))
+			}
+		case "bar":
+			if v, ok := value.value.([]interface{}); ok {
+				for i, ele := range v {
+					if e, ok := ele.(float64); ok {
+						v[i] = strconv.Itoa(int(e))
+					}
+				}
+				value.value = v
+			}
+		default:
+		}
+	}
+
+	tableTests := []struct {
+		name     string
+		input    *Object
+		function func(key string, value *Value)
+		output   *Object
+	}{
+		{
+			name: "Non-empty object",
+			input: NewObject(reporter, map[string]interface{}{
+				"foo": 123,
+				"bar": []interface{}{456, 789},
+				"baz": map[string]interface{}{
+					"a": "b",
+				},
+			}),
+			function: convertIntToStr,
+			output: NewObject(reporter, map[string]interface{}{
+				"foo": "123",
+				"bar": []interface{}{"456", "789"},
+				"baz": map[string]interface{}{
+					"a": "b",
+				},
+			}),
+		},
+	}
+
+	for _, test := range tableTests {
+		t.Log("Running: " + test.name)
+		value := test.input.Every(test.function)
+
+		value.ValueEqual("foo", test.output.value["foo"])
+		value.chain.assertOK(t)
+		value.chain.reset()
+
+		t.Log(value.Values().value...)
+
+		value.ValueEqual("bar", test.output.value["bar"])
+		value.chain.assertOK(t)
+		value.chain.reset()
+
+		value.ValueEqual("baz", test.output.value["baz"])
+		value.chain.assertOK(t)
+		value.chain.reset()
+	}
 }

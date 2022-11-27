@@ -657,3 +657,30 @@ func checkSubset(outer, inner map[string]interface{}) bool {
 	}
 	return true
 }
+
+// Every runs the passed function for all the key value pairs in the object
+// value should be map[string]interface{} or struct.
+//
+// Example:
+//
+//	object := NewObject(t, map[string]interface{}{"foo": 123, "bar": 456})
+//
+//	newObject := object.Every(func(key string, value *httpexpect.Value) {
+//	  value.String().NotEmpty()
+//	})
+func (o *Object) Every(fn func(key string, value *Value)) *Object {
+	newObjectValue := map[string]interface{}{}
+
+	for key, val := range o.value {
+		valueChain := o.chain.clone()
+		valueChain.enter("Every[%s]", val)
+
+		newValue := newValue(valueChain, val)
+
+		fn(key, newValue)
+
+		newObjectValue[key] = newValue.value
+	}
+
+	return newObject(o.chain, newObjectValue)
+}
