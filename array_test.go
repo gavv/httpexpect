@@ -748,3 +748,41 @@ func TestArrayConvertContains(t *testing.T) {
 	value.chain.assertFailed(t)
 	value.chain.reset()
 }
+
+func TestArrayEvery(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	tableTests := []struct {
+		name     string
+		input    *Array
+		function func(idx int, val *Value)
+		output   *Array
+	}{
+		{
+			name:  "Non-empty array",
+			input: NewArray(reporter, []interface{}{1, 2}),
+			function: func(_ int, val *Value) {
+				if v, ok := val.value.(float64); ok {
+					val.value = int(v) * 3
+				}
+			},
+			output: NewArray(reporter, []interface{}{3, 6}),
+		},
+		{
+			name:  "Empty array",
+			input: NewArray(reporter, []interface{}{}),
+			function: func(_ int, val *Value) {
+				if v, ok := val.value.(float64); ok {
+					val.value = int(v) * 3
+				}
+			},
+			output: NewArray(reporter, []interface{}{}),
+		},
+	}
+
+	for _, test := range tableTests {
+		t.Log("Running: " + test.name)
+		newArray := test.input.Every(test.function)
+		assert.Equal(t, test.output.value, newArray.Raw())
+	}
+}

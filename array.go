@@ -861,3 +861,29 @@ func countElement(array []interface{}, element interface{}) int {
 	}
 	return count
 }
+
+// Every runs the passed function on all the Elements
+// in the array and returns a new Array instance.
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{"foo", "bar"})
+//	newArray := array.Every(func(idx int, val *httpexpect.Value) {
+//		value.String().NotEmpty()
+//	})
+func (a *Array) Every(fn func(index int, value *Value)) *Array {
+	newArrayValue := []interface{}{}
+
+	for idx, val := range a.value {
+		valueChain := a.chain.clone()
+		valueChain.enter("Every[%d]", val)
+
+		newValue := newValue(valueChain, val)
+
+		fn(idx, newValue)
+
+		newArrayValue = append(newArrayValue, newValue.value)
+	}
+
+	return newArray(a.chain, newArrayValue)
+}
