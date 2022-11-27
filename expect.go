@@ -99,21 +99,21 @@ type Config struct {
 	// TestName defines the name of the currently running test.
 	// May be empty.
 	//
-	// If empty, and if Config.Reporter implements Namer, name will be retrieved
-	// from it. In particular, this is true when Reporter is *testing.T.
+	// If non-empty, it will be included in failure report.
+	// Normally you set this value to t.Name().
 	TestName string
 
-	// BaseURL is a URL to prepended to all request.
+	// BaseURL is a URL to prepended to all requests.
 	// My be empty.
 	//
-	// If non-empty, trailing slash is allowed but not required and is appended
+	// If non-empty, trailing slash is allowed (but not required) and is appended
 	// automatically.
 	BaseURL string
 
 	// RequestFactory is used to pass in a custom *http.Request generation func.
 	// May be nil.
 	//
-	// If nil, DefaultRequestFactory is used.
+	// If nil, DefaultRequestFactory is used, which just calls http.NewRequest.
 	//
 	// You can use DefaultRequestFactory, or provide custom implementation.
 	// Useful for Google App Engine testing for example.
@@ -127,7 +127,7 @@ type Config struct {
 	//      Jar: httpexpect.NewJar(),
 	//  }
 	//
-	// You can use http.DefaultClient or http.Client, or provide
+	// You can use http.DefaultClient or your own http.Client, or provide
 	// custom implementation.
 	Client Client
 
@@ -153,36 +153,40 @@ type Config struct {
 	// Reporter is used to report formatted failure messages.
 	// Should NOT be nil, unless custom AssertionHandler is used.
 	//
-	// Reporter is used when AssertionHandler is nil or explicitly set to
-	// DefaultAssertionHandler.
+	// Config.Reporter is used by DefaultAssertionHandler, which is automatically
+	// constructed when AssertionHandler is nil.
 	//
 	// You can use AssertReporter, RequireReporter (they use testify),
 	// or *testing.T, or provide custom implementation.
 	Reporter Reporter
 
-	// Formatter is used to format failure message.
+	// Formatter is used to format success and failure messages.
 	// May be nil.
 	//
 	// If nil, DefaultFormatter is used.
 	//
-	// Formatter is used when AssertionHandler is nil or explicitly set to
-	// DefaultAssertionHandler.
+	// Config.Formatter is used by DefaultAssertionHandler, which is automatically
+	// constructed when AssertionHandler is nil.
 	//
-	// Usually you don't need custom formatter. Implementing one is
+	// Usually you don't need custom formatter. Implementing one is a
 	// relatively big task.
 	Formatter Formatter
 
-	// AssertionHandler handles both successful and failed assertions.
+	// AssertionHandler handles successful and failed assertions.
 	// May be nil.
 	//
-	// If nil, DefaultAssertionHandler is used.
+	// Every time an assertion is made, AssertionHandler is invoked with detailed
+	// info about the assertion. On failure, AssertionHandler is responsible to
+	// format error and report it to test suite.
 	//
-	// Every time an assertion is made, AssertionHandler in invoked with detailed
-	// info about the assertion and failure. On failure, AssertionHandler is
-	// responsible to format and report error.
+	// If AssertionHandler is nil, DefaultAssertionHandler is constructed, with
+	// Formatter set to Config.Formatter, Reporter set to Config.Reporter, and
+	// Logger set to nil. DefaultAssertionHandler will just delegates formatting
+	// and reporting to Formatter and Reporter.
 	//
-	// DefaultAssertionHandler uses Config.Formatter to format failure and
-	// Config.Reporter to report it.
+	// If you're happy with DefaultAssertionHandler, but want to enable logging
+	// of successful assertions and non-fatal failures, you can manually construct
+	// DefaultAssertionHandler and set its Logger field to non-nil value.
 	//
 	// Usually you don't need custom AssertionHandler and it's enough just to
 	// set Reporter. Use AssertionHandler for more precise control of reports.
@@ -192,7 +196,7 @@ type Config struct {
 	// May be nil.
 	//
 	// If printer implements WebsocketPrinter interface, it will be also used
-	// to print websocket messages.
+	// to print WebSocket messages.
 	//
 	// You can use CompactPrinter, DebugPrinter, CurlPrinter, or provide
 	// custom implementation.
@@ -204,11 +208,12 @@ type Config struct {
 	// Environment provides a container for arbitrary data shared between tests.
 	// May be nil.
 	//
-	// Environment is not by httpexpect itself, but can be used by tests to store
-	// and load arbitrary values. Tests can access Environment via Expect.Env()
-	// and AssertionContext.Env.
+	// Environment is not used by httpexpect itself, but can be used by tests to
+	// store and load arbitrary values. Tests can access Environment via
+	// Expect.Env(). It is also accessible in AssertionHandler via AssertionContext.
 	//
-	// If Environment is nil, a new environment is automatically created.
+	// If Environment is nil, a new empty environment is automatically created
+	// when Expect instance is constructed.
 	Environment *Environment
 }
 
@@ -330,8 +335,8 @@ func New(t LoggerReporter, baseURL string) *Expect {
 //
 // t is usually *testing.T, but can be any matching implementation.
 //
-// baseURL specifies URL to prepended to all request. My be empty. If non-empty,
-// trailing slash is allowed but not required and is appended automatically.
+// baseURL specifies URL to be prepended to all requests. My be empty. If non-empty,
+// trailing slash is allowed (but not required) and is appended automatically.
 //
 // Default is a shorthand for WithConfig. It uses:
 //   - baseURL for Config.BaseURL

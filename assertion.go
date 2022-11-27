@@ -28,7 +28,7 @@ const (
 	AssertNotEmpty
 
 	// Check expression: [Actual] is equal to [Expected]
-	// [Delta] specifies allowed difference between values (may be zero)
+	// If [Delta] is set, it specifies allowed difference between values
 	AssertEqual
 	AssertNotEqual
 
@@ -104,7 +104,7 @@ type AssertionContext struct {
 	Request *Request
 
 	// Response being matched
-	// May be nil if request was not yet received
+	// May be nil if response was not yet received
 	Response *Response
 
 	// Environment shared between tests
