@@ -1610,10 +1610,7 @@ func TestRequestRedirect(t *testing.T) {
 		t.Run("request has no body", func(t *testing.T) {
 			tp := newMockTransportRedirect(t).
 				WithAssertFn(func(r *http.Request) bool {
-					assert.Equal(t, http.NoBody, r.Body)
-					assert.Nil(t, r.GetBody)
-
-					return true
+					return assert.Equal(t, http.NoBody, r.Body)
 				})
 
 			client := &http.Client{
@@ -1636,6 +1633,9 @@ func TestRequestRedirect(t *testing.T) {
 				Equal("/redirect")
 			resp.chain.assertOK(t)
 
+			// Should set GetBody
+			assert.Nil(t, req.httpReq.GetBody)
+
 			// Should set CheckRedirect
 			httpClient, _ := req.config.Client.(*http.Client)
 			assert.NotNil(t, httpClient.CheckRedirect)
@@ -1648,9 +1648,9 @@ func TestRequestRedirect(t *testing.T) {
 		t.Run("request has body", func(t *testing.T) {
 			tp := newMockTransportRedirect(t).
 				WithAssertFn(func(r *http.Request) bool {
-					assert.NotNil(t, r.Body)
-					assert.NotEqual(t, http.NoBody, r.Body)
-					assert.Nil(t, r.GetBody)
+					b, err := ioutil.ReadAll(r.Body)
+					assert.NoError(t, err)
+					assert.Equal(t, "test body", string(b))
 
 					return true
 				})
@@ -1676,6 +1676,9 @@ func TestRequestRedirect(t *testing.T) {
 				Equal("/redirect")
 			resp.chain.assertOK(t)
 
+			// Should set GetBody
+			assert.Nil(t, req.httpReq.GetBody)
+
 			// Should set CheckRedirect
 			httpClient, _ := req.config.Client.(*http.Client)
 			assert.NotNil(t, httpClient.CheckRedirect)
@@ -1690,19 +1693,7 @@ func TestRequestRedirect(t *testing.T) {
 		t.Run("request has no body", func(t *testing.T) {
 			tp := newMockTransportRedirect(t).
 				WithAssertFn(func(r *http.Request) bool {
-					assert.Equal(t, http.NoBody, r.Body)
-
-					if r.URL.String() == "/url" {
-						rc, err := r.GetBody()
-						assert.NoError(t, err)
-						assert.Equal(t, http.NoBody, rc)
-					} else if r.URL.String() == "/redirect" {
-						assert.Nil(t, r.GetBody)
-					} else {
-						t.Fatalf("invalid request URL")
-					}
-
-					return true
+					return assert.Equal(t, http.NoBody, r.Body)
 				}).WithMaxRedirect(1)
 
 			client := &http.Client{
@@ -1723,6 +1714,11 @@ func TestRequestRedirect(t *testing.T) {
 			resp := req.Expect().
 				Status(http.StatusOK)
 			resp.chain.assertOK(t)
+
+			// Should set GetBody
+			gb, err := req.httpReq.GetBody()
+			assert.NoError(t, err)
+			assert.Equal(t, http.NoBody, gb)
 
 			// Should set CheckRedirect
 			httpClient, _ := req.config.Client.(*http.Client)
@@ -1741,19 +1737,7 @@ func TestRequestRedirect(t *testing.T) {
 		t.Run("request has no body and too many redirects", func(t *testing.T) {
 			tp := newMockTransportRedirect(t).
 				WithAssertFn(func(r *http.Request) bool {
-					assert.Equal(t, http.NoBody, r.Body)
-
-					if r.URL.String() == "/url" {
-						rc, err := r.GetBody()
-						assert.NoError(t, err)
-						assert.Equal(t, http.NoBody, rc)
-					} else if r.URL.String() == "/redirect" {
-						assert.Nil(t, r.GetBody)
-					} else {
-						t.Fatalf("invalid request URL")
-					}
-
-					return true
+					return assert.Equal(t, http.NoBody, r.Body)
 				})
 
 			client := &http.Client{
@@ -1774,6 +1758,11 @@ func TestRequestRedirect(t *testing.T) {
 			resp := req.Expect()
 			resp.chain.assertFailed(t)
 
+			// Should set GetBody
+			gb, err := req.httpReq.GetBody()
+			assert.NoError(t, err)
+			assert.Equal(t, http.NoBody, gb)
+
 			// Should set CheckRedirect
 			httpClient, _ := req.config.Client.(*http.Client)
 			assert.NotNil(t, httpClient.CheckRedirect)
@@ -1791,21 +1780,9 @@ func TestRequestRedirect(t *testing.T) {
 		t.Run("request has body", func(t *testing.T) {
 			tp := newMockTransportRedirect(t).
 				WithAssertFn(func(r *http.Request) bool {
-					assert.NotNil(t, r.Body)
-
-					if r.URL.String() == "/url" {
-						rc1, err := r.Body.(*bodyWrapper).GetBody()
-						assert.NoError(t, err)
-
-						rc2, err := r.GetBody()
-						assert.NoError(t, err)
-
-						assert.Equal(t, rc1, rc2)
-					} else if r.URL.String() == "/redirect" {
-						assert.Nil(t, r.GetBody)
-					} else {
-						t.Fatalf("invalid request URL")
-					}
+					b, err := ioutil.ReadAll(r.Body)
+					assert.NoError(t, err)
+					assert.Equal(t, "test body", string(b))
 
 					return true
 				}).WithMaxRedirect(1)
@@ -1830,6 +1807,13 @@ func TestRequestRedirect(t *testing.T) {
 				Status(http.StatusOK)
 			resp.chain.assertOK(t)
 
+			// Should set GetBody
+			gb, err := req.httpReq.GetBody()
+			assert.NoError(t, err)
+			b, err := ioutil.ReadAll(gb)
+			assert.NoError(t, err)
+			assert.Equal(t, "test body", string(b))
+
 			// Should set CheckRedirect
 			httpClient, _ := req.config.Client.(*http.Client)
 			assert.NotNil(t, httpClient.CheckRedirect)
@@ -1847,21 +1831,9 @@ func TestRequestRedirect(t *testing.T) {
 		t.Run("request has body and too many redirects", func(t *testing.T) {
 			tp := newMockTransportRedirect(t).
 				WithAssertFn(func(r *http.Request) bool {
-					assert.NotNil(t, r.Body)
-
-					if r.URL.String() == "/url" {
-						rc1, err := r.Body.(*bodyWrapper).GetBody()
-						assert.NoError(t, err)
-
-						rc2, err := r.GetBody()
-						assert.NoError(t, err)
-
-						assert.Equal(t, rc1, rc2)
-					} else if r.URL.String() == "/redirect" {
-						assert.Nil(t, r.GetBody)
-					} else {
-						t.Fatalf("invalid request URL")
-					}
+					b, err := ioutil.ReadAll(r.Body)
+					assert.NoError(t, err)
+					assert.Equal(t, "test body", string(b))
 
 					return true
 				})
@@ -1884,6 +1856,13 @@ func TestRequestRedirect(t *testing.T) {
 			// Should error
 			resp := req.Expect()
 			resp.chain.assertFailed(t)
+
+			// Should set GetBody
+			gb, err := req.httpReq.GetBody()
+			assert.NoError(t, err)
+			b, err := ioutil.ReadAll(gb)
+			assert.NoError(t, err)
+			assert.Equal(t, "test body", string(b))
 
 			// Should set CheckRedirect
 			httpClient, _ := req.config.Client.(*http.Client)
@@ -1904,10 +1883,7 @@ func TestRequestRedirect(t *testing.T) {
 		t.Run("request has no body", func(t *testing.T) {
 			tp := newMockTransportRedirect(t).
 				WithAssertFn(func(r *http.Request) bool {
-					assert.Contains(t, []interface{}{nil, http.NoBody}, r.Body)
-					assert.Nil(t, r.GetBody)
-
-					return true
+					return assert.Contains(t, []interface{}{nil, http.NoBody}, r.Body)
 				}).WithMaxRedirect(1)
 
 			client := &http.Client{
@@ -1929,6 +1905,9 @@ func TestRequestRedirect(t *testing.T) {
 				Status(http.StatusOK)
 			resp.chain.assertOK(t)
 
+			// Should set GetBody
+			assert.Nil(t, req.httpReq.GetBody)
+
 			// Should set CheckRedirect
 			httpClient, _ := req.config.Client.(*http.Client)
 			assert.NotNil(t, httpClient.CheckRedirect)
@@ -1946,19 +1925,7 @@ func TestRequestRedirect(t *testing.T) {
 		t.Run("request has no body and too many redirects", func(t *testing.T) {
 			tp := newMockTransportRedirect(t).
 				WithAssertFn(func(r *http.Request) bool {
-					assert.Equal(t, http.NoBody, r.Body)
-
-					if r.URL.String() == "/url" {
-						rc, err := r.GetBody()
-						assert.NoError(t, err)
-						assert.Equal(t, http.NoBody, rc)
-					} else if r.URL.String() == "/redirect" {
-						assert.Nil(t, r.GetBody)
-					} else {
-						t.Fatalf("invalid request URL")
-					}
-
-					return true
+					return assert.Contains(t, []interface{}{nil, http.NoBody}, r.Body)
 				})
 
 			client := &http.Client{
@@ -1971,13 +1938,16 @@ func TestRequestRedirect(t *testing.T) {
 			}
 
 			req := NewRequest(config, http.MethodPut, "/url").
-				WithRedirectPolicy(FollowAllRedirects).
+				WithRedirectPolicy(FollowRedirectsWithoutBody).
 				WithMaxRedirects(1)
 			req.chain.assertOK(t)
 
 			// Should error
 			resp := req.Expect()
 			resp.chain.assertFailed(t)
+
+			// Should set GetBody
+			assert.Nil(t, req.httpReq.GetBody)
 
 			// Should set CheckRedirect
 			httpClient, _ := req.config.Client.(*http.Client)
@@ -1997,8 +1967,9 @@ func TestRequestRedirect(t *testing.T) {
 			func(t *testing.T) {
 				tp := newMockTransportRedirect(t).
 					WithAssertFn(func(r *http.Request) bool {
-						assert.NotNil(t, r.Body)
-						assert.Nil(t, r.GetBody)
+						b, err := ioutil.ReadAll(r.Body)
+						assert.NoError(t, err)
+						assert.Equal(t, "test body", string(b))
 
 						return true
 					}).WithMaxRedirect(1)
@@ -2023,6 +1994,9 @@ func TestRequestRedirect(t *testing.T) {
 					Status(tp.redirectHTTPStatusCode)
 				resp.chain.assertOK(t)
 
+				// Should set GetBody
+				assert.Nil(t, req.httpReq.GetBody)
+
 				// Should set CheckRedirect
 				httpClient, _ := req.config.Client.(*http.Client)
 				assert.NotNil(t, httpClient.CheckRedirect)
@@ -2043,15 +2017,16 @@ func TestRequestRedirect(t *testing.T) {
 					WithAssertFn(func(r *http.Request) bool {
 						if r.URL.String() == "/url" {
 							assert.Equal(t, r.Method, http.MethodPut)
-							assert.NotNil(t, r.Body)
+
+							b, err := ioutil.ReadAll(r.Body)
+							assert.NoError(t, err)
+							assert.Equal(t, "test body", string(b))
 						} else if r.URL.String() == "/redirect" {
 							assert.Equal(t, r.Method, http.MethodGet)
 							assert.Nil(t, r.Body)
 						} else {
 							t.Fatalf("invalid request URL")
 						}
-
-						assert.Nil(t, r.GetBody)
 
 						return true
 					}).WithRedirectHTTPStatusCode(http.StatusMovedPermanently).WithMaxRedirect(1)
@@ -2076,6 +2051,9 @@ func TestRequestRedirect(t *testing.T) {
 					Status(http.StatusOK)
 				resp.chain.assertOK(t)
 
+				// Should set GetBody
+				assert.Nil(t, req.httpReq.GetBody)
+
 				// Should set CheckRedirect
 				httpClient, _ := req.config.Client.(*http.Client)
 				assert.NotNil(t, httpClient.CheckRedirect)
@@ -2098,15 +2076,16 @@ func TestRequestRedirect(t *testing.T) {
 					WithAssertFn(func(r *http.Request) bool {
 						if r.URL.String() == "/url" {
 							assert.Equal(t, r.Method, http.MethodPut)
-							assert.NotNil(t, r.Body)
+
+							b, err := ioutil.ReadAll(r.Body)
+							assert.NoError(t, err)
+							assert.Equal(t, "test body", string(b))
 						} else if r.URL.String() == "/redirect" {
 							assert.Equal(t, r.Method, http.MethodGet)
 							assert.Nil(t, r.Body)
 						} else {
 							t.Fatalf("invalid request URL")
 						}
-
-						assert.Nil(t, r.GetBody)
 
 						return true
 					}).WithRedirectHTTPStatusCode(http.StatusMovedPermanently)
@@ -2129,6 +2108,9 @@ func TestRequestRedirect(t *testing.T) {
 				// Should error
 				resp := req.Expect()
 				resp.chain.assertFailed(t)
+
+				// Should set GetBody
+				assert.Nil(t, req.httpReq.GetBody)
 
 				// Should set CheckRedirect
 				httpClient, _ := req.config.Client.(*http.Client)
