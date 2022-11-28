@@ -1246,7 +1246,7 @@ func (r *Request) WithProto(proto string) *Request {
 //	req := NewRequest(config, "PUT", "http://example.com/upload")
 //	fh, _ := os.Open("data")
 //	defer fh.Close()
-//	req.WithHeader("Content-Type": "application/octet-stream")
+//	req.WithHeader("Content-Type", "application/octet-stream")
 //	req.WithChunked(fh)
 func (r *Request) WithChunked(reader io.Reader) *Request {
 	r.chain.enter("WithChunked()")
