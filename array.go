@@ -248,7 +248,7 @@ func (a *Array) Every(fn func(index int, value *Value)) *Array {
 
 	for idx, val := range a.value {
 		valueChain := a.chain.clone()
-		valueChain.enter("Every[%d]", val)
+		valueChain.enter("Every[%v]", val)
 
 		valueChain.setFatal(false)
 		valueChain.setFailCallback(func() {
