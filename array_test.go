@@ -1,7 +1,6 @@
 package httpexpect
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -759,15 +758,17 @@ func TestArrayEvery(t *testing.T) {
 		array := NewArray(reporter, []interface{}{2, 4, 6})
 		array.Every(func(_ int, val *Value) {
 			if v, ok := val.Raw().(float64); ok {
-				newValue(val.chain, int(v)%2).Equal(0)
+				assert.Equal(ts, 0, int(v)%2)
 			}
 		})
+		array.chain.assertOK(ts)
 	})
 
 	t.Run("Empty array", func(ts *testing.T) {
 		reporter := newMockReporter(ts)
 		array := NewArray(reporter, []interface{}{})
 		array.Every(func(_ int, val *Value) {})
+		array.chain.assertOK(ts)
 	})
 
 	t.Run("Test correct index", func(ts *testing.T) {
@@ -776,17 +777,11 @@ func TestArrayEvery(t *testing.T) {
 		array.Every(
 			func(idx int, val *Value) {
 				if v, ok := val.Raw().(float64); ok {
-					if int(v) != idx+1 {
-						val.chain.fail(AssertionFailure{
-							Type: AssertEqual,
-							Errors: []error{
-								errors.New("invalid index"),
-							},
-						})
-					}
+					assert.Equal(ts, idx, int(v)-1)
 				}
 			},
 		)
+		array.chain.assertOK(ts)
 	})
 
 	t.Run("Assertion failed for any", func(ts *testing.T) {
@@ -799,6 +794,7 @@ func TestArrayEvery(t *testing.T) {
 		})
 		assert.Equal(t, true, array.chain.failed())
 		assert.Equal(t, 3, invoked)
+		array.chain.assertFailed(ts)
 	})
 
 	t.Run("Assertion failed for all", func(ts *testing.T) {
@@ -811,5 +807,6 @@ func TestArrayEvery(t *testing.T) {
 		})
 		assert.Equal(t, true, array.chain.failed())
 		assert.Equal(t, 3, invoked)
+		array.chain.assertFailed(ts)
 	})
 }

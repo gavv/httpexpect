@@ -212,8 +212,7 @@ func (a *Array) Iter() []Value {
 	return ret
 }
 
-// Every runs the passed function on all the Elements
-// in the array and returns a new Array instance.
+// Every runs the passed function on all the Elements in the array.
 //
 // If assertion inside function fails, the original Array is marked failed.
 //
@@ -223,7 +222,8 @@ func (a *Array) Iter() []Value {
 // Example:
 //
 //	array := NewArray(t, []interface{}{"foo", "bar"})
-//	newArray := array.Every(func(idx int, val *httpexpect.Value) {
+//
+//	array.Every(func(index int, value *httpexpect.Value) {
 //		value.String().NotEmpty()
 //	})
 func (a *Array) Every(fn func(index int, value *Value)) *Array {
@@ -238,7 +238,7 @@ func (a *Array) Every(fn func(index int, value *Value)) *Array {
 		a.chain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
-				errors.New("unexpected nil"),
+				errors.New("unexpected nil function argument"),
 			},
 		})
 		return a
@@ -246,22 +246,19 @@ func (a *Array) Every(fn func(index int, value *Value)) *Array {
 
 	chainFailure := false
 
-	for idx, val := range a.value {
+	for index, val := range a.value {
 		valueChain := a.chain.clone()
-		valueChain.enter("Every[%v]", val)
+		valueChain.replace("Every[%d]", index)
 
-		valueChain.setFatal(false)
 		valueChain.setFailCallback(func() {
 			chainFailure = true
 		})
 
-		fn(idx, newValue(valueChain, val))
+		fn(index, newValue(valueChain, val))
 	}
 
 	if chainFailure {
-		a.chain.fail(AssertionFailure{
-			Type: AssertNotValid,
-		})
+		a.chain.setFailed()
 	}
 
 	return a
