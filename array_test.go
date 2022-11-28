@@ -792,7 +792,6 @@ func TestArrayEvery(t *testing.T) {
 			invoked++
 			val.String().NotEmpty()
 		})
-		assert.Equal(t, true, array.chain.failed())
 		assert.Equal(t, 3, invoked)
 		array.chain.assertFailed(ts)
 	})
@@ -805,7 +804,6 @@ func TestArrayEvery(t *testing.T) {
 			invoked++
 			val.String().NotEmpty()
 		})
-		assert.Equal(t, true, array.chain.failed())
 		assert.Equal(t, 3, invoked)
 		array.chain.assertFailed(ts)
 	})
