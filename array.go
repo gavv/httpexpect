@@ -212,6 +212,61 @@ func (a *Array) Iter() []Value {
 	return ret
 }
 
+// Every runs the passed function on all the Elements
+// in the array and returns a new Array instance.
+//
+// If assertion inside function fails, the original Array is marked failed.
+//
+// Every will execute the function for all values in the array irrespective
+// of assertion failures for some values in the array.
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{"foo", "bar"})
+//	newArray := array.Every(func(idx int, val *httpexpect.Value) {
+//		value.String().NotEmpty()
+//	})
+func (a *Array) Every(fn func(index int, value *Value)) *Array {
+	a.chain.enter("Every()")
+	defer a.chain.leave()
+
+	if a.chain.failed() {
+		return a
+	}
+
+	if fn == nil {
+		a.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected nil"),
+			},
+		})
+		return a
+	}
+
+	chainFailure := false
+
+	for idx, val := range a.value {
+		valueChain := a.chain.clone()
+		valueChain.enter("Every[%d]", val)
+
+		valueChain.setFatal(false)
+		valueChain.setFailCallback(func() {
+			chainFailure = true
+		})
+
+		fn(idx, newValue(valueChain, val))
+	}
+
+	if chainFailure {
+		a.chain.fail(AssertionFailure{
+			Type: AssertNotValid,
+		})
+	}
+
+	return a
+}
+
 // Empty succeeds if array is empty.
 //
 // Example:
@@ -860,30 +915,4 @@ func countElement(array []interface{}, element interface{}) int {
 		}
 	}
 	return count
-}
-
-// Every runs the passed function on all the Elements
-// in the array and returns a new Array instance.
-//
-// Example:
-//
-//	array := NewArray(t, []interface{}{"foo", "bar"})
-//	newArray := array.Every(func(idx int, val *httpexpect.Value) {
-//		value.String().NotEmpty()
-//	})
-func (a *Array) Every(fn func(index int, value *Value)) *Array {
-	newArrayValue := []interface{}{}
-
-	for idx, val := range a.value {
-		valueChain := a.chain.clone()
-		valueChain.enter("Every[%d]", val)
-
-		newValue := newValue(valueChain, val)
-
-		fn(idx, newValue)
-
-		newArrayValue = append(newArrayValue, newValue.value)
-	}
-
-	return newArray(a.chain, newArrayValue)
 }

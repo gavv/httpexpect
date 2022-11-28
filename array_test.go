@@ -1,6 +1,7 @@
 package httpexpect
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -37,6 +38,9 @@ func TestArrayFailed(t *testing.T) {
 		value.NotContainsOnly("foo")
 		value.ContainsAny("foo")
 		value.NotContainsAny("foo")
+		value.Every(func(_ int, val *Value) {
+			val.String().NotEmpty()
+		})
 	}
 
 	t.Run("failed_chain", func(t *testing.T) {
@@ -750,39 +754,62 @@ func TestArrayConvertContains(t *testing.T) {
 }
 
 func TestArrayEvery(t *testing.T) {
-	reporter := newMockReporter(t)
+	t.Run("Check validation", func(ts *testing.T) {
+		reporter := newMockReporter(ts)
+		array := NewArray(reporter, []interface{}{2, 4, 6})
+		array.Every(func(_ int, val *Value) {
+			if v, ok := val.Raw().(float64); ok {
+				newValue(val.chain, int(v)%2).Equal(0)
+			}
+		})
+	})
 
-	tableTests := []struct {
-		name     string
-		input    *Array
-		function func(idx int, val *Value)
-		output   *Array
-	}{
-		{
-			name:  "Non-empty array",
-			input: NewArray(reporter, []interface{}{1, 2}),
-			function: func(_ int, val *Value) {
-				if v, ok := val.value.(float64); ok {
-					val.value = int(v) * 3
+	t.Run("Empty array", func(ts *testing.T) {
+		reporter := newMockReporter(ts)
+		array := NewArray(reporter, []interface{}{})
+		array.Every(func(_ int, val *Value) {})
+	})
+
+	t.Run("Test correct index", func(ts *testing.T) {
+		reporter := newMockReporter(ts)
+		array := NewArray(reporter, []interface{}{1, 2, 3})
+		array.Every(
+			func(idx int, val *Value) {
+				if v, ok := val.Raw().(float64); ok {
+					if int(v) != idx+1 {
+						val.chain.fail(AssertionFailure{
+							Type: AssertEqual,
+							Errors: []error{
+								errors.New("invalid index"),
+							},
+						})
+					}
 				}
 			},
-			output: NewArray(reporter, []interface{}{3, 6}),
-		},
-		{
-			name:  "Empty array",
-			input: NewArray(reporter, []interface{}{}),
-			function: func(_ int, val *Value) {
-				if v, ok := val.value.(float64); ok {
-					val.value = int(v) * 3
-				}
-			},
-			output: NewArray(reporter, []interface{}{}),
-		},
-	}
+		)
+	})
 
-	for _, test := range tableTests {
-		t.Log("Running: " + test.name)
-		newArray := test.input.Every(test.function)
-		assert.Equal(t, test.output.value, newArray.Raw())
-	}
+	t.Run("Assertion failed for any", func(ts *testing.T) {
+		reporter := newMockReporter(ts)
+		array := NewArray(reporter, []interface{}{"foo", "", "bar"})
+		invoked := 0
+		array.Every(func(_ int, val *Value) {
+			invoked++
+			val.String().NotEmpty()
+		})
+		assert.Equal(t, true, array.chain.failed())
+		assert.Equal(t, 3, invoked)
+	})
+
+	t.Run("Assertion failed for all", func(ts *testing.T) {
+		reporter := newMockReporter(ts)
+		array := NewArray(reporter, []interface{}{"", "", ""})
+		invoked := 0
+		array.Every(func(_ int, val *Value) {
+			invoked++
+			val.String().NotEmpty()
+		})
+		assert.Equal(t, true, array.chain.failed())
+		assert.Equal(t, 3, invoked)
+	})
 }
