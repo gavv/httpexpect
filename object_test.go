@@ -758,23 +758,6 @@ func TestObjectConvertValueEqual(t *testing.T) {
 }
 
 func TestObjectEvery(t *testing.T) {
-	// tableTests := []struct {
-	// 	name     string
-	// 	input    *Object
-	// 	function func(key string, value *Value)
-	// 	output   *Object
-	// }{
-	// 	{
-	// 		output: NewObject(reporter, map[string]interface{}{
-	// 			"foo": "123",
-	// 			"bar": []interface{}{"456", "789"},
-	// 			"baz": map[string]interface{}{
-	// 				"a": "b",
-	// 			},
-	// 		}),
-	// 	},
-	// }
-
 	t.Run("Check Validation", func(ts *testing.T) {
 		reporter := newMockReporter(ts)
 		object := NewObject(reporter, map[string]interface{}{
@@ -785,14 +768,18 @@ func TestObjectEvery(t *testing.T) {
 		object.Every(func(_ string, value *Value) {
 			value.String().NotEmpty()
 		})
+		object.chain.assertOK(ts)
 	})
+
 	t.Run("Empty Object", func(ts *testing.T) {
 		reporter := newMockReporter(ts)
 		object := NewObject(reporter, map[string]interface{}{})
 		object.Every(func(_ string, value *Value) {
 			value.String().NotEmpty()
 		})
+		object.chain.assertOK(ts)
 	})
+
 	t.Run("Test Keys", func(ts *testing.T) {
 		reporter := newMockReporter(ts)
 		object := NewObject(reporter, map[string]interface{}{
@@ -804,36 +791,38 @@ func TestObjectEvery(t *testing.T) {
 			if v, ok := value.Raw().(string); ok {
 				switch v {
 				case "123":
-					NewString(reporter, "foo").Equal(key)
+					assert.Equal(ts, "foo", key)
 				case "456":
-					NewString(reporter, "bar").Equal(key)
+					assert.Equal(ts, "bar", key)
 				case "baz":
-					NewString(reporter, "baz").Equal(key)
+					assert.Equal(ts, "baz", key)
 				}
 			}
 		})
+		object.chain.assertOK(ts)
 	})
+
 	t.Run("Assertion failed for any", func(ts *testing.T) {
 		reporter := newMockReporter(ts)
-		array := NewObject(reporter, map[string]interface{}{"foo": "", "bar": "bar"})
+		object := NewObject(reporter, map[string]interface{}{"foo": "", "bar": "bar"})
 		invoked := 0
-		array.Every(func(_ string, val *Value) {
+		object.Every(func(_ string, val *Value) {
 			invoked++
 			val.String().NotEmpty()
 		})
-		assert.Equal(t, true, array.chain.failed())
+		object.chain.assertFailed(ts)
 		assert.Equal(t, 2, invoked)
 	})
 
 	t.Run("Assertion failed for all", func(ts *testing.T) {
 		reporter := newMockReporter(ts)
-		array := NewObject(reporter, map[string]interface{}{"foo": "", "bar": ""})
+		object := NewObject(reporter, map[string]interface{}{"foo": "", "bar": ""})
 		invoked := 0
-		array.Every(func(_ string, val *Value) {
+		object.Every(func(_ string, val *Value) {
 			invoked++
 			val.String().NotEmpty()
 		})
-		assert.Equal(t, true, array.chain.failed())
+		object.chain.assertFailed(ts)
 		assert.Equal(t, 2, invoked)
 	})
 }

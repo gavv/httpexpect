@@ -164,14 +164,16 @@ func (o *Object) Value(key string) *Value {
 
 // Every runs the passed function for all the key value pairs in the object
 //
-// in the array and returns a new Array instance.
+// If assertion inside function fails, the original Object is marked failed.
 //
-// If assertion inside function fails, the original Array is marked failed.
+// Every will execute the function for all values in the object irrespective
+// of assertion failures for some values in the object.
+//
 // Example:
 //
 //	object := NewObject(t, map[string]interface{}{"foo": 123, "bar": 456})
 //
-//	newObject := object.Every(func(key string, value *httpexpect.Value) {
+//	object.Every(func(key string, value *httpexpect.Value) {
 //	  value.String().NotEmpty()
 //	})
 func (o *Object) Every(fn func(key string, value *Value)) *Object {
@@ -186,7 +188,7 @@ func (o *Object) Every(fn func(key string, value *Value)) *Object {
 		o.chain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
-				errors.New("unexpected nil"),
+				errors.New("unexpected nil function argument"),
 			},
 		})
 		return o
@@ -196,9 +198,8 @@ func (o *Object) Every(fn func(key string, value *Value)) *Object {
 
 	for key, val := range o.value {
 		valueChain := o.chain.clone()
-		valueChain.enter("Every[%q]", val)
+		valueChain.replace("Every[%q]", key)
 
-		valueChain.setFatal(false)
 		valueChain.setFailCallback(func() {
 			chainFailure = true
 		})
@@ -208,9 +209,7 @@ func (o *Object) Every(fn func(key string, value *Value)) *Object {
 	}
 
 	if chainFailure {
-		o.chain.fail(AssertionFailure{
-			Type: AssertNotValid,
-		})
+		o.chain.setFailed()
 	}
 
 	return o
