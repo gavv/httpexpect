@@ -162,6 +162,59 @@ func (o *Object) Value(key string) *Value {
 	return newValue(o.chain, value)
 }
 
+// Every runs the passed function for all the key value pairs in the object
+//
+// If assertion inside function fails, the original Object is marked failed.
+//
+// Every will execute the function for all values in the object irrespective
+// of assertion failures for some values in the object.
+//
+// Example:
+//
+//	object := NewObject(t, map[string]interface{}{"foo": 123, "bar": 456})
+//
+//	object.Every(func(key string, value *httpexpect.Value) {
+//	  value.String().NotEmpty()
+//	})
+func (o *Object) Every(fn func(key string, value *Value)) *Object {
+	o.chain.enter("Every()")
+	defer o.chain.leave()
+
+	if o.chain.failed() {
+		return o
+	}
+
+	if fn == nil {
+		o.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected nil function argument"),
+			},
+		})
+		return o
+	}
+
+	chainFailure := false
+
+	for key, val := range o.value {
+		valueChain := o.chain.clone()
+		valueChain.replace("Every[%q]", key)
+
+		valueChain.setFailCallback(func() {
+			chainFailure = true
+		})
+
+		fn(key, newValue(valueChain, val))
+
+	}
+
+	if chainFailure {
+		o.chain.setFailed()
+	}
+
+	return o
+}
+
 // Empty succeeds if object is empty.
 //
 // Example:

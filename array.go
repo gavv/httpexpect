@@ -212,6 +212,58 @@ func (a *Array) Iter() []Value {
 	return ret
 }
 
+// Every runs the passed function on all the Elements in the array.
+//
+// If assertion inside function fails, the original Array is marked failed.
+//
+// Every will execute the function for all values in the array irrespective
+// of assertion failures for some values in the array.
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{"foo", "bar"})
+//
+//	array.Every(func(index int, value *httpexpect.Value) {
+//		value.String().NotEmpty()
+//	})
+func (a *Array) Every(fn func(index int, value *Value)) *Array {
+	a.chain.enter("Every()")
+	defer a.chain.leave()
+
+	if a.chain.failed() {
+		return a
+	}
+
+	if fn == nil {
+		a.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected nil function argument"),
+			},
+		})
+		return a
+	}
+
+	chainFailure := false
+
+	for index, val := range a.value {
+		valueChain := a.chain.clone()
+		valueChain.replace("Every[%d]", index)
+
+		valueChain.setFailCallback(func() {
+			chainFailure = true
+		})
+
+		fn(index, newValue(valueChain, val))
+	}
+
+	if chainFailure {
+		a.chain.setFailed()
+	}
+
+	return a
+}
+
 // Empty succeeds if array is empty.
 //
 // Example:

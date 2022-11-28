@@ -29,6 +29,9 @@ func TestObjectFailed(t *testing.T) {
 		value.NotContainsSubset(nil)
 		value.ValueEqual("foo", nil)
 		value.NotValueEqual("foo", nil)
+		value.Every(func(_ string, value *Value) {
+			value.String().NotEmpty()
+		})
 	}
 
 	t.Run("failed_chain", func(t *testing.T) {
@@ -752,4 +755,74 @@ func TestObjectConvertValueEqual(t *testing.T) {
 	value.NotValueEqual("baz", myMap{"a": "b"})
 	value.chain.assertFailed(t)
 	value.chain.reset()
+}
+
+func TestObjectEvery(t *testing.T) {
+	t.Run("Check Validation", func(ts *testing.T) {
+		reporter := newMockReporter(ts)
+		object := NewObject(reporter, map[string]interface{}{
+			"foo": "123",
+			"bar": "456",
+			"baz": "b",
+		})
+		object.Every(func(_ string, value *Value) {
+			value.String().NotEmpty()
+		})
+		object.chain.assertOK(ts)
+	})
+
+	t.Run("Empty Object", func(ts *testing.T) {
+		reporter := newMockReporter(ts)
+		object := NewObject(reporter, map[string]interface{}{})
+		object.Every(func(_ string, value *Value) {
+			value.String().NotEmpty()
+		})
+		object.chain.assertOK(ts)
+	})
+
+	t.Run("Test Keys", func(ts *testing.T) {
+		reporter := newMockReporter(ts)
+		object := NewObject(reporter, map[string]interface{}{
+			"foo": "123",
+			"bar": "456",
+			"baz": "b",
+		})
+		object.Every(func(key string, value *Value) {
+			if v, ok := value.Raw().(string); ok {
+				switch v {
+				case "123":
+					assert.Equal(ts, "foo", key)
+				case "456":
+					assert.Equal(ts, "bar", key)
+				case "baz":
+					assert.Equal(ts, "baz", key)
+				}
+			}
+		})
+		object.chain.assertOK(ts)
+	})
+
+	t.Run("Assertion failed for any", func(ts *testing.T) {
+		reporter := newMockReporter(ts)
+		object := NewObject(reporter, map[string]interface{}{"foo": "", "bar": "bar"})
+		invoked := 0
+		object.Every(func(_ string, val *Value) {
+			invoked++
+			val.String().NotEmpty()
+		})
+		object.chain.assertFailed(ts)
+		assert.Equal(t, 2, invoked)
+	})
+
+	t.Run("Assertion failed for all", func(ts *testing.T) {
+		reporter := newMockReporter(ts)
+		object := NewObject(reporter, map[string]interface{}{"foo": "", "bar": ""})
+		invoked := 0
+		object.Every(func(_ string, val *Value) {
+			invoked++
+			val.String().NotEmpty()
+		})
+		object.chain.assertFailed(ts)
+		assert.Equal(t, 2, invoked)
+	})
 }
