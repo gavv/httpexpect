@@ -162,6 +162,60 @@ func (o *Object) Value(key string) *Value {
 	return newValue(o.chain, value)
 }
 
+// Every runs the passed function for all the key value pairs in the object
+//
+// in the array and returns a new Array instance.
+//
+// If assertion inside function fails, the original Array is marked failed.
+// Example:
+//
+//	object := NewObject(t, map[string]interface{}{"foo": 123, "bar": 456})
+//
+//	newObject := object.Every(func(key string, value *httpexpect.Value) {
+//	  value.String().NotEmpty()
+//	})
+func (o *Object) Every(fn func(key string, value *Value)) *Object {
+	o.chain.enter("Every()")
+	defer o.chain.leave()
+
+	if o.chain.failed() {
+		return o
+	}
+
+	if fn == nil {
+		o.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected nil"),
+			},
+		})
+		return o
+	}
+
+	chainFailure := false
+
+	for key, val := range o.value {
+		valueChain := o.chain.clone()
+		valueChain.enter("Every[%q]", val)
+
+		valueChain.setFatal(false)
+		valueChain.setFailCallback(func() {
+			chainFailure = true
+		})
+
+		fn(key, newValue(valueChain, val))
+
+	}
+
+	if chainFailure {
+		o.chain.fail(AssertionFailure{
+			Type: AssertNotValid,
+		})
+	}
+
+	return o
+}
+
 // Empty succeeds if object is empty.
 //
 // Example:
@@ -656,31 +710,4 @@ func checkSubset(outer, inner map[string]interface{}) bool {
 		}
 	}
 	return true
-}
-
-// Every runs the passed function for all the key value pairs in the object
-// value should be map[string]interface{} or struct.
-//
-// Example:
-//
-//	object := NewObject(t, map[string]interface{}{"foo": 123, "bar": 456})
-//
-//	newObject := object.Every(func(key string, value *httpexpect.Value) {
-//	  value.String().NotEmpty()
-//	})
-func (o *Object) Every(fn func(key string, value *Value)) *Object {
-	newObjectValue := map[string]interface{}{}
-
-	for key, val := range o.value {
-		valueChain := o.chain.clone()
-		valueChain.enter("Every[%s]", val)
-
-		newValue := newValue(valueChain, val)
-
-		fn(key, newValue)
-
-		newObjectValue[key] = newValue.value
-	}
-
-	return newObject(o.chain, newObjectValue)
 }

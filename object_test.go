@@ -1,7 +1,6 @@
 package httpexpect
 
 import (
-	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -30,6 +29,9 @@ func TestObjectFailed(t *testing.T) {
 		value.NotContainsSubset(nil)
 		value.ValueEqual("foo", nil)
 		value.NotValueEqual("foo", nil)
+		value.Every(func(_ string, value *Value) {
+			value.String().NotEmpty()
+		})
 	}
 
 	t.Run("failed_chain", func(t *testing.T) {
@@ -756,75 +758,82 @@ func TestObjectConvertValueEqual(t *testing.T) {
 }
 
 func TestObjectEvery(t *testing.T) {
-	type (
-		myArray []interface{}
-		myMap   map[string]interface{}
-		myInt   int
-	)
+	// tableTests := []struct {
+	// 	name     string
+	// 	input    *Object
+	// 	function func(key string, value *Value)
+	// 	output   *Object
+	// }{
+	// 	{
+	// 		output: NewObject(reporter, map[string]interface{}{
+	// 			"foo": "123",
+	// 			"bar": []interface{}{"456", "789"},
+	// 			"baz": map[string]interface{}{
+	// 				"a": "b",
+	// 			},
+	// 		}),
+	// 	},
+	// }
 
-	reporter := newMockReporter(t)
-
-	convertIntToStr := func(key string, value *Value) {
-		switch key {
-		case "foo":
-			if v, ok := value.value.(float64); ok {
-				value.value = strconv.Itoa(int(v))
-			}
-		case "bar":
-			if v, ok := value.value.([]interface{}); ok {
-				for i, ele := range v {
-					if e, ok := ele.(float64); ok {
-						v[i] = strconv.Itoa(int(e))
-					}
+	t.Run("Check Validation", func(ts *testing.T) {
+		reporter := newMockReporter(ts)
+		object := NewObject(reporter, map[string]interface{}{
+			"foo": "123",
+			"bar": "456",
+			"baz": "b",
+		})
+		object.Every(func(_ string, value *Value) {
+			value.String().NotEmpty()
+		})
+	})
+	t.Run("Empty Object", func(ts *testing.T) {
+		reporter := newMockReporter(ts)
+		object := NewObject(reporter, map[string]interface{}{})
+		object.Every(func(_ string, value *Value) {
+			value.String().NotEmpty()
+		})
+	})
+	t.Run("Test Keys", func(ts *testing.T) {
+		reporter := newMockReporter(ts)
+		object := NewObject(reporter, map[string]interface{}{
+			"foo": "123",
+			"bar": "456",
+			"baz": "b",
+		})
+		object.Every(func(key string, value *Value) {
+			if v, ok := value.Raw().(string); ok {
+				switch v {
+				case "123":
+					NewString(reporter, "foo").Equal(key)
+				case "456":
+					NewString(reporter, "bar").Equal(key)
+				case "baz":
+					NewString(reporter, "baz").Equal(key)
 				}
-				value.value = v
 			}
-		default:
-		}
-	}
+		})
+	})
+	t.Run("Assertion failed for any", func(ts *testing.T) {
+		reporter := newMockReporter(ts)
+		array := NewObject(reporter, map[string]interface{}{"foo": "", "bar": "bar"})
+		invoked := 0
+		array.Every(func(_ string, val *Value) {
+			invoked++
+			val.String().NotEmpty()
+		})
+		assert.Equal(t, true, array.chain.failed())
+		assert.Equal(t, 2, invoked)
+	})
 
-	tableTests := []struct {
-		name     string
-		input    *Object
-		function func(key string, value *Value)
-		output   *Object
-	}{
-		{
-			name: "Non-empty object",
-			input: NewObject(reporter, map[string]interface{}{
-				"foo": 123,
-				"bar": []interface{}{456, 789},
-				"baz": map[string]interface{}{
-					"a": "b",
-				},
-			}),
-			function: convertIntToStr,
-			output: NewObject(reporter, map[string]interface{}{
-				"foo": "123",
-				"bar": []interface{}{"456", "789"},
-				"baz": map[string]interface{}{
-					"a": "b",
-				},
-			}),
-		},
-	}
-
-	for _, test := range tableTests {
-		t.Log("Running: " + test.name)
-		value := test.input.Every(test.function)
-
-		value.ValueEqual("foo", test.output.value["foo"])
-		value.chain.assertOK(t)
-		value.chain.reset()
-
-		t.Log(value.Values().value...)
-
-		value.ValueEqual("bar", test.output.value["bar"])
-		value.chain.assertOK(t)
-		value.chain.reset()
-
-		value.ValueEqual("baz", test.output.value["baz"])
-		value.chain.assertOK(t)
-		value.chain.reset()
-	}
+	t.Run("Assertion failed for all", func(ts *testing.T) {
+		reporter := newMockReporter(ts)
+		array := NewObject(reporter, map[string]interface{}{"foo": "", "bar": ""})
+		invoked := 0
+		array.Every(func(_ string, val *Value) {
+			invoked++
+			val.String().NotEmpty()
+		})
+		assert.Equal(t, true, array.chain.failed())
+		assert.Equal(t, 2, invoked)
+	})
 }
