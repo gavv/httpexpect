@@ -96,6 +96,10 @@ func (c *chain) enter(name string, args ...interface{}) {
 	c.context.Path = append(c.context.Path, fmt.Sprintf(name, args...))
 }
 
+func (c *chain) replace(name string, args ...interface{}) {
+	c.context.Path[len(c.context.Path)-1] = fmt.Sprintf(name, args...)
+}
+
 func (c *chain) leave() {
 	if len(c.context.Path) == 0 {
 		panic("unpaired enter/leave")
@@ -123,6 +127,10 @@ func (c *chain) fail(failure AssertionFailure) {
 	if c.failCb != nil {
 		c.failCb()
 	}
+}
+
+func (c *chain) setFailed() {
+	c.failbit = true
 }
 
 func (c *chain) failed() bool {
