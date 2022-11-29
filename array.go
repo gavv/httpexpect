@@ -914,15 +914,15 @@ func countElement(array []interface{}, element interface{}) int {
 	return count
 }
 
-func (a *Array) Filter(filter func(index int, value *Value) bool) *Array{
+func (a *Array) Filter(filter func(index int, value *Value) bool) *Array {
 	a.chain.enter("Filter()")
 	defer a.chain.leave()
 
-	if a.chain.failed(){
+	if a.chain.failed() {
 		return a
 	}
 
-	if filter==nil{
+	if filter == nil {
 		a.chain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
@@ -932,11 +932,11 @@ func (a *Array) Filter(filter func(index int, value *Value) bool) *Array{
 	}
 
 	var filteredArray []interface{}
-	
-	chainFailure:=false
+
+	chainFailure := false
 	for index, element := range a.value {
 		valueChain := a.chain.clone()
-		valueChain.setFailCallback(func(){
+		valueChain.setFailCallback(func() {
 			chainFailure = true
 		})
 		if filter(index, newValue(valueChain, element)) {
@@ -944,7 +944,7 @@ func (a *Array) Filter(filter func(index int, value *Value) bool) *Array{
 		}
 	}
 
-	if chainFailure{
+	if chainFailure {
 		a.chain.setFailed()
 	}
 	a.value = filteredArray

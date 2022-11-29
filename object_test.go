@@ -828,23 +828,25 @@ func TestObjectEvery(t *testing.T) {
 }
 
 func TestObjectFilterElement(t *testing.T) {
-	t.Run("Filter an object of elements of the same type and validate", func(ts *testing.T){
+	t.Run("Filter an object of elements of the same type and validate", func(ts *testing.T) {
 		reporter := newMockReporter(t)
-		array := NewObject(reporter, map[string]interface{}{"foo": "bar", "baz": "qux", "quux": "corge"})
+		array := NewObject(reporter, map[string]interface{}{"foo": "bar",
+			"baz": "qux", "quux": "corge"})
 		array.Filter(func(key string, value *Value) bool {
-				return value.Raw()!="qux" && key!="quux"
-			})
-		assert.Equal(t, map[string]interface{}{"foo":"bar"}, array.Raw())		
+			return value.Raw() != "qux" && key != "quux"
+		})
+		assert.Equal(t, map[string]interface{}{"foo": "bar"}, array.Raw())
 		array.chain.assertOK(t)
 	})
 
-	t.Run("Filter an object of elements of different types and validate", func(ts *testing.T){
+	t.Run("Filter an object of different types and validate", func(ts *testing.T) {
 		reporter := newMockReporter(t)
-		array := NewObject(reporter, map[string]interface{}{"foo": "bar", "baz": 3, "qux": false})
+		array := NewObject(reporter, map[string]interface{}{"foo": "bar",
+			"baz": 3, "qux": false})
 		array.Filter(func(key string, value *Value) bool {
-				return value.Raw()!="bar" && value.Raw()!=3.0
-			})
-		assert.Equal(t, map[string]interface{}{"qux":false}, array.Raw())		
+			return value.Raw() != "bar" && value.Raw() != 3.0
+		})
+		assert.Equal(t, map[string]interface{}{"qux": false}, array.Raw())
 		array.chain.assertOK(t)
 	})
 

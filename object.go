@@ -711,15 +711,15 @@ func checkSubset(outer, inner map[string]interface{}) bool {
 	return true
 }
 
-func (o *Object) Filter(filter func(key string, value *Value) bool) *Object{
+func (o *Object) Filter(filter func(key string, value *Value) bool) *Object {
 	o.chain.enter("Filter()")
 	defer o.chain.leave()
 
-	if o.chain.failed(){
+	if o.chain.failed() {
 		return o
 	}
 
-	if filter==nil{
+	if filter == nil {
 		o.chain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
@@ -729,11 +729,11 @@ func (o *Object) Filter(filter func(key string, value *Value) bool) *Object{
 	}
 
 	filteredArray := make(map[string]interface{})
-	
-	chainFailure:=false
+
+	chainFailure := false
 	for key, element := range o.value {
 		valueChain := o.chain.clone()
-		valueChain.setFailCallback(func(){
+		valueChain.setFailCallback(func() {
 			chainFailure = true
 		})
 		if filter(key, newValue(valueChain, element)) {
@@ -741,7 +741,7 @@ func (o *Object) Filter(filter func(key string, value *Value) bool) *Object{
 		}
 	}
 
-	if chainFailure{
+	if chainFailure {
 		o.chain.setFailed()
 	}
 	o.value = filteredArray
