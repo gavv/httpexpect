@@ -728,7 +728,7 @@ func (o *Object) Filter(filter func(key string, value *Value) bool) *Object {
 		})
 	}
 
-	filteredArray := make(map[string]interface{})
+	filteredObject := make(map[string]interface{})
 
 	chainFailure := false
 	for key, element := range o.value {
@@ -737,13 +737,13 @@ func (o *Object) Filter(filter func(key string, value *Value) bool) *Object {
 			chainFailure = true
 		})
 		if filter(key, newValue(valueChain, element)) {
-			filteredArray[key] = element
+			filteredObject[key] = element
 		}
 	}
 
 	if chainFailure {
 		o.chain.setFailed()
 	}
-	o.value = filteredArray
+	o.value = filteredObject
 	return o
 }
