@@ -831,3 +831,4 @@ func TestArrayFilter(t *testing.T) {
 		assert.Equal(t, []interface{}{"foo", true, 1.0}, array.Raw())		
 		array.chain.assertOK(t)
 	})
+}
