@@ -913,3 +913,66 @@ func countElement(array []interface{}, element interface{}) int {
 	}
 	return count
 }
+
+// Transform runs the passed function on all the Elements in the array.
+//
+// If transformation inside function fails, the original Array is marked failed.
+//
+// Transform will immediately stop execution of the function upon first transformation failures
+// or if return value is nil.
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{"foo", "bar"})
+//	transformedArray := array.Transform(func(index int, value *httpexpect.Value) *httpexpect.Value {
+//	  *httpexpect.NewValue(...)
+//	})
+func (a *Array) Transform(fn func(index int, value *Value) *Value) *Array {
+	a.chain.enter("Transform()")
+	defer a.chain.leave()
+
+	if a.chain.failed() {
+		return a
+	}
+
+	if fn == nil {
+		a.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected nil function argument"),
+			},
+		})
+		return a
+	}
+
+	chainFailure := false
+
+	array := make([]interface{}, 0)
+
+	for index, val := range a.value {
+		valueChain := a.chain.clone()
+		valueChain.replace("Transform[%d]", index)
+
+		valueChain.setFailCallback(func() {
+			chainFailure = true
+		})
+
+		transformedValue := fn(index, newValue(valueChain, val))
+		if transformedValue == nil {
+			a.chain.fail(AssertionFailure{
+				Type: AssertNil,
+				Errors: []error{
+					errors.New("unexpected nil return value"),
+				},
+			})
+			return a
+		}
+		array = append(array, transformedValue)
+	}
+
+	if chainFailure {
+		a.chain.setFailed()
+	}
+
+	return newArray(a.chain, array)
+}
