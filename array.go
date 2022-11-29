@@ -913,3 +913,40 @@ func countElement(array []interface{}, element interface{}) int {
 	}
 	return count
 }
+
+func (a *Array) Filter(filter func(index int, value *Value) bool) *Array{
+	a.chain.enter("Filter()")
+	defer a.chain.leave()
+
+	if a.chain.failed(){
+		return a
+	}
+
+	if filter==nil{
+		a.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected nil function argument"),
+			},
+		})
+	}
+
+	var filteredArray []interface{}
+	
+	chainFailure:=false
+	for index, element := range a.value {
+		valueChain := a.chain.clone()
+		valueChain.setFailCallback(func(){
+			chainFailure = true
+		})
+		if filter(index, newValue(valueChain, element)) {
+			filteredArray = append(filteredArray, element)
+		}
+	}
+
+	if chainFailure{
+		a.chain.setFailed()
+	}
+	a.value = filteredArray
+	return a
+}

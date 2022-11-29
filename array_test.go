@@ -808,3 +808,26 @@ func TestArrayEvery(t *testing.T) {
 		array.chain.assertFailed(ts)
 	})
 }
+
+
+
+func TestArrayFilter(t *testing.T) {
+	t.Run("Filter an array of elements of the same type and validate", func(ts *testing.T){
+		reporter := newMockReporter(t)
+		array := NewArray(reporter, []interface{}{1, 2, 3, 4, 5, 6})
+		array.Filter(func(index int, value *Value) bool {
+				return value.Raw()!=2.0 && value.Raw()!=5.0
+			})
+		assert.Equal(t, []interface{}{1.0, 3.0, 4.0, 6.0}, array.Raw())		
+		array.chain.assertOK(t)
+	})
+
+	t.Run("Filter an array of elements of different types and validate", func(ts *testing.T){
+		reporter := newMockReporter(t)
+		array := NewArray(reporter, []interface{}{"foo", "bar", true, 1})
+		array.Filter(func(index int, value *Value) bool {
+				return value.Raw()!="bar"
+			})
+		assert.Equal(t, []interface{}{"foo", true, 1.0}, array.Raw())		
+		array.chain.assertOK(t)
+	})
