@@ -733,17 +733,25 @@ func (o *Object) Filter(filter func(key string, value *Value) bool) *Object {
 	chainFailure := false
 	for key, element := range o.value {
 		valueChain := o.chain.clone()
+
 		valueChain.setFailCallback(func() {
 			chainFailure = true
 		})
 		if filter(key, newValue(valueChain, element)) {
 			filteredObject[key] = element
+		} else {
+			valueChain.replace("Every[%v]", element)
 		}
 	}
 
 	if chainFailure {
-		o.chain.setFailed()
+		o.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("predicate function failed"),
+			},
+		})
 	}
-	o.value = filteredObject
-	return o
+
+	return newObject(o.chain, filteredObject)
 }
