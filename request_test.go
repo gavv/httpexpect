@@ -2437,7 +2437,7 @@ func TestRequestRetry(t *testing.T) {
 		})
 	})
 
-	t.Run("retry temporary network and server errors policy", func(t *testing.T) {
+	t.Run("retry all errors policy", func(t *testing.T) {
 		t.Run("temporary network error", func(t *testing.T) {
 			callCount := 0
 
@@ -2449,7 +2449,7 @@ func TestRequestRetry(t *testing.T) {
 			}
 
 			req := NewRequest(config, http.MethodGet, "/url").
-				WithRetryPolicy(RetryTemporaryNetworkAndServerErrors).
+				WithRetryPolicy(RetryAllErrors).
 				WithMaxRetries(1).
 				WithRetryDelay(0, 0)
 			req.chain.assertOK(t)
@@ -2472,7 +2472,7 @@ func TestRequestRetry(t *testing.T) {
 			}
 
 			req := NewRequest(config, http.MethodGet, "/url").
-				WithRetryPolicy(RetryTemporaryNetworkAndServerErrors).
+				WithRetryPolicy(RetryAllErrors).
 				WithMaxRetries(1)
 			req.chain.assertOK(t)
 
@@ -2495,7 +2495,7 @@ func TestRequestRetry(t *testing.T) {
 			}
 
 			req := NewRequest(config, http.MethodGet, "/url").
-				WithRetryPolicy(RetryTemporaryNetworkAndServerErrors).
+				WithRetryPolicy(RetryAllErrors).
 				WithMaxRetries(1)
 			req.chain.assertOK(t)
 
@@ -2503,8 +2503,8 @@ func TestRequestRetry(t *testing.T) {
 				Status(http.StatusBadRequest)
 			resp.chain.assertOK(t)
 
-			// Should not retry
-			assert.Equal(t, 1, callCount)
+			// Should retry
+			assert.Equal(t, 2, callCount)
 		})
 	})
 }
