@@ -926,13 +926,13 @@ func countElement(array []interface{}, element interface{}) int {
 //
 // Example:
 //
-// object := make(map[string]interface{})
-// filteredObject := object.Filter(func(_ string, value *Value) bool {
+// array := newArray(reporter, []interface{}{1, 2, "foo", "bar"}
+// filteredArray := array.Filter(func(_ int, value *Value) bool {
 //	value.String().NotEmpty()		//fails on 1 and 2
 //  return value != "bar"			//fails on "bar"
 // })
 //
-// assert.Equal(t, filteredObject, []interface{}{"foo"}) //true
+// assert.Equal(t, filteredArray, []interface{}{"foo"}) //succeeds
 
 func (a *Array) Filter(filter func(index int, value *Value) bool) *Array {
 	a.chain.enter("Filter()")
