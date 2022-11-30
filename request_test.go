@@ -2583,7 +2583,10 @@ func TestRequestRetry(t *testing.T) {
 			elapsed := time.Since(start)
 
 			// Should retry with delay
-			assert.LessOrEqual(t, int64(5+10+20), elapsed.Truncate(5*time.Millisecond).Milliseconds())
+			assert.LessOrEqual(t,
+				int64(5+10+20),
+				elapsed.Truncate(5*time.Millisecond).Milliseconds(),
+			)
 		})
 
 		t.Run("exceeding max retry delay", func(t *testing.T) {
