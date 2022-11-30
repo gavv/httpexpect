@@ -40,6 +40,10 @@ func TestArrayFailed(t *testing.T) {
 		value.Every(func(_ int, val *Value) {
 			val.String().NotEmpty()
 		})
+		value.Filter(func(_ int, val *Value) bool {
+			val.String().NotEmpty()
+			return true
+		})
 	}
 
 	t.Run("failed_chain", func(t *testing.T) {
@@ -817,6 +821,18 @@ func TestArrayFilter(t *testing.T) {
 			return value.Raw() != 2.0 && value.Raw() != 5.0
 		})
 		assert.Equal(t, []interface{}{1.0, 3.0, 4.0, 6.0}, filteredArray.Raw())
+		array.chain.assertOK(t)
+	})
+
+	t.Run("Filter throws when an assertion within predicate fails", func(ts *testing.T) {
+		reporter := newMockReporter(t)
+		array := NewArray(reporter, []interface{}{1, "foo", "bar", 4, "baz", 6})
+		filteredArray := array.Filter(func(index int, value *Value) bool {
+			stringifiedValue := value.String().NotEmpty().Raw()
+			return stringifiedValue != "bar"
+		})
+		assert.Equal(t, []interface{}{"foo", "baz"}, filteredArray.Raw())
+
 		array.chain.assertOK(t)
 	})
 

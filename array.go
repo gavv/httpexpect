@@ -933,31 +933,22 @@ func (a *Array) Filter(filter func(index int, value *Value) bool) *Array {
 
 	var filteredArray []interface{}
 
-	chainFailure := false
-
 	for index, element := range a.value {
-
+		chainFailed := false
 		valueChain := a.chain.clone()
 		valueChain.setFatal(false)
+
 		valueChain.setFailCallback(func() {
-			chainFailure = true
+			chainFailed = true
+
 		})
 
-		if filter(index, newValue(valueChain, element)) {
+		if filter(index, newValue(valueChain, element)) && !chainFailed {
 			filteredArray = append(filteredArray, element)
 		} else {
 			valueChain.replace("Filter[%v]", element)
 		}
 
-	}
-
-	if chainFailure {
-		a.chain.fail(AssertionFailure{
-			Type: AssertUsage,
-			Errors: []error{
-				errors.New("predicate function failed"),
-			},
-		})
 	}
 
 	return newArray(a.chain, filteredArray)
