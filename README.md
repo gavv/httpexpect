@@ -1,4 +1,4 @@
-# httpexpect [![GoDev](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white)](https://pkg.go.dev/github.com/gavv/httpexpect/v2) [![Build](https://github.com/gavv/httpexpect/workflows/build/badge.svg)](https://github.com/gavv/httpexpect/actions) [![Coveralls](https://coveralls.io/repos/github/gavv/httpexpect/badge.svg?branch=master)](https://coveralls.io/github/gavv/httpexpect?branch=master) [![GitHub release](https://img.shields.io/github/tag/gavv/httpexpect.svg)](https://github.com/gavv/httpexpect/tags)
+# httpexpect [![GoDev](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white)](https://pkg.go.dev/github.com/gavv/httpexpect/v2) [![Build](https://github.com/gavv/httpexpect/workflows/build/badge.svg)](https://github.com/gavv/httpexpect/actions) [![Coveralls](https://coveralls.io/repos/github/gavv/httpexpect/badge.svg?branch=master)](https://coveralls.io/github/gavv/httpexpect?branch=master) [![GitHub release](https://img.shields.io/github/tag/gavv/httpexpect.svg)](https://github.com/gavv/httpexpect/tags) [![Discord](https://img.shields.io/discord/1047473005900615780?logo=discord&label=discord&color=blueviolet&logoColor=white)](https://discord.gg/5SCPCuCWA9)
 
 Concise, declarative, and easy to use end-to-end HTTP and REST API testing for Go (golang).
 
@@ -75,6 +75,12 @@ import "gopkg.in/gavv/httpexpect.v2"
 ## Documentation
 
 Documentation is available on [pkg.go.dev](https://pkg.go.dev/github.com/gavv/httpexpect/v2#section-documentation). It contains an overview and reference.
+
+## Community
+
+Community forum and Q&A board is right on GitHub in [discussions tab](https://github.com/gavv/httpexpect/discussions).
+
+For more interactive discussion, you can join [discord chat](https://discord.gg/5SCPCuCWA9).
 
 ## Examples
 
