@@ -2532,4 +2532,89 @@ func TestRequestRetry(t *testing.T) {
 			assert.Equal(t, 2, callCount)
 		})
 	})
+
+	t.Run("max retries", func(t *testing.T) {
+		callCount := 0
+
+		client := newHTTPErrClient(func() { callCount++ })
+
+		config := Config{
+			Client:   client,
+			Reporter: reporter,
+		}
+
+		req := NewRequest(config, http.MethodGet, "/url").
+			WithRetryPolicy(RetryAllErrors).
+			WithMaxRetries(3).
+			WithRetryDelay(0, 0)
+		req.chain.assertOK(t)
+
+		resp := req.Expect().
+			Status(http.StatusBadRequest)
+		resp.chain.assertOK(t)
+
+		// Should retry until max retries is reached
+		assert.Equal(t, 1+3, callCount)
+	})
+
+	t.Run("retry delay", func(t *testing.T) {
+		t.Run("not exceeding max retry delay", func(t *testing.T) {
+			callCount := 0
+
+			client := newHTTPErrClient(func() { callCount++ })
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			req := NewRequest(config, http.MethodGet, "/url").
+				WithRetryPolicy(RetryAllErrors).
+				WithMaxRetries(3).
+				WithRetryDelay(5*time.Millisecond, 50*time.Millisecond)
+			req.chain.assertOK(t)
+
+			start := time.Now()
+
+			resp := req.Expect().
+				Status(http.StatusBadRequest)
+			resp.chain.assertOK(t)
+
+			elapsed := time.Since(start)
+
+			// Should retry with delay
+			assert.LessOrEqual(t, int64(5+10+20), elapsed.Truncate(5*time.Millisecond).Milliseconds())
+		})
+
+		t.Run("exceeding max retry delay", func(t *testing.T) {
+			callCount := 0
+
+			client := newHTTPErrClient(func() { callCount++ })
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			req := NewRequest(config, http.MethodGet, "/url").
+				WithRetryPolicy(RetryAllErrors).
+				WithMaxRetries(3).
+				WithRetryDelay(5*time.Millisecond, 15*time.Millisecond)
+			req.chain.assertOK(t)
+
+			start := time.Now()
+
+			resp := req.Expect().
+				Status(http.StatusBadRequest)
+			resp.chain.assertOK(t)
+
+			elapsed := time.Since(start)
+
+			// Should retry with delay
+			assert.LessOrEqual(t,
+				int64(5+10+15),
+				elapsed.Truncate(5*time.Millisecond).Milliseconds(),
+			)
+		})
+	})
 }
