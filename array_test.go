@@ -40,6 +40,9 @@ func TestArrayFailed(t *testing.T) {
 		value.Every(func(_ int, val *Value) {
 			val.String().NotEmpty()
 		})
+		value.Transform(func(index int, value *Value) *Value {
+			return nil
+		})
 	}
 
 	t.Run("failed_chain", func(t *testing.T) {
@@ -805,6 +808,56 @@ func TestArrayEvery(t *testing.T) {
 			val.String().NotEmpty()
 		})
 		assert.Equal(t, 3, invoked)
+		array.chain.assertFailed(ts)
+	})
+}
+
+func TestArrayTransform(t *testing.T) {
+	t.Run("Square Integers", func(ts *testing.T) {
+		reporter := newMockReporter(ts)
+		array := NewArray(reporter, []interface{}{2, 4, 6})
+		newArray := array.Transform(func(_ int, val *Value) *Value {
+			if v, ok := val.Raw().(float64); ok {
+				return NewValue(ts, int(v)*int(v))
+			}
+			return nil
+		})
+		newArray.Contains([]interface{}{4, 16, 36})
+		array.chain.assertOK(ts)
+	})
+
+	t.Run("Empty array", func(ts *testing.T) {
+		reporter := newMockReporter(ts)
+		array := NewArray(reporter, []interface{}{})
+		array.Transform(func(_ int, val *Value) *Value {
+			return nil
+		})
+		array.chain.assertOK(ts)
+	})
+
+	t.Run("Test correct index", func(ts *testing.T) {
+		reporter := newMockReporter(ts)
+		array := NewArray(reporter, []interface{}{1, 2, 3})
+		array.Transform(
+			func(idx int, val *Value) *Value {
+				if v, ok := val.Raw().(float64); ok {
+					assert.Equal(ts, idx, int(v)-1)
+				}
+				return val
+			},
+		)
+		array.chain.assertOK(ts)
+	})
+
+	t.Run("Assertion failed for any and exits on failure", func(ts *testing.T) {
+		reporter := newMockReporter(ts)
+		array := NewArray(reporter, []interface{}{2, 4, 6})
+		invoked := 0
+		array.Transform(func(_ int, _ *Value) *Value {
+			invoked++
+			return nil
+		})
+		assert.Equal(t, 1, invoked)
 		array.chain.assertFailed(ts)
 	})
 }
