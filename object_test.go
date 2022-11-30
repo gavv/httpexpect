@@ -842,7 +842,9 @@ func TestObjectFilter(t *testing.T) {
 		assert.Equal(t, map[string]interface{}{"foo": "bar"}, filteredObject.Raw())
 		assert.Equal(t, object.Raw(), map[string]interface{}{"foo": "bar",
 			"baz": "qux", "quux": "corge"})
+
 		filteredObject.chain.assertOK(t)
+		object.chain.assertOK(t)
 	})
 
 	t.Run("Filter throws when an assertion within predicate fails", func(ts *testing.T) {
@@ -856,6 +858,8 @@ func TestObjectFilter(t *testing.T) {
 		assert.Equal(t, map[string]interface{}{"qux": "quux"}, filteredObject.Raw())
 		assert.Equal(t, object.Raw(), map[string]interface{}{"foo": "bar", "baz": 6.0,
 			"qux": "quux"})
+
+		filteredObject.chain.assertOK(t)
 		object.chain.assertOK(t)
 	})
 
@@ -869,7 +873,9 @@ func TestObjectFilter(t *testing.T) {
 		assert.Equal(t, map[string]interface{}{"qux": false}, filteredObject.Raw())
 		assert.Equal(t, object.Raw(), map[string]interface{}{"foo": "bar",
 			"baz": 3.0, "qux": false})
+
 		filteredObject.chain.assertOK(t)
+		object.chain.assertOK(t)
 	})
 
 	t.Run("Filter an empty object", func(ts *testing.T) {
@@ -881,9 +887,10 @@ func TestObjectFilter(t *testing.T) {
 		assert.Equal(t, map[string]interface{}{}, filteredObject.Raw())
 
 		filteredObject.chain.assertOK(t)
+		object.chain.assertOK(t)
 	})
 
-	t.Run("Filter should return an empty non-nil array if no items pass",
+	t.Run("Filter should return an empty non-nil object if no items pass",
 		func(ts *testing.T) {
 			reporter := newMockReporter(t)
 			object := NewObject(reporter, map[string]interface{}{"foo": "bar",
@@ -894,7 +901,9 @@ func TestObjectFilter(t *testing.T) {
 			assert.Equal(t, map[string]interface{}{}, filteredObject.Raw())
 			assert.Equal(t, object.Raw(), map[string]interface{}{"foo": "bar",
 				"baz": "qux", "quux": "corge"})
+
 			filteredObject.chain.assertOK(t)
+			object.chain.assertOK(t)
 		})
 
 }

@@ -723,15 +723,16 @@ func checkSubset(outer, inner map[string]interface{}) bool {
 //
 // Example:
 //
-// object := map[string]interface{}{"foo": "bar", "baz": 6,
-//			"qux": "quux"}
+// object := newObject(reporter, map[string]interface{}{"foo": "bar",
+// "baz": 6,"qux": "quux"})
 //
 // filteredObject := object.Filter(func(_ int, value *Value) bool {
-//	value.String().NotEmpty()                         //fails on 1 and 2
-//  return value != "bar"                             //fails on "bar"
+//	value.String().NotEmpty()			//fails on 1 and 2
+//  return value != "bar"				//fails on "bar"
 // })
 //
-// filteredArray.Raw() == map[string]interface{}{"qux":"quux"} //true
+// assert.Equal(t, filteredObject,
+//	 map[string]interface{}{"qux":"quux"})	//succeeds
 
 func (o *Object) Filter(filter func(key string, value *Value) bool) *Object {
 	o.chain.enter("Filter()")
@@ -753,8 +754,9 @@ func (o *Object) Filter(filter func(key string, value *Value) bool) *Object {
 	filteredObject := make(map[string]interface{})
 
 	for key, element := range o.value {
-		chainFailed := false
 		valueChain := o.chain.clone()
+		valueChain.setFatal(false)
+		chainFailed := false
 		valueChain.setFailCallback(func() {
 			chainFailed = true
 		})

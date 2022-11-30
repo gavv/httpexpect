@@ -822,6 +822,8 @@ func TestArrayFilter(t *testing.T) {
 		})
 		assert.Equal(t, []interface{}{1.0, 3.0, 4.0, 6.0}, filteredArray.Raw())
 		assert.Equal(t, array.Raw(), []interface{}{1.0, 2.0, 3.0, 4.0, 5.0, 6.0})
+
+		array.chain.assertOK(t)
 		filteredArray.chain.assertOK(t)
 	})
 
@@ -835,6 +837,7 @@ func TestArrayFilter(t *testing.T) {
 		assert.Equal(t, []interface{}{"foo", "baz"}, filteredArray.Raw())
 		assert.Equal(t, array.Raw(), []interface{}{1.0, "foo", "bar", 4.0, "baz", 6.0})
 
+		array.chain.assertOK(t)
 		filteredArray.chain.assertOK(t)
 	})
 
@@ -847,10 +850,11 @@ func TestArrayFilter(t *testing.T) {
 		assert.Equal(t, []interface{}{"foo", true, 1.0}, filteredArray.Raw())
 		assert.Equal(t, array.Raw(), []interface{}{"foo", "bar", true, 1.0})
 
+		array.chain.assertOK(t)
 		filteredArray.chain.assertOK(t)
 	})
 
-	t.Run("Filter an array of different types and validate", func(ts *testing.T) {
+	t.Run("Filter an empty array", func(ts *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{})
 		filteredArray := array.Filter(func(index int, value *Value) bool {
@@ -859,6 +863,7 @@ func TestArrayFilter(t *testing.T) {
 		assert.Equal(t, []interface{}{}, filteredArray.Raw())
 		assert.Equal(t, array.Raw(), []interface{}{})
 
+		array.chain.assertOK(t)
 		filteredArray.chain.assertOK(t)
 	})
 
@@ -872,6 +877,7 @@ func TestArrayFilter(t *testing.T) {
 			assert.Equal(t, []interface{}{}, filteredArray.Raw())
 			assert.Equal(t, array.Raw(), []interface{}{"foo", "bar", true, 1.0})
 
+			array.chain.assertOK(t)
 			filteredArray.chain.assertOK(t)
 		})
 }

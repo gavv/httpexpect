@@ -928,11 +928,11 @@ func countElement(array []interface{}, element interface{}) int {
 //
 // object := make(map[string]interface{})
 // filteredObject := object.Filter(func(_ string, value *Value) bool {
-//	value.String().NotEmpty()                //fails on 1 and 2
-//  return value != "bar"                    //fails on "bar"
+//	value.String().NotEmpty()		//fails on 1 and 2
+//  return value != "bar"			//fails on "bar"
 // })
 //
-// filteredArray.Raw() == []interface{}{"foo"} //true
+// assert.Equal(t, filteredObject, []interface{}{"foo"}) //true
 
 func (a *Array) Filter(filter func(index int, value *Value) bool) *Array {
 	a.chain.enter("Filter()")
@@ -954,13 +954,11 @@ func (a *Array) Filter(filter func(index int, value *Value) bool) *Array {
 	filteredArray := []interface{}{}
 
 	for index, element := range a.value {
-		chainFailed := false
 		valueChain := a.chain.clone()
 		valueChain.setFatal(false)
-
+		chainFailed := false
 		valueChain.setFailCallback(func() {
 			chainFailed = true
-
 		})
 		valueChain.replace("Filter[%v]", element)
 		if filter(index, newValue(valueChain, element)) && !chainFailed {
