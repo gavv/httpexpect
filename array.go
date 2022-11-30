@@ -914,12 +914,32 @@ func countElement(array []interface{}, element interface{}) int {
 	return count
 }
 
+// Filter accepts a function that returns a boolean. The function is ran
+// over the array items. If the function returns true, the item passes
+// the filter and is added to the new array of filtered items. If false,
+// the item is skipped (or in other words filtered out). After iterating
+// through all the items of the original array, the new filtered array
+// is returned.
+//
+// If there are any failed assertions in the filtering function, the
+// item is omitted without causing chain failure.
+//
+// Example:
+//
+// object := make(map[string]interface{})
+// filteredObject := object.Filter(func(_ string, value *Value) bool {
+//	value.String().NotEmpty()                //fails on 1 and 2
+//  return value != "bar"                    //fails on "bar"
+// })
+//
+// filteredArray.Raw() == []interface{}{"foo"} //true
+
 func (a *Array) Filter(filter func(index int, value *Value) bool) *Array {
 	a.chain.enter("Filter()")
 	defer a.chain.leave()
 
 	if a.chain.failed() {
-		return a
+		return newArray(a.chain, nil)
 	}
 
 	if filter == nil {
@@ -931,7 +951,7 @@ func (a *Array) Filter(filter func(index int, value *Value) bool) *Array {
 		})
 	}
 
-	var filteredArray []interface{}
+	filteredArray := []interface{}{}
 
 	for index, element := range a.value {
 		chainFailed := false
@@ -942,13 +962,10 @@ func (a *Array) Filter(filter func(index int, value *Value) bool) *Array {
 			chainFailed = true
 
 		})
-
+		valueChain.replace("Filter[%v]", element)
 		if filter(index, newValue(valueChain, element)) && !chainFailed {
 			filteredArray = append(filteredArray, element)
-		} else {
-			valueChain.replace("Filter[%v]", element)
 		}
-
 	}
 
 	return newArray(a.chain, filteredArray)

@@ -711,12 +711,34 @@ func checkSubset(outer, inner map[string]interface{}) bool {
 	return true
 }
 
+// Filter accepts a function that returns a boolean. The function is ran
+// over the object items. If the function returns true, the item passes
+// the filter and is added to the new object of filtered items. If false,
+// the value is skipped (or in other words filtered out). After iterating
+// through all the items of the original object, the new filtered object
+// is returned.
+//
+// If there are any failed assertions in the filtering function, the
+// item is omitted without causing chain failure.
+//
+// Example:
+//
+// object := map[string]interface{}{"foo": "bar", "baz": 6,
+//			"qux": "quux"}
+//
+// filteredObject := object.Filter(func(_ int, value *Value) bool {
+//	value.String().NotEmpty()                         //fails on 1 and 2
+//  return value != "bar"                             //fails on "bar"
+// })
+//
+// filteredArray.Raw() == map[string]interface{}{"qux":"quux"} //true
+
 func (o *Object) Filter(filter func(key string, value *Value) bool) *Object {
 	o.chain.enter("Filter()")
 	defer o.chain.leave()
 
 	if o.chain.failed() {
-		return o
+		return newObject(o.chain, nil)
 	}
 
 	if filter == nil {
@@ -736,10 +758,9 @@ func (o *Object) Filter(filter func(key string, value *Value) bool) *Object {
 		valueChain.setFailCallback(func() {
 			chainFailed = true
 		})
+		valueChain.replace("Every[%v]", element)
 		if filter(key, newValue(valueChain, element)) && !chainFailed {
 			filteredObject[key] = element
-		} else {
-			valueChain.replace("Every[%v]", element)
 		}
 	}
 
