@@ -729,7 +729,7 @@ func checkSubset(outer, inner map[string]interface{}) bool {
 //		"qux": "quux"})
 //	filteredObject := object.Filter(func(key string, value *Value) bool {
 //		value.String().NotEmpty()		//fails on 6
-//  	return value.Raw() != "bar"		//fails on "bar"
+//		return value.Raw() != "bar"		//fails on "bar"
 // 	})
 //	filteredObject.Equal(map[string]interface{}{"qux":"quux"})	//succeeds
 
