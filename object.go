@@ -63,7 +63,7 @@ func (o *Object) Path(path string) *Value {
 	return jsonPath(o.chain, o.value, path)
 }
 
-// Schema is similar to Value.Schema.
+// Schema is similar to Value.Schemo.
 func (o *Object) Schema(schema interface{}) *Object {
 	o.chain.enter("Schema()")
 	defer o.chain.leave()
@@ -709,4 +709,44 @@ func checkSubset(outer, inner map[string]interface{}) bool {
 		}
 	}
 	return true
+}
+
+func (o *Object) Transform(fn func(key string, value *Value) *Value) *Object {
+	o.chain.enter("Transform()")
+	defer o.chain.leave()
+
+	if o.chain.failed() {
+		return o
+	}
+
+	if fn == nil {
+		o.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected nil function argument"),
+			},
+		})
+		return o
+	}
+
+	object := map[string]interface{}{}
+
+	for key, val := range o.value {
+		valueChain := o.chain.clone()
+		valueChain.replace("Transform[%q]", key)
+
+		transformedValue := fn(key, newValue(valueChain, val))
+		if transformedValue == nil {
+			o.chain.fail(AssertionFailure{
+				Type: AssertNil,
+				Errors: []error{
+					errors.New("unexpected nil return value"),
+				},
+			})
+			return o
+		}
+		object[key] = transformedValue.value
+	}
+
+	return newObject(o.chain, object)
 }

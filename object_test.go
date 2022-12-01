@@ -32,6 +32,9 @@ func TestObjectFailed(t *testing.T) {
 		value.Every(func(_ string, value *Value) {
 			value.String().NotEmpty()
 		})
+		value.Transform(func(key string, value *Value) *Value {
+			return nil
+		})
 	}
 
 	t.Run("failed_chain", func(t *testing.T) {
@@ -824,5 +827,79 @@ func TestObjectEvery(t *testing.T) {
 		})
 		object.chain.assertFailed(ts)
 		assert.Equal(t, 2, invoked)
+	})
+}
+
+func TestObjectTransform(t *testing.T) {
+	t.Run("Add Hello", func(ts *testing.T) {
+		reporter := newMockReporter(ts)
+		object := NewObject(reporter, map[string]interface{}{
+			"foo": "123",
+			"bar": "456",
+			"baz": "b",
+		})
+		newObject := object.Transform(func(_ string, value *Value) *Value {
+			if v, ok := value.Raw().(string); ok {
+				return NewValue(ts, "Hello "+v)
+			}
+			return nil
+		})
+		assert.Equal(t, map[string]interface{}{"foo": "Hello 123", "bar": "Hello 456", "baz": "Hello b"}, newObject.value)
+	})
+
+	t.Run("Empty object", func(ts *testing.T) {
+		reporter := newMockReporter(ts)
+		object := NewObject(reporter, map[string]interface{}{
+			"foo": "123",
+			"bar": "456",
+			"baz": "b",
+		})
+		newObject := object.Transform(func(_ string, value *Value) *Value {
+			if v, ok := value.Raw().(string); ok {
+				return NewValue(ts, "Hello "+v)
+			}
+			return nil
+		})
+		newObject.chain.assertOK(ts)
+	})
+
+	t.Run("Test correct index", func(ts *testing.T) {
+		reporter := newMockReporter(ts)
+		object := NewObject(reporter, map[string]interface{}{
+			"foo": "123",
+			"bar": "456",
+			"baz": "baz",
+		})
+		newObject := object.Transform(func(key string, value *Value) *Value {
+			if v, ok := value.Raw().(string); ok {
+				switch v {
+				case "123":
+					assert.Equal(ts, "foo", key)
+				case "456":
+					assert.Equal(ts, "bar", key)
+				case "baz":
+					assert.Equal(ts, "baz", key)
+				}
+			}
+			return value
+		})
+		newObject.chain.assertOK(ts)
+	})
+
+	t.Run("Assertion failed for any and exits on failure", func(ts *testing.T) {
+		reporter := newMockReporter(ts)
+		object := NewObject(reporter, map[string]interface{}{
+			"foo": "123",
+			"bar": "456",
+			"baz": "b",
+		})
+		invoked := 0
+		newObject := object.Transform(func(_ string, _ *Value) *Value {
+			invoked++
+			return nil
+		})
+		assert.Equal(t, 1, invoked)
+		assert.Equal(t, true, newObject.chain.failed())
+		newObject.chain.assertFailed(ts)
 	})
 }
