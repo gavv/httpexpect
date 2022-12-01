@@ -715,15 +715,18 @@ func checkSubset(outer, inner map[string]interface{}) bool {
 //
 // If transformation inside function fails, the original Object is marked failed.
 //
-// Transform will immediately stop execution of the function upon first transformation failures
+// Transform will immediately stop execution of the function
+// upon first transformation failures
 // or if return value is nil.
 //
 // Example:
 //
 //	object := NewObject(t, map[string]interface{}{"foo": 123})
-//	transformedObject := object.Transform(func(key string, value *httpexpect.Value) *httpexpect.Value {
-//	  *httpexpect.NewValue(...)
-//	})
+//	transformedObject := object.Transform(
+//		func(key string, value *httpexpect.Value) *httpexpect.Value {
+//			return *httpexpect.NewValue(...)
+//		},
+//	)
 func (o *Object) Transform(fn func(key string, value *Value) *Value) *Object {
 	o.chain.enter("Transform()")
 	defer o.chain.leave()

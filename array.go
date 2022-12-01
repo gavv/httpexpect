@@ -918,15 +918,18 @@ func countElement(array []interface{}, element interface{}) int {
 //
 // If transformation inside function fails, the original Array is marked failed.
 //
-// Transform will immediately stop execution of the function upon first transformation failures
+// Transform will immediately stop execution of the function
+// upon first transformation failures
 // or if return value is nil.
 //
 // Example:
 //
 //	array := NewArray(t, []interface{}{"foo", "bar"})
-//	transformedArray := array.Transform(func(index int, value *httpexpect.Value) *httpexpect.Value {
-//	  *httpexpect.NewValue(...)
-//	})
+//	transformedArray := array.Transform(
+//		func(index int, value *httpexpect.Value) *httpexpect.Value {
+//			return *httpexpect.NewValue(...)
+//		},
+//	)
 func (a *Array) Transform(fn func(index int, value *Value) *Value) *Array {
 	a.chain.enter("Transform()")
 	defer a.chain.leave()

@@ -844,7 +844,10 @@ func TestObjectTransform(t *testing.T) {
 			}
 			return nil
 		})
-		assert.Equal(t, map[string]interface{}{"foo": "Hello 123", "bar": "Hello 456", "baz": "Hello b"}, newObject.value)
+		assert.Equal(t,
+			map[string]interface{}{"foo": "Hello 123", "bar": "Hello 456", "baz": "Hello b"},
+			newObject.value,
+		)
 	})
 
 	t.Run("Empty object", func(ts *testing.T) {
