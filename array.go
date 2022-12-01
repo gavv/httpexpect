@@ -922,17 +922,16 @@ func countElement(array []interface{}, element interface{}) int {
 // is returned.
 //
 // If there are any failed assertions in the filtering function, the
-// item is omitted without causing chain failure.
+// item is omitted without causing test failure.
 //
 // Example:
 //
-// array := newArray(reporter, []interface{}{1, 2, "foo", "bar"}
-// filteredArray := array.Filter(func(_ int, value *Value) bool {
-//	value.String().NotEmpty()		//fails on 1 and 2
-//  return value != "bar"			//fails on "bar"
-// })
-//
-// assert.Equal(t, filteredArray, []interface{}{"foo"}) //succeeds
+//	array := NewArray([]interface{}{1, 2, "foo", "bar"}
+//	filteredArray := array.Filter(func(index int, value *Value) bool {
+//		value.String().NotEmpty()		//fails on 1 and 2
+//		return value.Raw() != "bar"		//fails on "bar"
+//	})
+//	filteredArray.Equal([]interface{}{"foo"})	//succeeds
 
 func (a *Array) Filter(filter func(index int, value *Value) bool) *Array {
 	a.chain.enter("Filter()")
@@ -960,7 +959,7 @@ func (a *Array) Filter(filter func(index int, value *Value) bool) *Array {
 		valueChain.setFailCallback(func() {
 			chainFailed = true
 		})
-		valueChain.replace("Filter[%v]", element)
+		valueChain.replace("Filter[%v]", index)
 		if filter(index, newValue(valueChain, element)) && !chainFailed {
 			filteredArray = append(filteredArray, element)
 		}

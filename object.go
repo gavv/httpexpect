@@ -719,20 +719,19 @@ func checkSubset(outer, inner map[string]interface{}) bool {
 // is returned.
 //
 // If there are any failed assertions in the filtering function, the
-// item is omitted without causing chain failure.
+// item is omitted without causing test failure.
 //
 // Example:
 //
-// object := newObject(reporter, map[string]interface{}{"foo": "bar",
-// "baz": 6,"qux": "quux"})
-//
-// filteredObject := object.Filter(func(_ int, value *Value) bool {
-//	value.String().NotEmpty()			//fails on 6
-//  return value != "bar"				//fails on "bar"
-// })
-//
-// assert.Equal(t, filteredObject,
-//	 map[string]interface{}{"qux":"quux"})	//succeeds
+//	object := NewObject(map[string]interface{}{
+//		"foo": "bar",
+//		"baz": 6,
+//		"qux": "quux"})
+//	filteredObject := object.Filter(func(key string, value *Value) bool {
+//		value.String().NotEmpty()		//fails on 6
+//  	return value.Raw() != "bar"		//fails on "bar"
+// 	})
+//	filteredObject.Equal(map[string]interface{}{"qux":"quux"})	//succeeds
 
 func (o *Object) Filter(filter func(key string, value *Value) bool) *Object {
 	o.chain.enter("Filter()")
@@ -760,7 +759,7 @@ func (o *Object) Filter(filter func(key string, value *Value) bool) *Object {
 		valueChain.setFailCallback(func() {
 			chainFailed = true
 		})
-		valueChain.replace("Every[%v]", element)
+		valueChain.replace("Filter[%q]", key)
 		if filter(key, newValue(valueChain, element)) && !chainFailed {
 			filteredObject[key] = element
 		}
