@@ -63,7 +63,7 @@ func (o *Object) Path(path string) *Value {
 	return jsonPath(o.chain, o.value, path)
 }
 
-// Schema is similar to Value.Schemo.
+// Schema is similar to Value.Schema.
 func (o *Object) Schema(schema interface{}) *Object {
 	o.chain.enter("Schema()")
 	defer o.chain.leave()
@@ -711,6 +711,19 @@ func checkSubset(outer, inner map[string]interface{}) bool {
 	return true
 }
 
+// Transform runs the passed function on all the Elements in the object.
+//
+// If transformation inside function fails, the original Object is marked failed.
+//
+// Transform will immediately stop execution of the function upon first transformation failures
+// or if return value is nil.
+//
+// Example:
+//
+//	object := NewObject(t, map[string]interface{}{"foo": 123})
+//	transformedObject := object.Transform(func(key string, value *httpexpect.Value) *httpexpect.Value {
+//	  *httpexpect.NewValue(...)
+//	})
 func (o *Object) Transform(fn func(key string, value *Value) *Value) *Object {
 	o.chain.enter("Transform()")
 	defer o.chain.leave()
