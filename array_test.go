@@ -822,19 +822,17 @@ func TestArrayTransform(t *testing.T) {
 			}
 			return nil
 		})
-		newArray.Contains(4)
-		newArray.Contains(16)
-		newArray.Contains(36)
-		array.chain.assertOK(ts)
+		assert.Equal(t, []interface{}{float64(4), float64(16), float64(36)}, newArray.value)
+		newArray.chain.assertOK(ts)
 	})
 
 	t.Run("Empty array", func(ts *testing.T) {
 		reporter := newMockReporter(ts)
 		array := NewArray(reporter, []interface{}{})
-		array.Transform(func(_ int, val *Value) *Value {
+		newArray := array.Transform(func(_ int, val *Value) *Value {
 			return nil
 		})
-		array.chain.assertOK(ts)
+		newArray.chain.assertOK(ts)
 	})
 
 	t.Run("Test correct index", func(ts *testing.T) {
@@ -848,10 +846,8 @@ func TestArrayTransform(t *testing.T) {
 				return val
 			},
 		)
-		newArray.Contains(1)
-		newArray.Contains(2)
-		newArray.Contains(3)
-		array.chain.assertOK(ts)
+		assert.Equal(t, []interface{}{float64(1), float64(2), float64(3)}, newArray.value)
+		newArray.chain.assertOK(ts)
 	})
 
 	t.Run("Assertion failed for any and exits on failure", func(ts *testing.T) {
@@ -864,6 +860,6 @@ func TestArrayTransform(t *testing.T) {
 		})
 		assert.Equal(t, 1, invoked)
 		assert.Equal(t, true, newArray.chain.failed())
-		array.chain.assertFailed(ts)
+		newArray.chain.assertFailed(ts)
 	})
 }

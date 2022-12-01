@@ -964,6 +964,5 @@ func (a *Array) Transform(fn func(index int, value *Value) *Value) *Array {
 		array = append(array, transformedValue.value)
 	}
 
-	newArr := newArray(a.chain, array)
-	return newArr
+	return newArray(a.chain, array)
 }
