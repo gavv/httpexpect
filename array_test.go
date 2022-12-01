@@ -822,7 +822,9 @@ func TestArrayTransform(t *testing.T) {
 			}
 			return nil
 		})
-		newArray.Contains([]interface{}{4, 16, 36})
+		newArray.Contains(4)
+		newArray.Contains(16)
+		newArray.Contains(36)
 		array.chain.assertOK(ts)
 	})
 
@@ -838,7 +840,7 @@ func TestArrayTransform(t *testing.T) {
 	t.Run("Test correct index", func(ts *testing.T) {
 		reporter := newMockReporter(ts)
 		array := NewArray(reporter, []interface{}{1, 2, 3})
-		array.Transform(
+		newArray := array.Transform(
 			func(idx int, val *Value) *Value {
 				if v, ok := val.Raw().(float64); ok {
 					assert.Equal(ts, idx, int(v)-1)
@@ -846,6 +848,9 @@ func TestArrayTransform(t *testing.T) {
 				return val
 			},
 		)
+		newArray.Contains(1)
+		newArray.Contains(2)
+		newArray.Contains(3)
 		array.chain.assertOK(ts)
 	})
 
@@ -853,11 +858,12 @@ func TestArrayTransform(t *testing.T) {
 		reporter := newMockReporter(ts)
 		array := NewArray(reporter, []interface{}{2, 4, 6})
 		invoked := 0
-		array.Transform(func(_ int, _ *Value) *Value {
+		newArray := array.Transform(func(_ int, _ *Value) *Value {
 			invoked++
 			return nil
 		})
 		assert.Equal(t, 1, invoked)
+		assert.Equal(t, true, newArray.chain.failed())
 		array.chain.assertFailed(ts)
 	})
 }

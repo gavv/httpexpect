@@ -945,17 +945,11 @@ func (a *Array) Transform(fn func(index int, value *Value) *Value) *Array {
 		return a
 	}
 
-	chainFailure := false
-
-	array := make([]interface{}, 0)
+	array := []interface{}{}
 
 	for index, val := range a.value {
 		valueChain := a.chain.clone()
 		valueChain.replace("Transform[%d]", index)
-
-		valueChain.setFailCallback(func() {
-			chainFailure = true
-		})
 
 		transformedValue := fn(index, newValue(valueChain, val))
 		if transformedValue == nil {
@@ -967,12 +961,9 @@ func (a *Array) Transform(fn func(index int, value *Value) *Value) *Array {
 			})
 			return a
 		}
-		array = append(array, transformedValue)
+		array = append(array, transformedValue.value)
 	}
 
-	if chainFailure {
-		a.chain.setFailed()
-	}
-
-	return newArray(a.chain, array)
+	newArr := newArray(a.chain, array)
+	return newArr
 }
