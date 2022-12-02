@@ -199,6 +199,7 @@ func (o *Object) Filter(filter func(key string, value *Value) bool) *Object {
 				errors.New("unexpected nil function argument"),
 			},
 		})
+		return newObject(o.chain, nil)
 	}
 
 	filteredObject := make(map[string]interface{})
