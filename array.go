@@ -212,6 +212,59 @@ func (a *Array) Iter() []Value {
 	return ret
 }
 
+// Filter accepts a function that returns a boolean. The function is ran
+// over the array items. If the function returns true, the item passes
+// the filter and is added to the new array of filtered items. If false,
+// the item is skipped (or in other words filtered out). After iterating
+// through all the items of the original array, the new filtered array
+// is returned.
+//
+// If there are any failed assertions in the filtering function, the
+// item is omitted without causing test failure.
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{1, 2, "foo", "bar"})
+//	filteredArray := array.Filter(func(index int, value *httpexpect.Value) bool {
+//		value.String().NotEmpty()		//fails on 1 and 2
+//		return value.Raw() != "bar"		//fails on "bar"
+//	})
+//	filteredArray.Equal([]interface{}{"foo"})	//succeeds
+func (a *Array) Filter(filter func(index int, value *Value) bool) *Array {
+	a.chain.enter("Filter()")
+	defer a.chain.leave()
+
+	if a.chain.failed() {
+		return newArray(a.chain, nil)
+	}
+
+	if filter == nil {
+		a.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected nil function argument"),
+			},
+		})
+	}
+
+	filteredArray := []interface{}{}
+
+	for index, element := range a.value {
+		valueChain := a.chain.clone()
+		valueChain.setFatal(false)
+		chainFailed := false
+		valueChain.setFailCallback(func() {
+			chainFailed = true
+		})
+		valueChain.replace("Filter[%v]", index)
+		if filter(index, newValue(valueChain, element)) && !chainFailed {
+			filteredArray = append(filteredArray, element)
+		}
+	}
+
+	return newArray(a.chain, filteredArray)
+}
+
 // Every runs the passed function on all the Elements in the array.
 //
 // If assertion inside function fails, the original Array is marked failed.

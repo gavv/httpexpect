@@ -40,6 +40,10 @@ func TestArrayFailed(t *testing.T) {
 		value.Every(func(_ int, val *Value) {
 			val.String().NotEmpty()
 		})
+		value.Filter(func(_ int, val *Value) bool {
+			val.String().NotEmpty()
+			return true
+		})
 		value.Transform(func(index int, value *Value) *Value {
 			return nil
 		})
@@ -862,4 +866,73 @@ func TestArrayTransform(t *testing.T) {
 		assert.Equal(t, true, newArray.chain.failed())
 		newArray.chain.assertFailed(ts)
 	})
+}
+
+func TestArrayFilter(t *testing.T) {
+	t.Run("Filter an array of elements of the same type and validate", func(ts *testing.T) {
+		reporter := newMockReporter(t)
+		array := NewArray(reporter, []interface{}{1, 2, 3, 4, 5, 6})
+		filteredArray := array.Filter(func(index int, value *Value) bool {
+			return value.Raw() != 2.0 && value.Raw() != 5.0
+		})
+		assert.Equal(t, []interface{}{1.0, 3.0, 4.0, 6.0}, filteredArray.Raw())
+		assert.Equal(t, array.Raw(), []interface{}{1.0, 2.0, 3.0, 4.0, 5.0, 6.0})
+
+		array.chain.assertOK(t)
+		filteredArray.chain.assertOK(t)
+	})
+
+	t.Run("Filter throws when an assertion within predicate fails", func(ts *testing.T) {
+		reporter := newMockReporter(t)
+		array := NewArray(reporter, []interface{}{1.0, "foo", "bar", 4.0, "baz", 6.0})
+		filteredArray := array.Filter(func(index int, value *Value) bool {
+			stringifiedValue := value.String().NotEmpty().Raw()
+			return stringifiedValue != "bar"
+		})
+		assert.Equal(t, []interface{}{"foo", "baz"}, filteredArray.Raw())
+		assert.Equal(t, array.Raw(), []interface{}{1.0, "foo", "bar", 4.0, "baz", 6.0})
+
+		array.chain.assertOK(t)
+		filteredArray.chain.assertOK(t)
+	})
+
+	t.Run("Filter an array of different types and validate", func(ts *testing.T) {
+		reporter := newMockReporter(t)
+		array := NewArray(reporter, []interface{}{"foo", "bar", true, 1.0})
+		filteredArray := array.Filter(func(index int, value *Value) bool {
+			return value.Raw() != "bar"
+		})
+		assert.Equal(t, []interface{}{"foo", true, 1.0}, filteredArray.Raw())
+		assert.Equal(t, array.Raw(), []interface{}{"foo", "bar", true, 1.0})
+
+		array.chain.assertOK(t)
+		filteredArray.chain.assertOK(t)
+	})
+
+	t.Run("Filter an empty array", func(ts *testing.T) {
+		reporter := newMockReporter(t)
+		array := NewArray(reporter, []interface{}{})
+		filteredArray := array.Filter(func(index int, value *Value) bool {
+			return false
+		})
+		assert.Equal(t, []interface{}{}, filteredArray.Raw())
+		assert.Equal(t, array.Raw(), []interface{}{})
+
+		array.chain.assertOK(t)
+		filteredArray.chain.assertOK(t)
+	})
+
+	t.Run("Filter returns an empty non-nil array if no items are passed",
+		func(ts *testing.T) {
+			reporter := newMockReporter(t)
+			array := NewArray(reporter, []interface{}{"foo", "bar", true, 1.0})
+			filteredArray := array.Filter(func(index int, value *Value) bool {
+				return false
+			})
+			assert.Equal(t, []interface{}{}, filteredArray.Raw())
+			assert.Equal(t, array.Raw(), []interface{}{"foo", "bar", true, 1.0})
+
+			array.chain.assertOK(t)
+			filteredArray.chain.assertOK(t)
+		})
 }
