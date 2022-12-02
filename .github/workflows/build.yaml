@@ -94,6 +94,7 @@ jobs:
 
   coverage:
     runs-on: ubuntu-latest
+    needs: [build, examples, formatting, linters]
 
     name: Coverage
     steps:
