@@ -24,7 +24,7 @@ func (r *AssertReporter) Errorf(message string, args ...interface{}) {
 }
 
 // RequireReporter implements Reporter interface using `testify/require'
-// package. Failures fatal with this reporter.
+// package. Failures are fatal with this reporter.
 type RequireReporter struct {
 	backend *require.Assertions
 }
