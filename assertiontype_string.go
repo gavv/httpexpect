@@ -42,11 +42,15 @@ func _() {
 	_ = x[AssertNotContainsSubset-31]
 	_ = x[AssertBelongs-32]
 	_ = x[AssertNotBelongs-33]
+	_ = x[AssertHasPrefix-34]
+	_ = x[AssertNotHasPrefix-35]
+	_ = x[AssertHasSuffix-36]
+	_ = x[AssertNotHasSuffix-37]
 }
 
-const _AssertionType_name = "AssertUsageAssertOperationAssertTypeAssertNotTypeAssertValidAssertNotValidAssertNilAssertNotNilAssertEmptyAssertNotEmptyAssertEqualAssertNotEqualAssertLtAssertLeAssertGtAssertGeAssertInRangeAssertNotInRangeAssertMatchSchemaAssertNotMatchSchemaAssertMatchPathAssertNotMatchPathAssertMatchRegexpAssertNotMatchRegexpAssertMatchFormatAssertNotMatchFormatAssertContainsKeyAssertNotContainsKeyAssertContainsElementAssertNotContainsElementAssertContainsSubsetAssertNotContainsSubsetAssertBelongsAssertNotBelongs"
+const _AssertionType_name = "AssertUsageAssertOperationAssertTypeAssertNotTypeAssertValidAssertNotValidAssertNilAssertNotNilAssertEmptyAssertNotEmptyAssertEqualAssertNotEqualAssertLtAssertLeAssertGtAssertGeAssertInRangeAssertNotInRangeAssertMatchSchemaAssertNotMatchSchemaAssertMatchPathAssertNotMatchPathAssertMatchRegexpAssertNotMatchRegexpAssertMatchFormatAssertNotMatchFormatAssertContainsKeyAssertNotContainsKeyAssertContainsElementAssertNotContainsElementAssertContainsSubsetAssertNotContainsSubsetAssertBelongsAssertNotBelongsAssertHasPrefixAssertNotHasPrefixAssertHasSuffixAssertNotHasSuffix"
 
-var _AssertionType_index = [...]uint16{0, 11, 26, 36, 49, 60, 74, 83, 95, 106, 120, 131, 145, 153, 161, 169, 177, 190, 206, 223, 243, 258, 276, 293, 313, 330, 350, 367, 387, 408, 432, 452, 475, 488, 504}
+var _AssertionType_index = [...]uint16{0, 11, 26, 36, 49, 60, 74, 83, 95, 106, 120, 131, 145, 153, 161, 169, 177, 190, 206, 223, 243, 258, 276, 293, 313, 330, 350, 367, 387, 408, 432, 452, 475, 488, 504, 519, 537, 552, 570}
 
 func (i AssertionType) String() string {
 	if i >= AssertionType(len(_AssertionType_index)-1) {
