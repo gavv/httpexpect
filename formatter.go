@@ -322,6 +322,13 @@ func (f *DefaultFormatter) fillExpected(
 			formatValue(failure.Expected.Value),
 		}
 
+	case AssertHasPrefix, AssertNotHasPrefix, AssertHasSuffix, AssertNotHasSuffix:
+		data.HaveExpected = true
+		data.ExpectedKind = kindSubset
+		data.Expected = []string{
+			formatValue(failure.Expected.Value),
+		}
+
 	case AssertBelongs, AssertNotBelongs:
 		data.HaveExpected = true
 		data.ExpectedKind = kindValueList
@@ -348,7 +355,9 @@ func (f *DefaultFormatter) fillIsNegation(
 		AssertContainsKey,
 		AssertContainsElement,
 		AssertContainsSubset,
-		AssertBelongs:
+		AssertBelongs,
+		AssertHasPrefix,
+		AssertHasSuffix:
 		break
 
 	case AssertNotType,
@@ -364,7 +373,9 @@ func (f *DefaultFormatter) fillIsNegation(
 		AssertNotContainsKey,
 		AssertNotContainsElement,
 		AssertNotContainsSubset,
-		AssertNotBelongs:
+		AssertNotBelongs,
+		AssertNotHasPrefix,
+		AssertNotHasSuffix:
 		data.IsNegation = true
 	}
 }
