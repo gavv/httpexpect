@@ -341,6 +341,12 @@ func TestStringAsNumber(t *testing.T) {
 		value2.chain.assertFailed(t)
 		num2.chain.assertFailed(t)
 		assert.Equal(t, float64(0), num2.Raw())
+
+		value3 := NewString(reporter, "8000000000000000")
+		num3 := value3.AsNumber(16)
+		value3.chain.assertOK(t)
+		num3.chain.assertOK(t)
+		assert.Equal(t, float64(9223372036854775808), num3.Raw())
 	})
 
 	t.Run("multiple_base", func(t *testing.T) {
