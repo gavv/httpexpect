@@ -563,7 +563,7 @@ func (s *String) AsNumber(base ...int) *Number {
 		inum, err = strconv.ParseInt(s.value, base[0], 64)
 		num = float64(inum)
 
-		if err == strconv.ErrRange {
+		if errors.Is(err, strconv.ErrRange) {
 			var unum uint64
 
 			unum, err = strconv.ParseUint(s.value, base[0], 64)
