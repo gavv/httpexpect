@@ -342,6 +342,14 @@ func TestStringAsNumber(t *testing.T) {
 		num2.chain.assertFailed(t)
 		assert.Equal(t, float64(0), num2.Raw())
 	})
+
+	t.Run("multiple_base", func(t *testing.T) {
+		value1 := NewString(reporter, "100")
+		num1 := value1.AsNumber(10, 16)
+		value1.chain.assertFailed(t)
+		num1.chain.assertFailed(t)
+		assert.Equal(t, float64(0), num1.Raw())
+	})
 }
 
 func TestStringAsBoolean(t *testing.T) {
