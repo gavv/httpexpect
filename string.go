@@ -375,7 +375,7 @@ func (s *String) HasPrefix(value string) *String {
 
 	if !strings.HasPrefix(s.value, value) {
 		s.chain.fail(AssertionFailure{
-			Type:     AssertHasPrefix,
+			Type:     AssertContainsSubset,
 			Actual:   &AssertionValue{s.value},
 			Expected: &AssertionValue{value},
 			Errors: []error{
@@ -403,7 +403,7 @@ func (s *String) NotHasPrefix(value string) *String {
 
 	if strings.HasPrefix(s.value, value) {
 		s.chain.fail(AssertionFailure{
-			Type:     AssertNotHasPrefix,
+			Type:     AssertNotContainsSubset,
 			Actual:   &AssertionValue{s.value},
 			Expected: &AssertionValue{value},
 			Errors: []error{
@@ -431,7 +431,7 @@ func (s *String) HasSuffix(value string) *String {
 
 	if !strings.HasSuffix(s.value, value) {
 		s.chain.fail(AssertionFailure{
-			Type:     AssertHasSuffix,
+			Type:     AssertContainsSubset,
 			Actual:   &AssertionValue{s.value},
 			Expected: &AssertionValue{value},
 			Errors: []error{
@@ -459,7 +459,7 @@ func (s *String) NotHasSuffix(value string) *String {
 
 	if strings.HasSuffix(s.value, value) {
 		s.chain.fail(AssertionFailure{
-			Type:     AssertNotHasSuffix,
+			Type:     AssertNotContainsSubset,
 			Actual:   &AssertionValue{s.value},
 			Expected: &AssertionValue{value},
 			Errors: []error{
@@ -488,7 +488,7 @@ func (s *String) HasPrefixFold(value string) *String {
 
 	if !strings.HasPrefix(strings.ToLower(s.value), strings.ToLower(value)) {
 		s.chain.fail(AssertionFailure{
-			Type:     AssertHasPrefix,
+			Type:     AssertContainsSubset,
 			Actual:   &AssertionValue{s.value},
 			Expected: &AssertionValue{value},
 			Errors: []error{
@@ -517,7 +517,7 @@ func (s *String) NotHasPrefixFold(value string) *String {
 
 	if strings.HasPrefix(strings.ToLower(s.value), strings.ToLower(value)) {
 		s.chain.fail(AssertionFailure{
-			Type:     AssertNotHasPrefix,
+			Type:     AssertNotContainsSubset,
 			Actual:   &AssertionValue{s.value},
 			Expected: &AssertionValue{value},
 			Errors: []error{
@@ -546,7 +546,7 @@ func (s *String) HasSuffixFold(value string) *String {
 
 	if !strings.HasSuffix(strings.ToLower(s.value), strings.ToLower(value)) {
 		s.chain.fail(AssertionFailure{
-			Type:     AssertHasSuffix,
+			Type:     AssertContainsSubset,
 			Actual:   &AssertionValue{s.value},
 			Expected: &AssertionValue{value},
 			Errors: []error{
@@ -575,7 +575,7 @@ func (s *String) NotHasSuffixFold(value string) *String {
 
 	if strings.HasSuffix(strings.ToLower(s.value), strings.ToLower(value)) {
 		s.chain.fail(AssertionFailure{
-			Type:     AssertNotHasSuffix,
+			Type:     AssertNotContainsSubset,
 			Actual:   &AssertionValue{s.value},
 			Expected: &AssertionValue{value},
 			Errors: []error{

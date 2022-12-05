@@ -82,14 +82,6 @@ const (
 	// [Expected] stores AssertionList with allowed values
 	AssertBelongs
 	AssertNotBelongs
-
-	// Check expression: [Actual] has prefix [Expected]
-	AssertHasPrefix
-	AssertNotHasPrefix
-
-	// Check expression: [Actual] has suffix [Expected]
-	AssertHasSuffix
-	AssertNotHasSuffix
 )
 
 // AssertionContext provides context where the assetion happened.
