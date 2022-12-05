@@ -44,7 +44,7 @@ func TestArrayFailed(t *testing.T) {
 			val.String().NotEmpty()
 			return true
 		})
-		value.Transform(func(index int, value *Value) *Value {
+		value.Transform(func(index int, value interface{}) interface{} {
 			return nil
 		})
 	}
@@ -820,10 +820,11 @@ func TestArrayTransform(t *testing.T) {
 	t.Run("Square Integers", func(ts *testing.T) {
 		reporter := newMockReporter(ts)
 		array := NewArray(reporter, []interface{}{2, 4, 6})
-		newArray := array.Transform(func(_ int, val *Value) *Value {
-			if v, ok := val.Raw().(float64); ok {
-				return NewValue(ts, int(v)*int(v))
+		newArray := array.Transform(func(_ int, val interface{}) interface{} {
+			if v, ok := val.(float64); ok {
+				return int(v) * int(v)
 			}
+			ts.Errorf("failed transformation")
 			return nil
 		})
 		assert.Equal(t, []interface{}{float64(4), float64(16), float64(36)}, newArray.value)
@@ -833,7 +834,8 @@ func TestArrayTransform(t *testing.T) {
 	t.Run("Empty array", func(ts *testing.T) {
 		reporter := newMockReporter(ts)
 		array := NewArray(reporter, []interface{}{})
-		newArray := array.Transform(func(_ int, val *Value) *Value {
+		newArray := array.Transform(func(_ int, _ interface{}) interface{} {
+			ts.Errorf("failed transformation")
 			return nil
 		})
 		newArray.chain.assertOK(ts)
@@ -843,8 +845,8 @@ func TestArrayTransform(t *testing.T) {
 		reporter := newMockReporter(ts)
 		array := NewArray(reporter, []interface{}{1, 2, 3})
 		newArray := array.Transform(
-			func(idx int, val *Value) *Value {
-				if v, ok := val.Raw().(float64); ok {
+			func(idx int, val interface{}) interface{} {
+				if v, ok := val.(float64); ok {
 					assert.Equal(ts, idx, int(v)-1)
 				}
 				return val
@@ -852,19 +854,6 @@ func TestArrayTransform(t *testing.T) {
 		)
 		assert.Equal(t, []interface{}{float64(1), float64(2), float64(3)}, newArray.value)
 		newArray.chain.assertOK(ts)
-	})
-
-	t.Run("Assertion failed for any and exits on failure", func(ts *testing.T) {
-		reporter := newMockReporter(ts)
-		array := NewArray(reporter, []interface{}{2, 4, 6})
-		invoked := 0
-		newArray := array.Transform(func(_ int, _ *Value) *Value {
-			invoked++
-			return nil
-		})
-		assert.Equal(t, 1, invoked)
-		assert.Equal(t, true, newArray.chain.failed())
-		newArray.chain.assertFailed(ts)
 	})
 }
 

@@ -32,7 +32,7 @@ func TestObjectFailed(t *testing.T) {
 		value.Every(func(_ string, value *Value) {
 			value.String().NotEmpty()
 		})
-		value.Transform(func(key string, value *Value) *Value {
+		value.Transform(func(key string, value interface{}) interface{} {
 			return nil
 		})
 		value.Filter(func(_ string, value *Value) bool {
@@ -842,9 +842,9 @@ func TestObjectTransform(t *testing.T) {
 			"bar": "456",
 			"baz": "b",
 		})
-		newObject := object.Transform(func(_ string, value *Value) *Value {
-			if v, ok := value.Raw().(string); ok {
-				return NewValue(ts, "Hello "+v)
+		newObject := object.Transform(func(_ string, value interface{}) interface{} {
+			if v, ok := value.(string); ok {
+				return "Hello " + v
 			}
 			return nil
 		})
@@ -861,9 +861,9 @@ func TestObjectTransform(t *testing.T) {
 			"bar": "456",
 			"baz": "b",
 		})
-		newObject := object.Transform(func(_ string, value *Value) *Value {
-			if v, ok := value.Raw().(string); ok {
-				return NewValue(ts, "Hello "+v)
+		newObject := object.Transform(func(_ string, value interface{}) interface{} {
+			if v, ok := value.(string); ok {
+				return "Hello " + v
 			}
 			return nil
 		})
@@ -877,8 +877,8 @@ func TestObjectTransform(t *testing.T) {
 			"bar": "456",
 			"baz": "baz",
 		})
-		newObject := object.Transform(func(key string, value *Value) *Value {
-			if v, ok := value.Raw().(string); ok {
+		newObject := object.Transform(func(key string, value interface{}) interface{} {
+			if v, ok := value.(string); ok {
 				switch v {
 				case "123":
 					assert.Equal(ts, "foo", key)
@@ -891,23 +891,6 @@ func TestObjectTransform(t *testing.T) {
 			return value
 		})
 		newObject.chain.assertOK(ts)
-	})
-
-	t.Run("Assertion failed for any and exits on failure", func(ts *testing.T) {
-		reporter := newMockReporter(ts)
-		object := NewObject(reporter, map[string]interface{}{
-			"foo": "123",
-			"bar": "456",
-			"baz": "b",
-		})
-		invoked := 0
-		newObject := object.Transform(func(_ string, _ *Value) *Value {
-			invoked++
-			return nil
-		})
-		assert.Equal(t, 1, invoked)
-		assert.Equal(t, true, newObject.chain.failed())
-		newObject.chain.assertFailed(ts)
 	})
 }
 

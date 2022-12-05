@@ -768,28 +768,24 @@ func checkSubset(outer, inner map[string]interface{}) bool {
 	return true
 }
 
-// Transform runs the passed function on all the Elements in the object.
-//
-// If transformation inside function fails, the original Object is marked failed.
-//
-// Transform will immediately stop execution of the function
-// upon first transformation failures
-// or if return value is nil.
+// Transform runs the passed function on all the Elements in the Object
+// returns a new object without effecting original object.
 //
 // Example:
 //
 //	object := NewObject(t, map[string]interface{}{"foo": 123})
 //	transformedObject := object.Transform(
-//		func(key string, value *httpexpect.Value) *httpexpect.Value {
-//			return *httpexpect.NewValue(...)
+//		func(key string, value interface{}) interface{} {
+//			return tranformedValue.(interface{})
 //		},
 //	)
-func (o *Object) Transform(fn func(key string, value *Value) *Value) *Object {
+//	transformedObject.Equals(map[string]interface{}{....})
+func (o *Object) Transform(fn func(key string, value interface{}) interface{}) *Object {
 	o.chain.enter("Transform()")
 	defer o.chain.leave()
 
 	if o.chain.failed() {
-		return o
+		return newObject(o.chain, nil)
 	}
 
 	if fn == nil {
@@ -799,26 +795,14 @@ func (o *Object) Transform(fn func(key string, value *Value) *Value) *Object {
 				errors.New("unexpected nil function argument"),
 			},
 		})
-		return o
+		return newObject(o.chain, nil)
 	}
 
 	object := map[string]interface{}{}
 
 	for key, val := range o.value {
-		valueChain := o.chain.clone()
-		valueChain.replace("Transform[%q]", key)
-
-		transformedValue := fn(key, newValue(valueChain, val))
-		if transformedValue == nil {
-			o.chain.fail(AssertionFailure{
-				Type: AssertNil,
-				Errors: []error{
-					errors.New("unexpected nil return value"),
-				},
-			})
-			return o
-		}
-		object[key] = transformedValue.value
+		transformedValue := fn(key, val)
+		object[key] = transformedValue
 	}
 
 	return newObject(o.chain, object)
