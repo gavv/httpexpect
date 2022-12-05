@@ -552,32 +552,59 @@ func (s *String) AsNumber(base ...int) *Number {
 		return newNumber(s.chain, 0)
 	}
 
-	var num float64
-	var err error
-
-	if len(base) == 0 || base[0] == 10 {
-		num, err = strconv.ParseFloat(s.value, 64)
-	} else {
-		var inum int64
-
-		inum, err = strconv.ParseInt(s.value, base[0], 64)
-		num = float64(inum)
-
-		if err == strconv.ErrRange {
-			var unum uint64
-
-			unum, err = strconv.ParseUint(s.value, base[0], 64)
-			num = float64(unum)
-		}
+	b := 10
+	if len(base) != 0 {
+		b = base[0]
 	}
 
-	if err != nil {
-		if len(base) == 0 || base[0] == 10 {
+	var fnum float64
+	var inum int64
+	var unum uint64
+	var err error
+
+	inum, err = strconv.ParseInt(s.value, b, 64)
+	fnum = float64(inum)
+
+	if err == nil && int64(fnum) != inum {
+		s.chain.fail(AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{s.value},
+			Errors: []error{
+				errors.New("expected:" +
+					" number can be represented as float64 without precision loss"),
+			},
+		})
+		return newNumber(s.chain, 0)
+	}
+
+	if err != nil && errors.Is(err, strconv.ErrRange) {
+		unum, err = strconv.ParseUint(s.value, b, 64)
+		fnum = float64(unum)
+
+		if err == nil && uint64(fnum) != unum {
 			s.chain.fail(AssertionFailure{
 				Type:   AssertValid,
 				Actual: &AssertionValue{s.value},
 				Errors: []error{
-					errors.New("expected: string can be parsed to float"),
+					errors.New("expected:" +
+						" number can be represented as float64 without precision loss"),
+				},
+			})
+			return newNumber(s.chain, 0)
+		}
+	}
+
+	if err != nil && b == 10 {
+		fnum, err = strconv.ParseFloat(s.value, 64)
+	}
+
+	if err != nil {
+		if b == 10 {
+			s.chain.fail(AssertionFailure{
+				Type:   AssertValid,
+				Actual: &AssertionValue{s.value},
+				Errors: []error{
+					errors.New("expected: string can be parsed to integer or float"),
 					err,
 				},
 			})
@@ -596,7 +623,7 @@ func (s *String) AsNumber(base ...int) *Number {
 		return newNumber(s.chain, 0)
 	}
 
-	return newNumber(s.chain, num)
+	return newNumber(s.chain, fnum)
 }
 
 // AsBoolean parses true/false value string and returns a new Boolean instance

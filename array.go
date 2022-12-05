@@ -245,6 +245,7 @@ func (a *Array) Filter(filter func(index int, value *Value) bool) *Array {
 				errors.New("unexpected nil function argument"),
 			},
 		})
+		return newArray(a.chain, nil)
 	}
 
 	filteredArray := []interface{}{}
