@@ -334,7 +334,7 @@ func TestStringAsNumber(t *testing.T) {
 		num1 := value1.AsNumber(16)
 		value1.chain.assertOK(t)
 		num1.chain.assertOK(t)
-		assert.Equal(t, float64(256), num1.Raw())
+		assert.Equal(t, float64(0x100), num1.Raw())
 
 		value2 := NewString(reporter, "11.22")
 		num2 := value2.AsNumber(16)
@@ -342,11 +342,37 @@ func TestStringAsNumber(t *testing.T) {
 		num2.chain.assertFailed(t)
 		assert.Equal(t, float64(0), num2.Raw())
 
-		value3 := NewString(reporter, "8000000000000000")
+		value3 := NewString(reporter, "4000000000000000")
 		num3 := value3.AsNumber(16)
 		value3.chain.assertOK(t)
 		num3.chain.assertOK(t)
-		assert.Equal(t, float64(9223372036854775808), num3.Raw())
+		assert.Equal(t, float64(0x4000000000000000), num3.Raw())
+	})
+
+	t.Run("float_precision", func(t *testing.T) {
+		value1 := NewString(reporter, "4611686018427387905")
+		num1 := value1.AsNumber()
+		value1.chain.assertFailed(t)
+		num1.chain.assertFailed(t)
+		assert.Equal(t, float64(0), num1.Raw())
+
+		value2 := NewString(reporter, "4611686018427387905")
+		num2 := value2.AsNumber(10)
+		value2.chain.assertFailed(t)
+		num2.chain.assertFailed(t)
+		assert.Equal(t, float64(0), num2.Raw())
+
+		value3 := NewString(reporter, "8000000000000001")
+		num3 := value3.AsNumber(16)
+		value3.chain.assertFailed(t)
+		num3.chain.assertFailed(t)
+		assert.Equal(t, float64(0), num3.Raw())
+
+		value4 := NewString(reporter, "-4000000000000001")
+		num4 := value4.AsNumber(16)
+		value4.chain.assertFailed(t)
+		num4.chain.assertFailed(t)
+		assert.Equal(t, float64(0), num4.Raw())
 	})
 
 	t.Run("multiple_base", func(t *testing.T) {
