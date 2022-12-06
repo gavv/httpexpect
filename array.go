@@ -969,14 +969,17 @@ func countElement(array []interface{}, element interface{}) int {
 }
 
 // Transform runs the passed function on all the Elements in the array
-// returns a new array without effeecting original array.
+// and returns a new array without effeecting original array.
 //
 // Example:
 //
 //	array := NewArray(t, []interface{}{"foo", "bar"})
 //	transformedArray := array.Transform(
 //		func(index int, value interface{}) interface{} {
-//			return transformedValue.(interface{})
+//		  if val, ok := value.(float64); ok {
+//		    return int(val) * int(val)
+//		  }
+//	    return nil
 //		},
 //	)
 //	transformedArray.Equals([]interface{}{....})

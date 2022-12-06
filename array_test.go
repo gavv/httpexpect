@@ -831,6 +831,13 @@ func TestArrayTransform(t *testing.T) {
 		newArray.chain.assertOK(ts)
 	})
 
+	t.Run("Chain fail on nil function value", func(ts *testing.T) {
+		reporter := newMockReporter(ts)
+		array := NewArray(reporter, []interface{}{2, 4, 6})
+		newArray := array.Transform(nil)
+		newArray.chain.assertFailed(reporter)
+	})
+
 	t.Run("Empty array", func(ts *testing.T) {
 		reporter := newMockReporter(ts)
 		array := NewArray(reporter, []interface{}{})

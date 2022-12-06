@@ -854,6 +854,17 @@ func TestObjectTransform(t *testing.T) {
 		)
 	})
 
+	t.Run("Chain fail on nil function value", func(ts *testing.T) {
+		reporter := newMockReporter(ts)
+		object := NewObject(reporter, map[string]interface{}{
+			"foo": "123",
+			"bar": "456",
+			"baz": "b",
+		})
+		newObject := object.Transform(nil)
+		newObject.chain.assertFailed(reporter)
+	})
+
 	t.Run("Empty object", func(ts *testing.T) {
 		reporter := newMockReporter(ts)
 		object := NewObject(reporter, map[string]interface{}{
