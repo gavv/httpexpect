@@ -252,6 +252,14 @@ func TestNumberInRange(t *testing.T) {
 	value.NotInRange(1234+1, 1234-1)
 	value.chain.assertOK(t)
 	value.chain.reset()
+
+	value.NotInRange(1234+1, "1234+2")
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.NotInRange("1234+1", 1234+2)
+	value.chain.assertFailed(t)
+	value.chain.reset()
 }
 
 func TestNumberConvertEqual(t *testing.T) {
