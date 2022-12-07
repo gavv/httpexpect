@@ -82,6 +82,18 @@ func TestResponseFailed(t *testing.T) {
 
 		check(resp)
 	})
+
+	t.Run("Multiple rtt arguments", func(t *testing.T) {
+		t1 := time.Millisecond.Abs()
+		chain := newMockChain(t)
+		t2 := time.Millisecond.Abs()
+		resp := newResponse(responseOpts{
+			chain:    chain,
+			httpResp: &http.Response{},
+			rtt:      []time.Duration{t1, t2},
+		})
+		check(resp)
+	})
 }
 
 func TestResponseRoundTripTime(t *testing.T) {
