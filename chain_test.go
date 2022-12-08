@@ -89,26 +89,33 @@ func TestChainHandler(t *testing.T) {
 	assert.Nil(t, handler.failure)
 }
 
-func TestChainFatal(t *testing.T) {
+func TestChainSeverity(t *testing.T) {
 	handler := &mockAssertionHandler{}
 
 	chain := newChainWithConfig("test", Config{
 		AssertionHandler: handler,
 	})
 
-	chain.setFatal(true)
 	chain.fail(AssertionFailure{})
 
 	assert.NotNil(t, handler.failure)
-	assert.True(t, handler.failure.IsFatal)
+	assert.Equal(t, SeverityError, handler.failure.Severity)
 
 	chain.reset()
 
-	chain.setFatal(false)
+	chain.setSeverity(SeverityError)
 	chain.fail(AssertionFailure{})
 
 	assert.NotNil(t, handler.failure)
-	assert.False(t, handler.failure.IsFatal)
+	assert.Equal(t, SeverityError, handler.failure.Severity)
+
+	chain.reset()
+
+	chain.setSeverity(SeverityInfo)
+	chain.fail(AssertionFailure{})
+
+	assert.NotNil(t, handler.failure)
+	assert.Equal(t, SeverityInfo, handler.failure.Severity)
 }
 
 func TestChainCallback(t *testing.T) {
