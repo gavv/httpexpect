@@ -2219,6 +2219,15 @@ func (mt *mockTransportRedirect) WithMaxRedirect(
 func TestRequestRetry(t *testing.T) {
 	reporter := newMockReporter(t)
 
+	newNoErrClient := func(cb func()) *mockClient {
+		return &mockClient{
+			resp: http.Response{
+				StatusCode: http.StatusOK,
+			},
+			cb: cb,
+		}
+	}
+
 	newTempNetErrClient := func(cb func()) *mockClient {
 		return &mockClient{
 			err: &mockNetError{
@@ -2247,6 +2256,27 @@ func TestRequestRetry(t *testing.T) {
 	}
 
 	t.Run("dont retry policy", func(t *testing.T) {
+		t.Run("no error", func(t *testing.T) {
+			callCount := 0
+
+			client := newNoErrClient(func() { callCount++ })
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			req := NewRequest(config, http.MethodGet, "/url").
+				WithRetryPolicy(DontRetry)
+			req.chain.assertOK(t)
+
+			resp := req.Expect()
+			resp.chain.assertOK(t)
+
+			// Should not retry
+			assert.Equal(t, 1, callCount)
+		})
+
 		t.Run("temporary network error", func(t *testing.T) {
 			callCount := 0
 
@@ -2318,6 +2348,27 @@ func TestRequestRetry(t *testing.T) {
 	})
 
 	t.Run("retry temporary network errors policy", func(t *testing.T) {
+		t.Run("no error", func(t *testing.T) {
+			callCount := 0
+
+			client := newNoErrClient(func() { callCount++ })
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			req := NewRequest(config, http.MethodGet, "/url").
+				WithRetryPolicy(RetryTemporaryNetworkErrors)
+			req.chain.assertOK(t)
+
+			resp := req.Expect()
+			resp.chain.assertOK(t)
+
+			// Should not retry
+			assert.Equal(t, 1, callCount)
+		})
+
 		t.Run("temporary network error", func(t *testing.T) {
 			callCount := 0
 
@@ -2389,6 +2440,27 @@ func TestRequestRetry(t *testing.T) {
 	})
 
 	t.Run("retry temporary network and server errors policy", func(t *testing.T) {
+		t.Run("no error", func(t *testing.T) {
+			callCount := 0
+
+			client := newNoErrClient(func() { callCount++ })
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			req := NewRequest(config, http.MethodGet, "/url").
+				WithRetryPolicy(RetryTemporaryNetworkAndServerErrors)
+			req.chain.assertOK(t)
+
+			resp := req.Expect()
+			resp.chain.assertOK(t)
+
+			// Should not retry
+			assert.Equal(t, 1, callCount)
+		})
+
 		t.Run("temporary network error", func(t *testing.T) {
 			callCount := 0
 
@@ -2461,6 +2533,27 @@ func TestRequestRetry(t *testing.T) {
 	})
 
 	t.Run("retry all errors policy", func(t *testing.T) {
+		t.Run("no error", func(t *testing.T) {
+			callCount := 0
+
+			client := newNoErrClient(func() { callCount++ })
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			req := NewRequest(config, http.MethodGet, "/url").
+				WithRetryPolicy(RetryAllErrors)
+			req.chain.assertOK(t)
+
+			resp := req.Expect()
+			resp.chain.assertOK(t)
+
+			// Should not retry
+			assert.Equal(t, 1, callCount)
+		})
+
 		t.Run("temporary network error", func(t *testing.T) {
 			callCount := 0
 
