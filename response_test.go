@@ -1023,7 +1023,7 @@ func TestResponseJSONPCharsetBad(t *testing.T) {
 	resp.chain.assertFailed(t)
 	resp.chain.reset()
 
-	assert.Equal(t, nil, resp.JSONP("foo").Raw())
+	assert.Nil(t, resp.JSONP("foo").Raw())
 }
 
 func TestResponseContentOpts(t *testing.T) {
