@@ -226,7 +226,7 @@ func TestResponseHeaders(t *testing.T) {
 	resp.chain.assertOK(t)
 	resp.chain.reset()
 
-	assert.Equal(t, httpResp, resp.Raw())
+	assert.Same(t, httpResp, resp.Raw())
 
 	resp.Status(http.StatusOK)
 	resp.chain.assertOK(t)

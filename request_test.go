@@ -151,7 +151,7 @@ func TestRequestMatchers(t *testing.T) {
 	resp := req.Expect()
 
 	assert.Equal(t, 1, len(resps))
-	assert.Equal(t, resp, resps[0])
+	assert.Same(t, resp, resps[0])
 }
 
 func TestRequestTransformers(t *testing.T) {
@@ -657,7 +657,7 @@ func TestRequestHeaders(t *testing.T) {
 	assert.Equal(t, "url", client.req.URL.String())
 	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
 
-	assert.Equal(t, &client.resp, resp.Raw())
+	assert.Same(t, &client.resp, resp.Raw())
 }
 
 func TestRequestCookies(t *testing.T) {
@@ -693,7 +693,7 @@ func TestRequestCookies(t *testing.T) {
 	assert.Equal(t, "url", client.req.URL.String())
 	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
 
-	assert.Equal(t, &client.resp, resp.Raw())
+	assert.Same(t, &client.resp, resp.Raw())
 }
 
 func TestRequestBasicAuth(t *testing.T) {
@@ -740,7 +740,7 @@ func TestRequestWithHost(t *testing.T) {
 	assert.Equal(t, "example.com", client1.req.Host)
 	assert.Equal(t, "url", client1.req.URL.String())
 
-	assert.Equal(t, &client1.resp, resp.Raw())
+	assert.Same(t, &client1.resp, resp.Raw())
 
 	factory2 := DefaultRequestFactory{}
 	client2 := &mockClient{}
@@ -809,7 +809,7 @@ func TestRequestBodyChunked(t *testing.T) {
 	assert.Equal(t, make(http.Header), client.req.Header)
 	assert.Equal(t, "body", string(resp.content))
 
-	assert.Equal(t, &client.resp, resp.Raw())
+	assert.Same(t, &client.resp, resp.Raw())
 }
 
 func TestRequestBodyChunkedNil(t *testing.T) {
@@ -897,7 +897,7 @@ func TestRequestBodyBytes(t *testing.T) {
 	assert.Equal(t, make(http.Header), client.req.Header)
 	assert.Equal(t, "body", string(resp.content))
 
-	assert.Equal(t, &client.resp, resp.Raw())
+	assert.Same(t, &client.resp, resp.Raw())
 }
 
 func TestRequestBodyBytesNil(t *testing.T) {
@@ -958,7 +958,7 @@ func TestRequestBodyText(t *testing.T) {
 	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
 	assert.Equal(t, "some text", string(resp.content))
 
-	assert.Equal(t, &client.resp, resp.Raw())
+	assert.Same(t, &client.resp, resp.Raw())
 }
 
 func TestRequestBodyForm(t *testing.T) {
@@ -998,7 +998,7 @@ func TestRequestBodyForm(t *testing.T) {
 	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
 	assert.Equal(t, `a=1&b=2`, string(resp.content))
 
-	assert.Equal(t, &client.resp, resp.Raw())
+	assert.Same(t, &client.resp, resp.Raw())
 }
 
 func TestRequestBodyField(t *testing.T) {
@@ -1036,7 +1036,7 @@ func TestRequestBodyField(t *testing.T) {
 	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
 	assert.Equal(t, `a=1&b=2`, string(resp.content))
 
-	assert.Equal(t, &client.resp, resp.Raw())
+	assert.Same(t, &client.resp, resp.Raw())
 }
 
 func TestRequestBodyFormStruct(t *testing.T) {
@@ -1074,7 +1074,7 @@ func TestRequestBodyFormStruct(t *testing.T) {
 	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
 	assert.Equal(t, `a=1&b=2`, string(resp.content))
 
-	assert.Equal(t, &client.resp, resp.Raw())
+	assert.Same(t, &client.resp, resp.Raw())
 }
 
 func TestRequestBodyFormCombined(t *testing.T) {
@@ -1112,7 +1112,7 @@ func TestRequestBodyFormCombined(t *testing.T) {
 	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
 	assert.Equal(t, `a=1&b=2&c=3`, string(resp.content))
 
-	assert.Equal(t, &client.resp, resp.Raw())
+	assert.Same(t, &client.resp, resp.Raw())
 }
 
 func TestRequestBodyMultipart(t *testing.T) {
@@ -1273,7 +1273,7 @@ func TestRequestBodyJSON(t *testing.T) {
 	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
 	assert.Equal(t, `{"key":"value"}`, string(resp.content))
 
-	assert.Equal(t, &client.resp, resp.Raw())
+	assert.Same(t, &client.resp, resp.Raw())
 }
 
 func TestRequestContentLength(t *testing.T) {
