@@ -42,6 +42,8 @@ func TestStringFailed(t *testing.T) {
 	value.Match("")
 	value.NotMatch("")
 	value.MatchAll("")
+	value.IsASCII()
+	value.IsNotASCII()
 }
 
 func TestStringGetters(t *testing.T) {
@@ -298,6 +300,64 @@ func TestStringMatchInvalid(t *testing.T) {
 	value.NotMatch(`[`)
 	value.chain.assertFailed(t)
 	value.chain.reset()
+}
+
+func TestStringIsAscii(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value1 := NewString(reporter, "Ascii")
+	value1.IsASCII()
+	value1.chain.assertOK(t)
+	value1.chain.reset()
+
+	value2 := NewString(reporter, "Ascii is アスキー")
+	value2.IsASCII()
+	value2.chain.assertFailed(t)
+	value2.chain.reset()
+
+	value3 := NewString(reporter, "アスキー")
+	value3.IsASCII()
+	value3.chain.assertFailed(t)
+	value3.chain.reset()
+
+	value4 := NewString(reporter, string(rune(127)))
+	value4.IsASCII()
+	value4.chain.assertOK(t)
+	value4.chain.reset()
+
+	value5 := NewString(reporter, string(rune(128)))
+	value5.IsASCII()
+	value5.chain.assertFailed(t)
+	value5.chain.reset()
+}
+
+func TestStringIsNotAscii(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value1 := NewString(reporter, "Ascii")
+	value1.IsNotASCII()
+	value1.chain.assertFailed(t)
+	value1.chain.reset()
+
+	value2 := NewString(reporter, "Ascii is アスキー")
+	value2.IsNotASCII()
+	value2.chain.assertFailed(t)
+	value2.chain.reset()
+
+	value3 := NewString(reporter, "アスキー")
+	value3.IsNotASCII()
+	value3.chain.assertOK(t)
+	value3.chain.reset()
+
+	value4 := NewString(reporter, string(rune(127)))
+	value4.IsNotASCII()
+	value4.chain.assertFailed(t)
+	value4.chain.reset()
+
+	value5 := NewString(reporter, string(rune(128)))
+	value5.IsNotASCII()
+	value5.chain.assertOK(t)
+	value5.chain.reset()
 }
 
 func TestStringAsNumber(t *testing.T) {

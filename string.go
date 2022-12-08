@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 )
 
 // String provides methods to inspect attached string value
@@ -745,6 +746,76 @@ func (s *String) MatchAll(re string) []Match {
 	}
 
 	return ret
+}
+
+// IsASCII succeeds if all string characters are ASCII
+//
+// Example:
+//
+// str := NewString(t, "Hello")
+// str.IsASCII()
+func (s *String) IsASCII() *String {
+	s.chain.enter("IsASCII()")
+	defer s.chain.leave()
+
+	if s.chain.failed() {
+		return s
+	}
+
+	isASCII := true
+	for _, c := range s.value {
+		if c > unicode.MaxASCII {
+			isASCII = false
+			break
+		}
+	}
+
+	if !isASCII {
+		s.chain.fail(AssertionFailure{
+			Type:   AssertContainsSubset,
+			Actual: &AssertionValue{s.value},
+			Errors: []error{
+				errors.New("expected: all string characters are ascii"),
+			},
+		})
+	}
+
+	return s
+}
+
+// IsNotASCII succeeds if all string characters are not ASCII
+//
+// Example:
+//
+// str := NewString(t, "こんにちは")
+// str.IsNotASCII()
+func (s *String) IsNotASCII() *String {
+	s.chain.enter("IsNotASCII()")
+	defer s.chain.leave()
+
+	if s.chain.failed() {
+		return s
+	}
+
+	isASCII := false
+	for _, c := range s.value {
+		if c <= unicode.MaxASCII {
+			isASCII = true
+			break
+		}
+	}
+
+	if isASCII {
+		s.chain.fail(AssertionFailure{
+			Type:   AssertContainsSubset,
+			Actual: &AssertionValue{s.value},
+			Errors: []error{
+				errors.New("expected: all string characters are not ascii"),
+			},
+		})
+	}
+
+	return s
 }
 
 // AsNumber parses float from string and returns a new Number instance
