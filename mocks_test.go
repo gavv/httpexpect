@@ -13,13 +13,13 @@ type mockClient struct {
 	req  *http.Request
 	resp http.Response
 	err  error
-	cb   func() // callback in .Do
+	cb   func(req *http.Request) // callback in .Do
 }
 
 func (c *mockClient) Do(req *http.Request) (*http.Response, error) {
 	defer func() {
 		if c.cb != nil {
-			c.cb()
+			c.cb(req)
 		}
 	}()
 	c.req = req

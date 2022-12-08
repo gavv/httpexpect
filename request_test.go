@@ -2219,7 +2219,7 @@ func (mt *mockTransportRedirect) WithMaxRedirect(
 func TestRequestRetry(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	newNoErrClient := func(cb func()) *mockClient {
+	newNoErrClient := func(cb func(req *http.Request)) *mockClient {
 		return &mockClient{
 			resp: http.Response{
 				StatusCode: http.StatusOK,
@@ -2228,7 +2228,7 @@ func TestRequestRetry(t *testing.T) {
 		}
 	}
 
-	newTempNetErrClient := func(cb func()) *mockClient {
+	newTempNetErrClient := func(cb func(req *http.Request)) *mockClient {
 		return &mockClient{
 			err: &mockNetError{
 				isTemporary: true,
@@ -2237,7 +2237,7 @@ func TestRequestRetry(t *testing.T) {
 		}
 	}
 
-	newTempServerErrClient := func(cb func()) *mockClient {
+	newTempServerErrClient := func(cb func(req *http.Request)) *mockClient {
 		return &mockClient{
 			resp: http.Response{
 				StatusCode: http.StatusInternalServerError,
@@ -2246,7 +2246,7 @@ func TestRequestRetry(t *testing.T) {
 		}
 	}
 
-	newHTTPErrClient := func(cb func()) *mockClient {
+	newHTTPErrClient := func(cb func(req *http.Request)) *mockClient {
 		return &mockClient{
 			resp: http.Response{
 				StatusCode: http.StatusBadRequest,
@@ -2259,14 +2259,21 @@ func TestRequestRetry(t *testing.T) {
 		t.Run("no error", func(t *testing.T) {
 			callCount := 0
 
-			client := newNoErrClient(func() { callCount++ })
+			client := newNoErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
 
 			config := Config{
 				Client:   client,
 				Reporter: reporter,
 			}
 
-			req := NewRequest(config, http.MethodGet, "/url").
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
 				WithRetryPolicy(DontRetry)
 			req.chain.assertOK(t)
 
@@ -2280,14 +2287,21 @@ func TestRequestRetry(t *testing.T) {
 		t.Run("temporary network error", func(t *testing.T) {
 			callCount := 0
 
-			client := newTempNetErrClient(func() { callCount++ })
+			client := newTempNetErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
 
 			config := Config{
 				Client:   client,
 				Reporter: reporter,
 			}
 
-			req := NewRequest(config, http.MethodGet, "/url").
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
 				WithRetryPolicy(DontRetry).
 				WithMaxRetries(1)
 			req.chain.assertOK(t)
@@ -2302,14 +2316,21 @@ func TestRequestRetry(t *testing.T) {
 		t.Run("temporary server error", func(t *testing.T) {
 			callCount := 0
 
-			client := newTempServerErrClient(func() { callCount++ })
+			client := newTempServerErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
 
 			config := Config{
 				Client:   client,
 				Reporter: reporter,
 			}
 
-			req := NewRequest(config, http.MethodGet, "/url").
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
 				WithRetryPolicy(DontRetry).
 				WithMaxRetries(1)
 			req.chain.assertOK(t)
@@ -2325,14 +2346,21 @@ func TestRequestRetry(t *testing.T) {
 		t.Run("http error", func(t *testing.T) {
 			callCount := 0
 
-			client := newHTTPErrClient(func() { callCount++ })
+			client := newHTTPErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
 
 			config := Config{
 				Client:   client,
 				Reporter: reporter,
 			}
 
-			req := NewRequest(config, http.MethodGet, "/url").
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
 				WithRetryPolicy(DontRetry).
 				WithMaxRetries(1)
 			req.chain.assertOK(t)
@@ -2351,14 +2379,21 @@ func TestRequestRetry(t *testing.T) {
 		t.Run("no error", func(t *testing.T) {
 			callCount := 0
 
-			client := newNoErrClient(func() { callCount++ })
+			client := newNoErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
 
 			config := Config{
 				Client:   client,
 				Reporter: reporter,
 			}
 
-			req := NewRequest(config, http.MethodGet, "/url").
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
 				WithRetryPolicy(RetryTemporaryNetworkErrors)
 			req.chain.assertOK(t)
 
@@ -2372,14 +2407,21 @@ func TestRequestRetry(t *testing.T) {
 		t.Run("temporary network error", func(t *testing.T) {
 			callCount := 0
 
-			client := newTempNetErrClient(func() { callCount++ })
+			client := newTempNetErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
 
 			config := Config{
 				Client:   client,
 				Reporter: reporter,
 			}
 
-			req := NewRequest(config, http.MethodGet, "/url").
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
 				WithRetryPolicy(RetryTemporaryNetworkErrors).
 				WithMaxRetries(1).
 				WithRetryDelay(0, 0)
@@ -2395,14 +2437,21 @@ func TestRequestRetry(t *testing.T) {
 		t.Run("temporary server error", func(t *testing.T) {
 			callCount := 0
 
-			client := newTempServerErrClient(func() { callCount++ })
+			client := newTempServerErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
 
 			config := Config{
 				Client:   client,
 				Reporter: reporter,
 			}
 
-			req := NewRequest(config, http.MethodGet, "/url").
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
 				WithRetryPolicy(RetryTemporaryNetworkErrors).
 				WithMaxRetries(1)
 			req.chain.assertOK(t)
@@ -2418,14 +2467,21 @@ func TestRequestRetry(t *testing.T) {
 		t.Run("http error", func(t *testing.T) {
 			callCount := 0
 
-			client := newHTTPErrClient(func() { callCount++ })
+			client := newHTTPErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
 
 			config := Config{
 				Client:   client,
 				Reporter: reporter,
 			}
 
-			req := NewRequest(config, http.MethodGet, "/url").
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
 				WithRetryPolicy(RetryTemporaryNetworkErrors).
 				WithMaxRetries(1)
 			req.chain.assertOK(t)
@@ -2443,14 +2499,21 @@ func TestRequestRetry(t *testing.T) {
 		t.Run("no error", func(t *testing.T) {
 			callCount := 0
 
-			client := newNoErrClient(func() { callCount++ })
+			client := newNoErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
 
 			config := Config{
 				Client:   client,
 				Reporter: reporter,
 			}
 
-			req := NewRequest(config, http.MethodGet, "/url").
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
 				WithRetryPolicy(RetryTemporaryNetworkAndServerErrors)
 			req.chain.assertOK(t)
 
@@ -2464,14 +2527,21 @@ func TestRequestRetry(t *testing.T) {
 		t.Run("temporary network error", func(t *testing.T) {
 			callCount := 0
 
-			client := newTempNetErrClient(func() { callCount++ })
+			client := newTempNetErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
 
 			config := Config{
 				Client:   client,
 				Reporter: reporter,
 			}
 
-			req := NewRequest(config, http.MethodGet, "/url").
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
 				WithRetryPolicy(RetryTemporaryNetworkAndServerErrors).
 				WithMaxRetries(1).
 				WithRetryDelay(0, 0)
@@ -2487,14 +2557,21 @@ func TestRequestRetry(t *testing.T) {
 		t.Run("temporary server error", func(t *testing.T) {
 			callCount := 0
 
-			client := newTempServerErrClient(func() { callCount++ })
+			client := newTempServerErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
 
 			config := Config{
 				Client:   client,
 				Reporter: reporter,
 			}
 
-			req := NewRequest(config, http.MethodGet, "/url").
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
 				WithRetryPolicy(RetryTemporaryNetworkAndServerErrors).
 				WithMaxRetries(1).
 				WithRetryDelay(0, 0)
@@ -2511,14 +2588,21 @@ func TestRequestRetry(t *testing.T) {
 		t.Run("http error", func(t *testing.T) {
 			callCount := 0
 
-			client := newHTTPErrClient(func() { callCount++ })
+			client := newHTTPErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
 
 			config := Config{
 				Client:   client,
 				Reporter: reporter,
 			}
 
-			req := NewRequest(config, http.MethodGet, "/url").
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
 				WithRetryPolicy(RetryTemporaryNetworkAndServerErrors).
 				WithMaxRetries(1)
 			req.chain.assertOK(t)
@@ -2536,14 +2620,21 @@ func TestRequestRetry(t *testing.T) {
 		t.Run("no error", func(t *testing.T) {
 			callCount := 0
 
-			client := newNoErrClient(func() { callCount++ })
+			client := newNoErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
 
 			config := Config{
 				Client:   client,
 				Reporter: reporter,
 			}
 
-			req := NewRequest(config, http.MethodGet, "/url").
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
 				WithRetryPolicy(RetryAllErrors)
 			req.chain.assertOK(t)
 
@@ -2557,14 +2648,21 @@ func TestRequestRetry(t *testing.T) {
 		t.Run("temporary network error", func(t *testing.T) {
 			callCount := 0
 
-			client := newTempNetErrClient(func() { callCount++ })
+			client := newTempNetErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
 
 			config := Config{
 				Client:   client,
 				Reporter: reporter,
 			}
 
-			req := NewRequest(config, http.MethodGet, "/url").
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
 				WithRetryPolicy(RetryAllErrors).
 				WithMaxRetries(1).
 				WithRetryDelay(0, 0)
@@ -2580,14 +2678,21 @@ func TestRequestRetry(t *testing.T) {
 		t.Run("temporary server error", func(t *testing.T) {
 			callCount := 0
 
-			client := newTempServerErrClient(func() { callCount++ })
+			client := newTempServerErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
 
 			config := Config{
 				Client:   client,
 				Reporter: reporter,
 			}
 
-			req := NewRequest(config, http.MethodGet, "/url").
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
 				WithRetryPolicy(RetryAllErrors).
 				WithMaxRetries(1).
 				WithRetryDelay(0, 0)
@@ -2604,14 +2709,21 @@ func TestRequestRetry(t *testing.T) {
 		t.Run("http error", func(t *testing.T) {
 			callCount := 0
 
-			client := newHTTPErrClient(func() { callCount++ })
+			client := newHTTPErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
 
 			config := Config{
 				Client:   client,
 				Reporter: reporter,
 			}
 
-			req := NewRequest(config, http.MethodGet, "/url").
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
 				WithRetryPolicy(RetryAllErrors).
 				WithMaxRetries(1).
 				WithRetryDelay(0, 0)
@@ -2629,14 +2741,21 @@ func TestRequestRetry(t *testing.T) {
 	t.Run("max retries", func(t *testing.T) {
 		callCount := 0
 
-		client := newHTTPErrClient(func() { callCount++ })
+		client := newHTTPErrClient(func(req *http.Request) {
+			callCount++
+
+			b, err := ioutil.ReadAll(req.Body)
+			assert.NoError(t, err)
+			assert.Equal(t, "test body", string(b))
+		})
 
 		config := Config{
 			Client:   client,
 			Reporter: reporter,
 		}
 
-		req := NewRequest(config, http.MethodGet, "/url").
+		req := NewRequest(config, http.MethodPost, "/url").
+			WithText("test body").
 			WithRetryPolicy(RetryAllErrors).
 			WithMaxRetries(3).
 			WithRetryDelay(0, 0)
@@ -2654,14 +2773,21 @@ func TestRequestRetry(t *testing.T) {
 		t.Run("not exceeding max retry delay", func(t *testing.T) {
 			callCount := 0
 
-			client := newHTTPErrClient(func() { callCount++ })
+			client := newHTTPErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
 
 			config := Config{
 				Client:   client,
 				Reporter: reporter,
 			}
 
-			req := NewRequest(config, http.MethodGet, "/url").
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
 				WithRetryPolicy(RetryAllErrors).
 				WithMaxRetries(3).
 				WithRetryDelay(5*time.Millisecond, 50*time.Millisecond)
@@ -2685,14 +2811,21 @@ func TestRequestRetry(t *testing.T) {
 		t.Run("exceeding max retry delay", func(t *testing.T) {
 			callCount := 0
 
-			client := newHTTPErrClient(func() { callCount++ })
+			client := newHTTPErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
 
 			config := Config{
 				Client:   client,
 				Reporter: reporter,
 			}
 
-			req := NewRequest(config, http.MethodGet, "/url").
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
 				WithRetryPolicy(RetryAllErrors).
 				WithMaxRetries(3).
 				WithRetryDelay(5*time.Millisecond, 15*time.Millisecond)
