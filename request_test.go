@@ -1723,8 +1723,8 @@ func TestRequestRedirect(t *testing.T) {
 			// Should set CheckRedirect
 			httpClient, _ := req.config.Client.(*http.Client)
 			assert.NotNil(t, httpClient.CheckRedirect)
-			assert.Equal(t, nil, httpClient.CheckRedirect(req.httpReq, nil))
-			assert.Equal(t, nil, httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 1)))
+			assert.Nil(t, httpClient.CheckRedirect(req.httpReq, nil))
+			assert.Nil(t, httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 1)))
 			assert.Equal(t,
 				errors.New("stopped after 1 redirects"),
 				httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 2)),
@@ -1766,8 +1766,8 @@ func TestRequestRedirect(t *testing.T) {
 			// Should set CheckRedirect
 			httpClient, _ := req.config.Client.(*http.Client)
 			assert.NotNil(t, httpClient.CheckRedirect)
-			assert.Equal(t, nil, httpClient.CheckRedirect(req.httpReq, nil))
-			assert.Equal(t, nil, httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 1)))
+			assert.Nil(t, httpClient.CheckRedirect(req.httpReq, nil))
+			assert.Nil(t, httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 1)))
 			assert.Equal(t,
 				errors.New("stopped after 1 redirects"),
 				httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 2)),
@@ -1817,8 +1817,8 @@ func TestRequestRedirect(t *testing.T) {
 			// Should set CheckRedirect
 			httpClient, _ := req.config.Client.(*http.Client)
 			assert.NotNil(t, httpClient.CheckRedirect)
-			assert.Equal(t, nil, httpClient.CheckRedirect(req.httpReq, nil))
-			assert.Equal(t, nil, httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 1)))
+			assert.Nil(t, httpClient.CheckRedirect(req.httpReq, nil))
+			assert.Nil(t, httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 1)))
 			assert.Equal(t,
 				errors.New("stopped after 1 redirects"),
 				httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 2)),
@@ -1867,8 +1867,8 @@ func TestRequestRedirect(t *testing.T) {
 			// Should set CheckRedirect
 			httpClient, _ := req.config.Client.(*http.Client)
 			assert.NotNil(t, httpClient.CheckRedirect)
-			assert.Equal(t, nil, httpClient.CheckRedirect(req.httpReq, nil))
-			assert.Equal(t, nil, httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 1)))
+			assert.Nil(t, httpClient.CheckRedirect(req.httpReq, nil))
+			assert.Nil(t, httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 1)))
 			assert.Equal(t,
 				errors.New("stopped after 1 redirects"),
 				httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 2)),
@@ -1911,8 +1911,8 @@ func TestRequestRedirect(t *testing.T) {
 			// Should set CheckRedirect
 			httpClient, _ := req.config.Client.(*http.Client)
 			assert.NotNil(t, httpClient.CheckRedirect)
-			assert.Equal(t, nil, httpClient.CheckRedirect(req.httpReq, nil))
-			assert.Equal(t, nil, httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 1)))
+			assert.Nil(t, httpClient.CheckRedirect(req.httpReq, nil))
+			assert.Nil(t, httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 1)))
 			assert.Equal(t,
 				errors.New("stopped after 1 redirects"),
 				httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 2)),
@@ -1952,8 +1952,8 @@ func TestRequestRedirect(t *testing.T) {
 			// Should set CheckRedirect
 			httpClient, _ := req.config.Client.(*http.Client)
 			assert.NotNil(t, httpClient.CheckRedirect)
-			assert.Equal(t, nil, httpClient.CheckRedirect(req.httpReq, nil))
-			assert.Equal(t, nil, httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 1)))
+			assert.Nil(t, httpClient.CheckRedirect(req.httpReq, nil))
+			assert.Nil(t, httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 1)))
 			assert.Equal(t,
 				errors.New("stopped after 1 redirects"),
 				httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 2)),
@@ -2000,8 +2000,8 @@ func TestRequestRedirect(t *testing.T) {
 				// Should set CheckRedirect
 				httpClient, _ := req.config.Client.(*http.Client)
 				assert.NotNil(t, httpClient.CheckRedirect)
-				assert.Equal(t, nil, httpClient.CheckRedirect(req.httpReq, nil))
-				assert.Equal(t, nil, httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 1)))
+				assert.Nil(t, httpClient.CheckRedirect(req.httpReq, nil))
+				assert.Nil(t, httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 1)))
 				assert.Equal(t,
 					errors.New("stopped after 1 redirects"),
 					httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 2)),
@@ -2057,8 +2057,8 @@ func TestRequestRedirect(t *testing.T) {
 				// Should set CheckRedirect
 				httpClient, _ := req.config.Client.(*http.Client)
 				assert.NotNil(t, httpClient.CheckRedirect)
-				assert.Equal(t, nil, httpClient.CheckRedirect(req.httpReq, nil))
-				assert.Equal(t, nil, httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 1)))
+				assert.Nil(t, httpClient.CheckRedirect(req.httpReq, nil))
+				assert.Nil(t, httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 1)))
 				assert.Equal(t,
 					errors.New("stopped after 1 redirects"),
 					httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 2)),
@@ -2115,8 +2115,8 @@ func TestRequestRedirect(t *testing.T) {
 				// Should set CheckRedirect
 				httpClient, _ := req.config.Client.(*http.Client)
 				assert.NotNil(t, httpClient.CheckRedirect)
-				assert.Equal(t, nil, httpClient.CheckRedirect(req.httpReq, nil))
-				assert.Equal(t, nil, httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 1)))
+				assert.Nil(t, httpClient.CheckRedirect(req.httpReq, nil))
+				assert.Nil(t, httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 1)))
 				assert.Equal(t,
 					errors.New("stopped after 1 redirects"),
 					httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 2)),
