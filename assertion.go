@@ -1,7 +1,7 @@
 package httpexpect
 
 // AssertionType defines type of performed assertion.
-type AssertionType uint64
+type AssertionType uint
 
 //go:generate stringer -type=AssertionType
 const (
@@ -84,6 +84,22 @@ const (
 	AssertNotBelongs
 )
 
+// AssertionSeverity defines how assertion failure should be treated.
+type AssertionSeverity uint
+
+//go:generate stringer -type=AssertionSeverity
+const (
+	// This assertion failure should mark current test as failed.
+	// This severity is used for most assertions.
+	SeverityError AssertionSeverity = iota
+
+	// This assertion failure is informational only, it can be logged,
+	// but should not cause test failure.
+	// This severity is used for assertions issued inside predicate functions,
+	// e.g. in Array.Filter and Object.Filter.
+	SeverityInfo
+)
+
 // AssertionContext provides context where the assetion happened.
 type AssertionContext struct {
 	// Name of the running test
@@ -144,7 +160,10 @@ type AssertionFailure struct {
 	// Type of failed assertion
 	Type AssertionType
 
-	// Defines if failure should be reported as fatal
+	// Severity of failure
+	Severity AssertionSeverity
+
+	// Deprecated: use Severity
 	IsFatal bool
 
 	// List of error messages
@@ -187,8 +206,9 @@ type AssertionHandler interface {
 	Success(*AssertionContext)
 
 	// Invoked every time when an assertion failed.
-	// If Failure.IsFatal is false, may print failure to log or ignore it.
-	// If Failure.IsFatal is true, should report failure to testing suite.
+	// Handling depends on Failure.Severity field:
+	//  - for SeverityError, should report failure to testing suite
+	//  - for SeverityInfo, should log failure or ignore it
 	Failure(*AssertionContext, *AssertionFailure)
 }
 
@@ -229,7 +249,8 @@ func (h *DefaultAssertionHandler) Failure(
 		panic("DefaultAssertionHandler.Formatter is nil")
 	}
 
-	if failure.IsFatal {
+	switch failure.Severity {
+	case SeverityError:
 		if h.Reporter == nil {
 			panic("DefaultAssertionHandler.Reporter is nil")
 		}
@@ -237,7 +258,8 @@ func (h *DefaultAssertionHandler) Failure(
 		msg := h.Formatter.FormatFailure(ctx, failure)
 
 		h.Reporter.Errorf("%s", msg)
-	} else {
+
+	case SeverityInfo:
 		if h.Logger == nil {
 			return
 		}
