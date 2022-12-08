@@ -762,14 +762,15 @@ func (o *Object) ValueNotEqual(key string, value interface{}) *Object {
 // Example:
 //
 // object := newObject(chain, map[string]interface{})
-// for n, val := range object.Iter() {
-//	    val.Equal(object[n])
-//	}
+//
+//	for n, val := range object.Iter() {
+//		    val.Equal(object[n])
+//		}
 func (o *Object) Iter() map[string]Value {
 	o.chain.enter("Iter")
 	defer o.chain.leave()
-	
-	if o.chain.failed() { 
+
+	if o.chain.failed() {
 		return map[string]Value{}
 	}
 
