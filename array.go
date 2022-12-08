@@ -193,10 +193,13 @@ func (a *Array) Last() *Value {
 //	strings := []interface{}{"foo", "bar"}
 //	array := NewArray(t, strings)
 //
-//	for n, val := range array.Iter() {
-//	    val.String().Equal(strings[n])
+//	for index, value := range array.Iter() {
+//	    value.String().Equal(strings[index])
 //	}
 func (a *Array) Iter() []Value {
+	a.chain.enter("Iter()")
+	defer a.chain.leave()
+
 	if a.chain.failed() {
 		return []Value{}
 	}
@@ -204,7 +207,7 @@ func (a *Array) Iter() []Value {
 	ret := []Value{}
 	for n := range a.value {
 		valueChain := a.chain.clone()
-		valueChain.enter("Iter[%d]", n)
+		valueChain.replace("Iter[%d]", n)
 
 		ret = append(ret, *newValue(valueChain, a.value[n]))
 	}
