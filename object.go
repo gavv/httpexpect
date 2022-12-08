@@ -162,65 +162,7 @@ func (o *Object) Value(key string) *Value {
 	return newValue(o.chain, value)
 }
 
-// Filter accepts a function that returns a boolean. The function is ran
-// over the object items. If the function returns true, the item passes
-// the filter and is added to the new object of filtered items. If false,
-// the value is skipped (or in other words filtered out). After iterating
-// through all the items of the original object, the new filtered object
-// is returned.
-//
-// If there are any failed assertions in the filtering function, the
-// item is omitted without causing test failure.
-//
-// Example:
-//
-//	object := NewObject(t, map[string]interface{}{
-//		"foo": "bar",
-//		"baz": 6,
-//		"qux": "quux",
-//	})
-//	filteredObject := object.Filter(func(key string, value *httpexpect.Value) bool {
-//		value.String().NotEmpty()		//fails on 6
-//		return value.Raw() != "bar"		//fails on "bar"
-//	})
-//	filteredObject.Equal(map[string]interface{}{"qux":"quux"})	//succeeds
-func (o *Object) Filter(filter func(key string, value *Value) bool) *Object {
-	o.chain.enter("Filter()")
-	defer o.chain.leave()
-
-	if o.chain.failed() {
-		return newObject(o.chain, nil)
-	}
-
-	if filter == nil {
-		o.chain.fail(AssertionFailure{
-			Type: AssertUsage,
-			Errors: []error{
-				errors.New("unexpected nil function argument"),
-			},
-		})
-		return newObject(o.chain, nil)
-	}
-
-	filteredObject := make(map[string]interface{})
-
-	for key, element := range o.value {
-		valueChain := o.chain.clone()
-		valueChain.setFatal(false)
-		chainFailed := false
-		valueChain.setFailCallback(func() {
-			chainFailed = true
-		})
-		valueChain.replace("Filter[%q]", key)
-		if filter(key, newValue(valueChain, element)) && !chainFailed {
-			filteredObject[key] = element
-		}
-	}
-
-	return newObject(o.chain, filteredObject)
-}
-
-// Every runs the passed function for all the key value pairs in the object
+// Every runs the passed function for all the key value pairs in the object.
 //
 // If assertion inside function fails, the original Object is marked failed.
 //
@@ -271,6 +213,103 @@ func (o *Object) Every(fn func(key string, value *Value)) *Object {
 	}
 
 	return o
+}
+
+// Filter accepts a function that returns a boolean. The function is ran
+// over the object items. If the function returns true, the item passes
+// the filter and is added to the new object of filtered items. If false,
+// the value is skipped (or in other words filtered out). After iterating
+// through all the items of the original object, the new filtered object
+// is returned.
+//
+// If there are any failed assertions in the filtering function, the
+// item is omitted without causing test failure.
+//
+// Example:
+//
+//	object := NewObject(t, map[string]interface{}{
+//		"foo": "bar",
+//		"baz": 6,
+//		"qux": "quux",
+//	})
+//	filteredObject := object.Filter(func(key string, value *httpexpect.Value) bool {
+//		value.String().NotEmpty()		//fails on 6
+//		return value.Raw() != "bar"		//fails on "bar"
+//	})
+//	filteredObject.Equal(map[string]interface{}{"qux":"quux"})	//succeeds
+func (o *Object) Filter(fn func(key string, value *Value) bool) *Object {
+	o.chain.enter("Filter()")
+	defer o.chain.leave()
+
+	if o.chain.failed() {
+		return newObject(o.chain, nil)
+	}
+
+	if fn == nil {
+		o.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected nil function argument"),
+			},
+		})
+		return newObject(o.chain, nil)
+	}
+
+	filteredObject := make(map[string]interface{})
+
+	for key, element := range o.value {
+		valueChain := o.chain.clone()
+		valueChain.setFatal(false)
+		chainFailed := false
+		valueChain.setFailCallback(func() {
+			chainFailed = true
+		})
+		valueChain.replace("Filter[%q]", key)
+		if fn(key, newValue(valueChain, element)) && !chainFailed {
+			filteredObject[key] = element
+		}
+	}
+
+	return newObject(o.chain, filteredObject)
+}
+
+// Transform runs the passed function on all the Elements in the Object
+// and returns a new object without effecting original object.
+//
+// Example:
+//
+//	object := NewObject(t, []interface{}{"x": "foo", "y": "bar"})
+//	transformedObject := object.Transform(
+//		func(key string, value interface{}) interface{} {
+//			return strings.ToUpper(value.(string))
+//		})
+//	transformedObject.Equals([]interface{}{"x": "FOO", "y": "BAR"})
+func (o *Object) Transform(fn func(key string, value interface{}) interface{}) *Object {
+	o.chain.enter("Transform()")
+	defer o.chain.leave()
+
+	if o.chain.failed() {
+		return newObject(o.chain, nil)
+	}
+
+	if fn == nil {
+		o.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected nil function argument"),
+			},
+		})
+		return newObject(o.chain, nil)
+	}
+
+	object := map[string]interface{}{}
+
+	for key, val := range o.value {
+		transformedValue := fn(key, val)
+		object[key] = transformedValue
+	}
+
+	return newObject(o.chain, object)
 }
 
 // Empty succeeds if object is empty.
@@ -767,47 +806,4 @@ func checkSubset(outer, inner map[string]interface{}) bool {
 		}
 	}
 	return true
-}
-
-// Transform runs the passed function on all the Elements in the Object
-// and returns a new object without effecting original object.
-//
-// Example:
-//
-//	object := NewObject(t, []interface{}{"foo": 12, "bar": 13})
-//	transformedObject := object.Transform(
-//		func(key string, value interface{}) interface{} {
-//		  if val, ok := value.(float64); ok {
-//		    return int(val) * int(val)
-//		  }
-//	    return nil
-//		},
-//	)
-//	transformedObject.Equals([]interface{}{"foo": 144, "bar": 169 })
-func (o *Object) Transform(fn func(key string, value interface{}) interface{}) *Object {
-	o.chain.enter("Transform()")
-	defer o.chain.leave()
-
-	if o.chain.failed() {
-		return newObject(o.chain, nil)
-	}
-
-	if fn == nil {
-		o.chain.fail(AssertionFailure{
-			Type: AssertUsage,
-			Errors: []error{
-				errors.New("unexpected nil function argument"),
-			},
-		})
-		return newObject(o.chain, nil)
-	}
-
-	object := map[string]interface{}{}
-
-	for key, val := range o.value {
-		transformedValue := fn(key, val)
-		object[key] = transformedValue
-	}
-
-	return newObject(o.chain, object)
 }
