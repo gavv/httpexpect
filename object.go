@@ -768,3 +768,46 @@ func checkSubset(outer, inner map[string]interface{}) bool {
 	}
 	return true
 }
+
+// Transform runs the passed function on all the Elements in the Object
+// and returns a new object without effecting original object.
+//
+// Example:
+//
+//	object := NewObject(t, []interface{}{"foo": 12, "bar": 13})
+//	transformedObject := object.Transform(
+//		func(key string, value interface{}) interface{} {
+//		  if val, ok := value.(float64); ok {
+//		    return int(val) * int(val)
+//		  }
+//	    return nil
+//		},
+//	)
+//	transformedObject.Equals([]interface{}{"foo": 144, "bar": 169 })
+func (o *Object) Transform(fn func(key string, value interface{}) interface{}) *Object {
+	o.chain.enter("Transform()")
+	defer o.chain.leave()
+
+	if o.chain.failed() {
+		return newObject(o.chain, nil)
+	}
+
+	if fn == nil {
+		o.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected nil function argument"),
+			},
+		})
+		return newObject(o.chain, nil)
+	}
+
+	object := map[string]interface{}{}
+
+	for key, val := range o.value {
+		transformedValue := fn(key, val)
+		object[key] = transformedValue
+	}
+
+	return newObject(o.chain, object)
+}

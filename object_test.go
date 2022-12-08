@@ -32,6 +32,9 @@ func TestObjectFailed(t *testing.T) {
 		value.Every(func(_ string, value *Value) {
 			value.String().NotEmpty()
 		})
+		value.Transform(func(key string, value interface{}) interface{} {
+			return nil
+		})
 		value.Filter(func(_ string, value *Value) bool {
 			value.String().NotEmpty()
 			return true
@@ -831,17 +834,92 @@ func TestObjectEvery(t *testing.T) {
 	})
 }
 
+func TestObjectTransform(t *testing.T) {
+	t.Run("Add Hello", func(ts *testing.T) {
+		reporter := newMockReporter(ts)
+		object := NewObject(reporter, map[string]interface{}{
+			"foo": "123",
+			"bar": "456",
+			"baz": "b",
+		})
+		newObject := object.Transform(func(_ string, value interface{}) interface{} {
+			if v, ok := value.(string); ok {
+				return "Hello " + v
+			}
+			return nil
+		})
+		assert.Equal(t,
+			map[string]interface{}{"foo": "Hello 123", "bar": "Hello 456", "baz": "Hello b"},
+			newObject.value,
+		)
+	})
+
+	t.Run("Chain fail on nil function value", func(ts *testing.T) {
+		reporter := newMockReporter(ts)
+		object := NewObject(reporter, map[string]interface{}{
+			"foo": "123",
+			"bar": "456",
+			"baz": "b",
+		})
+		newObject := object.Transform(nil)
+		newObject.chain.assertFailed(reporter)
+	})
+
+	t.Run("Empty object", func(ts *testing.T) {
+		reporter := newMockReporter(ts)
+		object := NewObject(reporter, map[string]interface{}{
+			"foo": "123",
+			"bar": "456",
+			"baz": "b",
+		})
+		newObject := object.Transform(func(_ string, value interface{}) interface{} {
+			if v, ok := value.(string); ok {
+				return "Hello " + v
+			}
+			return nil
+		})
+		newObject.chain.assertOK(ts)
+	})
+
+	t.Run("Test correct index", func(ts *testing.T) {
+		reporter := newMockReporter(ts)
+		object := NewObject(reporter, map[string]interface{}{
+			"foo": "123",
+			"bar": "456",
+			"baz": "baz",
+		})
+		newObject := object.Transform(func(key string, value interface{}) interface{} {
+			if v, ok := value.(string); ok {
+				switch v {
+				case "123":
+					assert.Equal(ts, "foo", key)
+				case "456":
+					assert.Equal(ts, "bar", key)
+				case "baz":
+					assert.Equal(ts, "baz", key)
+				}
+			}
+			return value
+		})
+		newObject.chain.assertOK(ts)
+	})
+}
+
 func TestObjectFilter(t *testing.T) {
 	t.Run("Filter an object of elements of the same type and validate", func(ts *testing.T) {
 		reporter := newMockReporter(t)
-		object := NewObject(reporter, map[string]interface{}{"foo": "bar",
-			"baz": "qux", "quux": "corge"})
+		object := NewObject(reporter, map[string]interface{}{
+			"foo": "bar",
+			"baz": "qux", "quux": "corge",
+		})
 		filteredObject := object.Filter(func(key string, value *Value) bool {
 			return value.Raw() != "qux" && key != "quux"
 		})
 		assert.Equal(t, map[string]interface{}{"foo": "bar"}, filteredObject.Raw())
-		assert.Equal(t, object.Raw(), map[string]interface{}{"foo": "bar",
-			"baz": "qux", "quux": "corge"})
+		assert.Equal(t, object.Raw(), map[string]interface{}{
+			"foo": "bar",
+			"baz": "qux", "quux": "corge",
+		})
 
 		filteredObject.chain.assertOK(t)
 		object.chain.assertOK(t)
@@ -849,15 +927,19 @@ func TestObjectFilter(t *testing.T) {
 
 	t.Run("Filter throws when an assertion within predicate fails", func(ts *testing.T) {
 		reporter := newMockReporter(t)
-		object := NewObject(reporter, map[string]interface{}{"foo": "bar", "baz": 6.0,
-			"qux": "quux"})
+		object := NewObject(reporter, map[string]interface{}{
+			"foo": "bar", "baz": 6.0,
+			"qux": "quux",
+		})
 		filteredObject := object.Filter(func(key string, value *Value) bool {
 			stringifiedValue := value.String().NotEmpty().Raw()
 			return stringifiedValue != "bar"
 		})
 		assert.Equal(t, map[string]interface{}{"qux": "quux"}, filteredObject.Raw())
-		assert.Equal(t, object.Raw(), map[string]interface{}{"foo": "bar", "baz": 6.0,
-			"qux": "quux"})
+		assert.Equal(t, object.Raw(), map[string]interface{}{
+			"foo": "bar", "baz": 6.0,
+			"qux": "quux",
+		})
 
 		filteredObject.chain.assertOK(t)
 		object.chain.assertOK(t)
@@ -865,14 +947,18 @@ func TestObjectFilter(t *testing.T) {
 
 	t.Run("Filter an object of different types and validate", func(ts *testing.T) {
 		reporter := newMockReporter(t)
-		object := NewObject(reporter, map[string]interface{}{"foo": "bar",
-			"baz": 3.0, "qux": false})
+		object := NewObject(reporter, map[string]interface{}{
+			"foo": "bar",
+			"baz": 3.0, "qux": false,
+		})
 		filteredObject := object.Filter(func(key string, value *Value) bool {
 			return value.Raw() != "bar" && value.Raw() != 3.0
 		})
 		assert.Equal(t, map[string]interface{}{"qux": false}, filteredObject.Raw())
-		assert.Equal(t, object.Raw(), map[string]interface{}{"foo": "bar",
-			"baz": 3.0, "qux": false})
+		assert.Equal(t, object.Raw(), map[string]interface{}{
+			"foo": "bar",
+			"baz": 3.0, "qux": false,
+		})
 
 		filteredObject.chain.assertOK(t)
 		object.chain.assertOK(t)
@@ -893,17 +979,20 @@ func TestObjectFilter(t *testing.T) {
 	t.Run("Filter should return an empty non-nil object if no items pass",
 		func(ts *testing.T) {
 			reporter := newMockReporter(t)
-			object := NewObject(reporter, map[string]interface{}{"foo": "bar",
-				"baz": "qux", "quux": "corge"})
+			object := NewObject(reporter, map[string]interface{}{
+				"foo": "bar",
+				"baz": "qux", "quux": "corge",
+			})
 			filteredObject := object.Filter(func(key string, value *Value) bool {
 				return false
 			})
 			assert.Equal(t, map[string]interface{}{}, filteredObject.Raw())
-			assert.Equal(t, object.Raw(), map[string]interface{}{"foo": "bar",
-				"baz": "qux", "quux": "corge"})
+			assert.Equal(t, object.Raw(), map[string]interface{}{
+				"foo": "bar",
+				"baz": "qux", "quux": "corge",
+			})
 
 			filteredObject.chain.assertOK(t)
 			object.chain.assertOK(t)
 		})
-
 }
