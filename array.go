@@ -967,3 +967,46 @@ func countElement(array []interface{}, element interface{}) int {
 	}
 	return count
 }
+
+// Transform runs the passed function on all the Elements in the array
+// and returns a new array without effeecting original array.
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{"foo", "bar"})
+//	transformedArray := array.Transform(
+//		func(index int, value interface{}) interface{} {
+//		  if val, ok := value.(float64); ok {
+//		    return int(val) * int(val)
+//		  }
+//	    return nil
+//		},
+//	)
+//	transformedArray.Equals([]interface{}{....})
+func (a *Array) Transform(fn func(index int, value interface{}) interface{}) *Array {
+	a.chain.enter("Transform()")
+	defer a.chain.leave()
+
+	if a.chain.failed() {
+		return newArray(a.chain, nil)
+	}
+
+	if fn == nil {
+		a.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected nil function argument"),
+			},
+		})
+		return newArray(a.chain, nil)
+	}
+
+	array := []interface{}{}
+
+	for index, val := range a.value {
+		transformedValue := fn(index, val)
+		array = append(array, transformedValue)
+	}
+
+	return newArray(a.chain, array)
+}
