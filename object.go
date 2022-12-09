@@ -757,17 +757,17 @@ func (o *Object) ValueNotEqual(key string, value interface{}) *Object {
 	return o.NotValueEqual(key, value)
 }
 
-// Iter returns a new map of Value
+// Iter returns a new map of Values attached to object elements.
 //
 // Example:
 //
-// object := newObject(chain, map[string]interface{})
+// object := NewObject(t, map[string]interface{}{})
 //
-//	for n, val := range object.Iter() {
-//		    val.Equal(object[n])
-//		}
+// for key, value := range object.Iter() {
+//	    value.Equal(object[key])
+// }
 func (o *Object) Iter() map[string]Value {
-	o.chain.enter("Iter")
+	o.chain.enter("Iter()")
 	defer o.chain.leave()
 
 	if o.chain.failed() {
@@ -778,7 +778,7 @@ func (o *Object) Iter() map[string]Value {
 
 	for k, v := range o.value {
 		valueChain := o.chain.clone()
-		valueChain.enter("Iter[%d]", v)
+		valueChain.replace("Iter[%q]", k)
 
 		obj[k] = *newValue(valueChain, v)
 	}
