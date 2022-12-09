@@ -133,6 +133,7 @@ func TestObjectGetters(t *testing.T) {
 	value.chain.reset()
 
 	it := value.Iter()
+	assert.Equal(t, 3, len(it))
 	assert.Equal(t, it["foo"].value, value.Value("foo").Raw())
 	assert.Equal(t, it["bar"].value, value.Value("bar").Raw())
 	value.chain.assertOK(t)
