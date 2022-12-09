@@ -752,8 +752,8 @@ func (s *String) MatchAll(re string) []Match {
 //
 // Example:
 //
-// str := NewString(t, "Hello")
-// str.IsASCII()
+//	str := NewString(t, "Hello")
+//	str.IsASCII()
 func (s *String) IsASCII() *String {
 	s.chain.enter("IsASCII()")
 	defer s.chain.leave()
@@ -772,7 +772,7 @@ func (s *String) IsASCII() *String {
 
 	if !isASCII {
 		s.chain.fail(AssertionFailure{
-			Type:   AssertContainsSubset,
+			Type:   AssertValid,
 			Actual: &AssertionValue{s.value},
 			Errors: []error{
 				errors.New("expected: all string characters are ascii"),
@@ -783,34 +783,34 @@ func (s *String) IsASCII() *String {
 	return s
 }
 
-// IsNotASCII succeeds if all string characters are not ASCII
+// NotIsASCII succeeds if at least one string character is not ASCII
 //
 // Example:
 //
-// str := NewString(t, "こんにちは")
-// str.IsNotASCII()
-func (s *String) IsNotASCII() *String {
-	s.chain.enter("IsNotASCII()")
+//	str := NewString(t, "こんにちは")
+//	str.NotIsASCII()
+func (s *String) NotIsASCII() *String {
+	s.chain.enter("NotIsASCII()")
 	defer s.chain.leave()
 
 	if s.chain.failed() {
 		return s
 	}
 
-	isASCII := false
+	isASCII := true
 	for _, c := range s.value {
-		if c <= unicode.MaxASCII {
-			isASCII = true
+		if c > unicode.MaxASCII {
+			isASCII = false
 			break
 		}
 	}
 
 	if isASCII {
 		s.chain.fail(AssertionFailure{
-			Type:   AssertContainsSubset,
+			Type:   AssertValid,
 			Actual: &AssertionValue{s.value},
 			Errors: []error{
-				errors.New("expected: all string characters are not ascii"),
+				errors.New("expected: at least one string character is not ascii"),
 			},
 		})
 	}
