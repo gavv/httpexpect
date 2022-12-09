@@ -764,7 +764,7 @@ func (o *Object) ValueNotEqual(key string, value interface{}) *Object {
 // object := NewObject(t, map[string]interface{}{})
 //
 // for key, value := range object.Iter() {
-//	    value.Equal(object[key])
+//	    value.Equal(object.value[key])
 // }
 func (o *Object) Iter() map[string]Value {
 	o.chain.enter("Iter()")
