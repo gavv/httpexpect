@@ -1,6 +1,7 @@
 package httpexpect
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -34,6 +35,94 @@ func TestChainClone(t *testing.T) {
 
 	assert.True(t, chain1.failed())
 	assert.True(t, chain2.failed())
+}
+
+func TestChainEnv(t *testing.T) {
+	t.Run("newChainWithConfig", func(t *testing.T) {
+		env1 := NewEnvironment(newMockReporter(t))
+		chain1 := newChainWithConfig("root", Config{
+			Environment: env1,
+		})
+		assert.True(t, env1 == chain1.getEnv())
+
+		chain2 := newChainWithConfig("root", Config{
+			Environment: nil,
+		})
+		assert.NotNil(t, chain2.getEnv())
+	})
+
+	t.Run("newChainWithDefaults", func(t *testing.T) {
+		chain := newChainWithDefaults("root", newMockReporter(t))
+		assert.NotNil(t, chain.getEnv())
+	})
+}
+
+func TestChainRoot(t *testing.T) {
+	t.Run("newChainWithConfig", func(t *testing.T) {
+		chain1 := newChainWithConfig("root", Config{
+			AssertionHandler: &mockAssertionHandler{},
+		})
+		assert.Equal(t, []string{"root"}, chain1.context.Path)
+
+		chain2 := newChainWithConfig("", Config{
+			AssertionHandler: &mockAssertionHandler{},
+		})
+		assert.Equal(t, []string{}, chain2.context.Path)
+	})
+
+	t.Run("newChainWithDefaults", func(t *testing.T) {
+		chain1 := newChainWithDefaults("root", newMockReporter(t))
+		assert.Equal(t, []string{"root"}, chain1.context.Path)
+
+		chain2 := newChainWithDefaults("", newMockReporter(t))
+		assert.Equal(t, []string{}, chain2.context.Path)
+	})
+}
+
+func TestChainPath(t *testing.T) {
+	path := func(c *chain) string {
+		return strings.Join(c.context.Path, ".")
+	}
+
+	chain := newChainWithDefaults("root", newMockReporter(t))
+
+	assert.Equal(t, "root", path(chain))
+
+	chain.enter("foo")
+	assert.Equal(t, "root.foo", path(chain))
+
+	chain.enter("bar")
+	assert.Equal(t, "root.foo.bar", path(chain))
+
+	chainClone := chain.clone()
+	chainClone.enter("baz")
+
+	assert.Equal(t, "root.foo.bar", path(chain))
+	assert.Equal(t, "root.foo.bar.baz", path(chainClone))
+
+	chain.replace("qux")
+	chainClone.replace("wee")
+
+	assert.Equal(t, "root.foo.qux", path(chain))
+	assert.Equal(t, "root.foo.bar.wee", path(chainClone))
+
+	chain.leave()
+	chainClone.leave()
+
+	assert.Equal(t, "root.foo", path(chain))
+	assert.Equal(t, "root.foo.bar", path(chainClone))
+
+	chain.leave()
+	chainClone.leave()
+
+	assert.Equal(t, "root", path(chain))
+	assert.Equal(t, "root.foo", path(chainClone))
+
+	chain.leave()
+	chainClone.leave()
+
+	assert.Equal(t, "", path(chain))
+	assert.Equal(t, "root", path(chainClone))
 }
 
 func TestChainReport(t *testing.T) {
@@ -89,26 +178,33 @@ func TestChainHandler(t *testing.T) {
 	assert.Nil(t, handler.failure)
 }
 
-func TestChainFatal(t *testing.T) {
+func TestChainSeverity(t *testing.T) {
 	handler := &mockAssertionHandler{}
 
 	chain := newChainWithConfig("test", Config{
 		AssertionHandler: handler,
 	})
 
-	chain.setFatal(true)
 	chain.fail(AssertionFailure{})
 
 	assert.NotNil(t, handler.failure)
-	assert.True(t, handler.failure.IsFatal)
+	assert.Equal(t, SeverityError, handler.failure.Severity)
 
 	chain.reset()
 
-	chain.setFatal(false)
+	chain.setSeverity(SeverityError)
 	chain.fail(AssertionFailure{})
 
 	assert.NotNil(t, handler.failure)
-	assert.False(t, handler.failure.IsFatal)
+	assert.Equal(t, SeverityError, handler.failure.Severity)
+
+	chain.reset()
+
+	chain.setSeverity(SeverityInfo)
+	chain.fail(AssertionFailure{})
+
+	assert.NotNil(t, handler.failure)
+	assert.Equal(t, SeverityInfo, handler.failure.Severity)
 }
 
 func TestChainCallback(t *testing.T) {

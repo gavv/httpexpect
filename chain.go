@@ -5,19 +5,19 @@ import (
 )
 
 type chain struct {
-	context AssertionContext
-	handler AssertionHandler
-	isFatal bool
-	failCb  func()
-	failbit bool
+	context  AssertionContext
+	handler  AssertionHandler
+	severity AssertionSeverity
+	failCb   func()
+	failBit  bool
 }
 
 func newChainWithConfig(name string, config Config) *chain {
 	c := &chain{
-		context: AssertionContext{},
-		handler: config.AssertionHandler,
-		isFatal: true,
-		failbit: false,
+		context:  AssertionContext{},
+		handler:  config.AssertionHandler,
+		severity: SeverityError,
+		failBit:  false,
 	}
 
 	c.context.TestName = config.TestName
@@ -44,8 +44,8 @@ func newChainWithDefaults(name string, reporter Reporter) *chain {
 			Formatter: &DefaultFormatter{},
 			Reporter:  reporter,
 		},
-		isFatal: true,
-		failbit: false,
+		severity: SeverityError,
+		failBit:  false,
 	}
 
 	if name != "" {
@@ -63,12 +63,12 @@ func (c *chain) getEnv() *Environment {
 	return c.context.Environment
 }
 
-func (c *chain) setFatal(isFatal bool) {
-	c.isFatal = isFatal
-}
-
 func (c *chain) setFailCallback(failCb func()) {
 	c.failCb = failCb
+}
+
+func (c *chain) setSeverity(severity AssertionSeverity) {
+	c.severity = severity
 }
 
 func (c *chain) setRequestName(name string) {
@@ -97,6 +97,10 @@ func (c *chain) enter(name string, args ...interface{}) {
 }
 
 func (c *chain) replace(name string, args ...interface{}) {
+	if len(c.context.Path) == 0 {
+		panic("unexpected replace")
+	}
+
 	c.context.Path[len(c.context.Path)-1] = fmt.Sprintf(name, args...)
 }
 
@@ -105,7 +109,7 @@ func (c *chain) leave() {
 		panic("unpaired enter/leave")
 	}
 
-	if !c.failbit {
+	if !c.failBit {
 		c.handler.Success(&c.context)
 	}
 
@@ -113,12 +117,13 @@ func (c *chain) leave() {
 }
 
 func (c *chain) fail(failure AssertionFailure) {
-	if c.failbit {
+	if c.failBit {
 		return
 	}
-	c.failbit = true
+	c.failBit = true
 
-	if c.isFatal {
+	failure.Severity = c.severity
+	if c.severity == SeverityError {
 		failure.IsFatal = true
 	}
 
@@ -130,25 +135,25 @@ func (c *chain) fail(failure AssertionFailure) {
 }
 
 func (c *chain) setFailed() {
-	c.failbit = true
+	c.failBit = true
 }
 
 func (c *chain) failed() bool {
-	return c.failbit
+	return c.failBit
 }
 
 func (c *chain) reset() {
-	c.failbit = false
+	c.failBit = false
 }
 
 func (c *chain) assertOK(r Reporter) {
-	if c.failbit {
+	if c.failBit {
 		r.Errorf("failbit is true, but should be false")
 	}
 }
 
 func (c *chain) assertFailed(r Reporter) {
-	if !c.failbit {
+	if !c.failBit {
 		r.Errorf("failbit is false, but should be true")
 	}
 }
