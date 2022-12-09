@@ -748,7 +748,7 @@ func (s *String) MatchAll(re string) []Match {
 	return ret
 }
 
-// IsASCII succeeds if all string characters are ASCII
+// IsASCII succeeds if all string characters belongs to ASCII.
 //
 // Example:
 //
@@ -783,7 +783,7 @@ func (s *String) IsASCII() *String {
 	return s
 }
 
-// NotIsASCII succeeds if at least one string character is not ASCII
+// NotIsASCII succeeds if at least one string character does not belong to ASCII.
 //
 // Example:
 //
