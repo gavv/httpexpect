@@ -162,6 +162,36 @@ func (o *Object) Value(key string) *Value {
 	return newValue(o.chain, value)
 }
 
+// Iter returns a new map of Values attached to object elements.
+//
+// Example:
+//
+//	numbers := map[string]interface{}{"foo": 123, "bar": 456}
+//	object := NewObject(t, numbers)
+//
+//	for key, value := range object.Iter() {
+//	    value.Number().Equal(numbers[key])
+//	}
+func (o *Object) Iter() map[string]Value {
+	o.chain.enter("Iter()")
+	defer o.chain.leave()
+
+	if o.chain.failed() {
+		return map[string]Value{}
+	}
+
+	obj := make(map[string]Value)
+
+	for k, v := range o.value {
+		valueChain := o.chain.clone()
+		valueChain.replace("Iter[%q]", k)
+
+		obj[k] = *newValue(valueChain, v)
+	}
+
+	return obj
+}
+
 // Every runs the passed function for all the key value pairs in the object.
 //
 // If assertion inside function fails, the original Object is marked failed.
@@ -755,35 +785,6 @@ func (o *Object) NotValueEqual(key string, value interface{}) *Object {
 // Deprecated: use NotValueEqual instead.
 func (o *Object) ValueNotEqual(key string, value interface{}) *Object {
 	return o.NotValueEqual(key, value)
-}
-
-// Iter returns a new map of Values attached to object elements.
-//
-// Example:
-//
-// object := NewObject(t, map[string]interface{}{})
-//
-// for key, value := range object.Iter() {
-//	    value.Equal(object.value[key])
-// }
-func (o *Object) Iter() map[string]Value {
-	o.chain.enter("Iter()")
-	defer o.chain.leave()
-
-	if o.chain.failed() {
-		return map[string]Value{}
-	}
-
-	obj := make(map[string]Value)
-
-	for k, v := range o.value {
-		valueChain := o.chain.clone()
-		valueChain.replace("Iter[%q]", k)
-
-		obj[k] = *newValue(valueChain, v)
-	}
-
-	return obj
 }
 
 func (o *Object) containsKey(arg string) bool {
