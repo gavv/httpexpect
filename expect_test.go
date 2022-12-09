@@ -76,9 +76,9 @@ func TestExpectBuilders(t *testing.T) {
 	assert.Equal(t, 2, len(reqs1))
 	assert.Equal(t, 1, len(reqs2))
 
-	assert.Equal(t, r1, reqs1[0])
-	assert.Equal(t, r2, reqs1[1])
-	assert.Equal(t, r1, reqs2[0])
+	assert.Same(t, r1, reqs1[0])
+	assert.Same(t, r2, reqs1[1])
+	assert.Same(t, r2, reqs2[0])
 }
 
 func TestExpectBuildersCopying(t *testing.T) {
@@ -175,9 +175,9 @@ func TestExpectMatchers(t *testing.T) {
 	assert.Equal(t, 2, len(resps1))
 	assert.Equal(t, 1, len(resps2))
 
-	assert.Equal(t, resp1, resps1[0])
-	assert.Equal(t, resp2, resps1[1])
-	assert.Equal(t, resp2, resps2[0])
+	assert.Same(t, resp1, resps1[0])
+	assert.Same(t, resp2, resps1[1])
+	assert.Same(t, resp2, resps2[0])
 }
 
 func TestExpectMatchersCopying(t *testing.T) {
