@@ -2238,12 +2238,21 @@ func TestEncodeWebsocketRequest(t *testing.T) {
 		Client:         client,
 		Reporter:       reporter,
 	}
+	
+	t.Run("Http request as https", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.httpReq.URL.Scheme = "https"
+		actual := req.encodeWebsocketRequest()
+		assert.Equal(t, "wss", req.httpReq.URL.Scheme)
+		assert.True(t, actual)
+	})
 
-	req := NewRequest(config, "METHOD", "/")
-	req.httpReq.URL.Scheme = "https"
-	actual := req.encodeWebsocketRequest()
-	assert.Equal(t, "wss", req.httpReq.URL.Scheme)
-	assert.True(t, actual)
+	t.Run("Req chain failure", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.chain.setFailed()
+		actual := req.encodeWebsocketRequest()
+		assert.False(t, actual)
+	})
 }
 
 func TestWithRetryDelay(t *testing.T) {
