@@ -2238,7 +2238,7 @@ func TestEncodeWebsocketRequest(t *testing.T) {
 		Client:         client,
 		Reporter:       reporter,
 	}
-	
+
 	t.Run("Http request as https", func(t *testing.T) {
 		req := NewRequest(config, "METHOD", "/")
 		req.httpReq.URL.Scheme = "https"
@@ -3067,7 +3067,6 @@ func TestRequestRetry(t *testing.T) {
 				totalSleepTime += d
 				return time.After(0)
 			}
-
 			req.chain.assertNotFailed(t)
 
 			resp := req.Expect().
@@ -3077,41 +3076,5 @@ func TestRequestRetry(t *testing.T) {
 			// Should retry with delay
 			assert.Equal(t, int64(100+200+300), totalSleepTime.Milliseconds())
 		})
-	})
-
-	t.Run("cancelled retries", func(t *testing.T) {
-		callCount := 0
-
-		client := newHTTPErrClient(func(req *http.Request) {
-			callCount++
-
-			assert.Error(t, req.Context().Err(), context.Canceled.Error())
-
-			b, err := ioutil.ReadAll(req.Body)
-			assert.NoError(t, err)
-			assert.Equal(t, "test body", string(b))
-		})
-
-		config := Config{
-			Client:   client,
-			Reporter: reporter,
-		}
-
-		ctx, cancel := context.WithCancel(context.Background())
-		cancel() // Cancel immediately to trigger error
-
-		req := NewRequest(config, http.MethodPost, "/url").
-			WithText("test body").
-			WithRetryPolicy(RetryAllErrors).
-			WithMaxRetries(1).
-			WithContext(ctx).
-			WithRetryDelay(1*time.Minute, 5*time.Minute)
-		req.chain.assertNotFailed(t)
-
-		resp := req.Expect()
-		resp.chain.assertFailed(t)
-
-		// Should not retry
-		assert.Equal(t, 1, callCount)
 	})
 }
