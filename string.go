@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode"
 )
 
 // String provides methods to inspect attached string value
@@ -359,6 +360,234 @@ func (s *String) NotContainsFold(value string) *String {
 	return s
 }
 
+// HasPrefix succeeds if string has given Go string as prefix
+//
+// Example:
+//
+//	str := NewString(t, "Hello World")
+//	str.HasPrefix("Hello")
+func (s *String) HasPrefix(value string) *String {
+	s.chain.enter("HasPrefix()")
+	defer s.chain.leave()
+
+	if s.chain.failed() {
+		return s
+	}
+
+	if !strings.HasPrefix(s.value, value) {
+		s.chain.fail(AssertionFailure{
+			Type:     AssertContainsSubset,
+			Actual:   &AssertionValue{s.value},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				errors.New("expected: string has prefix"),
+			},
+		})
+	}
+
+	return s
+}
+
+// NotHasPrefix succeeds if string doesn't have given Go string as prefix
+//
+// Example:
+//
+//	str := NewString(t, "Hello World")
+//	str.NotHasPrefix("Bye")
+func (s *String) NotHasPrefix(value string) *String {
+	s.chain.enter("NotHasPrefix()")
+	defer s.chain.leave()
+
+	if s.chain.failed() {
+		return s
+	}
+
+	if strings.HasPrefix(s.value, value) {
+		s.chain.fail(AssertionFailure{
+			Type:     AssertNotContainsSubset,
+			Actual:   &AssertionValue{s.value},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				errors.New("expected: string doesn't have prefix"),
+			},
+		})
+	}
+
+	return s
+}
+
+// HasSuffix succeeds if string has given Go string as suffix
+//
+// Example:
+//
+//	str := NewString(t, "Hello World")
+//	str.HasSuffix("World")
+func (s *String) HasSuffix(value string) *String {
+	s.chain.enter("HasSuffix()")
+	defer s.chain.leave()
+
+	if s.chain.failed() {
+		return s
+	}
+
+	if !strings.HasSuffix(s.value, value) {
+		s.chain.fail(AssertionFailure{
+			Type:     AssertContainsSubset,
+			Actual:   &AssertionValue{s.value},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				errors.New("expected: string has suffix"),
+			},
+		})
+	}
+
+	return s
+}
+
+// NotHasSuffix succeeds if string doesn't have given Go string as suffix
+//
+// Example:
+//
+//	str := NewString(t, "Hello World")
+//	str.NotHasSuffix("Hello")
+func (s *String) NotHasSuffix(value string) *String {
+	s.chain.enter("NotHasSuffix()")
+	defer s.chain.leave()
+
+	if s.chain.failed() {
+		return s
+	}
+
+	if strings.HasSuffix(s.value, value) {
+		s.chain.fail(AssertionFailure{
+			Type:     AssertNotContainsSubset,
+			Actual:   &AssertionValue{s.value},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				errors.New("expected: string doesn't have suffix"),
+			},
+		})
+	}
+
+	return s
+}
+
+// HasPrefixFold succeeds if string has given Go string as prefix
+// after applying Unicode case-folding (so it's a case-insensitive match).
+//
+// Example:
+//
+//	str := NewString(t, "Hello World")
+//	str.HasPrefixFold("hello")
+func (s *String) HasPrefixFold(value string) *String {
+	s.chain.enter("HasPrefixFold()")
+	defer s.chain.leave()
+
+	if s.chain.failed() {
+		return s
+	}
+
+	if !strings.HasPrefix(strings.ToLower(s.value), strings.ToLower(value)) {
+		s.chain.fail(AssertionFailure{
+			Type:     AssertContainsSubset,
+			Actual:   &AssertionValue{s.value},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				errors.New("expected: string has prefix (if folded)"),
+			},
+		})
+	}
+
+	return s
+}
+
+// NotHasPrefixFold succeeds if string doesn't have given Go string as prefix
+// after applying Unicode case-folding (so it's a case-insensitive match).
+//
+// Example:
+//
+//	str := NewString(t, "Hello World")
+//	str.NotHasPrefixFold("Bye")
+func (s *String) NotHasPrefixFold(value string) *String {
+	s.chain.enter("NotHasPrefixFold()")
+	defer s.chain.leave()
+
+	if s.chain.failed() {
+		return s
+	}
+
+	if strings.HasPrefix(strings.ToLower(s.value), strings.ToLower(value)) {
+		s.chain.fail(AssertionFailure{
+			Type:     AssertNotContainsSubset,
+			Actual:   &AssertionValue{s.value},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				errors.New("expected: string doesn't have prefix (if folded)"),
+			},
+		})
+	}
+
+	return s
+}
+
+// HasSuffixFold succeeds if string has given Go string as suffix
+// after applying Unicode case-folding (so it's a case-insensitive match).
+//
+// Example:
+//
+//	str := NewString(t, "Hello World")
+//	str.HasSuffixFold("world")
+func (s *String) HasSuffixFold(value string) *String {
+	s.chain.enter("HasSuffixFold()")
+	defer s.chain.leave()
+
+	if s.chain.failed() {
+		return s
+	}
+
+	if !strings.HasSuffix(strings.ToLower(s.value), strings.ToLower(value)) {
+		s.chain.fail(AssertionFailure{
+			Type:     AssertContainsSubset,
+			Actual:   &AssertionValue{s.value},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				errors.New("expected: string has suffix (if folded)"),
+			},
+		})
+	}
+
+	return s
+}
+
+// NotHasSuffixFold succeeds if string doesn't have given Go string as suffix
+// after applying Unicode case-folding (so it's a case-insensitive match).
+//
+// Example:
+//
+//	str := NewString(t, "Hello World")
+//	str.NotHasSuffixFold("Bye")
+func (s *String) NotHasSuffixFold(value string) *String {
+	s.chain.enter("NotHasSuffix()")
+	defer s.chain.leave()
+
+	if s.chain.failed() {
+		return s
+	}
+
+	if strings.HasSuffix(strings.ToLower(s.value), strings.ToLower(value)) {
+		s.chain.fail(AssertionFailure{
+			Type:     AssertNotContainsSubset,
+			Actual:   &AssertionValue{s.value},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				errors.New("expected: string doesn't have suffix (if folded)"),
+			},
+		})
+	}
+
+	return s
+}
+
 // Match matches the string with given regexp and returns a new Match instance
 // with found submatches.
 //
@@ -519,6 +748,76 @@ func (s *String) MatchAll(re string) []Match {
 	return ret
 }
 
+// IsASCII succeeds if all string characters belongs to ASCII.
+//
+// Example:
+//
+//	str := NewString(t, "Hello")
+//	str.IsASCII()
+func (s *String) IsASCII() *String {
+	s.chain.enter("IsASCII()")
+	defer s.chain.leave()
+
+	if s.chain.failed() {
+		return s
+	}
+
+	isASCII := true
+	for _, c := range s.value {
+		if c > unicode.MaxASCII {
+			isASCII = false
+			break
+		}
+	}
+
+	if !isASCII {
+		s.chain.fail(AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{s.value},
+			Errors: []error{
+				errors.New("expected: all string characters are ascii"),
+			},
+		})
+	}
+
+	return s
+}
+
+// NotIsASCII succeeds if at least one string character does not belong to ASCII.
+//
+// Example:
+//
+//	str := NewString(t, "こんにちは")
+//	str.NotIsASCII()
+func (s *String) NotIsASCII() *String {
+	s.chain.enter("NotIsASCII()")
+	defer s.chain.leave()
+
+	if s.chain.failed() {
+		return s
+	}
+
+	isASCII := true
+	for _, c := range s.value {
+		if c > unicode.MaxASCII {
+			isASCII = false
+			break
+		}
+	}
+
+	if isASCII {
+		s.chain.fail(AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{s.value},
+			Errors: []error{
+				errors.New("expected: at least one string character is not ascii"),
+			},
+		})
+	}
+
+	return s
+}
+
 // AsNumber parses float from string and returns a new Number instance
 // with result.
 //
@@ -552,32 +851,59 @@ func (s *String) AsNumber(base ...int) *Number {
 		return newNumber(s.chain, 0)
 	}
 
-	var num float64
-	var err error
-
-	if len(base) == 0 || base[0] == 10 {
-		num, err = strconv.ParseFloat(s.value, 64)
-	} else {
-		var inum int64
-
-		inum, err = strconv.ParseInt(s.value, base[0], 64)
-		num = float64(inum)
-
-		if err == strconv.ErrRange {
-			var unum uint64
-
-			unum, err = strconv.ParseUint(s.value, base[0], 64)
-			num = float64(unum)
-		}
+	b := 10
+	if len(base) != 0 {
+		b = base[0]
 	}
 
-	if err != nil {
-		if len(base) == 0 || base[0] == 10 {
+	var fnum float64
+	var inum int64
+	var unum uint64
+	var err error
+
+	inum, err = strconv.ParseInt(s.value, b, 64)
+	fnum = float64(inum)
+
+	if err == nil && int64(fnum) != inum {
+		s.chain.fail(AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{s.value},
+			Errors: []error{
+				errors.New("expected:" +
+					" number can be represented as float64 without precision loss"),
+			},
+		})
+		return newNumber(s.chain, 0)
+	}
+
+	if err != nil && errors.Is(err, strconv.ErrRange) {
+		unum, err = strconv.ParseUint(s.value, b, 64)
+		fnum = float64(unum)
+
+		if err == nil && uint64(fnum) != unum {
 			s.chain.fail(AssertionFailure{
 				Type:   AssertValid,
 				Actual: &AssertionValue{s.value},
 				Errors: []error{
-					errors.New("expected: string can be parsed to float"),
+					errors.New("expected:" +
+						" number can be represented as float64 without precision loss"),
+				},
+			})
+			return newNumber(s.chain, 0)
+		}
+	}
+
+	if err != nil && b == 10 {
+		fnum, err = strconv.ParseFloat(s.value, 64)
+	}
+
+	if err != nil {
+		if b == 10 {
+			s.chain.fail(AssertionFailure{
+				Type:   AssertValid,
+				Actual: &AssertionValue{s.value},
+				Errors: []error{
+					errors.New("expected: string can be parsed to integer or float"),
 					err,
 				},
 			})
@@ -596,7 +922,7 @@ func (s *String) AsNumber(base ...int) *Number {
 		return newNumber(s.chain, 0)
 	}
 
-	return newNumber(s.chain, num)
+	return newNumber(s.chain, fnum)
 }
 
 // AsBoolean parses true/false value string and returns a new Boolean instance

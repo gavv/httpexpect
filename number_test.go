@@ -9,7 +9,7 @@ import (
 
 func TestNumberFailed(t *testing.T) {
 	chain := newMockChain(t)
-	chain.fail(AssertionFailure{})
+	chain.fail(mockFailure())
 
 	value := newNumber(chain, 0)
 
@@ -251,6 +251,14 @@ func TestNumberInRange(t *testing.T) {
 
 	value.NotInRange(1234+1, 1234-1)
 	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.NotInRange(1234+1, "1234+2")
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.NotInRange("1234+1", 1234+2)
+	value.chain.assertFailed(t)
 	value.chain.reset()
 }
 

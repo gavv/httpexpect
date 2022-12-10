@@ -10,7 +10,7 @@ import (
 
 func TestStringFailed(t *testing.T) {
 	chain := newMockChain(t)
-	chain.fail(AssertionFailure{})
+	chain.fail(mockFailure())
 
 	value := newString(chain, "")
 
@@ -31,9 +31,19 @@ func TestStringFailed(t *testing.T) {
 	value.NotContains("")
 	value.ContainsFold("")
 	value.NotContainsFold("")
+	value.HasPrefix("")
+	value.NotHasPrefix("")
+	value.HasSuffix("")
+	value.NotHasSuffix("")
+	value.HasPrefixFold("")
+	value.NotHasPrefixFold("")
+	value.HasSuffixFold("")
+	value.NotHasSuffixFold("")
 	value.Match("")
 	value.NotMatch("")
 	value.MatchAll("")
+	value.IsASCII()
+	value.NotIsASCII()
 }
 
 func TestStringGetters(t *testing.T) {
@@ -292,6 +302,64 @@ func TestStringMatchInvalid(t *testing.T) {
 	value.chain.reset()
 }
 
+func TestStringIsAscii(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value1 := NewString(reporter, "Ascii")
+	value1.IsASCII()
+	value1.chain.assertOK(t)
+	value1.chain.reset()
+
+	value2 := NewString(reporter, "Ascii is アスキー")
+	value2.IsASCII()
+	value2.chain.assertFailed(t)
+	value2.chain.reset()
+
+	value3 := NewString(reporter, "アスキー")
+	value3.IsASCII()
+	value3.chain.assertFailed(t)
+	value3.chain.reset()
+
+	value4 := NewString(reporter, string(rune(127)))
+	value4.IsASCII()
+	value4.chain.assertOK(t)
+	value4.chain.reset()
+
+	value5 := NewString(reporter, string(rune(128)))
+	value5.IsASCII()
+	value5.chain.assertFailed(t)
+	value5.chain.reset()
+}
+
+func TestStringIsNotAscii(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value1 := NewString(reporter, "Ascii")
+	value1.NotIsASCII()
+	value1.chain.assertFailed(t)
+	value1.chain.reset()
+
+	value2 := NewString(reporter, "Ascii is アスキー")
+	value2.NotIsASCII()
+	value2.chain.assertOK(t)
+	value2.chain.reset()
+
+	value3 := NewString(reporter, "アスキー")
+	value3.NotIsASCII()
+	value3.chain.assertOK(t)
+	value3.chain.reset()
+
+	value4 := NewString(reporter, string(rune(127)))
+	value4.NotIsASCII()
+	value4.chain.assertFailed(t)
+	value4.chain.reset()
+
+	value5 := NewString(reporter, string(rune(128)))
+	value5.NotIsASCII()
+	value5.chain.assertOK(t)
+	value5.chain.reset()
+}
+
 func TestStringAsNumber(t *testing.T) {
 	reporter := newMockReporter(t)
 
@@ -334,13 +402,53 @@ func TestStringAsNumber(t *testing.T) {
 		num1 := value1.AsNumber(16)
 		value1.chain.assertOK(t)
 		num1.chain.assertOK(t)
-		assert.Equal(t, float64(256), num1.Raw())
+		assert.Equal(t, float64(0x100), num1.Raw())
 
 		value2 := NewString(reporter, "11.22")
 		num2 := value2.AsNumber(16)
 		value2.chain.assertFailed(t)
 		num2.chain.assertFailed(t)
 		assert.Equal(t, float64(0), num2.Raw())
+
+		value3 := NewString(reporter, "4000000000000000")
+		num3 := value3.AsNumber(16)
+		value3.chain.assertOK(t)
+		num3.chain.assertOK(t)
+		assert.Equal(t, float64(0x4000000000000000), num3.Raw())
+	})
+
+	t.Run("float_precision", func(t *testing.T) {
+		value1 := NewString(reporter, "4611686018427387905")
+		num1 := value1.AsNumber()
+		value1.chain.assertFailed(t)
+		num1.chain.assertFailed(t)
+		assert.Equal(t, float64(0), num1.Raw())
+
+		value2 := NewString(reporter, "4611686018427387905")
+		num2 := value2.AsNumber(10)
+		value2.chain.assertFailed(t)
+		num2.chain.assertFailed(t)
+		assert.Equal(t, float64(0), num2.Raw())
+
+		value3 := NewString(reporter, "8000000000000001")
+		num3 := value3.AsNumber(16)
+		value3.chain.assertFailed(t)
+		num3.chain.assertFailed(t)
+		assert.Equal(t, float64(0), num3.Raw())
+
+		value4 := NewString(reporter, "-4000000000000001")
+		num4 := value4.AsNumber(16)
+		value4.chain.assertFailed(t)
+		num4.chain.assertFailed(t)
+		assert.Equal(t, float64(0), num4.Raw())
+	})
+
+	t.Run("multiple_base", func(t *testing.T) {
+		value1 := NewString(reporter, "100")
+		num1 := value1.AsNumber(10, 16)
+		value1.chain.assertFailed(t)
+		num1.chain.assertFailed(t)
+		assert.Equal(t, float64(0), num1.Raw())
 	})
 }
 
@@ -433,4 +541,164 @@ func TestStringAsDateTime(t *testing.T) {
 			dt4.chain.assertFailed(t)
 		}
 	}
+}
+
+func TestStringHasPrefix(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewString(reporter, "Hello World")
+
+	value.HasPrefix("Hello")
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.HasPrefix("Hello World")
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.HasPrefix("")
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.HasPrefix("Hello!")
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.HasPrefix("hello")
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.HasPrefix("World")
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.NotHasPrefix("Bye")
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.NotHasPrefix("Hello")
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.NotHasPrefix("hello")
+	value.chain.assertOK(t)
+	value.chain.reset()
+}
+
+func TestStringHasSuffix(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewString(reporter, "Hello World")
+
+	value.HasSuffix("World")
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.HasSuffix("Hello World")
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.HasSuffix("")
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.HasPrefix("World!")
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.HasSuffix("world")
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.HasSuffix("Hello")
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.NotHasSuffix("Bye")
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.NotHasSuffix("World")
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.NotHasSuffix("world")
+	value.chain.assertOK(t)
+	value.chain.reset()
+}
+
+func TestStringHasPrefixFold(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewString(reporter, "Hello World")
+
+	value.HasPrefixFold("hello")
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.HasPrefixFold("HeLlO wOrLd")
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.HasPrefixFold("")
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.HasPrefixFold("World")
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.NotHasPrefixFold("Bye")
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.NotHasPrefixFold("world")
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.NotHasPrefixFold("world!")
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.NotHasPrefixFold("hello")
+	value.chain.assertFailed(t)
+	value.chain.reset()
+}
+
+func TestStringHasSuffixFold(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewString(reporter, "Hello World")
+
+	value.HasSuffixFold("world")
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.HasSuffixFold("hElLo WoRlD")
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.HasSuffixFold("")
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.HasSuffixFold("hello")
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.HasSuffixFold("world!")
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.NotHasSuffixFold("Bye")
+	value.chain.assertOK(t)
+	value.chain.reset()
+
+	value.NotHasSuffixFold("world")
+	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	value.NotHasSuffixFold("world!")
+	value.chain.assertOK(t)
+	value.chain.reset()
 }

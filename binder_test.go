@@ -138,7 +138,7 @@ func TestBinderTLS(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, resp)
 	assert.NotNil(t, resp.Request.TLS)
-	assert.Equal(t, tlsState, resp.Request.TLS)
+	assert.Same(t, tlsState, resp.Request.TLS)
 }
 
 func TestBinderChunked(t *testing.T) {

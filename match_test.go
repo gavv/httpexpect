@@ -8,7 +8,7 @@ import (
 
 func TestMatchFailed(t *testing.T) {
 	chain := newMockChain(t)
-	chain.fail(AssertionFailure{})
+	chain.fail(mockFailure())
 
 	value := newMatch(chain, nil, nil)
 

@@ -335,7 +335,8 @@ func (c *Websocket) CloseWithJSON(
 
 	if err != nil {
 		c.chain.fail(AssertionFailure{
-			Type: AssertValid,
+			Type:   AssertValid,
+			Actual: &AssertionValue{object},
 			Errors: []error{
 				errors.New("invalid json object"),
 				err,
@@ -470,7 +471,8 @@ func (c *Websocket) WriteJSON(object interface{}) *Websocket {
 
 	if err != nil {
 		c.chain.fail(AssertionFailure{
-			Type: AssertValid,
+			Type:   AssertValid,
+			Actual: &AssertionValue{object},
 			Errors: []error{
 				errors.New("invalid json object"),
 				err,

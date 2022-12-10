@@ -12,7 +12,7 @@ func noWsPreSteps(ws *Websocket) {}
 
 func TestWebsocketFailed(t *testing.T) {
 	chain := newMockChain(t)
-	chain.fail(AssertionFailure{})
+	chain.fail(mockFailure())
 
 	ws := newWebsocket(chain, Config{}, nil)
 
@@ -111,7 +111,7 @@ func TestWebsocketMockConn(t *testing.T) {
 
 func TestWebsocketExpect(t *testing.T) {
 	failedChain := newMockChain(t)
-	failedChain.fail(AssertionFailure{})
+	failedChain.fail(mockFailure())
 
 	type args struct {
 		config     Config

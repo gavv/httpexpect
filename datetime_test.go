@@ -9,7 +9,7 @@ import (
 
 func TestDateTimeFailed(t *testing.T) {
 	chain := newMockChain(t)
-	chain.fail(AssertionFailure{})
+	chain.fail(mockFailure())
 
 	tm := time.Unix(0, 0)
 

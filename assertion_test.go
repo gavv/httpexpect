@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestDefaultAssertionHandler(t *testing.T) {
+func TestAssertionHandler(t *testing.T) {
 	type test struct {
 		formatter *mockFormatter
 		reporter  *mockReporter
@@ -48,7 +48,7 @@ func TestDefaultAssertionHandler(t *testing.T) {
 		assert.False(t, test.reporter.reported)
 	})
 
-	t.Run("success_nologger", func(t *testing.T) {
+	t.Run("success_no_logger", func(t *testing.T) {
 		test := createTest(t, false)
 
 		test.handler.Success(&AssertionContext{
@@ -62,7 +62,7 @@ func TestDefaultAssertionHandler(t *testing.T) {
 		assert.False(t, test.reporter.reported)
 	})
 
-	t.Run("failure_nonfatal", func(t *testing.T) {
+	t.Run("failure_severity_info", func(t *testing.T) {
 		test := createTest(t, true)
 
 		test.handler.Failure(
@@ -70,8 +70,8 @@ func TestDefaultAssertionHandler(t *testing.T) {
 				TestName: t.Name(),
 			},
 			&AssertionFailure{
-				Type:    AssertValid,
-				IsFatal: false,
+				Type:     AssertValid,
+				Severity: SeverityLog,
 			})
 
 		assert.Equal(t, 0, test.formatter.formattedSuccess)
@@ -81,7 +81,7 @@ func TestDefaultAssertionHandler(t *testing.T) {
 		assert.False(t, test.reporter.reported)
 	})
 
-	t.Run("failure_nonfatal_nologger", func(t *testing.T) {
+	t.Run("failure_severity_info_no_logger", func(t *testing.T) {
 		test := createTest(t, false)
 
 		test.handler.Failure(
@@ -89,8 +89,8 @@ func TestDefaultAssertionHandler(t *testing.T) {
 				TestName: t.Name(),
 			},
 			&AssertionFailure{
-				Type:    AssertValid,
-				IsFatal: false,
+				Type:     AssertValid,
+				Severity: SeverityLog,
 			})
 
 		assert.Equal(t, 0, test.formatter.formattedSuccess)
@@ -100,7 +100,7 @@ func TestDefaultAssertionHandler(t *testing.T) {
 		assert.False(t, test.reporter.reported)
 	})
 
-	t.Run("failure_fatal", func(t *testing.T) {
+	t.Run("failure_severity_error", func(t *testing.T) {
 		test := createTest(t, true)
 
 		test.handler.Failure(
@@ -108,8 +108,8 @@ func TestDefaultAssertionHandler(t *testing.T) {
 				TestName: t.Name(),
 			},
 			&AssertionFailure{
-				Type:    AssertValid,
-				IsFatal: true,
+				Type:     AssertValid,
+				Severity: SeverityError,
 			})
 
 		assert.Equal(t, 0, test.formatter.formattedSuccess)
@@ -119,7 +119,7 @@ func TestDefaultAssertionHandler(t *testing.T) {
 		assert.True(t, test.reporter.reported)
 	})
 
-	t.Run("failure_fatal_nologger", func(t *testing.T) {
+	t.Run("failure_severity_error_no_logger", func(t *testing.T) {
 		test := createTest(t, false)
 
 		test.handler.Failure(
@@ -127,8 +127,8 @@ func TestDefaultAssertionHandler(t *testing.T) {
 				TestName: t.Name(),
 			},
 			&AssertionFailure{
-				Type:    AssertValid,
-				IsFatal: true,
+				Type:     AssertValid,
+				Severity: SeverityError,
 			})
 
 		assert.Equal(t, 0, test.formatter.formattedSuccess)
@@ -136,5 +136,19 @@ func TestDefaultAssertionHandler(t *testing.T) {
 
 		assert.Nil(t, test.logger)
 		assert.True(t, test.reporter.reported)
+	})
+}
+
+func TestAssertionStrings(t *testing.T) {
+	t.Run("AssertionType", func(t *testing.T) {
+		for i := 0; i < 100; i++ {
+			assert.NotEmpty(t, AssertionType(i).String())
+		}
+	})
+
+	t.Run("AssertionSeverity", func(t *testing.T) {
+		for i := 0; i < 100; i++ {
+			assert.NotEmpty(t, AssertionSeverity(i).String())
+		}
 	})
 }

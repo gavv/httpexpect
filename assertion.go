@@ -1,7 +1,7 @@
 package httpexpect
 
 // AssertionType defines type of performed assertion.
-type AssertionType uint64
+type AssertionType uint
 
 //go:generate stringer -type=AssertionType
 const (
@@ -84,6 +84,24 @@ const (
 	AssertNotBelongs
 )
 
+// AssertionSeverity defines how assertion failure should be treated.
+type AssertionSeverity uint
+
+//go:generate stringer -type=AssertionSeverity
+const (
+	// This assertion failure should mark current test as failed.
+	// Typically handler will call t.Errorf().
+	// This severity is used for most assertions.
+	SeverityError AssertionSeverity = iota
+
+	// This assertion failure is informational only, it can be logged,
+	// but should not cause test failure.
+	// Typically handler will call t.Logf(), or just ignore assertion.
+	// This severity is used for assertions issued inside predicate functions,
+	// e.g. in Array.Filter and Object.Filter.
+	SeverityLog
+)
+
 // AssertionContext provides context where the assetion happened.
 type AssertionContext struct {
 	// Name of the running test
@@ -144,7 +162,10 @@ type AssertionFailure struct {
 	// Type of failed assertion
 	Type AssertionType
 
-	// Defines if failure should be reported as fatal
+	// Severity of failure
+	Severity AssertionSeverity
+
+	// Deprecated: use Severity
 	IsFatal bool
 
 	// List of error messages
@@ -183,12 +204,13 @@ type AssertionList []interface{}
 // custom formatting, for example, provide a JSON output for ulterior processing.
 type AssertionHandler interface {
 	// Invoked every time when an assertion succeeded.
-	// May print failure to log or ignore it.
+	// May ignore failure, or log it, e.g. using t.Logf().
 	Success(*AssertionContext)
 
 	// Invoked every time when an assertion failed.
-	// If Failure.IsFatal is false, may print failure to log or ignore it.
-	// If Failure.IsFatal is true, should report failure to testing suite.
+	// Handling depends on Failure.Severity field:
+	//  - for SeverityError, reports failure to testing suite, e.g. using t.Errorf()
+	//  - for SeverityLog, ignores failure, or logs it, e.g. using t.Logf()
 	Failure(*AssertionContext, *AssertionFailure)
 }
 
@@ -229,7 +251,8 @@ func (h *DefaultAssertionHandler) Failure(
 		panic("DefaultAssertionHandler.Formatter is nil")
 	}
 
-	if failure.IsFatal {
+	switch failure.Severity {
+	case SeverityError:
 		if h.Reporter == nil {
 			panic("DefaultAssertionHandler.Reporter is nil")
 		}
@@ -237,7 +260,8 @@ func (h *DefaultAssertionHandler) Failure(
 		msg := h.Formatter.FormatFailure(ctx, failure)
 
 		h.Reporter.Errorf("%s", msg)
-	} else {
+
+	case SeverityLog:
 		if h.Logger == nil {
 			return
 		}

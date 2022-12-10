@@ -12,7 +12,7 @@ import (
 
 func TestValueFailed(t *testing.T) {
 	chain := newMockChain(t)
-	chain.fail(AssertionFailure{})
+	chain.fail(mockFailure())
 
 	value := newValue(chain, nil)
 

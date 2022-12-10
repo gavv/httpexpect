@@ -2,6 +2,7 @@ package httpexpect
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -127,6 +128,14 @@ func (h *mockAssertionHandler) Failure(
 ) {
 	h.ctx = ctx
 	h.failure = failure
+}
+
+func mockFailure() AssertionFailure {
+	return AssertionFailure{
+		Errors: []error{
+			errors.New("test_error"),
+		},
+	}
 }
 
 type mockPrinter struct {

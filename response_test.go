@@ -50,7 +50,7 @@ func TestResponseFailed(t *testing.T) {
 
 	t.Run("failed_chain", func(t *testing.T) {
 		chain := newMockChain(t)
-		chain.fail(AssertionFailure{})
+		chain.fail(mockFailure())
 
 		resp := newResponse(responseOpts{
 			chain:    chain,
@@ -73,7 +73,7 @@ func TestResponseFailed(t *testing.T) {
 
 	t.Run("failed_chain_nil_value", func(t *testing.T) {
 		chain := newMockChain(t)
-		chain.fail(AssertionFailure{})
+		chain.fail(mockFailure())
 
 		resp := newResponse(responseOpts{
 			chain:    chain,
@@ -214,7 +214,7 @@ func TestResponseHeaders(t *testing.T) {
 	resp.chain.assertOK(t)
 	resp.chain.reset()
 
-	assert.Equal(t, httpResp, resp.Raw())
+	assert.Same(t, httpResp, resp.Raw())
 
 	resp.Status(http.StatusOK)
 	resp.chain.assertOK(t)
@@ -1011,7 +1011,7 @@ func TestResponseJSONPCharsetBad(t *testing.T) {
 	resp.chain.assertFailed(t)
 	resp.chain.reset()
 
-	assert.Equal(t, nil, resp.JSONP("foo").Raw())
+	assert.Nil(t, resp.JSONP("foo").Raw())
 }
 
 func TestResponseContentOpts(t *testing.T) {

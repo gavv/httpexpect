@@ -193,10 +193,13 @@ func (a *Array) Last() *Value {
 //	strings := []interface{}{"foo", "bar"}
 //	array := NewArray(t, strings)
 //
-//	for n, val := range array.Iter() {
-//	    val.String().Equal(strings[n])
+//	for index, value := range array.Iter() {
+//	    value.String().Equal(strings[index])
 //	}
 func (a *Array) Iter() []Value {
+	a.chain.enter("Iter()")
+	defer a.chain.leave()
+
 	if a.chain.failed() {
 		return []Value{}
 	}
@@ -204,7 +207,7 @@ func (a *Array) Iter() []Value {
 	ret := []Value{}
 	for n := range a.value {
 		valueChain := a.chain.clone()
-		valueChain.enter("Iter[%d]", n)
+		valueChain.replace("Iter[%d]", n)
 
 		ret = append(ret, *newValue(valueChain, a.value[n]))
 	}
@@ -262,6 +265,99 @@ func (a *Array) Every(fn func(index int, value *Value)) *Array {
 	}
 
 	return a
+}
+
+// Filter accepts a function that returns a boolean. The function is ran
+// over the array items. If the function returns true, the item passes
+// the filter and is added to the new array of filtered items. If false,
+// the item is skipped (or in other words filtered out). After iterating
+// through all the items of the original array, the new filtered array
+// is returned.
+//
+// If there are any failed assertions in the filtering function, the
+// item is omitted without causing test failure.
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{1, 2, "foo", "bar"})
+//	filteredArray := array.Filter(func(index int, value *httpexpect.Value) bool {
+//		value.String().NotEmpty()		//fails on 1 and 2
+//		return value.Raw() != "bar"		//fails on "bar"
+//	})
+//	filteredArray.Equal([]interface{}{"foo"})	//succeeds
+func (a *Array) Filter(fn func(index int, value *Value) bool) *Array {
+	a.chain.enter("Filter()")
+	defer a.chain.leave()
+
+	if a.chain.failed() {
+		return newArray(a.chain, nil)
+	}
+
+	if fn == nil {
+		a.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected nil function argument"),
+			},
+		})
+		return newArray(a.chain, nil)
+	}
+
+	filteredArray := []interface{}{}
+
+	for index, element := range a.value {
+		valueChain := a.chain.clone()
+		valueChain.setSeverity(SeverityLog)
+		chainFailed := false
+		valueChain.setFailCallback(func() {
+			chainFailed = true
+		})
+		valueChain.replace("Filter[%v]", index)
+		if fn(index, newValue(valueChain, element)) && !chainFailed {
+			filteredArray = append(filteredArray, element)
+		}
+	}
+
+	return newArray(a.chain, filteredArray)
+}
+
+// Transform runs the passed function on all the Elements in the array
+// and returns a new array without effeecting original array.
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{"foo", "bar"})
+//	transformedArray := array.Transform(
+//		func(index int, value interface{}) interface{} {
+//			return strings.ToUpper(value.(string))
+//		})
+//	transformedArray.Equals([]interface{}{"FOO", "BAR"})
+func (a *Array) Transform(fn func(index int, value interface{}) interface{}) *Array {
+	a.chain.enter("Transform()")
+	defer a.chain.leave()
+
+	if a.chain.failed() {
+		return newArray(a.chain, nil)
+	}
+
+	if fn == nil {
+		a.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected nil function argument"),
+			},
+		})
+		return newArray(a.chain, nil)
+	}
+
+	array := []interface{}{}
+
+	for index, val := range a.value {
+		transformedValue := fn(index, val)
+		array = append(array, transformedValue)
+	}
+
+	return newArray(a.chain, array)
 }
 
 // Empty succeeds if array is empty.
@@ -894,7 +990,8 @@ func (a *Array) NotContainsAny(values ...interface{}) *Array {
 				Expected:  &AssertionValue{expected},
 				Reference: &AssertionValue{values},
 				Errors: []error{
-					errors.New("expected: array does not contain any elements from reference array"),
+					errors.New("expected:" +
+						" array does not contain any elements from reference array"),
 				},
 			})
 			return a

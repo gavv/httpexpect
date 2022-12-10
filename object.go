@@ -162,7 +162,37 @@ func (o *Object) Value(key string) *Value {
 	return newValue(o.chain, value)
 }
 
-// Every runs the passed function for all the key value pairs in the object
+// Iter returns a new map of Values attached to object elements.
+//
+// Example:
+//
+//	numbers := map[string]interface{}{"foo": 123, "bar": 456}
+//	object := NewObject(t, numbers)
+//
+//	for key, value := range object.Iter() {
+//	    value.Number().Equal(numbers[key])
+//	}
+func (o *Object) Iter() map[string]Value {
+	o.chain.enter("Iter()")
+	defer o.chain.leave()
+
+	if o.chain.failed() {
+		return map[string]Value{}
+	}
+
+	obj := make(map[string]Value)
+
+	for k, v := range o.value {
+		valueChain := o.chain.clone()
+		valueChain.replace("Iter[%q]", k)
+
+		obj[k] = *newValue(valueChain, v)
+	}
+
+	return obj
+}
+
+// Every runs the passed function for all the key value pairs in the object.
 //
 // If assertion inside function fails, the original Object is marked failed.
 //
@@ -213,6 +243,103 @@ func (o *Object) Every(fn func(key string, value *Value)) *Object {
 	}
 
 	return o
+}
+
+// Filter accepts a function that returns a boolean. The function is ran
+// over the object items. If the function returns true, the item passes
+// the filter and is added to the new object of filtered items. If false,
+// the value is skipped (or in other words filtered out). After iterating
+// through all the items of the original object, the new filtered object
+// is returned.
+//
+// If there are any failed assertions in the filtering function, the
+// item is omitted without causing test failure.
+//
+// Example:
+//
+//	object := NewObject(t, map[string]interface{}{
+//		"foo": "bar",
+//		"baz": 6,
+//		"qux": "quux",
+//	})
+//	filteredObject := object.Filter(func(key string, value *httpexpect.Value) bool {
+//		value.String().NotEmpty()		//fails on 6
+//		return value.Raw() != "bar"		//fails on "bar"
+//	})
+//	filteredObject.Equal(map[string]interface{}{"qux":"quux"})	//succeeds
+func (o *Object) Filter(fn func(key string, value *Value) bool) *Object {
+	o.chain.enter("Filter()")
+	defer o.chain.leave()
+
+	if o.chain.failed() {
+		return newObject(o.chain, nil)
+	}
+
+	if fn == nil {
+		o.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected nil function argument"),
+			},
+		})
+		return newObject(o.chain, nil)
+	}
+
+	filteredObject := make(map[string]interface{})
+
+	for key, element := range o.value {
+		valueChain := o.chain.clone()
+		valueChain.setSeverity(SeverityLog)
+		chainFailed := false
+		valueChain.setFailCallback(func() {
+			chainFailed = true
+		})
+		valueChain.replace("Filter[%q]", key)
+		if fn(key, newValue(valueChain, element)) && !chainFailed {
+			filteredObject[key] = element
+		}
+	}
+
+	return newObject(o.chain, filteredObject)
+}
+
+// Transform runs the passed function on all the Elements in the Object
+// and returns a new object without effecting original object.
+//
+// Example:
+//
+//	object := NewObject(t, []interface{}{"x": "foo", "y": "bar"})
+//	transformedObject := object.Transform(
+//		func(key string, value interface{}) interface{} {
+//			return strings.ToUpper(value.(string))
+//		})
+//	transformedObject.Equals([]interface{}{"x": "FOO", "y": "BAR"})
+func (o *Object) Transform(fn func(key string, value interface{}) interface{}) *Object {
+	o.chain.enter("Transform()")
+	defer o.chain.leave()
+
+	if o.chain.failed() {
+		return newObject(o.chain, nil)
+	}
+
+	if fn == nil {
+		o.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected nil function argument"),
+			},
+		})
+		return newObject(o.chain, nil)
+	}
+
+	object := map[string]interface{}{}
+
+	for key, val := range o.value {
+		transformedValue := fn(key, val)
+		object[key] = transformedValue
+	}
+
+	return newObject(o.chain, object)
 }
 
 // Empty succeeds if object is empty.
