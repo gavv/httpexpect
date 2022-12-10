@@ -2786,26 +2786,24 @@ func TestRequestRetry(t *testing.T) {
 				Reporter: reporter,
 			}
 
+			var totalSleepTime time.Duration
+
 			req := NewRequest(config, http.MethodPost, "/url").
 				WithText("test body").
 				WithRetryPolicy(RetryAllErrors).
 				WithMaxRetries(3).
-				WithRetryDelay(5*time.Millisecond, 50*time.Millisecond)
+				WithRetryDelay(100*time.Millisecond, 1000*time.Millisecond)
+			req.sleepFn = func(d time.Duration) {
+				totalSleepTime += d
+			}
 			req.chain.assertOK(t)
-
-			start := time.Now()
 
 			resp := req.Expect().
 				Status(http.StatusBadRequest)
 			resp.chain.assertOK(t)
 
-			elapsed := time.Since(start)
-
 			// Should retry with delay
-			assert.LessOrEqual(t,
-				int64(5+10+20),
-				elapsed.Truncate(5*time.Millisecond).Milliseconds(),
-			)
+			assert.Equal(t, int64(100+200+400), totalSleepTime.Milliseconds())
 		})
 
 		t.Run("exceeding max retry delay", func(t *testing.T) {
@@ -2824,26 +2822,24 @@ func TestRequestRetry(t *testing.T) {
 				Reporter: reporter,
 			}
 
+			var totalSleepTime time.Duration
+
 			req := NewRequest(config, http.MethodPost, "/url").
 				WithText("test body").
 				WithRetryPolicy(RetryAllErrors).
 				WithMaxRetries(3).
-				WithRetryDelay(5*time.Millisecond, 15*time.Millisecond)
+				WithRetryDelay(100*time.Millisecond, 300*time.Millisecond)
+			req.sleepFn = func(d time.Duration) {
+				totalSleepTime += d
+			}
 			req.chain.assertOK(t)
-
-			start := time.Now()
 
 			resp := req.Expect().
 				Status(http.StatusBadRequest)
 			resp.chain.assertOK(t)
 
-			elapsed := time.Since(start)
-
 			// Should retry with delay
-			assert.LessOrEqual(t,
-				int64(5+10+15),
-				elapsed.Truncate(5*time.Millisecond).Milliseconds(),
-			)
+			assert.Equal(t, int64(100+200+300), totalSleepTime.Milliseconds())
 		})
 	})
 }
