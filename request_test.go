@@ -2255,7 +2255,9 @@ func TestRequestRetry(t *testing.T) {
 		}
 	}
 
-	noopSleepFn := func(time.Duration) {}
+	noopSleepFn := func(time.Duration) <-chan time.Time {
+		return time.After(0)
+	}
 
 	t.Run("dont retry policy", func(t *testing.T) {
 		t.Run("no error", func(t *testing.T) {
@@ -2812,8 +2814,9 @@ func TestRequestRetry(t *testing.T) {
 				WithRetryPolicy(RetryAllErrors).
 				WithMaxRetries(3).
 				WithRetryDelay(100*time.Millisecond, 1000*time.Millisecond)
-			req.sleepFn = func(d time.Duration) {
+			req.sleepFn = func(d time.Duration) <-chan time.Time {
 				totalSleepTime += d
+				return time.After(0)
 			}
 			req.chain.assertOK(t)
 
@@ -2848,9 +2851,11 @@ func TestRequestRetry(t *testing.T) {
 				WithRetryPolicy(RetryAllErrors).
 				WithMaxRetries(3).
 				WithRetryDelay(100*time.Millisecond, 300*time.Millisecond)
-			req.sleepFn = func(d time.Duration) {
+			req.sleepFn = func(d time.Duration) <-chan time.Time {
 				totalSleepTime += d
+				return time.After(0)
 			}
+
 			req.chain.assertOK(t)
 
 			resp := req.Expect().
@@ -2860,5 +2865,41 @@ func TestRequestRetry(t *testing.T) {
 			// Should retry with delay
 			assert.Equal(t, int64(100+200+300), totalSleepTime.Milliseconds())
 		})
+	})
+
+	t.Run("cancelled retries", func(t *testing.T) {
+		callCount := 0
+
+		client := newHTTPErrClient(func(req *http.Request) {
+			callCount++
+
+			assert.Error(t, req.Context().Err(), context.Canceled.Error())
+
+			b, err := ioutil.ReadAll(req.Body)
+			assert.NoError(t, err)
+			assert.Equal(t, "test body", string(b))
+		})
+
+		config := Config{
+			Client:   client,
+			Reporter: reporter,
+		}
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel() // Cancel immediately to trigger error
+
+		req := NewRequest(config, http.MethodPost, "/url").
+			WithText("test body").
+			WithRetryPolicy(RetryAllErrors).
+			WithMaxRetries(1).
+			WithRetryDelay(100*time.Millisecond, 300*time.Millisecond).
+			WithContext(ctx)
+		req.chain.assertOK(t)
+
+		resp := req.Expect()
+		resp.chain.assertFailed(t)
+
+		// Should not retry
+		assert.Equal(t, 1, callCount)
 	})
 }
