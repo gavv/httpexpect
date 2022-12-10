@@ -2255,6 +2255,8 @@ func TestRequestRetry(t *testing.T) {
 		}
 	}
 
+	noopSleepFn := func(time.Duration) {}
+
 	t.Run("dont retry policy", func(t *testing.T) {
 		t.Run("no error", func(t *testing.T) {
 			callCount := 0
@@ -2275,6 +2277,7 @@ func TestRequestRetry(t *testing.T) {
 			req := NewRequest(config, http.MethodPost, "/url").
 				WithText("test body").
 				WithRetryPolicy(DontRetry)
+			req.sleepFn = noopSleepFn
 			req.chain.assertOK(t)
 
 			resp := req.Expect()
@@ -2304,6 +2307,7 @@ func TestRequestRetry(t *testing.T) {
 				WithText("test body").
 				WithRetryPolicy(DontRetry).
 				WithMaxRetries(1)
+			req.sleepFn = noopSleepFn
 			req.chain.assertOK(t)
 
 			resp := req.Expect()
@@ -2333,6 +2337,7 @@ func TestRequestRetry(t *testing.T) {
 				WithText("test body").
 				WithRetryPolicy(DontRetry).
 				WithMaxRetries(1)
+			req.sleepFn = noopSleepFn
 			req.chain.assertOK(t)
 
 			resp := req.Expect().
@@ -2363,6 +2368,7 @@ func TestRequestRetry(t *testing.T) {
 				WithText("test body").
 				WithRetryPolicy(DontRetry).
 				WithMaxRetries(1)
+			req.sleepFn = noopSleepFn
 			req.chain.assertOK(t)
 
 			resp := req.Expect().
@@ -2395,6 +2401,7 @@ func TestRequestRetry(t *testing.T) {
 			req := NewRequest(config, http.MethodPost, "/url").
 				WithText("test body").
 				WithRetryPolicy(RetryTemporaryNetworkErrors)
+			req.sleepFn = noopSleepFn
 			req.chain.assertOK(t)
 
 			resp := req.Expect()
@@ -2425,6 +2432,7 @@ func TestRequestRetry(t *testing.T) {
 				WithRetryPolicy(RetryTemporaryNetworkErrors).
 				WithMaxRetries(1).
 				WithRetryDelay(0, 0)
+			req.sleepFn = noopSleepFn
 			req.chain.assertOK(t)
 
 			resp := req.Expect()
@@ -2454,6 +2462,7 @@ func TestRequestRetry(t *testing.T) {
 				WithText("test body").
 				WithRetryPolicy(RetryTemporaryNetworkErrors).
 				WithMaxRetries(1)
+			req.sleepFn = noopSleepFn
 			req.chain.assertOK(t)
 
 			resp := req.Expect().
@@ -2484,6 +2493,7 @@ func TestRequestRetry(t *testing.T) {
 				WithText("test body").
 				WithRetryPolicy(RetryTemporaryNetworkErrors).
 				WithMaxRetries(1)
+			req.sleepFn = noopSleepFn
 			req.chain.assertOK(t)
 
 			resp := req.Expect().
@@ -2515,6 +2525,7 @@ func TestRequestRetry(t *testing.T) {
 			req := NewRequest(config, http.MethodPost, "/url").
 				WithText("test body").
 				WithRetryPolicy(RetryTemporaryNetworkAndServerErrors)
+			req.sleepFn = noopSleepFn
 			req.chain.assertOK(t)
 
 			resp := req.Expect()
@@ -2545,6 +2556,7 @@ func TestRequestRetry(t *testing.T) {
 				WithRetryPolicy(RetryTemporaryNetworkAndServerErrors).
 				WithMaxRetries(1).
 				WithRetryDelay(0, 0)
+			req.sleepFn = noopSleepFn
 			req.chain.assertOK(t)
 
 			resp := req.Expect()
@@ -2575,6 +2587,7 @@ func TestRequestRetry(t *testing.T) {
 				WithRetryPolicy(RetryTemporaryNetworkAndServerErrors).
 				WithMaxRetries(1).
 				WithRetryDelay(0, 0)
+			req.sleepFn = noopSleepFn
 			req.chain.assertOK(t)
 
 			resp := req.Expect().
@@ -2605,6 +2618,7 @@ func TestRequestRetry(t *testing.T) {
 				WithText("test body").
 				WithRetryPolicy(RetryTemporaryNetworkAndServerErrors).
 				WithMaxRetries(1)
+			req.sleepFn = noopSleepFn
 			req.chain.assertOK(t)
 
 			resp := req.Expect().
@@ -2636,6 +2650,7 @@ func TestRequestRetry(t *testing.T) {
 			req := NewRequest(config, http.MethodPost, "/url").
 				WithText("test body").
 				WithRetryPolicy(RetryAllErrors)
+			req.sleepFn = noopSleepFn
 			req.chain.assertOK(t)
 
 			resp := req.Expect()
@@ -2666,6 +2681,7 @@ func TestRequestRetry(t *testing.T) {
 				WithRetryPolicy(RetryAllErrors).
 				WithMaxRetries(1).
 				WithRetryDelay(0, 0)
+			req.sleepFn = noopSleepFn
 			req.chain.assertOK(t)
 
 			resp := req.Expect()
@@ -2696,6 +2712,7 @@ func TestRequestRetry(t *testing.T) {
 				WithRetryPolicy(RetryAllErrors).
 				WithMaxRetries(1).
 				WithRetryDelay(0, 0)
+			req.sleepFn = noopSleepFn
 			req.chain.assertOK(t)
 
 			resp := req.Expect().
@@ -2727,6 +2744,7 @@ func TestRequestRetry(t *testing.T) {
 				WithRetryPolicy(RetryAllErrors).
 				WithMaxRetries(1).
 				WithRetryDelay(0, 0)
+			req.sleepFn = noopSleepFn
 			req.chain.assertOK(t)
 
 			resp := req.Expect().
@@ -2759,6 +2777,7 @@ func TestRequestRetry(t *testing.T) {
 			WithRetryPolicy(RetryAllErrors).
 			WithMaxRetries(3).
 			WithRetryDelay(0, 0)
+		req.sleepFn = noopSleepFn
 		req.chain.assertOK(t)
 
 		resp := req.Expect().
