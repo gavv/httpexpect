@@ -286,6 +286,50 @@ func statusRangeText(code int) string {
 	}
 }
 
+// StatusList succeeds if response matches with any given status code list
+//
+// Example:
+//
+//	resp := NewResponse(t, response)
+//	resp.StatusList(http.StatusForbidden, http.StatusUnauthorized)
+func (r *Response) StatusList(values ...int) *Response {
+	r.chain.enter("StatusList()")
+	defer r.chain.leave()
+
+	if r.chain.failed() {
+		return r
+	}
+
+	var found bool
+	for _, v := range values {
+		if v == r.httpResp.StatusCode {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		r.chain.fail(AssertionFailure{
+			Type:     AssertContainsElement,
+			Actual:   &AssertionValue{statusCodeText(r.httpResp.StatusCode)},
+			Expected: &AssertionValue{statusListText(values)},
+			Errors: []error{
+				fmt.Errorf("expected: http status belongs to given list"),
+			},
+		})
+	}
+
+	return r
+}
+
+func statusListText(values []int) []string {
+	var statusText []string
+	for _, v := range values {
+		statusText = append(statusText, statusCodeText(v))
+	}
+	return statusText
+}
+
 // Headers returns a new Object instance with response header map.
 //
 // Example:
