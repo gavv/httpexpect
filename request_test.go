@@ -2128,7 +2128,7 @@ func TestRequestRedirect(t *testing.T) {
 	})
 }
 
-func TestValidationFailures(t *testing.T){
+func TestValidationFailures(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	client := &mockClient{}
@@ -2167,7 +2167,7 @@ func TestValidationFailures(t *testing.T){
 
 	t.Run("WithRetryDelay", func(t *testing.T) {
 		req := NewRequest(config, "METHOD", "/")
-		req.WithRetryDelay(10,5)
+		req.WithRetryDelay(10, 5)
 		req.chain.assertFailed(t)
 	})
 
@@ -2179,13 +2179,13 @@ func TestValidationFailures(t *testing.T){
 
 	t.Run("WithPath", func(t *testing.T) {
 		req := NewRequest(config, "METHOD", "/")
-		req.WithPath("test-path",nil)
+		req.WithPath("test-path", nil)
 		req.chain.assertFailed(t)
 	})
 
 	t.Run("WithQuery", func(t *testing.T) {
 		req := NewRequest(config, "METHOD", "/")
-		req.WithQuery("test-query",nil)
+		req.WithQuery("test-query", nil)
 		req.chain.assertFailed(t)
 	})
 
@@ -2197,12 +2197,12 @@ func TestValidationFailures(t *testing.T){
 
 	t.Run("WithFile", func(t *testing.T) {
 		req := NewRequest(config, "METHOD", "/")
-		req.WithFile("test-key","test-path",nil,nil)
+		req.WithFile("test-key", "test-path", nil, nil)
 		req.chain.assertFailed(t)
 	})
 }
 
-func TestWithRetryDelay(t *testing.T){
+func TestWithRetryDelay(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	client := &mockClient{}
@@ -2219,6 +2219,72 @@ func TestWithRetryDelay(t *testing.T){
 	req.WithRetryDelay(5, 10)
 	assert.Equal(t, time.Duration(5), req.minRetryDelay)
 	assert.Equal(t, time.Duration(10), req.maxRetryDelay)
+}
+
+func TestValidatePanics(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
+	client := &mockClient{}
+
+	reporter := newMockReporter(t)
+
+	t.Run("setBody", func(t *testing.T) {
+		config := Config{
+			RequestFactory: factory,
+			Client:         client,
+			Reporter:       reporter,
+		}
+
+		req := NewRequest(config, "METHOD", "/")
+		defer func() {
+			err := recover()
+			assert.Equal(t, "invalid length", err)
+		}()
+		req.setBody("some-setter", nil, 1, false)
+	})
+
+	t.Run("newRequest - requestFactory is nil", func(t *testing.T) {
+		config := Config{
+			RequestFactory: nil,
+			Client:         client,
+			Reporter:       reporter,
+		}
+
+		defer func() {
+			err := recover()
+			assert.Equal(t, "Config.RequestFactory is nil", err)
+		}()
+		newRequest(nil, config, "", "")
+	})
+
+	t.Run("newRequest - client is nil", func(t *testing.T) {
+		config := Config{
+			RequestFactory: factory,
+			Client:         nil,
+			Reporter:       reporter,
+		}
+
+		defer func() {
+			err := recover()
+			assert.Equal(t, "Config.Client is nil", err)
+		}()
+		newRequest(nil, config, "", "")
+	})
+
+	t.Run("newRequest - AssertionHandler is nil", func(t *testing.T) {
+		config := Config{
+			RequestFactory: factory,
+			Client:         client,
+			Reporter:       reporter,
+		}
+		config.AssertionHandler = nil
+
+		defer func() {
+			err := recover()
+			assert.Equal(t, "Config.AssertionHandler is nil", err)
+		}()
+		newRequest(nil, config, "", "")
+	})
 }
 
 // mockTransportRedirect mocks a transport that implements RoundTripper
