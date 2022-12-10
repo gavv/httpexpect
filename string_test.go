@@ -659,6 +659,10 @@ func TestStringHasPrefixFold(t *testing.T) {
 	value.NotHasPrefixFold("world!")
 	value.chain.assertOK(t)
 	value.chain.reset()
+
+	value.NotHasPrefixFold("hello")
+	value.chain.assertFailed(t)
+	value.chain.reset()
 }
 
 func TestStringHasSuffixFold(t *testing.T) {
