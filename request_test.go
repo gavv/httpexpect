@@ -2202,6 +2202,25 @@ func TestValidationFailures(t *testing.T){
 	})
 }
 
+func TestWithRetryDelay(t *testing.T){
+	factory := DefaultRequestFactory{}
+
+	client := &mockClient{}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
+	}
+
+	req := NewRequest(config, "METHOD", "/")
+	req.WithRetryDelay(5, 10)
+	assert.Equal(t, time.Duration(5), req.minRetryDelay)
+	assert.Equal(t, time.Duration(10), req.maxRetryDelay)
+}
+
 // mockTransportRedirect mocks a transport that implements RoundTripper
 //
 // When tripCount < maxRedirect,
