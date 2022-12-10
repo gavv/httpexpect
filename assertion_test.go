@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestDefaultAssertionHandler(t *testing.T) {
+func TestAssertionHandler(t *testing.T) {
 	type test struct {
 		formatter *mockFormatter
 		reporter  *mockReporter
@@ -136,5 +136,19 @@ func TestDefaultAssertionHandler(t *testing.T) {
 
 		assert.Nil(t, test.logger)
 		assert.True(t, test.reporter.reported)
+	})
+}
+
+func TestAssertionStrings(t *testing.T) {
+	t.Run("AssertionType", func(t *testing.T) {
+		for i := 0; i < 100; i++ {
+			assert.NotEmpty(t, AssertionType(i).String())
+		}
+	})
+
+	t.Run("AssertionSeverity", func(t *testing.T) {
+		for i := 0; i < 100; i++ {
+			assert.NotEmpty(t, AssertionSeverity(i).String())
+		}
 	})
 }

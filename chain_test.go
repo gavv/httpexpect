@@ -125,6 +125,46 @@ func TestChainPath(t *testing.T) {
 	assert.Equal(t, "root", path(chainClone))
 }
 
+func TestChainPanic(t *testing.T) {
+	t.Run("unpaired leave", func(t *testing.T){
+		chain := newChainWithDefaults("", newMockReporter(t))
+
+		assert.Panics(t, func(){
+			chain.leave()
+		})
+	})
+
+	t.Run("unpaired enter/leave", func(t *testing.T){
+		chain := newChainWithDefaults("", newMockReporter(t))
+
+		chain.enter("foo")
+		chain.leave()
+
+		assert.Panics(t, func(){
+			chain.leave()
+		})
+	})
+
+	t.Run("unpaired replace", func(t *testing.T){
+		chain := newChainWithDefaults("", newMockReporter(t))
+
+		assert.Panics(t, func(){
+			chain.replace("foo")
+		})
+	})
+
+	t.Run("unpaired enter/replace", func(t *testing.T){
+		chain := newChainWithDefaults("", newMockReporter(t))
+
+		chain.enter("foo")
+		chain.leave()
+
+		assert.Panics(t, func(){
+			chain.replace("bar")
+		})
+	})
+}
+
 func TestChainReport(t *testing.T) {
 	r0 := newMockReporter(t)
 
