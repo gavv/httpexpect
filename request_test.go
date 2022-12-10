@@ -2147,12 +2147,6 @@ func TestValidationFailures(t *testing.T) {
 		req.chain.assertFailed(t)
 	})
 
-	t.Run("WithContext", func(t *testing.T) {
-		req := NewRequest(config, "METHOD", "/")
-		req.WithContext(nil)
-		req.chain.assertFailed(t)
-	})
-
 	t.Run("WithMaxRetries", func(t *testing.T) {
 		req := NewRequest(config, "METHOD", "/")
 		req.WithMaxRetries(-1)
@@ -2201,7 +2195,7 @@ func TestValidationFailures(t *testing.T) {
 		req.chain.assertFailed(t)
 	})
 
-	t.Run("setupRedirect - http client is nil and redirect policy is not defaultRedirectPolicy", func(t *testing.T) {
+	t.Run("setupRedirect - redirect policy", func(t *testing.T) {
 		req := NewRequest(config, "METHOD", "/")
 		req.config.Client = nil
 		req.redirectPolicy = FollowAllRedirects
@@ -2209,7 +2203,7 @@ func TestValidationFailures(t *testing.T) {
 		req.chain.assertFailed(t)
 	})
 
-	t.Run("setupRedirect - http client is nil and maxRedirects is not -1", func(t *testing.T) {
+	t.Run("setupRedirect - maxRedirects is not -1", func(t *testing.T) {
 		req := NewRequest(config, "METHOD", "/")
 		req.config.Client = nil
 		req.redirectPolicy = defaultRedirectPolicy
