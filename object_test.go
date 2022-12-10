@@ -16,6 +16,7 @@ func TestObjectFailed(t *testing.T) {
 		assert.NotNil(t, value.Keys())
 		assert.NotNil(t, value.Values())
 		assert.NotNil(t, value.Value("foo"))
+		assert.NotNil(t, value.Iter())
 
 		value.Empty()
 		value.NotEmpty()
@@ -129,6 +130,15 @@ func TestObjectGetters(t *testing.T) {
 
 	assert.Equal(t, nil, value.Value("BAZ").Raw())
 	value.chain.assertFailed(t)
+	value.chain.reset()
+
+	it := value.Iter()
+	assert.Equal(t, 3, len(it))
+	assert.Equal(t, it["foo"].value, value.Value("foo").Raw())
+	assert.Equal(t, it["bar"].value, value.Value("bar").Raw())
+	it["foo"].chain.assertOK(t)
+	it["bar"].chain.assertOK(t)
+	value.chain.assertOK(t)
 	value.chain.reset()
 }
 
