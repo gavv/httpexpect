@@ -2200,6 +2200,50 @@ func TestValidationFailures(t *testing.T) {
 		req.WithFile("test-key", "test-path", nil, nil)
 		req.chain.assertFailed(t)
 	})
+
+	t.Run("setupRedirect - http client is nil and redirect policy is not defaultRedirectPolicy", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.config.Client = nil
+		req.redirectPolicy = FollowAllRedirects
+		req.setupRedirects()
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("setupRedirect - http client is nil and maxRedirects is not -1", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.config.Client = nil
+		req.redirectPolicy = defaultRedirectPolicy
+		req.maxRedirects = 0
+		req.setupRedirects()
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("encodeWebsocketRequest", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.bodySetter = "some value"
+		req.encodeWebsocketRequest()
+		req.chain.assertFailed(t)
+	})
+}
+
+func TestEncodeWebsocketRequest(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
+	client := &mockClient{}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
+	}
+
+	req := NewRequest(config, "METHOD", "/")
+	req.httpReq.URL.Scheme = "https"
+	actual := req.encodeWebsocketRequest()
+	assert.Equal(t, "wss", req.httpReq.URL.Scheme)
+	assert.True(t, actual)
 }
 
 func TestWithRetryDelay(t *testing.T) {
