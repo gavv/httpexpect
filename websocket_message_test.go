@@ -9,7 +9,7 @@ import (
 
 func TestWebsocketMessageFailed(t *testing.T) {
 	chain := newMockChain(t)
-	chain.fail(AssertionFailure{})
+	chain.fail(mockFailure())
 
 	msg := newWebsocketMessage(chain)
 

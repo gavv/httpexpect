@@ -50,7 +50,7 @@ func TestResponseFailed(t *testing.T) {
 
 	t.Run("failed_chain", func(t *testing.T) {
 		chain := newMockChain(t)
-		chain.fail(AssertionFailure{})
+		chain.fail(mockFailure())
 
 		resp := newResponse(responseOpts{
 			chain:    chain,
@@ -73,7 +73,7 @@ func TestResponseFailed(t *testing.T) {
 
 	t.Run("failed_chain_nil_value", func(t *testing.T) {
 		chain := newMockChain(t)
-		chain.fail(AssertionFailure{})
+		chain.fail(mockFailure())
 
 		resp := newResponse(responseOpts{
 			chain:    chain,

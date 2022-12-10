@@ -116,6 +116,8 @@ func (c *chain) leave() {
 	c.context.Path = c.context.Path[:len(c.context.Path)-1]
 }
 
+var chainAssertionValidation = false
+
 func (c *chain) fail(failure AssertionFailure) {
 	if c.failBit {
 		return
@@ -131,6 +133,12 @@ func (c *chain) fail(failure AssertionFailure) {
 
 	if c.failCb != nil {
 		c.failCb()
+	}
+
+	if chainAssertionValidation {
+		if err := validateAssertion(&failure); err != nil {
+			panic(err)
+		}
 	}
 }
 

@@ -24,7 +24,7 @@ func TestRequestFailed(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	chain := newChainWithDefaults("test", reporter)
-	chain.fail(AssertionFailure{})
+	chain.fail(mockFailure())
 
 	config := Config{
 		Reporter: reporter,

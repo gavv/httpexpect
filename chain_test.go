@@ -12,10 +12,10 @@ func TestChainFail(t *testing.T) {
 
 	assert.False(t, chain.failed())
 
-	chain.fail(AssertionFailure{})
+	chain.fail(mockFailure())
 	assert.True(t, chain.failed())
 
-	chain.fail(AssertionFailure{})
+	chain.fail(mockFailure())
 	assert.True(t, chain.failed())
 }
 
@@ -26,12 +26,12 @@ func TestChainClone(t *testing.T) {
 	assert.False(t, chain1.failed())
 	assert.False(t, chain2.failed())
 
-	chain1.fail(AssertionFailure{})
+	chain1.fail(mockFailure())
 
 	assert.True(t, chain1.failed())
 	assert.False(t, chain2.failed())
 
-	chain2.fail(AssertionFailure{})
+	chain2.fail(mockFailure())
 
 	assert.True(t, chain1.failed())
 	assert.True(t, chain2.failed())
@@ -180,7 +180,7 @@ func TestChainReport(t *testing.T) {
 
 	assert.False(t, chain.failed())
 
-	chain.fail(AssertionFailure{})
+	chain.fail(mockFailure())
 	assert.True(t, r0.reported)
 
 	r2 := newMockReporter(t)
@@ -200,7 +200,7 @@ func TestChainHandler(t *testing.T) {
 	})
 
 	chain.enter("test")
-	chain.fail(AssertionFailure{})
+	chain.fail(mockFailure())
 	chain.leave()
 
 	assert.NotNil(t, handler.ctx)
@@ -225,7 +225,7 @@ func TestChainSeverity(t *testing.T) {
 		AssertionHandler: handler,
 	})
 
-	chain.fail(AssertionFailure{})
+	chain.fail(mockFailure())
 
 	assert.NotNil(t, handler.failure)
 	assert.Equal(t, SeverityError, handler.failure.Severity)
@@ -233,7 +233,7 @@ func TestChainSeverity(t *testing.T) {
 	chain.reset()
 
 	chain.setSeverity(SeverityError)
-	chain.fail(AssertionFailure{})
+	chain.fail(mockFailure())
 
 	assert.NotNil(t, handler.failure)
 	assert.Equal(t, SeverityError, handler.failure.Severity)
@@ -241,7 +241,7 @@ func TestChainSeverity(t *testing.T) {
 	chain.reset()
 
 	chain.setSeverity(SeverityLog)
-	chain.fail(AssertionFailure{})
+	chain.fail(mockFailure())
 
 	assert.NotNil(t, handler.failure)
 	assert.Equal(t, SeverityLog, handler.failure.Severity)
@@ -260,6 +260,6 @@ func TestChainCallback(t *testing.T) {
 		called = true
 	})
 
-	chain.fail(AssertionFailure{})
+	chain.fail(mockFailure())
 	assert.True(t, called)
 }
