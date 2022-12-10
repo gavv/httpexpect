@@ -2215,3 +2215,650 @@ func (mt *mockTransportRedirect) WithMaxRedirect(
 
 	return mt
 }
+
+func TestRequestRetry(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	newNoErrClient := func(cb func(req *http.Request)) *mockClient {
+		return &mockClient{
+			resp: http.Response{
+				StatusCode: http.StatusOK,
+			},
+			cb: cb,
+		}
+	}
+
+	newTempNetErrClient := func(cb func(req *http.Request)) *mockClient {
+		return &mockClient{
+			err: &mockNetError{
+				isTemporary: true,
+			},
+			cb: cb,
+		}
+	}
+
+	newTempServerErrClient := func(cb func(req *http.Request)) *mockClient {
+		return &mockClient{
+			resp: http.Response{
+				StatusCode: http.StatusInternalServerError,
+			},
+			cb: cb,
+		}
+	}
+
+	newHTTPErrClient := func(cb func(req *http.Request)) *mockClient {
+		return &mockClient{
+			resp: http.Response{
+				StatusCode: http.StatusBadRequest,
+			},
+			cb: cb,
+		}
+	}
+
+	noopSleepFn := func(time.Duration) {}
+
+	t.Run("dont retry policy", func(t *testing.T) {
+		t.Run("no error", func(t *testing.T) {
+			callCount := 0
+
+			client := newNoErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
+				WithRetryPolicy(DontRetry)
+			req.sleepFn = noopSleepFn
+			req.chain.assertOK(t)
+
+			resp := req.Expect()
+			resp.chain.assertOK(t)
+
+			// Should not retry
+			assert.Equal(t, 1, callCount)
+		})
+
+		t.Run("temporary network error", func(t *testing.T) {
+			callCount := 0
+
+			client := newTempNetErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
+				WithRetryPolicy(DontRetry).
+				WithMaxRetries(1)
+			req.sleepFn = noopSleepFn
+			req.chain.assertOK(t)
+
+			resp := req.Expect()
+			resp.chain.assertFailed(t)
+
+			// Should not retry
+			assert.Equal(t, 1, callCount)
+		})
+
+		t.Run("temporary server error", func(t *testing.T) {
+			callCount := 0
+
+			client := newTempServerErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
+				WithRetryPolicy(DontRetry).
+				WithMaxRetries(1)
+			req.sleepFn = noopSleepFn
+			req.chain.assertOK(t)
+
+			resp := req.Expect().
+				Status(http.StatusInternalServerError)
+			resp.chain.assertOK(t)
+
+			// Should not retry
+			assert.Equal(t, 1, callCount)
+		})
+
+		t.Run("http error", func(t *testing.T) {
+			callCount := 0
+
+			client := newHTTPErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
+				WithRetryPolicy(DontRetry).
+				WithMaxRetries(1)
+			req.sleepFn = noopSleepFn
+			req.chain.assertOK(t)
+
+			resp := req.Expect().
+				Status(http.StatusBadRequest)
+			resp.chain.assertOK(t)
+
+			// Should not retry
+			assert.Equal(t, 1, callCount)
+		})
+
+	})
+
+	t.Run("retry temporary network errors policy", func(t *testing.T) {
+		t.Run("no error", func(t *testing.T) {
+			callCount := 0
+
+			client := newNoErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
+				WithRetryPolicy(RetryTemporaryNetworkErrors)
+			req.sleepFn = noopSleepFn
+			req.chain.assertOK(t)
+
+			resp := req.Expect()
+			resp.chain.assertOK(t)
+
+			// Should not retry
+			assert.Equal(t, 1, callCount)
+		})
+
+		t.Run("temporary network error", func(t *testing.T) {
+			callCount := 0
+
+			client := newTempNetErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
+				WithRetryPolicy(RetryTemporaryNetworkErrors).
+				WithMaxRetries(1).
+				WithRetryDelay(0, 0)
+			req.sleepFn = noopSleepFn
+			req.chain.assertOK(t)
+
+			resp := req.Expect()
+			resp.chain.assertFailed(t)
+
+			// Should retry
+			assert.Equal(t, 2, callCount)
+		})
+
+		t.Run("temporary server error", func(t *testing.T) {
+			callCount := 0
+
+			client := newTempServerErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
+				WithRetryPolicy(RetryTemporaryNetworkErrors).
+				WithMaxRetries(1)
+			req.sleepFn = noopSleepFn
+			req.chain.assertOK(t)
+
+			resp := req.Expect().
+				Status(http.StatusInternalServerError)
+			resp.chain.assertOK(t)
+
+			// Should not retry
+			assert.Equal(t, 1, callCount)
+		})
+
+		t.Run("http error", func(t *testing.T) {
+			callCount := 0
+
+			client := newHTTPErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
+				WithRetryPolicy(RetryTemporaryNetworkErrors).
+				WithMaxRetries(1)
+			req.sleepFn = noopSleepFn
+			req.chain.assertOK(t)
+
+			resp := req.Expect().
+				Status(http.StatusBadRequest)
+			resp.chain.assertOK(t)
+
+			// Should not retry
+			assert.Equal(t, 1, callCount)
+		})
+	})
+
+	t.Run("retry temporary network and server errors policy", func(t *testing.T) {
+		t.Run("no error", func(t *testing.T) {
+			callCount := 0
+
+			client := newNoErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
+				WithRetryPolicy(RetryTemporaryNetworkAndServerErrors)
+			req.sleepFn = noopSleepFn
+			req.chain.assertOK(t)
+
+			resp := req.Expect()
+			resp.chain.assertOK(t)
+
+			// Should not retry
+			assert.Equal(t, 1, callCount)
+		})
+
+		t.Run("temporary network error", func(t *testing.T) {
+			callCount := 0
+
+			client := newTempNetErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
+				WithRetryPolicy(RetryTemporaryNetworkAndServerErrors).
+				WithMaxRetries(1).
+				WithRetryDelay(0, 0)
+			req.sleepFn = noopSleepFn
+			req.chain.assertOK(t)
+
+			resp := req.Expect()
+			resp.chain.assertFailed(t)
+
+			// Should retry
+			assert.Equal(t, 2, callCount)
+		})
+
+		t.Run("temporary server error", func(t *testing.T) {
+			callCount := 0
+
+			client := newTempServerErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
+				WithRetryPolicy(RetryTemporaryNetworkAndServerErrors).
+				WithMaxRetries(1).
+				WithRetryDelay(0, 0)
+			req.sleepFn = noopSleepFn
+			req.chain.assertOK(t)
+
+			resp := req.Expect().
+				Status(http.StatusInternalServerError)
+			resp.chain.assertOK(t)
+
+			// Should retry
+			assert.Equal(t, 2, callCount)
+		})
+
+		t.Run("http error", func(t *testing.T) {
+			callCount := 0
+
+			client := newHTTPErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
+				WithRetryPolicy(RetryTemporaryNetworkAndServerErrors).
+				WithMaxRetries(1)
+			req.sleepFn = noopSleepFn
+			req.chain.assertOK(t)
+
+			resp := req.Expect().
+				Status(http.StatusBadRequest)
+			resp.chain.assertOK(t)
+
+			// Should not retry
+			assert.Equal(t, 1, callCount)
+		})
+	})
+
+	t.Run("retry all errors policy", func(t *testing.T) {
+		t.Run("no error", func(t *testing.T) {
+			callCount := 0
+
+			client := newNoErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
+				WithRetryPolicy(RetryAllErrors)
+			req.sleepFn = noopSleepFn
+			req.chain.assertOK(t)
+
+			resp := req.Expect()
+			resp.chain.assertOK(t)
+
+			// Should not retry
+			assert.Equal(t, 1, callCount)
+		})
+
+		t.Run("temporary network error", func(t *testing.T) {
+			callCount := 0
+
+			client := newTempNetErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
+				WithRetryPolicy(RetryAllErrors).
+				WithMaxRetries(1).
+				WithRetryDelay(0, 0)
+			req.sleepFn = noopSleepFn
+			req.chain.assertOK(t)
+
+			resp := req.Expect()
+			resp.chain.assertFailed(t)
+
+			// Should retry
+			assert.Equal(t, 2, callCount)
+		})
+
+		t.Run("temporary server error", func(t *testing.T) {
+			callCount := 0
+
+			client := newTempServerErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
+				WithRetryPolicy(RetryAllErrors).
+				WithMaxRetries(1).
+				WithRetryDelay(0, 0)
+			req.sleepFn = noopSleepFn
+			req.chain.assertOK(t)
+
+			resp := req.Expect().
+				Status(http.StatusInternalServerError)
+			resp.chain.assertOK(t)
+
+			// Should retry
+			assert.Equal(t, 2, callCount)
+		})
+
+		t.Run("http error", func(t *testing.T) {
+			callCount := 0
+
+			client := newHTTPErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
+				WithRetryPolicy(RetryAllErrors).
+				WithMaxRetries(1).
+				WithRetryDelay(0, 0)
+			req.sleepFn = noopSleepFn
+			req.chain.assertOK(t)
+
+			resp := req.Expect().
+				Status(http.StatusBadRequest)
+			resp.chain.assertOK(t)
+
+			// Should retry
+			assert.Equal(t, 2, callCount)
+		})
+	})
+
+	t.Run("max retries", func(t *testing.T) {
+		callCount := 0
+
+		client := newHTTPErrClient(func(req *http.Request) {
+			callCount++
+
+			b, err := ioutil.ReadAll(req.Body)
+			assert.NoError(t, err)
+			assert.Equal(t, "test body", string(b))
+		})
+
+		config := Config{
+			Client:   client,
+			Reporter: reporter,
+		}
+
+		req := NewRequest(config, http.MethodPost, "/url").
+			WithText("test body").
+			WithRetryPolicy(RetryAllErrors).
+			WithMaxRetries(3).
+			WithRetryDelay(0, 0)
+		req.sleepFn = noopSleepFn
+		req.chain.assertOK(t)
+
+		resp := req.Expect().
+			Status(http.StatusBadRequest)
+		resp.chain.assertOK(t)
+
+		// Should retry until max retries is reached
+		assert.Equal(t, 1+3, callCount)
+	})
+
+	t.Run("retry delay", func(t *testing.T) {
+		t.Run("not exceeding max retry delay", func(t *testing.T) {
+			callCount := 0
+
+			client := newHTTPErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			var totalSleepTime time.Duration
+
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
+				WithRetryPolicy(RetryAllErrors).
+				WithMaxRetries(3).
+				WithRetryDelay(100*time.Millisecond, 1000*time.Millisecond)
+			req.sleepFn = func(d time.Duration) {
+				totalSleepTime += d
+			}
+			req.chain.assertOK(t)
+
+			resp := req.Expect().
+				Status(http.StatusBadRequest)
+			resp.chain.assertOK(t)
+
+			// Should retry with delay
+			assert.Equal(t, int64(100+200+400), totalSleepTime.Milliseconds())
+		})
+
+		t.Run("exceeding max retry delay", func(t *testing.T) {
+			callCount := 0
+
+			client := newHTTPErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			var totalSleepTime time.Duration
+
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
+				WithRetryPolicy(RetryAllErrors).
+				WithMaxRetries(3).
+				WithRetryDelay(100*time.Millisecond, 300*time.Millisecond)
+			req.sleepFn = func(d time.Duration) {
+				totalSleepTime += d
+			}
+			req.chain.assertOK(t)
+
+			resp := req.Expect().
+				Status(http.StatusBadRequest)
+			resp.chain.assertOK(t)
+
+			// Should retry with delay
+			assert.Equal(t, int64(100+200+300), totalSleepTime.Milliseconds())
+		})
+	})
+}

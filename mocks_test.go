@@ -14,9 +14,15 @@ type mockClient struct {
 	req  *http.Request
 	resp http.Response
 	err  error
+	cb   func(req *http.Request) // callback in .Do
 }
 
 func (c *mockClient) Do(req *http.Request) (*http.Response, error) {
+	defer func() {
+		if c.cb != nil {
+			c.cb(req)
+		}
+	}()
 	c.req = req
 	if c.err == nil {
 		c.resp.Header = c.req.Header
@@ -257,4 +263,21 @@ func (wc *mockWebsocketConn) SetWriteDeadline(t time.Time) error {
 
 func (wc *mockWebsocketConn) Subprotocol() string {
 	return wc.subprotocol
+}
+
+type mockNetError struct {
+	isTimeout   bool
+	isTemporary bool
+}
+
+func (e *mockNetError) Error() string {
+	return "mock net error"
+}
+
+func (e *mockNetError) Timeout() bool {
+	return e.isTimeout
+}
+
+func (e *mockNetError) Temporary() bool {
+	return e.isTemporary
 }

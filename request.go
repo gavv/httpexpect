@@ -38,6 +38,7 @@ type Request struct {
 	maxRetries    int
 	minRetryDelay time.Duration
 	maxRetryDelay time.Duration
+	sleepFn       func(d time.Duration)
 
 	timeout time.Duration
 
@@ -122,6 +123,7 @@ func newRequest(
 		maxRetries:    0,
 		minRetryDelay: time.Millisecond * 50,
 		maxRetryDelay: time.Second * 5,
+		sleepFn:       time.Sleep,
 	}
 
 	r.initPath(path, pathargs...)
@@ -1920,7 +1922,7 @@ func (r *Request) retryRequest(reqFunc func() (*http.Response, error)) (
 			resp.Body.Close()
 		}
 
-		time.Sleep(delay)
+		r.sleepFn(delay)
 
 		delay *= 2
 		if delay > r.maxRetryDelay {
