@@ -2128,6 +2128,80 @@ func TestRequestRedirect(t *testing.T) {
 	})
 }
 
+func TestValidationFailures(t *testing.T){
+	factory := DefaultRequestFactory{}
+
+	client := &mockClient{}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
+	}
+
+	t.Run("WithMatcher", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.WithMatcher(nil)
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithContext", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.WithContext(nil)
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithMaxRetries", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.WithMaxRetries(-1)
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithMaxRedirects", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.WithMaxRedirects(-1)
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithRetryDelay", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.WithRetryDelay(10,5)
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithWebsocketDialer", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.WithWebsocketDialer(nil)
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithPath", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.WithPath("test-path",nil)
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithQuery", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.WithQuery("test-query",nil)
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithURL", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.WithURL("%-invalid-url")
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithFile", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.WithFile("test-key","test-path",nil,nil)
+		req.chain.assertFailed(t)
+	})
+}
+
 // mockTransportRedirect mocks a transport that implements RoundTripper
 //
 // When tripCount < maxRedirect,
