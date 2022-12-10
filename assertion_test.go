@@ -71,7 +71,7 @@ func TestDefaultAssertionHandler(t *testing.T) {
 			},
 			&AssertionFailure{
 				Type:     AssertValid,
-				Severity: SeverityInfo,
+				Severity: SeverityLog,
 			})
 
 		assert.Equal(t, 0, test.formatter.formattedSuccess)
@@ -90,7 +90,7 @@ func TestDefaultAssertionHandler(t *testing.T) {
 			},
 			&AssertionFailure{
 				Type:     AssertValid,
-				Severity: SeverityInfo,
+				Severity: SeverityLog,
 			})
 
 		assert.Equal(t, 0, test.formatter.formattedSuccess)

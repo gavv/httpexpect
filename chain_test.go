@@ -200,11 +200,11 @@ func TestChainSeverity(t *testing.T) {
 
 	chain.reset()
 
-	chain.setSeverity(SeverityInfo)
+	chain.setSeverity(SeverityLog)
 	chain.fail(AssertionFailure{})
 
 	assert.NotNil(t, handler.failure)
-	assert.Equal(t, SeverityInfo, handler.failure.Severity)
+	assert.Equal(t, SeverityLog, handler.failure.Severity)
 }
 
 func TestChainCallback(t *testing.T) {
