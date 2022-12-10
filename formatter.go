@@ -90,8 +90,9 @@ type FormatData struct {
 	TestName    string
 	RequestName string
 
-	AssertPath []string
-	AssertType string
+	AssertPath     []string
+	AssertType     string
+	AssertSeverity string
 
 	Errors []string
 
@@ -163,6 +164,7 @@ func (f *DefaultFormatter) buildFormatData(
 
 	if failure != nil {
 		data.AssertType = failure.Type.String()
+		data.AssertSeverity = failure.Severity.String()
 
 		f.fillErrors(&data, ctx, failure)
 
