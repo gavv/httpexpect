@@ -2199,7 +2199,7 @@ func TestValidationFailures(t *testing.T) {
 		req := NewRequest(config, "METHOD", "/")
 		req.config.Client = nil
 		req.redirectPolicy = FollowAllRedirects
-		req.setupRedirects()
+		req.Expect() // calls setupRedirect indirectly
 		req.chain.assertFailed(t)
 	})
 
@@ -2208,44 +2208,8 @@ func TestValidationFailures(t *testing.T) {
 		req.config.Client = nil
 		req.redirectPolicy = defaultRedirectPolicy
 		req.maxRedirects = 0
-		req.setupRedirects()
+		req.Expect() // calls setupRedirect indirectly
 		req.chain.assertFailed(t)
-	})
-
-	t.Run("encodeWebsocketRequest", func(t *testing.T) {
-		req := NewRequest(config, "METHOD", "/")
-		req.bodySetter = "some value"
-		req.encodeWebsocketRequest()
-		req.chain.assertFailed(t)
-	})
-}
-
-func TestEncodeWebsocketRequest(t *testing.T) {
-	factory := DefaultRequestFactory{}
-
-	client := &mockClient{}
-
-	reporter := newMockReporter(t)
-
-	config := Config{
-		RequestFactory: factory,
-		Client:         client,
-		Reporter:       reporter,
-	}
-
-	t.Run("Http request as https", func(t *testing.T) {
-		req := NewRequest(config, "METHOD", "/")
-		req.httpReq.URL.Scheme = "https"
-		actual := req.encodeWebsocketRequest()
-		assert.Equal(t, "wss", req.httpReq.URL.Scheme)
-		assert.True(t, actual)
-	})
-
-	t.Run("Req chain failure", func(t *testing.T) {
-		req := NewRequest(config, "METHOD", "/")
-		req.chain.setFailed()
-		actual := req.encodeWebsocketRequest()
-		assert.False(t, actual)
 	})
 }
 
