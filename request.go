@@ -1924,11 +1924,14 @@ func (r *Request) retryRequest(reqFunc func() (*http.Response, error)) (
 			resp.Body.Close()
 		}
 
-		select {
-		case <-r.sleepFn(delay):
-			break
-		case <-r.httpReq.Context().Done():
-			return nil, elapsed, r.httpReq.Context().Err()
+		if configCtx := r.config.Context; configCtx != nil {
+			select {
+			case <-configCtx.Done():
+				return nil, elapsed, r.httpReq.Context().Err()
+			case <-r.sleepFn(delay):
+			}
+		} else {
+			<-r.sleepFn(delay)
 		}
 
 		delay *= 2
