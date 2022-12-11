@@ -394,44 +394,159 @@ func TestContextPerRequestWithTimeoutCancelledByContext(t *testing.T) {
 	assert.True(t, suppressor.expErrorOccurred)
 }
 
-func TestContextPerRequestRetryCancelledByContext(t *testing.T) {
-	var callCount int
-	var isConfigCtxCancelled bool
-	delayDuration := TimeOutDuration / 2
+func TestContextPerRequestRetry(t *testing.T) {
+	var m sync.Mutex
+	TimeOutDuration := 5 * time.Minute
 
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		callCount++
-		w.WriteHeader(http.StatusInternalServerError)
-	}))
-	defer ts.Close()
+	t.Run("not cancelled", func(t *testing.T) {
+		var callCount int
+		var isCtxCancelled bool
+		ctxCancellationSleepDuration := 1 * time.Minute
+		retryDelayDuration := 1 * time.Second
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	go func(fn context.CancelFunc) {
-		time.Sleep(delayDuration / 2)
-		fn()
-		isConfigCtxCancelled = true
-	}(cancel)
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			m.Lock()
+			defer m.Unlock()
+			callCount++
 
-	// Config with context cancelled error
-	suppressor := newExpErrorSuppressor(t,
-		func(err error) bool {
-			return strings.Contains(err.Error(), context.Canceled.Error())
+			if callCount > 1 {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+
+			w.WriteHeader(http.StatusInternalServerError)
+		}))
+		defer ts.Close()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		go func(fn context.CancelFunc) {
+			time.Sleep(ctxCancellationSleepDuration)
+			fn()
+			m.Lock()
+			defer m.Unlock()
+			isCtxCancelled = true
+		}(cancel)
+
+		// Config with all error
+		suppressor := newExpErrorSuppressor(t,
+			func(err error) bool {
+				return true
+			})
+
+		e := WithConfig(Config{
+			BaseURL:          ts.URL,
+			AssertionHandler: suppressor,
 		})
 
-	e := WithConfig(Config{
-		BaseURL:          ts.URL,
-		AssertionHandler: suppressor,
+		e.GET("/").
+			WithContext(ctx).
+			WithMaxRetries(1).
+			WithRetryPolicy(RetryAllErrors).
+			WithRetryDelay(retryDelayDuration, TimeOutDuration).
+			Expect()
+
+		assert.Equal(t, 2, callCount)
+		assert.False(t, isCtxCancelled)
+		assert.False(t, suppressor.expErrorOccurred)
 	})
 
-	e.GET("/").
-		WithContext(ctx).
-		WithMaxRetries(1).
-		WithRetryPolicy(RetryAllErrors).
-		WithRetryDelay(delayDuration, TimeOutDuration).
-		Expect()
+	t.Run("cancelled on first retry attempt", func(t *testing.T) {
+		var callCount int
+		var isCtxCancelled bool
+		ctxCancellationSleepDuration := 1 * time.Second
+		retryDelayDuration := 1 * time.Minute
 
-	assert.Equal(t, 1, callCount)
-	assert.True(t, isConfigCtxCancelled)
-	assert.True(t, suppressor.expErrorOccurred)
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			m.Lock()
+			defer m.Unlock()
+			callCount++
+			w.WriteHeader(http.StatusInternalServerError)
+		}))
+		defer ts.Close()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		go func(fn context.CancelFunc) {
+			time.Sleep(ctxCancellationSleepDuration)
+			fn()
+			m.Lock()
+			defer m.Unlock()
+			isCtxCancelled = true
+		}(cancel)
+
+		// Config with context cancelled error
+		suppressor := newExpErrorSuppressor(t,
+			func(err error) bool {
+				return strings.Contains(err.Error(), context.Canceled.Error())
+			})
+
+		e := WithConfig(Config{
+			BaseURL:          ts.URL,
+			AssertionHandler: suppressor,
+		})
+
+		e.GET("/").
+			WithContext(ctx).
+			WithMaxRetries(1).
+			WithRetryPolicy(RetryAllErrors).
+			WithRetryDelay(retryDelayDuration, TimeOutDuration).
+			Expect()
+
+		assert.Equal(t, 1, callCount)
+		assert.True(t, isCtxCancelled)
+		assert.True(t, suppressor.expErrorOccurred)
+	})
+
+	t.Run("cancelled on second retry attempt", func(t *testing.T) {
+		var callCount int
+		var isCtxCancelled bool
+		ctxCancellation := make(chan bool, 1) // To cancel context after frist retry attempt
+		retryDelayDuration := 5 * time.Second
+
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			m.Lock()
+			defer m.Unlock()
+			callCount++
+
+			if callCount == 2 {
+				ctxCancellation <- true
+			}
+
+			w.WriteHeader(http.StatusInternalServerError)
+		}))
+		defer ts.Close()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		go func(fn context.CancelFunc) {
+			<-ctxCancellation
+			fn()
+			m.Lock()
+			defer m.Unlock()
+			isCtxCancelled = true
+		}(cancel)
+
+		// Config with context cancelled error
+		suppressor := newExpErrorSuppressor(t,
+			func(err error) bool {
+				return strings.Contains(err.Error(), context.Canceled.Error())
+			})
+
+		e := WithConfig(Config{
+			BaseURL:          ts.URL,
+			AssertionHandler: suppressor,
+		})
+
+		e.GET("/").
+			WithContext(ctx).
+			WithMaxRetries(1).
+			WithRetryPolicy(RetryAllErrors).
+			WithRetryDelay(retryDelayDuration, TimeOutDuration).
+			Expect()
+
+		assert.Equal(t, 2, callCount)
+		assert.True(t, isCtxCancelled)
+		assert.True(t, suppressor.expErrorOccurred)
+	})
 }
