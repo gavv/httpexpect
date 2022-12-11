@@ -1927,7 +1927,7 @@ func (r *Request) retryRequest(reqFunc func() (*http.Response, error)) (
 		if configCtx := r.config.Context; configCtx != nil {
 			select {
 			case <-configCtx.Done():
-				return nil, elapsed, r.httpReq.Context().Err()
+				return nil, elapsed, configCtx.Err()
 			case <-r.sleepFn(delay):
 			}
 		} else {
