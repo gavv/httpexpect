@@ -2239,17 +2239,6 @@ func TestValidatePanics(t *testing.T) {
 
 	reporter := newMockReporter(t)
 
-	t.Run("setBody", func(t *testing.T) {
-		config := Config{
-			RequestFactory: factory,
-			Client:         client,
-			Reporter:       reporter,
-		}
-
-		req := NewRequest(config, "METHOD", "/")
-		assert.Panics(t, func() { req.setBody("some-setter", nil, 1, false) })
-	})
-
 	t.Run("newRequest - requestFactory is nil", func(t *testing.T) {
 		config := Config{
 			RequestFactory: nil,
