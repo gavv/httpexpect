@@ -394,7 +394,7 @@ func TestContextPerRequestWithTimeoutCancelledByContext(t *testing.T) {
 	assert.True(t, suppressor.expErrorOccurred)
 }
 
-func TestContextPerRequestWithRetryCancelledByContext(t *testing.T) {
+func TestContextPerRequestRetryCancelledByContext(t *testing.T) {
 	var callCount int
 	var isConfigCtxCancelled bool
 	delayDuration := TimeOutDuration / 2
