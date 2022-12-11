@@ -420,13 +420,13 @@ func TestContextPerRequestRetry(t *testing.T) {
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		go func(fn context.CancelFunc) {
+		go func() {
 			time.Sleep(ctxCancellationSleepDuration)
-			fn()
+			cancel()
 			m.Lock()
 			defer m.Unlock()
 			isCtxCancelled = true
-		}(cancel)
+		}()
 
 		// Config with all error
 		suppressor := newExpErrorSuppressor(t,
@@ -467,13 +467,13 @@ func TestContextPerRequestRetry(t *testing.T) {
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		go func(fn context.CancelFunc) {
+		go func() {
 			time.Sleep(ctxCancellationSleepDuration)
-			fn()
+			cancel()
 			m.Lock()
 			defer m.Unlock()
 			isCtxCancelled = true
-		}(cancel)
+		}()
 
 		// Config with context cancelled error
 		suppressor := newExpErrorSuppressor(t,
@@ -519,13 +519,13 @@ func TestContextPerRequestRetry(t *testing.T) {
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		go func(fn context.CancelFunc) {
+		go func() {
 			<-ctxCancellation
-			fn()
+			cancel()
 			m.Lock()
 			defer m.Unlock()
 			isCtxCancelled = true
-		}(cancel)
+		}()
 
 		// Config with context cancelled error
 		suppressor := newExpErrorSuppressor(t,
