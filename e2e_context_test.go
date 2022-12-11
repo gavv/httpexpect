@@ -393,3 +393,45 @@ func TestContextPerRequestWithTimeoutCancelledByContext(t *testing.T) {
 	// expected error should occur
 	assert.True(t, suppressor.expErrorOccurred)
 }
+
+func TestContextPerRequestWithRetryCancelledByContext(t *testing.T) {
+	var callCount int
+	var isConfigCtxCancelled bool
+	delayDuration := TimeOutDuration / 2
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		callCount++
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer ts.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	go func(fn context.CancelFunc) {
+		time.Sleep(delayDuration / 2)
+		fn()
+		isConfigCtxCancelled = true
+	}(cancel)
+
+	// Config with context cancelled error
+	suppressor := newExpErrorSuppressor(t,
+		func(err error) bool {
+			return strings.Contains(err.Error(), context.Canceled.Error())
+		})
+
+	e := WithConfig(Config{
+		BaseURL:          ts.URL,
+		AssertionHandler: suppressor,
+	})
+
+	e.GET("/").
+		WithContext(ctx).
+		WithMaxRetries(1).
+		WithRetryPolicy(RetryAllErrors).
+		WithRetryDelay(delayDuration, TimeOutDuration).
+		Expect()
+
+	assert.Equal(t, 1, callCount)
+	assert.True(t, isConfigCtxCancelled)
+	assert.True(t, suppressor.expErrorOccurred)
+}
