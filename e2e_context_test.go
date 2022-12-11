@@ -502,7 +502,7 @@ func TestContextPerRequestRetry(t *testing.T) {
 		var callCount int
 		var isCtxCancelled bool
 		ctxCancellation := make(chan bool, 1) // To cancel context after first retry attempt
-		retryDelayDuration := 5 * time.Second
+		retryDelayDuration := 1 * time.Second
 
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			m.Lock()
