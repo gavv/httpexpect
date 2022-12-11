@@ -2283,11 +2283,7 @@ func TestValidatePanics(t *testing.T) {
 		}
 
 		req := NewRequest(config, "METHOD", "/")
-		defer func() {
-			err := recover()
-			assert.Equal(t, "invalid length", err)
-		}()
-		req.setBody("some-setter", nil, 1, false)
+		assert.Panics(t, func() { req.setBody("some-setter", nil, 1, false) })
 	})
 
 	t.Run("newRequest - requestFactory is nil", func(t *testing.T) {
@@ -2297,11 +2293,7 @@ func TestValidatePanics(t *testing.T) {
 			Reporter:       reporter,
 		}
 
-		defer func() {
-			err := recover()
-			assert.Equal(t, "Config.RequestFactory is nil", err)
-		}()
-		newRequest(nil, config, "", "")
+		assert.Panics(t, func() { newRequest(nil, config, "", "") })
 	})
 
 	t.Run("newRequest - client is nil", func(t *testing.T) {
@@ -2311,11 +2303,7 @@ func TestValidatePanics(t *testing.T) {
 			Reporter:       reporter,
 		}
 
-		defer func() {
-			err := recover()
-			assert.Equal(t, "Config.Client is nil", err)
-		}()
-		newRequest(nil, config, "", "")
+		assert.Panics(t, func() { newRequest(nil, config, "", "") })
 	})
 
 	t.Run("newRequest - AssertionHandler is nil", func(t *testing.T) {
@@ -2326,11 +2314,7 @@ func TestValidatePanics(t *testing.T) {
 		}
 		config.AssertionHandler = nil
 
-		defer func() {
-			err := recover()
-			assert.Equal(t, "Config.AssertionHandler is nil", err)
-		}()
-		newRequest(nil, config, "", "")
+		assert.Panics(t, func() { newRequest(nil, config, "", "") })
 	})
 }
 
