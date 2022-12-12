@@ -262,6 +262,52 @@ func (r *Response) StatusRange(rn StatusRange) *Response {
 	return r
 }
 
+// StatusList succeeds if response matches with any given status code list
+//
+// Example:
+//
+//	resp := NewResponse(t, response)
+//	resp.StatusList(http.StatusForbidden, http.StatusUnauthorized)
+func (r *Response) StatusList(values ...int) *Response {
+	r.chain.enter("StatusList()")
+	defer r.chain.leave()
+
+	if r.chain.failed() {
+		return r
+	}
+
+	if len(values) == 0 {
+		r.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty status list"),
+			},
+		})
+		return r
+	}
+
+	var found bool
+	for _, v := range values {
+		if v == r.httpResp.StatusCode {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		r.chain.fail(AssertionFailure{
+			Type:     AssertBelongs,
+			Actual:   &AssertionValue{statusCodeText(r.httpResp.StatusCode)},
+			Expected: &AssertionValue{AssertionList{statusListText(values)}},
+			Errors: []error{
+				errors.New("expected: http status belongs to given list"),
+			},
+		})
+	}
+
+	return r
+}
+
 func statusCodeText(code int) string {
 	if s := http.StatusText(code); s != "" {
 		return strconv.Itoa(code) + " " + s
@@ -284,42 +330,6 @@ func statusRangeText(code int) string {
 	default:
 		return ""
 	}
-}
-
-// StatusList succeeds if response matches with any given status code list
-//
-// Example:
-//
-//	resp := NewResponse(t, response)
-//	resp.StatusList(http.StatusForbidden, http.StatusUnauthorized)
-func (r *Response) StatusList(values ...int) *Response {
-	r.chain.enter("StatusList()")
-	defer r.chain.leave()
-
-	if r.chain.failed() {
-		return r
-	}
-
-	var found bool
-	for _, v := range values {
-		if v == r.httpResp.StatusCode {
-			found = true
-			break
-		}
-	}
-
-	if !found {
-		r.chain.fail(AssertionFailure{
-			Type:     AssertContainsElement,
-			Actual:   &AssertionValue{statusCodeText(r.httpResp.StatusCode)},
-			Expected: &AssertionValue{statusListText(values)},
-			Errors: []error{
-				fmt.Errorf("expected: http status belongs to given list"),
-			},
-		})
-	}
-
-	return r
 }
 
 func statusListText(values []int) []string {
