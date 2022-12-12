@@ -400,8 +400,6 @@ func TestContextPerRequestRetry(t *testing.T) {
 
 	t.Run("not cancelled", func(t *testing.T) {
 		var callCount int
-		var isCtxCancelled bool
-		ctxCancellationSleepDuration := 1 * time.Minute
 		retryDelayDuration := 1 * time.Second
 
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -420,23 +418,10 @@ func TestContextPerRequestRetry(t *testing.T) {
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		go func() {
-			time.Sleep(ctxCancellationSleepDuration)
-			cancel()
-			m.Lock()
-			defer m.Unlock()
-			isCtxCancelled = true
-		}()
-
-		// Config with all error
-		suppressor := newExpErrorSuppressor(t,
-			func(err error) bool {
-				return true
-			})
 
 		e := WithConfig(Config{
 			BaseURL:          ts.URL,
-			AssertionHandler: suppressor,
+			AssertionHandler: &mockAssertionHandler{},
 		})
 
 		e.GET("/").
@@ -447,62 +432,12 @@ func TestContextPerRequestRetry(t *testing.T) {
 			Expect()
 
 		assert.Equal(t, 2, callCount)
-		assert.False(t, isCtxCancelled)
-		assert.False(t, suppressor.expErrorOccurred)
 	})
 
-	t.Run("cancelled on first retry attempt", func(t *testing.T) {
-		var callCount int
-		var isCtxCancelled bool
-		ctxCancellationSleepDuration := 1 * time.Second
-		retryDelayDuration := 1 * time.Minute
-
-		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			m.Lock()
-			defer m.Unlock()
-			callCount++
-			w.WriteHeader(http.StatusInternalServerError)
-		}))
-		defer ts.Close()
-
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
-		go func() {
-			time.Sleep(ctxCancellationSleepDuration)
-			cancel()
-			m.Lock()
-			defer m.Unlock()
-			isCtxCancelled = true
-		}()
-
-		// Config with context cancelled error
-		suppressor := newExpErrorSuppressor(t,
-			func(err error) bool {
-				return strings.Contains(err.Error(), context.Canceled.Error())
-			})
-
-		e := WithConfig(Config{
-			BaseURL:          ts.URL,
-			AssertionHandler: suppressor,
-		})
-
-		e.GET("/").
-			WithContext(ctx).
-			WithMaxRetries(1).
-			WithRetryPolicy(RetryAllErrors).
-			WithRetryDelay(retryDelayDuration, TimeOutDuration).
-			Expect()
-
-		assert.Equal(t, 1, callCount)
-		assert.True(t, isCtxCancelled)
-		assert.True(t, suppressor.expErrorOccurred)
-	})
-
-	t.Run("cancelled on second retry attempt", func(t *testing.T) {
+	t.Run("cancelled after first retry attempt", func(t *testing.T) {
 		var callCount int
 		var isCtxCancelled bool
 		ctxCancellation := make(chan bool, 1) // To cancel context after first retry attempt
-		retryDelayDuration := 1 * time.Second
 
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			m.Lock()
@@ -540,9 +475,9 @@ func TestContextPerRequestRetry(t *testing.T) {
 
 		e.GET("/").
 			WithContext(ctx).
-			WithMaxRetries(1).
+			WithMaxRetries(100).
 			WithRetryPolicy(RetryAllErrors).
-			WithRetryDelay(retryDelayDuration, TimeOutDuration).
+			WithRetryDelay(10*time.Millisecond, 50*time.Millisecond).
 			Expect()
 
 		assert.Equal(t, 2, callCount)
