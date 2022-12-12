@@ -2892,7 +2892,8 @@ func TestRequestRetry(t *testing.T) {
 			WithText("test body").
 			WithRetryPolicy(RetryAllErrors).
 			WithMaxRetries(1).
-			WithContext(ctx).WithRetryDelay(1*time.Minute, 5*time.Minute)
+			WithContext(ctx).
+			WithRetryDelay(1*time.Minute, 5*time.Minute)
 		req.chain.assertOK(t)
 
 		resp := req.Expect()
