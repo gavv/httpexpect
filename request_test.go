@@ -2888,22 +2888,17 @@ func TestRequestRetry(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		cancel() // Cancel immediately to trigger error
 
-		start := time.Now()
-
 		req := NewRequest(config, http.MethodPost, "/url").
 			WithText("test body").
 			WithRetryPolicy(RetryAllErrors).
 			WithMaxRetries(1).
-			WithContext(ctx)
+			WithContext(ctx).WithRetryDelay(1*time.Minute, 5*time.Minute)
 		req.chain.assertOK(t)
-
-		elapsed := time.Since(start)
 
 		resp := req.Expect()
 		resp.chain.assertFailed(t)
 
 		// Should not retry
 		assert.Equal(t, 1, callCount)
-		assert.Equal(t, time.Duration(0), elapsed.Round(req.minRetryDelay))
 	})
 }
