@@ -38,7 +38,7 @@ type Request struct {
 	maxRetries    int
 	minRetryDelay time.Duration
 	maxRetryDelay time.Duration
-	sleepFn       func(d time.Duration)
+	sleepFn       func(d time.Duration) <-chan time.Time
 
 	timeout time.Duration
 
@@ -123,7 +123,9 @@ func newRequest(
 		maxRetries:    0,
 		minRetryDelay: time.Millisecond * 50,
 		maxRetryDelay: time.Second * 5,
-		sleepFn:       time.Sleep,
+		sleepFn: func(d time.Duration) <-chan time.Time {
+			return time.After(d)
+		},
 	}
 
 	r.initPath(path, pathargs...)
@@ -1922,7 +1924,15 @@ func (r *Request) retryRequest(reqFunc func() (*http.Response, error)) (
 			resp.Body.Close()
 		}
 
-		r.sleepFn(delay)
+		if configCtx := r.config.Context; configCtx != nil {
+			select {
+			case <-configCtx.Done():
+				return nil, elapsed, configCtx.Err()
+			case <-r.sleepFn(delay):
+			}
+		} else {
+			<-r.sleepFn(delay)
+		}
 
 		delay *= 2
 		if delay > r.maxRetryDelay {

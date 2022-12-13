@@ -393,3 +393,95 @@ func TestContextPerRequestWithTimeoutCancelledByContext(t *testing.T) {
 	// expected error should occur
 	assert.True(t, suppressor.expErrorOccurred)
 }
+
+func TestContextPerRequestRetry(t *testing.T) {
+	var m sync.Mutex
+	TimeOutDuration := 5 * time.Minute
+
+	t.Run("not cancelled", func(t *testing.T) {
+		var callCount int
+		retryDelayDuration := 1 * time.Second
+
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			m.Lock()
+			defer m.Unlock()
+			callCount++
+
+			if callCount > 1 {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+
+			w.WriteHeader(http.StatusInternalServerError)
+		}))
+		defer ts.Close()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		e := WithConfig(Config{
+			BaseURL:          ts.URL,
+			AssertionHandler: &mockAssertionHandler{},
+		})
+
+		e.GET("/").
+			WithContext(ctx).
+			WithMaxRetries(1).
+			WithRetryPolicy(RetryAllErrors).
+			WithRetryDelay(retryDelayDuration, TimeOutDuration).
+			Expect()
+
+		assert.Equal(t, 2, callCount)
+	})
+
+	t.Run("cancelled after first retry attempt", func(t *testing.T) {
+		var callCount int
+		var isCtxCancelled bool
+		ctxCancellation := make(chan bool, 1) // To cancel context after first retry attempt
+
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			m.Lock()
+			defer m.Unlock()
+			callCount++
+
+			if callCount == 2 {
+				ctxCancellation <- true
+			}
+
+			w.WriteHeader(http.StatusInternalServerError)
+		}))
+		defer ts.Close()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		go func() {
+			<-ctxCancellation
+			cancel()
+			m.Lock()
+			defer m.Unlock()
+			isCtxCancelled = true
+		}()
+
+		// Config with context cancelled error
+		suppressor := newExpErrorSuppressor(t,
+			func(err error) bool {
+				return strings.Contains(err.Error(), context.Canceled.Error())
+			})
+
+		e := WithConfig(Config{
+			BaseURL:          ts.URL,
+			AssertionHandler: suppressor,
+		})
+
+		e.GET("/").
+			WithContext(ctx).
+			WithMaxRetries(100).
+			WithRetryPolicy(RetryAllErrors).
+			WithRetryDelay(10*time.Millisecond, 50*time.Millisecond).
+			Expect()
+
+		assert.Equal(t, 2, callCount)
+		assert.True(t, isCtxCancelled)
+		assert.True(t, suppressor.expErrorOccurred)
+	})
+}
