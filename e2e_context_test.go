@@ -2,6 +2,7 @@ package httpexpect
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -137,7 +138,7 @@ func TestContextGlobalCancel(t *testing.T) {
 	// config with context cancel suppression
 	suppressor := newExpErrorSuppressor(t,
 		func(err error) bool {
-			return strings.Contains(err.Error(), "context canceled")
+			return errors.Is(err, context.Canceled)
 		})
 	e := WithConfig(Config{
 		BaseURL:          server.URL,
@@ -175,7 +176,7 @@ func TestContextGlobalWithRetries(t *testing.T) {
 	// config with context cancel suppression
 	suppressor := newExpErrorSuppressor(t,
 		func(err error) bool {
-			return strings.Contains(err.Error(), "context canceled")
+			return errors.Is(err, context.Canceled)
 		})
 	e := WithConfig(Config{
 		BaseURL:          server.URL,
@@ -215,7 +216,7 @@ func TestContextPerRequest(t *testing.T) {
 	// config with context cancel suppression
 	suppressor := newExpErrorSuppressor(t,
 		func(err error) bool {
-			return strings.Contains(err.Error(), "context canceled")
+			return errors.Is(err, context.Canceled)
 		})
 	e := WithConfig(Config{
 		BaseURL:          server.URL,
@@ -253,7 +254,7 @@ func TestContextPerRequestWithRetries(t *testing.T) {
 	// config with context cancel suppression
 	suppressor := newExpErrorSuppressor(t,
 		func(err error) bool {
-			return strings.Contains(err.Error(), "context canceled")
+			return errors.Is(err, context.Canceled)
 		})
 	e := WithConfig(Config{
 		BaseURL:          server.URL,
@@ -369,7 +370,7 @@ func TestContextPerRequestWithTimeoutCancelledByContext(t *testing.T) {
 	// config with context deadline expected error
 	suppressor := newExpErrorSuppressor(t,
 		func(err error) bool {
-			return strings.Contains(err.Error(), "context canceled")
+			return errors.Is(err, context.Canceled)
 		})
 	e := WithConfig(Config{
 		BaseURL:          server.URL,
@@ -461,7 +462,7 @@ func TestContextPerRequestRetry(t *testing.T) {
 		// Config with context cancelled error
 		suppressor := newExpErrorSuppressor(t,
 			func(err error) bool {
-				return strings.Contains(err.Error(), context.Canceled.Error())
+				return errors.Is(err, context.Canceled)
 			})
 
 		e := WithConfig(Config{
