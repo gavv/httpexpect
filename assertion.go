@@ -202,6 +202,9 @@ type AssertionList []interface{}
 //
 // You can log every performed assertion, or report only failures. You can implement
 // custom formatting, for example, provide a JSON output for ulterior processing.
+//
+// Usually you don't need to implement AssertionHandler; instead you can implement
+// Reporter, which is much simpler, and use it with DefaultAssertionHandler.
 type AssertionHandler interface {
 	// Invoked every time when an assertion succeeded.
 	// May ignore failure, or log it, e.g. using t.Logf().
