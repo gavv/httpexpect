@@ -233,7 +233,7 @@ func TestResponseStatusList(t *testing.T) {
 		})
 		resp.StatusList(c.List...)
 		if c.WantOK {
-			resp.chain.assertOK(t)
+			resp.chain.assertNotFailed(t)
 		} else {
 			resp.chain.assertFailed(t)
 		}

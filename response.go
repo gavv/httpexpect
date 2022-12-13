@@ -298,7 +298,7 @@ func (r *Response) StatusList(values ...int) *Response {
 		r.chain.fail(AssertionFailure{
 			Type:     AssertBelongs,
 			Actual:   &AssertionValue{statusCodeText(r.httpResp.StatusCode)},
-			Expected: &AssertionValue{AssertionList{statusListText(values)}},
+			Expected: &AssertionValue{AssertionList(statusListText(values))},
 			Errors: []error{
 				errors.New("expected: http status belongs to given list"),
 			},
@@ -332,8 +332,8 @@ func statusRangeText(code int) string {
 	}
 }
 
-func statusListText(values []int) []string {
-	var statusText []string
+func statusListText(values []int) []interface{} {
+	var statusText []interface{}
 	for _, v := range values {
 		statusText = append(statusText, statusCodeText(v))
 	}
