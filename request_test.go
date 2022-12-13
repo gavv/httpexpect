@@ -2197,17 +2197,16 @@ func TestValidationFailures(t *testing.T) {
 
 	t.Run("setupRedirect - redirect policy", func(t *testing.T) {
 		req := NewRequest(config, "METHOD", "/")
-		req.config.Client = nil
-		req.redirectPolicy = FollowAllRedirects
+		req.config.Client = &mockClient{}
+		req.WithRedirectPolicy(FollowAllRedirects)
 		req.Expect() // calls setupRedirect indirectly
 		req.chain.assertFailed(t)
 	})
 
 	t.Run("setupRedirect - maxRedirects is not -1", func(t *testing.T) {
 		req := NewRequest(config, "METHOD", "/")
-		req.config.Client = nil
-		req.redirectPolicy = defaultRedirectPolicy
-		req.maxRedirects = 0
+		req.config.Client = &mockClient{}
+		req.WithMaxRedirects(0)
 		req.Expect() // calls setupRedirect indirectly
 		req.chain.assertFailed(t)
 	})
