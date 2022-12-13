@@ -42,6 +42,7 @@ func TestResponseFailed(t *testing.T) {
 
 		resp.Status(123)
 		resp.StatusRange(Status2xx)
+		resp.StatusList(http.StatusOK, http.StatusBadGateway)
 		resp.NoContent()
 		resp.ContentType("", "")
 		resp.ContentEncoding("")
@@ -192,6 +193,49 @@ func TestResponseStatusRange(t *testing.T) {
 			} else {
 				resp.chain.assertFailed(t)
 			}
+		}
+	}
+}
+
+func TestResponseStatusList(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	cases := []struct {
+		Status int
+		List   []int
+		WantOK bool
+	}{
+		{
+			http.StatusOK,
+			[]int{http.StatusOK, http.StatusBadRequest, http.StatusInternalServerError},
+			true,
+		},
+		{
+			http.StatusBadRequest,
+			[]int{http.StatusOK, http.StatusBadRequest, http.StatusInternalServerError},
+			true,
+		},
+		{
+			http.StatusOK,
+			[]int{http.StatusInternalServerError, http.StatusBadRequest},
+			false,
+		},
+		{
+			http.StatusBadGateway,
+			[]int{},
+			false,
+		},
+	}
+
+	for _, c := range cases {
+		resp := NewResponse(reporter, &http.Response{
+			StatusCode: c.Status,
+		})
+		resp.StatusList(c.List...)
+		if c.WantOK {
+			resp.chain.assertNotFailed(t)
+		} else {
+			resp.chain.assertFailed(t)
 		}
 	}
 }
