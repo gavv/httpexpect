@@ -396,11 +396,9 @@ func TestContextPerRequestWithTimeoutCancelledByContext(t *testing.T) {
 
 func TestContextPerRequestRetry(t *testing.T) {
 	var m sync.Mutex
-	TimeOutDuration := 5 * time.Minute
 
 	t.Run("not cancelled", func(t *testing.T) {
 		var callCount int
-		retryDelayDuration := 1 * time.Second
 
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			m.Lock()
@@ -428,7 +426,7 @@ func TestContextPerRequestRetry(t *testing.T) {
 			WithContext(ctx).
 			WithMaxRetries(1).
 			WithRetryPolicy(RetryAllErrors).
-			WithRetryDelay(retryDelayDuration, TimeOutDuration).
+			WithRetryDelay(time.Millisecond, time.Millisecond).
 			Expect()
 
 		assert.Equal(t, 2, callCount)
@@ -436,8 +434,8 @@ func TestContextPerRequestRetry(t *testing.T) {
 
 	t.Run("cancelled after first retry attempt", func(t *testing.T) {
 		var callCount int
-		var isCtxCancelled bool
 		ctxCancellation := make(chan bool, 1) // To cancel context after first retry attempt
+		isCtxCancelled := make(chan bool, 1)  // To wait until cancel() is called
 
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			m.Lock()
@@ -457,9 +455,7 @@ func TestContextPerRequestRetry(t *testing.T) {
 		go func() {
 			<-ctxCancellation
 			cancel()
-			m.Lock()
-			defer m.Unlock()
-			isCtxCancelled = true
+			isCtxCancelled <- true
 		}()
 
 		// Config with context cancelled error
@@ -477,11 +473,12 @@ func TestContextPerRequestRetry(t *testing.T) {
 			WithContext(ctx).
 			WithMaxRetries(100).
 			WithRetryPolicy(RetryAllErrors).
-			WithRetryDelay(10*time.Millisecond, 50*time.Millisecond).
+			WithRetryDelay(10*time.Millisecond, 10*time.Millisecond).
 			Expect()
 
-		assert.Equal(t, 2, callCount)
-		assert.True(t, isCtxCancelled)
+		<-isCtxCancelled
+
+		assert.GreaterOrEqual(t, callCount, 2)
 		assert.True(t, suppressor.expErrorOccurred)
 	})
 }
