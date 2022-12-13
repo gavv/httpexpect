@@ -3,6 +3,7 @@ package httpexpect
 import (
 	"errors"
 	"fmt"
+	"reflect"
 )
 
 func validateAssertion(failure *AssertionFailure) error {
@@ -130,6 +131,24 @@ func validateTraits(failure *AssertionFailure, traits fieldTraits) error {
 		break
 	}
 
+	if traits.Range == fieldRequired || traits.Range == fieldOptional {
+		if failure.Expected != nil {
+			if _, ok := failure.Expected.Value.(*AssertionRange); ok {
+				return errors.New(
+					"AssertionValue should contain AssertionRange, not *AssertionRange")
+			}
+
+			if rng, ok := failure.Expected.Value.(AssertionRange); ok {
+				if rng.Min == nil {
+					return errors.New("AssertionRange value should have non-nil Min field")
+				}
+				if rng.Max == nil {
+					return errors.New("AssertionRange value should have non-nil Max field")
+				}
+			}
+		}
+	}
+
 	switch traits.Range {
 	case fieldRequired:
 		if failure.Expected == nil {
@@ -138,18 +157,11 @@ func validateTraits(failure *AssertionFailure, traits fieldTraits) error {
 				failure.Type)
 		}
 
-		if rng, ok := failure.Expected.Value.(AssertionRange); !ok {
+		if _, ok := failure.Expected.Value.(AssertionRange); !ok {
 			return fmt.Errorf(
 				"AssertionFailure of type %s"+
 					" should have Expected field with AssertionRange value",
 				failure.Type)
-		} else {
-			if rng.Min == nil {
-				return errors.New("AssertionRange value should have non-nil Min field")
-			}
-			if rng.Max == nil {
-				return errors.New("AssertionRange value should have non-nil Max field")
-			}
 		}
 
 	case fieldDenied:
@@ -157,6 +169,27 @@ func validateTraits(failure *AssertionFailure, traits fieldTraits) error {
 
 	case fieldOptional:
 		break
+	}
+
+	if traits.Range == fieldRequired || traits.Range == fieldOptional {
+		if failure.Expected != nil {
+			if _, ok := failure.Expected.Value.(*AssertionList); ok {
+				return errors.New(
+					"AssertionValue should contain AssertionList, not *AssertionList")
+			}
+
+			if lst, ok := failure.Expected.Value.(AssertionList); ok {
+				if len(lst) == 0 {
+					return errors.New("AssertionList should be non-empty")
+				}
+
+				if len(lst) == 1 && reflect.ValueOf(lst[0]).Kind() == reflect.Slice {
+					return errors.New(
+						"AssertionList should contain a list of values," +
+							" but it contains a single element which itself is a list")
+				}
+			}
+		}
 	}
 
 	switch traits.List {
@@ -167,15 +200,11 @@ func validateTraits(failure *AssertionFailure, traits fieldTraits) error {
 				failure.Type)
 		}
 
-		if lst, ok := failure.Expected.Value.(AssertionList); !ok {
+		if _, ok := failure.Expected.Value.(AssertionList); !ok {
 			return fmt.Errorf(
 				"AssertionFailure of type %s"+
 					" should have Expected field with AssertionList value",
 				failure.Type)
-		} else {
-			if len(lst) == 0 {
-				return errors.New("AssertionList can't be empty")
-			}
 		}
 
 	case fieldDenied:

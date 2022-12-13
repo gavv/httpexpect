@@ -280,6 +280,18 @@ func TestAssertionValidation(t *testing.T) {
 			},
 		},
 		{
+			testName:          "Range is pointer",
+			errorContainsText: "AssertionRange",
+			input: AssertionFailure{
+				Type: AssertInRange,
+				Errors: []error{
+					errors.New("test"),
+				},
+				Actual:   &AssertionValue{},
+				Expected: &AssertionValue{&AssertionRange{Min: 0, Max: 0}},
+			},
+		},
+		{
 			testName:          "Range Min is nil",
 			errorContainsText: "Min",
 			input: AssertionFailure{
@@ -340,6 +352,18 @@ func TestAssertionValidation(t *testing.T) {
 			},
 		},
 		{
+			testName:          "List is pointer",
+			errorContainsText: "AssertionList",
+			input: AssertionFailure{
+				Type: AssertBelongs,
+				Errors: []error{
+					errors.New("test"),
+				},
+				Actual:   &AssertionValue{},
+				Expected: &AssertionValue{&AssertionList{1}},
+			},
+		},
+		{
 			testName:          "List is typed nil",
 			errorContainsText: "AssertionList",
 			input: AssertionFailure{
@@ -361,6 +385,18 @@ func TestAssertionValidation(t *testing.T) {
 				},
 				Actual:   &AssertionValue{},
 				Expected: &AssertionValue{AssertionList{}},
+			},
+		},
+		{
+			testName:          "List has one element and it's list",
+			errorContainsText: "AssertionList",
+			input: AssertionFailure{
+				Type: AssertBelongs,
+				Errors: []error{
+					errors.New("test"),
+				},
+				Actual:   &AssertionValue{},
+				Expected: &AssertionValue{AssertionList{[]string{"test"}}},
 			},
 		},
 	}
