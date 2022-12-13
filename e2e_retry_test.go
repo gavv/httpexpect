@@ -139,14 +139,14 @@ func testRetries(
 		e.POST("/test").
 			WithMaxRetries(1).WithRetryPolicy(DontRetry).
 			Expect().
-			Status(http.StatusInternalServerError).chain.assertOK(t)
+			Status(http.StatusInternalServerError).chain.assertNotFailed(t)
 
 		rc.Reset(1, http.StatusBadRequest)
 		tc.Reset(0)
 		e.POST("/test").
 			WithMaxRetries(1).WithRetryPolicy(DontRetry).
 			Expect().
-			Status(http.StatusBadRequest).chain.assertOK(t)
+			Status(http.StatusBadRequest).chain.assertNotFailed(t)
 
 		rc.Reset(0, http.StatusOK)
 		tc.Reset(1)
@@ -163,21 +163,21 @@ func testRetries(
 		e.POST("/test").
 			WithMaxRetries(1).WithRetryPolicy(RetryTemporaryNetworkErrors).
 			Expect().
-			Status(http.StatusInternalServerError).chain.assertOK(t)
+			Status(http.StatusInternalServerError).chain.assertNotFailed(t)
 
 		rc.Reset(1, http.StatusBadRequest)
 		tc.Reset(0)
 		e.POST("/test").
 			WithMaxRetries(1).WithRetryPolicy(RetryTemporaryNetworkErrors).
 			Expect().
-			Status(http.StatusBadRequest).chain.assertOK(t)
+			Status(http.StatusBadRequest).chain.assertNotFailed(t)
 
 		rc.Reset(0, http.StatusOK)
 		tc.Reset(1)
 		e.POST("/test").
 			WithMaxRetries(1).WithRetryPolicy(RetryTemporaryNetworkErrors).
 			Expect().
-			Status(http.StatusOK).chain.assertOK(t)
+			Status(http.StatusOK).chain.assertNotFailed(t)
 	})
 
 	t.Run("RetryTemporaryNetworkAndServerErrors", func(t *testing.T) {
@@ -188,21 +188,21 @@ func testRetries(
 		e.POST("/test").
 			WithMaxRetries(1).WithRetryPolicy(RetryTemporaryNetworkAndServerErrors).
 			Expect().
-			Status(http.StatusOK).chain.assertOK(t)
+			Status(http.StatusOK).chain.assertNotFailed(t)
 
 		rc.Reset(1, http.StatusBadRequest)
 		tc.Reset(0)
 		e.POST("/test").
 			WithMaxRetries(1).WithRetryPolicy(RetryTemporaryNetworkAndServerErrors).
 			Expect().
-			Status(http.StatusBadRequest).chain.assertOK(t)
+			Status(http.StatusBadRequest).chain.assertNotFailed(t)
 
 		rc.Reset(0, http.StatusOK)
 		tc.Reset(1)
 		e.POST("/test").
 			WithMaxRetries(1).WithRetryPolicy(RetryTemporaryNetworkAndServerErrors).
 			Expect().
-			Status(http.StatusOK).chain.assertOK(t)
+			Status(http.StatusOK).chain.assertNotFailed(t)
 	})
 
 	t.Run("RetryAllErrors", func(t *testing.T) {
@@ -213,21 +213,21 @@ func testRetries(
 		e.POST("/test").
 			WithMaxRetries(1).WithRetryPolicy(RetryAllErrors).
 			Expect().
-			Status(http.StatusOK).chain.assertOK(t)
+			Status(http.StatusOK).chain.assertNotFailed(t)
 
 		rc.Reset(1, http.StatusBadRequest)
 		tc.Reset(0)
 		e.POST("/test").
 			WithMaxRetries(1).WithRetryPolicy(RetryAllErrors).
 			Expect().
-			Status(http.StatusOK).chain.assertOK(t)
+			Status(http.StatusOK).chain.assertNotFailed(t)
 
 		rc.Reset(0, http.StatusOK)
 		tc.Reset(1)
 		e.POST("/test").
 			WithMaxRetries(1).WithRetryPolicy(RetryAllErrors).
 			Expect().
-			Status(http.StatusOK).chain.assertOK(t)
+			Status(http.StatusOK).chain.assertNotFailed(t)
 	})
 }
 

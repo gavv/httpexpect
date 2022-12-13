@@ -172,7 +172,7 @@ func TestChainReport(t *testing.T) {
 
 	r1 := newMockReporter(t)
 
-	chain.assertOK(r1)
+	chain.assertNotFailed(r1)
 	assert.False(t, r1.reported)
 
 	chain.assertFailed(r1)
@@ -188,7 +188,7 @@ func TestChainReport(t *testing.T) {
 	chain.assertFailed(r2)
 	assert.False(t, r2.reported)
 
-	chain.assertOK(r2)
+	chain.assertNotFailed(r2)
 	assert.True(t, r2.reported)
 }
 
@@ -206,7 +206,7 @@ func TestChainHandler(t *testing.T) {
 	assert.NotNil(t, handler.ctx)
 	assert.NotNil(t, handler.failure)
 
-	chain.reset()
+	chain.clearFailed()
 
 	handler.ctx = nil
 	handler.failure = nil
@@ -230,7 +230,7 @@ func TestChainSeverity(t *testing.T) {
 	assert.NotNil(t, handler.failure)
 	assert.Equal(t, SeverityError, handler.failure.Severity)
 
-	chain.reset()
+	chain.clearFailed()
 
 	chain.setSeverity(SeverityError)
 	chain.fail(mockFailure())
@@ -238,7 +238,7 @@ func TestChainSeverity(t *testing.T) {
 	assert.NotNil(t, handler.failure)
 	assert.Equal(t, SeverityError, handler.failure.Severity)
 
-	chain.reset()
+	chain.clearFailed()
 
 	chain.setSeverity(SeverityLog)
 	chain.fail(mockFailure())

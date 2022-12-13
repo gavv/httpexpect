@@ -27,20 +27,20 @@ func TestBooleanGetters(t *testing.T) {
 	value := NewBoolean(reporter, true)
 
 	assert.Equal(t, true, value.Raw())
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	assert.Equal(t, true, value.Path("$").Raw())
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Schema(`{"type": "boolean"}`)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Schema(`{"type": "object"}`)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 }
 
 func TestBooleanTrue(t *testing.T) {
@@ -51,28 +51,28 @@ func TestBooleanTrue(t *testing.T) {
 	assert.Equal(t, true, value.Raw())
 
 	value.Equal(true)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Equal(false)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotEqual(false)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotEqual(true)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.True()
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.False()
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 }
 
 func TestBooleanFalse(t *testing.T) {
@@ -84,25 +84,25 @@ func TestBooleanFalse(t *testing.T) {
 
 	value.Equal(true)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.Equal(false)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotEqual(false)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotEqual(true)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.True()
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.False()
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 }

@@ -13,18 +13,18 @@ func TestEnvironmentGeneric(t *testing.T) {
 	env := newEnvironment(newMockChain(t))
 
 	assert.False(t, env.Has("good_key"))
-	env.chain.assertOK(t)
+	env.chain.assertNotFailed(t)
 
 	env.Put("good_key", 123)
-	env.chain.assertOK(t)
+	env.chain.assertNotFailed(t)
 
 	assert.True(t, env.Has("good_key"))
 	assert.NotNil(t, env.Get("good_key"))
 	assert.Equal(t, 123, env.Get("good_key").(int))
-	env.chain.assertOK(t)
+	env.chain.assertNotFailed(t)
 
 	assert.False(t, env.Has("bad_key"))
-	env.chain.assertOK(t)
+	env.chain.assertNotFailed(t)
 
 	assert.Nil(t, env.Get("bad_key"))
 	env.chain.assertFailed(t)
@@ -35,35 +35,35 @@ func TestEnvironmentNotFound(t *testing.T) {
 
 	assert.Nil(t, env.Get("bad_key"))
 	env.chain.assertFailed(t)
-	env.chain.reset()
+	env.chain.clearFailed()
 
 	assert.Equal(t, false, env.GetBool("bad_key"))
 	env.chain.assertFailed(t)
-	env.chain.reset()
+	env.chain.clearFailed()
 
 	assert.Equal(t, 0, env.GetInt("bad_key"))
 	env.chain.assertFailed(t)
-	env.chain.reset()
+	env.chain.clearFailed()
 
 	assert.Equal(t, 0.0, env.GetFloat("bad_key"))
 	env.chain.assertFailed(t)
-	env.chain.reset()
+	env.chain.clearFailed()
 
 	assert.Equal(t, "", env.GetString("bad_key"))
 	env.chain.assertFailed(t)
-	env.chain.reset()
+	env.chain.clearFailed()
 
 	assert.Nil(t, env.GetBytes("bad_key"))
 	env.chain.assertFailed(t)
-	env.chain.reset()
+	env.chain.clearFailed()
 
 	assert.Equal(t, time.Duration(0), env.GetDuration("bad_key"))
 	env.chain.assertFailed(t)
-	env.chain.reset()
+	env.chain.clearFailed()
 
 	assert.Equal(t, time.Unix(0, 0), env.GetTime("bad_key"))
 	env.chain.assertFailed(t)
-	env.chain.reset()
+	env.chain.clearFailed()
 }
 
 func TestEnvironmentBool(t *testing.T) {
@@ -99,13 +99,13 @@ func TestEnvironmentBool(t *testing.T) {
 				env := newEnvironment(newMockChain(t))
 
 				env.Put("key", tt.put)
-				env.chain.assertOK(t)
+				env.chain.assertNotFailed(t)
 
 				val := env.GetBool("key")
 				assert.Equal(t, tt.get, val)
 
 				if tt.ok {
-					env.chain.assertOK(t)
+					env.chain.assertNotFailed(t)
 				} else {
 					env.chain.assertFailed(t)
 				}
@@ -196,13 +196,13 @@ func TestEnvironmentInt(t *testing.T) {
 				env := newEnvironment(newMockChain(t))
 
 				env.Put("key", tt.put)
-				env.chain.assertOK(t)
+				env.chain.assertNotFailed(t)
 
 				val := env.GetInt("key")
 				assert.Equal(t, tt.get, val)
 
 				if tt.ok {
-					env.chain.assertOK(t)
+					env.chain.assertNotFailed(t)
 				} else {
 					env.chain.assertFailed(t)
 				}
@@ -248,13 +248,13 @@ func TestEnvironmentFloat(t *testing.T) {
 				env := newEnvironment(newMockChain(t))
 
 				env.Put("key", tt.put)
-				env.chain.assertOK(t)
+				env.chain.assertNotFailed(t)
 
 				val := env.GetFloat("key")
 				assert.Equal(t, tt.get, val)
 
 				if tt.ok {
-					env.chain.assertOK(t)
+					env.chain.assertNotFailed(t)
 				} else {
 					env.chain.assertFailed(t)
 				}
@@ -290,13 +290,13 @@ func TestEnvironmentString(t *testing.T) {
 				env := newEnvironment(newMockChain(t))
 
 				env.Put("key", tt.put)
-				env.chain.assertOK(t)
+				env.chain.assertNotFailed(t)
 
 				val := env.GetString("key")
 				assert.Equal(t, tt.get, val)
 
 				if tt.ok {
-					env.chain.assertOK(t)
+					env.chain.assertNotFailed(t)
 				} else {
 					env.chain.assertFailed(t)
 				}
@@ -332,13 +332,13 @@ func TestEnvironmentBytes(t *testing.T) {
 				env := newEnvironment(newMockChain(t))
 
 				env.Put("key", tt.put)
-				env.chain.assertOK(t)
+				env.chain.assertNotFailed(t)
 
 				val := env.GetBytes("key")
 				assert.Equal(t, tt.get, val)
 
 				if tt.ok {
-					env.chain.assertOK(t)
+					env.chain.assertNotFailed(t)
 				} else {
 					env.chain.assertFailed(t)
 				}
@@ -374,13 +374,13 @@ func TestEnvironmentDuration(t *testing.T) {
 				env := newEnvironment(newMockChain(t))
 
 				env.Put("key", tt.put)
-				env.chain.assertOK(t)
+				env.chain.assertNotFailed(t)
 
 				val := env.GetDuration("key")
 				assert.Equal(t, tt.get, val)
 
 				if tt.ok {
-					env.chain.assertOK(t)
+					env.chain.assertNotFailed(t)
 				} else {
 					env.chain.assertFailed(t)
 				}
@@ -416,13 +416,13 @@ func TestEnvironmentTime(t *testing.T) {
 				env := newEnvironment(newMockChain(t))
 
 				env.Put("key", tt.put)
-				env.chain.assertOK(t)
+				env.chain.assertNotFailed(t)
 
 				val := env.GetTime("key")
 				assert.Equal(t, tt.get, val)
 
 				if tt.ok {
-					env.chain.assertOK(t)
+					env.chain.assertNotFailed(t)
 				} else {
 					env.chain.assertFailed(t)
 				}

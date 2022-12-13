@@ -68,14 +68,14 @@ func TestCookieGetters(t *testing.T) {
 		MaxAge:  123,
 	})
 
-	value.chain.assertOK(t)
+	value.chain.assertNotFailed(t)
 
-	value.Name().chain.assertOK(t)
-	value.Value().chain.assertOK(t)
-	value.Domain().chain.assertOK(t)
-	value.Path().chain.assertOK(t)
-	value.Expires().chain.assertOK(t)
-	value.MaxAge().chain.assertOK(t)
+	value.Name().chain.assertNotFailed(t)
+	value.Value().chain.assertNotFailed(t)
+	value.Domain().chain.assertNotFailed(t)
+	value.Path().chain.assertNotFailed(t)
+	value.Expires().chain.assertNotFailed(t)
+	value.MaxAge().chain.assertNotFailed(t)
 
 	assert.Equal(t, "name", value.Name().Raw())
 	assert.Equal(t, "value", value.Value().Raw())
@@ -84,7 +84,7 @@ func TestCookieGetters(t *testing.T) {
 	assert.True(t, time.Unix(1234, 0).Equal(value.Expires().Raw()))
 	assert.Equal(t, 123*time.Second, value.MaxAge().Raw())
 
-	value.chain.assertOK(t)
+	value.chain.assertNotFailed(t)
 }
 
 func TestCookieMaxAge(t *testing.T) {
@@ -95,17 +95,17 @@ func TestCookieMaxAge(t *testing.T) {
 			MaxAge: 0,
 		})
 
-		value.chain.assertOK(t)
+		value.chain.assertNotFailed(t)
 
 		value.HaveMaxAge().chain.assertFailed(t)
-		value.chain.reset()
+		value.chain.clearFailed()
 
-		value.NotHaveMaxAge().chain.assertOK(t)
-		value.chain.reset()
+		value.NotHaveMaxAge().chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
 		require.Nil(t, value.MaxAge().value)
 
-		value.MaxAge().NotSet().chain.assertOK(t)
+		value.MaxAge().NotSet().chain.assertNotFailed(t)
 		value.MaxAge().IsSet().chain.assertFailed(t)
 	})
 
@@ -114,19 +114,19 @@ func TestCookieMaxAge(t *testing.T) {
 			MaxAge: -1,
 		})
 
-		value.chain.assertOK(t)
+		value.chain.assertNotFailed(t)
 
-		value.HaveMaxAge().chain.assertOK(t)
-		value.chain.reset()
+		value.HaveMaxAge().chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
 		value.NotHaveMaxAge().chain.assertFailed(t)
-		value.chain.reset()
+		value.chain.clearFailed()
 
 		require.NotNil(t, value.MaxAge().value)
 		require.Equal(t, time.Duration(0), *value.MaxAge().value)
 
-		value.MaxAge().IsSet().chain.assertOK(t)
-		value.MaxAge().Equal(0).chain.assertOK(t)
+		value.MaxAge().IsSet().chain.assertNotFailed(t)
+		value.MaxAge().Equal(0).chain.assertNotFailed(t)
 	})
 
 	t.Run("non-zero", func(t *testing.T) {
@@ -134,18 +134,18 @@ func TestCookieMaxAge(t *testing.T) {
 			MaxAge: 3,
 		})
 
-		value.chain.assertOK(t)
+		value.chain.assertNotFailed(t)
 
-		value.HaveMaxAge().chain.assertOK(t)
-		value.chain.reset()
+		value.HaveMaxAge().chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
 		value.NotHaveMaxAge().chain.assertFailed(t)
-		value.chain.reset()
+		value.chain.clearFailed()
 
 		require.NotNil(t, value.MaxAge().value)
 		require.Equal(t, 3*time.Second, *value.MaxAge().value)
 
-		value.MaxAge().IsSet().chain.assertOK(t)
-		value.MaxAge().Equal(3 * time.Second).chain.assertOK(t)
+		value.MaxAge().IsSet().chain.assertNotFailed(t)
+		value.MaxAge().Equal(3 * time.Second).chain.assertNotFailed(t)
 	})
 }

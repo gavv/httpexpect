@@ -206,7 +206,7 @@ func (c *chain) setFailed() {
 
 // Clear fail bit.
 // For tests.
-func (c *chain) reset() {
+func (c *chain) clearFailed() {
 	c.failBit = false
 }
 
@@ -219,7 +219,7 @@ func (c *chain) failed() bool {
 // Check that chain is not failed.
 // Otherwise report failure to Reporter.
 // For tests.
-func (c *chain) assertOK(r Reporter) {
+func (c *chain) assertNotFailed(r Reporter) {
 	if c.failBit {
 		r.Errorf("expected: chain is not failed")
 	}

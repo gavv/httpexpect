@@ -31,12 +31,12 @@ func TestDurationSet(t *testing.T) {
 	value := newDuration(chain, &tm)
 
 	value.IsSet()
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotSet()
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 }
 
 func TestDurationUnset(t *testing.T) {
@@ -46,11 +46,11 @@ func TestDurationUnset(t *testing.T) {
 
 	value.IsSet()
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotSet()
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 }
 
 func TestDurationEqual(t *testing.T) {
@@ -61,20 +61,20 @@ func TestDurationEqual(t *testing.T) {
 	assert.Equal(t, time.Second, value.Raw())
 
 	value.Equal(time.Second)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Equal(time.Minute)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotEqual(time.Minute)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotEqual(time.Second)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 }
 
 func TestDurationGreater(t *testing.T) {
@@ -83,24 +83,24 @@ func TestDurationGreater(t *testing.T) {
 	value := NewDuration(reporter, time.Second)
 
 	value.Gt(time.Second - 1)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Gt(time.Second)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.Ge(time.Second - 1)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Ge(time.Second)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Ge(time.Second + 1)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 }
 
 func TestDurationLesser(t *testing.T) {
@@ -109,24 +109,24 @@ func TestDurationLesser(t *testing.T) {
 	value := NewDuration(reporter, time.Second)
 
 	value.Lt(time.Second + 1)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Lt(time.Second)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.Le(time.Second + 1)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Le(time.Second)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Le(time.Second - 1)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 }
 
 func TestDurationInRange(t *testing.T) {
@@ -135,50 +135,50 @@ func TestDurationInRange(t *testing.T) {
 	value := NewDuration(reporter, time.Second)
 
 	value.InRange(time.Second, time.Second)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotInRange(time.Second, time.Second)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.InRange(time.Second-1, time.Second)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotInRange(time.Second-1, time.Second)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.InRange(time.Second, time.Second+1)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotInRange(time.Second, time.Second+1)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.InRange(time.Second+1, time.Second+2)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotInRange(time.Second+1, time.Second+2)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.InRange(time.Second-2, time.Second-1)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotInRange(time.Second-2, time.Second-1)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.InRange(time.Second+1, time.Second-1)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotInRange(time.Second+1, time.Second-1)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 }

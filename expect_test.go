@@ -332,12 +332,12 @@ func TestExpectBranches(t *testing.T) {
 	e4.Equal("bar")
 
 	m1.chain.assertFailed(t)
-	m2.chain.assertOK(t)
+	m2.chain.assertNotFailed(t)
 
 	e1.chain.assertFailed(t)
 	e2.chain.assertFailed(t)
 	e3.chain.assertFailed(t)
-	e4.chain.assertOK(t)
+	e4.chain.assertNotFailed(t)
 }
 
 func TestExpectStdCompat(_ *testing.T) {
@@ -366,7 +366,7 @@ func TestExpectRequestFactory(t *testing.T) {
 		Reporter: NewAssertReporter(t),
 	})
 	r1 := e1.Request("GET", "/")
-	r1.chain.assertOK(t)
+	r1.chain.assertNotFailed(t)
 	assert.NotNil(t, r1.httpReq)
 
 	f2 := &testRequestFactory{}
@@ -376,7 +376,7 @@ func TestExpectRequestFactory(t *testing.T) {
 		RequestFactory: f2,
 	})
 	r2 := e2.Request("GET", "/")
-	r2.chain.assertOK(t)
+	r2.chain.assertNotFailed(t)
 	assert.NotNil(t, f2.lastreq)
 	assert.True(t, f2.lastreq == r2.httpReq)
 
