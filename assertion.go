@@ -90,14 +90,16 @@ type AssertionSeverity uint
 //go:generate stringer -type=AssertionSeverity
 const (
 	// This assertion failure should mark current test as failed.
+	// Typically handler will call t.Errorf().
 	// This severity is used for most assertions.
 	SeverityError AssertionSeverity = iota
 
 	// This assertion failure is informational only, it can be logged,
 	// but should not cause test failure.
+	// Typically handler will call t.Logf(), or just ignore assertion.
 	// This severity is used for assertions issued inside predicate functions,
 	// e.g. in Array.Filter and Object.Filter.
-	SeverityInfo
+	SeverityLog
 )
 
 // AssertionContext provides context where the assetion happened.
@@ -200,15 +202,18 @@ type AssertionList []interface{}
 //
 // You can log every performed assertion, or report only failures. You can implement
 // custom formatting, for example, provide a JSON output for ulterior processing.
+//
+// Usually you don't need to implement AssertionHandler; instead you can implement
+// Reporter, which is much simpler, and use it with DefaultAssertionHandler.
 type AssertionHandler interface {
 	// Invoked every time when an assertion succeeded.
-	// May print failure to log or ignore it.
+	// May ignore failure, or log it, e.g. using t.Logf().
 	Success(*AssertionContext)
 
 	// Invoked every time when an assertion failed.
 	// Handling depends on Failure.Severity field:
-	//  - for SeverityError, should report failure to testing suite
-	//  - for SeverityInfo, should log failure or ignore it
+	//  - for SeverityError, reports failure to testing suite, e.g. using t.Errorf()
+	//  - for SeverityLog, ignores failure, or logs it, e.g. using t.Logf()
 	Failure(*AssertionContext, *AssertionFailure)
 }
 
@@ -259,7 +264,7 @@ func (h *DefaultAssertionHandler) Failure(
 
 		h.Reporter.Errorf("%s", msg)
 
-	case SeverityInfo:
+	case SeverityLog:
 		if h.Logger == nil {
 			return
 		}

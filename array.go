@@ -307,7 +307,7 @@ func (a *Array) Filter(fn func(index int, value *Value) bool) *Array {
 
 	for index, element := range a.value {
 		valueChain := a.chain.clone()
-		valueChain.setSeverity(SeverityInfo)
+		valueChain.setSeverity(SeverityLog)
 		chainFailed := false
 		valueChain.setFailCallback(func() {
 			chainFailed = true

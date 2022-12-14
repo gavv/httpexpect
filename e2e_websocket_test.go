@@ -245,7 +245,7 @@ func testWebsocketTimeout(
 	blockCh <- struct{}{}
 
 	ws.WriteText("test").Expect()
-	ws.chain.assertOK(t)
+	ws.chain.assertNotFailed(t)
 
 	go func() {
 		time.Sleep(time.Millisecond * 100)
@@ -256,7 +256,7 @@ func testWebsocketTimeout(
 	if timeout {
 		ws.chain.assertFailed(t)
 	} else {
-		ws.chain.assertOK(t)
+		ws.chain.assertNotFailed(t)
 	}
 }
 
@@ -323,7 +323,7 @@ func TestE2EWebsocketClosed(t *testing.T) {
 		defer ws.Disconnect()
 
 		ws.CloseWithText("bye")
-		ws.chain.assertOK(t)
+		ws.chain.assertNotFailed(t)
 
 		ws.WriteText("test")
 		ws.chain.assertFailed(t)
@@ -347,7 +347,7 @@ func TestE2EWebsocketClosed(t *testing.T) {
 		defer ws.Disconnect()
 
 		ws.CloseWithText("bye")
-		ws.chain.assertOK(t)
+		ws.chain.assertNotFailed(t)
 
 		ws.CloseWithText("bye")
 		ws.chain.assertFailed(t)
@@ -372,7 +372,7 @@ func TestE2EWebsocketDisconnected(t *testing.T) {
 			Websocket()
 
 		ws.Disconnect()
-		ws.chain.assertOK(t)
+		ws.chain.assertNotFailed(t)
 
 		ws.WriteText("test")
 		ws.chain.assertFailed(t)
@@ -395,7 +395,7 @@ func TestE2EWebsocketDisconnected(t *testing.T) {
 			Websocket()
 
 		ws.Disconnect()
-		ws.chain.assertOK(t)
+		ws.chain.assertNotFailed(t)
 
 		ws.CloseWithText("test")
 		ws.chain.assertFailed(t)
@@ -418,10 +418,10 @@ func TestE2EWebsocketDisconnected(t *testing.T) {
 			Websocket()
 
 		ws.Disconnect()
-		ws.chain.assertOK(t)
+		ws.chain.assertNotFailed(t)
 
 		ws.Disconnect()
-		ws.chain.assertOK(t)
+		ws.chain.assertNotFailed(t)
 	})
 }
 

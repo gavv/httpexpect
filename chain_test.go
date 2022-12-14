@@ -12,10 +12,10 @@ func TestChainFail(t *testing.T) {
 
 	assert.False(t, chain.failed())
 
-	chain.fail(AssertionFailure{})
+	chain.fail(mockFailure())
 	assert.True(t, chain.failed())
 
-	chain.fail(AssertionFailure{})
+	chain.fail(mockFailure())
 	assert.True(t, chain.failed())
 }
 
@@ -26,12 +26,12 @@ func TestChainClone(t *testing.T) {
 	assert.False(t, chain1.failed())
 	assert.False(t, chain2.failed())
 
-	chain1.fail(AssertionFailure{})
+	chain1.fail(mockFailure())
 
 	assert.True(t, chain1.failed())
 	assert.False(t, chain2.failed())
 
-	chain2.fail(AssertionFailure{})
+	chain2.fail(mockFailure())
 
 	assert.True(t, chain1.failed())
 	assert.True(t, chain2.failed())
@@ -125,6 +125,46 @@ func TestChainPath(t *testing.T) {
 	assert.Equal(t, "root", path(chainClone))
 }
 
+func TestChainPanic(t *testing.T) {
+	t.Run("unpaired leave", func(t *testing.T) {
+		chain := newChainWithDefaults("", newMockReporter(t))
+
+		assert.Panics(t, func() {
+			chain.leave()
+		})
+	})
+
+	t.Run("unpaired enter/leave", func(t *testing.T) {
+		chain := newChainWithDefaults("", newMockReporter(t))
+
+		chain.enter("foo")
+		chain.leave()
+
+		assert.Panics(t, func() {
+			chain.leave()
+		})
+	})
+
+	t.Run("unpaired replace", func(t *testing.T) {
+		chain := newChainWithDefaults("", newMockReporter(t))
+
+		assert.Panics(t, func() {
+			chain.replace("foo")
+		})
+	})
+
+	t.Run("unpaired enter/replace", func(t *testing.T) {
+		chain := newChainWithDefaults("", newMockReporter(t))
+
+		chain.enter("foo")
+		chain.leave()
+
+		assert.Panics(t, func() {
+			chain.replace("bar")
+		})
+	})
+}
+
 func TestChainReport(t *testing.T) {
 	r0 := newMockReporter(t)
 
@@ -132,7 +172,7 @@ func TestChainReport(t *testing.T) {
 
 	r1 := newMockReporter(t)
 
-	chain.assertOK(r1)
+	chain.assertNotFailed(r1)
 	assert.False(t, r1.reported)
 
 	chain.assertFailed(r1)
@@ -140,7 +180,7 @@ func TestChainReport(t *testing.T) {
 
 	assert.False(t, chain.failed())
 
-	chain.fail(AssertionFailure{})
+	chain.fail(mockFailure())
 	assert.True(t, r0.reported)
 
 	r2 := newMockReporter(t)
@@ -148,7 +188,7 @@ func TestChainReport(t *testing.T) {
 	chain.assertFailed(r2)
 	assert.False(t, r2.reported)
 
-	chain.assertOK(r2)
+	chain.assertNotFailed(r2)
 	assert.True(t, r2.reported)
 }
 
@@ -160,13 +200,13 @@ func TestChainHandler(t *testing.T) {
 	})
 
 	chain.enter("test")
-	chain.fail(AssertionFailure{})
+	chain.fail(mockFailure())
 	chain.leave()
 
 	assert.NotNil(t, handler.ctx)
 	assert.NotNil(t, handler.failure)
 
-	chain.reset()
+	chain.clearFailed()
 
 	handler.ctx = nil
 	handler.failure = nil
@@ -185,26 +225,26 @@ func TestChainSeverity(t *testing.T) {
 		AssertionHandler: handler,
 	})
 
-	chain.fail(AssertionFailure{})
+	chain.fail(mockFailure())
 
 	assert.NotNil(t, handler.failure)
 	assert.Equal(t, SeverityError, handler.failure.Severity)
 
-	chain.reset()
+	chain.clearFailed()
 
 	chain.setSeverity(SeverityError)
-	chain.fail(AssertionFailure{})
+	chain.fail(mockFailure())
 
 	assert.NotNil(t, handler.failure)
 	assert.Equal(t, SeverityError, handler.failure.Severity)
 
-	chain.reset()
+	chain.clearFailed()
 
-	chain.setSeverity(SeverityInfo)
-	chain.fail(AssertionFailure{})
+	chain.setSeverity(SeverityLog)
+	chain.fail(mockFailure())
 
 	assert.NotNil(t, handler.failure)
-	assert.Equal(t, SeverityInfo, handler.failure.Severity)
+	assert.Equal(t, SeverityLog, handler.failure.Severity)
 }
 
 func TestChainCallback(t *testing.T) {
@@ -220,6 +260,6 @@ func TestChainCallback(t *testing.T) {
 		called = true
 	})
 
-	chain.fail(AssertionFailure{})
+	chain.fail(mockFailure())
 	assert.True(t, called)
 }

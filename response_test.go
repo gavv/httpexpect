@@ -42,6 +42,7 @@ func TestResponseFailed(t *testing.T) {
 
 		resp.Status(123)
 		resp.StatusRange(Status2xx)
+		resp.StatusList(http.StatusOK, http.StatusBadGateway)
 		resp.NoContent()
 		resp.ContentType("", "")
 		resp.ContentEncoding("")
@@ -50,7 +51,7 @@ func TestResponseFailed(t *testing.T) {
 
 	t.Run("failed_chain", func(t *testing.T) {
 		chain := newMockChain(t)
-		chain.fail(AssertionFailure{})
+		chain.fail(mockFailure())
 
 		resp := newResponse(responseOpts{
 			chain:    chain,
@@ -73,7 +74,7 @@ func TestResponseFailed(t *testing.T) {
 
 	t.Run("failed_chain_nil_value", func(t *testing.T) {
 		chain := newMockChain(t)
-		chain.fail(AssertionFailure{})
+		chain.fail(mockFailure())
 
 		resp := newResponse(responseOpts{
 			chain:    chain,
@@ -108,8 +109,8 @@ func TestResponseRoundTripTime(t *testing.T) {
 		duration := time.Second
 
 		resp := NewResponse(reporter, &http.Response{}, duration)
-		resp.chain.assertOK(t)
-		resp.chain.reset()
+		resp.chain.assertNotFailed(t)
+		resp.chain.clearFailed()
 
 		rt := resp.RoundTripTime()
 
@@ -117,20 +118,20 @@ func TestResponseRoundTripTime(t *testing.T) {
 
 		rt.IsSet()
 		rt.Equal(time.Second)
-		rt.chain.assertOK(t)
+		rt.chain.assertNotFailed(t)
 	})
 
 	t.Run("unset", func(t *testing.T) {
 		resp := NewResponse(reporter, &http.Response{})
-		resp.chain.assertOK(t)
-		resp.chain.reset()
+		resp.chain.assertNotFailed(t)
+		resp.chain.clearFailed()
 
 		rt := resp.RoundTripTime()
 
 		assert.Equal(t, time.Duration(0), rt.Raw())
 
 		rt.NotSet()
-		rt.chain.assertOK(t)
+		rt.chain.assertNotFailed(t)
 
 		rt.IsSet()
 		rt.chain.assertFailed(t)
@@ -144,26 +145,26 @@ func TestResponseDuration(t *testing.T) {
 		duration := time.Second
 
 		resp := NewResponse(reporter, &http.Response{}, duration)
-		resp.chain.assertOK(t)
-		resp.chain.reset()
+		resp.chain.assertNotFailed(t)
+		resp.chain.clearFailed()
 
 		d := resp.Duration()
 
 		assert.Equal(t, float64(time.Second), d.Raw())
 
-		d.chain.assertOK(t)
+		d.chain.assertNotFailed(t)
 	})
 
 	t.Run("unset", func(t *testing.T) {
 		resp := NewResponse(reporter, &http.Response{})
-		resp.chain.assertOK(t)
-		resp.chain.reset()
+		resp.chain.assertNotFailed(t)
+		resp.chain.clearFailed()
 
 		d := resp.Duration()
 
 		assert.Equal(t, float64(0), d.Raw())
 
-		d.chain.assertOK(t)
+		d.chain.assertNotFailed(t)
 	})
 }
 
@@ -205,10 +206,53 @@ func TestResponseStatusRange(t *testing.T) {
 			resp.StatusRange(r)
 
 			if test.Range == r {
-				resp.chain.assertOK(t)
+				resp.chain.assertNotFailed(t)
 			} else {
 				resp.chain.assertFailed(t)
 			}
+		}
+	}
+}
+
+func TestResponseStatusList(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	cases := []struct {
+		Status int
+		List   []int
+		WantOK bool
+	}{
+		{
+			http.StatusOK,
+			[]int{http.StatusOK, http.StatusBadRequest, http.StatusInternalServerError},
+			true,
+		},
+		{
+			http.StatusBadRequest,
+			[]int{http.StatusOK, http.StatusBadRequest, http.StatusInternalServerError},
+			true,
+		},
+		{
+			http.StatusOK,
+			[]int{http.StatusInternalServerError, http.StatusBadRequest},
+			false,
+		},
+		{
+			http.StatusBadGateway,
+			[]int{},
+			false,
+		},
+	}
+
+	for _, c := range cases {
+		resp := NewResponse(reporter, &http.Response{
+			StatusCode: c.Status,
+		})
+		resp.StatusList(c.List...)
+		if c.WantOK {
+			resp.chain.assertNotFailed(t)
+		} else {
+			resp.chain.assertFailed(t)
 		}
 	}
 }
@@ -228,28 +272,28 @@ func TestResponseHeaders(t *testing.T) {
 	}
 
 	resp := NewResponse(reporter, httpResp)
-	resp.chain.assertOK(t)
-	resp.chain.reset()
+	resp.chain.assertNotFailed(t)
+	resp.chain.clearFailed()
 
 	assert.Same(t, httpResp, resp.Raw())
 
 	resp.Status(http.StatusOK)
-	resp.chain.assertOK(t)
-	resp.chain.reset()
+	resp.chain.assertNotFailed(t)
+	resp.chain.clearFailed()
 
 	resp.Status(http.StatusNotFound)
 	resp.chain.assertFailed(t)
-	resp.chain.reset()
+	resp.chain.clearFailed()
 
-	resp.Headers().Equal(headers).chain.assertOK(t)
+	resp.Headers().Equal(headers).chain.assertNotFailed(t)
 
 	for k, v := range headers {
 		for _, h := range []string{k, strings.ToLower(k), strings.ToUpper(k)} {
-			resp.Header(h).Equal(v[0]).chain.assertOK(t)
+			resp.Header(h).Equal(v[0]).chain.assertNotFailed(t)
 		}
 	}
 
-	resp.Header("Bad-Header").Empty().chain.assertOK(t)
+	resp.Header("Bad-Header").Empty().chain.assertNotFailed(t)
 }
 
 func TestResponseCookies(t *testing.T) {
@@ -270,21 +314,21 @@ func TestResponseCookies(t *testing.T) {
 	}
 
 	resp := NewResponse(reporter, httpResp)
-	resp.chain.assertOK(t)
-	resp.chain.reset()
+	resp.chain.assertNotFailed(t)
+	resp.chain.clearFailed()
 
 	assert.Equal(t, []interface{}{"foo", "bar"}, resp.Cookies().Raw())
-	resp.chain.assertOK(t)
+	resp.chain.assertNotFailed(t)
 
 	c1 := resp.Cookie("foo")
-	resp.chain.assertOK(t)
+	resp.chain.assertNotFailed(t)
 	assert.Equal(t, "foo", c1.Raw().Name)
 	assert.Equal(t, "aaa", c1.Raw().Value)
 	assert.Equal(t, "", c1.Raw().Domain)
 	assert.Equal(t, "", c1.Raw().Path)
 
 	c2 := resp.Cookie("bar")
-	resp.chain.assertOK(t)
+	resp.chain.assertNotFailed(t)
 	assert.Equal(t, "bar", c2.Raw().Name)
 	assert.Equal(t, "bbb", c2.Raw().Value)
 	assert.Equal(t, "example.com", c2.Raw().Domain)
@@ -308,11 +352,11 @@ func TestResponseNoCookies(t *testing.T) {
 	}
 
 	resp := NewResponse(reporter, httpResp)
-	resp.chain.assertOK(t)
-	resp.chain.reset()
+	resp.chain.assertNotFailed(t)
+	resp.chain.clearFailed()
 
 	assert.Equal(t, []interface{}{}, resp.Cookies().Raw())
-	resp.chain.assertOK(t)
+	resp.chain.assertNotFailed(t)
 
 	c := resp.Cookie("foo")
 	resp.chain.assertFailed(t)
@@ -331,8 +375,8 @@ func TestResponseBody(t *testing.T) {
 	resp := NewResponse(reporter, httpResp)
 
 	assert.Equal(t, "body", resp.Body().Raw())
-	resp.chain.assertOK(t)
-	resp.chain.reset()
+	resp.chain.assertNotFailed(t)
+	resp.chain.clearFailed()
 }
 
 func TestResponseBodyClose(t *testing.T) {
@@ -350,7 +394,7 @@ func TestResponseBodyClose(t *testing.T) {
 	assert.Equal(t, "test_body", resp.Body().Raw())
 	assert.True(t, body.closed)
 
-	resp.chain.assertOK(t)
+	resp.chain.assertNotFailed(t)
 }
 
 func TestResponseBodyError(t *testing.T) {
@@ -407,32 +451,32 @@ func TestResponseNoContentEmpty(t *testing.T) {
 	resp := NewResponse(reporter, httpResp)
 
 	assert.Equal(t, "", resp.Body().Raw())
-	resp.chain.assertOK(t)
-	resp.chain.reset()
+	resp.chain.assertNotFailed(t)
+	resp.chain.clearFailed()
 
 	resp.NoContent()
-	resp.chain.assertOK(t)
-	resp.chain.reset()
+	resp.chain.assertNotFailed(t)
+	resp.chain.clearFailed()
 
 	resp.ContentType("")
-	resp.chain.assertOK(t)
-	resp.chain.reset()
+	resp.chain.assertNotFailed(t)
+	resp.chain.clearFailed()
 
 	resp.Text()
 	resp.chain.assertFailed(t)
-	resp.chain.reset()
+	resp.chain.clearFailed()
 
 	resp.Form()
 	resp.chain.assertFailed(t)
-	resp.chain.reset()
+	resp.chain.clearFailed()
 
 	resp.JSON()
 	resp.chain.assertFailed(t)
-	resp.chain.reset()
+	resp.chain.clearFailed()
 
 	resp.JSONP("")
 	resp.chain.assertFailed(t)
-	resp.chain.reset()
+	resp.chain.clearFailed()
 }
 
 func TestResponseNoContentNil(t *testing.T) {
@@ -451,32 +495,32 @@ func TestResponseNoContentNil(t *testing.T) {
 	resp := NewResponse(reporter, httpResp)
 
 	assert.Equal(t, "", resp.Body().Raw())
-	resp.chain.assertOK(t)
-	resp.chain.reset()
+	resp.chain.assertNotFailed(t)
+	resp.chain.clearFailed()
 
 	resp.NoContent()
-	resp.chain.assertOK(t)
-	resp.chain.reset()
+	resp.chain.assertNotFailed(t)
+	resp.chain.clearFailed()
 
 	resp.ContentType("")
-	resp.chain.assertOK(t)
-	resp.chain.reset()
+	resp.chain.assertNotFailed(t)
+	resp.chain.clearFailed()
 
 	resp.Text()
 	resp.chain.assertFailed(t)
-	resp.chain.reset()
+	resp.chain.clearFailed()
 
 	resp.Form()
 	resp.chain.assertFailed(t)
-	resp.chain.reset()
+	resp.chain.clearFailed()
 
 	resp.JSON()
 	resp.chain.assertFailed(t)
-	resp.chain.reset()
+	resp.chain.clearFailed()
 
 	resp.JSONP("")
 	resp.chain.assertFailed(t)
-	resp.chain.reset()
+	resp.chain.clearFailed()
 }
 
 func TestResponseNoContentFailed(t *testing.T) {
@@ -497,12 +541,12 @@ func TestResponseNoContentFailed(t *testing.T) {
 	resp := NewResponse(reporter, httpResp)
 
 	assert.Equal(t, body, resp.Body().Raw())
-	resp.chain.assertOK(t)
-	resp.chain.reset()
+	resp.chain.assertNotFailed(t)
+	resp.chain.clearFailed()
 
 	resp.NoContent()
 	resp.chain.assertFailed(t)
-	resp.chain.reset()
+	resp.chain.clearFailed()
 }
 
 func TestResponseContentType(t *testing.T) {
@@ -517,32 +561,32 @@ func TestResponseContentType(t *testing.T) {
 	})
 
 	resp.ContentType("text/plain")
-	resp.chain.assertOK(t)
-	resp.chain.reset()
+	resp.chain.assertNotFailed(t)
+	resp.chain.clearFailed()
 
 	resp.ContentType("text/plain", "utf-8")
-	resp.chain.assertOK(t)
-	resp.chain.reset()
+	resp.chain.assertNotFailed(t)
+	resp.chain.clearFailed()
 
 	resp.ContentType("text/plain", "UTF-8")
-	resp.chain.assertOK(t)
-	resp.chain.reset()
+	resp.chain.assertNotFailed(t)
+	resp.chain.clearFailed()
 
 	resp.ContentType("bad")
 	resp.chain.assertFailed(t)
-	resp.chain.reset()
+	resp.chain.clearFailed()
 
 	resp.ContentType("text/plain", "bad")
 	resp.chain.assertFailed(t)
-	resp.chain.reset()
+	resp.chain.clearFailed()
 
 	resp.ContentType("")
 	resp.chain.assertFailed(t)
-	resp.chain.reset()
+	resp.chain.clearFailed()
 
 	resp.ContentType("text/plain", "")
 	resp.chain.assertFailed(t)
-	resp.chain.reset()
+	resp.chain.clearFailed()
 }
 
 func TestResponseContentTypeEmptyCharset(t *testing.T) {
@@ -557,16 +601,16 @@ func TestResponseContentTypeEmptyCharset(t *testing.T) {
 	})
 
 	resp.ContentType("text/plain")
-	resp.chain.assertOK(t)
-	resp.chain.reset()
+	resp.chain.assertNotFailed(t)
+	resp.chain.clearFailed()
 
 	resp.ContentType("text/plain", "")
-	resp.chain.assertOK(t)
-	resp.chain.reset()
+	resp.chain.assertNotFailed(t)
+	resp.chain.clearFailed()
 
 	resp.ContentType("text/plain", "utf-8")
 	resp.chain.assertFailed(t)
-	resp.chain.reset()
+	resp.chain.clearFailed()
 }
 
 func TestResponseContentTypeInvalid(t *testing.T) {
@@ -590,19 +634,19 @@ func TestResponseContentTypeInvalid(t *testing.T) {
 
 	resp1.ContentType("")
 	resp1.chain.assertFailed(t)
-	resp1.chain.reset()
+	resp1.chain.clearFailed()
 
 	resp1.ContentType("", "")
 	resp1.chain.assertFailed(t)
-	resp1.chain.reset()
+	resp1.chain.clearFailed()
 
 	resp2.ContentType("")
 	resp2.chain.assertFailed(t)
-	resp2.chain.reset()
+	resp2.chain.clearFailed()
 
 	resp2.ContentType("", "")
 	resp2.chain.assertFailed(t)
-	resp2.chain.reset()
+	resp2.chain.clearFailed()
 }
 
 func TestResponseContentEncoding(t *testing.T) {
@@ -617,20 +661,20 @@ func TestResponseContentEncoding(t *testing.T) {
 	})
 
 	resp.ContentEncoding("gzip", "deflate")
-	resp.chain.assertOK(t)
-	resp.chain.reset()
+	resp.chain.assertNotFailed(t)
+	resp.chain.clearFailed()
 
 	resp.ContentEncoding("deflate", "gzip")
 	resp.chain.assertFailed(t)
-	resp.chain.reset()
+	resp.chain.clearFailed()
 
 	resp.ContentEncoding("gzip")
 	resp.chain.assertFailed(t)
-	resp.chain.reset()
+	resp.chain.clearFailed()
 
 	resp.ContentEncoding()
 	resp.chain.assertFailed(t)
-	resp.chain.reset()
+	resp.chain.clearFailed()
 }
 
 func TestResponseTransferEncoding(t *testing.T) {
@@ -641,16 +685,16 @@ func TestResponseTransferEncoding(t *testing.T) {
 	})
 
 	resp.TransferEncoding("foo", "bar")
-	resp.chain.assertOK(t)
-	resp.chain.reset()
+	resp.chain.assertNotFailed(t)
+	resp.chain.clearFailed()
 
 	resp.TransferEncoding("foo")
 	resp.chain.assertFailed(t)
-	resp.chain.reset()
+	resp.chain.clearFailed()
 
 	resp.TransferEncoding()
 	resp.chain.assertFailed(t)
-	resp.chain.reset()
+	resp.chain.clearFailed()
 }
 
 func TestResponseText(t *testing.T) {
@@ -671,24 +715,24 @@ func TestResponseText(t *testing.T) {
 	resp := NewResponse(reporter, httpResp)
 
 	assert.Equal(t, body, resp.Body().Raw())
-	resp.chain.assertOK(t)
-	resp.chain.reset()
+	resp.chain.assertNotFailed(t)
+	resp.chain.clearFailed()
 
 	resp.ContentType("text/plain")
-	resp.chain.assertOK(t)
-	resp.chain.reset()
+	resp.chain.assertNotFailed(t)
+	resp.chain.clearFailed()
 
 	resp.ContentType("text/plain", "utf-8")
-	resp.chain.assertOK(t)
-	resp.chain.reset()
+	resp.chain.assertNotFailed(t)
+	resp.chain.clearFailed()
 
 	resp.ContentType("application/json")
 	resp.chain.assertFailed(t)
-	resp.chain.reset()
+	resp.chain.clearFailed()
 
 	resp.Text()
-	resp.chain.assertOK(t)
-	resp.chain.reset()
+	resp.chain.assertNotFailed(t)
+	resp.chain.clearFailed()
 
 	assert.Equal(t, "hello, world!", resp.Text().Raw())
 }
@@ -711,24 +755,24 @@ func TestResponseForm(t *testing.T) {
 	resp := NewResponse(reporter, httpResp)
 
 	assert.Equal(t, body, resp.Body().Raw())
-	resp.chain.assertOK(t)
-	resp.chain.reset()
+	resp.chain.assertNotFailed(t)
+	resp.chain.clearFailed()
 
 	resp.ContentType("application/x-www-form-urlencoded")
-	resp.chain.assertOK(t)
-	resp.chain.reset()
+	resp.chain.assertNotFailed(t)
+	resp.chain.clearFailed()
 
 	resp.ContentType("application/x-www-form-urlencoded", "")
-	resp.chain.assertOK(t)
-	resp.chain.reset()
+	resp.chain.assertNotFailed(t)
+	resp.chain.clearFailed()
 
 	resp.ContentType("text/plain")
 	resp.chain.assertFailed(t)
-	resp.chain.reset()
+	resp.chain.clearFailed()
 
 	resp.Form()
-	resp.chain.assertOK(t)
-	resp.chain.reset()
+	resp.chain.assertNotFailed(t)
+	resp.chain.clearFailed()
 
 	expected := map[string]interface{}{
 		"a": "1",
@@ -757,7 +801,7 @@ func TestResponseFormBadBody(t *testing.T) {
 
 	resp.Form()
 	resp.chain.assertFailed(t)
-	resp.chain.reset()
+	resp.chain.clearFailed()
 
 	assert.True(t, resp.Form().Raw() == nil)
 }
@@ -781,7 +825,7 @@ func TestResponseFormBadType(t *testing.T) {
 
 	resp.Form()
 	resp.chain.assertFailed(t)
-	resp.chain.reset()
+	resp.chain.clearFailed()
 
 	assert.True(t, resp.Form().Raw() == nil)
 }
@@ -804,24 +848,24 @@ func TestResponseJSON(t *testing.T) {
 	resp := NewResponse(reporter, httpResp)
 
 	assert.Equal(t, body, resp.Body().Raw())
-	resp.chain.assertOK(t)
-	resp.chain.reset()
+	resp.chain.assertNotFailed(t)
+	resp.chain.clearFailed()
 
 	resp.ContentType("application/json")
-	resp.chain.assertOK(t)
-	resp.chain.reset()
+	resp.chain.assertNotFailed(t)
+	resp.chain.clearFailed()
 
 	resp.ContentType("application/json", "utf-8")
-	resp.chain.assertOK(t)
-	resp.chain.reset()
+	resp.chain.assertNotFailed(t)
+	resp.chain.clearFailed()
 
 	resp.ContentType("text/plain")
 	resp.chain.assertFailed(t)
-	resp.chain.reset()
+	resp.chain.clearFailed()
 
 	resp.JSON()
-	resp.chain.assertOK(t)
-	resp.chain.reset()
+	resp.chain.assertNotFailed(t)
+	resp.chain.clearFailed()
 
 	assert.Equal(t,
 		map[string]interface{}{"key": "value"}, resp.JSON().Object().Raw())
@@ -846,7 +890,7 @@ func TestResponseJSONBadBody(t *testing.T) {
 
 	resp.JSON()
 	resp.chain.assertFailed(t)
-	resp.chain.reset()
+	resp.chain.clearFailed()
 
 	assert.True(t, resp.JSON().Raw() == nil)
 }
@@ -869,8 +913,8 @@ func TestResponseJSONCharsetEmpty(t *testing.T) {
 	resp := NewResponse(reporter, httpResp)
 
 	resp.JSON()
-	resp.chain.assertOK(t)
-	resp.chain.reset()
+	resp.chain.assertNotFailed(t)
+	resp.chain.clearFailed()
 
 	assert.Equal(t,
 		map[string]interface{}{"key": "value"}, resp.JSON().Object().Raw())
@@ -895,7 +939,7 @@ func TestResponseJSONCharsetBad(t *testing.T) {
 
 	resp.JSON()
 	resp.chain.assertFailed(t)
-	resp.chain.reset()
+	resp.chain.clearFailed()
 
 	assert.Equal(t, nil, resp.JSON().Raw())
 }
@@ -921,35 +965,35 @@ func TestResponseJSONP(t *testing.T) {
 		resp := NewResponse(reporter, httpResp)
 
 		assert.Equal(t, body, resp.Body().Raw())
-		resp.chain.assertOK(t)
-		resp.chain.reset()
+		resp.chain.assertNotFailed(t)
+		resp.chain.clearFailed()
 
 		resp.ContentType("application/javascript")
-		resp.chain.assertOK(t)
-		resp.chain.reset()
+		resp.chain.assertNotFailed(t)
+		resp.chain.clearFailed()
 
 		resp.ContentType("application/javascript", "utf-8")
-		resp.chain.assertOK(t)
-		resp.chain.reset()
+		resp.chain.assertNotFailed(t)
+		resp.chain.clearFailed()
 
 		resp.ContentType("text/plain")
 		resp.chain.assertFailed(t)
-		resp.chain.reset()
+		resp.chain.clearFailed()
 
 		resp.JSONP("foo")
-		resp.chain.assertOK(t)
-		resp.chain.reset()
+		resp.chain.assertNotFailed(t)
+		resp.chain.clearFailed()
 
 		assert.Equal(t,
 			map[string]interface{}{"key": "value"}, resp.JSONP("foo").Object().Raw())
 
 		resp.JSONP("fo")
 		resp.chain.assertFailed(t)
-		resp.chain.reset()
+		resp.chain.clearFailed()
 
 		resp.JSONP("")
 		resp.chain.assertFailed(t)
-		resp.chain.reset()
+		resp.chain.clearFailed()
 	}
 }
 
@@ -976,7 +1020,7 @@ func TestResponseJSONPBadBody(t *testing.T) {
 
 		resp.JSONP("foo")
 		resp.chain.assertFailed(t)
-		resp.chain.reset()
+		resp.chain.clearFailed()
 
 		assert.True(t, resp.JSONP("foo").Raw() == nil)
 	}
@@ -1000,8 +1044,8 @@ func TestResponseJSONPCharsetEmpty(t *testing.T) {
 	resp := NewResponse(reporter, httpResp)
 
 	resp.JSONP("foo")
-	resp.chain.assertOK(t)
-	resp.chain.reset()
+	resp.chain.assertNotFailed(t)
+	resp.chain.clearFailed()
 
 	assert.Equal(t,
 		map[string]interface{}{"key": "value"}, resp.JSONP("foo").Object().Raw())
@@ -1026,7 +1070,7 @@ func TestResponseJSONPCharsetBad(t *testing.T) {
 
 	resp.JSONP("foo")
 	resp.chain.assertFailed(t)
-	resp.chain.reset()
+	resp.chain.clearFailed()
 
 	assert.Nil(t, resp.JSONP("foo").Raw())
 }
@@ -1062,7 +1106,7 @@ func TestResponseContentOpts(t *testing.T) {
 		})
 
 		if tc.match {
-			c.assertOK(t)
+			c.assertNotFailed(t)
 		} else {
 			c.assertFailed(t)
 		}

@@ -145,11 +145,11 @@ func testRedirects(t *testing.T, createFn func(Reporter) *Expect) {
 		e := createFn(newMockReporter(t))
 
 		e.POST("/double_redirect").
-			Expect().chain.assertOK(t)
+			Expect().chain.assertNotFailed(t)
 
 		e.POST("/double_redirect").
 			WithMaxRedirects(2).
-			Expect().chain.assertOK(t)
+			Expect().chain.assertNotFailed(t)
 
 		e.POST("/double_redirect").
 			WithMaxRedirects(1).
@@ -157,7 +157,7 @@ func testRedirects(t *testing.T, createFn func(Reporter) *Expect) {
 
 		e.POST("/redirect308").
 			WithMaxRedirects(1).
-			Expect().chain.assertOK(t)
+			Expect().chain.assertNotFailed(t)
 
 		e.POST("/redirect308").
 			WithMaxRedirects(0).
@@ -165,7 +165,7 @@ func testRedirects(t *testing.T, createFn func(Reporter) *Expect) {
 
 		e.POST("/content").
 			WithMaxRedirects(0).
-			Expect().chain.assertOK(t)
+			Expect().chain.assertNotFailed(t)
 	})
 }
 

@@ -9,7 +9,7 @@ import (
 
 func TestDateTimeFailed(t *testing.T) {
 	chain := newMockChain(t)
-	chain.fail(AssertionFailure{})
+	chain.fail(mockFailure())
 
 	tm := time.Unix(0, 0)
 
@@ -35,20 +35,20 @@ func TestDateTimeEqual(t *testing.T) {
 	assert.True(t, time.Unix(0, 1234).Equal(value.Raw()))
 
 	value.Equal(time.Unix(0, 1234))
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Equal(time.Unix(0, 4321))
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotEqual(time.Unix(0, 4321))
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotEqual(time.Unix(0, 1234))
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 }
 
 func TestDateTimeGreater(t *testing.T) {
@@ -57,24 +57,24 @@ func TestDateTimeGreater(t *testing.T) {
 	value := NewDateTime(reporter, time.Unix(0, 1234))
 
 	value.Gt(time.Unix(0, 1234-1))
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Gt(time.Unix(0, 1234))
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.Ge(time.Unix(0, 1234-1))
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Ge(time.Unix(0, 1234))
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Ge(time.Unix(0, 1234+1))
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 }
 
 func TestDateTimeLesser(t *testing.T) {
@@ -83,24 +83,24 @@ func TestDateTimeLesser(t *testing.T) {
 	value := NewDateTime(reporter, time.Unix(0, 1234))
 
 	value.Lt(time.Unix(0, 1234+1))
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Lt(time.Unix(0, 1234))
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.Le(time.Unix(0, 1234+1))
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Le(time.Unix(0, 1234))
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Le(time.Unix(0, 1234-1))
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 }
 
 func TestDateTimeInRange(t *testing.T) {
@@ -109,50 +109,50 @@ func TestDateTimeInRange(t *testing.T) {
 	value := NewDateTime(reporter, time.Unix(0, 1234))
 
 	value.InRange(time.Unix(0, 1234), time.Unix(0, 1234))
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotInRange(time.Unix(0, 1234), time.Unix(0, 1234))
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.InRange(time.Unix(0, 1234-1), time.Unix(0, 1234))
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotInRange(time.Unix(0, 1234-1), time.Unix(0, 1234))
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.InRange(time.Unix(0, 1234), time.Unix(0, 1234+1))
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotInRange(time.Unix(0, 1234), time.Unix(0, 1234+1))
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.InRange(time.Unix(0, 1234+1), time.Unix(0, 1234+2))
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotInRange(time.Unix(0, 1234+1), time.Unix(0, 1234+2))
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.InRange(time.Unix(0, 1234-2), time.Unix(0, 1234-1))
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotInRange(time.Unix(0, 1234-2), time.Unix(0, 1234-1))
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.InRange(time.Unix(0, 1234+1), time.Unix(0, 1234-1))
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotInRange(time.Unix(0, 1234+1), time.Unix(0, 1234-1))
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 }

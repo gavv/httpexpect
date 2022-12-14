@@ -289,7 +289,7 @@ func (o *Object) Filter(fn func(key string, value *Value) bool) *Object {
 
 	for key, element := range o.value {
 		valueChain := o.chain.clone()
-		valueChain.setSeverity(SeverityInfo)
+		valueChain.setSeverity(SeverityLog)
 		chainFailed := false
 		valueChain.setFailCallback(func() {
 			chainFailed = true

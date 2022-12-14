@@ -9,7 +9,7 @@ import (
 
 func TestNumberFailed(t *testing.T) {
 	chain := newMockChain(t)
-	chain.fail(AssertionFailure{})
+	chain.fail(mockFailure())
 
 	value := newNumber(chain, 0)
 
@@ -34,20 +34,20 @@ func TestNumberGetters(t *testing.T) {
 	value := NewNumber(reporter, 123.0)
 
 	assert.Equal(t, 123.0, value.Raw())
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	assert.Equal(t, 123.0, value.Path("$").Raw())
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Schema(`{"type": "number"}`)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Schema(`{"type": "object"}`)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 }
 
 func TestNumberEqual(t *testing.T) {
@@ -58,20 +58,20 @@ func TestNumberEqual(t *testing.T) {
 	assert.Equal(t, 1234, int(value.Raw()))
 
 	value.Equal(1234)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Equal(4321)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotEqual(4321)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotEqual(1234)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 }
 
 func TestNumberEqualDelta(t *testing.T) {
@@ -80,36 +80,36 @@ func TestNumberEqualDelta(t *testing.T) {
 	value := NewNumber(reporter, 1234.5)
 
 	value.EqualDelta(1234.3, 0.3)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.EqualDelta(1234.7, 0.3)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.EqualDelta(1234.3, 0.1)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.EqualDelta(1234.7, 0.1)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotEqualDelta(1234.3, 0.3)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotEqualDelta(1234.7, 0.3)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotEqualDelta(1234.3, 0.1)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotEqualDelta(1234.7, 0.1)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 }
 
 func TestNumberEqualNaN(t *testing.T) {
@@ -154,24 +154,24 @@ func TestNumberGreater(t *testing.T) {
 	value := NewNumber(reporter, 1234)
 
 	value.Gt(1234 - 1)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Gt(1234)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.Ge(1234 - 1)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Ge(1234)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Ge(1234 + 1)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 }
 
 func TestNumberLesser(t *testing.T) {
@@ -180,24 +180,24 @@ func TestNumberLesser(t *testing.T) {
 	value := NewNumber(reporter, 1234)
 
 	value.Lt(1234 + 1)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Lt(1234)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.Le(1234 + 1)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Le(1234)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Le(1234 - 1)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 }
 
 func TestNumberInRange(t *testing.T) {
@@ -206,60 +206,60 @@ func TestNumberInRange(t *testing.T) {
 	value := NewNumber(reporter, 1234)
 
 	value.InRange(1234, 1234)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotInRange(1234, 1234)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.InRange(1234-1, 1234)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotInRange(1234-1, 1234)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.InRange(1234, 1234+1)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotInRange(1234, 1234+1)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.InRange(1234+1, 1234+2)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotInRange(1234+1, 1234+2)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.InRange(1234-2, 1234-1)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotInRange(1234-2, 1234-1)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.InRange(1234+1, 1234-1)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotInRange(1234+1, 1234-1)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotInRange(1234+1, "1234+2")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotInRange("1234+1", 1234+2)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 }
 
 func TestNumberConvertEqual(t *testing.T) {
@@ -268,28 +268,28 @@ func TestNumberConvertEqual(t *testing.T) {
 	value := NewNumber(reporter, 1234)
 
 	value.Equal(int64(1234))
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Equal(float32(1234))
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Equal("1234")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotEqual(int64(4321))
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotEqual(float32(4321))
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotEqual("4321")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 }
 
 func TestNumberConvertGreater(t *testing.T) {
@@ -298,28 +298,28 @@ func TestNumberConvertGreater(t *testing.T) {
 	value := NewNumber(reporter, 1234)
 
 	value.Gt(int64(1233))
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Gt(float32(1233))
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Gt("1233")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.Ge(int64(1233))
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Ge(float32(1233))
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Ge("1233")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 }
 
 func TestNumberConvertLesser(t *testing.T) {
@@ -328,28 +328,28 @@ func TestNumberConvertLesser(t *testing.T) {
 	value := NewNumber(reporter, 1234)
 
 	value.Lt(int64(1235))
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Lt(float32(1235))
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Lt("1235")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.Le(int64(1235))
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Le(float32(1235))
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Le("1235")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 }
 
 func TestNumberConvertInRange(t *testing.T) {
@@ -358,14 +358,14 @@ func TestNumberConvertInRange(t *testing.T) {
 	value := NewNumber(reporter, 1234)
 
 	value.InRange(int64(1233), float32(1235))
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.InRange(int64(1233), "1235")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.InRange(nil, 1235)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 }

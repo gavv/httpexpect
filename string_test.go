@@ -10,7 +10,7 @@ import (
 
 func TestStringFailed(t *testing.T) {
 	chain := newMockChain(t)
-	chain.fail(AssertionFailure{})
+	chain.fail(mockFailure())
 
 	value := newString(chain, "")
 
@@ -52,20 +52,20 @@ func TestStringGetters(t *testing.T) {
 	value := NewString(reporter, "foo")
 
 	assert.Equal(t, "foo", value.Raw())
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	assert.Equal(t, "foo", value.Path("$").Raw())
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Schema(`{"type": "string"}`)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Schema(`{"type": "object"}`)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 }
 
 func TestStringLength(t *testing.T) {
@@ -74,8 +74,8 @@ func TestStringLength(t *testing.T) {
 	value := NewString(reporter, "1234567")
 
 	num := value.Length()
-	value.chain.assertOK(t)
-	num.chain.assertOK(t)
+	value.chain.assertNotFailed(t)
+	num.chain.assertNotFailed(t)
 	assert.Equal(t, 7.0, num.Raw())
 }
 
@@ -85,22 +85,22 @@ func TestStringEmpty(t *testing.T) {
 	value1 := NewString(reporter, "")
 
 	value1.Empty()
-	value1.chain.assertOK(t)
-	value1.chain.reset()
+	value1.chain.assertNotFailed(t)
+	value1.chain.clearFailed()
 
 	value1.NotEmpty()
 	value1.chain.assertFailed(t)
-	value1.chain.reset()
+	value1.chain.clearFailed()
 
 	value2 := NewString(reporter, "a")
 
 	value2.Empty()
 	value2.chain.assertFailed(t)
-	value2.chain.reset()
+	value2.chain.clearFailed()
 
 	value2.NotEmpty()
-	value2.chain.assertOK(t)
-	value2.chain.reset()
+	value2.chain.assertNotFailed(t)
+	value2.chain.clearFailed()
 }
 
 func TestStringEqual(t *testing.T) {
@@ -111,20 +111,20 @@ func TestStringEqual(t *testing.T) {
 	assert.Equal(t, "foo", value.Raw())
 
 	value.Equal("foo")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Equal("FOO")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotEqual("FOO")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotEqual("foo")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 }
 
 func TestStringEqualFold(t *testing.T) {
@@ -133,28 +133,28 @@ func TestStringEqualFold(t *testing.T) {
 	value := NewString(reporter, "foo")
 
 	value.EqualFold("foo")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.EqualFold("FOO")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.EqualFold("foo2")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotEqualFold("foo")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotEqualFold("FOO")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotEqualFold("foo2")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 }
 
 func TestStringContains(t *testing.T) {
@@ -163,20 +163,20 @@ func TestStringContains(t *testing.T) {
 	value := NewString(reporter, "11-foo-22")
 
 	value.Contains("foo")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Contains("FOO")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotContains("FOO")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotContains("foo")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 }
 
 func TestStringContainsFold(t *testing.T) {
@@ -185,28 +185,28 @@ func TestStringContainsFold(t *testing.T) {
 	value := NewString(reporter, "11-foo-22")
 
 	value.ContainsFold("foo")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.ContainsFold("FOO")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.ContainsFold("foo3")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotContainsFold("foo")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotContainsFold("FOO")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotContainsFold("foo3")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 }
 
 func TestStringMatchOne(t *testing.T) {
@@ -215,14 +215,14 @@ func TestStringMatchOne(t *testing.T) {
 	value := NewString(reporter, "http://example.com/users/john")
 
 	m1 := value.Match(`http://(?P<host>.+)/users/(?P<user>.+)`)
-	m1.chain.assertOK(t)
+	m1.chain.assertNotFailed(t)
 
 	assert.Equal(t,
 		[]string{"http://example.com/users/john", "example.com", "john"},
 		m1.submatches)
 
 	m2 := value.Match(`http://(.+)/users/(.+)`)
-	m2.chain.assertOK(t)
+	m2.chain.assertNotFailed(t)
 
 	assert.Equal(t,
 		[]string{"http://example.com/users/john", "example.com", "john"},
@@ -239,8 +239,8 @@ func TestStringMatchAll(t *testing.T) {
 
 	assert.Equal(t, 2, len(m))
 
-	m[0].chain.assertOK(t)
-	m[1].chain.assertOK(t)
+	m[0].chain.assertNotFailed(t)
+	m[1].chain.assertNotFailed(t)
 
 	assert.Equal(t,
 		[]string{"http://example.com/users/john", "example.com", "john"},
@@ -257,28 +257,28 @@ func TestStringMatchStatus(t *testing.T) {
 	value := NewString(reporter, "a")
 
 	value.Match(`a`)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.MatchAll(`a`)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotMatch(`a`)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.Match(`[^a]`)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.MatchAll(`[^a]`)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotMatch(`[^a]`)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	assert.Equal(t, []string{}, value.Match(`[^a]`).submatches)
 	assert.Equal(t, []Match{}, value.MatchAll(`[^a]`))
@@ -291,15 +291,15 @@ func TestStringMatchInvalid(t *testing.T) {
 
 	value.Match(`[`)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.MatchAll(`[`)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotMatch(`[`)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 }
 
 func TestStringIsAscii(t *testing.T) {
@@ -307,28 +307,28 @@ func TestStringIsAscii(t *testing.T) {
 
 	value1 := NewString(reporter, "Ascii")
 	value1.IsASCII()
-	value1.chain.assertOK(t)
-	value1.chain.reset()
+	value1.chain.assertNotFailed(t)
+	value1.chain.clearFailed()
 
 	value2 := NewString(reporter, "Ascii is アスキー")
 	value2.IsASCII()
 	value2.chain.assertFailed(t)
-	value2.chain.reset()
+	value2.chain.clearFailed()
 
 	value3 := NewString(reporter, "アスキー")
 	value3.IsASCII()
 	value3.chain.assertFailed(t)
-	value3.chain.reset()
+	value3.chain.clearFailed()
 
 	value4 := NewString(reporter, string(rune(127)))
 	value4.IsASCII()
-	value4.chain.assertOK(t)
-	value4.chain.reset()
+	value4.chain.assertNotFailed(t)
+	value4.chain.clearFailed()
 
 	value5 := NewString(reporter, string(rune(128)))
 	value5.IsASCII()
 	value5.chain.assertFailed(t)
-	value5.chain.reset()
+	value5.chain.clearFailed()
 }
 
 func TestStringIsNotAscii(t *testing.T) {
@@ -337,27 +337,27 @@ func TestStringIsNotAscii(t *testing.T) {
 	value1 := NewString(reporter, "Ascii")
 	value1.NotIsASCII()
 	value1.chain.assertFailed(t)
-	value1.chain.reset()
+	value1.chain.clearFailed()
 
 	value2 := NewString(reporter, "Ascii is アスキー")
 	value2.NotIsASCII()
-	value2.chain.assertOK(t)
-	value2.chain.reset()
+	value2.chain.assertNotFailed(t)
+	value2.chain.clearFailed()
 
 	value3 := NewString(reporter, "アスキー")
 	value3.NotIsASCII()
-	value3.chain.assertOK(t)
-	value3.chain.reset()
+	value3.chain.assertNotFailed(t)
+	value3.chain.clearFailed()
 
 	value4 := NewString(reporter, string(rune(127)))
 	value4.NotIsASCII()
 	value4.chain.assertFailed(t)
-	value4.chain.reset()
+	value4.chain.clearFailed()
 
 	value5 := NewString(reporter, string(rune(128)))
 	value5.NotIsASCII()
-	value5.chain.assertOK(t)
-	value5.chain.reset()
+	value5.chain.assertNotFailed(t)
+	value5.chain.clearFailed()
 }
 
 func TestStringAsNumber(t *testing.T) {
@@ -366,14 +366,14 @@ func TestStringAsNumber(t *testing.T) {
 	t.Run("default_base", func(t *testing.T) {
 		value1 := NewString(reporter, "1234567")
 		num1 := value1.AsNumber()
-		value1.chain.assertOK(t)
-		num1.chain.assertOK(t)
+		value1.chain.assertNotFailed(t)
+		num1.chain.assertNotFailed(t)
 		assert.Equal(t, float64(1234567), num1.Raw())
 
 		value2 := NewString(reporter, "11.22")
 		num2 := value2.AsNumber()
-		value2.chain.assertOK(t)
-		num2.chain.assertOK(t)
+		value2.chain.assertNotFailed(t)
+		num2.chain.assertNotFailed(t)
 		assert.Equal(t, float64(11.22), num2.Raw())
 
 		value3 := NewString(reporter, "a1")
@@ -386,22 +386,22 @@ func TestStringAsNumber(t *testing.T) {
 	t.Run("base10", func(t *testing.T) {
 		value1 := NewString(reporter, "100")
 		num1 := value1.AsNumber(10)
-		value1.chain.assertOK(t)
-		num1.chain.assertOK(t)
+		value1.chain.assertNotFailed(t)
+		num1.chain.assertNotFailed(t)
 		assert.Equal(t, float64(100), num1.Raw())
 
 		value2 := NewString(reporter, "11.22")
 		num2 := value2.AsNumber(10)
-		value2.chain.assertOK(t)
-		num2.chain.assertOK(t)
+		value2.chain.assertNotFailed(t)
+		num2.chain.assertNotFailed(t)
 		assert.Equal(t, float64(11.22), num2.Raw())
 	})
 
 	t.Run("base16", func(t *testing.T) {
 		value1 := NewString(reporter, "100")
 		num1 := value1.AsNumber(16)
-		value1.chain.assertOK(t)
-		num1.chain.assertOK(t)
+		value1.chain.assertNotFailed(t)
+		num1.chain.assertNotFailed(t)
 		assert.Equal(t, float64(0x100), num1.Raw())
 
 		value2 := NewString(reporter, "11.22")
@@ -412,8 +412,8 @@ func TestStringAsNumber(t *testing.T) {
 
 		value3 := NewString(reporter, "4000000000000000")
 		num3 := value3.AsNumber(16)
-		value3.chain.assertOK(t)
-		num3.chain.assertOK(t)
+		value3.chain.assertNotFailed(t)
+		num3.chain.assertNotFailed(t)
 		assert.Equal(t, float64(0x4000000000000000), num3.Raw())
 	})
 
@@ -463,7 +463,7 @@ func TestStringAsBoolean(t *testing.T) {
 		value := NewString(reporter, str)
 
 		b := value.AsBoolean()
-		b.chain.assertOK(t)
+		b.chain.assertNotFailed(t)
 
 		assert.True(t, b.Raw())
 	}
@@ -472,7 +472,7 @@ func TestStringAsBoolean(t *testing.T) {
 		value := NewString(reporter, str)
 
 		b := value.AsBoolean()
-		b.chain.assertOK(t)
+		b.chain.assertNotFailed(t)
 
 		assert.False(t, b.Raw())
 	}
@@ -490,14 +490,14 @@ func TestStringAsDateTime(t *testing.T) {
 
 	value1 := NewString(reporter, "Tue, 15 Nov 1994 08:12:31 GMT")
 	dt1 := value1.AsDateTime()
-	value1.chain.assertOK(t)
-	dt1.chain.assertOK(t)
+	value1.chain.assertNotFailed(t)
+	dt1.chain.assertNotFailed(t)
 	assert.True(t, time.Date(1994, 11, 15, 8, 12, 31, 0, time.UTC).Equal(dt1.Raw()))
 
 	value2 := NewString(reporter, "15 Nov 94 08:12 GMT")
 	dt2 := value2.AsDateTime(time.RFC822)
-	value2.chain.assertOK(t)
-	dt2.chain.assertOK(t)
+	value2.chain.assertNotFailed(t)
+	dt2.chain.assertNotFailed(t)
 	assert.True(t, time.Date(1994, 11, 15, 8, 12, 0, 0, time.UTC).Equal(dt2.Raw()))
 
 	value3 := NewString(reporter, "bad")
@@ -525,15 +525,15 @@ func TestStringAsDateTime(t *testing.T) {
 
 		value1 := NewString(reporter, str)
 		dt1 := value1.AsDateTime()
-		dt1.chain.assertOK(t)
+		dt1.chain.assertNotFailed(t)
 
 		value2 := NewString(reporter, str)
 		dt2 := value2.AsDateTime(formats...)
-		dt2.chain.assertOK(t)
+		dt2.chain.assertNotFailed(t)
 
 		value3 := NewString(reporter, str)
 		dt3 := value3.AsDateTime(f)
-		dt3.chain.assertOK(t)
+		dt3.chain.assertNotFailed(t)
 
 		if n != 0 {
 			value4 := NewString(reporter, str)
@@ -549,40 +549,40 @@ func TestStringHasPrefix(t *testing.T) {
 	value := NewString(reporter, "Hello World")
 
 	value.HasPrefix("Hello")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.HasPrefix("Hello World")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.HasPrefix("")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.HasPrefix("Hello!")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.HasPrefix("hello")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.HasPrefix("World")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotHasPrefix("Bye")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotHasPrefix("Hello")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotHasPrefix("hello")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 }
 
 func TestStringHasSuffix(t *testing.T) {
@@ -591,40 +591,40 @@ func TestStringHasSuffix(t *testing.T) {
 	value := NewString(reporter, "Hello World")
 
 	value.HasSuffix("World")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.HasSuffix("Hello World")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.HasSuffix("")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.HasPrefix("World!")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.HasSuffix("world")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.HasSuffix("Hello")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotHasSuffix("Bye")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotHasSuffix("World")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotHasSuffix("world")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 }
 
 func TestStringHasPrefixFold(t *testing.T) {
@@ -633,32 +633,36 @@ func TestStringHasPrefixFold(t *testing.T) {
 	value := NewString(reporter, "Hello World")
 
 	value.HasPrefixFold("hello")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.HasPrefixFold("HeLlO wOrLd")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.HasPrefixFold("")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.HasPrefixFold("World")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotHasPrefixFold("Bye")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotHasPrefixFold("world")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotHasPrefixFold("world!")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.NotHasPrefixFold("hello")
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
 }
 
 func TestStringHasSuffixFold(t *testing.T) {
@@ -667,34 +671,34 @@ func TestStringHasSuffixFold(t *testing.T) {
 	value := NewString(reporter, "Hello World")
 
 	value.HasSuffixFold("world")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.HasSuffixFold("hElLo WoRlD")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.HasSuffixFold("")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.HasSuffixFold("hello")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.HasSuffixFold("world!")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotHasSuffixFold("Bye")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotHasSuffixFold("world")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotHasSuffixFold("world!")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 }

@@ -51,7 +51,7 @@ func TestArrayFailed(t *testing.T) {
 
 	t.Run("failed_chain", func(t *testing.T) {
 		chain := newMockChain(t)
-		chain.fail(AssertionFailure{})
+		chain.fail(mockFailure())
 
 		value := newArray(chain, []interface{}{})
 
@@ -68,7 +68,7 @@ func TestArrayFailed(t *testing.T) {
 
 	t.Run("failed_chain_nil_value", func(t *testing.T) {
 		chain := newMockChain(t)
-		chain.fail(AssertionFailure{})
+		chain.fail(mockFailure())
 
 		value := newArray(chain, nil)
 
@@ -84,43 +84,43 @@ func TestArrayGetters(t *testing.T) {
 	value := NewArray(reporter, a)
 
 	assert.Equal(t, a, value.Raw())
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	assert.Equal(t, a, value.Path("$").Raw())
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Schema(`{"type": "array"}`)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Schema(`{"type": "object"}`)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	assert.Equal(t, 2.0, value.Length().Raw())
 
 	assert.Equal(t, "foo", value.Element(0).Raw())
 	assert.Equal(t, 123.0, value.Element(1).Raw())
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	assert.Equal(t, nil, value.Element(2).Raw())
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	it := value.Iter()
 	assert.Equal(t, 2, len(it))
 	assert.Equal(t, "foo", it[0].Raw())
 	assert.Equal(t, 123.0, it[1].Raw())
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	assert.Equal(t, "foo", value.First().Raw())
 	assert.Equal(t, 123.0, value.Last().Raw())
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 }
 
 func TestArrayEmpty(t *testing.T) {
@@ -130,27 +130,27 @@ func TestArrayEmpty(t *testing.T) {
 
 	_ = value1
 	value1.chain.assertFailed(t)
-	value1.chain.reset()
+	value1.chain.clearFailed()
 
 	value2 := NewArray(reporter, []interface{}{})
 
 	value2.Empty()
-	value2.chain.assertOK(t)
-	value2.chain.reset()
+	value2.chain.assertNotFailed(t)
+	value2.chain.clearFailed()
 
 	value2.NotEmpty()
 	value2.chain.assertFailed(t)
-	value2.chain.reset()
+	value2.chain.clearFailed()
 
 	value3 := NewArray(reporter, []interface{}{""})
 
 	value3.Empty()
 	value3.chain.assertFailed(t)
-	value3.chain.reset()
+	value3.chain.clearFailed()
 
 	value3.NotEmpty()
-	value3.chain.assertOK(t)
-	value3.chain.reset()
+	value3.chain.assertNotFailed(t)
+	value3.chain.clearFailed()
 }
 
 func TestArrayEmptyGetters(t *testing.T) {
@@ -160,19 +160,19 @@ func TestArrayEmptyGetters(t *testing.T) {
 
 	assert.NotNil(t, value.Element(0))
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	assert.NotNil(t, value.First())
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	assert.NotNil(t, value.Last())
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	assert.NotNil(t, value.Iter())
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 }
 
 func TestArrayEqualEmpty(t *testing.T) {
@@ -183,20 +183,20 @@ func TestArrayEqualEmpty(t *testing.T) {
 	assert.Equal(t, []interface{}{}, value.Raw())
 
 	value.Equal([]interface{}{})
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotEqual([]interface{}{})
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.Equal([]interface{}{""})
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotEqual([]interface{}{""})
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 }
 
 func TestArrayEqualNotEmpty(t *testing.T) {
@@ -208,35 +208,35 @@ func TestArrayEqualNotEmpty(t *testing.T) {
 
 	value.Equal([]interface{}{})
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotEqual([]interface{}{})
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Equal([]interface{}{"foo"})
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotEqual([]interface{}{"foo"})
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Equal([]interface{}{"bar", "foo"})
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotEqual([]interface{}{"bar", "foo"})
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Equal([]interface{}{"foo", "bar"})
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotEqual([]interface{}{"foo", "bar"})
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 }
 
 func TestArrayEqualTypes(t *testing.T) {
@@ -254,56 +254,56 @@ func TestArrayEqualTypes(t *testing.T) {
 	})
 
 	value1.Equal([]string{"foo", "bar"})
-	value1.chain.assertOK(t)
-	value1.chain.reset()
+	value1.chain.assertNotFailed(t)
+	value1.chain.clearFailed()
 
 	value1.Equal([]string{"bar", "foo"})
 	value1.chain.assertFailed(t)
-	value1.chain.reset()
+	value1.chain.clearFailed()
 
 	value1.NotEqual([]string{"foo", "bar"})
 	value1.chain.assertFailed(t)
-	value1.chain.reset()
+	value1.chain.clearFailed()
 
 	value1.NotEqual([]string{"bar", "foo"})
-	value1.chain.assertOK(t)
-	value1.chain.reset()
+	value1.chain.assertNotFailed(t)
+	value1.chain.clearFailed()
 
 	value2.Equal([]int{123, 456})
-	value2.chain.assertOK(t)
-	value2.chain.reset()
+	value2.chain.assertNotFailed(t)
+	value2.chain.clearFailed()
 
 	value2.Equal([]int{456, 123})
 	value2.chain.assertFailed(t)
-	value2.chain.reset()
+	value2.chain.clearFailed()
 
 	value2.NotEqual([]int{123, 456})
 	value2.chain.assertFailed(t)
-	value2.chain.reset()
+	value2.chain.clearFailed()
 
 	value2.NotEqual([]int{456, 123})
-	value2.chain.assertOK(t)
-	value2.chain.reset()
+	value2.chain.assertNotFailed(t)
+	value2.chain.clearFailed()
 
 	type S struct {
 		Foo int `json:"foo"`
 	}
 
 	value3.Equal([]S{{123}, {456}})
-	value3.chain.assertOK(t)
-	value3.chain.reset()
+	value3.chain.assertNotFailed(t)
+	value3.chain.clearFailed()
 
 	value3.Equal([]S{{456}, {123}})
 	value3.chain.assertFailed(t)
-	value3.chain.reset()
+	value3.chain.clearFailed()
 
 	value3.NotEqual([]S{{123}, {456}})
 	value3.chain.assertFailed(t)
-	value3.chain.reset()
+	value3.chain.clearFailed()
 
 	value3.NotEqual([]S{{456}, {123}})
-	value3.chain.assertOK(t)
-	value3.chain.reset()
+	value3.chain.assertNotFailed(t)
+	value3.chain.clearFailed()
 }
 
 func TestArrayEqualUnordered(t *testing.T) {
@@ -314,43 +314,43 @@ func TestArrayEqualUnordered(t *testing.T) {
 
 		value.EqualUnordered([]interface{}{123})
 		value.chain.assertFailed(t)
-		value.chain.reset()
+		value.chain.clearFailed()
 
 		value.NotEqualUnordered([]interface{}{123})
-		value.chain.assertOK(t)
-		value.chain.reset()
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
 		value.EqualUnordered([]interface{}{"foo"})
 		value.chain.assertFailed(t)
-		value.chain.reset()
+		value.chain.clearFailed()
 
 		value.NotEqualUnordered([]interface{}{"foo"})
-		value.chain.assertOK(t)
-		value.chain.reset()
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
 		value.EqualUnordered([]interface{}{123, "foo", "foo"})
 		value.chain.assertFailed(t)
-		value.chain.reset()
+		value.chain.clearFailed()
 
 		value.NotEqualUnordered([]interface{}{123, "foo", "foo"})
-		value.chain.assertOK(t)
-		value.chain.reset()
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
 		value.EqualUnordered([]interface{}{123, "foo"})
-		value.chain.assertOK(t)
-		value.chain.reset()
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
 		value.NotEqualUnordered([]interface{}{123, "foo"})
 		value.chain.assertFailed(t)
-		value.chain.reset()
+		value.chain.clearFailed()
 
 		value.EqualUnordered([]interface{}{"foo", 123})
-		value.chain.assertOK(t)
-		value.chain.reset()
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
 		value.NotEqualUnordered([]interface{}{"foo", 123})
 		value.chain.assertFailed(t)
-		value.chain.reset()
+		value.chain.clearFailed()
 	})
 
 	t.Run("with_duplicates", func(t *testing.T) {
@@ -358,35 +358,35 @@ func TestArrayEqualUnordered(t *testing.T) {
 
 		value.EqualUnordered([]interface{}{123, "foo"})
 		value.chain.assertFailed(t)
-		value.chain.reset()
+		value.chain.clearFailed()
 
 		value.NotEqualUnordered([]interface{}{123, "foo"})
-		value.chain.assertOK(t)
-		value.chain.reset()
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
 		value.EqualUnordered([]interface{}{123, 123, "foo"})
 		value.chain.assertFailed(t)
-		value.chain.reset()
+		value.chain.clearFailed()
 
 		value.NotEqualUnordered([]interface{}{123, 123, "foo"})
-		value.chain.assertOK(t)
-		value.chain.reset()
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
 		value.EqualUnordered([]interface{}{123, "foo", "foo"})
-		value.chain.assertOK(t)
-		value.chain.reset()
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
 		value.NotEqualUnordered([]interface{}{123, "foo", "foo"})
 		value.chain.assertFailed(t)
-		value.chain.reset()
+		value.chain.clearFailed()
 
 		value.EqualUnordered([]interface{}{"foo", 123, "foo"})
-		value.chain.assertOK(t)
-		value.chain.reset()
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
 		value.NotEqualUnordered([]interface{}{"foo", 123, "foo"})
 		value.chain.assertFailed(t)
-		value.chain.reset()
+		value.chain.clearFailed()
 	})
 }
 
@@ -397,23 +397,23 @@ func TestArrayElements(t *testing.T) {
 
 	value.Elements(123)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.Elements("foo")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.Elements("foo", 123)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.Elements(123, "foo", "foo")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.Elements(123, "foo")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 }
 
 func TestArrayNotElements(t *testing.T) {
@@ -422,24 +422,24 @@ func TestArrayNotElements(t *testing.T) {
 	value := NewArray(reporter, []interface{}{123, "foo"})
 
 	value.NotElements(123)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotElements("foo")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotElements("foo", 123)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotElements(123, "foo", "foo")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotElements(123, "foo")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 }
 
 func TestArrayContains(t *testing.T) {
@@ -448,48 +448,48 @@ func TestArrayContains(t *testing.T) {
 	value := NewArray(reporter, []interface{}{123, "foo"})
 
 	value.Contains(123)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotContains(123)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.Contains("foo", 123)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotContains("foo", 123)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.Contains("foo", "foo")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotContains("foo", "foo")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.Contains(123, "foo", "FOO")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotContains(123, "foo", "FOO")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotContains("FOO")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Contains([]interface{}{123, "foo"})
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotContains([]interface{}{123, "foo"})
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 }
 
 func TestArrayContainsOnly(t *testing.T) {
@@ -500,79 +500,79 @@ func TestArrayContainsOnly(t *testing.T) {
 
 		value.ContainsOnly(123)
 		value.chain.assertFailed(t)
-		value.chain.reset()
+		value.chain.clearFailed()
 
 		value.NotContainsOnly(123)
-		value.chain.assertOK(t)
-		value.chain.reset()
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
 		value.ContainsOnly("foo")
 		value.chain.assertFailed(t)
-		value.chain.reset()
+		value.chain.clearFailed()
 
 		value.NotContainsOnly("foo")
-		value.chain.assertOK(t)
-		value.chain.reset()
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
 		value.ContainsOnly(123, "foo", "foo")
-		value.chain.assertOK(t)
-		value.chain.reset()
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
 		value.NotContainsOnly(123, "foo", "foo")
 		value.chain.assertFailed(t)
-		value.chain.reset()
+		value.chain.clearFailed()
 
 		value.ContainsOnly(123, "foo")
-		value.chain.assertOK(t)
-		value.chain.reset()
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
 		value.NotContainsOnly(123, "foo")
 		value.chain.assertFailed(t)
-		value.chain.reset()
+		value.chain.clearFailed()
 
 		value.ContainsOnly("foo", 123)
-		value.chain.assertOK(t)
-		value.chain.reset()
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
 		value.NotContainsOnly("foo", 123)
 		value.chain.assertFailed(t)
-		value.chain.reset()
+		value.chain.clearFailed()
 	})
 
 	t.Run("with_duplicates", func(t *testing.T) {
 		value := NewArray(reporter, []interface{}{123, "foo", "foo"})
 
 		value.ContainsOnly(123, "foo")
-		value.chain.assertOK(t)
-		value.chain.reset()
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
 		value.NotContainsOnly(123, "foo")
 		value.chain.assertFailed(t)
-		value.chain.reset()
+		value.chain.clearFailed()
 
 		value.ContainsOnly(123, 123, "foo")
-		value.chain.assertOK(t)
-		value.chain.reset()
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
 		value.NotContainsOnly(123, 123, "foo")
 		value.chain.assertFailed(t)
-		value.chain.reset()
+		value.chain.clearFailed()
 
 		value.ContainsOnly(123, "foo", "foo")
-		value.chain.assertOK(t)
-		value.chain.reset()
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
 		value.NotContainsOnly(123, "foo", "foo")
 		value.chain.assertFailed(t)
-		value.chain.reset()
+		value.chain.clearFailed()
 
 		value.ContainsOnly("foo", 123, "foo")
-		value.chain.assertOK(t)
-		value.chain.reset()
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
 		value.NotContainsOnly("foo", 123, "foo")
 		value.chain.assertFailed(t)
-		value.chain.reset()
+		value.chain.clearFailed()
 	})
 }
 
@@ -582,52 +582,52 @@ func TestArrayContainsAny(t *testing.T) {
 	value := NewArray(reporter, []interface{}{123, "foo"})
 
 	value.ContainsAny(123)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotContainsAny(123)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.ContainsAny("foo", 123)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotContainsAny("foo", 123)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.ContainsAny("foo", "foo")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotContainsAny("foo", "foo")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.ContainsAny(123, "foo", "FOO")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotContainsAny(123, "foo", "FOO")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.ContainsAny("FOO")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotContainsAny("FOO")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.ContainsAny([]interface{}{123, "foo"})
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotContainsAny([]interface{}{123, "foo"})
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 }
 
 func TestArrayConvertEqual(t *testing.T) {
@@ -643,28 +643,28 @@ func TestArrayConvertEqual(t *testing.T) {
 	assert.Equal(t, []interface{}{123.0, 456.0}, value.Raw())
 
 	value.Equal(myArray{myInt(123), 456.0})
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotEqual(myArray{myInt(123), 456.0})
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.Equal([]interface{}{"123", "456"})
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotEqual([]interface{}{"123", "456"})
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Equal(nil)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotEqual(nil)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 }
 
 func TestArrayConvertElements(t *testing.T) {
@@ -679,12 +679,12 @@ func TestArrayConvertElements(t *testing.T) {
 	assert.Equal(t, []interface{}{123.0, 456.0}, value.Raw())
 
 	value.Elements(myInt(123), 456.0)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Elements(func() {})
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 }
 
 func TestArrayConvertContains(t *testing.T) {
@@ -699,64 +699,64 @@ func TestArrayConvertContains(t *testing.T) {
 	assert.Equal(t, []interface{}{123.0, 456.0}, value.Raw())
 
 	value.Contains(myInt(123), 456.0)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotContains(myInt(123), 456.0)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.ContainsOnly(myInt(123), 456.0)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.ContainsAny(myInt(123), 456.0)
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotContainsAny(myInt(123), 456.0)
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.Contains("123")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotContains("123")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.ContainsOnly("123.0", "456.0")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.ContainsAny("123.0", "456.0")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotContainsAny("123.0", "456.0")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Contains(func() {})
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotContains(func() {})
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.ContainsOnly(func() {})
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.ContainsAny(func() {})
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotContainsAny(func() {})
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 }
 
 func TestArrayEvery(t *testing.T) {
@@ -768,14 +768,14 @@ func TestArrayEvery(t *testing.T) {
 				assert.Equal(ts, 0, int(v)%2)
 			}
 		})
-		array.chain.assertOK(ts)
+		array.chain.assertNotFailed(ts)
 	})
 
 	t.Run("Empty array", func(ts *testing.T) {
 		reporter := newMockReporter(ts)
 		array := NewArray(reporter, []interface{}{})
 		array.Every(func(_ int, val *Value) {})
-		array.chain.assertOK(ts)
+		array.chain.assertNotFailed(ts)
 	})
 
 	t.Run("Test correct index", func(ts *testing.T) {
@@ -788,7 +788,7 @@ func TestArrayEvery(t *testing.T) {
 				}
 			},
 		)
-		array.chain.assertOK(ts)
+		array.chain.assertNotFailed(ts)
 	})
 
 	t.Run("Assertion failed for any", func(ts *testing.T) {
@@ -828,7 +828,7 @@ func TestArrayTransform(t *testing.T) {
 			return nil
 		})
 		assert.Equal(t, []interface{}{float64(4), float64(16), float64(36)}, newArray.value)
-		newArray.chain.assertOK(ts)
+		newArray.chain.assertNotFailed(ts)
 	})
 
 	t.Run("Chain fail on nil function value", func(ts *testing.T) {
@@ -845,7 +845,7 @@ func TestArrayTransform(t *testing.T) {
 			ts.Errorf("failed transformation")
 			return nil
 		})
-		newArray.chain.assertOK(ts)
+		newArray.chain.assertNotFailed(ts)
 	})
 
 	t.Run("Test correct index", func(ts *testing.T) {
@@ -860,7 +860,7 @@ func TestArrayTransform(t *testing.T) {
 			},
 		)
 		assert.Equal(t, []interface{}{float64(1), float64(2), float64(3)}, newArray.value)
-		newArray.chain.assertOK(ts)
+		newArray.chain.assertNotFailed(ts)
 	})
 }
 
@@ -874,8 +874,8 @@ func TestArrayFilter(t *testing.T) {
 		assert.Equal(t, []interface{}{1.0, 3.0, 4.0, 6.0}, filteredArray.Raw())
 		assert.Equal(t, array.Raw(), []interface{}{1.0, 2.0, 3.0, 4.0, 5.0, 6.0})
 
-		array.chain.assertOK(t)
-		filteredArray.chain.assertOK(t)
+		array.chain.assertNotFailed(t)
+		filteredArray.chain.assertNotFailed(t)
 	})
 
 	t.Run("Filter throws when an assertion within predicate fails", func(ts *testing.T) {
@@ -888,8 +888,8 @@ func TestArrayFilter(t *testing.T) {
 		assert.Equal(t, []interface{}{"foo", "baz"}, filteredArray.Raw())
 		assert.Equal(t, array.Raw(), []interface{}{1.0, "foo", "bar", 4.0, "baz", 6.0})
 
-		array.chain.assertOK(t)
-		filteredArray.chain.assertOK(t)
+		array.chain.assertNotFailed(t)
+		filteredArray.chain.assertNotFailed(t)
 	})
 
 	t.Run("Filter an array of different types and validate", func(ts *testing.T) {
@@ -901,8 +901,8 @@ func TestArrayFilter(t *testing.T) {
 		assert.Equal(t, []interface{}{"foo", true, 1.0}, filteredArray.Raw())
 		assert.Equal(t, array.Raw(), []interface{}{"foo", "bar", true, 1.0})
 
-		array.chain.assertOK(t)
-		filteredArray.chain.assertOK(t)
+		array.chain.assertNotFailed(t)
+		filteredArray.chain.assertNotFailed(t)
 	})
 
 	t.Run("Filter an empty array", func(ts *testing.T) {
@@ -914,8 +914,8 @@ func TestArrayFilter(t *testing.T) {
 		assert.Equal(t, []interface{}{}, filteredArray.Raw())
 		assert.Equal(t, array.Raw(), []interface{}{})
 
-		array.chain.assertOK(t)
-		filteredArray.chain.assertOK(t)
+		array.chain.assertNotFailed(t)
+		filteredArray.chain.assertNotFailed(t)
 	})
 
 	t.Run("Filter returns an empty non-nil array if no items are passed",
@@ -928,7 +928,7 @@ func TestArrayFilter(t *testing.T) {
 			assert.Equal(t, []interface{}{}, filteredArray.Raw())
 			assert.Equal(t, array.Raw(), []interface{}{"foo", "bar", true, 1.0})
 
-			array.chain.assertOK(t)
-			filteredArray.chain.assertOK(t)
+			array.chain.assertNotFailed(t)
+			filteredArray.chain.assertNotFailed(t)
 		})
 }

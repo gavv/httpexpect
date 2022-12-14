@@ -8,7 +8,7 @@ import (
 
 func TestMatchFailed(t *testing.T) {
 	chain := newMockChain(t)
-	chain.fail(AssertionFailure{})
+	chain.fail(mockFailure())
 
 	value := newMatch(chain, nil, nil)
 
@@ -37,27 +37,27 @@ func TestMatchGetters(t *testing.T) {
 	assert.Equal(t, "m0", value.Index(0).Raw())
 	assert.Equal(t, "m1", value.Index(1).Raw())
 	assert.Equal(t, "m2", value.Index(2).Raw())
-	value.chain.assertOK(t)
+	value.chain.assertNotFailed(t)
 
 	assert.Equal(t, "m1", value.Name("n1").Raw())
 	assert.Equal(t, "m2", value.Name("n2").Raw())
-	value.chain.assertOK(t)
+	value.chain.assertNotFailed(t)
 
 	assert.Equal(t, "", value.Index(-1).Raw())
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	assert.Equal(t, "", value.Index(3).Raw())
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	assert.Equal(t, "", value.Name("").Raw())
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	assert.Equal(t, "", value.Name("bad").Raw())
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 }
 
 func TestMatchEmpty(t *testing.T) {
@@ -72,27 +72,27 @@ func TestMatchEmpty(t *testing.T) {
 
 	value1.Empty()
 	value1.chain.assertFailed(t)
-	value1.chain.reset()
+	value1.chain.clearFailed()
 
 	value1.NotEmpty()
-	value1.chain.assertOK(t)
-	value1.chain.reset()
+	value1.chain.assertNotFailed(t)
+	value1.chain.clearFailed()
 
 	value2.Empty()
-	value2.chain.assertOK(t)
-	value2.chain.reset()
+	value2.chain.assertNotFailed(t)
+	value2.chain.clearFailed()
 
 	value2.NotEmpty()
 	value2.chain.assertFailed(t)
-	value2.chain.reset()
+	value2.chain.clearFailed()
 
 	value3.Empty()
-	value3.chain.assertOK(t)
-	value3.chain.reset()
+	value3.chain.assertNotFailed(t)
+	value3.chain.clearFailed()
 
 	value3.NotEmpty()
 	value3.chain.assertFailed(t)
-	value3.chain.reset()
+	value3.chain.clearFailed()
 }
 
 func TestMatchValues(t *testing.T) {
@@ -101,36 +101,36 @@ func TestMatchValues(t *testing.T) {
 	value := NewMatch(reporter, []string{"m0", "m1", "m2"}, nil)
 
 	value.Values("m1", "m2")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.Values("m2", "m1")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.Values("m1")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.Values()
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotValues("m1", "m2")
 	value.chain.assertFailed(t)
-	value.chain.reset()
+	value.chain.clearFailed()
 
 	value.NotValues("m2", "m1")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotValues("m1")
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
 	value.NotValues()
-	value.chain.assertOK(t)
-	value.chain.reset()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 }
 
 func TestMatchValuesEmpty(t *testing.T) {
@@ -141,26 +141,26 @@ func TestMatchValuesEmpty(t *testing.T) {
 	value3 := NewMatch(reporter, []string{"m0"}, nil)
 
 	value1.Values()
-	value1.chain.assertOK(t)
-	value1.chain.reset()
+	value1.chain.assertNotFailed(t)
+	value1.chain.clearFailed()
 
 	value1.Values("")
 	value1.chain.assertFailed(t)
-	value1.chain.reset()
+	value1.chain.clearFailed()
 
 	value2.Values()
-	value2.chain.assertOK(t)
-	value2.chain.reset()
+	value2.chain.assertNotFailed(t)
+	value2.chain.clearFailed()
 
 	value2.Values("")
 	value2.chain.assertFailed(t)
-	value2.chain.reset()
+	value2.chain.clearFailed()
 
 	value3.Values()
-	value3.chain.assertOK(t)
-	value3.chain.reset()
+	value3.chain.assertNotFailed(t)
+	value3.chain.clearFailed()
 
 	value3.Values("m0")
 	value3.chain.assertFailed(t)
-	value3.chain.reset()
+	value3.chain.clearFailed()
 }

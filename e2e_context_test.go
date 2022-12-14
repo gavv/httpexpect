@@ -2,6 +2,7 @@ package httpexpect
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -137,7 +138,7 @@ func TestContextGlobalCancel(t *testing.T) {
 	// config with context cancel suppression
 	suppressor := newExpErrorSuppressor(t,
 		func(err error) bool {
-			return strings.Contains(err.Error(), "context canceled")
+			return errors.Is(err, context.Canceled)
 		})
 	e := WithConfig(Config{
 		BaseURL:          server.URL,
@@ -175,7 +176,7 @@ func TestContextGlobalWithRetries(t *testing.T) {
 	// config with context cancel suppression
 	suppressor := newExpErrorSuppressor(t,
 		func(err error) bool {
-			return strings.Contains(err.Error(), "context canceled")
+			return errors.Is(err, context.Canceled)
 		})
 	e := WithConfig(Config{
 		BaseURL:          server.URL,
@@ -215,7 +216,7 @@ func TestContextPerRequest(t *testing.T) {
 	// config with context cancel suppression
 	suppressor := newExpErrorSuppressor(t,
 		func(err error) bool {
-			return strings.Contains(err.Error(), "context canceled")
+			return errors.Is(err, context.Canceled)
 		})
 	e := WithConfig(Config{
 		BaseURL:          server.URL,
@@ -253,7 +254,7 @@ func TestContextPerRequestWithRetries(t *testing.T) {
 	// config with context cancel suppression
 	suppressor := newExpErrorSuppressor(t,
 		func(err error) bool {
-			return strings.Contains(err.Error(), "context canceled")
+			return errors.Is(err, context.Canceled)
 		})
 	e := WithConfig(Config{
 		BaseURL:          server.URL,
@@ -369,7 +370,7 @@ func TestContextPerRequestWithTimeoutCancelledByContext(t *testing.T) {
 	// config with context deadline expected error
 	suppressor := newExpErrorSuppressor(t,
 		func(err error) bool {
-			return strings.Contains(err.Error(), "context canceled")
+			return errors.Is(err, context.Canceled)
 		})
 	e := WithConfig(Config{
 		BaseURL:          server.URL,
@@ -392,4 +393,93 @@ func TestContextPerRequestWithTimeoutCancelledByContext(t *testing.T) {
 
 	// expected error should occur
 	assert.True(t, suppressor.expErrorOccurred)
+}
+
+func TestContextPerRequestRetry(t *testing.T) {
+	var m sync.Mutex
+
+	t.Run("not cancelled", func(t *testing.T) {
+		var callCount int
+
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			m.Lock()
+			defer m.Unlock()
+			callCount++
+
+			if callCount > 1 {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+
+			w.WriteHeader(http.StatusInternalServerError)
+		}))
+		defer ts.Close()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		e := WithConfig(Config{
+			BaseURL:          ts.URL,
+			AssertionHandler: &mockAssertionHandler{},
+		})
+
+		e.GET("/").
+			WithContext(ctx).
+			WithMaxRetries(1).
+			WithRetryPolicy(RetryAllErrors).
+			WithRetryDelay(time.Millisecond, time.Millisecond).
+			Expect()
+
+		assert.Equal(t, 2, callCount)
+	})
+
+	t.Run("cancelled after first retry attempt", func(t *testing.T) {
+		var callCount int
+		ctxCancellation := make(chan bool, 1) // To cancel context after first retry attempt
+		isCtxCancelled := make(chan bool, 1)  // To wait until cancel() is called
+
+		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			m.Lock()
+			defer m.Unlock()
+			callCount++
+
+			if callCount == 2 {
+				ctxCancellation <- true
+			}
+
+			w.WriteHeader(http.StatusInternalServerError)
+		}))
+		defer ts.Close()
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		go func() {
+			<-ctxCancellation
+			cancel()
+			isCtxCancelled <- true
+		}()
+
+		// Config with context cancelled error
+		suppressor := newExpErrorSuppressor(t,
+			func(err error) bool {
+				return errors.Is(err, context.Canceled)
+			})
+
+		e := WithConfig(Config{
+			BaseURL:          ts.URL,
+			AssertionHandler: suppressor,
+		})
+
+		e.GET("/").
+			WithContext(ctx).
+			WithMaxRetries(100).
+			WithRetryPolicy(RetryAllErrors).
+			WithRetryDelay(10*time.Millisecond, 10*time.Millisecond).
+			Expect()
+
+		<-isCtxCancelled
+
+		assert.GreaterOrEqual(t, callCount, 2)
+		assert.True(t, suppressor.expErrorOccurred)
+	})
 }

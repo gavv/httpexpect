@@ -9,12 +9,12 @@ func _() {
 	// Re-run the stringer command to generate them again.
 	var x [1]struct{}
 	_ = x[SeverityError-0]
-	_ = x[SeverityInfo-1]
+	_ = x[SeverityLog-1]
 }
 
-const _AssertionSeverity_name = "SeverityErrorSeverityInfo"
+const _AssertionSeverity_name = "SeverityErrorSeverityLog"
 
-var _AssertionSeverity_index = [...]uint8{0, 13, 25}
+var _AssertionSeverity_index = [...]uint8{0, 13, 24}
 
 func (i AssertionSeverity) String() string {
 	if i >= AssertionSeverity(len(_AssertionSeverity_index)-1) {

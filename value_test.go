@@ -12,7 +12,7 @@ import (
 
 func TestValueFailed(t *testing.T) {
 	chain := newMockChain(t)
-	chain.fail(AssertionFailure{})
+	chain.fail(mockFailure())
 
 	value := newValue(chain, nil)
 
@@ -51,7 +51,7 @@ func TestValueCastNull(t *testing.T) {
 	NewValue(reporter, data).Number().chain.assertFailed(t)
 	NewValue(reporter, data).Boolean().chain.assertFailed(t)
 	NewValue(reporter, data).NotNull().chain.assertFailed(t)
-	NewValue(reporter, data).Null().chain.assertOK(t)
+	NewValue(reporter, data).Null().chain.assertNotFailed(t)
 }
 
 func TestValueCastIndirectNull(t *testing.T) {
@@ -65,7 +65,7 @@ func TestValueCastIndirectNull(t *testing.T) {
 	NewValue(reporter, data).Number().chain.assertFailed(t)
 	NewValue(reporter, data).Boolean().chain.assertFailed(t)
 	NewValue(reporter, data).NotNull().chain.assertFailed(t)
-	NewValue(reporter, data).Null().chain.assertOK(t)
+	NewValue(reporter, data).Null().chain.assertNotFailed(t)
 }
 
 func TestValueCastBad(t *testing.T) {
@@ -87,12 +87,12 @@ func TestValueCastObject(t *testing.T) {
 
 	data := map[string]interface{}{}
 
-	NewValue(reporter, data).Object().chain.assertOK(t)
+	NewValue(reporter, data).Object().chain.assertNotFailed(t)
 	NewValue(reporter, data).Array().chain.assertFailed(t)
 	NewValue(reporter, data).String().chain.assertFailed(t)
 	NewValue(reporter, data).Number().chain.assertFailed(t)
 	NewValue(reporter, data).Boolean().chain.assertFailed(t)
-	NewValue(reporter, data).NotNull().chain.assertOK(t)
+	NewValue(reporter, data).NotNull().chain.assertNotFailed(t)
 	NewValue(reporter, data).Null().chain.assertFailed(t)
 }
 
@@ -102,11 +102,11 @@ func TestValueCastArray(t *testing.T) {
 	data := []interface{}{}
 
 	NewValue(reporter, data).Object().chain.assertFailed(t)
-	NewValue(reporter, data).Array().chain.assertOK(t)
+	NewValue(reporter, data).Array().chain.assertNotFailed(t)
 	NewValue(reporter, data).String().chain.assertFailed(t)
 	NewValue(reporter, data).Number().chain.assertFailed(t)
 	NewValue(reporter, data).Boolean().chain.assertFailed(t)
-	NewValue(reporter, data).NotNull().chain.assertOK(t)
+	NewValue(reporter, data).NotNull().chain.assertNotFailed(t)
 	NewValue(reporter, data).Null().chain.assertFailed(t)
 }
 
@@ -117,10 +117,10 @@ func TestValueCastString(t *testing.T) {
 
 	NewValue(reporter, data).Object().chain.assertFailed(t)
 	NewValue(reporter, data).Array().chain.assertFailed(t)
-	NewValue(reporter, data).String().chain.assertOK(t)
+	NewValue(reporter, data).String().chain.assertNotFailed(t)
 	NewValue(reporter, data).Number().chain.assertFailed(t)
 	NewValue(reporter, data).Boolean().chain.assertFailed(t)
-	NewValue(reporter, data).NotNull().chain.assertOK(t)
+	NewValue(reporter, data).NotNull().chain.assertNotFailed(t)
 	NewValue(reporter, data).Null().chain.assertFailed(t)
 }
 
@@ -132,9 +132,9 @@ func TestValueCastNumber(t *testing.T) {
 	NewValue(reporter, data).Object().chain.assertFailed(t)
 	NewValue(reporter, data).Array().chain.assertFailed(t)
 	NewValue(reporter, data).String().chain.assertFailed(t)
-	NewValue(reporter, data).Number().chain.assertOK(t)
+	NewValue(reporter, data).Number().chain.assertNotFailed(t)
 	NewValue(reporter, data).Boolean().chain.assertFailed(t)
-	NewValue(reporter, data).NotNull().chain.assertOK(t)
+	NewValue(reporter, data).NotNull().chain.assertNotFailed(t)
 	NewValue(reporter, data).Null().chain.assertFailed(t)
 }
 
@@ -147,8 +147,8 @@ func TestValueCastBoolean(t *testing.T) {
 	NewValue(reporter, data).Array().chain.assertFailed(t)
 	NewValue(reporter, data).String().chain.assertFailed(t)
 	NewValue(reporter, data).Number().chain.assertFailed(t)
-	NewValue(reporter, data).Boolean().chain.assertOK(t)
-	NewValue(reporter, data).NotNull().chain.assertOK(t)
+	NewValue(reporter, data).Boolean().chain.assertNotFailed(t)
+	NewValue(reporter, data).NotNull().chain.assertNotFailed(t)
 	NewValue(reporter, data).Null().chain.assertFailed(t)
 }
 
@@ -164,8 +164,8 @@ func TestValueGetObject(t *testing.T) {
 	value1 := NewValue(reporter, data1)
 	inner1 := value1.Object()
 
-	inner1.chain.assertOK(t)
-	inner1.chain.reset()
+	inner1.chain.assertNotFailed(t)
+	inner1.chain.clearFailed()
 	assert.Equal(t, data1, inner1.Raw())
 
 	data2 := myMap{"foo": 123.0}
@@ -173,8 +173,8 @@ func TestValueGetObject(t *testing.T) {
 	value2 := NewValue(reporter, data2)
 	inner2 := value2.Object()
 
-	inner2.chain.assertOK(t)
-	inner2.chain.reset()
+	inner2.chain.assertNotFailed(t)
+	inner2.chain.clearFailed()
 	assert.Equal(t, map[string]interface{}(data2), inner2.Raw())
 }
 
@@ -190,8 +190,8 @@ func TestValueGetArray(t *testing.T) {
 	value1 := NewValue(reporter, data1)
 	inner1 := value1.Array()
 
-	inner1.chain.assertOK(t)
-	inner1.chain.reset()
+	inner1.chain.assertNotFailed(t)
+	inner1.chain.clearFailed()
 	assert.Equal(t, data1, inner1.Raw())
 
 	data2 := myArray{"foo", 123.0}
@@ -199,8 +199,8 @@ func TestValueGetArray(t *testing.T) {
 	value2 := NewValue(reporter, data2)
 	inner2 := value2.Array()
 
-	inner2.chain.assertOK(t)
-	inner2.chain.reset()
+	inner2.chain.assertNotFailed(t)
+	inner2.chain.clearFailed()
 	assert.Equal(t, []interface{}(data2), inner2.Raw())
 }
 
@@ -210,8 +210,8 @@ func TestValueGetString(t *testing.T) {
 	value := NewValue(reporter, "foo")
 	inner := value.String()
 
-	inner.chain.assertOK(t)
-	inner.chain.reset()
+	inner.chain.assertNotFailed(t)
+	inner.chain.clearFailed()
 	assert.Equal(t, "foo", inner.Raw())
 }
 
@@ -227,8 +227,8 @@ func TestValueGetNumber(t *testing.T) {
 	value1 := NewValue(reporter, data1)
 	inner1 := value1.Number()
 
-	inner1.chain.assertOK(t)
-	inner1.chain.reset()
+	inner1.chain.assertNotFailed(t)
+	inner1.chain.clearFailed()
 	assert.Equal(t, data1, inner1.Raw())
 
 	data2 := 123
@@ -236,8 +236,8 @@ func TestValueGetNumber(t *testing.T) {
 	value2 := NewValue(reporter, data2)
 	inner2 := value2.Number()
 
-	inner2.chain.assertOK(t)
-	inner2.chain.reset()
+	inner2.chain.assertNotFailed(t)
+	inner2.chain.clearFailed()
 	assert.Equal(t, float64(data2), inner2.Raw())
 
 	data3 := myInt(123)
@@ -245,8 +245,8 @@ func TestValueGetNumber(t *testing.T) {
 	value3 := NewValue(reporter, data3)
 	inner3 := value3.Number()
 
-	inner3.chain.assertOK(t)
-	inner3.chain.reset()
+	inner3.chain.assertNotFailed(t)
+	inner3.chain.clearFailed()
 	assert.Equal(t, float64(data3), inner3.Raw())
 }
 
@@ -256,15 +256,15 @@ func TestValueGetBoolean(t *testing.T) {
 	value1 := NewValue(reporter, true)
 	inner1 := value1.Boolean()
 
-	inner1.chain.assertOK(t)
-	inner1.chain.reset()
+	inner1.chain.assertNotFailed(t)
+	inner1.chain.clearFailed()
 	assert.Equal(t, true, inner1.Raw())
 
 	value2 := NewValue(reporter, false)
 	inner2 := value2.Boolean()
 
-	inner2.chain.assertOK(t)
-	inner2.chain.reset()
+	inner2.chain.assertNotFailed(t)
+	inner2.chain.clearFailed()
 	assert.Equal(t, false, inner2.Raw())
 }
 
@@ -274,8 +274,8 @@ func TestValueEqual(t *testing.T) {
 	data1 := map[string]interface{}{"foo": "bar"}
 	data2 := "baz"
 
-	NewValue(reporter, data1).Equal(data1).chain.assertOK(t)
-	NewValue(reporter, data2).Equal(data2).chain.assertOK(t)
+	NewValue(reporter, data1).Equal(data1).chain.assertNotFailed(t)
+	NewValue(reporter, data2).Equal(data2).chain.assertNotFailed(t)
 
 	NewValue(reporter, data1).NotEqual(data1).chain.assertFailed(t)
 	NewValue(reporter, data2).NotEqual(data2).chain.assertFailed(t)
@@ -283,12 +283,12 @@ func TestValueEqual(t *testing.T) {
 	NewValue(reporter, data1).Equal(data2).chain.assertFailed(t)
 	NewValue(reporter, data2).Equal(data1).chain.assertFailed(t)
 
-	NewValue(reporter, data1).NotEqual(data2).chain.assertOK(t)
-	NewValue(reporter, data2).NotEqual(data1).chain.assertOK(t)
+	NewValue(reporter, data1).NotEqual(data2).chain.assertNotFailed(t)
+	NewValue(reporter, data2).NotEqual(data1).chain.assertNotFailed(t)
 
-	NewValue(reporter, nil).Equal(nil).chain.assertOK(t)
+	NewValue(reporter, nil).Equal(nil).chain.assertNotFailed(t)
 
-	NewValue(reporter, nil).Equal(map[string]interface{}(nil)).chain.assertOK(t)
+	NewValue(reporter, nil).Equal(map[string]interface{}(nil)).chain.assertNotFailed(t)
 	NewValue(reporter, nil).Equal(map[string]interface{}{}).chain.assertFailed(t)
 
 	NewValue(reporter, data1).Equal(func() {}).chain.assertFailed(t)
@@ -316,19 +316,19 @@ func TestValuePathObject(t *testing.T) {
 	assert.Equal(t, "john", value.Path("$.users[0].name").Raw())
 	assert.Equal(t, []interface{}{"john", "bob"}, value.Path("$.users[*].name").Raw())
 	assert.Equal(t, []interface{}{"john", "bob"}, value.Path("$..name").Raw())
-	value.chain.assertOK(t)
+	value.chain.assertNotFailed(t)
 
 	names := value.Path("$..name").Array().Iter()
-	names[0].String().Equal("john").chain.assertOK(t)
-	names[1].String().Equal("bob").chain.assertOK(t)
-	value.chain.assertOK(t)
+	names[0].String().Equal("john").chain.assertNotFailed(t)
+	names[1].String().Equal("bob").chain.assertNotFailed(t)
+	value.chain.assertNotFailed(t)
 
 	for _, key := range []string{"$.bad", "!"} {
 		bad := value.Path(key)
 		assert.True(t, bad != nil)
 		assert.True(t, bad.Raw() == nil)
 		value.chain.assertFailed(t)
-		value.chain.reset()
+		value.chain.clearFailed()
 	}
 }
 
@@ -350,7 +350,7 @@ func TestValuePathArray(t *testing.T) {
 	assert.Equal(t, "john", value.Path("$[0].name").Raw())
 	assert.Equal(t, []interface{}{"john", "bob"}, value.Path("$[*].name").Raw())
 	assert.Equal(t, []interface{}{"john", "bob"}, value.Path("$..name").Raw())
-	value.chain.assertOK(t)
+	value.chain.assertNotFailed(t)
 }
 
 func TestValuePathString(t *testing.T) {
@@ -361,7 +361,7 @@ func TestValuePathString(t *testing.T) {
 	value := NewValue(reporter, data)
 
 	assert.Equal(t, data, value.Path("$").Raw())
-	value.chain.assertOK(t)
+	value.chain.assertNotFailed(t)
 }
 
 func TestValuePathNumber(t *testing.T) {
@@ -372,7 +372,7 @@ func TestValuePathNumber(t *testing.T) {
 	value := NewValue(reporter, data)
 
 	assert.Equal(t, float64(data), value.Path("$").Raw())
-	value.chain.assertOK(t)
+	value.chain.assertNotFailed(t)
 }
 
 func TestValuePathBoolean(t *testing.T) {
@@ -383,7 +383,7 @@ func TestValuePathBoolean(t *testing.T) {
 	value := NewValue(reporter, data)
 
 	assert.Equal(t, data, value.Path("$").Raw())
-	value.chain.assertOK(t)
+	value.chain.assertNotFailed(t)
 }
 
 func TestValuePathNull(t *testing.T) {
@@ -392,7 +392,7 @@ func TestValuePathNull(t *testing.T) {
 	value := NewValue(reporter, nil)
 
 	assert.Equal(t, nil, value.Path("$").Raw())
-	value.chain.assertOK(t)
+	value.chain.assertNotFailed(t)
 }
 
 func TestValuePathError(t *testing.T) {
@@ -467,11 +467,11 @@ func TestValuePathExpressions(t *testing.T) {
 
 	runTests := func(tests map[string]interface{}) {
 		value := NewValue(reporter, data)
-		value.chain.assertOK(t)
+		value.chain.assertNotFailed(t)
 
 		for path, expected := range tests {
 			actual := value.Path(path)
-			actual.chain.assertOK(t)
+			actual.chain.assertNotFailed(t)
 
 			assert.Equal(t, expected, actual.Raw())
 		}
@@ -600,14 +600,14 @@ func TestValuePathIntFloat(t *testing.T) {
 	}
 
 	value := NewValue(reporter, data)
-	value.chain.assertOK(t)
+	value.chain.assertNotFailed(t)
 
 	a := value.Path(`$["A"]`)
-	a.chain.assertOK(t)
+	a.chain.assertNotFailed(t)
 	assert.Equal(t, 123.0, a.Raw())
 
 	b := value.Path(`$["B"]`)
-	b.chain.assertOK(t)
+	b.chain.assertNotFailed(t)
 	assert.Equal(t, 123.0, b.Raw())
 }
 
@@ -637,17 +637,17 @@ func TestValueSchema(t *testing.T) {
 		"bar": "b",
 	}
 
-	NewValue(reporter, data1).Schema(schema).chain.assertOK(t)
+	NewValue(reporter, data1).Schema(schema).chain.assertNotFailed(t)
 	NewValue(reporter, data2).Schema(schema).chain.assertFailed(t)
 
-	NewValue(reporter, data1).Schema([]byte(schema)).chain.assertOK(t)
+	NewValue(reporter, data1).Schema([]byte(schema)).chain.assertNotFailed(t)
 	NewValue(reporter, data2).Schema([]byte(schema)).chain.assertFailed(t)
 
 	var b interface{}
 	err := json.Unmarshal([]byte(schema), &b)
 	require.Nil(t, err)
 
-	NewValue(reporter, data1).Schema(b).chain.assertOK(t)
+	NewValue(reporter, data1).Schema(b).chain.assertNotFailed(t)
 	NewValue(reporter, data2).Schema(b).chain.assertFailed(t)
 
 	tmp, _ := ioutil.TempFile("", "httpexpect")
@@ -661,7 +661,7 @@ func TestValueSchema(t *testing.T) {
 
 	url := "file://" + tmp.Name()
 
-	NewValue(reporter, data1).Schema(url).chain.assertOK(t)
+	NewValue(reporter, data1).Schema(url).chain.assertNotFailed(t)
 	NewValue(reporter, data2).Schema(url).chain.assertFailed(t)
 
 	NewValue(reporter, data1).Schema("file:///bad/path").chain.assertFailed(t)

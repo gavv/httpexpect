@@ -110,7 +110,7 @@ jobs:
         run: go test -covermode=count -coverprofile=coverage.out
 
       - name: Prepare coverage report
-        uses: jandelgado/gcov2lcov-action@v1.0.5
+        uses: jandelgado/gcov2lcov-action@v1.0.9
 
       - name: Send coverage report
         uses: coverallsapp/github-action@master

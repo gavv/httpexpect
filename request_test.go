@@ -24,7 +24,7 @@ func TestRequestFailed(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	chain := newChainWithDefaults("test", reporter)
-	chain.fail(AssertionFailure{})
+	chain.fail(mockFailure())
 
 	config := Config{
 		Reporter: reporter,
@@ -100,8 +100,8 @@ func TestRequestEmpty(t *testing.T) {
 
 	resp := req.Expect()
 
-	req.chain.assertOK(t)
-	resp.chain.assertOK(t)
+	req.chain.assertNotFailed(t)
+	resp.chain.assertNotFailed(t)
 }
 
 func TestRequestTime(t *testing.T) {
@@ -175,7 +175,7 @@ func TestRequestTransformers(t *testing.T) {
 
 		req := NewRequest(config, "METHOD", "/")
 		req.WithTransformer(transform)
-		req.Expect().chain.assertOK(t)
+		req.Expect().chain.assertNotFailed(t)
 
 		assert.NotNil(t, savedReq)
 	})
@@ -191,7 +191,7 @@ func TestRequestTransformers(t *testing.T) {
 			r.Header.Add("bar", "22")
 		})
 
-		req.Expect().chain.assertOK(t)
+		req.Expect().chain.assertNotFailed(t)
 
 		assert.Equal(t, []string{"11"}, client.req.Header["Foo"])
 		assert.Equal(t, []string{"22"}, client.req.Header["Bar"])
@@ -211,7 +211,7 @@ func TestRequestTransformers(t *testing.T) {
 			r.URL.Path += "/44"
 		})
 
-		req.Expect().chain.assertOK(t)
+		req.Expect().chain.assertNotFailed(t)
 
 		assert.Equal(t, "/11/22/33/44", client.req.URL.Path)
 	})
@@ -238,12 +238,12 @@ func TestRequestClient(t *testing.T) {
 	}
 
 	req1 := NewRequest(config, "METHOD", "/")
-	req1.Expect().chain.assertOK(t)
+	req1.Expect().chain.assertNotFailed(t)
 	assert.NotNil(t, client1.req)
 
 	req2 := NewRequest(config, "METHOD", "/")
 	req2.WithClient(client2)
-	req2.Expect().chain.assertOK(t)
+	req2.Expect().chain.assertNotFailed(t)
 	assert.NotNil(t, client2.req)
 
 	req3 := NewRequest(config, "METHOD", "/")
@@ -275,12 +275,12 @@ func TestRequestHandler(t *testing.T) {
 	}
 
 	req1 := NewRequest(config, "METHOD", "/")
-	req1.Expect().chain.assertOK(t)
+	req1.Expect().chain.assertNotFailed(t)
 	assert.NotNil(t, hr1)
 
 	req2 := NewRequest(config, "METHOD", "/")
 	req2.WithHandler(handler2)
-	req2.Expect().chain.assertOK(t)
+	req2.Expect().chain.assertNotFailed(t)
 	assert.NotNil(t, hr2)
 
 	req3 := NewRequest(config, "METHOD", "/")
@@ -308,7 +308,7 @@ func TestRequestHandlerResetClient(t *testing.T) {
 
 	req := NewRequest(config, "METHOD", "/")
 	req.WithHandler(handler)
-	req.Expect().chain.assertOK(t)
+	req.Expect().chain.assertNotFailed(t)
 	assert.NotNil(t, hr)
 	assert.Nil(t, client.req)
 }
@@ -411,7 +411,7 @@ func TestRequestURLConcatenate(t *testing.T) {
 	}
 
 	for _, req := range reqs {
-		req.Expect().chain.assertOK(t)
+		req.Expect().chain.assertNotFailed(t)
 		assert.Equal(t, "http://example.com/path", client.req.URL.String())
 	}
 
@@ -419,9 +419,9 @@ func TestRequestURLConcatenate(t *testing.T) {
 	empty2 := NewRequest(config2, "METHOD", "")
 	empty3 := NewRequest(config3, "METHOD", "")
 
-	empty1.Expect().chain.assertOK(t)
-	empty2.Expect().chain.assertOK(t)
-	empty3.Expect().chain.assertOK(t)
+	empty1.Expect().chain.assertNotFailed(t)
+	empty2.Expect().chain.assertNotFailed(t)
+	empty3.Expect().chain.assertNotFailed(t)
 
 	assert.Equal(t, "", empty1.httpReq.URL.String())
 	assert.Equal(t, "http://example.com", empty2.httpReq.URL.String())
@@ -461,7 +461,7 @@ func TestRequestURLOverwrite(t *testing.T) {
 	}
 
 	for _, req := range reqs {
-		req.Expect().chain.assertOK(t)
+		req.Expect().chain.assertNotFailed(t)
 		assert.Equal(t, "http://example.com/path", client.req.URL.String())
 	}
 }
@@ -487,19 +487,19 @@ func TestRequestURLInterpolate(t *testing.T) {
 	reqs[2] = NewRequest(config, "METHOD", "{arg}", "/foo/bar")
 
 	for _, req := range reqs {
-		req.Expect().chain.assertOK(t)
+		req.Expect().chain.assertNotFailed(t)
 		assert.Equal(t, "http://example.com/foo/bar", client.req.URL.String())
 	}
 
 	r1 := NewRequest(config, "METHOD", "/{arg1}/{arg2}", "foo")
-	r1.Expect().chain.assertOK(t)
+	r1.Expect().chain.assertNotFailed(t)
 	assert.Equal(t, "http://example.com/foo/%7Barg2%7D",
 		client.req.URL.String())
 
 	r2 := NewRequest(config, "METHOD", "/{arg1}/{arg2}/{arg3}")
 	r2.WithPath("ARG3", "foo")
 	r2.WithPath("arg2", "bar")
-	r2.Expect().chain.assertOK(t)
+	r2.Expect().chain.assertNotFailed(t)
 	assert.Equal(t, "http://example.com/%7Barg1%7D/bar/foo",
 		client.req.URL.String())
 
@@ -507,7 +507,7 @@ func TestRequestURLInterpolate(t *testing.T) {
 	r3.WithPath("arg2", "bar")
 	r3.WithPathObject(map[string]string{"ARG1": "foo", "arg3": "baz"})
 	r3.WithPathObject(nil)
-	r3.Expect().chain.assertOK(t)
+	r3.Expect().chain.assertNotFailed(t)
 	assert.Equal(t, "http://example.com/foo.bar.baz",
 		client.req.URL.String())
 
@@ -519,24 +519,24 @@ func TestRequestURLInterpolate(t *testing.T) {
 
 	r4 := NewRequest(config, "METHOD", "/{arg1}{arg2}")
 	r4.WithPathObject(S{"foo", 1, 2})
-	r4.Expect().chain.assertOK(t)
+	r4.Expect().chain.assertNotFailed(t)
 	assert.Equal(t, "http://example.com/foo1", client.req.URL.String())
 
 	r5 := NewRequest(config, "METHOD", "/{arg1}{arg2}")
 	r5.WithPathObject(&S{"foo", 1, 2})
-	r5.Expect().chain.assertOK(t)
+	r5.Expect().chain.assertNotFailed(t)
 	assert.Equal(t, "http://example.com/foo1", client.req.URL.String())
 
 	r6 := NewRequest(config, "GET", "{arg}", nil)
 	r6.chain.assertFailed(t)
 
 	r7 := NewRequest(config, "GET", "{arg}")
-	r7.chain.assertOK(t)
+	r7.chain.assertNotFailed(t)
 	r7.WithPath("arg", nil)
 	r7.chain.assertFailed(t)
 
 	r8 := NewRequest(config, "GET", "{arg}")
-	r8.chain.assertOK(t)
+	r8.chain.assertNotFailed(t)
 	r8.WithPath("bad", "value")
 	r8.chain.assertFailed(t)
 
@@ -546,7 +546,7 @@ func TestRequestURLInterpolate(t *testing.T) {
 	r9.chain.assertFailed(t)
 
 	r10 := NewRequest(config, "GET", "{arg}")
-	r10.chain.assertOK(t)
+	r10.chain.assertNotFailed(t)
 	r10.WithPathObject(func() {})
 	r10.chain.assertFailed(t)
 }
@@ -600,7 +600,7 @@ func TestRequestURLQuery(t *testing.T) {
 	for _, req := range []*Request{req1, req2, req3, req4, req5, req6} {
 		client.req = nil
 		req.Expect()
-		req.chain.assertOK(t)
+		req.chain.assertNotFailed(t)
 		assert.Equal(t, "http://example.com/path?aa=foo&bb=123&cc=%2A%26%40",
 			client.req.URL.String())
 	}
@@ -610,7 +610,7 @@ func TestRequestURLQuery(t *testing.T) {
 		WithQueryObject(nil)
 
 	req7.Expect()
-	req7.chain.assertOK(t)
+	req7.chain.assertNotFailed(t)
 	assert.Equal(t, "http://example.com/path?foo=bar", client.req.URL.String())
 
 	NewRequest(config, "METHOD", "/path").
@@ -650,7 +650,7 @@ func TestRequestHeaders(t *testing.T) {
 	}
 
 	resp := req.Expect()
-	resp.chain.assertOK(t)
+	resp.chain.assertNotFailed(t)
 
 	assert.Equal(t, "METHOD", client.req.Method)
 	assert.Equal(t, "example.com", client.req.Host)
@@ -687,7 +687,7 @@ func TestRequestCookies(t *testing.T) {
 	}
 
 	resp := req.Expect()
-	resp.chain.assertOK(t)
+	resp.chain.assertNotFailed(t)
 
 	assert.Equal(t, "METHOD", client.req.Method)
 	assert.Equal(t, "url", client.req.URL.String())
@@ -712,7 +712,7 @@ func TestRequestBasicAuth(t *testing.T) {
 	req := NewRequest(config, "METHOD", "url")
 
 	req.WithBasicAuth("Aladdin", "open sesame")
-	req.chain.assertOK(t)
+	req.chain.assertNotFailed(t)
 
 	assert.Equal(t, "Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ==",
 		req.httpReq.Header.Get("Authorization"))
@@ -734,7 +734,7 @@ func TestRequestWithHost(t *testing.T) {
 	req1.WithHost("example.com")
 
 	resp := req1.Expect()
-	resp.chain.assertOK(t)
+	resp.chain.assertNotFailed(t)
 
 	assert.Equal(t, "METHOD", client1.req.Method)
 	assert.Equal(t, "example.com", client1.req.Host)
@@ -757,7 +757,7 @@ func TestRequestWithHost(t *testing.T) {
 	req2.WithHeader("HOST", "example1.com")
 	req2.WithHost("example2.com")
 
-	req2.Expect().chain.assertOK(t)
+	req2.Expect().chain.assertNotFailed(t)
 
 	assert.Equal(t, "example2.com", client2.req.Host)
 
@@ -776,7 +776,7 @@ func TestRequestWithHost(t *testing.T) {
 	req3.WithHost("example2.com")
 	req3.WithHeader("HOST", "example1.com")
 
-	req3.Expect().chain.assertOK(t)
+	req3.Expect().chain.assertNotFailed(t)
 
 	assert.Equal(t, "example1.com", client3.req.Host)
 }
@@ -799,7 +799,7 @@ func TestRequestBodyChunked(t *testing.T) {
 	req.WithChunked(bytes.NewBufferString("body"))
 
 	resp := req.Expect()
-	resp.chain.assertOK(t)
+	resp.chain.assertNotFailed(t)
 
 	assert.False(t, client.req.Body == nil)
 	assert.Equal(t, int64(-1), client.req.ContentLength)
@@ -830,7 +830,7 @@ func TestRequestBodyChunkedNil(t *testing.T) {
 	req.WithChunked(nil)
 
 	resp := req.Expect()
-	resp.chain.assertOK(t)
+	resp.chain.assertNotFailed(t)
 
 	assert.True(t, client.req.Body == http.NoBody)
 	assert.Equal(t, int64(0), client.req.ContentLength)
@@ -887,7 +887,7 @@ func TestRequestBodyBytes(t *testing.T) {
 	req.WithBytes([]byte("body"))
 
 	resp := req.Expect()
-	resp.chain.assertOK(t)
+	resp.chain.assertNotFailed(t)
 
 	assert.False(t, client.req.Body == nil)
 	assert.Equal(t, int64(len("body")), client.req.ContentLength)
@@ -918,7 +918,7 @@ func TestRequestBodyBytesNil(t *testing.T) {
 	req.WithBytes(nil)
 
 	resp := req.Expect()
-	resp.chain.assertOK(t)
+	resp.chain.assertNotFailed(t)
 
 	assert.True(t, client.req.Body == http.NoBody)
 	assert.Equal(t, int64(0), client.req.ContentLength)
@@ -951,7 +951,7 @@ func TestRequestBodyText(t *testing.T) {
 	req.WithText("some text")
 
 	resp := req.Expect()
-	resp.chain.assertOK(t)
+	resp.chain.assertNotFailed(t)
 
 	assert.Equal(t, "METHOD", client.req.Method)
 	assert.Equal(t, "url", client.req.URL.String())
@@ -991,7 +991,7 @@ func TestRequestBodyForm(t *testing.T) {
 	})
 
 	resp := req.Expect()
-	resp.chain.assertOK(t)
+	resp.chain.assertNotFailed(t)
 
 	assert.Equal(t, "METHOD", client.req.Method)
 	assert.Equal(t, "url", client.req.URL.String())
@@ -1029,7 +1029,7 @@ func TestRequestBodyField(t *testing.T) {
 	req.WithFormField("b", "2")
 
 	resp := req.Expect()
-	resp.chain.assertOK(t)
+	resp.chain.assertNotFailed(t)
 
 	assert.Equal(t, "METHOD", client.req.Method)
 	assert.Equal(t, "url", client.req.URL.String())
@@ -1067,7 +1067,7 @@ func TestRequestBodyFormStruct(t *testing.T) {
 	req.WithForm(S{"1", 2, 3})
 
 	resp := req.Expect()
-	resp.chain.assertOK(t)
+	resp.chain.assertNotFailed(t)
 
 	assert.Equal(t, "METHOD", client.req.Method)
 	assert.Equal(t, "url", client.req.URL.String())
@@ -1105,7 +1105,7 @@ func TestRequestBodyFormCombined(t *testing.T) {
 	req.WithFormField("c", 3)
 
 	resp := req.Expect()
-	resp.chain.assertOK(t)
+	resp.chain.assertNotFailed(t)
 
 	assert.Equal(t, "METHOD", client.req.Method)
 	assert.Equal(t, "url", client.req.URL.String())
@@ -1135,7 +1135,7 @@ func TestRequestBodyMultipart(t *testing.T) {
 	req.WithFormField("a", 3)
 
 	resp := req.Expect()
-	resp.chain.assertOK(t)
+	resp.chain.assertNotFailed(t)
 
 	assert.Equal(t, "POST", client.req.Method)
 	assert.Equal(t, "url", client.req.URL.String())
@@ -1198,7 +1198,7 @@ func TestRequestBodyMultipartFile(t *testing.T) {
 	req.WithFileBytes("d", "filename4", []byte("4"))
 
 	resp := req.Expect()
-	resp.chain.assertOK(t)
+	resp.chain.assertNotFailed(t)
 
 	assert.Equal(t, "POST", client.req.Method)
 	assert.Equal(t, "url", client.req.URL.String())
@@ -1266,7 +1266,7 @@ func TestRequestBodyJSON(t *testing.T) {
 	req.WithJSON(map[string]interface{}{"key": "value"})
 
 	resp := req.Expect()
-	resp.chain.assertOK(t)
+	resp.chain.assertNotFailed(t)
 
 	assert.Equal(t, "METHOD", client.req.Method)
 	assert.Equal(t, "url", client.req.URL.String())
@@ -1291,40 +1291,40 @@ func TestRequestContentLength(t *testing.T) {
 
 	req1 := NewRequest(config, "METHOD", "url")
 	req1.WithChunked(bytes.NewReader([]byte("12345")))
-	req1.Expect().chain.assertOK(t)
+	req1.Expect().chain.assertNotFailed(t)
 	assert.Equal(t, int64(-1), client.req.ContentLength)
 
 	req2 := NewRequest(config, "METHOD", "url")
 	req2.WithBytes([]byte("12345"))
-	req2.Expect().chain.assertOK(t)
+	req2.Expect().chain.assertNotFailed(t)
 	assert.Equal(t, int64(5), client.req.ContentLength)
 
 	req3 := NewRequest(config, "METHOD", "url")
 	req3.WithText("12345")
-	req3.Expect().chain.assertOK(t)
+	req3.Expect().chain.assertNotFailed(t)
 	assert.Equal(t, int64(5), client.req.ContentLength)
 
 	j, _ := json.Marshal(map[string]string{"a": "b"})
 	req4 := NewRequest(config, "METHOD", "url")
 	req4.WithJSON(map[string]string{"a": "b"})
-	req4.Expect().chain.assertOK(t)
+	req4.Expect().chain.assertNotFailed(t)
 	assert.Equal(t, int64(len(j)), client.req.ContentLength)
 
 	f := `a=b`
 	req5 := NewRequest(config, "METHOD", "url")
 	req5.WithForm(map[string]string{"a": "b"})
-	req5.Expect().chain.assertOK(t)
+	req5.Expect().chain.assertNotFailed(t)
 	assert.Equal(t, int64(len(f)), client.req.ContentLength)
 
 	req6 := NewRequest(config, "METHOD", "url")
 	req6.WithFormField("a", "b")
-	req6.Expect().chain.assertOK(t)
+	req6.Expect().chain.assertNotFailed(t)
 	assert.Equal(t, int64(len(f)), client.req.ContentLength)
 
 	req7 := NewRequest(config, "METHOD", "url")
 	req7.WithMultipart()
 	req7.WithFileBytes("a", "b", []byte("12345"))
-	req7.Expect().chain.assertOK(t)
+	req7.Expect().chain.assertNotFailed(t)
 	assert.True(t, client.req.ContentLength > 0)
 }
 
@@ -1344,27 +1344,27 @@ func TestRequestContentTypeOverwrite(t *testing.T) {
 	req1 := NewRequest(config, "METHOD", "url")
 	req1.WithText("hello")
 	req1.WithHeader("Content-Type", "foo")
-	req1.Expect().chain.assertOK(t)
+	req1.Expect().chain.assertNotFailed(t)
 	assert.Equal(t, http.Header{"Content-Type": {"foo"}}, client.req.Header)
 
 	req2 := NewRequest(config, "METHOD", "url")
 	req2.WithHeader("Content-Type", "foo")
 	req2.WithText("hello")
-	req2.Expect().chain.assertOK(t)
+	req2.Expect().chain.assertNotFailed(t)
 	assert.Equal(t, http.Header{"Content-Type": {"foo"}}, client.req.Header)
 
 	req3 := NewRequest(config, "METHOD", "url")
 	req3.WithJSON(map[string]interface{}{"a": "b"})
 	req3.WithHeader("Content-Type", "foo")
 	req3.WithHeader("Content-Type", "bar")
-	req3.Expect().chain.assertOK(t)
+	req3.Expect().chain.assertNotFailed(t)
 	assert.Equal(t, http.Header{"Content-Type": {"foo", "bar"}}, client.req.Header)
 
 	req4 := NewRequest(config, "METHOD", "url")
 	req4.WithForm(map[string]interface{}{"a": "b"})
 	req4.WithHeader("Content-Type", "foo")
 	req4.WithHeader("Content-Type", "bar")
-	req4.Expect().chain.assertOK(t)
+	req4.Expect().chain.assertNotFailed(t)
 	assert.Equal(t, http.Header{"Content-Type": {"foo", "bar"}}, client.req.Header)
 
 	req5 := NewRequest(config, "METHOD", "url")
@@ -1372,7 +1372,7 @@ func TestRequestContentTypeOverwrite(t *testing.T) {
 	req5.WithForm(map[string]interface{}{"a": "b"})
 	req5.WithHeader("Content-Type", "foo")
 	req5.WithHeader("Content-Type", "bar")
-	req5.Expect().chain.assertOK(t)
+	req5.Expect().chain.assertNotFailed(t)
 	assert.Equal(t, http.Header{"Content-Type": {"foo", "bar"}}, client.req.Header)
 }
 
@@ -1488,45 +1488,45 @@ func TestRequestErrorConflictBody(t *testing.T) {
 
 	req1 := NewRequest(config, "METHOD", "url")
 	req1.WithChunked(nil)
-	req1.chain.assertOK(t)
+	req1.chain.assertNotFailed(t)
 	req1.WithChunked(nil)
 	req1.chain.assertFailed(t)
 
 	req2 := NewRequest(config, "METHOD", "url")
 	req2.WithChunked(nil)
-	req2.chain.assertOK(t)
+	req2.chain.assertNotFailed(t)
 	req2.WithBytes(nil)
 	req2.chain.assertFailed(t)
 
 	req3 := NewRequest(config, "METHOD", "url")
 	req3.WithChunked(nil)
-	req3.chain.assertOK(t)
+	req3.chain.assertNotFailed(t)
 	req3.WithText("")
 	req3.chain.assertFailed(t)
 
 	req4 := NewRequest(config, "METHOD", "url")
 	req4.WithChunked(nil)
-	req4.chain.assertOK(t)
+	req4.chain.assertNotFailed(t)
 	req4.WithJSON(map[string]interface{}{"a": "b"})
 	req4.chain.assertFailed(t)
 
 	req5 := NewRequest(config, "METHOD", "url")
 	req5.WithChunked(nil)
-	req5.chain.assertOK(t)
+	req5.chain.assertNotFailed(t)
 	req5.WithForm(map[string]interface{}{"a": "b"})
 	req5.Expect()
 	req5.chain.assertFailed(t)
 
 	req6 := NewRequest(config, "METHOD", "url")
 	req6.WithChunked(nil)
-	req6.chain.assertOK(t)
+	req6.chain.assertNotFailed(t)
 	req6.WithFormField("a", "b")
 	req6.Expect()
 	req6.chain.assertFailed(t)
 
 	req7 := NewRequest(config, "METHOD", "url")
 	req7.WithChunked(nil)
-	req7.chain.assertOK(t)
+	req7.chain.assertNotFailed(t)
 	req7.WithMultipart()
 	req7.chain.assertFailed(t)
 }
@@ -1548,25 +1548,25 @@ func TestRequestErrorConflictType(t *testing.T) {
 
 	req1 := NewRequest(config, "METHOD", "url")
 	req1.WithText("")
-	req1.chain.assertOK(t)
+	req1.chain.assertNotFailed(t)
 	req1.WithJSON(map[string]interface{}{"a": "b"})
 	req1.chain.assertFailed(t)
 
 	req2 := NewRequest(config, "METHOD", "url")
 	req2.WithText("")
-	req2.chain.assertOK(t)
+	req2.chain.assertNotFailed(t)
 	req2.WithForm(map[string]interface{}{"a": "b"})
 	req2.chain.assertFailed(t)
 
 	req3 := NewRequest(config, "METHOD", "url")
 	req3.WithText("")
-	req3.chain.assertOK(t)
+	req3.chain.assertNotFailed(t)
 	req3.WithFormField("a", "b")
 	req3.chain.assertFailed(t)
 
 	req4 := NewRequest(config, "METHOD", "url")
 	req4.WithText("")
-	req4.chain.assertOK(t)
+	req4.chain.assertNotFailed(t)
 	req4.WithMultipart()
 	req4.chain.assertFailed(t)
 }
@@ -1588,13 +1588,13 @@ func TestRequestErrorConflictMultipart(t *testing.T) {
 
 	req1 := NewRequest(config, "METHOD", "url")
 	req1.WithForm(map[string]interface{}{"a": "b"})
-	req1.chain.assertOK(t)
+	req1.chain.assertNotFailed(t)
 	req1.WithMultipart()
 	req1.chain.assertFailed(t)
 
 	req2 := NewRequest(config, "METHOD", "url")
 	req2.WithFormField("a", "b")
-	req2.chain.assertOK(t)
+	req2.chain.assertNotFailed(t)
 	req2.WithMultipart()
 	req2.chain.assertFailed(t)
 
@@ -1624,14 +1624,14 @@ func TestRequestRedirect(t *testing.T) {
 
 			req := NewRequest(config, http.MethodPut, "/url").
 				WithRedirectPolicy(DontFollowRedirects)
-			req.chain.assertOK(t)
+			req.chain.assertNotFailed(t)
 
 			// Should return redirection response
 			resp := req.Expect().
 				Status(tp.redirectHTTPStatusCode).
 				Header("Location").
 				Equal("/redirect")
-			resp.chain.assertOK(t)
+			resp.chain.assertNotFailed(t)
 
 			// Should set GetBody
 			assert.Nil(t, req.httpReq.GetBody)
@@ -1667,14 +1667,14 @@ func TestRequestRedirect(t *testing.T) {
 			req := NewRequest(config, http.MethodPut, "/url").
 				WithRedirectPolicy(DontFollowRedirects).
 				WithText("test body")
-			req.chain.assertOK(t)
+			req.chain.assertNotFailed(t)
 
 			// Should return redirection response
 			resp := req.Expect().
 				Status(tp.redirectHTTPStatusCode).
 				Header("Location").
 				Equal("/redirect")
-			resp.chain.assertOK(t)
+			resp.chain.assertNotFailed(t)
 
 			// Should set GetBody
 			assert.Nil(t, req.httpReq.GetBody)
@@ -1708,12 +1708,12 @@ func TestRequestRedirect(t *testing.T) {
 			req := NewRequest(config, http.MethodPut, "/url").
 				WithRedirectPolicy(FollowAllRedirects).
 				WithMaxRedirects(1)
-			req.chain.assertOK(t)
+			req.chain.assertNotFailed(t)
 
 			// Should return OK response
 			resp := req.Expect().
 				Status(http.StatusOK)
-			resp.chain.assertOK(t)
+			resp.chain.assertNotFailed(t)
 
 			// Should set GetBody
 			gb, err := req.httpReq.GetBody()
@@ -1752,7 +1752,7 @@ func TestRequestRedirect(t *testing.T) {
 			req := NewRequest(config, http.MethodPut, "/url").
 				WithRedirectPolicy(FollowAllRedirects).
 				WithMaxRedirects(1)
-			req.chain.assertOK(t)
+			req.chain.assertNotFailed(t)
 
 			// Should error
 			resp := req.Expect()
@@ -1800,12 +1800,12 @@ func TestRequestRedirect(t *testing.T) {
 				WithRedirectPolicy(FollowAllRedirects).
 				WithMaxRedirects(1).
 				WithText("test body")
-			req.chain.assertOK(t)
+			req.chain.assertNotFailed(t)
 
 			// Should return OK response
 			resp := req.Expect().
 				Status(http.StatusOK)
-			resp.chain.assertOK(t)
+			resp.chain.assertNotFailed(t)
 
 			// Should set GetBody
 			gb, err := req.httpReq.GetBody()
@@ -1851,7 +1851,7 @@ func TestRequestRedirect(t *testing.T) {
 				WithRedirectPolicy(FollowAllRedirects).
 				WithMaxRedirects(1).
 				WithText("test body")
-			req.chain.assertOK(t)
+			req.chain.assertNotFailed(t)
 
 			// Should error
 			resp := req.Expect()
@@ -1898,12 +1898,12 @@ func TestRequestRedirect(t *testing.T) {
 			req := NewRequest(config, http.MethodPut, "/url").
 				WithRedirectPolicy(FollowRedirectsWithoutBody).
 				WithMaxRedirects(1)
-			req.chain.assertOK(t)
+			req.chain.assertNotFailed(t)
 
 			// Should return OK response
 			resp := req.Expect().
 				Status(http.StatusOK)
-			resp.chain.assertOK(t)
+			resp.chain.assertNotFailed(t)
 
 			// Should set GetBody
 			assert.Nil(t, req.httpReq.GetBody)
@@ -1940,7 +1940,7 @@ func TestRequestRedirect(t *testing.T) {
 			req := NewRequest(config, http.MethodPut, "/url").
 				WithRedirectPolicy(FollowRedirectsWithoutBody).
 				WithMaxRedirects(1)
-			req.chain.assertOK(t)
+			req.chain.assertNotFailed(t)
 
 			// Should error
 			resp := req.Expect()
@@ -1987,12 +1987,12 @@ func TestRequestRedirect(t *testing.T) {
 					WithRedirectPolicy(FollowRedirectsWithoutBody).
 					WithMaxRedirects(1).
 					WithText("test body")
-				req.chain.assertOK(t)
+				req.chain.assertNotFailed(t)
 
 				// Should return redirection response
 				resp := req.Expect().
 					Status(tp.redirectHTTPStatusCode)
-				resp.chain.assertOK(t)
+				resp.chain.assertNotFailed(t)
 
 				// Should set GetBody
 				assert.Nil(t, req.httpReq.GetBody)
@@ -2044,12 +2044,12 @@ func TestRequestRedirect(t *testing.T) {
 					WithRedirectPolicy(FollowRedirectsWithoutBody).
 					WithMaxRedirects(1).
 					WithText("test body")
-				req.chain.assertOK(t)
+				req.chain.assertNotFailed(t)
 
 				// Should return OK response
 				resp := req.Expect().
 					Status(http.StatusOK)
-				resp.chain.assertOK(t)
+				resp.chain.assertNotFailed(t)
 
 				// Should set GetBody
 				assert.Nil(t, req.httpReq.GetBody)
@@ -2103,7 +2103,7 @@ func TestRequestRedirect(t *testing.T) {
 					WithRedirectPolicy(FollowRedirectsWithoutBody).
 					WithMaxRedirects(1).
 					WithText("test body")
-				req.chain.assertOK(t)
+				req.chain.assertNotFailed(t)
 
 				// Should error
 				resp := req.Expect()
@@ -2214,4 +2214,692 @@ func (mt *mockTransportRedirect) WithMaxRedirect(
 	mt.maxRedirect = maxRedirect
 
 	return mt
+}
+
+func TestRequestRetry(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	newNoErrClient := func(cb func(req *http.Request)) *mockClient {
+		return &mockClient{
+			resp: http.Response{
+				StatusCode: http.StatusOK,
+			},
+			cb: cb,
+		}
+	}
+
+	newTempNetErrClient := func(cb func(req *http.Request)) *mockClient {
+		return &mockClient{
+			err: &mockNetError{
+				isTemporary: true,
+			},
+			cb: cb,
+		}
+	}
+
+	newTempServerErrClient := func(cb func(req *http.Request)) *mockClient {
+		return &mockClient{
+			resp: http.Response{
+				StatusCode: http.StatusInternalServerError,
+			},
+			cb: cb,
+		}
+	}
+
+	newHTTPErrClient := func(cb func(req *http.Request)) *mockClient {
+		return &mockClient{
+			resp: http.Response{
+				StatusCode: http.StatusBadRequest,
+			},
+			cb: cb,
+		}
+	}
+
+	noopSleepFn := func(time.Duration) <-chan time.Time {
+		return time.After(0)
+	}
+
+	t.Run("dont retry policy", func(t *testing.T) {
+		t.Run("no error", func(t *testing.T) {
+			callCount := 0
+
+			client := newNoErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
+				WithRetryPolicy(DontRetry)
+			req.sleepFn = noopSleepFn
+			req.chain.assertNotFailed(t)
+
+			resp := req.Expect()
+			resp.chain.assertNotFailed(t)
+
+			// Should not retry
+			assert.Equal(t, 1, callCount)
+		})
+
+		t.Run("temporary network error", func(t *testing.T) {
+			callCount := 0
+
+			client := newTempNetErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
+				WithRetryPolicy(DontRetry).
+				WithMaxRetries(1)
+			req.sleepFn = noopSleepFn
+			req.chain.assertNotFailed(t)
+
+			resp := req.Expect()
+			resp.chain.assertFailed(t)
+
+			// Should not retry
+			assert.Equal(t, 1, callCount)
+		})
+
+		t.Run("temporary server error", func(t *testing.T) {
+			callCount := 0
+
+			client := newTempServerErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
+				WithRetryPolicy(DontRetry).
+				WithMaxRetries(1)
+			req.sleepFn = noopSleepFn
+			req.chain.assertNotFailed(t)
+
+			resp := req.Expect().
+				Status(http.StatusInternalServerError)
+			resp.chain.assertNotFailed(t)
+
+			// Should not retry
+			assert.Equal(t, 1, callCount)
+		})
+
+		t.Run("http error", func(t *testing.T) {
+			callCount := 0
+
+			client := newHTTPErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
+				WithRetryPolicy(DontRetry).
+				WithMaxRetries(1)
+			req.sleepFn = noopSleepFn
+			req.chain.assertNotFailed(t)
+
+			resp := req.Expect().
+				Status(http.StatusBadRequest)
+			resp.chain.assertNotFailed(t)
+
+			// Should not retry
+			assert.Equal(t, 1, callCount)
+		})
+
+	})
+
+	t.Run("retry temporary network errors policy", func(t *testing.T) {
+		t.Run("no error", func(t *testing.T) {
+			callCount := 0
+
+			client := newNoErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
+				WithRetryPolicy(RetryTemporaryNetworkErrors)
+			req.sleepFn = noopSleepFn
+			req.chain.assertNotFailed(t)
+
+			resp := req.Expect()
+			resp.chain.assertNotFailed(t)
+
+			// Should not retry
+			assert.Equal(t, 1, callCount)
+		})
+
+		t.Run("temporary network error", func(t *testing.T) {
+			callCount := 0
+
+			client := newTempNetErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
+				WithRetryPolicy(RetryTemporaryNetworkErrors).
+				WithMaxRetries(1).
+				WithRetryDelay(0, 0)
+			req.sleepFn = noopSleepFn
+			req.chain.assertNotFailed(t)
+
+			resp := req.Expect()
+			resp.chain.assertFailed(t)
+
+			// Should retry
+			assert.Equal(t, 2, callCount)
+		})
+
+		t.Run("temporary server error", func(t *testing.T) {
+			callCount := 0
+
+			client := newTempServerErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
+				WithRetryPolicy(RetryTemporaryNetworkErrors).
+				WithMaxRetries(1)
+			req.sleepFn = noopSleepFn
+			req.chain.assertNotFailed(t)
+
+			resp := req.Expect().
+				Status(http.StatusInternalServerError)
+			resp.chain.assertNotFailed(t)
+
+			// Should not retry
+			assert.Equal(t, 1, callCount)
+		})
+
+		t.Run("http error", func(t *testing.T) {
+			callCount := 0
+
+			client := newHTTPErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
+				WithRetryPolicy(RetryTemporaryNetworkErrors).
+				WithMaxRetries(1)
+			req.sleepFn = noopSleepFn
+			req.chain.assertNotFailed(t)
+
+			resp := req.Expect().
+				Status(http.StatusBadRequest)
+			resp.chain.assertNotFailed(t)
+
+			// Should not retry
+			assert.Equal(t, 1, callCount)
+		})
+	})
+
+	t.Run("retry temporary network and server errors policy", func(t *testing.T) {
+		t.Run("no error", func(t *testing.T) {
+			callCount := 0
+
+			client := newNoErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
+				WithRetryPolicy(RetryTemporaryNetworkAndServerErrors)
+			req.sleepFn = noopSleepFn
+			req.chain.assertNotFailed(t)
+
+			resp := req.Expect()
+			resp.chain.assertNotFailed(t)
+
+			// Should not retry
+			assert.Equal(t, 1, callCount)
+		})
+
+		t.Run("temporary network error", func(t *testing.T) {
+			callCount := 0
+
+			client := newTempNetErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
+				WithRetryPolicy(RetryTemporaryNetworkAndServerErrors).
+				WithMaxRetries(1).
+				WithRetryDelay(0, 0)
+			req.sleepFn = noopSleepFn
+			req.chain.assertNotFailed(t)
+
+			resp := req.Expect()
+			resp.chain.assertFailed(t)
+
+			// Should retry
+			assert.Equal(t, 2, callCount)
+		})
+
+		t.Run("temporary server error", func(t *testing.T) {
+			callCount := 0
+
+			client := newTempServerErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
+				WithRetryPolicy(RetryTemporaryNetworkAndServerErrors).
+				WithMaxRetries(1).
+				WithRetryDelay(0, 0)
+			req.sleepFn = noopSleepFn
+			req.chain.assertNotFailed(t)
+
+			resp := req.Expect().
+				Status(http.StatusInternalServerError)
+			resp.chain.assertNotFailed(t)
+
+			// Should retry
+			assert.Equal(t, 2, callCount)
+		})
+
+		t.Run("http error", func(t *testing.T) {
+			callCount := 0
+
+			client := newHTTPErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
+				WithRetryPolicy(RetryTemporaryNetworkAndServerErrors).
+				WithMaxRetries(1)
+			req.sleepFn = noopSleepFn
+			req.chain.assertNotFailed(t)
+
+			resp := req.Expect().
+				Status(http.StatusBadRequest)
+			resp.chain.assertNotFailed(t)
+
+			// Should not retry
+			assert.Equal(t, 1, callCount)
+		})
+	})
+
+	t.Run("retry all errors policy", func(t *testing.T) {
+		t.Run("no error", func(t *testing.T) {
+			callCount := 0
+
+			client := newNoErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
+				WithRetryPolicy(RetryAllErrors)
+			req.sleepFn = noopSleepFn
+			req.chain.assertNotFailed(t)
+
+			resp := req.Expect()
+			resp.chain.assertNotFailed(t)
+
+			// Should not retry
+			assert.Equal(t, 1, callCount)
+		})
+
+		t.Run("temporary network error", func(t *testing.T) {
+			callCount := 0
+
+			client := newTempNetErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
+				WithRetryPolicy(RetryAllErrors).
+				WithMaxRetries(1).
+				WithRetryDelay(0, 0)
+			req.sleepFn = noopSleepFn
+			req.chain.assertNotFailed(t)
+
+			resp := req.Expect()
+			resp.chain.assertFailed(t)
+
+			// Should retry
+			assert.Equal(t, 2, callCount)
+		})
+
+		t.Run("temporary server error", func(t *testing.T) {
+			callCount := 0
+
+			client := newTempServerErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
+				WithRetryPolicy(RetryAllErrors).
+				WithMaxRetries(1).
+				WithRetryDelay(0, 0)
+			req.sleepFn = noopSleepFn
+			req.chain.assertNotFailed(t)
+
+			resp := req.Expect().
+				Status(http.StatusInternalServerError)
+			resp.chain.assertNotFailed(t)
+
+			// Should retry
+			assert.Equal(t, 2, callCount)
+		})
+
+		t.Run("http error", func(t *testing.T) {
+			callCount := 0
+
+			client := newHTTPErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
+				WithRetryPolicy(RetryAllErrors).
+				WithMaxRetries(1).
+				WithRetryDelay(0, 0)
+			req.sleepFn = noopSleepFn
+			req.chain.assertNotFailed(t)
+
+			resp := req.Expect().
+				Status(http.StatusBadRequest)
+			resp.chain.assertNotFailed(t)
+
+			// Should retry
+			assert.Equal(t, 2, callCount)
+		})
+	})
+
+	t.Run("max retries", func(t *testing.T) {
+		callCount := 0
+
+		client := newHTTPErrClient(func(req *http.Request) {
+			callCount++
+
+			b, err := ioutil.ReadAll(req.Body)
+			assert.NoError(t, err)
+			assert.Equal(t, "test body", string(b))
+		})
+
+		config := Config{
+			Client:   client,
+			Reporter: reporter,
+		}
+
+		req := NewRequest(config, http.MethodPost, "/url").
+			WithText("test body").
+			WithRetryPolicy(RetryAllErrors).
+			WithMaxRetries(3).
+			WithRetryDelay(0, 0)
+		req.sleepFn = noopSleepFn
+		req.chain.assertNotFailed(t)
+
+		resp := req.Expect().
+			Status(http.StatusBadRequest)
+		resp.chain.assertNotFailed(t)
+
+		// Should retry until max retries is reached
+		assert.Equal(t, 1+3, callCount)
+	})
+
+	t.Run("retry delay", func(t *testing.T) {
+		t.Run("not exceeding max retry delay", func(t *testing.T) {
+			callCount := 0
+
+			client := newHTTPErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			var totalSleepTime time.Duration
+
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
+				WithRetryPolicy(RetryAllErrors).
+				WithMaxRetries(3).
+				WithRetryDelay(100*time.Millisecond, 1000*time.Millisecond)
+			req.sleepFn = func(d time.Duration) <-chan time.Time {
+				totalSleepTime += d
+				return time.After(0)
+			}
+			req.chain.assertNotFailed(t)
+
+			resp := req.Expect().
+				Status(http.StatusBadRequest)
+			resp.chain.assertNotFailed(t)
+
+			// Should retry with delay
+			assert.Equal(t, int64(100+200+400), totalSleepTime.Milliseconds())
+		})
+
+		t.Run("exceeding max retry delay", func(t *testing.T) {
+			callCount := 0
+
+			client := newHTTPErrClient(func(req *http.Request) {
+				callCount++
+
+				b, err := ioutil.ReadAll(req.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			})
+
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
+
+			var totalSleepTime time.Duration
+
+			req := NewRequest(config, http.MethodPost, "/url").
+				WithText("test body").
+				WithRetryPolicy(RetryAllErrors).
+				WithMaxRetries(3).
+				WithRetryDelay(100*time.Millisecond, 300*time.Millisecond)
+			req.sleepFn = func(d time.Duration) <-chan time.Time {
+				totalSleepTime += d
+				return time.After(0)
+			}
+
+			req.chain.assertNotFailed(t)
+
+			resp := req.Expect().
+				Status(http.StatusBadRequest)
+			resp.chain.assertNotFailed(t)
+
+			// Should retry with delay
+			assert.Equal(t, int64(100+200+300), totalSleepTime.Milliseconds())
+		})
+	})
+
+	t.Run("cancelled retries", func(t *testing.T) {
+		callCount := 0
+
+		client := newHTTPErrClient(func(req *http.Request) {
+			callCount++
+
+			assert.Error(t, req.Context().Err(), context.Canceled.Error())
+
+			b, err := ioutil.ReadAll(req.Body)
+			assert.NoError(t, err)
+			assert.Equal(t, "test body", string(b))
+		})
+
+		config := Config{
+			Client:   client,
+			Reporter: reporter,
+		}
+
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel() // Cancel immediately to trigger error
+
+		req := NewRequest(config, http.MethodPost, "/url").
+			WithText("test body").
+			WithRetryPolicy(RetryAllErrors).
+			WithMaxRetries(1).
+			WithContext(ctx).
+			WithRetryDelay(1*time.Minute, 5*time.Minute)
+		req.chain.assertNotFailed(t)
+
+		resp := req.Expect()
+		resp.chain.assertFailed(t)
+
+		// Should not retry
+		assert.Equal(t, 1, callCount)
+	})
 }
