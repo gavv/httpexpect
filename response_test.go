@@ -82,7 +82,6 @@ func TestResponseFailed(t *testing.T) {
 
 		check(resp)
 	})
-
 }
 
 func TestMultipleRttArgs(t *testing.T) {
