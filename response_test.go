@@ -89,15 +89,10 @@ func TestMultipleRttArgs(t *testing.T) {
 	check := func(resp *Response) {
 		resp.chain.assertFailed(t)
 	}
+	reporter := newMockReporter(t)
+	rtt := []time.Duration{time.Second, time.Second}
 	t.Run("Multiple rtt arguments", func(t *testing.T) {
-		t1 := time.Second
-		chain := newMockChain(t)
-		t2 := time.Second
-		resp := newResponse(responseOpts{
-			chain:    chain,
-			httpResp: &http.Response{},
-			rtt:      []time.Duration{t1, t2},
-		})
+		resp := NewResponse(reporter, &http.Response{}, rtt...)
 		check(resp)
 	})
 }
