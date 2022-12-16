@@ -2129,16 +2129,9 @@ func TestRequestRedirect(t *testing.T) {
 }
 
 func TestValidationFailures(t *testing.T) {
-	factory := DefaultRequestFactory{}
-
-	client := &mockClient{}
-
-	reporter := newMockReporter(t)
-
 	config := Config{
-		RequestFactory: factory,
-		Client:         client,
-		Reporter:       reporter,
+		Reporter: newMockReporter(t),
+		Client:   &mockClient{},
 	}
 
 	t.Run("WithMatcher", func(t *testing.T) {
@@ -2197,7 +2190,6 @@ func TestValidationFailures(t *testing.T) {
 
 	t.Run("setupRedirect - redirect policy", func(t *testing.T) {
 		req := NewRequest(config, "METHOD", "/")
-		req.config.Client = &mockClient{}
 		req.WithRedirectPolicy(FollowAllRedirects)
 		req.Expect() // calls setupRedirect indirectly
 		req.chain.assertFailed(t)
@@ -2205,24 +2197,21 @@ func TestValidationFailures(t *testing.T) {
 
 	t.Run("setupRedirect - maxRedirects is not -1", func(t *testing.T) {
 		req := NewRequest(config, "METHOD", "/")
-		req.config.Client = &mockClient{}
 		req.WithMaxRedirects(0)
 		req.Expect() // calls setupRedirect indirectly
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithContext", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.WithContext(nil)
 		req.chain.assertFailed(t)
 	})
 }
 
 func TestWithRetryDelay(t *testing.T) {
-	factory := DefaultRequestFactory{}
-
-	client := &mockClient{}
-
-	reporter := newMockReporter(t)
-
 	config := Config{
-		RequestFactory: factory,
-		Client:         client,
-		Reporter:       reporter,
+		Reporter: newMockReporter(t),
 	}
 
 	req := NewRequest(config, "METHOD", "/")
@@ -2232,17 +2221,11 @@ func TestWithRetryDelay(t *testing.T) {
 }
 
 func TestValidatePanics(t *testing.T) {
-	factory := DefaultRequestFactory{}
-
-	client := &mockClient{}
-
-	reporter := newMockReporter(t)
-
 	t.Run("newRequest - requestFactory is nil", func(t *testing.T) {
 		config := Config{
 			RequestFactory: nil,
-			Client:         client,
-			Reporter:       reporter,
+			Client:         &mockClient{},
+			Reporter:       newMockReporter(t),
 		}
 
 		assert.Panics(t, func() { newRequest(nil, config, "", "") })
@@ -2250,9 +2233,9 @@ func TestValidatePanics(t *testing.T) {
 
 	t.Run("newRequest - client is nil", func(t *testing.T) {
 		config := Config{
-			RequestFactory: factory,
+			RequestFactory: DefaultRequestFactory{},
 			Client:         nil,
-			Reporter:       reporter,
+			Reporter:       newMockReporter(t),
 		}
 
 		assert.Panics(t, func() { newRequest(nil, config, "", "") })
@@ -2260,11 +2243,10 @@ func TestValidatePanics(t *testing.T) {
 
 	t.Run("newRequest - AssertionHandler is nil", func(t *testing.T) {
 		config := Config{
-			RequestFactory: factory,
-			Client:         client,
-			Reporter:       reporter,
+			RequestFactory:   DefaultRequestFactory{},
+			Client:           &mockClient{},
+			AssertionHandler: nil,
 		}
-		config.AssertionHandler = nil
 
 		assert.Panics(t, func() { newRequest(nil, config, "", "") })
 	})
