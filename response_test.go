@@ -608,6 +608,20 @@ func TestResponseContentTypeEmptyCharset(t *testing.T) {
 	resp.chain.clearFailed()
 }
 
+func TestResponseContentTypeMultipleCharsetArgs(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	headers := map[string][]string{
+		"Content-Type": {"text/plain;charset=utf-8;charset=US-ASCII"},
+	}
+	resp := NewResponse(reporter, &http.Response{
+		Header: headers,
+	})
+	resp.ContentType("text/plain", "utf-8", "US-ASCII")
+	resp.chain.assertFailed(t)
+	resp.chain.clearFailed()
+}
+
 func TestResponseContentTypeInvalid(t *testing.T) {
 	reporter := newMockReporter(t)
 
