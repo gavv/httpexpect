@@ -2201,12 +2201,6 @@ func TestValidationFailures(t *testing.T) {
 		req.Expect() // calls setupRedirect indirectly
 		req.chain.assertFailed(t)
 	})
-
-	t.Run("WithContext", func(t *testing.T) {
-		req := NewRequest(config, "METHOD", "/")
-		req.WithContext(nil)
-		req.chain.assertFailed(t)
-	})
 }
 
 func TestWithRetryDelay(t *testing.T) {
