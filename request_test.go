@@ -2128,6 +2128,124 @@ func TestRequestRedirect(t *testing.T) {
 	})
 }
 
+func TestValidationFailures(t *testing.T) {
+	config := Config{
+		Reporter: newMockReporter(t),
+		Client:   &mockClient{},
+	}
+
+	t.Run("WithMatcher", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.WithMatcher(nil)
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithMaxRetries", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.WithMaxRetries(-1)
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithMaxRedirects", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.WithMaxRedirects(-1)
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithRetryDelay", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.WithRetryDelay(10, 5)
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithWebsocketDialer", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.WithWebsocketDialer(nil)
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithPath", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.WithPath("test-path", nil)
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithQuery", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.WithQuery("test-query", nil)
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithURL", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.WithURL("%-invalid-url")
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithFile", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.WithFile("test-key", "test-path", nil, nil)
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("setupRedirect - redirect policy", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.WithRedirectPolicy(FollowAllRedirects)
+		req.Expect() // calls setupRedirect indirectly
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("setupRedirect - maxRedirects is not -1", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.WithMaxRedirects(0)
+		req.Expect() // calls setupRedirect indirectly
+		req.chain.assertFailed(t)
+	})
+}
+
+func TestWithRetryDelay(t *testing.T) {
+	config := Config{
+		Reporter: newMockReporter(t),
+	}
+
+	req := NewRequest(config, "METHOD", "/")
+	req.WithRetryDelay(5, 10)
+	assert.Equal(t, time.Duration(5), req.minRetryDelay)
+	assert.Equal(t, time.Duration(10), req.maxRetryDelay)
+}
+
+func TestValidatePanics(t *testing.T) {
+	t.Run("newRequest - requestFactory is nil", func(t *testing.T) {
+		config := Config{
+			RequestFactory: nil,
+			Client:         &mockClient{},
+			Reporter:       newMockReporter(t),
+		}
+
+		assert.Panics(t, func() { newRequest(nil, config, "", "") })
+	})
+
+	t.Run("newRequest - client is nil", func(t *testing.T) {
+		config := Config{
+			RequestFactory: DefaultRequestFactory{},
+			Client:         nil,
+			Reporter:       newMockReporter(t),
+		}
+
+		assert.Panics(t, func() { newRequest(nil, config, "", "") })
+	})
+
+	t.Run("newRequest - AssertionHandler is nil", func(t *testing.T) {
+		config := Config{
+			RequestFactory:   DefaultRequestFactory{},
+			Client:           &mockClient{},
+			AssertionHandler: nil,
+		}
+
+		assert.Panics(t, func() { newRequest(nil, config, "", "") })
+	})
+}
+
 // mockTransportRedirect mocks a transport that implements RoundTripper
 //
 // When tripCount < maxRedirect,
