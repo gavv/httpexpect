@@ -2128,7 +2128,7 @@ func TestRequestRedirect(t *testing.T) {
 	})
 }
 
-func TestUsageChecks(t *testing.T) {
+func TestRequestUsageChecks(t *testing.T) {
 	config := Config{
 		Reporter: newMockReporter(t),
 	}
@@ -2238,7 +2238,7 @@ func TestUsageChecks(t *testing.T) {
 	})
 }
 
-func TestPanics(t *testing.T) {
+func TestRequestPanics(t *testing.T) {
 	t.Run("newRequest - RequestFactory is nil", func(t *testing.T) {
 		config := Config{
 			RequestFactory:   nil,
