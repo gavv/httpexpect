@@ -125,7 +125,7 @@ func TestChainPath(t *testing.T) {
 	assert.Equal(t, "root", path(chainClone))
 }
 
-func TestChainPanic(t *testing.T) {
+func TestChainPanics(t *testing.T) {
 	t.Run("unpaired leave", func(t *testing.T) {
 		chain := newChainWithDefaults("", newMockReporter(t))
 
@@ -161,6 +161,16 @@ func TestChainPanic(t *testing.T) {
 
 		assert.Panics(t, func() {
 			chain.replace("bar")
+		})
+	})
+
+	t.Run("invalid assertion", func(t *testing.T) {
+		chain := newChainWithDefaults("", newMockReporter(t))
+
+		assert.Panics(t, func() {
+			chain.fail(AssertionFailure{
+				Type: AssertionType(9999),
+			})
 		})
 	})
 }
