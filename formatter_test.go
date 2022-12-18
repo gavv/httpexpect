@@ -95,13 +95,14 @@ func TestFormatDiff(t *testing.T) {
 }
 
 func TestFormatFailure_Actual(t *testing.T) {
+	df := &DefaultFormatter{}
+	ctx := &AssertionContext{}
+
 	t.Run("assert type integer", func(t *testing.T) {
-		df := &DefaultFormatter{}
-		ctx := &AssertionContext{}
 		fl := &AssertionFailure{
 			Type: AssertType,
 			Actual: &AssertionValue{
-				Value: 1_000_000,
+				Value: int(1_000_000),
 			},
 		}
 		tmpl := df.FormatFailure(ctx, fl)
@@ -109,8 +110,6 @@ func TestFormatFailure_Actual(t *testing.T) {
 	})
 
 	t.Run("assert type float32", func(t *testing.T) {
-		df := &DefaultFormatter{}
-		ctx := &AssertionContext{}
 		fl := &AssertionFailure{
 			Type: AssertType,
 			Actual: &AssertionValue{
@@ -122,8 +121,6 @@ func TestFormatFailure_Actual(t *testing.T) {
 	})
 
 	t.Run("assert type float64", func(t *testing.T) {
-		df := &DefaultFormatter{}
-		ctx := &AssertionContext{}
 		fl := &AssertionFailure{
 			Type: AssertType,
 			Actual: &AssertionValue{
@@ -135,8 +132,6 @@ func TestFormatFailure_Actual(t *testing.T) {
 	})
 
 	t.Run("assert type string", func(t *testing.T) {
-		df := &DefaultFormatter{}
-		ctx := &AssertionContext{}
 		fl := &AssertionFailure{
 			Type: AssertType,
 			Actual: &AssertionValue{
@@ -149,15 +144,16 @@ func TestFormatFailure_Actual(t *testing.T) {
 }
 
 func TestFormatFailure_Expected(t *testing.T) {
+	df := &DefaultFormatter{}
+	ctx := &AssertionContext{}
+
 	t.Run("assert in range integer", func(t *testing.T) {
-		df := &DefaultFormatter{}
-		ctx := &AssertionContext{}
 		fl := &AssertionFailure{
 			Type: AssertInRange,
 			Expected: &AssertionValue{
 				AssertionRange{
-					Min: 1_000_000,
-					Max: 2_000_000,
+					Min: int(1_000_000),
+					Max: int(2_000_000),
 				},
 			},
 		}
@@ -166,8 +162,6 @@ func TestFormatFailure_Expected(t *testing.T) {
 	})
 
 	t.Run("assert in range float32", func(t *testing.T) {
-		df := &DefaultFormatter{}
-		ctx := &AssertionContext{}
 		fl := &AssertionFailure{
 			Type: AssertInRange,
 			Expected: &AssertionValue{
@@ -182,8 +176,6 @@ func TestFormatFailure_Expected(t *testing.T) {
 	})
 
 	t.Run("assert in range float64", func(t *testing.T) {
-		df := &DefaultFormatter{}
-		ctx := &AssertionContext{}
 		fl := &AssertionFailure{
 			Type: AssertInRange,
 			Expected: &AssertionValue{
@@ -198,8 +190,6 @@ func TestFormatFailure_Expected(t *testing.T) {
 	})
 
 	t.Run("assert in range string", func(t *testing.T) {
-		df := &DefaultFormatter{}
-		ctx := &AssertionContext{}
 		fl := &AssertionFailure{
 			Type: AssertInRange,
 			Expected: &AssertionValue{
@@ -216,9 +206,10 @@ func TestFormatFailure_Expected(t *testing.T) {
 }
 
 func TestFormatFailure_Delta(t *testing.T) {
+	df := &DefaultFormatter{}
+	ctx := &AssertionContext{}
+
 	t.Run("integer", func(t *testing.T) {
-		df := &DefaultFormatter{}
-		ctx := &AssertionContext{}
 		fl := &AssertionFailure{
 			Delta: &AssertionValue{
 				Value: int(1_000_000),
@@ -229,8 +220,6 @@ func TestFormatFailure_Delta(t *testing.T) {
 	})
 
 	t.Run("float32", func(t *testing.T) {
-		df := &DefaultFormatter{}
-		ctx := &AssertionContext{}
 		fl := &AssertionFailure{
 			Delta: &AssertionValue{
 				Value: float32(1_000_000),
@@ -241,8 +230,6 @@ func TestFormatFailure_Delta(t *testing.T) {
 	})
 
 	t.Run("float64", func(t *testing.T) {
-		df := &DefaultFormatter{}
-		ctx := &AssertionContext{}
 		fl := &AssertionFailure{
 			Delta: &AssertionValue{
 				Value: float64(1_000_000),
@@ -253,8 +240,6 @@ func TestFormatFailure_Delta(t *testing.T) {
 	})
 
 	t.Run("string", func(t *testing.T) {
-		df := &DefaultFormatter{}
-		ctx := &AssertionContext{}
 		fl := &AssertionFailure{
 			Delta: &AssertionValue{
 				Value: "delta string",
