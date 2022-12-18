@@ -85,18 +85,6 @@ func TestResponseFailed(t *testing.T) {
 	})
 }
 
-func TestMultipleRttArgs(t *testing.T) {
-	check := func(resp *Response) {
-		resp.chain.assertFailed(t)
-	}
-	reporter := newMockReporter(t)
-	rtt := []time.Duration{time.Second, time.Second}
-	t.Run("Multiple rtt arguments", func(t *testing.T) {
-		resp := NewResponse(reporter, &http.Response{}, rtt...)
-		check(resp)
-	})
-}
-
 func TestResponseRoundTripTime(t *testing.T) {
 	reporter := newMockReporter(t)
 
@@ -607,19 +595,6 @@ func TestResponseContentTypeEmptyCharset(t *testing.T) {
 	resp.chain.assertFailed(t)
 	resp.chain.clearFailed()
 }
-func TestResponseContentTypeMultipleCharsetArgs(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	headers := map[string][]string{
-		"Content-Type": {"text/plain;charset=utf-8;charset=US-ASCII"},
-	}
-	resp := NewResponse(reporter, &http.Response{
-		Header: headers,
-	})
-	resp.ContentType("text/plain", "utf-8", "US-ASCII")
-	resp.chain.assertFailed(t)
-	resp.chain.clearFailed()
-}
 
 func TestResponseContentTypeInvalid(t *testing.T) {
 	reporter := newMockReporter(t)
@@ -745,25 +720,6 @@ func TestResponseText(t *testing.T) {
 	assert.Equal(t, "hello, world!", resp.Text().Raw())
 }
 
-func TestResponseMultipleTextArgs(t *testing.T) {
-	reporter := newMockReporter(t)
-	header := map[string][]string{
-		"ContentType": {"text/plain"},
-	}
-	resp := NewResponse(reporter, &http.Response{
-		Header: header,
-	})
-	ContentOpts1 := ContentOpts{
-		MediaType: "text/plain",
-	}
-	ContentOpts2 := ContentOpts{
-		MediaType: "application/json",
-	}
-	resp.Text(ContentOpts1, ContentOpts2)
-	resp.chain.assertFailed(t)
-	resp.chain.clearFailed()
-}
-
 func TestResponseForm(t *testing.T) {
 	reporter := newMockReporter(t)
 
@@ -857,33 +813,6 @@ func TestResponseFormBadType(t *testing.T) {
 	assert.True(t, resp.Form().Raw() == nil)
 }
 
-func TestResponseMultipleFormArgs(t *testing.T) {
-	reporter := newMockReporter(t)
-	headers := map[string][]string{
-		"Content-Type": {"application/x-www-form-urlencoded"},
-	}
-
-	body := `a=1&b=2`
-
-	httpResp := &http.Response{
-		StatusCode: http.StatusOK,
-		Header:     http.Header(headers),
-		Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
-	}
-
-	resp := NewResponse(reporter, httpResp)
-	ContentOpts1 := ContentOpts{
-		MediaType: "text/plain",
-	}
-	ContentOpts2 := ContentOpts{
-		MediaType: "application/json",
-	}
-	resp.Form(ContentOpts1, ContentOpts2)
-	resp.chain.assertFailed(t)
-	resp.chain.clearFailed()
-
-}
-
 func TestResponseJSON(t *testing.T) {
 	reporter := newMockReporter(t)
 
@@ -924,31 +853,7 @@ func TestResponseJSON(t *testing.T) {
 	assert.Equal(t,
 		map[string]interface{}{"key": "value"}, resp.JSON().Object().Raw())
 }
-func TestResponseMultipleJsonArgs(t *testing.T) {
-	reporter := newMockReporter(t)
-	headers := map[string][]string{
-		"Content-Type": {"application/json; charset=utf-8"},
-	}
 
-	body := `{"key": "value"}`
-
-	httpResp := &http.Response{
-		StatusCode: http.StatusOK,
-		Header:     http.Header(headers),
-		Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
-	}
-
-	resp := NewResponse(reporter, httpResp)
-	ContentOpts1 := ContentOpts{
-		MediaType: "text/plain",
-	}
-	ContentOpts2 := ContentOpts{
-		MediaType: "application/json",
-	}
-	resp.JSON(ContentOpts1, ContentOpts2)
-	resp.chain.assertFailed(t)
-	resp.chain.clearFailed()
-}
 func TestResponseJSONBadBody(t *testing.T) {
 	reporter := newMockReporter(t)
 
@@ -1073,33 +978,6 @@ func TestResponseJSONP(t *testing.T) {
 		resp.chain.assertFailed(t)
 		resp.chain.clearFailed()
 	}
-}
-
-func TestResponseJSONPMultipleArgs(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	headers := map[string][]string{
-		"Content-Type": {"application/javascript; charset=utf-8"},
-	}
-
-	body1 := `foo({"key": "value"})`
-
-	httpResp := &http.Response{
-		StatusCode: http.StatusOK,
-		Header:     http.Header(headers),
-		Body:       ioutil.NopCloser(bytes.NewBufferString(body1)),
-	}
-
-	resp := NewResponse(reporter, httpResp)
-	ContentOpts1 := ContentOpts{
-		MediaType: "text/plain",
-	}
-	ContentOpts2 := ContentOpts{
-		MediaType: "application/json",
-	}
-	resp.JSONP("foo", ContentOpts1, ContentOpts2)
-	resp.chain.assertFailed(t)
-	resp.chain.clearFailed()
 }
 
 func TestResponseJSONPBadBody(t *testing.T) {
@@ -1323,5 +1201,123 @@ func TestResponseContentOpts(t *testing.T) {
 			func(resp *Response, opts ContentOpts) *chain {
 				return resp.JSONP("cb", opts).chain
 			})
+	})
+}
+
+func TestAssertUsage(t *testing.T) {
+	t.Run("Response Multiple rtt arguments", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		rtt := []time.Duration{time.Second, time.Second}
+		resp := NewResponse(reporter, &http.Response{}, rtt...)
+		resp.chain.assertFailed(t)
+	})
+
+	t.Run("Response ContentType Multiple CharsetArgs", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		headers := map[string][]string{
+			"Content-Type": {"text/plain;charset=utf-8;charset=US-ASCII"},
+		}
+		resp := NewResponse(reporter, &http.Response{
+			Header: headers,
+		})
+		resp.ContentType("text/plain", "utf-8", "US-ASCII")
+		resp.chain.assertFailed(t)
+		resp.chain.clearFailed()
+	})
+	t.Run("Response Multiple Text Args", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		header := map[string][]string{
+			"ContentType": {"text/plain"},
+		}
+		resp := NewResponse(reporter, &http.Response{
+			Header: header,
+		})
+		ContentOpts1 := ContentOpts{
+			MediaType: "text/plain",
+		}
+		ContentOpts2 := ContentOpts{
+			MediaType: "application/json",
+		}
+		resp.Text(ContentOpts1, ContentOpts2)
+		resp.chain.assertFailed(t)
+		resp.chain.clearFailed()
+	})
+	t.Run("Response Multiple Form Args", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		headers := map[string][]string{
+			"Content-Type": {"application/x-www-form-urlencoded"},
+		}
+
+		body := `a=1&b=2`
+
+		httpResp := &http.Response{
+			StatusCode: http.StatusOK,
+			Header:     http.Header(headers),
+			Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+		}
+
+		resp := NewResponse(reporter, httpResp)
+		ContentOpts1 := ContentOpts{
+			MediaType: "text/plain",
+		}
+		ContentOpts2 := ContentOpts{
+			MediaType: "application/json",
+		}
+		resp.Form(ContentOpts1, ContentOpts2)
+		resp.chain.assertFailed(t)
+		resp.chain.clearFailed()
+
+	})
+	t.Run("Response Multiple Json Args", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		headers := map[string][]string{
+			"Content-Type": {"application/json; charset=utf-8"},
+		}
+
+		body := `{"key": "value"}`
+
+		httpResp := &http.Response{
+			StatusCode: http.StatusOK,
+			Header:     http.Header(headers),
+			Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+		}
+
+		resp := NewResponse(reporter, httpResp)
+		ContentOpts1 := ContentOpts{
+			MediaType: "text/plain",
+		}
+		ContentOpts2 := ContentOpts{
+			MediaType: "application/json",
+		}
+		resp.JSON(ContentOpts1, ContentOpts2)
+		resp.chain.assertFailed(t)
+		resp.chain.clearFailed()
+	})
+	t.Run("Response JSONP Multiple Args", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		headers := map[string][]string{
+			"Content-Type": {"application/javascript; charset=utf-8"},
+		}
+
+		body1 := `foo({"key": "value"})`
+
+		httpResp := &http.Response{
+			StatusCode: http.StatusOK,
+			Header:     http.Header(headers),
+			Body:       ioutil.NopCloser(bytes.NewBufferString(body1)),
+		}
+
+		resp := NewResponse(reporter, httpResp)
+		ContentOpts1 := ContentOpts{
+			MediaType: "text/plain",
+		}
+		ContentOpts2 := ContentOpts{
+			MediaType: "application/json",
+		}
+		resp.JSONP("foo", ContentOpts1, ContentOpts2)
+		resp.chain.assertFailed(t)
+		resp.chain.clearFailed()
 	})
 }
