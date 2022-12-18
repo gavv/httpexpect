@@ -27,6 +27,13 @@ else
 	cd _examples && go test
 endif
 
+short:
+ifneq ($(shell which gotest),)
+	gotest -short
+else
+	go test -short
+endif
+
 spell:
 ifneq ($(shell which mdspell),)
 	mdspell -a README.md

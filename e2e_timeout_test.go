@@ -47,6 +47,10 @@ func createTimeoutHandler() http.Handler {
 }
 
 func TestE2ETimeoutDeadlineExpired(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
+
 	handler := createTimeoutHandler()
 
 	server := httptest.NewServer(handler)
@@ -67,6 +71,10 @@ func TestE2ETimeoutDeadlineExpired(t *testing.T) {
 }
 
 func TestE2ETimeoutSmallBody(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
+
 	handler := createTimeoutHandler()
 
 	server := httptest.NewServer(handler)
@@ -85,6 +93,10 @@ func TestE2ETimeoutSmallBody(t *testing.T) {
 }
 
 func TestE2ETimeoutLargeBody(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
+
 	handler := createTimeoutHandler()
 
 	server := httptest.NewServer(handler)

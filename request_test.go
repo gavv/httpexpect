@@ -2068,8 +2068,8 @@ func TestRequestRedirect(t *testing.T) {
 				assert.Equal(t, 2, tp.tripCount)
 			})
 
-		t.Run(`request has body 
-		and redirected with status moved permanently 
+		t.Run(`request has body
+		and redirected with status moved permanently
 		and too many redirects`,
 			func(t *testing.T) {
 				tp := newMockTransportRedirect(t).
@@ -2125,6 +2125,148 @@ func TestRequestRedirect(t *testing.T) {
 				// Should do round trip
 				assert.Equal(t, 2, tp.tripCount)
 			})
+	})
+}
+
+func TestRequestUsageChecks(t *testing.T) {
+	config := Config{
+		Reporter: newMockReporter(t),
+	}
+
+	t.Run("WithMatcher", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.WithMatcher(nil)
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithTransformer", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.WithTransformer(nil)
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithClient", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.WithClient(nil)
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithHandler", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.WithHandler(nil)
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithContext", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.WithContext(nil) // nolint
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithMaxRedirects", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.WithMaxRedirects(-1)
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithMaxRetries", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.WithMaxRetries(-1)
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithRetryDelay", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.WithRetryDelay(10, 5)
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithWebsocketDialer", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.WithWebsocketDialer(nil)
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithPath", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.WithPath("test-path", nil)
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithQuery", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.WithQuery("test-query", nil)
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithURL", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.WithURL("%-invalid-url")
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithFile", func(t *testing.T) {
+		req := NewRequest(config, "METHOD", "/")
+		req.WithFile("test-key", "test-path", nil, nil)
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithRedirectPolicy bad Client", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			// WithRedirectPolicy requires Client to be http.Client,
+			// but we use another one
+			Client: &mockClient{},
+		}
+		req := NewRequest(config, "METHOD", "/")
+		req.WithRedirectPolicy(FollowAllRedirects)
+		req.Expect()
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithMaxRedirects bad Client", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			// WithMaxRedirects requires Client to be http.Client,
+			// but we use another one
+			Client: &mockClient{},
+		}
+		req := NewRequest(config, "METHOD", "/")
+		req.WithMaxRedirects(1)
+		req.Expect()
+		req.chain.assertFailed(t)
+	})
+}
+
+func TestRequestPanics(t *testing.T) {
+	t.Run("newRequest - RequestFactory is nil", func(t *testing.T) {
+		config := Config{
+			RequestFactory:   nil,
+			Client:           &mockClient{},
+			AssertionHandler: &mockAssertionHandler{},
+		}
+
+		assert.Panics(t, func() { newRequest(newMockChain(t), config, "METHOD", "") })
+	})
+
+	t.Run("newRequest - Client is nil", func(t *testing.T) {
+		config := Config{
+			RequestFactory:   DefaultRequestFactory{},
+			Client:           nil,
+			AssertionHandler: &mockAssertionHandler{},
+		}
+
+		assert.Panics(t, func() { newRequest(newMockChain(t), config, "METHOD", "") })
+	})
+
+	t.Run("newRequest - AssertionHandler is nil", func(t *testing.T) {
+		config := Config{
+			RequestFactory:   DefaultRequestFactory{},
+			Client:           &mockClient{},
+			AssertionHandler: nil,
+		}
+
+		assert.Panics(t, func() { newRequest(newMockChain(t), config, "METHOD", "") })
 	})
 }
 

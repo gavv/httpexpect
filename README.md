@@ -805,6 +805,18 @@ Re-generate, build, lint, and test everything:
 make
 ```
 
+Run tests:
+
+```
+make test
+```
+
+Run only short tests:
+
+```
+make short
+```
+
 Run gofmt:
 
 ```

@@ -137,7 +137,7 @@ func TestE2EBasicLiveTLS(t *testing.T) {
 
 func TestE2EBasicLiveLongRun(t *testing.T) {
 	if testing.Short() {
-		return
+		t.Skip()
 	}
 
 	handler := createBasicHandler()

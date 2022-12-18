@@ -392,3 +392,32 @@ func TestExpectRequestFactory(t *testing.T) {
 	r3.chain.assertFailed(t)
 	assert.Nil(t, f3.lastreq)
 }
+
+func TestExpectPanics(t *testing.T) {
+	t.Run("nil_AssertionHandler_nonnil_Reporter", func(t *testing.T) {
+		assert.NotPanics(t, func() {
+			WithConfig(Config{
+				Reporter:         newMockReporter(t),
+				AssertionHandler: nil,
+			})
+		})
+	})
+
+	t.Run("nonnil_AssertionHandler_nil_Reporter", func(t *testing.T) {
+		assert.NotPanics(t, func() {
+			WithConfig(Config{
+				Reporter:         nil,
+				AssertionHandler: &mockAssertionHandler{},
+			})
+		})
+	})
+
+	t.Run("nil_AssertionHandler_nil_Reporter", func(t *testing.T) {
+		assert.Panics(t, func() {
+			WithConfig(Config{
+				Reporter:         nil,
+				AssertionHandler: nil,
+			})
+		})
+	})
+}
