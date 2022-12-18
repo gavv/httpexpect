@@ -232,6 +232,10 @@ func testRetries(
 }
 
 func TestE2ERetryLive(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
+
 	rc := &retryController{}
 
 	handler := createRetryHandler(rc)
@@ -253,6 +257,10 @@ func TestE2ERetryLive(t *testing.T) {
 }
 
 func TestE2ERetryBinderStandard(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
+
 	rc := &retryController{}
 
 	handler := createRetryHandler(rc)
@@ -271,6 +279,10 @@ func TestE2ERetryBinderStandard(t *testing.T) {
 }
 
 func TestE2ERetryBinderFast(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
+
 	rc := &retryController{}
 
 	handler := createRetryFastHandler(rc)

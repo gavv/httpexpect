@@ -126,7 +126,7 @@ func (h *expErrorSuppressor) Failure(
 	h.backend.Fail(h.formatter.FormatFailure(ctx, failure))
 }
 
-func TestContextGlobalCancel(t *testing.T) {
+func TestE2EContextGlobalCancel(t *testing.T) {
 	handler := newWaitHandler(0)
 
 	server := httptest.NewServer(handler)
@@ -162,7 +162,11 @@ func TestContextGlobalCancel(t *testing.T) {
 	assert.True(t, suppressor.expErrorOccurred)
 }
 
-func TestContextGlobalWithRetries(t *testing.T) {
+func TestE2EContextGlobalWithRetries(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
+
 	maxRetries := 3
 	retriesToFail := 2
 	handler := newWaitHandler(retriesToFail)
@@ -204,7 +208,7 @@ func TestContextGlobalWithRetries(t *testing.T) {
 	assert.Equal(t, retriesToFail+1, handler.GetCallCount())
 }
 
-func TestContextPerRequest(t *testing.T) {
+func TestE2EContextPerRequest(t *testing.T) {
 	handler := newWaitHandler(0)
 
 	server := httptest.NewServer(handler)
@@ -240,7 +244,11 @@ func TestContextPerRequest(t *testing.T) {
 	assert.True(t, suppressor.expErrorOccurred)
 }
 
-func TestContextPerRequestWithRetries(t *testing.T) {
+func TestE2EContextPerRequestWithRetries(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
+
 	maxRetries := 3
 	retriesToFail := 2
 	handler := newWaitHandler(retriesToFail)
@@ -282,7 +290,11 @@ func TestContextPerRequestWithRetries(t *testing.T) {
 	assert.Equal(t, retriesToFail+1, handler.GetCallCount())
 }
 
-func TestContextPerRequestWithTimeout(t *testing.T) {
+func TestE2EContextPerRequestWithTimeout(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
+
 	handler := newWaitHandler(0)
 
 	server := httptest.NewServer(handler)
@@ -306,7 +318,11 @@ func TestContextPerRequestWithTimeout(t *testing.T) {
 	assert.True(t, suppressor.expErrorOccurred)
 }
 
-func TestContextPerRequestWithTimeoutAndRetries(t *testing.T) {
+func TestE2EContextPerRequestWithTimeoutAndRetries(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
+
 	maxRetries := 3
 	retriesToFail := 2
 	handler := newWaitHandler(retriesToFail)
@@ -330,7 +346,11 @@ func TestContextPerRequestWithTimeoutAndRetries(t *testing.T) {
 	assert.Equal(t, retriesToFail+1, handler.GetCallCount())
 }
 
-func TestContextPerRequestWithTimeoutCancelledByTimeout(t *testing.T) {
+func TestE2EContextPerRequestWithTimeoutCancelledByTimeout(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
+
 	handler := newWaitHandler(0)
 
 	server := httptest.NewServer(handler)
@@ -358,7 +378,7 @@ func TestContextPerRequestWithTimeoutCancelledByTimeout(t *testing.T) {
 	assert.True(t, suppressor.expErrorOccurred)
 }
 
-func TestContextPerRequestWithTimeoutCancelledByContext(t *testing.T) {
+func TestE2EContextPerRequestWithTimeoutCancelledByContext(t *testing.T) {
 	handler := newWaitHandler(0)
 
 	server := httptest.NewServer(handler)
@@ -395,7 +415,7 @@ func TestContextPerRequestWithTimeoutCancelledByContext(t *testing.T) {
 	assert.True(t, suppressor.expErrorOccurred)
 }
 
-func TestContextPerRequestRetry(t *testing.T) {
+func TestE2EContextPerRequestRetry(t *testing.T) {
 	var m sync.Mutex
 
 	t.Run("not cancelled", func(t *testing.T) {

@@ -261,6 +261,10 @@ func testWebsocketTimeout(
 }
 
 func TestE2EWebsocketTimeouts(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
+
 	t.Run("with-read-timeout", func(t *testing.T) {
 		blockCh := make(chan struct{}, 1)
 
