@@ -217,7 +217,7 @@ type Config struct {
 	Environment *Environment
 }
 
-func (config *Config) fillDefaults() {
+func (config Config) withDefaults() Config {
 	if config.RequestFactory == nil {
 		config.RequestFactory = DefaultRequestFactory{}
 	}
@@ -245,6 +245,22 @@ func (config *Config) fillDefaults() {
 			Reporter:  config.Reporter,
 			Formatter: config.Formatter,
 		}
+	}
+
+	return config
+}
+
+func (config *Config) validate() {
+	if config.RequestFactory == nil {
+		panic("Config.RequestFactory is nil")
+	}
+
+	if config.Client == nil {
+		panic("Config.Client is nil")
+	}
+
+	if config.AssertionHandler == nil {
+		panic("Config.AssertionHandler is nil")
 	}
 }
 
@@ -390,7 +406,9 @@ func Default(t TestingTB, baseURL string) *Expect {
 //	        Status(http.StatusOK)
 //	}
 func WithConfig(config Config) *Expect {
-	config.fillDefaults()
+	config = config.withDefaults()
+
+	config.validate()
 
 	return &Expect{
 		chain:  newChainWithConfig("", config),

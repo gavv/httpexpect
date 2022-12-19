@@ -61,6 +61,10 @@ func (b *mockBody) Close() error {
 	return nil
 }
 
+func newMockConfig(r Reporter) Config {
+	return Config{Reporter: r}.withDefaults()
+}
+
 func newMockChain(t *testing.T) *chain {
 	return newChainWithDefaults("test", newMockReporter(t))
 }

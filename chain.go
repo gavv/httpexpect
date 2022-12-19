@@ -46,6 +46,8 @@ type chain struct {
 
 // Construct chain using config.
 func newChainWithConfig(name string, config Config) *chain {
+	config.validate()
+
 	c := &chain{
 		context:  AssertionContext{},
 		handler:  config.AssertionHandler,

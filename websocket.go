@@ -39,7 +39,7 @@ type WebsocketConn interface {
 
 // NewWebsocket returns a new Websocket instance.
 func NewWebsocket(config Config, conn WebsocketConn) *Websocket {
-	config.fillDefaults()
+	config = config.withDefaults()
 
 	return newWebsocket(
 		newChainWithConfig("Websocket()", config),
@@ -49,11 +49,11 @@ func NewWebsocket(config Config, conn WebsocketConn) *Websocket {
 }
 
 func newWebsocket(parent *chain, config Config, conn WebsocketConn) *Websocket {
-	chain := parent.clone()
+	config.validate()
 
 	return &Websocket{
 		config: config,
-		chain:  chain,
+		chain:  parent.clone(),
 		conn:   conn,
 	}
 }

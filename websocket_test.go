@@ -11,10 +11,13 @@ import (
 func noWsPreSteps(ws *Websocket) {}
 
 func TestWebsocketFailed(t *testing.T) {
-	chain := newMockChain(t)
+	reporter := newMockReporter(t)
+	chain := newChainWithDefaults("test", reporter)
+	config := newMockConfig(reporter)
+
 	chain.fail(mockFailure())
 
-	ws := newWebsocket(chain, Config{}, nil)
+	ws := newWebsocket(chain, config, nil)
 
 	ws.Conn()
 	ws.Raw()
@@ -110,14 +113,10 @@ func TestWebsocketMockConn(t *testing.T) {
 }
 
 func TestWebsocketExpect(t *testing.T) {
-	failedChain := newMockChain(t)
-	failedChain.fail(mockFailure())
-
 	type args struct {
-		config     Config
-		chain      *chain
-		wsConn     WebsocketConn
-		wsPreSteps func(*Websocket)
+		failedChain bool
+		wsConn      WebsocketConn
+		wsPreSteps  func(*Websocket)
 	}
 	tests := []struct {
 		name     string
@@ -127,8 +126,6 @@ func TestWebsocketExpect(t *testing.T) {
 		{
 			name: "success",
 			args: args{
-				config:     Config{},
-				chain:      newMockChain(t),
 				wsPreSteps: noWsPreSteps,
 				wsConn:     newMockWebsocketConn(),
 			},
@@ -137,8 +134,6 @@ func TestWebsocketExpect(t *testing.T) {
 		{
 			name: "fail to read message from conn",
 			args: args{
-				config:     Config{},
-				chain:      newMockChain(t),
 				wsPreSteps: noWsPreSteps,
 				wsConn: newMockWebsocketConn().WithReadMsgError(
 					fmt.Errorf("failed to read message")),
@@ -148,18 +143,15 @@ func TestWebsocketExpect(t *testing.T) {
 		{
 			name: "chain already failed",
 			args: args{
-				config:     Config{},
-				chain:      failedChain,
-				wsPreSteps: noWsPreSteps,
-				wsConn:     newMockWebsocketConn(),
+				failedChain: true,
+				wsPreSteps:  noWsPreSteps,
+				wsConn:      newMockWebsocketConn(),
 			},
 			assertOk: false,
 		},
 		{
 			name: "conn is nil",
 			args: args{
-				config:     Config{},
-				chain:      newMockChain(t),
 				wsPreSteps: noWsPreSteps,
 				wsConn:     nil,
 			},
@@ -168,8 +160,6 @@ func TestWebsocketExpect(t *testing.T) {
 		{
 			name: "connection closed",
 			args: args{
-				config: Config{},
-				chain:  newMockChain(t),
 				wsPreSteps: func(ws *Websocket) {
 					ws.Disconnect()
 				},
@@ -180,8 +170,6 @@ func TestWebsocketExpect(t *testing.T) {
 		{
 			name: "failed to set read deadline",
 			args: args{
-				config:     Config{},
-				chain:      newMockChain(t),
 				wsPreSteps: noWsPreSteps,
 				wsConn: newMockWebsocketConn().WithReadDlError(
 					fmt.Errorf("failed to set read deadline")),
@@ -191,7 +179,15 @@ func TestWebsocketExpect(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ws := newWebsocket(tt.args.chain, tt.args.config, tt.args.wsConn)
+			reporter := newMockReporter(t)
+			chain := newChainWithDefaults("test", reporter)
+			config := newMockConfig(reporter)
+
+			if tt.args.failedChain {
+				chain.fail(mockFailure())
+			}
+
+			ws := newWebsocket(chain, config, tt.args.wsConn)
 			tt.args.wsPreSteps(ws)
 
 			ws.Expect()
@@ -207,8 +203,6 @@ func TestWebsocketExpect(t *testing.T) {
 
 func TestWebsocketClose(t *testing.T) {
 	type args struct {
-		config     Config
-		chain      *chain
 		wsConn     WebsocketConn
 		wsPreSteps func(*Websocket)
 		closeCode  []int
@@ -221,8 +215,6 @@ func TestWebsocketClose(t *testing.T) {
 		{
 			name: "success",
 			args: args{
-				config:     Config{},
-				chain:      newMockChain(t),
 				wsPreSteps: noWsPreSteps,
 				wsConn:     newMockWebsocketConn(),
 				closeCode:  []int{websocket.CloseNormalClosure},
@@ -232,8 +224,6 @@ func TestWebsocketClose(t *testing.T) {
 		{
 			name: "conn is nil",
 			args: args{
-				config:     Config{},
-				chain:      newMockChain(t),
 				wsPreSteps: noWsPreSteps,
 				wsConn:     nil,
 				closeCode:  []int{websocket.CloseNormalClosure},
@@ -243,8 +233,6 @@ func TestWebsocketClose(t *testing.T) {
 		{
 			name: "websocket unusable",
 			args: args{
-				config: Config{},
-				chain:  newMockChain(t),
 				wsPreSteps: func(ws *Websocket) {
 					ws.Disconnect()
 				},
@@ -256,8 +244,6 @@ func TestWebsocketClose(t *testing.T) {
 		{
 			name: "too many close codes",
 			args: args{
-				config:     Config{},
-				chain:      newMockChain(t),
 				wsPreSteps: noWsPreSteps,
 				wsConn:     newMockWebsocketConn(),
 				closeCode:  []int{websocket.CloseNormalClosure, websocket.CloseAbnormalClosure},
@@ -267,7 +253,11 @@ func TestWebsocketClose(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ws := newWebsocket(tt.args.chain, tt.args.config, tt.args.wsConn)
+			reporter := newMockReporter(t)
+			chain := newChainWithDefaults("test", reporter)
+			config := newMockConfig(reporter)
+
+			ws := newWebsocket(chain, config, tt.args.wsConn)
 
 			tt.args.wsPreSteps(ws)
 
@@ -284,8 +274,6 @@ func TestWebsocketClose(t *testing.T) {
 
 func TestWebsocketCloseWithBytes(t *testing.T) {
 	type args struct {
-		config     Config
-		chain      *chain
 		wsConn     WebsocketConn
 		wsPreSteps func(*Websocket)
 		content    []byte
@@ -299,8 +287,6 @@ func TestWebsocketCloseWithBytes(t *testing.T) {
 		{
 			name: "success",
 			args: args{
-				config:     Config{},
-				chain:      newMockChain(t),
 				wsPreSteps: noWsPreSteps,
 				wsConn:     newMockWebsocketConn(),
 				content:    []byte("connection closed..."),
@@ -311,8 +297,6 @@ func TestWebsocketCloseWithBytes(t *testing.T) {
 		{
 			name: "conn is nil",
 			args: args{
-				config:     Config{},
-				chain:      newMockChain(t),
 				wsPreSteps: noWsPreSteps,
 				wsConn:     nil,
 				content:    []byte("connection closed..."),
@@ -323,8 +307,6 @@ func TestWebsocketCloseWithBytes(t *testing.T) {
 		{
 			name: "websocket unusable",
 			args: args{
-				config: Config{},
-				chain:  newMockChain(t),
 				wsPreSteps: func(ws *Websocket) {
 					ws.Disconnect()
 				},
@@ -337,8 +319,6 @@ func TestWebsocketCloseWithBytes(t *testing.T) {
 		{
 			name: "too many close codes",
 			args: args{
-				config:     Config{},
-				chain:      newMockChain(t),
 				wsPreSteps: noWsPreSteps,
 				wsConn:     newMockWebsocketConn(),
 				content:    []byte("connection closed..."),
@@ -349,7 +329,11 @@ func TestWebsocketCloseWithBytes(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ws := newWebsocket(tt.args.chain, tt.args.config, tt.args.wsConn)
+			reporter := newMockReporter(t)
+			chain := newChainWithDefaults("test", reporter)
+			config := newMockConfig(reporter)
+
+			ws := newWebsocket(chain, config, tt.args.wsConn)
 
 			tt.args.wsPreSteps(ws)
 
@@ -366,8 +350,6 @@ func TestWebsocketCloseWithBytes(t *testing.T) {
 
 func TestWebsocketCloseWithText(t *testing.T) {
 	type args struct {
-		config     Config
-		chain      *chain
 		wsConn     WebsocketConn
 		wsPreSteps func(*Websocket)
 		content    string
@@ -381,8 +363,6 @@ func TestWebsocketCloseWithText(t *testing.T) {
 		{
 			name: "success",
 			args: args{
-				config:     Config{},
-				chain:      newMockChain(t),
 				wsPreSteps: noWsPreSteps,
 				wsConn:     newMockWebsocketConn(),
 				content:    "connection closed...",
@@ -393,8 +373,6 @@ func TestWebsocketCloseWithText(t *testing.T) {
 		{
 			name: "conn is nil",
 			args: args{
-				config:     Config{},
-				chain:      newMockChain(t),
 				wsPreSteps: noWsPreSteps,
 				wsConn:     nil,
 				content:    "connection closed...",
@@ -405,8 +383,6 @@ func TestWebsocketCloseWithText(t *testing.T) {
 		{
 			name: "websocket unusable",
 			args: args{
-				config: Config{},
-				chain:  newMockChain(t),
 				wsPreSteps: func(ws *Websocket) {
 					ws.Disconnect()
 				},
@@ -419,8 +395,6 @@ func TestWebsocketCloseWithText(t *testing.T) {
 		{
 			name: "too many close codes",
 			args: args{
-				config:     Config{},
-				chain:      newMockChain(t),
 				wsPreSteps: noWsPreSteps,
 				wsConn:     newMockWebsocketConn(),
 				content:    "connection closed...",
@@ -431,7 +405,11 @@ func TestWebsocketCloseWithText(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ws := newWebsocket(tt.args.chain, tt.args.config, tt.args.wsConn)
+			reporter := newMockReporter(t)
+			chain := newChainWithDefaults("test", reporter)
+			config := newMockConfig(reporter)
+
+			ws := newWebsocket(chain, config, tt.args.wsConn)
 
 			tt.args.wsPreSteps(ws)
 
@@ -448,8 +426,6 @@ func TestWebsocketCloseWithText(t *testing.T) {
 
 func TestWebsocketCloseWithJSON(t *testing.T) {
 	type args struct {
-		config     Config
-		chain      *chain
 		wsConn     WebsocketConn
 		wsPreSteps func(*Websocket)
 		content    interface{}
@@ -463,8 +439,6 @@ func TestWebsocketCloseWithJSON(t *testing.T) {
 		{
 			name: "success",
 			args: args{
-				config:     Config{},
-				chain:      newMockChain(t),
 				wsPreSteps: noWsPreSteps,
 				wsConn:     newMockWebsocketConn(),
 				content: map[string]string{
@@ -477,8 +451,6 @@ func TestWebsocketCloseWithJSON(t *testing.T) {
 		{
 			name: "conn is nil",
 			args: args{
-				config:     Config{},
-				chain:      newMockChain(t),
 				wsPreSteps: noWsPreSteps,
 				wsConn:     nil,
 				content: map[string]string{
@@ -491,8 +463,6 @@ func TestWebsocketCloseWithJSON(t *testing.T) {
 		{
 			name: "websocket unusable",
 			args: args{
-				config: Config{},
-				chain:  newMockChain(t),
 				wsPreSteps: func(ws *Websocket) {
 					ws.Disconnect()
 				},
@@ -507,8 +477,6 @@ func TestWebsocketCloseWithJSON(t *testing.T) {
 		{
 			name: "too many close codes",
 			args: args{
-				config:     Config{},
-				chain:      newMockChain(t),
 				wsPreSteps: noWsPreSteps,
 				wsConn:     newMockWebsocketConn(),
 				content: map[string]string{
@@ -521,8 +489,6 @@ func TestWebsocketCloseWithJSON(t *testing.T) {
 		{
 			name: "marshall failed",
 			args: args{
-				config:     Config{},
-				chain:      newMockChain(t),
 				wsPreSteps: noWsPreSteps,
 				wsConn:     newMockWebsocketConn(),
 				content:    make(chan int),
@@ -533,7 +499,11 @@ func TestWebsocketCloseWithJSON(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ws := newWebsocket(tt.args.chain, tt.args.config, tt.args.wsConn)
+			reporter := newMockReporter(t)
+			chain := newChainWithDefaults("test", reporter)
+			config := newMockConfig(reporter)
+
+			ws := newWebsocket(chain, config, tt.args.wsConn)
 
 			tt.args.wsPreSteps(ws)
 
@@ -550,8 +520,6 @@ func TestWebsocketCloseWithJSON(t *testing.T) {
 
 func TestWebsocketWriteMessage(t *testing.T) {
 	type args struct {
-		config     Config
-		chain      *chain
 		wsConn     WebsocketConn
 		wsPreSteps func(*Websocket)
 		typ        int
@@ -566,8 +534,6 @@ func TestWebsocketWriteMessage(t *testing.T) {
 		{
 			name: "text message success",
 			args: args{
-				config:     Config{},
-				chain:      newMockChain(t),
 				wsPreSteps: noWsPreSteps,
 				wsConn:     newMockWebsocketConn(),
 				typ:        websocket.TextMessage,
@@ -579,8 +545,6 @@ func TestWebsocketWriteMessage(t *testing.T) {
 		{
 			name: "text message fail nil conn",
 			args: args{
-				config:     Config{},
-				chain:      newMockChain(t),
 				wsConn:     nil,
 				wsPreSteps: noWsPreSteps,
 				typ:        websocket.TextMessage,
@@ -592,8 +556,6 @@ func TestWebsocketWriteMessage(t *testing.T) {
 		{
 			name: "text message fail unusable",
 			args: args{
-				config: Config{},
-				chain:  newMockChain(t),
 				wsConn: newMockWebsocketConn(),
 				wsPreSteps: func(ws *Websocket) {
 					ws.Disconnect()
@@ -607,8 +569,6 @@ func TestWebsocketWriteMessage(t *testing.T) {
 		{
 			name: "text message failed to set write deadline",
 			args: args{
-				config: Config{},
-				chain:  newMockChain(t),
 				wsConn: newMockWebsocketConn().WithWriteDlError(
 					fmt.Errorf("failed to set write deadline")),
 				wsPreSteps: noWsPreSteps,
@@ -621,8 +581,6 @@ func TestWebsocketWriteMessage(t *testing.T) {
 		{
 			name: "text message failed to write to conn",
 			args: args{
-				config: Config{},
-				chain:  newMockChain(t),
 				wsConn: newMockWebsocketConn().WithWriteMsgError(
 					fmt.Errorf("failed to write message to conn")),
 				wsPreSteps: noWsPreSteps,
@@ -635,8 +593,6 @@ func TestWebsocketWriteMessage(t *testing.T) {
 		{
 			name: "text binary message success",
 			args: args{
-				config:     Config{},
-				chain:      newMockChain(t),
 				wsPreSteps: noWsPreSteps,
 				wsConn:     newMockWebsocketConn(),
 				typ:        websocket.BinaryMessage,
@@ -648,8 +604,6 @@ func TestWebsocketWriteMessage(t *testing.T) {
 		{
 			name: "close message success",
 			args: args{
-				config:     Config{},
-				chain:      newMockChain(t),
 				wsConn:     newMockWebsocketConn(),
 				wsPreSteps: noWsPreSteps,
 				typ:        websocket.CloseMessage,
@@ -661,8 +615,6 @@ func TestWebsocketWriteMessage(t *testing.T) {
 		{
 			name: "close message too many close codes",
 			args: args{
-				config:     Config{},
-				chain:      newMockChain(t),
 				wsConn:     newMockWebsocketConn(),
 				wsPreSteps: noWsPreSteps,
 				typ:        websocket.CloseMessage,
@@ -677,8 +629,6 @@ func TestWebsocketWriteMessage(t *testing.T) {
 		{
 			name: "unsupported message type",
 			args: args{
-				config:     Config{},
-				chain:      newMockChain(t),
 				wsConn:     newMockWebsocketConn(),
 				wsPreSteps: noWsPreSteps,
 				typ:        websocket.CloseMandatoryExtension,
@@ -690,7 +640,11 @@ func TestWebsocketWriteMessage(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ws := newWebsocket(tt.args.chain, tt.args.config, tt.args.wsConn)
+			reporter := newMockReporter(t)
+			chain := newChainWithDefaults("test", reporter)
+			config := newMockConfig(reporter)
+
+			ws := newWebsocket(chain, config, tt.args.wsConn)
 
 			tt.args.wsPreSteps(ws)
 
@@ -707,8 +661,6 @@ func TestWebsocketWriteMessage(t *testing.T) {
 
 func TestWebsocketWriteBytesBinary(t *testing.T) {
 	type args struct {
-		config     Config
-		chain      *chain
 		wsConn     WebsocketConn
 		wsPreSteps func(*Websocket)
 		content    []byte
@@ -721,8 +673,6 @@ func TestWebsocketWriteBytesBinary(t *testing.T) {
 		{
 			name: "success",
 			args: args{
-				config:     Config{},
-				chain:      newMockChain(t),
 				wsPreSteps: noWsPreSteps,
 				wsConn:     newMockWebsocketConn(),
 				content:    []byte("random message..."),
@@ -732,8 +682,6 @@ func TestWebsocketWriteBytesBinary(t *testing.T) {
 		{
 			name: "conn is nil",
 			args: args{
-				config:     Config{},
-				chain:      newMockChain(t),
 				wsConn:     nil,
 				wsPreSteps: noWsPreSteps,
 				content:    []byte("random message..."),
@@ -743,8 +691,6 @@ func TestWebsocketWriteBytesBinary(t *testing.T) {
 		{
 			name: "websocket unusable",
 			args: args{
-				config: Config{},
-				chain:  newMockChain(t),
 				wsConn: newMockWebsocketConn(),
 				wsPreSteps: func(ws *Websocket) {
 					ws.Disconnect()
@@ -756,7 +702,11 @@ func TestWebsocketWriteBytesBinary(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ws := newWebsocket(tt.args.chain, tt.args.config, tt.args.wsConn)
+			reporter := newMockReporter(t)
+			chain := newChainWithDefaults("test", reporter)
+			config := newMockConfig(reporter)
+
+			ws := newWebsocket(chain, config, tt.args.wsConn)
 
 			tt.args.wsPreSteps(ws)
 
@@ -773,8 +723,6 @@ func TestWebsocketWriteBytesBinary(t *testing.T) {
 
 func TestWebsocketWriteBytesText(t *testing.T) {
 	type args struct {
-		config     Config
-		chain      *chain
 		wsConn     WebsocketConn
 		wsPreSteps func(*Websocket)
 		content    []byte
@@ -787,8 +735,6 @@ func TestWebsocketWriteBytesText(t *testing.T) {
 		{
 			name: "success",
 			args: args{
-				config:     Config{},
-				chain:      newMockChain(t),
 				wsPreSteps: noWsPreSteps,
 				wsConn:     newMockWebsocketConn(),
 				content:    []byte("random message..."),
@@ -798,8 +744,6 @@ func TestWebsocketWriteBytesText(t *testing.T) {
 		{
 			name: "conn is nil",
 			args: args{
-				config:     Config{},
-				chain:      newMockChain(t),
 				wsConn:     nil,
 				wsPreSteps: noWsPreSteps,
 				content:    []byte("random message..."),
@@ -809,8 +753,6 @@ func TestWebsocketWriteBytesText(t *testing.T) {
 		{
 			name: "websocket unusable",
 			args: args{
-				config: Config{},
-				chain:  newMockChain(t),
 				wsConn: newMockWebsocketConn(),
 				wsPreSteps: func(ws *Websocket) {
 					ws.Disconnect()
@@ -822,7 +764,11 @@ func TestWebsocketWriteBytesText(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ws := newWebsocket(tt.args.chain, tt.args.config, tt.args.wsConn)
+			reporter := newMockReporter(t)
+			chain := newChainWithDefaults("test", reporter)
+			config := newMockConfig(reporter)
+
+			ws := newWebsocket(chain, config, tt.args.wsConn)
 
 			tt.args.wsPreSteps(ws)
 
@@ -839,8 +785,6 @@ func TestWebsocketWriteBytesText(t *testing.T) {
 
 func TestWebsocketWriteText(t *testing.T) {
 	type args struct {
-		config     Config
-		chain      *chain
 		wsConn     WebsocketConn
 		wsPreSteps func(*Websocket)
 		content    string
@@ -853,8 +797,6 @@ func TestWebsocketWriteText(t *testing.T) {
 		{
 			name: "success",
 			args: args{
-				config:     Config{},
-				chain:      newMockChain(t),
 				wsPreSteps: noWsPreSteps,
 				wsConn:     newMockWebsocketConn(),
 				content:    "random message...",
@@ -864,8 +806,6 @@ func TestWebsocketWriteText(t *testing.T) {
 		{
 			name: "conn is nil",
 			args: args{
-				config:     Config{},
-				chain:      newMockChain(t),
 				wsConn:     nil,
 				wsPreSteps: noWsPreSteps,
 				content:    "random message...",
@@ -875,8 +815,6 @@ func TestWebsocketWriteText(t *testing.T) {
 		{
 			name: "websocket unusable",
 			args: args{
-				config: Config{},
-				chain:  newMockChain(t),
 				wsConn: newMockWebsocketConn(),
 				wsPreSteps: func(ws *Websocket) {
 					ws.Disconnect()
@@ -888,7 +826,11 @@ func TestWebsocketWriteText(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ws := newWebsocket(tt.args.chain, tt.args.config, tt.args.wsConn)
+			reporter := newMockReporter(t)
+			chain := newChainWithDefaults("test", reporter)
+			config := newMockConfig(reporter)
+
+			ws := newWebsocket(chain, config, tt.args.wsConn)
 
 			tt.args.wsPreSteps(ws)
 
@@ -905,8 +847,6 @@ func TestWebsocketWriteText(t *testing.T) {
 
 func TestWebsocketWriteJSON(t *testing.T) {
 	type args struct {
-		config     Config
-		chain      *chain
 		wsConn     WebsocketConn
 		wsPreSteps func(*Websocket)
 		content    interface{}
@@ -919,8 +859,6 @@ func TestWebsocketWriteJSON(t *testing.T) {
 		{
 			name: "success",
 			args: args{
-				config:     Config{},
-				chain:      newMockChain(t),
 				wsPreSteps: noWsPreSteps,
 				wsConn:     newMockWebsocketConn(),
 				content: map[string]string{
@@ -932,8 +870,6 @@ func TestWebsocketWriteJSON(t *testing.T) {
 		{
 			name: "conn is nil",
 			args: args{
-				config:     Config{},
-				chain:      newMockChain(t),
 				wsConn:     nil,
 				wsPreSteps: noWsPreSteps,
 				content: map[string]string{
@@ -945,8 +881,6 @@ func TestWebsocketWriteJSON(t *testing.T) {
 		{
 			name: "websocket unusable",
 			args: args{
-				config: Config{},
-				chain:  newMockChain(t),
 				wsConn: newMockWebsocketConn(),
 				wsPreSteps: func(ws *Websocket) {
 					ws.Disconnect()
@@ -960,8 +894,6 @@ func TestWebsocketWriteJSON(t *testing.T) {
 		{
 			name: "JSON marshal failed",
 			args: args{
-				config:     Config{},
-				chain:      newMockChain(t),
 				wsConn:     newMockWebsocketConn(),
 				wsPreSteps: noWsPreSteps,
 				content:    make(chan int),
@@ -971,7 +903,11 @@ func TestWebsocketWriteJSON(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ws := newWebsocket(tt.args.chain, tt.args.config, tt.args.wsConn)
+			reporter := newMockReporter(t)
+			chain := newChainWithDefaults("test", reporter)
+			config := newMockConfig(reporter)
+
+			ws := newWebsocket(chain, config, tt.args.wsConn)
 
 			tt.args.wsPreSteps(ws)
 
@@ -1001,8 +937,6 @@ func TestWebsocketSubprotocol(t *testing.T) {
 
 func TestWebsocketSetReadDeadline(t *testing.T) {
 	type args struct {
-		config Config
-		chain  *chain
 		wsConn WebsocketConn
 	}
 	tests := []struct {
@@ -1013,8 +947,6 @@ func TestWebsocketSetReadDeadline(t *testing.T) {
 		{
 			name: "success",
 			args: args{
-				config: Config{},
-				chain:  newMockChain(t),
 				wsConn: newMockWebsocketConn(),
 			},
 			assertOk: true,
@@ -1022,8 +954,6 @@ func TestWebsocketSetReadDeadline(t *testing.T) {
 		{
 			name: "conn.SetReadDeadline error",
 			args: args{
-				config: Config{},
-				chain:  newMockChain(t),
 				wsConn: newMockWebsocketConn().WithReadDlError(
 					fmt.Errorf("Failed to set read deadline")),
 			},
@@ -1032,7 +962,11 @@ func TestWebsocketSetReadDeadline(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ws := newWebsocket(tt.args.chain, tt.args.config, tt.args.wsConn).
+			reporter := newMockReporter(t)
+			chain := newChainWithDefaults("test", reporter)
+			config := newMockConfig(reporter)
+
+			ws := newWebsocket(chain, config, tt.args.wsConn).
 				WithReadTimeout(time.Second)
 
 			ws.setReadDeadline()
@@ -1048,8 +982,6 @@ func TestWebsocketSetReadDeadline(t *testing.T) {
 
 func TestWebsocketSetWriteDeadline(t *testing.T) {
 	type args struct {
-		config Config
-		chain  *chain
 		wsConn WebsocketConn
 	}
 	tests := []struct {
@@ -1060,8 +992,6 @@ func TestWebsocketSetWriteDeadline(t *testing.T) {
 		{
 			name: "success",
 			args: args{
-				config: Config{},
-				chain:  newMockChain(t),
 				wsConn: newMockWebsocketConn(),
 			},
 			assertOk: true,
@@ -1069,8 +999,6 @@ func TestWebsocketSetWriteDeadline(t *testing.T) {
 		{
 			name: "conn.SetReadDeadline error",
 			args: args{
-				config: Config{},
-				chain:  newMockChain(t),
 				wsConn: newMockWebsocketConn().WithWriteDlError(
 					fmt.Errorf("Failed to set read deadline")),
 			},
@@ -1079,7 +1007,11 @@ func TestWebsocketSetWriteDeadline(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ws := newWebsocket(tt.args.chain, tt.args.config, tt.args.wsConn).
+			reporter := newMockReporter(t)
+			chain := newChainWithDefaults("test", reporter)
+			config := newMockConfig(reporter)
+
+			ws := newWebsocket(chain, config, tt.args.wsConn).
 				WithWriteTimeout(time.Second)
 
 			ws.setWriteDeadline()
@@ -1095,8 +1027,6 @@ func TestWebsocketSetWriteDeadline(t *testing.T) {
 
 func TestWebsocketDisconnect(t *testing.T) {
 	type args struct {
-		config Config
-		chain  *chain
 		wsConn WebsocketConn
 	}
 	tests := []struct {
@@ -1107,8 +1037,6 @@ func TestWebsocketDisconnect(t *testing.T) {
 		{
 			name: "success",
 			args: args{
-				config: Config{},
-				chain:  newMockChain(t),
 				wsConn: newMockWebsocketConn(),
 			},
 			assertOk: true,
@@ -1116,8 +1044,6 @@ func TestWebsocketDisconnect(t *testing.T) {
 		{
 			name: "success even if conn is nil",
 			args: args{
-				config: Config{},
-				chain:  newMockChain(t),
 				wsConn: nil,
 			},
 			assertOk: true,
@@ -1125,8 +1051,6 @@ func TestWebsocketDisconnect(t *testing.T) {
 		{
 			name: "conn close failed",
 			args: args{
-				config: Config{},
-				chain:  newMockChain(t),
 				wsConn: newMockWebsocketConn().WithCloseError(
 					fmt.Errorf("failed to close ws conn")),
 			},
@@ -1135,7 +1059,11 @@ func TestWebsocketDisconnect(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ws := newWebsocket(tt.args.chain, tt.args.config, tt.args.wsConn)
+			reporter := newMockReporter(t)
+			chain := newChainWithDefaults("test", reporter)
+			config := newMockConfig(reporter)
+
+			ws := newWebsocket(chain, config, tt.args.wsConn)
 
 			ws.Disconnect()
 
@@ -1149,10 +1077,12 @@ func TestWebsocketDisconnect(t *testing.T) {
 }
 
 func TestWebsocketPrintRead(t *testing.T) {
+	reporter := newMockReporter(t)
 	printer := newMockWsPrinter()
 	config := Config{
+		Reporter: reporter,
 		Printers: []Printer{printer},
-	}
+	}.withDefaults()
 	ws := newWebsocket(newMockChain(t), config, newMockWebsocketConn())
 
 	ws.printRead(websocket.CloseMessage,
@@ -1165,10 +1095,12 @@ func TestWebsocketPrintRead(t *testing.T) {
 }
 
 func TestWebsocketPrintWrite(t *testing.T) {
+	reporter := newMockReporter(t)
 	printer := newMockWsPrinter()
 	config := Config{
+		Reporter: reporter,
 		Printers: []Printer{printer},
-	}
+	}.withDefaults()
 	ws := newWebsocket(newMockChain(t), config, newMockWebsocketConn())
 
 	ws.printWrite(websocket.CloseMessage,

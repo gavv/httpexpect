@@ -22,15 +22,10 @@ import (
 
 func TestRequestFailed(t *testing.T) {
 	reporter := newMockReporter(t)
-
 	chain := newChainWithDefaults("test", reporter)
+	config := newMockConfig(reporter)
+
 	chain.fail(mockFailure())
-
-	config := Config{
-		Reporter: reporter,
-	}
-
-	config.fillDefaults()
 
 	req := newRequest(chain, config, "GET", "")
 

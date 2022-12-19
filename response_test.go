@@ -50,10 +50,14 @@ func TestResponseFailed(t *testing.T) {
 	}
 
 	t.Run("failed_chain", func(t *testing.T) {
-		chain := newMockChain(t)
+		reporter := newMockReporter(t)
+		chain := newChainWithDefaults("test", reporter)
+		config := newMockConfig(reporter)
+
 		chain.fail(mockFailure())
 
 		resp := newResponse(responseOpts{
+			config:   config,
 			chain:    chain,
 			httpResp: &http.Response{},
 		})
@@ -62,9 +66,12 @@ func TestResponseFailed(t *testing.T) {
 	})
 
 	t.Run("nil_value", func(t *testing.T) {
-		chain := newMockChain(t)
+		reporter := newMockReporter(t)
+		chain := newChainWithDefaults("test", reporter)
+		config := newMockConfig(reporter)
 
 		resp := newResponse(responseOpts{
+			config:   config,
 			chain:    chain,
 			httpResp: nil,
 		})
@@ -73,10 +80,14 @@ func TestResponseFailed(t *testing.T) {
 	})
 
 	t.Run("failed_chain_nil_value", func(t *testing.T) {
-		chain := newMockChain(t)
+		reporter := newMockReporter(t)
+		chain := newChainWithDefaults("test", reporter)
+		config := newMockConfig(reporter)
+
 		chain.fail(mockFailure())
 
 		resp := newResponse(responseOpts{
+			config:   config,
 			chain:    chain,
 			httpResp: nil,
 		})

@@ -86,7 +86,7 @@ type Request struct {
 // separated by slash. If BaseURL ends with a slash and path (after interpolation)
 // starts with a slash, only single slash is inserted.
 func NewRequest(config Config, method, path string, pathargs ...interface{}) *Request {
-	config.fillDefaults()
+	config = config.withDefaults()
 
 	return newRequest(
 		newChainWithConfig("Request()", config),
@@ -100,17 +100,7 @@ func NewRequest(config Config, method, path string, pathargs ...interface{}) *Re
 func newRequest(
 	parent *chain, config Config, method, path string, pathargs ...interface{},
 ) *Request {
-	if config.RequestFactory == nil {
-		panic("Config.RequestFactory is nil")
-	}
-
-	if config.Client == nil {
-		panic("Config.Client is nil")
-	}
-
-	if config.AssertionHandler == nil {
-		panic("Config.AssertionHandler is nil")
-	}
+	config.validate()
 
 	r := &Request{
 		config: config,

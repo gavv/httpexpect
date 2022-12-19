@@ -41,10 +41,7 @@ type Response struct {
 func NewResponse(
 	reporter Reporter, response *http.Response, rtt ...time.Duration,
 ) *Response {
-	config := Config{
-		Reporter: reporter,
-	}
-	config.fillDefaults()
+	config := Config{Reporter: reporter}.withDefaults()
 
 	return newResponse(responseOpts{
 		config:   config,
@@ -63,6 +60,8 @@ type responseOpts struct {
 }
 
 func newResponse(opts responseOpts) *Response {
+	opts.config.validate()
+
 	r := &Response{
 		config: opts.config,
 		chain:  opts.chain.clone(),
