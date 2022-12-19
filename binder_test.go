@@ -175,6 +175,17 @@ func TestFastBinder(t *testing.T) {
 		assert.Equal(t, "application/x-www-form-urlencoded",
 			string(ctx.Request.Header.ContentType()))
 
+		assert.NotNil(t, ctx.LocalAddr())
+		assert.Equal(t, "tcp", ctx.LocalAddr().Network())
+		assert.Equal(t, "0.0.0.0:0", ctx.LocalAddr().String())
+
+		assert.NotNil(t, ctx.RemoteAddr())
+		assert.Equal(t, "tcp", ctx.RemoteAddr().Network())
+		assert.Equal(t, "0.0.0.0:0", ctx.RemoteAddr().String())
+
+		assert.False(t, ctx.IsTLS())
+		assert.Nil(t, ctx.TLSConnectionState())
+
 		headers := map[string][]string{}
 
 		ctx.Request.Header.VisitAll(func(k, v []byte) {
@@ -234,6 +245,8 @@ func TestFastBinder(t *testing.T) {
 
 func TestFastBinderRemoteAddr(t *testing.T) {
 	handler := func(ctx *fasthttp.RequestCtx) {
+		assert.NotNil(t, ctx.RemoteAddr())
+		assert.Equal(t, "tcp", ctx.RemoteAddr().Network())
 		assert.Equal(t, "8.8.8.8:88", ctx.RemoteAddr().String())
 
 		ctx.Response.SetBody([]byte(`ok`))
@@ -313,7 +326,9 @@ func TestFastBinderProtocol(t *testing.T) {
 func TestFastBinderTLS(t *testing.T) {
 	var isHTTPS, isTLS bool
 
-	tlsState := &tls.ConnectionState{}
+	tlsState := &tls.ConnectionState{
+		Version: tls.VersionTLS12,
+	}
 
 	handler := func(ctx *fasthttp.RequestCtx) {
 		isHTTPS = strings.HasPrefix(string(ctx.Request.Header.RequestURI()), "https://")
@@ -447,4 +462,34 @@ func TestFastBinderEmptyResponse(t *testing.T) {
 	}
 
 	assert.Equal(t, "", string(b))
+}
+
+func TestFastBinderLogger(t *testing.T) {
+	handler := func(ctx *fasthttp.RequestCtx) {
+		ctx.Logger().Printf("test_message")
+	}
+
+	logger := newMockLogger(t)
+
+	client := &http.Client{
+		Transport: &FastBinder{
+			Handler: handler,
+			Logger:  logger,
+		},
+	}
+
+	req, err := http.NewRequest(
+		"POST", "http://example.com/path", strings.NewReader("foo=bar"))
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_, err = client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	assert.True(t, logger.logged)
+	assert.Contains(t, logger.lastMessage, "test_message")
 }

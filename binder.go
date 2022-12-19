@@ -95,6 +95,8 @@ type FastBinder struct {
 	Handler fasthttp.RequestHandler
 	// TLS connection state used for https:// requests.
 	TLS *tls.ConnectionState
+	// If non-nil, fasthttp.RequestCtx.Logger() will print messages to it.
+	Logger Logger
 }
 
 // NewFastBinder returns a new FastBinder given a fasthttp.RequestHandler.
@@ -120,7 +122,9 @@ func (binder FastBinder) RoundTrip(stdreq *http.Request) (*http.Response, error)
 	}
 
 	ctx := fasthttp.RequestCtx{}
-	ctx.Init2(conn, fastLogger{}, true)
+	log := fastLogger{binder.Logger}
+	ctx.Init2(conn, log, true)
+
 	fastreq.CopyTo(&ctx.Request)
 
 	if stdreq.RemoteAddr != "" {
@@ -223,10 +227,14 @@ func fast2std(stdreq *http.Request, fastresp *fasthttp.Response) *http.Response 
 	return stdresp
 }
 
-type fastLogger struct{}
+type fastLogger struct {
+	logger Logger
+}
 
-func (fastLogger) Printf(format string, args ...interface{}) {
-	_, _ = format, args
+func (f fastLogger) Printf(format string, args ...interface{}) {
+	if f.logger != nil {
+		f.logger.Logf(format, args...)
+	}
 }
 
 type connNonTLS struct {
