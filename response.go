@@ -457,7 +457,7 @@ func (r *Response) Cookie(name string) *Cookie {
 //
 // Example:
 //
-//	req := NewRequest(config, "GET", "/path")
+//	req := NewRequestC(config, "GET", "/path")
 //	req.WithWebsocketUpgrade()
 //	ws := req.Expect().Websocket()
 //	defer ws.Disconnect()

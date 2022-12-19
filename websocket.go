@@ -13,6 +13,16 @@ const noDuration = time.Duration(0)
 
 var infiniteTime = time.Time{}
 
+// WebsocketConn is used by Websocket to communicate with actual WebSocket connection.
+type WebsocketConn interface {
+	ReadMessage() (messageType int, p []byte, err error)
+	WriteMessage(messageType int, data []byte) error
+	Close() error
+	SetReadDeadline(t time.Time) error
+	SetWriteDeadline(t time.Time) error
+	Subprotocol() string
+}
+
 // Websocket provides methods to read from, write into and close WebSocket
 // connection.
 type Websocket struct {
@@ -27,18 +37,13 @@ type Websocket struct {
 	isClosed bool
 }
 
-// WebsocketConn is used by Websocket to communicate with actual WebSocket connection.
-type WebsocketConn interface {
-	ReadMessage() (messageType int, p []byte, err error)
-	WriteMessage(messageType int, data []byte) error
-	Close() error
-	SetReadDeadline(t time.Time) error
-	SetWriteDeadline(t time.Time) error
-	Subprotocol() string
+// Deprecated: use NewWebsocketC instead.
+func NewWebsocket(config Config, conn WebsocketConn) *Websocket {
+	return NewWebsocketC(config, conn)
 }
 
-// NewWebsocket returns a new Websocket instance.
-func NewWebsocket(config Config, conn WebsocketConn) *Websocket {
+// NewWebsocketC returns a new Websocket instance.
+func NewWebsocketC(config Config, conn WebsocketConn) *Websocket {
 	config = config.withDefaults()
 
 	return newWebsocket(

@@ -50,7 +50,7 @@ func TestWebsocketNilConn(t *testing.T) {
 	}
 
 	t.Run("getters", func(t *testing.T) {
-		ws := NewWebsocket(config, nil)
+		ws := NewWebsocketC(config, nil)
 
 		if ws.Conn() != nil {
 			t.Fatal("Conn returned not nil")
@@ -68,7 +68,7 @@ func TestWebsocketNilConn(t *testing.T) {
 	})
 
 	t.Run("expect", func(t *testing.T) {
-		ws := NewWebsocket(config, nil)
+		ws := NewWebsocketC(config, nil)
 
 		msg := ws.Expect()
 		msg.chain.assertFailed(t)
@@ -85,7 +85,7 @@ func TestWebsocketMockConn(t *testing.T) {
 	}
 
 	t.Run("getters", func(t *testing.T) {
-		ws := NewWebsocket(config, newMockWebsocketConn())
+		ws := NewWebsocketC(config, newMockWebsocketConn())
 
 		if ws.Conn() == nil {
 			t.Fatal("Conn returned nil")
@@ -103,7 +103,7 @@ func TestWebsocketMockConn(t *testing.T) {
 	})
 
 	t.Run("expect", func(t *testing.T) {
-		ws := NewWebsocket(config, newMockWebsocketConn())
+		ws := NewWebsocketC(config, newMockWebsocketConn())
 
 		msg := ws.Expect()
 		msg.chain.assertNotFailed(t)
@@ -924,7 +924,7 @@ func TestWebsocketWriteJSON(t *testing.T) {
 
 func TestWebsocketSubprotocol(t *testing.T) {
 	subproto := "soap"
-	ws := NewWebsocket(Config{
+	ws := NewWebsocketC(Config{
 		Reporter: NewAssertReporter(t),
 	}, newMockWebsocketConn().WithSubprotocol(subproto))
 

@@ -60,7 +60,12 @@ type Request struct {
 	matchers   []func(*Response)
 }
 
-// NewRequest returns a new Request instance.
+// Deprecated: use NewRequestC instead.
+func NewRequest(config Config, method, path string, pathargs ...interface{}) *Request {
+	return NewRequestC(config, method, path, pathargs...)
+}
+
+// NewRequestC returns a new Request instance.
 //
 // method defines the HTTP method (GET, POST, PUT, etc.). path defines url path.
 //
@@ -72,12 +77,12 @@ type Request struct {
 //
 // For example:
 //
-//	req := NewRequest(config, "POST", "/repos/{user}/{repo}", "gavv", "httpexpect")
+//	req := NewRequestC(config, "POST", "/repos/{user}/{repo}", "gavv", "httpexpect")
 //	// path will be "/repos/gavv/httpexpect"
 //
 // Or:
 //
-//	req := NewRequest(config, "POST", "/repos/{user}/{repo}")
+//	req := NewRequestC(config, "POST", "/repos/{user}/{repo}")
 //	req.WithPath("user", "gavv")
 //	req.WithPath("repo", "httpexpect")
 //	// path will be "/repos/gavv/httpexpect"
@@ -85,7 +90,7 @@ type Request struct {
 // After interpolation, path is urlencoded and appended to Config.BaseURL,
 // separated by slash. If BaseURL ends with a slash and path (after interpolation)
 // starts with a slash, only single slash is inserted.
-func NewRequest(config Config, method, path string, pathargs ...interface{}) *Request {
+func NewRequestC(config Config, method, path string, pathargs ...interface{}) *Request {
 	config = config.withDefaults()
 
 	return newRequest(
@@ -186,7 +191,7 @@ func (r *Request) initReq(method string) {
 //
 // Example:
 //
-//	req := NewRequest(config, "POST", "/api/login")
+//	req := NewRequestC(config, "POST", "/api/login")
 //	req.WithName("Login Request")
 func (r *Request) WithName(name string) *Request {
 	r.chain.enter("WithName()")
@@ -203,7 +208,7 @@ func (r *Request) WithName(name string) *Request {
 //
 // Example:
 //
-//	req := NewRequest(config, "GET", "/path")
+//	req := NewRequestC(config, "GET", "/path")
 //	req.WithMatcher(func (resp *httpexpect.Response) {
 //	    resp.Header("API-Version").NotEmpty()
 //	})
@@ -235,7 +240,7 @@ func (r *Request) WithMatcher(matcher func(*Response)) *Request {
 //
 // Example:
 //
-//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req := NewRequestC(config, "PUT", "http://example.com/path")
 //	req.WithTransformer(func(r *http.Request) { r.Header.Add("foo", "bar") })
 func (r *Request) WithTransformer(transform func(*http.Request)) *Request {
 	r.chain.enter("WithTransformer()")
@@ -267,7 +272,7 @@ func (r *Request) WithTransformer(transform func(*http.Request)) *Request {
 //
 // Example:
 //
-//	req := NewRequest(config, "GET", "/path")
+//	req := NewRequestC(config, "GET", "/path")
 //	req.WithClient(&http.Client{
 //	  Transport: &http.Transport{
 //	    DisableCompression: true,
@@ -304,7 +309,7 @@ func (r *Request) WithClient(client Client) *Request {
 //
 // Example:
 //
-//	req := NewRequest(config, "GET", "/path")
+//	req := NewRequestC(config, "GET", "/path")
 //	req.WithHandler(myServer.someHandler)
 func (r *Request) WithHandler(handler http.Handler) *Request {
 	r.chain.enter("WithHandler()")
@@ -348,7 +353,7 @@ func (r *Request) WithHandler(handler http.Handler) *Request {
 // Example:
 //
 //	ctx, _ = context.WithTimeout(context.Background(), time.Duration(3)*time.Second)
-//	req := NewRequest(config, "GET", "/path")
+//	req := NewRequestC(config, "GET", "/path")
 //	req.WithContext(ctx)
 //	req.Expect().Status(http.StatusOK)
 func (r *Request) WithContext(ctx context.Context) *Request {
@@ -386,7 +391,7 @@ func (r *Request) WithContext(ctx context.Context) *Request {
 //
 // Example:
 //
-//	req := NewRequest(config, "GET", "/path")
+//	req := NewRequestC(config, "GET", "/path")
 //	req.WithTimeout(time.Duration(3)*time.Second)
 //	req.Expect().Status(http.StatusOK)
 func (r *Request) WithTimeout(timeout time.Duration) *Request {
@@ -447,11 +452,11 @@ const (
 //
 // Example:
 //
-//	req1 := NewRequest(config, "POST", "/path")
+//	req1 := NewRequestC(config, "POST", "/path")
 //	req1.WithRedirectPolicy(FollowAllRedirects)
 //	req1.Expect().Status(http.StatusOK)
 //
-//	req2 := NewRequest(config, "POST", "/path")
+//	req2 := NewRequestC(config, "POST", "/path")
 //	req2.WithRedirectPolicy(DontFollowRedirects)
 //	req2.Expect().Status(http.StatusPermanentRedirect)
 func (r *Request) WithRedirectPolicy(policy RedirectPolicy) *Request {
@@ -479,7 +484,7 @@ func (r *Request) WithRedirectPolicy(policy RedirectPolicy) *Request {
 //
 // Example:
 //
-//	req1 := NewRequest(config, "POST", "/path")
+//	req1 := NewRequestC(config, "POST", "/path")
 //	req1.WithMaxRedirects(1)
 //	req1.Expect().Status(http.StatusOK)
 func (r *Request) WithMaxRedirects(maxRedirects int) *Request {
@@ -543,7 +548,7 @@ const (
 //
 // Example:
 //
-//	req := NewRequest(config, "POST", "/path")
+//	req := NewRequestC(config, "POST", "/path")
 //	req.WithRetryPolicy(RetryAllErrors)
 //	req.Expect().Status(http.StatusOK)
 func (r *Request) WithRetryPolicy(policy RetryPolicy) *Request {
@@ -571,7 +576,7 @@ func (r *Request) WithRetryPolicy(policy RetryPolicy) *Request {
 //
 // Example:
 //
-//	req := NewRequest(config, "POST", "/path")
+//	req := NewRequestC(config, "POST", "/path")
 //	req.WithMaxRetries(1)
 //	req.Expect().Status(http.StatusOK)
 func (r *Request) WithMaxRetries(maxRetries int) *Request {
@@ -607,7 +612,7 @@ func (r *Request) WithMaxRetries(maxRetries int) *Request {
 //
 // Example:
 //
-//	req := NewRequest(config, "POST", "/path")
+//	req := NewRequestC(config, "POST", "/path")
 //	req.WithRetryDelay(time.Second, time.Minute)
 //	req.Expect().Status(http.StatusOK)
 func (r *Request) WithRetryDelay(minDelay, maxDelay time.Duration) *Request {
@@ -653,7 +658,7 @@ func (r *Request) WithRetryDelay(minDelay, maxDelay time.Duration) *Request {
 //
 // Example:
 //
-//	req := NewRequest(config, "GET", "/path")
+//	req := NewRequestC(config, "GET", "/path")
 //	req.WithWebsocketUpgrade()
 //	ws := req.Expect().Status(http.StatusSwitchingProtocols).Websocket()
 //	defer ws.Disconnect()
@@ -677,7 +682,7 @@ func (r *Request) WithWebsocketUpgrade() *Request {
 //
 // Example:
 //
-//	req := NewRequest(config, "GET", "/path")
+//	req := NewRequestC(config, "GET", "/path")
 //	req.WithWebsocketUpgrade()
 //	req.WithWebsocketDialer(&websocket.Dialer{
 //	  EnableCompression: false,
@@ -716,7 +721,7 @@ func (r *Request) WithWebsocketDialer(dialer WebsocketDialer) *Request {
 //
 // Example:
 //
-//	req := NewRequest(config, "POST", "/repos/{user}/{repo}")
+//	req := NewRequestC(config, "POST", "/repos/{user}/{repo}")
 //	req.WithPath("user", "gavv")
 //	req.WithPath("repo", "httpexpect")
 //	// path will be "/repos/gavv/httpexpect"
@@ -762,11 +767,11 @@ func (r *Request) WithPath(key string, value interface{}) *Request {
 //	    Repo  string
 //	}
 //
-//	req := NewRequest(config, "POST", "/repos/{user}/{repo}")
+//	req := NewRequestC(config, "POST", "/repos/{user}/{repo}")
 //	req.WithPathObject(MyPath{"gavv", "httpexpect"})
 //	// path will be "/repos/gavv/httpexpect"
 //
-//	req := NewRequest(config, "POST", "/repos/{user}/{repo}")
+//	req := NewRequestC(config, "POST", "/repos/{user}/{repo}")
 //	req.WithPathObject(map[string]string{"user": "gavv", "repo": "httpexpect"})
 //	// path will be "/repos/gavv/httpexpect"
 func (r *Request) WithPathObject(object interface{}) *Request {
@@ -858,7 +863,7 @@ func (r *Request) withPath(key string, value interface{}) {
 //
 // Example:
 //
-//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req := NewRequestC(config, "PUT", "http://example.com/path")
 //	req.WithQuery("a", 123)
 //	req.WithQuery("b", "foo")
 //	// URL is now http://example.com/path?a=123&b=foo
@@ -903,11 +908,11 @@ func (r *Request) WithQuery(key string, value interface{}) *Request {
 //	    B string `url:"b"`
 //	}
 //
-//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req := NewRequestC(config, "PUT", "http://example.com/path")
 //	req.WithQueryObject(MyURL{A: 123, B: "foo"})
 //	// URL is now http://example.com/path?a=123&b=foo
 //
-//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req := NewRequestC(config, "PUT", "http://example.com/path")
 //	req.WithQueryObject(map[string]interface{}{"a": 123, "b": "foo"})
 //	// URL is now http://example.com/path?a=123&b=foo
 func (r *Request) WithQueryObject(object interface{}) *Request {
@@ -968,7 +973,7 @@ func (r *Request) WithQueryObject(object interface{}) *Request {
 //
 // Example:
 //
-//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req := NewRequestC(config, "PUT", "http://example.com/path")
 //	req.WithQuery("a", 11)
 //	req.WithQueryString("b=22&c=33")
 //	// URL is now http://example.com/path?a=11&bb=22&c=33
@@ -1006,12 +1011,12 @@ func (r *Request) WithQueryString(query string) *Request {
 
 // WithURL sets request URL.
 //
-// This URL overwrites Config.BaseURL. Request path passed to NewRequest()
+// This URL overwrites Config.BaseURL. Request path passed to request constructor
 // is appended to this URL, separated by slash if necessary.
 //
 // Example:
 //
-//	req := NewRequest(config, "PUT", "/path")
+//	req := NewRequestC(config, "PUT", "/path")
 //	req.WithURL("http://example.com")
 //	// URL is now http://example.com/path
 func (r *Request) WithURL(urlStr string) *Request {
@@ -1044,7 +1049,7 @@ func (r *Request) WithURL(urlStr string) *Request {
 //
 // Example:
 //
-//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req := NewRequestC(config, "PUT", "http://example.com/path")
 //	req.WithHeaders(map[string]string{
 //	    "Content-Type": "application/json",
 //	})
@@ -1067,7 +1072,7 @@ func (r *Request) WithHeaders(headers map[string]string) *Request {
 //
 // Example:
 //
-//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req := NewRequestC(config, "PUT", "http://example.com/path")
 //	req.WithHeader("Content-Type", "application/json")
 func (r *Request) WithHeader(k, v string) *Request {
 	r.chain.enter("WithHeader()")
@@ -1104,7 +1109,7 @@ func (r *Request) withHeader(k, v string) {
 //
 // Example:
 //
-//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req := NewRequestC(config, "PUT", "http://example.com/path")
 //	req.WithCookies(map[string]string{
 //	    "foo": "aa",
 //	    "bar": "bb",
@@ -1131,7 +1136,7 @@ func (r *Request) WithCookies(cookies map[string]string) *Request {
 //
 // Example:
 //
-//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req := NewRequestC(config, "PUT", "http://example.com/path")
 //	req.WithCookie("name", "value")
 func (r *Request) WithCookie(k, v string) *Request {
 	r.chain.enter("WithCookie()")
@@ -1157,7 +1162,7 @@ func (r *Request) WithCookie(k, v string) *Request {
 //
 // Example:
 //
-//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req := NewRequestC(config, "PUT", "http://example.com/path")
 //	req.WithBasicAuth("john", "secret")
 func (r *Request) WithBasicAuth(username, password string) *Request {
 	r.chain.enter("WithBasicAuth()")
@@ -1176,7 +1181,7 @@ func (r *Request) WithBasicAuth(username, password string) *Request {
 //
 // Example:
 //
-//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req := NewRequestC(config, "PUT", "http://example.com/path")
 //	req.WithHost("example.com")
 func (r *Request) WithHost(host string) *Request {
 	r.chain.enter("WithHost()")
@@ -1197,7 +1202,7 @@ func (r *Request) WithHost(host string) *Request {
 //
 // Example:
 //
-//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req := NewRequestC(config, "PUT", "http://example.com/path")
 //	req.WithProto("HTTP/2.0")
 func (r *Request) WithProto(proto string) *Request {
 	r.chain.enter("WithProto()")
@@ -1237,7 +1242,7 @@ func (r *Request) WithProto(proto string) *Request {
 //
 // Example:
 //
-//	req := NewRequest(config, "PUT", "http://example.com/upload")
+//	req := NewRequestC(config, "PUT", "http://example.com/upload")
 //	fh, _ := os.Open("data")
 //	defer fh.Close()
 //	req.WithHeader("Content-Type", "application/octet-stream")
@@ -1272,7 +1277,7 @@ func (r *Request) WithChunked(reader io.Reader) *Request {
 //
 // Example:
 //
-//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req := NewRequestC(config, "PUT", "http://example.com/path")
 //	req.WithHeader("Content-Type", "application/json")
 //	req.WithBytes([]byte(`{"foo": 123}`))
 func (r *Request) WithBytes(b []byte) *Request {
@@ -1297,7 +1302,7 @@ func (r *Request) WithBytes(b []byte) *Request {
 //
 // Example:
 //
-//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req := NewRequestC(config, "PUT", "http://example.com/path")
 //	req.WithText("hello, world!")
 func (r *Request) WithText(s string) *Request {
 	r.chain.enter("WithText()")
@@ -1322,10 +1327,10 @@ func (r *Request) WithText(s string) *Request {
 //	    Foo int `json:"foo"`
 //	}
 //
-//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req := NewRequestC(config, "PUT", "http://example.com/path")
 //	req.WithJSON(MyJSON{Foo: 123})
 //
-//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req := NewRequestC(config, "PUT", "http://example.com/path")
 //	req.WithJSON(map[string]interface{}{"foo": 123})
 func (r *Request) WithJSON(object interface{}) *Request {
 	r.chain.enter("WithJSON()")
@@ -1372,10 +1377,10 @@ func (r *Request) WithJSON(object interface{}) *Request {
 //	    Foo int `form:"foo"`
 //	}
 //
-//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req := NewRequestC(config, "PUT", "http://example.com/path")
 //	req.WithForm(MyForm{Foo: 123})
 //
-//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req := NewRequestC(config, "PUT", "http://example.com/path")
 //	req.WithForm(map[string]interface{}{"foo": 123})
 func (r *Request) WithForm(object interface{}) *Request {
 	r.chain.enter("WithForm()")
@@ -1443,7 +1448,7 @@ func (r *Request) WithForm(object interface{}) *Request {
 //
 // Example:
 //
-//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req := NewRequestC(config, "PUT", "http://example.com/path")
 //	req.WithFormField("foo", 123).
 //	    WithFormField("bar", 456)
 func (r *Request) WithFormField(key string, value interface{}) *Request {
@@ -1492,10 +1497,10 @@ func (r *Request) WithFormField(key string, value interface{}) *Request {
 //
 // Example:
 //
-//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req := NewRequestC(config, "PUT", "http://example.com/path")
 //	req.WithFile("avatar", "./john.png")
 //
-//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req := NewRequestC(config, "PUT", "http://example.com/path")
 //	fh, _ := os.Open("./john.png")
 //	req.WithMultipart().
 //	    WithFile("avatar", "john.png", fh)
@@ -1528,7 +1533,7 @@ func (r *Request) WithFile(key, path string, reader ...io.Reader) *Request {
 //
 // Example:
 //
-//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req := NewRequestC(config, "PUT", "http://example.com/path")
 //	fh, _ := os.Open("./john.png")
 //	b, _ := ioutil.ReadAll(fh)
 //	req.WithMultipart().
@@ -1617,7 +1622,7 @@ func (r *Request) withFile(method, key, path string, reader ...io.Reader) {
 //
 // Example:
 //
-//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req := NewRequestC(config, "PUT", "http://example.com/path")
 //	req.WithMultipart().
 //	    WithForm(map[string]interface{}{"foo": 123})
 func (r *Request) WithMultipart() *Request {
@@ -1647,7 +1652,7 @@ func (r *Request) WithMultipart() *Request {
 //
 // Example:
 //
-//	req := NewRequest(config, "PUT", "http://example.com/path")
+//	req := NewRequestC(config, "PUT", "http://example.com/path")
 //	req.WithJSON(map[string]interface{}{"foo": 123})
 //	resp := req.Expect()
 //	resp.Status(http.StatusOK)
