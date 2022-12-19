@@ -107,7 +107,7 @@ func TestFormatDataFailureActual(t *testing.T) {
 		}
 		fd := df.buildFormatData(ctx, fl)
 		assert.True(t, fd.HaveActual)
-		assert.Equal(t, fd.Actual, "int(1000000)")
+		assert.Equal(t, "int(1000000)", fd.Actual)
 
 	})
 
@@ -120,7 +120,7 @@ func TestFormatDataFailureActual(t *testing.T) {
 		}
 		fd := df.buildFormatData(ctx, fl)
 		assert.True(t, fd.HaveActual)
-		assert.Equal(t, fd.Actual, "float32(1e+06)")
+		assert.Equal(t, "float32(1e+06)", fd.Actual)
 	})
 
 	t.Run("assert type float64", func(t *testing.T) {
@@ -132,7 +132,7 @@ func TestFormatDataFailureActual(t *testing.T) {
 		}
 		fd := df.buildFormatData(ctx, fl)
 		assert.True(t, fd.HaveActual)
-		assert.Equal(t, fd.Actual, "float64(1e+06)")
+		assert.Equal(t, "float64(1e+06)", fd.Actual)
 	})
 
 	t.Run("assert type string", func(t *testing.T) {
@@ -144,7 +144,7 @@ func TestFormatDataFailureActual(t *testing.T) {
 		}
 		fd := df.buildFormatData(ctx, fl)
 		assert.True(t, fd.HaveActual)
-		assert.Equal(t, fd.Actual, `string("value string")`)
+		assert.Equal(t, `string("value string")`, fd.Actual)
 	})
 }
 
@@ -164,8 +164,8 @@ func TestFormatDataFailureExpected(t *testing.T) {
 		}
 		fd := df.buildFormatData(ctx, fl)
 		assert.True(t, fd.HaveExpected)
-		assert.Equal(t, fd.ExpectedKind, kindRange)
-		assert.Equal(t, fd.Expected, []string{"[1000000; 2000000]"})
+		assert.Equal(t, kindRange, fd.ExpectedKind)
+		assert.Equal(t, []string{"[1000000; 2000000]"}, fd.Expected)
 	})
 
 	t.Run("assert in range float32", func(t *testing.T) {
@@ -180,8 +180,8 @@ func TestFormatDataFailureExpected(t *testing.T) {
 		}
 		fd := df.buildFormatData(ctx, fl)
 		assert.True(t, fd.HaveExpected)
-		assert.Equal(t, fd.ExpectedKind, kindRange)
-		assert.Equal(t, fd.Expected, []string{"[1e+06; 2e+06]"})
+		assert.Equal(t, kindRange, fd.ExpectedKind)
+		assert.Equal(t, []string{"[1e+06; 2e+06]"}, fd.Expected)
 	})
 
 	t.Run("assert in range float64", func(t *testing.T) {
@@ -196,8 +196,8 @@ func TestFormatDataFailureExpected(t *testing.T) {
 		}
 		fd := df.buildFormatData(ctx, fl)
 		assert.True(t, fd.HaveExpected)
-		assert.Equal(t, fd.ExpectedKind, kindRange)
-		assert.Equal(t, fd.Expected, []string{"[1e+06; 2e+06]"})
+		assert.Equal(t, kindRange, fd.ExpectedKind)
+		assert.Equal(t, []string{"[1e+06; 2e+06]"}, fd.Expected)
 	})
 
 	t.Run("assert in range string", func(t *testing.T) {
@@ -212,8 +212,8 @@ func TestFormatDataFailureExpected(t *testing.T) {
 		}
 		fd := df.buildFormatData(ctx, fl)
 		assert.True(t, fd.HaveExpected)
-		assert.Equal(t, fd.ExpectedKind, kindRange)
-		assert.Equal(t, fd.Expected, []string{"min string", "max string"})
+		assert.Equal(t, kindRange, fd.ExpectedKind)
+		assert.Equal(t, []string{"min string", "max string"}, fd.Expected)
 	})
 }
 
@@ -229,7 +229,7 @@ func TestFormatDataFailureDelta(t *testing.T) {
 		}
 		fd := df.buildFormatData(ctx, fl)
 		assert.True(t, fd.HaveDelta)
-		assert.Equal(t, fd.Delta, "1000000")
+		assert.Equal(t, "1000000", fd.Delta)
 	})
 
 	t.Run("float32", func(t *testing.T) {
@@ -240,7 +240,7 @@ func TestFormatDataFailureDelta(t *testing.T) {
 		}
 		fd := df.buildFormatData(ctx, fl)
 		assert.True(t, fd.HaveDelta)
-		assert.Equal(t, fd.Delta, "1000000.000000")
+		assert.Equal(t, "1000000.000000", fd.Delta)
 
 	})
 
@@ -252,7 +252,7 @@ func TestFormatDataFailureDelta(t *testing.T) {
 		}
 		fd := df.buildFormatData(ctx, fl)
 		assert.True(t, fd.HaveDelta)
-		assert.Equal(t, fd.Delta, "1000000.000000")
+		assert.Equal(t, "1000000.000000", fd.Delta)
 	})
 
 	t.Run("string", func(t *testing.T) {
@@ -263,6 +263,6 @@ func TestFormatDataFailureDelta(t *testing.T) {
 		}
 		fd := df.buildFormatData(ctx, fl)
 		assert.True(t, fd.HaveDelta)
-		assert.Equal(t, fd.Delta, `"delta string"`)
+		assert.Equal(t, `"delta string"`, fd.Delta)
 	})
 }
