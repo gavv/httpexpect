@@ -1204,15 +1204,15 @@ func TestResponseContentOpts(t *testing.T) {
 	})
 }
 
-func TestAssertUsage(t *testing.T) {
-	t.Run("Response Multiple rtt arguments", func(t *testing.T) {
+func TestResponseUsageChecks(t *testing.T) {
+	t.Run("NewResponse multiple rtt arguments", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		rtt := []time.Duration{time.Second, time.Second}
 		resp := NewResponse(reporter, &http.Response{}, rtt...)
 		resp.chain.assertFailed(t)
 	})
 
-	t.Run("Response ContentType Multiple CharsetArgs", func(t *testing.T) {
+	t.Run("ContentType multiple charset arguments", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		headers := map[string][]string{
@@ -1223,9 +1223,9 @@ func TestAssertUsage(t *testing.T) {
 		})
 		resp.ContentType("text/plain", "utf-8", "US-ASCII")
 		resp.chain.assertFailed(t)
-		resp.chain.clearFailed()
 	})
-	t.Run("Response Multiple Text Args", func(t *testing.T) {
+
+	t.Run("Text multiple arguments", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		header := map[string][]string{
 			"ContentType": {"text/plain"},
@@ -1241,9 +1241,9 @@ func TestAssertUsage(t *testing.T) {
 		}
 		resp.Text(ContentOpts1, ContentOpts2)
 		resp.chain.assertFailed(t)
-		resp.chain.clearFailed()
 	})
-	t.Run("Response Multiple Form Args", func(t *testing.T) {
+
+	t.Run("Form multiple arguments", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		headers := map[string][]string{
 			"Content-Type": {"application/x-www-form-urlencoded"},
@@ -1266,10 +1266,10 @@ func TestAssertUsage(t *testing.T) {
 		}
 		resp.Form(ContentOpts1, ContentOpts2)
 		resp.chain.assertFailed(t)
-		resp.chain.clearFailed()
 
 	})
-	t.Run("Response Multiple Json Args", func(t *testing.T) {
+
+	t.Run("JSON multiple arguments", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		headers := map[string][]string{
 			"Content-Type": {"application/json; charset=utf-8"},
@@ -1292,9 +1292,9 @@ func TestAssertUsage(t *testing.T) {
 		}
 		resp.JSON(ContentOpts1, ContentOpts2)
 		resp.chain.assertFailed(t)
-		resp.chain.clearFailed()
 	})
-	t.Run("Response JSONP Multiple Args", func(t *testing.T) {
+
+	t.Run("JSONP multiple arguments", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		headers := map[string][]string{
@@ -1318,6 +1318,5 @@ func TestAssertUsage(t *testing.T) {
 		}
 		resp.JSONP("foo", ContentOpts1, ContentOpts2)
 		resp.chain.assertFailed(t)
-		resp.chain.clearFailed()
 	})
 }
