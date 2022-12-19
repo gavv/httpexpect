@@ -24,11 +24,16 @@ func createWebsocketHandler(opts wsHandlerOpts) http.Handler {
 
 	mux.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
 		upgrader := &websocket.Upgrader{}
-		c, err := upgrader.Upgrade(w, r, nil)
+
+		hdr := make(http.Header)
+		hdr["X-Test"] = []string{"test_header"}
+
+		c, err := upgrader.Upgrade(w, r, hdr)
 		if err != nil {
 			panic(err)
 		}
 		defer c.Close()
+
 		for {
 			if opts.preRead != nil {
 				opts.preRead()
@@ -52,8 +57,12 @@ func createWebsocketHandler(opts wsHandlerOpts) http.Handler {
 
 func websocketFastHandler(ctx *fasthttp.RequestCtx) {
 	var upgrader fastwebsocket.FastHTTPUpgrader
+
+	ctx.Response.Header.Set("X-Test", "test_header")
+
 	err := upgrader.Upgrade(ctx, func(c *fastwebsocket.Conn) {
 		defer c.Close()
+
 		for {
 			mt, message, err := c.ReadMessage()
 			if err != nil {
@@ -84,6 +93,18 @@ func testWebsocketConn(e *Expect) {
 	if ws.Raw() == nil {
 		panic("Raw returned nil")
 	}
+}
+
+func testWebsocketHeader(e *Expect) {
+	resp := e.GET("/test").WithWebsocketUpgrade().
+		Expect().
+		Status(http.StatusSwitchingProtocols)
+
+	hdr := resp.Header("X-Test")
+	hdr.Equal("test_header")
+
+	ws := resp.Websocket()
+	ws.Disconnect()
 }
 
 func testWebsocketSession(e *Expect) {
@@ -140,6 +161,7 @@ func testWebsocketTypes(e *Expect) {
 
 func testWebsocket(e *Expect) {
 	testWebsocketConn(e)
+	testWebsocketHeader(e)
 	testWebsocketSession(e)
 	testWebsocketTypes(e)
 }
