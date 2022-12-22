@@ -26,6 +26,18 @@ func NewObject(reporter Reporter, value map[string]interface{}) *Object {
 	return newObject(newChainWithDefaults("Object()", reporter), value)
 }
 
+//NewObjectC returns a new Object instance with config.
+//
+//Both config and value should not be nil. If value is nil, failure os reported.
+//
+// Example:
+//
+// object := NewObjectC(conf,map[string]interface{}{"foo":123})
+
+func NewObjectC(config Config, value map[string]interface{}) *Object {
+	return newObject(newChainWithConfig("Object()", config), value)
+}
+
 func newObject(parent *chain, val map[string]interface{}) *Object {
 	o := &Object{parent.clone(), nil}
 

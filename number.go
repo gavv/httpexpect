@@ -23,6 +23,17 @@ func NewNumber(reporter Reporter, value float64) *Number {
 	return newNumber(newChainWithDefaults("Number()", reporter), value)
 }
 
+// NewNumberC returns a new Number instance with config
+//
+// config should not be nil.
+//
+// Example:
+//
+// number := NewNumberC(conf,value)
+func NewNumberC(config Config, value float64) *Number {
+	return newNumber(newChainWithConfig("Number()", config), value)
+}
+
 func newNumber(parent *chain, val float64) *Number {
 	return &Number{parent.clone(), val}
 }

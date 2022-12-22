@@ -23,6 +23,18 @@ func NewDuration(reporter Reporter, value time.Duration) *Duration {
 	return newDuration(newChainWithDefaults("Duration()", reporter), &value)
 }
 
+// NewDurationC returns a new Duration instance with config.
+//
+// config should not be nil.
+//
+// Example:
+//
+//	d := NewDurationC(reporter, time.Second)
+//	d.Le(time.Minute)
+func NewDurationC(config Config, value time.Duration) *Duration {
+	return newDuration(newChainWithConfig("Duration()", config), &value)
+}
+
 func newDuration(parent *chain, val *time.Duration) *Duration {
 	return &Duration{parent.clone(), val}
 }

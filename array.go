@@ -25,6 +25,19 @@ func NewArray(reporter Reporter, value []interface{}) *Array {
 	return newArray(newChainWithDefaults("Array()", reporter), value)
 }
 
+// NewArrayC returns a new Array instance with config
+//
+// Both config and value should not be nil. If value is nil, failure is
+// reported.
+//
+// Example:
+//
+// array := NewArrayC(conf,[]interface{}{"foo",123})
+func NewArrayC(config Config, value []interface{}) *Array {
+	return newArray(newChainWithConfig("Array()", config.withDefaults()), value)
+
+}
+
 func newArray(parent *chain, val []interface{}) *Array {
 	a := &Array{parent.clone(), nil}
 

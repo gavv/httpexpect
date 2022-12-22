@@ -40,6 +40,33 @@ func NewValue(reporter Reporter, value interface{}) *Value {
 	return newValue(newChainWithDefaults("Value()", reporter), value)
 }
 
+// NewValuec returns a new Value instance with config.
+//
+// config should not be nil, but value may be nil.
+//
+// Example:
+//
+//	value := NewValueC(t, map[string]interface{}{"foo": 123})
+//	value.Object()
+//
+//	value := NewValueC(t, []interface{}{"foo", 123})
+//	value.Array()
+//
+//	value := NewValueC(t, "foo")
+//	value.String()
+//
+//	value := NewValueC(t, 123)
+//	value.Number()
+//
+//	value := NewValueC(t, true)
+//	value.Boolean()
+//
+//	value := NewValueC(t, nil)
+//	value.Null()
+func NewValueC(config Config, value interface{}) *Value {
+	return newValue(newChainWithConfig("Value()", config), value)
+}
+
 func newValue(parent *chain, val interface{}) *Value {
 	v := &Value{parent.clone(), nil}
 

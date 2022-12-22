@@ -29,6 +29,17 @@ func NewString(reporter Reporter, value string) *String {
 	return newString(newChainWithDefaults("String()", reporter), value)
 }
 
+// NewStringC returns a new String instance with config.
+//
+// config should not be nil.
+//
+// Example:
+//
+// str := NewStringC(config, value)
+func NewStringC(config Config, value string) *String {
+	return newString(newChainWithConfig("String", config), value)
+}
+
 func newString(parent *chain, val string) *String {
 	return &String{parent.clone(), val}
 }
