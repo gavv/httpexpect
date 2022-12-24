@@ -21,6 +21,22 @@ func TestBooleanFailed(t *testing.T) {
 	value.False()
 }
 
+func TestBooleanConstructors(t *testing.T) {
+	t.Run("Constructor without config", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		value := NewBoolean(reporter, true)
+		value.chain.assertNotFailed(t)
+		value.Equal(true)
+	})
+	t.Run("Constructor with config", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		value := NewBooleanC(Config{
+			Reporter: reporter,
+		}, true)
+		value.chain.assertNotFailed(t)
+		value.Equal(true)
+	})
+}
 func TestBooleanGetters(t *testing.T) {
 	reporter := newMockReporter(t)
 

@@ -27,6 +27,24 @@ func TestDateTimeFailed(t *testing.T) {
 	value.NotInRange(tm, tm)
 }
 
+func TestDatetimeConstructors(t *testing.T) {
+	time := time.Unix(0, 1234)
+	t.Run("Constructor without config", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		value := NewDateTime(reporter, time)
+		value.chain.assertNotFailed(t)
+		value.Equal(time)
+	})
+	t.Run("Constructor with config", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		value := NewDateTimeC(Config{
+			Reporter: reporter,
+		}, time)
+		value.chain.assertNotFailed(t)
+		value.Equal(time)
+	})
+}
+
 func TestDateTimeEqual(t *testing.T) {
 	reporter := newMockReporter(t)
 

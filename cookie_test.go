@@ -56,6 +56,40 @@ func TestCookieFailed(t *testing.T) {
 	})
 }
 
+func TestCookieConstructors(t *testing.T) {
+	cookie := &http.Cookie{
+		Name:    "Test",
+		Value:   "Test_val",
+		Domain:  "example.com",
+		Path:    "/path",
+		Expires: time.Unix(1234, 0),
+		MaxAge:  123,
+	}
+	t.Run("Constructor without config", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		value := NewCookie(reporter, cookie)
+		value.chain.assertNotFailed(t)
+		value.Name().Equal("Test")
+		value.Value().Equal("Test_val")
+		value.Domain().Equal("example.com")
+		value.Expires().Equal(time.Unix(1234, 0))
+		value.MaxAge().Equal(123 * time.Second)
+	})
+	t.Run("Constructor with config", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		value := NewCookieC(Config{
+			Reporter: reporter,
+		}, cookie)
+		value.chain.assertNotFailed(t)
+		value.Name().Equal("Test")
+		value.Value().Equal("Test_val")
+		value.Domain().Equal("example.com")
+		value.Expires().Equal(time.Unix(1234, 0))
+		value.MaxAge().Equal(123 * time.Second)
+	})
+
+}
+
 func TestCookieGetters(t *testing.T) {
 	reporter := newMockReporter(t)
 
