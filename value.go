@@ -40,7 +40,7 @@ func NewValue(reporter Reporter, value interface{}) *Value {
 	return newValue(newChainWithDefaults("Value()", reporter), value)
 }
 
-// NewValuec returns a new Value instance with config.
+// NewValueC returns a new Value instance with config.
 //
 // Requirements for config are same as for WithConfig function.
 //
