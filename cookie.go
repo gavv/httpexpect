@@ -28,10 +28,11 @@ func NewCookie(reporter Reporter, value *http.Cookie) *Cookie {
 
 // NewCookieC returns a new Cookie instance with config
 //
-// config and value should not be nil.
+// Requirements for config are same as for WithConfig function.
 //
 // Example:
-// cookie := NewCookieC(conf,&http.Cookie{...})
+//
+//	cookie := NewCookieC(config, &http.Cookie{...})
 //
 //	cookie.Domain().Equal("example.com")
 //	cookie.Path().Equal("/")

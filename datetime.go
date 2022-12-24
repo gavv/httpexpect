@@ -28,11 +28,11 @@ func NewDateTime(reporter Reporter, value time.Time) *DateTime {
 
 // NewDateTimeC returns a new DateTime instance with config.
 //
-// config should not be nil.
+// Requirements for config are same as for WithConfig function.
 //
 // Example:
 //
-//	dt := NewDateTimeC(conf, time.Now())
+//	dt := NewDateTimeC(config, time.Now())
 //	dt.Le(time.Now())
 //
 //	time.Sleep(time.Second)

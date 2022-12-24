@@ -37,7 +37,7 @@ func NewMatch(reporter Reporter, submatches []string, names []string) *Match {
 
 // NewMatchC returns a new Match instance with config.
 //
-// connfig should not be nil. submatches and names may be nil.
+// Requirements for config are same as for WithConfig function.
 //
 // Example:
 //

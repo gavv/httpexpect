@@ -24,11 +24,11 @@ func NewBoolean(reporter Reporter, value bool) *Boolean {
 
 // NewBooleanC returns a new Boolean instance with config
 //
-// config should not be nil.
+// Requirements for config are same as for WithConfig function.
 //
 // Example:
 //
-// boolean := NewBooleanC(conf, true)
+//	boolean := NewBooleanC(config, true)
 func NewBooleanC(config Config, value bool) *Boolean {
 	return newBoolean(newChainWithConfig("Boolean()", config.withDefaults()), value)
 }

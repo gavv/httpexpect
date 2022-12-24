@@ -25,11 +25,11 @@ func NewNumber(reporter Reporter, value float64) *Number {
 
 // NewNumberC returns a new Number instance with config
 //
-// config should not be nil.
+// Requirements for config are same as for WithConfig function.
 //
 // Example:
 //
-// number := NewNumberC(conf,value)
+//	number := NewNumberC(config, value)
 func NewNumberC(config Config, value float64) *Number {
 	return newNumber(newChainWithConfig("Number()", config), value)
 }

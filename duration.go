@@ -25,7 +25,7 @@ func NewDuration(reporter Reporter, value time.Duration) *Duration {
 
 // NewDurationC returns a new Duration instance with config.
 //
-// config should not be nil.
+// Requirements for config are same as for WithConfig function.
 //
 // Example:
 //

@@ -31,11 +31,11 @@ func NewString(reporter Reporter, value string) *String {
 
 // NewStringC returns a new String instance with config.
 //
-// config should not be nil.
+// Requirements for config are same as for WithConfig function.
 //
 // Example:
 //
-// str := NewStringC(config, value)
+//	str := NewStringC(config, value)
 func NewStringC(config Config, value string) *String {
 	return newString(newChainWithConfig("String", config), value)
 }

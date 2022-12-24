@@ -27,12 +27,11 @@ func NewArray(reporter Reporter, value []interface{}) *Array {
 
 // NewArrayC returns a new Array instance with config
 //
-// Both config and value should not be nil. If value is nil, failure is
-// reported.
+// Requirements for config are same as for WithConfig function.
 //
 // Example:
 //
-// array := NewArrayC(conf,[]interface{}{"foo",123})
+//	array := NewArrayC(config, []interface{}{"foo",123})
 func NewArrayC(config Config, value []interface{}) *Array {
 	return newArray(newChainWithConfig("Array()", config.withDefaults()), value)
 

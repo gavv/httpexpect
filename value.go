@@ -42,7 +42,7 @@ func NewValue(reporter Reporter, value interface{}) *Value {
 
 // NewValuec returns a new Value instance with config.
 //
-// config should not be nil, but value may be nil.
+// Requirements for config are same as for WithConfig function.
 //
 // Example:
 //
