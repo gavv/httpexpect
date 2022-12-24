@@ -38,7 +38,7 @@ func NewDateTime(reporter Reporter, value time.Time) *DateTime {
 //	time.Sleep(time.Second)
 //	dt.Lt(time.Now())
 func NewDateTimeC(config Config, value time.Time) *DateTime {
-	return newDateTime(newChainWithConfig("DateTime()", config), value)
+	return newDateTime(newChainWithConfig("DateTime()", config.withDefaults()), value)
 }
 
 func newDateTime(parent *chain, val time.Time) *DateTime {

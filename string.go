@@ -37,7 +37,7 @@ func NewString(reporter Reporter, value string) *String {
 //
 //	str := NewStringC(config, value)
 func NewStringC(config Config, value string) *String {
-	return newString(newChainWithConfig("String", config), value)
+	return newString(newChainWithConfig("String", config.withDefaults()), value)
 }
 
 func newString(parent *chain, val string) *String {

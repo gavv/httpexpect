@@ -64,7 +64,7 @@ func NewValue(reporter Reporter, value interface{}) *Value {
 //	value := NewValueC(t, nil)
 //	value.Null()
 func NewValueC(config Config, value interface{}) *Value {
-	return newValue(newChainWithConfig("Value()", config), value)
+	return newValue(newChainWithConfig("Value()", config.withDefaults()), value)
 }
 
 func newValue(parent *chain, val interface{}) *Value {

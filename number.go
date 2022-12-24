@@ -31,7 +31,7 @@ func NewNumber(reporter Reporter, value float64) *Number {
 //
 //	number := NewNumberC(config, value)
 func NewNumberC(config Config, value float64) *Number {
-	return newNumber(newChainWithConfig("Number()", config), value)
+	return newNumber(newChainWithConfig("Number()", config.withDefaults()), value)
 }
 
 func newNumber(parent *chain, val float64) *Number {

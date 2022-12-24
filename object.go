@@ -35,7 +35,7 @@ func NewObject(reporter Reporter, value map[string]interface{}) *Object {
 //	object := NewObjectC(config, map[string]interface{}{"foo":123})
 
 func NewObjectC(config Config, value map[string]interface{}) *Object {
-	return newObject(newChainWithConfig("Object()", config), value)
+	return newObject(newChainWithConfig("Object()", config.withDefaults()), value)
 }
 
 func newObject(parent *chain, val map[string]interface{}) *Object {

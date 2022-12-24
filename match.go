@@ -55,7 +55,7 @@ func NewMatch(reporter Reporter, submatches []string, names []string) *Match {
 //	m.Name("host").Equal("example.com")
 //	m.Name("user").Equal("john")
 func NewMatchC(config Config, submatches []string, names []string) *Match {
-	return newMatch(newChainWithConfig("Match()", config), submatches, names)
+	return newMatch(newChainWithConfig("Match()", config.withDefaults()), submatches, names)
 }
 
 func newMatch(parent *chain, matchList []string, nameList []string) *Match {
