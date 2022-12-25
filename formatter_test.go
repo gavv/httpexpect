@@ -157,7 +157,11 @@ func TestFormatDataFailureActual(t *testing.T) {
 		}
 		fd := df.buildFormatData(ctx, fl)
 		assert.True(t, fd.HaveActual)
-		assert.Equal(t, "struct { Name string }(struct { Name string }{Name:\"testName\"})", fd.Actual)
+		assert.Equal(
+			t,
+			"struct { Name string }(struct { Name string }{Name:\"testName\"})",
+			fd.Actual,
+		)
 	})
 }
 
