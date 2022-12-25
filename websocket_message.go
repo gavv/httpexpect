@@ -21,7 +21,7 @@ type WebsocketMessage struct {
 //
 // Example:
 //
-//	m := NewWebsocketMessage(reporter, websocket.TextMessage, []byte("content"), 0)
+//	m := NewWebsocketMessage(t, websocket.TextMessage, []byte("content"), 0)
 //	m.TextMessage()
 func NewWebsocketMessage(
 	reporter Reporter, typ int, content []byte, closeCode ...int,

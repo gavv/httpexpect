@@ -17,7 +17,7 @@ type Duration struct {
 //
 // Example:
 //
-//	d := NewDuration(reporter, time.Second)
+//	d := NewDuration(t, time.Second)
 //	d.Le(time.Minute)
 func NewDuration(reporter Reporter, value time.Duration) *Duration {
 	return newDuration(newChainWithDefaults("Duration()", reporter), &value)

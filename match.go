@@ -21,7 +21,7 @@ type Match struct {
 //	s := "http://example.com/users/john"
 //	r := regexp.MustCompile(`http://(?P<host>.+)/users/(?P<user>.+)`)
 //
-//	m := NewMatch(reporter, r.FindStringSubmatch(s), r.SubexpNames())
+//	m := NewMatch(t, r.FindStringSubmatch(s), r.SubexpNames())
 //
 //	m.NotEmpty()
 //	m.Length().Equal(3)

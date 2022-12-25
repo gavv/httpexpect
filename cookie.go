@@ -18,7 +18,8 @@ type Cookie struct {
 //
 // Example:
 //
-//	cookie := NewCookie(reporter, &http.Cookie{...})
+//	cookie := NewCookie(t, &http.Cookie{...})
+//
 //	cookie.Domain().Equal("example.com")
 //	cookie.Path().Equal("/")
 //	cookie.Expires().InRange(time.Now(), time.Now().Add(time.Hour * 24))

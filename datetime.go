@@ -17,7 +17,7 @@ type DateTime struct {
 //
 // Example:
 //
-//	dt := NewDateTime(reporter, time.Now())
+//	dt := NewDateTime(t, time.Now())
 //	dt.Le(time.Now())
 //
 //	time.Sleep(time.Second)
