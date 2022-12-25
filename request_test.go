@@ -316,7 +316,7 @@ func TestRequestHandlerResueClient(t *testing.T) {
 
 	client := &http.Client{
 		Transport: NewBinder(handler1),
-		Jar:       NewJar(),
+		Jar:       NewCookieJar(),
 	}
 
 	reporter := newMockReporter(t)

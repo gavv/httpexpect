@@ -124,7 +124,7 @@ type Config struct {
 	//
 	// If nil, set to a default client with a non-nil Jar:
 	//  &http.Client{
-	//      Jar: httpexpect.NewJar(),
+	//      Jar: httpexpect.NewCookieJar(),
 	//  }
 	//
 	// You can use http.DefaultClient or your own http.Client, or provide
@@ -224,7 +224,7 @@ func (config Config) withDefaults() Config {
 
 	if config.Client == nil {
 		config.Client = &http.Client{
-			Jar: NewJar(),
+			Jar: NewCookieJar(),
 		}
 	}
 
@@ -393,7 +393,7 @@ func Default(t TestingTB, baseURL string) *Expect {
 //	        BaseURL:  "http://example.com/",
 //	        Client:   &http.Client{
 //	            Transport: httpexpect.NewBinder(myHandler()),
-//	            Jar:       httpexpect.NewJar(),
+//	            Jar:       httpexpect.NewCookieJar(),
 //	        },
 //	        Reporter: httpexpect.NewAssertReporter(t),
 //	        Printers: []httpexpect.Printer{

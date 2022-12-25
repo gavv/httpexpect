@@ -31,7 +31,7 @@ func TestE2EFsFastBinder(t *testing.T) {
 	e := WithConfig(Config{
 		Client: &http.Client{
 			Transport: NewFastBinder(handler),
-			Jar:       NewJar(),
+			Jar:       NewCookieJar(),
 		},
 		Reporter: NewAssertReporter(t),
 		Printers: []Printer{

@@ -78,7 +78,7 @@ func TestE2ECookieLiveEnabled(t *testing.T) {
 		BaseURL:  server.URL,
 		Reporter: NewAssertReporter(t),
 		Client: &http.Client{
-			Jar: NewJar(),
+			Jar: NewCookieJar(),
 		},
 	})
 
@@ -108,7 +108,7 @@ func TestE2ECookieBinderStandardEnabled(t *testing.T) {
 		Reporter: NewAssertReporter(t),
 		Client: &http.Client{
 			Transport: NewBinder(handler),
-			Jar:       NewJar(),
+			Jar:       NewCookieJar(),
 		},
 	})
 
@@ -138,7 +138,7 @@ func TestE2ECookieBinderFastEnabled(t *testing.T) {
 		Reporter: NewAssertReporter(t),
 		Client: &http.Client{
 			Transport: NewFastBinder(handler),
-			Jar:       NewJar(),
+			Jar:       NewCookieJar(),
 		},
 	})
 

@@ -495,7 +495,7 @@ e := httpexpect.WithConfig(httpexpect.Config{
 
 	// use http.Client with a cookie jar and timeout
 	Client: &http.Client{
-		Jar:     httpexpect.NewJar(),
+		Jar:     httpexpect.NewCookieJar(),
 		Timeout: time.Second * 30,
 	},
 
@@ -522,7 +522,7 @@ e := httpexpect.WithConfig(httpexpect.Config{
 	Reporter: httpexpect.NewAssertReporter(t),
 	Client: &http.Client{
 		Transport: httpexpect.NewBinder(handler),
-		Jar:       httpexpect.NewJar(),
+		Jar:       httpexpect.NewCookieJar(),
 	},
 })
 
@@ -536,7 +536,7 @@ e := httpexpect.WithConfig(httpexpect.Config{
 	Reporter: httpexpect.NewAssertReporter(t),
 	Client: &http.Client{
 		Transport: httpexpect.NewFastBinder(handler),
-		Jar:       httpexpect.NewJar(),
+		Jar:       httpexpect.NewCookieJar(),
 	},
 })
 ```
@@ -592,7 +592,7 @@ e := httpexpect.WithConfig(httpexpect.Config{
 e := httpexpect.WithConfig(httpexpect.Config{
 	Reporter: httpexpect.NewAssertReporter(t),
 	Client: &http.Client{
-		Jar: httpexpect.NewJar(), // used by default if Client is nil
+		Jar: httpexpect.NewCookieJar(), // used by default if Client is nil
 	},
 })
 

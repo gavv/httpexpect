@@ -338,7 +338,7 @@ func (r *Request) WithHandler(handler http.Handler) *Request {
 	} else {
 		r.config.Client = &http.Client{
 			Transport: NewBinder(handler),
-			Jar:       NewJar(),
+			Jar:       NewCookieJar(),
 		}
 	}
 
