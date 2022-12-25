@@ -17,7 +17,7 @@ type Environment struct {
 	data  map[string]interface{}
 }
 
-// NewEnvironment returns a new Environment given a reporter.
+// NewEnvironment returns a new Environment.
 //
 // Reporter should not be nil.
 //
@@ -26,6 +26,17 @@ type Environment struct {
 //	env := NewEnvironment(t)
 func NewEnvironment(reporter Reporter) *Environment {
 	return newEnvironment(newChainWithDefaults("Environment()", reporter))
+}
+
+// NewEnvironmentC returns a new Environment with config.
+//
+// Requirements for config are same as for WithConfig function.
+//
+// Example:
+//
+//	env := NewEnvironmentC(config)
+func NewEnvironmentC(config Config) *Environment {
+	return newEnvironment(newChainWithConfig("Environment()", config.withDefaults()))
 }
 
 func newEnvironment(parent *chain) *Environment {

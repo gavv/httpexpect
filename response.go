@@ -41,7 +41,28 @@ type Response struct {
 func NewResponse(
 	reporter Reporter, response *http.Response, rtt ...time.Duration,
 ) *Response {
-	config := Config{Reporter: reporter}.withDefaults()
+	config := Config{Reporter: reporter}
+	config = config.withDefaults()
+
+	return newResponse(responseOpts{
+		config:   config,
+		chain:    newChainWithConfig("Response()", config),
+		httpResp: response,
+		rtt:      rtt,
+	})
+}
+
+// NewResponse returns a new Response instance with config.
+//
+// Requirements for config are same as for WithConfig function.
+// Response should not be nil.
+//
+// If rtt is given, it defines response round-trip time to be reported
+// by response.RoundTripTime().
+func NewResponseC(
+	config Config, response *http.Response, rtt ...time.Duration,
+) *Response {
+	config = config.withDefaults()
 
 	return newResponse(responseOpts{
 		config:   config,

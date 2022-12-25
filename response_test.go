@@ -96,6 +96,22 @@ func TestResponseFailed(t *testing.T) {
 	})
 }
 
+func TestResponseConstructors(t *testing.T) {
+	t.Run("Constructor without config", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		resp := NewResponse(reporter, &http.Response{})
+		resp.chain.assertNotFailed(t)
+	})
+
+	t.Run("Constructor with config", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		resp := NewResponseC(Config{
+			Reporter: reporter,
+		}, &http.Response{})
+		resp.chain.assertNotFailed(t)
+	})
+}
+
 func TestResponseRoundTripTime(t *testing.T) {
 	reporter := newMockReporter(t)
 

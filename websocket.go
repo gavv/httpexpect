@@ -172,12 +172,12 @@ func (c *Websocket) Expect() *WebsocketMessage {
 	defer c.chain.leave()
 
 	if c.checkUnusable("Expect()") {
-		return newWebsocketMessage(c.chain)
+		return newEmptyWebsocketMessage(c.chain)
 	}
 
 	m := c.readMessage()
 	if m == nil {
-		return newWebsocketMessage(c.chain)
+		return newEmptyWebsocketMessage(c.chain)
 	}
 
 	return m
@@ -519,7 +519,7 @@ func (c *Websocket) checkUnusable(where string) bool {
 }
 
 func (c *Websocket) readMessage() *WebsocketMessage {
-	m := newWebsocketMessage(c.chain)
+	m := newEmptyWebsocketMessage(c.chain)
 
 	if !c.setReadDeadline() {
 		return nil
