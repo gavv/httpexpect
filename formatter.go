@@ -541,7 +541,6 @@ func isNil(value interface{}) bool {
 	return value == nil || reflect.ValueOf(value).IsNil()
 }
 
-// For number types other than float32 and float64
 func isNumber(value interface{}) bool {
 	defer func() {
 		_ = recover()
