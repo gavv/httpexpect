@@ -360,6 +360,167 @@ func (a *Array) Transform(fn func(index int, value interface{}) interface{}) *Ar
 	return newArray(a.chain, array)
 }
 
+// Find returns first matched element,
+// or fails and returns empty (non-nil) value if element was not found
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{1, "foo", 2, "bar"})
+//	foundValue := array.Find(func(index int, value *httpexpect.Value) bool {
+//		return value.String().Raw() != ""
+//	})
+//	foundValue.Equal("foo")	// succeeds
+func (a *Array) Find(fn func(index int, value *Value) bool) *Value {
+	a.chain.enter("Find()")
+	defer a.chain.leave()
+
+	if a.chain.failed() {
+		return newValue(a.chain, nil)
+	}
+
+	if fn == nil {
+		a.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected nil function argument"),
+			},
+		})
+		return newValue(a.chain, nil)
+	}
+
+	for index, element := range a.value {
+		valueChain := a.chain.clone()
+		valueChain.setSeverity(SeverityLog)
+		chainFailed := false
+		valueChain.setFailCallback(func() {
+			chainFailed = true
+		})
+		valueChain.replace("Find[%v]", index)
+		if fn(index, newValue(valueChain, element)) && !chainFailed {
+			return newValue(a.chain, element)
+		}
+	}
+
+	a.chain.fail(AssertionFailure{
+		Type:   AssertValid,
+		Actual: &AssertionValue{a.value},
+		Errors: []error{
+			errors.New("expected: value is match in array"),
+		},
+	})
+
+	return newValue(a.chain, []interface{}{})
+}
+
+// FindAll is like Find, but returns slice of all matched values
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{1, "foo", 2, "bar"})
+//	foundValues := array.FindAll(func(index int, value *httpexpect.Value) bool {
+//		return value.String().Raw() != ""
+//	})
+//
+//	assert.Equal(t, len(foundValues), 2)
+//	foundValues[0].Equal("foo")
+//	foundValues[1].Equal("bar")
+func (a *Array) FindAll(fn func(index int, value *Value) bool) []Value {
+	a.chain.enter("FindAll()")
+	defer a.chain.leave()
+
+	if a.chain.failed() {
+		return []Value{}
+	}
+
+	if fn == nil {
+		a.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected nil function argument"),
+			},
+		})
+		return []Value{}
+	}
+
+	foundValues := make([]Value, 0, len(a.value))
+	for index, element := range a.value {
+		valueChain := a.chain.clone()
+		valueChain.setSeverity(SeverityLog)
+		chainFailed := false
+		valueChain.setFailCallback(func() {
+			chainFailed = true
+		})
+		valueChain.replace("FindAll[%v]", index)
+		if fn(index, newValue(valueChain, element)) && !chainFailed {
+			foundValues = append(foundValues, *newValue(a.chain, element))
+		}
+	}
+
+	if len(foundValues) == 0 {
+		a.chain.fail(AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{a.value},
+			Errors: []error{
+				errors.New("expected: value is match in array"),
+			},
+		})
+		return []Value{}
+	}
+
+	return foundValues
+}
+
+// NotFind succeeds if no element matched predicate
+// and fails if there is a match
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{1, "foo", 2, "bar"})
+//	afterArray := array.NotFind(func(index int, value *httpexpect.Value) bool {
+//		return value.String().Raw() == "baz"
+//	})
+//	afterArray.Equal([]interface{}{1, "foo", 2, "bar"})	// succeeds
+func (a *Array) NotFind(fn func(index int, value *Value) bool) *Array {
+	a.chain.enter("NotFind()")
+	defer a.chain.leave()
+
+	if a.chain.failed() {
+		return newArray(a.chain, nil)
+	}
+
+	if fn == nil {
+		a.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected nil function argument"),
+			},
+		})
+		return newArray(a.chain, nil)
+	}
+
+	for index, element := range a.value {
+		valueChain := a.chain.clone()
+		valueChain.setSeverity(SeverityLog)
+		chainFailed := false
+		valueChain.setFailCallback(func() {
+			chainFailed = true
+		})
+		valueChain.replace("NotFind[%v]", index)
+		if fn(index, newValue(valueChain, element)) && !chainFailed {
+			a.chain.fail(AssertionFailure{
+				Type:   AssertValid,
+				Actual: &AssertionValue{a.value},
+				Errors: []error{
+					errors.New("expected: value is not match in array"),
+				},
+			})
+			return newArray(a.chain, []interface{}{})
+		}
+	}
+
+	return a
+}
+
 // Empty succeeds if array is empty.
 //
 // Example:

@@ -342,6 +342,187 @@ func (o *Object) Transform(fn func(key string, value interface{}) interface{}) *
 	return newObject(o.chain, object)
 }
 
+// Find returns first matched element,
+// or fails and returns empty (non-nil) value if element was not found
+//
+// Example:
+//
+//	object := NewObject(t, map[string]interface{}{
+//		"foo": "bar",
+//		"baz": 6,
+//		"qux": "quux",
+//	})
+//	foundValue := object.Find(func(key string, value *httpexpect.Value)  bool {
+//		return key == "qux"
+//	})
+//	foundValue.Equal("quux")	// succeeds
+func (o *Object) Find(fn func(key string, value *Value) bool) *Value {
+	o.chain.enter("Find()")
+	defer o.chain.leave()
+
+	if o.chain.failed() {
+		return newValue(o.chain, nil)
+	}
+
+	if fn == nil {
+		o.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected nil function argument"),
+			},
+		})
+		return newValue(o.chain, nil)
+	}
+
+	for key, element := range o.value {
+		valueChain := o.chain.clone()
+		valueChain.setSeverity(SeverityLog)
+		chainFailed := false
+		valueChain.setFailCallback(func() {
+			chainFailed = true
+		})
+		valueChain.replace("Find[%q]", key)
+		if fn(key, newValue(valueChain, element)) && !chainFailed {
+			return newValue(o.chain, element)
+		}
+	}
+
+	o.chain.fail(AssertionFailure{
+		Type:   AssertValid,
+		Actual: &AssertionValue{o.value},
+		Errors: []error{
+			errors.New("expected: value is match in object"),
+		},
+	})
+
+	return newValue(o.chain, []interface{}{})
+}
+
+// FindAll is like Find, but returns slice of all matched values
+//
+// Example:
+//
+//	object := NewObject(t, map[string]interface{}{
+//		"foo": "bar",
+//		"baz": 6,
+//		"qux": "quux",
+//	})
+//	foundValues := object.FindAll(func(key string, value *httpexpect.Value)  bool {
+//		return key == "qux" || value.Raw() == 6.0
+//	})
+//
+//	actual := []interface{}{}
+//	for _, value := range foundValues {
+//		actual = append(actual, value.Raw())
+//	}
+//
+//	assert.ElementsMatch(t, []interface{}{6.0, "quux"}, actual)
+func (o *Object) FindAll(fn func(key string, value *Value) bool) []Value {
+	o.chain.enter("FindAll()")
+	defer o.chain.leave()
+
+	if o.chain.failed() {
+		return []Value{}
+	}
+
+	if fn == nil {
+		o.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected nil function argument"),
+			},
+		})
+		return []Value{}
+	}
+
+	foundValues := make([]Value, 0, len(o.value))
+
+	for key, element := range o.value {
+		valueChain := o.chain.clone()
+		valueChain.setSeverity(SeverityLog)
+		chainFailed := false
+		valueChain.setFailCallback(func() {
+			chainFailed = true
+		})
+		valueChain.replace("FindAll[%q]", key)
+		if fn(key, newValue(valueChain, element)) && !chainFailed {
+			foundValues = append(foundValues, *newValue(o.chain, element))
+		}
+	}
+
+	if len(foundValues) == 0 {
+		o.chain.fail(AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{o.value},
+			Errors: []error{
+				errors.New("expected: value is match in object"),
+			},
+		})
+		return []Value{}
+	}
+
+	return foundValues
+}
+
+// NotFind succeeds if no element matched predicate
+// and fails if there is a match
+//
+// Example:
+//
+//	object := NewObject(t, map[string]interface{}{
+//		"foo": "bar",
+//		"baz": 6,
+//		"qux": "quux",
+//	})
+//	afterObject := object.NotFind(func(key string, value *httpexpect.Value)  bool {
+//		return key == "corge"
+//	})
+//	filteredObject.Equal(map[string]interface{}{
+//		"foo": "bar",
+//		"baz": 6,
+//		"qux": "quux",
+//	})	// succeeds
+func (o *Object) NotFind(fn func(key string, value *Value) bool) *Object {
+	o.chain.enter("NotFind()")
+	defer o.chain.leave()
+
+	if o.chain.failed() {
+		return newObject(o.chain, nil)
+	}
+
+	if fn == nil {
+		o.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected nil function argument"),
+			},
+		})
+		return newObject(o.chain, nil)
+	}
+
+	for key, element := range o.value {
+		valueChain := o.chain.clone()
+		valueChain.setSeverity(SeverityLog)
+		chainFailed := false
+		valueChain.setFailCallback(func() {
+			chainFailed = true
+		})
+		valueChain.replace("NotFind[%q]", key)
+		if fn(key, newValue(valueChain, element)) && !chainFailed {
+			o.chain.fail(AssertionFailure{
+				Type:   AssertValid,
+				Actual: &AssertionValue{o.value},
+				Errors: []error{
+					errors.New("expected: value is not match in array"),
+				},
+			})
+			return newObject(o.chain, map[string]interface{}{})
+		}
+	}
+
+	return o
+}
+
 // Empty succeeds if object is empty.
 //
 // Example:

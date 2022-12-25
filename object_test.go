@@ -40,6 +40,18 @@ func TestObjectFailed(t *testing.T) {
 			value.String().NotEmpty()
 			return true
 		})
+		value.Find(func(key string, value *Value) bool {
+			value.String().NotEmpty()
+			return true
+		})
+		value.FindAll(func(key string, value *Value) bool {
+			value.String().NotEmpty()
+			return true
+		})
+		value.NotFind(func(key string, value *Value) bool {
+			value.String().NotEmpty()
+			return true
+		})
 	}
 
 	t.Run("failed_chain", func(t *testing.T) {
@@ -1005,4 +1017,268 @@ func TestObjectFilter(t *testing.T) {
 			filteredObject.chain.assertNotFailed(t)
 			object.chain.assertNotFailed(t)
 		})
+}
+
+func TestObjectFind(t *testing.T) {
+	t.Run("Find an object of elements of the same type and validate", func(ts *testing.T) {
+		reporter := newMockReporter(t)
+		object := NewObject(reporter, map[string]interface{}{
+			"foo":  "bar",
+			"baz":  "qux",
+			"quux": "corge",
+		})
+		foundValue := object.Find(func(key string, value *Value) bool {
+			return key == "baz"
+		})
+		assert.Equal(t, "qux", foundValue.Raw())
+		assert.Equal(t, object.Raw(), map[string]interface{}{
+			"foo":  "bar",
+			"baz":  "qux",
+			"quux": "corge",
+		})
+
+		foundValue.chain.assertNotFailed(t)
+		object.chain.assertNotFailed(t)
+	})
+
+	t.Run("Find an object of elements of the multi type and validate", func(ts *testing.T) {
+		reporter := newMockReporter(t)
+		object := NewObject(reporter, map[string]interface{}{
+			"foo":  "bar",
+			"baz":  true,
+			"qux":  -1,
+			"quux": 2,
+		})
+		foundValue := object.Find(func(key string, value *Value) bool {
+			n := value.Number().Raw()
+			return n > 1
+		})
+		assert.Equal(t, 2.0, foundValue.Raw())
+		assert.Equal(t, object.Raw(), map[string]interface{}{
+			"foo":  "bar",
+			"baz":  true,
+			"qux":  -1.0,
+			"quux": 2.0,
+		})
+
+		foundValue.chain.assertNotFailed(t)
+		object.chain.assertNotFailed(t)
+	})
+
+	t.Run("No match", func(ts *testing.T) {
+		reporter := newMockReporter(t)
+		object := NewObject(reporter, map[string]interface{}{
+			"foo":  "bar",
+			"baz":  true,
+			"qux":  -1,
+			"quux": 2,
+		})
+		foundValue := object.Find(func(key string, value *Value) bool {
+			n := value.Number().Raw()
+			return n == 3
+		})
+		assert.Equal(t, []interface{}{}, foundValue.Raw())
+		assert.Equal(t, object.Raw(), map[string]interface{}{
+			"foo":  "bar",
+			"baz":  true,
+			"qux":  -1.0,
+			"quux": 2.0,
+		})
+
+		foundValue.chain.assertFailed(t)
+		object.chain.assertFailed(t)
+	})
+
+	t.Run("Empty Object", func(ts *testing.T) {
+		reporter := newMockReporter(t)
+		object := NewObject(reporter, map[string]interface{}{})
+		foundValue := object.Find(func(key string, value *Value) bool {
+			n := value.Number().Raw()
+			return n == 3
+		})
+		assert.Equal(t, []interface{}{}, foundValue.Raw())
+		assert.Equal(t, object.Raw(), map[string]interface{}{})
+
+		foundValue.chain.assertFailed(t)
+		object.chain.assertFailed(t)
+	})
+}
+func TestObjectFindAll(t *testing.T) {
+	t.Run("Find values in array of the same type", func(ts *testing.T) {
+		reporter := newMockReporter(t)
+		object := NewObject(reporter, map[string]interface{}{
+			"foo":  "bar",
+			"baz":  "qux",
+			"quux": "corge",
+		})
+		foundValues := object.FindAll(func(key string, value *Value) bool {
+			return key == "baz" || key == "quux"
+		})
+
+		actual := []interface{}{}
+		for _, value := range foundValues {
+			actual = append(actual, value.Raw())
+		}
+
+		assert.ElementsMatch(t, []interface{}{"qux", "corge"}, actual)
+		assert.Equal(t, object.Raw(), map[string]interface{}{
+			"foo":  "bar",
+			"baz":  "qux",
+			"quux": "corge",
+		})
+
+		for _, value := range foundValues {
+			value.chain.assertNotFailed(t)
+		}
+		object.chain.assertNotFailed(t)
+	})
+
+	t.Run("Find values in array of the multi types", func(ts *testing.T) {
+		reporter := newMockReporter(t)
+		object := NewObject(reporter, map[string]interface{}{
+			"foo":  "bar",
+			"baz":  true,
+			"qux":  -1,
+			"quux": 2,
+		})
+		foundValues := object.FindAll(func(key string, value *Value) bool {
+			return key == "baz" || value.Number().Raw() == 2.0
+		})
+
+		actual := []interface{}{}
+		for _, value := range foundValues {
+			actual = append(actual, value.Raw())
+		}
+
+		assert.ElementsMatch(t, []interface{}{true, 2.0}, actual)
+		assert.Equal(t, object.Raw(), map[string]interface{}{
+			"foo":  "bar",
+			"baz":  true,
+			"qux":  -1.0,
+			"quux": 2.0,
+		})
+
+		for _, value := range foundValues {
+			value.chain.assertNotFailed(t)
+		}
+		object.chain.assertNotFailed(t)
+	})
+
+	t.Run("No match", func(ts *testing.T) {
+		reporter := newMockReporter(t)
+		object := NewObject(reporter, map[string]interface{}{
+			"foo":  "bar",
+			"baz":  true,
+			"qux":  -1,
+			"quux": 2,
+		})
+		foundValues := object.FindAll(func(key string, value *Value) bool {
+			return value.Number().Raw() == 3.0
+		})
+
+		actual := []interface{}{}
+		for _, value := range foundValues {
+			actual = append(actual, value.Raw())
+		}
+
+		assert.ElementsMatch(t, []interface{}{}, actual)
+		assert.Equal(t, object.Raw(), map[string]interface{}{
+			"foo":  "bar",
+			"baz":  true,
+			"qux":  -1.0,
+			"quux": 2.0,
+		})
+
+		for _, value := range foundValues {
+			value.chain.assertFailed(t)
+		}
+		object.chain.assertFailed(t)
+	})
+
+	t.Run("Empty array", func(ts *testing.T) {
+		reporter := newMockReporter(t)
+		object := NewObject(reporter, map[string]interface{}{})
+		foundValues := object.FindAll(func(key string, value *Value) bool {
+			return value.Number().Raw() == 3.0
+		})
+
+		actual := []interface{}{}
+		for _, value := range foundValues {
+			actual = append(actual, value.Raw())
+		}
+
+		assert.ElementsMatch(t, []interface{}{}, actual)
+		assert.Equal(t, object.Raw(), map[string]interface{}{})
+
+		for _, value := range foundValues {
+			value.chain.assertFailed(t)
+		}
+		object.chain.assertFailed(t)
+	})
+}
+
+func TestObjectNotFind(t *testing.T) {
+	t.Run("Succeeds if no element matched predicate", func(ts *testing.T) {
+		reporter := newMockReporter(t)
+		object := NewObject(reporter, map[string]interface{}{
+			"foo":  "bar",
+			"baz":  true,
+			"qux":  -1,
+			"quux": 2,
+		})
+		afterObject := object.NotFind(func(key string, value *Value) bool {
+			return key == "corge"
+		})
+		assert.Equal(t, map[string]interface{}{
+			"foo":  "bar",
+			"baz":  true,
+			"qux":  -1.0,
+			"quux": 2.0,
+		}, afterObject.Raw())
+		assert.Equal(t, object.Raw(), map[string]interface{}{
+			"foo":  "bar",
+			"baz":  true,
+			"qux":  -1.0,
+			"quux": 2.0,
+		})
+
+		afterObject.chain.assertNotFailed(t)
+		object.chain.assertNotFailed(t)
+	})
+
+	t.Run("Fails if there is a match", func(ts *testing.T) {
+		reporter := newMockReporter(t)
+		object := NewObject(reporter, map[string]interface{}{
+			"foo":  "bar",
+			"baz":  true,
+			"qux":  -1,
+			"quux": 2,
+		})
+		afterObject := object.NotFind(func(key string, value *Value) bool {
+			return key == "qux"
+		})
+		assert.Equal(t, map[string]interface{}{}, afterObject.Raw())
+		assert.Equal(t, object.Raw(), map[string]interface{}{
+			"foo":  "bar",
+			"baz":  true,
+			"qux":  -1.0,
+			"quux": 2.0,
+		})
+
+		afterObject.chain.assertFailed(t)
+		object.chain.assertFailed(t)
+	})
+
+	t.Run("Empty object", func(ts *testing.T) {
+		reporter := newMockReporter(t)
+		object := NewObject(reporter, map[string]interface{}{})
+		afterObject := object.NotFind(func(key string, value *Value) bool {
+			return key == "corge"
+		})
+		assert.Equal(t, map[string]interface{}{}, afterObject.Raw())
+		assert.Equal(t, object.Raw(), map[string]interface{}{})
+
+		afterObject.chain.assertNotFailed(t)
+		object.chain.assertNotFailed(t)
+	})
 }
