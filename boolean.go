@@ -22,7 +22,7 @@ func NewBoolean(reporter Reporter, value bool) *Boolean {
 	return newBoolean(newChainWithDefaults("Boolean()", reporter), value)
 }
 
-// NewBooleanC returns a new Boolean instance with config
+// NewBooleanC returns a new Boolean instance with config.
 //
 // Requirements for config are same as for WithConfig function.
 //

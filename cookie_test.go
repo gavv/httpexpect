@@ -65,29 +65,30 @@ func TestCookieConstructors(t *testing.T) {
 		Expires: time.Unix(1234, 0),
 		MaxAge:  123,
 	}
+
 	t.Run("Constructor without config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewCookie(reporter, cookie)
-		value.chain.assertNotFailed(t)
 		value.Name().Equal("Test")
 		value.Value().Equal("Test_val")
 		value.Domain().Equal("example.com")
 		value.Expires().Equal(time.Unix(1234, 0))
 		value.MaxAge().Equal(123 * time.Second)
+		value.chain.assertNotFailed(t)
 	})
+
 	t.Run("Constructor with config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewCookieC(Config{
 			Reporter: reporter,
 		}, cookie)
-		value.chain.assertNotFailed(t)
 		value.Name().Equal("Test")
 		value.Value().Equal("Test_val")
 		value.Domain().Equal("example.com")
 		value.Expires().Equal(time.Unix(1234, 0))
 		value.MaxAge().Equal(123 * time.Second)
+		value.chain.assertNotFailed(t)
 	})
-
 }
 
 func TestCookieGetters(t *testing.T) {

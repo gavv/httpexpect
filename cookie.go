@@ -26,7 +26,7 @@ func NewCookie(reporter Reporter, value *http.Cookie) *Cookie {
 	return newCookie(newChainWithDefaults("Cookie()", reporter), value)
 }
 
-// NewCookieC returns a new Cookie instance with config
+// NewCookieC returns a new Cookie instance with config.
 //
 // Requirements for config are same as for WithConfig function.
 //

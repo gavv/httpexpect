@@ -20,6 +20,7 @@ type Match struct {
 //
 //	s := "http://example.com/users/john"
 //	r := regexp.MustCompile(`http://(?P<host>.+)/users/(?P<user>.+)`)
+//
 //	m := NewMatch(reporter, r.FindStringSubmatch(s), r.SubexpNames())
 //
 //	m.NotEmpty()
@@ -43,7 +44,8 @@ func NewMatch(reporter Reporter, submatches []string, names []string) *Match {
 //
 //	s := "http://example.com/users/john"
 //	r := regexp.MustCompile(`http://(?P<host>.+)/users/(?P<user>.+)`)
-//	m := NewMatchC(reporter, r.FindStringSubmatch(s), r.SubexpNames())
+//
+//	m := NewMatchC(config, r.FindStringSubmatch(s), r.SubexpNames())
 //
 //	m.NotEmpty()
 //	m.Length().Equal(3)

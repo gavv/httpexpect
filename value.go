@@ -46,22 +46,22 @@ func NewValue(reporter Reporter, value interface{}) *Value {
 //
 // Example:
 //
-//	value := NewValueC(t, map[string]interface{}{"foo": 123})
+//	value := NewValueC(config, map[string]interface{}{"foo": 123})
 //	value.Object()
 //
-//	value := NewValueC(t, []interface{}{"foo", 123})
+//	value := NewValueC(config, []interface{}{"foo", 123})
 //	value.Array()
 //
-//	value := NewValueC(t, "foo")
+//	value := NewValueC(config, "foo")
 //	value.String()
 //
-//	value := NewValueC(t, 123)
+//	value := NewValueC(config, 123)
 //	value.Number()
 //
-//	value := NewValueC(t, true)
+//	value := NewValueC(config, true)
 //	value.Boolean()
 //
-//	value := NewValueC(t, nil)
+//	value := NewValueC(config, nil)
 //	value.Null()
 func NewValueC(config Config, value interface{}) *Value {
 	return newValue(newChainWithConfig("Value()", config.withDefaults()), value)

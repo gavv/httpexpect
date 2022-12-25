@@ -23,7 +23,7 @@ func NewNumber(reporter Reporter, value float64) *Number {
 	return newNumber(newChainWithDefaults("Number()", reporter), value)
 }
 
-// NewNumberC returns a new Number instance with config
+// NewNumberC returns a new Number instance with config.
 //
 // Requirements for config are same as for WithConfig function.
 //

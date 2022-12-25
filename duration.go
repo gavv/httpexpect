@@ -29,7 +29,7 @@ func NewDuration(reporter Reporter, value time.Duration) *Duration {
 //
 // Example:
 //
-//	d := NewDurationC(reporter, time.Second)
+//	d := NewDurationC(config, time.Second)
 //	d.Le(time.Minute)
 func NewDurationC(config Config, value time.Duration) *Duration {
 	return newDuration(newChainWithConfig("Duration()", config.withDefaults()), &value)

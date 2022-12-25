@@ -21,24 +21,28 @@ func TestMatchFailed(t *testing.T) {
 	value.Values("")
 	value.NotValues("")
 }
+
 func TestMatchConstructors(t *testing.T) {
 	matches := []string{"m0", "m1", "m2"}
 	names := []string{"", "n1", "n2"}
+
 	t.Run("Constructor without config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewMatch(reporter, matches, names)
-		value.chain.assertNotFailed(t)
 		assert.Equal(t, matches, value.Raw())
+		value.chain.assertNotFailed(t)
 	})
+
 	t.Run("Constructor with config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewMatchC(Config{
 			Reporter: reporter,
 		}, matches, names)
-		value.chain.assertNotFailed(t)
 		assert.Equal(t, matches, value.Raw())
+		value.chain.assertNotFailed(t)
 	})
 }
+
 func TestMatchGetters(t *testing.T) {
 	reporter := newMockReporter(t)
 

@@ -25,7 +25,7 @@ func NewArray(reporter Reporter, value []interface{}) *Array {
 	return newArray(newChainWithDefaults("Array()", reporter), value)
 }
 
-// NewArrayC returns a new Array instance with config
+// NewArrayC returns a new Array instance with config.
 //
 // Requirements for config are same as for WithConfig function.
 //
@@ -34,7 +34,6 @@ func NewArray(reporter Reporter, value []interface{}) *Array {
 //	array := NewArrayC(config, []interface{}{"foo",123})
 func NewArrayC(config Config, value []interface{}) *Array {
 	return newArray(newChainWithConfig("Array()", config.withDefaults()), value)
-
 }
 
 func newArray(parent *chain, val []interface{}) *Array {
