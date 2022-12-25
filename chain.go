@@ -74,6 +74,10 @@ func newChainWithConfig(name string, config Config) *chain {
 
 // Construct chain using DefaultAssertionHandler and provided Reporter.
 func newChainWithDefaults(name string, reporter Reporter) *chain {
+	if reporter == nil {
+		panic("Reporter is nil")
+	}
+
 	c := &chain{
 		context: AssertionContext{},
 		handler: &DefaultAssertionHandler{
