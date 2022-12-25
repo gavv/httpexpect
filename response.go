@@ -33,18 +33,36 @@ type Response struct {
 
 // NewResponse returns a new Response instance.
 //
-// Both reporter and response should not be nil. If response is nil,
-// failure is reported.
+// If reporter is nil, the function panics.
+// If response is nil, failure is reported.
 //
 // If rtt is given, it defines response round-trip time to be reported
 // by response.RoundTripTime().
 func NewResponse(
 	reporter Reporter, response *http.Response, rtt ...time.Duration,
 ) *Response {
-	config := Config{
-		Reporter: reporter,
-	}
-	config.fillDefaults()
+	config := Config{Reporter: reporter}
+	config = config.withDefaults()
+
+	return newResponse(responseOpts{
+		config:   config,
+		chain:    newChainWithConfig("Response()", config),
+		httpResp: response,
+		rtt:      rtt,
+	})
+}
+
+// NewResponse returns a new Response instance with config.
+//
+// Requirements for config are same as for WithConfig function.
+// If response is nil, failure is reported.
+//
+// If rtt is given, it defines response round-trip time to be reported
+// by response.RoundTripTime().
+func NewResponseC(
+	config Config, response *http.Response, rtt ...time.Duration,
+) *Response {
+	config = config.withDefaults()
 
 	return newResponse(responseOpts{
 		config:   config,
@@ -63,6 +81,8 @@ type responseOpts struct {
 }
 
 func newResponse(opts responseOpts) *Response {
+	opts.config.validate()
+
 	r := &Response{
 		config: opts.config,
 		chain:  opts.chain.clone(),
@@ -458,7 +478,7 @@ func (r *Response) Cookie(name string) *Cookie {
 //
 // Example:
 //
-//	req := NewRequest(config, "GET", "/path")
+//	req := NewRequestC(config, "GET", "/path")
 //	req.WithWebsocketUpgrade()
 //	ws := req.Expect().Websocket()
 //	defer ws.Disconnect()

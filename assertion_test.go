@@ -141,6 +141,60 @@ func TestAssertionHandler(t *testing.T) {
 	})
 }
 
+func TestAssertionHandlerPanics(t *testing.T) {
+	t.Run("success_nil_Formatter", func(t *testing.T) {
+		handler := &DefaultAssertionHandler{
+			Formatter: nil,
+			Reporter:  newMockReporter(t),
+			Logger:    newMockLogger(t),
+		}
+
+		assert.Panics(t, func() {
+			handler.Success(&AssertionContext{
+				TestName: t.Name(),
+			})
+		})
+	})
+
+	t.Run("failure_nil_Formatter", func(t *testing.T) {
+		handler := &DefaultAssertionHandler{
+			Formatter: nil,
+			Reporter:  newMockReporter(t),
+			Logger:    newMockLogger(t),
+		}
+
+		assert.Panics(t, func() {
+			handler.Failure(
+				&AssertionContext{
+					TestName: t.Name(),
+				},
+				&AssertionFailure{
+					Type:     AssertValid,
+					Severity: SeverityError,
+				})
+		})
+	})
+
+	t.Run("failure_nil_Reporter", func(t *testing.T) {
+		handler := &DefaultAssertionHandler{
+			Formatter: newMockFormatter(t),
+			Reporter:  nil,
+			Logger:    newMockLogger(t),
+		}
+
+		assert.Panics(t, func() {
+			handler.Failure(
+				&AssertionContext{
+					TestName: t.Name(),
+				},
+				&AssertionFailure{
+					Type:     AssertValid,
+					Severity: SeverityError,
+				})
+		})
+	})
+}
+
 func TestAssertionValidation(t *testing.T) {
 	tests := []struct {
 		testName          string

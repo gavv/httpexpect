@@ -69,6 +69,29 @@ func TestObjectFailed(t *testing.T) {
 	})
 }
 
+func TestObjectConstructors(t *testing.T) {
+	test := map[string]interface{}{
+		"foo": 100.0,
+	}
+
+	t.Run("Constructor without config", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		value := NewObject(reporter, test)
+		value.Equal(test)
+		value.chain.assertNotFailed(t)
+	})
+
+	t.Run("Constructor with config", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		value := NewObjectC(Config{
+			Reporter: reporter,
+		}, test)
+		value.Equal(test)
+		value.chain.assertNotFailed(t)
+	})
+
+}
+
 func TestObjectGetters(t *testing.T) {
 	reporter := newMockReporter(t)
 

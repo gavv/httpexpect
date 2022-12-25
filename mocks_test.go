@@ -3,6 +3,7 @@ package httpexpect
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -60,22 +61,28 @@ func (b *mockBody) Close() error {
 	return nil
 }
 
+func newMockConfig(r Reporter) Config {
+	return Config{Reporter: r}.withDefaults()
+}
+
 func newMockChain(t *testing.T) *chain {
 	return newChainWithDefaults("test", newMockReporter(t))
 }
 
 type mockLogger struct {
-	testing *testing.T
-	logged  bool
+	testing     *testing.T
+	logged      bool
+	lastMessage string
 }
 
 func newMockLogger(t *testing.T) *mockLogger {
-	return &mockLogger{t, false}
+	return &mockLogger{testing: t}
 }
 
-func (r *mockLogger) Logf(message string, args ...interface{}) {
-	r.testing.Logf(message, args...)
-	r.logged = true
+func (l *mockLogger) Logf(message string, args ...interface{}) {
+	l.testing.Logf(message, args...)
+	l.lastMessage = fmt.Sprintf(message, args...)
+	l.logged = true
 }
 
 type mockReporter struct {
@@ -84,7 +91,7 @@ type mockReporter struct {
 }
 
 func newMockReporter(t *testing.T) *mockReporter {
-	return &mockReporter{t, false}
+	return &mockReporter{testing: t}
 }
 
 func (r *mockReporter) Errorf(message string, args ...interface{}) {
@@ -102,15 +109,15 @@ func newMockFormatter(t *testing.T) *mockFormatter {
 	return &mockFormatter{testing: t}
 }
 
-func (m *mockFormatter) FormatSuccess(ctx *AssertionContext) string {
-	m.formattedSuccess++
+func (f *mockFormatter) FormatSuccess(ctx *AssertionContext) string {
+	f.formattedSuccess++
 	return ctx.TestName
 }
 
-func (m *mockFormatter) FormatFailure(
+func (f *mockFormatter) FormatFailure(
 	ctx *AssertionContext, failure *AssertionFailure,
 ) string {
-	m.formattedFailure++
+	f.formattedFailure++
 	return ctx.TestName
 }
 

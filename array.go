@@ -15,14 +15,26 @@ type Array struct {
 
 // NewArray returns a new Array instance.
 //
-// Both reporter and value should not be nil. If value is nil, failure is
-// reported.
+// If reporter is nil, the function panics.
+// If value is nil, failure is reported.
 //
 // Example:
 //
 //	array := NewArray(t, []interface{}{"foo", 123})
 func NewArray(reporter Reporter, value []interface{}) *Array {
 	return newArray(newChainWithDefaults("Array()", reporter), value)
+}
+
+// NewArrayC returns a new Array instance with config.
+//
+// Requirements for config are same as for WithConfig function.
+// If value is nil, failure is reported.
+//
+// Example:
+//
+//	array := NewArrayC(config, []interface{}{"foo",123})
+func NewArrayC(config Config, value []interface{}) *Array {
+	return newArray(newChainWithConfig("Array()", config.withDefaults()), value)
 }
 
 func newArray(parent *chain, val []interface{}) *Array {

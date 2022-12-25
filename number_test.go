@@ -28,6 +28,24 @@ func TestNumberFailed(t *testing.T) {
 	value.NotInRange(0, 0)
 }
 
+func TestNumberConstructors(t *testing.T) {
+	t.Run("Constructor without config", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		value := NewNumber(reporter, 10.3)
+		value.Equal(10.3)
+		value.chain.assertNotFailed(t)
+	})
+
+	t.Run("Constructor with config", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		value := NewNumberC(Config{
+			Reporter: reporter,
+		}, 10.3)
+		value.Equal(10.3)
+		value.chain.assertNotFailed(t)
+	})
+}
+
 func TestNumberGetters(t *testing.T) {
 	reporter := newMockReporter(t)
 

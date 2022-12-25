@@ -16,14 +16,26 @@ type Object struct {
 
 // NewObject returns a new Object instance.
 //
-// Both reporter and value should not be nil. If value is nil, failure is
-// reported.
+// If reporter is nil, the function panics.
+// If value is nil, failure is reported.
 //
 // Example:
 //
 //	object := NewObject(t, map[string]interface{}{"foo": 123})
 func NewObject(reporter Reporter, value map[string]interface{}) *Object {
 	return newObject(newChainWithDefaults("Object()", reporter), value)
+}
+
+// NewObjectC returns a new Object instance with config.
+//
+// Requirements for config are same as for WithConfig function.
+// If value is nil, failure is reported.
+//
+// Example:
+//
+//	object := NewObjectC(config, map[string]interface{}{"foo":123})
+func NewObjectC(config Config, value map[string]interface{}) *Object {
+	return newObject(newChainWithConfig("Object()", config.withDefaults()), value)
 }
 
 func newObject(parent *chain, val map[string]interface{}) *Object {

@@ -13,6 +13,16 @@ const noDuration = time.Duration(0)
 
 var infiniteTime = time.Time{}
 
+// WebsocketConn is used by Websocket to communicate with actual WebSocket connection.
+type WebsocketConn interface {
+	ReadMessage() (messageType int, p []byte, err error)
+	WriteMessage(messageType int, data []byte) error
+	Close() error
+	SetReadDeadline(t time.Time) error
+	SetWriteDeadline(t time.Time) error
+	Subprotocol() string
+}
+
 // Websocket provides methods to read from, write into and close WebSocket
 // connection.
 type Websocket struct {
@@ -27,19 +37,16 @@ type Websocket struct {
 	isClosed bool
 }
 
-// WebsocketConn is used by Websocket to communicate with actual WebSocket connection.
-type WebsocketConn interface {
-	ReadMessage() (messageType int, p []byte, err error)
-	WriteMessage(messageType int, data []byte) error
-	Close() error
-	SetReadDeadline(t time.Time) error
-	SetWriteDeadline(t time.Time) error
-	Subprotocol() string
+// Deprecated: use NewWebsocketC instead.
+func NewWebsocket(config Config, conn WebsocketConn) *Websocket {
+	return NewWebsocketC(config, conn)
 }
 
-// NewWebsocket returns a new Websocket instance.
-func NewWebsocket(config Config, conn WebsocketConn) *Websocket {
-	config.fillDefaults()
+// NewWebsocketC returns a new Websocket instance.
+//
+// Requirements for config are same as for WithConfig function.
+func NewWebsocketC(config Config, conn WebsocketConn) *Websocket {
+	config = config.withDefaults()
 
 	return newWebsocket(
 		newChainWithConfig("Websocket()", config),
@@ -49,11 +56,11 @@ func NewWebsocket(config Config, conn WebsocketConn) *Websocket {
 }
 
 func newWebsocket(parent *chain, config Config, conn WebsocketConn) *Websocket {
-	chain := parent.clone()
+	config.validate()
 
 	return &Websocket{
 		config: config,
-		chain:  chain,
+		chain:  parent.clone(),
 		conn:   conn,
 	}
 }
@@ -167,12 +174,12 @@ func (c *Websocket) Expect() *WebsocketMessage {
 	defer c.chain.leave()
 
 	if c.checkUnusable("Expect()") {
-		return newWebsocketMessage(c.chain)
+		return newEmptyWebsocketMessage(c.chain)
 	}
 
 	m := c.readMessage()
 	if m == nil {
-		return newWebsocketMessage(c.chain)
+		return newEmptyWebsocketMessage(c.chain)
 	}
 
 	return m
@@ -514,7 +521,7 @@ func (c *Websocket) checkUnusable(where string) bool {
 }
 
 func (c *Websocket) readMessage() *WebsocketMessage {
-	m := newWebsocketMessage(c.chain)
+	m := newEmptyWebsocketMessage(c.chain)
 
 	if !c.setReadDeadline() {
 		return nil

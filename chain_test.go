@@ -41,13 +41,15 @@ func TestChainEnv(t *testing.T) {
 	t.Run("newChainWithConfig", func(t *testing.T) {
 		env1 := NewEnvironment(newMockReporter(t))
 		chain1 := newChainWithConfig("root", Config{
-			Environment: env1,
-		})
-		assert.True(t, env1 == chain1.getEnv())
+			AssertionHandler: &mockAssertionHandler{},
+			Environment:      env1,
+		}.withDefaults())
+		assert.Same(t, env1, chain1.getEnv())
 
 		chain2 := newChainWithConfig("root", Config{
-			Environment: nil,
-		})
+			AssertionHandler: &mockAssertionHandler{},
+			Environment:      nil,
+		}.withDefaults())
 		assert.NotNil(t, chain2.getEnv())
 	})
 
@@ -61,12 +63,12 @@ func TestChainRoot(t *testing.T) {
 	t.Run("newChainWithConfig", func(t *testing.T) {
 		chain1 := newChainWithConfig("root", Config{
 			AssertionHandler: &mockAssertionHandler{},
-		})
+		}.withDefaults())
 		assert.Equal(t, []string{"root"}, chain1.context.Path)
 
 		chain2 := newChainWithConfig("", Config{
 			AssertionHandler: &mockAssertionHandler{},
-		})
+		}.withDefaults())
 		assert.Equal(t, []string{}, chain2.context.Path)
 	})
 
@@ -125,7 +127,7 @@ func TestChainPath(t *testing.T) {
 	assert.Equal(t, "root", path(chainClone))
 }
 
-func TestChainPanic(t *testing.T) {
+func TestChainPanics(t *testing.T) {
 	t.Run("unpaired leave", func(t *testing.T) {
 		chain := newChainWithDefaults("", newMockReporter(t))
 
@@ -163,6 +165,16 @@ func TestChainPanic(t *testing.T) {
 			chain.replace("bar")
 		})
 	})
+
+	t.Run("invalid assertion", func(t *testing.T) {
+		chain := newChainWithDefaults("", newMockReporter(t))
+
+		assert.Panics(t, func() {
+			chain.fail(AssertionFailure{
+				Type: AssertionType(9999),
+			})
+		})
+	})
 }
 
 func TestChainReport(t *testing.T) {
@@ -197,7 +209,7 @@ func TestChainHandler(t *testing.T) {
 
 	chain := newChainWithConfig("test", Config{
 		AssertionHandler: handler,
-	})
+	}.withDefaults())
 
 	chain.enter("test")
 	chain.fail(mockFailure())
@@ -223,7 +235,7 @@ func TestChainSeverity(t *testing.T) {
 
 	chain := newChainWithConfig("test", Config{
 		AssertionHandler: handler,
-	})
+	}.withDefaults())
 
 	chain.fail(mockFailure())
 
@@ -252,7 +264,7 @@ func TestChainCallback(t *testing.T) {
 
 	chain := newChainWithConfig("test", Config{
 		AssertionHandler: handler,
-	})
+	}.withDefaults())
 
 	called := false
 

@@ -50,10 +50,14 @@ func TestResponseFailed(t *testing.T) {
 	}
 
 	t.Run("failed_chain", func(t *testing.T) {
-		chain := newMockChain(t)
+		reporter := newMockReporter(t)
+		chain := newChainWithDefaults("test", reporter)
+		config := newMockConfig(reporter)
+
 		chain.fail(mockFailure())
 
 		resp := newResponse(responseOpts{
+			config:   config,
 			chain:    chain,
 			httpResp: &http.Response{},
 		})
@@ -62,9 +66,12 @@ func TestResponseFailed(t *testing.T) {
 	})
 
 	t.Run("nil_value", func(t *testing.T) {
-		chain := newMockChain(t)
+		reporter := newMockReporter(t)
+		chain := newChainWithDefaults("test", reporter)
+		config := newMockConfig(reporter)
 
 		resp := newResponse(responseOpts{
+			config:   config,
 			chain:    chain,
 			httpResp: nil,
 		})
@@ -73,15 +80,35 @@ func TestResponseFailed(t *testing.T) {
 	})
 
 	t.Run("failed_chain_nil_value", func(t *testing.T) {
-		chain := newMockChain(t)
+		reporter := newMockReporter(t)
+		chain := newChainWithDefaults("test", reporter)
+		config := newMockConfig(reporter)
+
 		chain.fail(mockFailure())
 
 		resp := newResponse(responseOpts{
+			config:   config,
 			chain:    chain,
 			httpResp: nil,
 		})
 
 		check(resp)
+	})
+}
+
+func TestResponseConstructors(t *testing.T) {
+	t.Run("Constructor without config", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		resp := NewResponse(reporter, &http.Response{})
+		resp.chain.assertNotFailed(t)
+	})
+
+	t.Run("Constructor with config", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		resp := NewResponseC(Config{
+			Reporter: reporter,
+		}, &http.Response{})
+		resp.chain.assertNotFailed(t)
 	})
 }
 
@@ -1201,5 +1228,122 @@ func TestResponseContentOpts(t *testing.T) {
 			func(resp *Response, opts ContentOpts) *chain {
 				return resp.JSONP("cb", opts).chain
 			})
+	})
+}
+
+func TestResponseUsageChecks(t *testing.T) {
+	t.Run("NewResponse multiple rtt arguments", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		rtt := []time.Duration{time.Second, time.Second}
+		resp := NewResponse(reporter, &http.Response{}, rtt...)
+		resp.chain.assertFailed(t)
+	})
+
+	t.Run("ContentType multiple charset arguments", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		headers := map[string][]string{
+			"Content-Type": {"text/plain;charset=utf-8;charset=US-ASCII"},
+		}
+		resp := NewResponse(reporter, &http.Response{
+			Header: headers,
+		})
+		resp.ContentType("text/plain", "utf-8", "US-ASCII")
+		resp.chain.assertFailed(t)
+	})
+
+	t.Run("Text multiple arguments", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		header := map[string][]string{
+			"ContentType": {"text/plain"},
+		}
+		resp := NewResponse(reporter, &http.Response{
+			Header: header,
+		})
+		ContentOpts1 := ContentOpts{
+			MediaType: "text/plain",
+		}
+		ContentOpts2 := ContentOpts{
+			MediaType: "application/json",
+		}
+		resp.Text(ContentOpts1, ContentOpts2)
+		resp.chain.assertFailed(t)
+	})
+
+	t.Run("Form multiple arguments", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		headers := map[string][]string{
+			"Content-Type": {"application/x-www-form-urlencoded"},
+		}
+
+		body := `a=1&b=2`
+
+		httpResp := &http.Response{
+			StatusCode: http.StatusOK,
+			Header:     http.Header(headers),
+			Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+		}
+
+		resp := NewResponse(reporter, httpResp)
+		ContentOpts1 := ContentOpts{
+			MediaType: "text/plain",
+		}
+		ContentOpts2 := ContentOpts{
+			MediaType: "application/json",
+		}
+		resp.Form(ContentOpts1, ContentOpts2)
+		resp.chain.assertFailed(t)
+
+	})
+
+	t.Run("JSON multiple arguments", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		headers := map[string][]string{
+			"Content-Type": {"application/json; charset=utf-8"},
+		}
+
+		body := `{"key": "value"}`
+
+		httpResp := &http.Response{
+			StatusCode: http.StatusOK,
+			Header:     http.Header(headers),
+			Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+		}
+
+		resp := NewResponse(reporter, httpResp)
+		ContentOpts1 := ContentOpts{
+			MediaType: "text/plain",
+		}
+		ContentOpts2 := ContentOpts{
+			MediaType: "application/json",
+		}
+		resp.JSON(ContentOpts1, ContentOpts2)
+		resp.chain.assertFailed(t)
+	})
+
+	t.Run("JSONP multiple arguments", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		headers := map[string][]string{
+			"Content-Type": {"application/javascript; charset=utf-8"},
+		}
+
+		body1 := `foo({"key": "value"})`
+
+		httpResp := &http.Response{
+			StatusCode: http.StatusOK,
+			Header:     http.Header(headers),
+			Body:       ioutil.NopCloser(bytes.NewBufferString(body1)),
+		}
+
+		resp := NewResponse(reporter, httpResp)
+		ContentOpts1 := ContentOpts{
+			MediaType: "text/plain",
+		}
+		ContentOpts2 := ContentOpts{
+			MediaType: "application/json",
+		}
+		resp.JSONP("foo", ContentOpts1, ContentOpts2)
+		resp.chain.assertFailed(t)
 	})
 }

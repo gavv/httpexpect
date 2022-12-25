@@ -14,16 +14,34 @@ type Cookie struct {
 
 // NewCookie returns a new Cookie instance.
 //
-// reporter and value should not be nil.
+// If reporter is nil, the function panics.
+// If value is nil, failure is reported.
 //
 // Example:
 //
-//	cookie := NewCookie(reporter, &http.Cookie{...})
+//	cookie := NewCookie(t, &http.Cookie{...})
+//
 //	cookie.Domain().Equal("example.com")
 //	cookie.Path().Equal("/")
 //	cookie.Expires().InRange(time.Now(), time.Now().Add(time.Hour * 24))
 func NewCookie(reporter Reporter, value *http.Cookie) *Cookie {
 	return newCookie(newChainWithDefaults("Cookie()", reporter), value)
+}
+
+// NewCookieC returns a new Cookie instance with config.
+//
+// Requirements for config are same as for WithConfig function.
+// If value is nil, failure is reported.
+//
+// Example:
+//
+//	cookie := NewCookieC(config, &http.Cookie{...})
+//
+//	cookie.Domain().Equal("example.com")
+//	cookie.Path().Equal("/")
+//	cookie.Expires().InRange(time.Now(), time.Now().Add(time.Hour * 24))
+func NewCookieC(config Config, value *http.Cookie) *Cookie {
+	return newCookie(newChainWithConfig("Cookie()", config.withDefaults()), value)
 }
 
 func newCookie(parent *chain, val *http.Cookie) *Cookie {

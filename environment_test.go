@@ -9,6 +9,22 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestEnvironmentConstructors(t *testing.T) {
+	t.Run("Constructor without config", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		env := NewEnvironment(reporter)
+		env.chain.assertNotFailed(t)
+	})
+
+	t.Run("Constructor with config", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		env := NewEnvironmentC(Config{
+			Reporter: reporter,
+		})
+		env.chain.assertNotFailed(t)
+	})
+}
+
 func TestEnvironmentGeneric(t *testing.T) {
 	env := newEnvironment(newMockChain(t))
 

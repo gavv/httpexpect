@@ -15,7 +15,8 @@ type Value struct {
 
 // NewValue returns a new Value instance.
 //
-// reporter should not be nil, but value may be nil.
+// If reporter is nil, the function panics.
+// Value may be nil.
 //
 // Example:
 //
@@ -38,6 +39,34 @@ type Value struct {
 //	value.Null()
 func NewValue(reporter Reporter, value interface{}) *Value {
 	return newValue(newChainWithDefaults("Value()", reporter), value)
+}
+
+// NewValueC returns a new Value instance with config.
+//
+// Requirements for config are same as for WithConfig function.
+// Value may be nil.
+//
+// Example:
+//
+//	value := NewValueC(config, map[string]interface{}{"foo": 123})
+//	value.Object()
+//
+//	value := NewValueC(config, []interface{}{"foo", 123})
+//	value.Array()
+//
+//	value := NewValueC(config, "foo")
+//	value.String()
+//
+//	value := NewValueC(config, 123)
+//	value.Number()
+//
+//	value := NewValueC(config, true)
+//	value.Boolean()
+//
+//	value := NewValueC(config, nil)
+//	value.Null()
+func NewValueC(config Config, value interface{}) *Value {
+	return newValue(newChainWithConfig("Value()", config.withDefaults()), value)
 }
 
 func newValue(parent *chain, val interface{}) *Value {

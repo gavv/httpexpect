@@ -14,13 +14,24 @@ type Number struct {
 
 // NewNumber returns a new Number instance.
 //
-// reporter should not be nil.
+// If reporter is nil, the function panics.
 //
 // Example:
 //
 //	number := NewNumber(t, 123.4)
 func NewNumber(reporter Reporter, value float64) *Number {
 	return newNumber(newChainWithDefaults("Number()", reporter), value)
+}
+
+// NewNumberC returns a new Number instance with config.
+//
+// Requirements for config are same as for WithConfig function.
+//
+// Example:
+//
+//	number := NewNumberC(config, value)
+func NewNumberC(config Config, value float64) *Number {
+	return newNumber(newChainWithConfig("Number()", config.withDefaults()), value)
 }
 
 func newNumber(parent *chain, val float64) *Number {

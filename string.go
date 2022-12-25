@@ -20,13 +20,24 @@ type String struct {
 
 // NewString returns a new String instance.
 //
-// reporter should not be nil.
+// If reporter is nil, the function panics.
 //
 // Example:
 //
 //	str := NewString(t, "Hello")
 func NewString(reporter Reporter, value string) *String {
 	return newString(newChainWithDefaults("String()", reporter), value)
+}
+
+// NewStringC returns a new String instance with config.
+//
+// Requirements for config are same as for WithConfig function.
+//
+// Example:
+//
+//	str := NewStringC(config, value)
+func NewStringC(config Config, value string) *String {
+	return newString(newChainWithConfig("String", config.withDefaults()), value)
 }
 
 func newString(parent *chain, val string) *String {

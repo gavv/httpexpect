@@ -40,6 +40,26 @@ func TestValueFailed(t *testing.T) {
 	value.NotEqual(nil)
 }
 
+func TestValueConstructors(t *testing.T) {
+	t.Run("Constructor without config", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		value := NewValue(reporter, "Test")
+		value.Equal("Test")
+		value.chain.assertNotFailed(t)
+		value.String().chain.assertNotFailed(t)
+	})
+
+	t.Run("Constructor with config", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		value := NewValueC(Config{
+			Reporter: reporter,
+		}, "Test")
+		value.Equal("Test")
+		value.chain.assertNotFailed(t)
+		value.String().chain.assertNotFailed(t)
+	})
+}
+
 func TestValueCastNull(t *testing.T) {
 	reporter := newMockReporter(t)
 

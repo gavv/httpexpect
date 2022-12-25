@@ -14,13 +14,15 @@ type Match struct {
 
 // NewMatch returns a new Match instance.
 //
-// reporter should not be nil. submatches and names may be nil.
+// If reporter is nil, the function panics.
+// Both submatches and names may be nil.
 //
 // Example:
 //
 //	s := "http://example.com/users/john"
 //	r := regexp.MustCompile(`http://(?P<host>.+)/users/(?P<user>.+)`)
-//	m := NewMatch(reporter, r.FindStringSubmatch(s), r.SubexpNames())
+//
+//	m := NewMatch(t, r.FindStringSubmatch(s), r.SubexpNames())
 //
 //	m.NotEmpty()
 //	m.Length().Equal(3)
@@ -35,9 +37,33 @@ func NewMatch(reporter Reporter, submatches []string, names []string) *Match {
 	return newMatch(newChainWithDefaults("Match()", reporter), submatches, names)
 }
 
+// NewMatchC returns a new Match instance with config.
+//
+// Requirements for config are same as for WithConfig function.
+// Both submatches and names may be nil.
+//
+// Example:
+//
+//	s := "http://example.com/users/john"
+//	r := regexp.MustCompile(`http://(?P<host>.+)/users/(?P<user>.+)`)
+//
+//	m := NewMatchC(config, r.FindStringSubmatch(s), r.SubexpNames())
+//
+//	m.NotEmpty()
+//	m.Length().Equal(3)
+//
+//	m.Index(0).Equal("http://example.com/users/john")
+//	m.Index(1).Equal("example.com")
+//	m.Index(2).Equal("john")
+//
+//	m.Name("host").Equal("example.com")
+//	m.Name("user").Equal("john")
+func NewMatchC(config Config, submatches []string, names []string) *Match {
+	return newMatch(newChainWithConfig("Match()", config.withDefaults()), submatches, names)
+}
+
 func newMatch(parent *chain, matchList []string, nameList []string) *Match {
 	m := &Match{parent.clone(), nil, nil}
-
 	if matchList != nil {
 		m.submatches = matchList
 	} else {

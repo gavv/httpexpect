@@ -46,6 +46,8 @@ type chain struct {
 
 // Construct chain using config.
 func newChainWithConfig(name string, config Config) *chain {
+	config.validate()
+
 	c := &chain{
 		context:  AssertionContext{},
 		handler:  config.AssertionHandler,
@@ -72,6 +74,10 @@ func newChainWithConfig(name string, config Config) *chain {
 
 // Construct chain using DefaultAssertionHandler and provided Reporter.
 func newChainWithDefaults(name string, reporter Reporter) *chain {
+	if reporter == nil {
+		panic("Reporter is nil")
+	}
+
 	c := &chain{
 		context: AssertionContext{},
 		handler: &DefaultAssertionHandler{

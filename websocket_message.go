@@ -17,16 +17,48 @@ type WebsocketMessage struct {
 
 // NewWebsocketMessage returns a new WebsocketMessage instance.
 //
-// reporter should not be nil.
+// If reporter is nil, the function panics.
+// Content may be nil.
 //
 // Example:
 //
-//	m := NewWebsocketMessage(reporter, websocket.TextMessage, []byte("content"), 0)
+//	m := NewWebsocketMessage(t, websocket.TextMessage, []byte("content"), 0)
 //	m.TextMessage()
 func NewWebsocketMessage(
 	reporter Reporter, typ int, content []byte, closeCode ...int,
 ) *WebsocketMessage {
-	m := newWebsocketMessage(newChainWithDefaults("WebsocketMessage()", reporter))
+	return newWebsocketMessage(
+		newChainWithDefaults("WebsocketMessage()", reporter),
+		typ,
+		content,
+		closeCode...,
+	)
+}
+
+// NewWebsocketMessageC returns a new WebsocketMessage instance with config.
+//
+// Requirements for config are same as for WithConfig function.
+// Content may be nil.
+//
+// Example:
+//
+//	m := NewWebsocketMessageC(config, websocket.TextMessage, []byte("content"), 0)
+//	m.TextMessage()
+func NewWebsocketMessageC(
+	config Config, typ int, content []byte, closeCode ...int,
+) *WebsocketMessage {
+	return newWebsocketMessage(
+		newChainWithConfig("WebsocketMessage()", config.withDefaults()),
+		typ,
+		content,
+		closeCode...,
+	)
+}
+
+func newWebsocketMessage(
+	parent *chain, typ int, content []byte, closeCode ...int,
+) *WebsocketMessage {
+	m := newEmptyWebsocketMessage(parent)
 
 	m.typ = typ
 	m.content = content
@@ -38,7 +70,7 @@ func NewWebsocketMessage(
 	return m
 }
 
-func newWebsocketMessage(parent *chain) *WebsocketMessage {
+func newEmptyWebsocketMessage(parent *chain) *WebsocketMessage {
 	return &WebsocketMessage{
 		chain: parent.clone(),
 	}

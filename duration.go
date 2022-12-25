@@ -13,14 +13,26 @@ type Duration struct {
 
 // NewDuration returns a new Duration instance.
 //
-// reporter should not be nil.
+// If reporter is nil, the function panics.
 //
 // Example:
 //
-//	d := NewDuration(reporter, time.Second)
+//	d := NewDuration(t, time.Second)
 //	d.Le(time.Minute)
 func NewDuration(reporter Reporter, value time.Duration) *Duration {
 	return newDuration(newChainWithDefaults("Duration()", reporter), &value)
+}
+
+// NewDurationC returns a new Duration instance with config.
+//
+// Requirements for config are same as for WithConfig function.
+//
+// Example:
+//
+//	d := NewDurationC(config, time.Second)
+//	d.Le(time.Minute)
+func NewDurationC(config Config, value time.Duration) *Duration {
+	return newDuration(newChainWithConfig("Duration()", config.withDefaults()), &value)
 }
 
 func newDuration(parent *chain, val *time.Duration) *Duration {

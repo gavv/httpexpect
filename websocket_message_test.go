@@ -11,7 +11,7 @@ func TestWebsocketMessageFailed(t *testing.T) {
 	chain := newMockChain(t)
 	chain.fail(mockFailure())
 
-	msg := newWebsocketMessage(chain)
+	msg := newEmptyWebsocketMessage(chain)
 
 	msg.Raw()
 	msg.CloseMessage()
@@ -30,10 +30,28 @@ func TestWebsocketMessageFailed(t *testing.T) {
 	msg.JSON().chain.assertFailed(t)
 }
 
+func TestWebsocketMessageConstructors(t *testing.T) {
+	t.Run("Constructor without config", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		msg := NewWebsocketMessage(reporter, websocket.CloseMessage, nil)
+		msg.CloseMessage()
+		msg.chain.assertNotFailed(t)
+	})
+
+	t.Run("Constructor with config", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		msg := NewWebsocketMessageC(Config{
+			Reporter: reporter,
+		}, websocket.CloseMessage, nil)
+		msg.CloseMessage()
+		msg.chain.assertNotFailed(t)
+	})
+}
+
 func TestWebsocketMessageBadUsage(t *testing.T) {
 	chain := newMockChain(t)
 
-	msg := newWebsocketMessage(chain)
+	msg := newEmptyWebsocketMessage(chain)
 
 	msg.chain.assertNotFailed(t)
 

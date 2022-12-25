@@ -13,17 +13,32 @@ type DateTime struct {
 
 // NewDateTime returns a new DateTime instance.
 //
-// reporter should not be nil.
+// If reporter is nil, the function panics.
 //
 // Example:
 //
-//	dt := NewDateTime(reporter, time.Now())
+//	dt := NewDateTime(t, time.Now())
 //	dt.Le(time.Now())
 //
 //	time.Sleep(time.Second)
 //	dt.Lt(time.Now())
 func NewDateTime(reporter Reporter, value time.Time) *DateTime {
 	return newDateTime(newChainWithDefaults("DateTime()", reporter), value)
+}
+
+// NewDateTimeC returns a new DateTime instance with config.
+//
+// Requirements for config are same as for WithConfig function.
+//
+// Example:
+//
+//	dt := NewDateTimeC(config, time.Now())
+//	dt.Le(time.Now())
+//
+//	time.Sleep(time.Second)
+//	dt.Lt(time.Now())
+func NewDateTimeC(config Config, value time.Time) *DateTime {
+	return newDateTime(newChainWithConfig("DateTime()", config.withDefaults()), value)
 }
 
 func newDateTime(parent *chain, val time.Time) *DateTime {

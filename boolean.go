@@ -13,13 +13,24 @@ type Boolean struct {
 
 // NewBoolean returns a new Boolean instance.
 //
-// reporter should not be nil.
+// If reporter is nil, the function panics.
 //
 // Example:
 //
 //	boolean := NewBoolean(t, true)
 func NewBoolean(reporter Reporter, value bool) *Boolean {
 	return newBoolean(newChainWithDefaults("Boolean()", reporter), value)
+}
+
+// NewBooleanC returns a new Boolean instance with config.
+//
+// Requirements for config are same as for WithConfig function.
+//
+// Example:
+//
+//	boolean := NewBooleanC(config, true)
+func NewBooleanC(config Config, value bool) *Boolean {
+	return newBoolean(newChainWithConfig("Boolean()", config.withDefaults()), value)
 }
 
 func newBoolean(parent *chain, val bool) *Boolean {
