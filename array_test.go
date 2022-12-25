@@ -122,6 +122,23 @@ func TestArrayGetters(t *testing.T) {
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 }
+func TestArrayConstructors(t *testing.T) {
+	testValue := []interface{}{"Foo", 123}
+	t.Run("Constructor without config", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		value := NewArray(reporter, testValue)
+		value.chain.assertNotFailed(t)
+		value.Equal(testValue)
+	})
+	t.Run("Constructor with config", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		value := NewArrayC(Config{
+			Reporter: reporter,
+		}, testValue)
+		value.chain.assertNotFailed(t)
+		value.Equal(testValue)
+	})
+}
 
 func TestArrayEmpty(t *testing.T) {
 	reporter := newMockReporter(t)

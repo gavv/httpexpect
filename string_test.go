@@ -46,6 +46,23 @@ func TestStringFailed(t *testing.T) {
 	value.NotIsASCII()
 }
 
+func TestStringConstructors(t *testing.T) {
+	t.Run("Constructor without config", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		value := NewString(reporter, "Hello")
+		value.chain.assertNotFailed(t)
+		value.Equal("Hello")
+	})
+	t.Run("Constructor with config", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		value := NewStringC(Config{
+			Reporter: reporter,
+		}, "Hello")
+		value.chain.assertNotFailed(t)
+		value.Equal("Hello")
+	})
+}
+
 func TestStringGetters(t *testing.T) {
 	reporter := newMockReporter(t)
 

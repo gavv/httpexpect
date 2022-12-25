@@ -24,6 +24,25 @@ func TestDurationFailed(t *testing.T) {
 	value.NotInRange(tm, tm)
 }
 
+func TestDurationConstructors(t *testing.T) {
+	tm := time.Second
+	t.Run("Constructor without config", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		value := NewDuration(reporter, tm)
+		value.chain.assertNotFailed(t)
+		value.Equal(tm)
+	})
+	t.Run("Constructor with config", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		value := NewDurationC(Config{
+			Reporter: reporter,
+		}, tm)
+		value.chain.assertNotFailed(t)
+		value.Equal(tm)
+	})
+
+}
+
 func TestDurationSet(t *testing.T) {
 	chain := newMockChain(t)
 
