@@ -43,6 +43,8 @@ func NewWebsocket(config Config, conn WebsocketConn) *Websocket {
 }
 
 // NewWebsocketC returns a new Websocket instance.
+//
+// Requirements for config are same as for WithConfig function.
 func NewWebsocketC(config Config, conn WebsocketConn) *Websocket {
 	config = config.withDefaults()
 

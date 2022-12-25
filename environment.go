@@ -19,7 +19,7 @@ type Environment struct {
 
 // NewEnvironment returns a new Environment.
 //
-// Reporter should not be nil.
+// If reporter is nil, the function panics.
 //
 // Example:
 //

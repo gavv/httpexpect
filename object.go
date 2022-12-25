@@ -16,8 +16,8 @@ type Object struct {
 
 // NewObject returns a new Object instance.
 //
-// Both reporter and value should not be nil. If value is nil, failure is
-// reported.
+// If reporter is nil, the function panics.
+// If value is nil, failure is reported.
 //
 // Example:
 //
@@ -29,6 +29,7 @@ func NewObject(reporter Reporter, value map[string]interface{}) *Object {
 // NewObjectC returns a new Object instance with config.
 //
 // Requirements for config are same as for WithConfig function.
+// If value is nil, failure is reported.
 //
 // Example:
 //

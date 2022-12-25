@@ -33,8 +33,8 @@ type Response struct {
 
 // NewResponse returns a new Response instance.
 //
-// Both reporter and response should not be nil. If response is nil,
-// failure is reported.
+// If reporter is nil, the function panics.
+// If response is nil, failure is reported.
 //
 // If rtt is given, it defines response round-trip time to be reported
 // by response.RoundTripTime().
@@ -55,7 +55,7 @@ func NewResponse(
 // NewResponse returns a new Response instance with config.
 //
 // Requirements for config are same as for WithConfig function.
-// Response should not be nil.
+// If response is nil, failure is reported.
 //
 // If rtt is given, it defines response round-trip time to be reported
 // by response.RoundTripTime().

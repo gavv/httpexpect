@@ -14,7 +14,8 @@ type Cookie struct {
 
 // NewCookie returns a new Cookie instance.
 //
-// reporter and value should not be nil.
+// If reporter is nil, the function panics.
+// If value is nil, failure is reported.
 //
 // Example:
 //
@@ -30,6 +31,7 @@ func NewCookie(reporter Reporter, value *http.Cookie) *Cookie {
 // NewCookieC returns a new Cookie instance with config.
 //
 // Requirements for config are same as for WithConfig function.
+// If value is nil, failure is reported.
 //
 // Example:
 //

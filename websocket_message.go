@@ -17,7 +17,8 @@ type WebsocketMessage struct {
 
 // NewWebsocketMessage returns a new WebsocketMessage instance.
 //
-// reporter should not be nil.
+// If reporter is nil, the function panics.
+// Content may be nil.
 //
 // Example:
 //
@@ -37,6 +38,7 @@ func NewWebsocketMessage(
 // NewWebsocketMessageC returns a new WebsocketMessage instance with config.
 //
 // Requirements for config are same as for WithConfig function.
+// Content may be nil.
 //
 // Example:
 //

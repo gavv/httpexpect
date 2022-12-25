@@ -14,7 +14,7 @@ type Number struct {
 
 // NewNumber returns a new Number instance.
 //
-// reporter should not be nil.
+// If reporter is nil, the function panics.
 //
 // Example:
 //

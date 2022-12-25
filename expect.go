@@ -382,7 +382,8 @@ func Default(t TestingTB, baseURL string) *Expect {
 
 // WithConfig returns a new Expect instance with custom config.
 //
-// Either Reporter or AssertionHandler should not be nil.
+// Either Reporter or AssertionHandler should not be nil,
+// otherwise the function panics.
 //
 // Example:
 //

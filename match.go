@@ -14,7 +14,8 @@ type Match struct {
 
 // NewMatch returns a new Match instance.
 //
-// reporter should not be nil. submatches and names may be nil.
+// If reporter is nil, the function panics.
+// Both submatches and names may be nil.
 //
 // Example:
 //
@@ -39,6 +40,7 @@ func NewMatch(reporter Reporter, submatches []string, names []string) *Match {
 // NewMatchC returns a new Match instance with config.
 //
 // Requirements for config are same as for WithConfig function.
+// Both submatches and names may be nil.
 //
 // Example:
 //

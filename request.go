@@ -67,6 +67,8 @@ func NewRequest(config Config, method, path string, pathargs ...interface{}) *Re
 
 // NewRequestC returns a new Request instance.
 //
+// Requirements for config are same as for WithConfig function.
+//
 // method defines the HTTP method (GET, POST, PUT, etc.). path defines url path.
 //
 // Simple interpolation is allowed for {named} parameters in path:

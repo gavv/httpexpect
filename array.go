@@ -15,8 +15,8 @@ type Array struct {
 
 // NewArray returns a new Array instance.
 //
-// Both reporter and value should not be nil. If value is nil, failure is
-// reported.
+// If reporter is nil, the function panics.
+// If value is nil, failure is reported.
 //
 // Example:
 //
@@ -28,6 +28,7 @@ func NewArray(reporter Reporter, value []interface{}) *Array {
 // NewArrayC returns a new Array instance with config.
 //
 // Requirements for config are same as for WithConfig function.
+// If value is nil, failure is reported.
 //
 // Example:
 //

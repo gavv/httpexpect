@@ -15,7 +15,8 @@ type Value struct {
 
 // NewValue returns a new Value instance.
 //
-// reporter should not be nil, but value may be nil.
+// If reporter is nil, the function panics.
+// Value may be nil.
 //
 // Example:
 //
@@ -43,6 +44,7 @@ func NewValue(reporter Reporter, value interface{}) *Value {
 // NewValueC returns a new Value instance with config.
 //
 // Requirements for config are same as for WithConfig function.
+// Value may be nil.
 //
 // Example:
 //
