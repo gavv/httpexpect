@@ -277,21 +277,21 @@ func (f *DefaultFormatter) fillExpected(
 		data.HaveExpected = true
 		data.ExpectedKind = kindSchema
 		data.Expected = []string{
-			formatString(failure.Expected.Value),
+			formatBareString(failure.Expected.Value),
 		}
 
 	case AssertMatchPath, AssertNotMatchPath:
 		data.HaveExpected = true
 		data.ExpectedKind = kindPath
 		data.Expected = []string{
-			formatString(failure.Expected.Value),
+			formatBareString(failure.Expected.Value),
 		}
 
 	case AssertMatchRegexp, AssertNotMatchRegexp:
 		data.HaveExpected = true
 		data.ExpectedKind = kindRegexp
 		data.Expected = []string{
-			formatString(failure.Expected.Value),
+			formatBareString(failure.Expected.Value),
 		}
 
 	case AssertMatchFormat, AssertNotMatchFormat:
@@ -417,7 +417,7 @@ func formatValue(value interface{}) string {
 	return sq.Sdump(value)
 }
 
-func formatString(value interface{}) string {
+func formatBareString(value interface{}) string {
 	switch v := value.(type) {
 	case string:
 		return v
@@ -541,6 +541,7 @@ func isNil(value interface{}) bool {
 	return value == nil || reflect.ValueOf(value).IsNil()
 }
 
+// For number types other than float32 and float64
 func isNumber(value interface{}) bool {
 	defer func() {
 		_ = recover()
