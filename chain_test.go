@@ -128,6 +128,12 @@ func TestChainPath(t *testing.T) {
 }
 
 func TestChainPanics(t *testing.T) {
+	t.Run("nil reporter", func(t *testing.T) {
+		assert.Panics(t, func() {
+			_ = newChainWithDefaults("test", nil)
+		})
+	})
+
 	t.Run("unpaired leave", func(t *testing.T) {
 		chain := newChainWithDefaults("", newMockReporter(t))
 
