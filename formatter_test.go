@@ -98,7 +98,19 @@ func TestFormatDataFailureActual(t *testing.T) {
 	df := &DefaultFormatter{}
 	ctx := &AssertionContext{}
 
-	t.Run("assert type integer", func(t *testing.T) {
+	t.Run("AssertType nil", func(t *testing.T) {
+		fl := &AssertionFailure{
+			Type: AssertType,
+			Actual: &AssertionValue{
+				Value: nil,
+			},
+		}
+		fd := df.buildFormatData(ctx, fl)
+		assert.True(t, fd.HaveActual)
+		assert.Equal(t, "<nil>(<nil>)", fd.Actual)
+	})
+
+	t.Run("AssertType int", func(t *testing.T) {
 		fl := &AssertionFailure{
 			Type: AssertType,
 			Actual: &AssertionValue{
@@ -111,7 +123,7 @@ func TestFormatDataFailureActual(t *testing.T) {
 
 	})
 
-	t.Run("assert type float32", func(t *testing.T) {
+	t.Run("AssertType float32", func(t *testing.T) {
 		fl := &AssertionFailure{
 			Type: AssertType,
 			Actual: &AssertionValue{
@@ -123,7 +135,7 @@ func TestFormatDataFailureActual(t *testing.T) {
 		assert.Equal(t, "float32(1e+06)", fd.Actual)
 	})
 
-	t.Run("assert type float64", func(t *testing.T) {
+	t.Run("AssertType float64", func(t *testing.T) {
 		fl := &AssertionFailure{
 			Type: AssertType,
 			Actual: &AssertionValue{
@@ -135,7 +147,7 @@ func TestFormatDataFailureActual(t *testing.T) {
 		assert.Equal(t, "float64(1e+06)", fd.Actual)
 	})
 
-	t.Run("assert type string", func(t *testing.T) {
+	t.Run("AssertType string", func(t *testing.T) {
 		fl := &AssertionFailure{
 			Type: AssertType,
 			Actual: &AssertionValue{
@@ -147,7 +159,7 @@ func TestFormatDataFailureActual(t *testing.T) {
 		assert.Equal(t, "string(\"value string\")", fd.Actual)
 	})
 
-	t.Run("assert type object", func(t *testing.T) {
+	t.Run("AssertType object", func(t *testing.T) {
 		obj := struct{ Name string }{"testName"}
 		fl := &AssertionFailure{
 			Type: AssertType,
@@ -169,238 +181,291 @@ func TestFormatDataFailureExpected(t *testing.T) {
 	df := &DefaultFormatter{}
 	ctx := &AssertionContext{}
 
-	t.Run("assert in range integer", func(t *testing.T) {
-		fl := &AssertionFailure{
-			Type: AssertInRange,
-			Expected: &AssertionValue{
-				Value: AssertionRange{
-					Min: int(1_000_000),
-					Max: int(2_000_000),
+	t.Run("AssertInRange", func(t *testing.T) {
+		t.Run("nil", func(t *testing.T) {
+			fl := &AssertionFailure{
+				Type: AssertInRange,
+				Expected: &AssertionValue{
+					Value: AssertionRange{
+						Min: nil,
+						Max: nil,
+					},
 				},
-			},
-		}
-		fd := df.buildFormatData(ctx, fl)
-		assert.True(t, fd.HaveExpected)
-		assert.Equal(t, kindRange, fd.ExpectedKind)
-		assert.Equal(t, []string{"[1000000; 2000000]"}, fd.Expected)
-	})
+			}
+			fd := df.buildFormatData(ctx, fl)
+			assert.True(t, fd.HaveExpected)
+			assert.Equal(t, kindRange, fd.ExpectedKind)
+			assert.Equal(t, []string{"<nil>", "<nil>"}, fd.Expected)
+		})
 
-	t.Run("assert in range float32", func(t *testing.T) {
-		fl := &AssertionFailure{
-			Type: AssertInRange,
-			Expected: &AssertionValue{
-				Value: AssertionRange{
-					Min: float32(1_000_000),
-					Max: float32(2_000_000),
+		t.Run("int", func(t *testing.T) {
+			fl := &AssertionFailure{
+				Type: AssertInRange,
+				Expected: &AssertionValue{
+					Value: AssertionRange{
+						Min: int(1_000_000),
+						Max: int(2_000_000),
+					},
 				},
-			},
-		}
-		fd := df.buildFormatData(ctx, fl)
-		assert.True(t, fd.HaveExpected)
-		assert.Equal(t, kindRange, fd.ExpectedKind)
-		assert.Equal(t, []string{"[1e+06; 2e+06]"}, fd.Expected)
-	})
+			}
+			fd := df.buildFormatData(ctx, fl)
+			assert.True(t, fd.HaveExpected)
+			assert.Equal(t, kindRange, fd.ExpectedKind)
+			assert.Equal(t, []string{"[1000000; 2000000]"}, fd.Expected)
+		})
 
-	t.Run("assert in range float64", func(t *testing.T) {
-		fl := &AssertionFailure{
-			Type: AssertInRange,
-			Expected: &AssertionValue{
-				Value: AssertionRange{
-					Min: float64(1_000_000),
-					Max: float64(2_000_000),
+		t.Run("float32", func(t *testing.T) {
+			fl := &AssertionFailure{
+				Type: AssertInRange,
+				Expected: &AssertionValue{
+					Value: AssertionRange{
+						Min: float32(1_000_000),
+						Max: float32(2_000_000),
+					},
 				},
-			},
-		}
-		fd := df.buildFormatData(ctx, fl)
-		assert.True(t, fd.HaveExpected)
-		assert.Equal(t, kindRange, fd.ExpectedKind)
-		assert.Equal(t, []string{"[1e+06; 2e+06]"}, fd.Expected)
-	})
+			}
+			fd := df.buildFormatData(ctx, fl)
+			assert.True(t, fd.HaveExpected)
+			assert.Equal(t, kindRange, fd.ExpectedKind)
+			assert.Equal(t, []string{"[1e+06; 2e+06]"}, fd.Expected)
+		})
 
-	t.Run("assert in range string", func(t *testing.T) {
-		fl := &AssertionFailure{
-			Type: AssertInRange,
-			Expected: &AssertionValue{
-				Value: AssertionRange{
-					Min: "string 1",
-					Max: "string 2",
+		t.Run("float64", func(t *testing.T) {
+			fl := &AssertionFailure{
+				Type: AssertInRange,
+				Expected: &AssertionValue{
+					Value: AssertionRange{
+						Min: float64(1_000_000),
+						Max: float64(2_000_000),
+					},
 				},
-			},
-		}
-		fd := df.buildFormatData(ctx, fl)
-		assert.True(t, fd.HaveExpected)
-		assert.Equal(t, kindRange, fd.ExpectedKind)
-		assert.Equal(t, []string{"string 1", "string 2"}, fd.Expected)
-	})
+			}
+			fd := df.buildFormatData(ctx, fl)
+			assert.True(t, fd.HaveExpected)
+			assert.Equal(t, kindRange, fd.ExpectedKind)
+			assert.Equal(t, []string{"[1e+06; 2e+06]"}, fd.Expected)
+		})
 
-	t.Run("assert in range object", func(t *testing.T) {
-		obj1 := struct{ Name string }{"testName1"}
-		obj2 := struct{ Name string }{"testName2"}
-		fl := &AssertionFailure{
-			Type: AssertInRange,
-			Expected: &AssertionValue{
-				Value: AssertionRange{
-					Min: obj1,
-					Max: obj2,
+		t.Run("string", func(t *testing.T) {
+			fl := &AssertionFailure{
+				Type: AssertInRange,
+				Expected: &AssertionValue{
+					Value: AssertionRange{
+						Min: "string 1",
+						Max: "string 2",
+					},
 				},
-			},
-		}
-		fd := df.buildFormatData(ctx, fl)
-		assert.True(t, fd.HaveExpected)
-		assert.Equal(t, kindRange, fd.ExpectedKind)
-		assert.Equal(t, []string{"{testName1}", "{testName2}"}, fd.Expected)
-	})
+			}
+			fd := df.buildFormatData(ctx, fl)
+			assert.True(t, fd.HaveExpected)
+			assert.Equal(t, kindRange, fd.ExpectedKind)
+			assert.Equal(t, []string{"string 1", "string 2"}, fd.Expected)
+		})
 
-	t.Run("assert match path integer", func(t *testing.T) {
-		fl := &AssertionFailure{
-			Type: AssertMatchPath,
-			Expected: &AssertionValue{
-				Value: int(1_000_000),
-			},
-		}
-		fd := df.buildFormatData(ctx, fl)
-		assert.True(t, fd.HaveExpected)
-		assert.Equal(t, kindPath, fd.ExpectedKind)
-		assert.Equal(t, []string{"1000000"}, fd.Expected)
-	})
-
-	t.Run("assert match path float32", func(t *testing.T) {
-		fl := &AssertionFailure{
-			Type: AssertMatchPath,
-			Expected: &AssertionValue{
-				Value: float32(1_000_000),
-			},
-		}
-		fd := df.buildFormatData(ctx, fl)
-		assert.True(t, fd.HaveExpected)
-		assert.Equal(t, kindPath, fd.ExpectedKind)
-		assert.Equal(t, []string{"1000000"}, fd.Expected)
-	})
-
-	t.Run("assert match path float64", func(t *testing.T) {
-		fl := &AssertionFailure{
-			Type: AssertMatchPath,
-			Expected: &AssertionValue{
-				Value: float64(1_000_000),
-			},
-		}
-		fd := df.buildFormatData(ctx, fl)
-		assert.True(t, fd.HaveExpected)
-		assert.Equal(t, kindPath, fd.ExpectedKind)
-		assert.Equal(t, []string{"1000000"}, fd.Expected)
-	})
-
-	t.Run("assert match path string", func(t *testing.T) {
-		fl := &AssertionFailure{
-			Type: AssertMatchPath,
-			Expected: &AssertionValue{
-				Value: "match path string",
-			},
-		}
-		fd := df.buildFormatData(ctx, fl)
-		assert.True(t, fd.HaveExpected)
-		assert.Equal(t, kindPath, fd.ExpectedKind)
-		assert.Equal(t, []string{"match path string"}, fd.Expected)
-	})
-
-	t.Run("assert match path object", func(t *testing.T) {
-		obj := struct{ Name string }{"testName"}
-		fl := &AssertionFailure{
-			Type: AssertMatchPath,
-			Expected: &AssertionValue{
-				Value: obj,
-			},
-		}
-		fd := df.buildFormatData(ctx, fl)
-		assert.True(t, fd.HaveExpected)
-		assert.Equal(t, kindPath, fd.ExpectedKind)
-		assert.Equal(t, []string{"{\n  \"Name\": \"testName\"\n}"}, fd.Expected)
-	})
-
-	t.Run("assert match format list integer", func(t *testing.T) {
-		fl := &AssertionFailure{
-			Type: AssertMatchFormat,
-			Expected: &AssertionValue{
-				Value: AssertionList{
-					int(1_000_000),
-					int(2_000_000),
+		t.Run("object", func(t *testing.T) {
+			obj1 := struct{ Name string }{"testName1"}
+			obj2 := struct{ Name string }{"testName2"}
+			fl := &AssertionFailure{
+				Type: AssertInRange,
+				Expected: &AssertionValue{
+					Value: AssertionRange{
+						Min: obj1,
+						Max: obj2,
+					},
 				},
-			},
-		}
-		fd := df.buildFormatData(ctx, fl)
-		assert.True(t, fd.HaveExpected)
-		assert.Equal(t, kindFormatList, fd.ExpectedKind)
-		assert.Equal(t, []string{"1000000", "2000000"}, fd.Expected)
+			}
+			fd := df.buildFormatData(ctx, fl)
+			assert.True(t, fd.HaveExpected)
+			assert.Equal(t, kindRange, fd.ExpectedKind)
+			assert.Equal(t, []string{"{testName1}", "{testName2}"}, fd.Expected)
+		})
+
 	})
 
-	t.Run("assert match format list float32", func(t *testing.T) {
-		fl := &AssertionFailure{
-			Type: AssertMatchFormat,
-			Expected: &AssertionValue{
-				Value: AssertionList{
-					float32(1_000_000),
-					float32(2_000_000),
+	t.Run("AssertMatchPath", func(t *testing.T) {
+		t.Run("nil", func(t *testing.T) {
+			fl := &AssertionFailure{
+				Type: AssertMatchPath,
+				Expected: &AssertionValue{
+					Value: nil,
 				},
-			},
-		}
-		fd := df.buildFormatData(ctx, fl)
-		assert.True(t, fd.HaveExpected)
-		assert.Equal(t, kindFormatList, fd.ExpectedKind)
-		assert.Equal(t, []string{"1000000", "2000000"}, fd.Expected)
+			}
+			fd := df.buildFormatData(ctx, fl)
+			assert.True(t, fd.HaveExpected)
+			assert.Equal(t, kindPath, fd.ExpectedKind)
+			assert.Equal(t, []string{"nil"}, fd.Expected)
+		})
+
+		t.Run("int", func(t *testing.T) {
+			fl := &AssertionFailure{
+				Type: AssertMatchPath,
+				Expected: &AssertionValue{
+					Value: int(1_000_000),
+				},
+			}
+			fd := df.buildFormatData(ctx, fl)
+			assert.True(t, fd.HaveExpected)
+			assert.Equal(t, kindPath, fd.ExpectedKind)
+			assert.Equal(t, []string{"1000000"}, fd.Expected)
+		})
+
+		t.Run("float32", func(t *testing.T) {
+			fl := &AssertionFailure{
+				Type: AssertMatchPath,
+				Expected: &AssertionValue{
+					Value: float32(1_000_000),
+				},
+			}
+			fd := df.buildFormatData(ctx, fl)
+			assert.True(t, fd.HaveExpected)
+			assert.Equal(t, kindPath, fd.ExpectedKind)
+			assert.Equal(t, []string{"1e+06"}, fd.Expected)
+		})
+
+		t.Run("float64", func(t *testing.T) {
+			fl := &AssertionFailure{
+				Type: AssertMatchPath,
+				Expected: &AssertionValue{
+					Value: float64(1_000_000),
+				},
+			}
+			fd := df.buildFormatData(ctx, fl)
+			assert.True(t, fd.HaveExpected)
+			assert.Equal(t, kindPath, fd.ExpectedKind)
+			assert.Equal(t, []string{"1e+06"}, fd.Expected)
+		})
+
+		t.Run("string", func(t *testing.T) {
+			fl := &AssertionFailure{
+				Type: AssertMatchPath,
+				Expected: &AssertionValue{
+					Value: "match path string",
+				},
+			}
+			fd := df.buildFormatData(ctx, fl)
+			assert.True(t, fd.HaveExpected)
+			assert.Equal(t, kindPath, fd.ExpectedKind)
+			assert.Equal(t, []string{"match path string"}, fd.Expected)
+		})
+
+		t.Run("object", func(t *testing.T) {
+			obj := struct{ Name string }{"testName"}
+			fl := &AssertionFailure{
+				Type: AssertMatchPath,
+				Expected: &AssertionValue{
+					Value: obj,
+				},
+			}
+			fd := df.buildFormatData(ctx, fl)
+			assert.True(t, fd.HaveExpected)
+			assert.Equal(t, kindPath, fd.ExpectedKind)
+			assert.Equal(t, []string{"{\n  \"Name\": \"testName\"\n}"}, fd.Expected)
+		})
+
 	})
 
-	t.Run("assert match format list float64", func(t *testing.T) {
-		fl := &AssertionFailure{
-			Type: AssertMatchFormat,
-			Expected: &AssertionValue{
-				Value: AssertionList{
-					float64(1_000_000),
-					float64(2_000_000),
+	t.Run("AssertMatchFormat", func(t *testing.T) {
+		t.Run("int", func(t *testing.T) {
+			fl := &AssertionFailure{
+				Type: AssertMatchFormat,
+				Expected: &AssertionValue{
+					Value: AssertionList{
+						nil,
+						nil,
+					},
 				},
-			},
-		}
-		fd := df.buildFormatData(ctx, fl)
-		assert.True(t, fd.HaveExpected)
-		assert.Equal(t, kindFormatList, fd.ExpectedKind)
-		assert.Equal(t, []string{"1000000", "2000000"}, fd.Expected)
-	})
+			}
+			fd := df.buildFormatData(ctx, fl)
+			assert.True(t, fd.HaveExpected)
+			assert.Equal(t, kindFormatList, fd.ExpectedKind)
+			assert.Equal(t, []string{"nil", "nil"}, fd.Expected)
+		})
 
-	t.Run("assert match format list string", func(t *testing.T) {
-		fl := &AssertionFailure{
-			Type: AssertMatchFormat,
-			Expected: &AssertionValue{
-				Value: AssertionList{
-					"string 1",
-					"string 2",
+		t.Run("int", func(t *testing.T) {
+			fl := &AssertionFailure{
+				Type: AssertMatchFormat,
+				Expected: &AssertionValue{
+					Value: AssertionList{
+						int(1_000_000),
+						int(2_000_000),
+					},
 				},
-			},
-		}
-		fd := df.buildFormatData(ctx, fl)
-		assert.True(t, fd.HaveExpected)
-		assert.Equal(t, kindFormatList, fd.ExpectedKind)
-		assert.Equal(t, []string{"\"string 1\"", "\"string 2\""}, fd.Expected)
-	})
+			}
+			fd := df.buildFormatData(ctx, fl)
+			assert.True(t, fd.HaveExpected)
+			assert.Equal(t, kindFormatList, fd.ExpectedKind)
+			assert.Equal(t, []string{"1000000", "2000000"}, fd.Expected)
+		})
 
-	t.Run("assert match format list object", func(t *testing.T) {
-		obj1 := struct{ Name string }{"testName1"}
-		obj2 := struct{ Name string }{"testName2"}
-		fl := &AssertionFailure{
-			Type: AssertMatchFormat,
-			Expected: &AssertionValue{
-				Value: AssertionList{
-					obj1,
-					obj2,
+		t.Run("float32", func(t *testing.T) {
+			fl := &AssertionFailure{
+				Type: AssertMatchFormat,
+				Expected: &AssertionValue{
+					Value: AssertionList{
+						float32(1_000_000),
+						float32(2_000_000),
+					},
 				},
-			},
-		}
-		fd := df.buildFormatData(ctx, fl)
-		assert.True(t, fd.HaveExpected)
-		assert.Equal(t, kindFormatList, fd.ExpectedKind)
-		assert.Equal(
-			t,
-			[]string{"{\n  \"Name\": \"testName1\"\n}", "{\n  \"Name\": \"testName2\"\n}"},
-			fd.Expected,
-		)
+			}
+			fd := df.buildFormatData(ctx, fl)
+			assert.True(t, fd.HaveExpected)
+			assert.Equal(t, kindFormatList, fd.ExpectedKind)
+			assert.Equal(t, []string{"1e+06", "2e+06"}, fd.Expected)
+		})
+
+		t.Run("float64", func(t *testing.T) {
+			fl := &AssertionFailure{
+				Type: AssertMatchFormat,
+				Expected: &AssertionValue{
+					Value: AssertionList{
+						float64(1_000_000),
+						float64(2_000_000),
+					},
+				},
+			}
+			fd := df.buildFormatData(ctx, fl)
+			assert.True(t, fd.HaveExpected)
+			assert.Equal(t, kindFormatList, fd.ExpectedKind)
+			assert.Equal(t, []string{"1e+06", "2e+06"}, fd.Expected)
+		})
+
+		t.Run("string", func(t *testing.T) {
+			fl := &AssertionFailure{
+				Type: AssertMatchFormat,
+				Expected: &AssertionValue{
+					Value: AssertionList{
+						"string 1",
+						"string 2",
+					},
+				},
+			}
+			fd := df.buildFormatData(ctx, fl)
+			assert.True(t, fd.HaveExpected)
+			assert.Equal(t, kindFormatList, fd.ExpectedKind)
+			assert.Equal(t, []string{"\"string 1\"", "\"string 2\""}, fd.Expected)
+		})
+
+		t.Run("object", func(t *testing.T) {
+			obj1 := struct{ Name string }{"testName1"}
+			obj2 := struct{ Name string }{"testName2"}
+			fl := &AssertionFailure{
+				Type: AssertMatchFormat,
+				Expected: &AssertionValue{
+					Value: AssertionList{
+						obj1,
+						obj2,
+					},
+				},
+			}
+			fd := df.buildFormatData(ctx, fl)
+			assert.True(t, fd.HaveExpected)
+			assert.Equal(t, kindFormatList, fd.ExpectedKind)
+			assert.Equal(
+				t,
+				[]string{"{\n  \"Name\": \"testName1\"\n}", "{\n  \"Name\": \"testName2\"\n}"},
+				fd.Expected,
+			)
+		})
 	})
 }
 
@@ -408,7 +473,18 @@ func TestFormatDataFailureReference(t *testing.T) {
 	df := &DefaultFormatter{}
 	ctx := &AssertionContext{}
 
-	t.Run("integer", func(t *testing.T) {
+	t.Run("nil", func(t *testing.T) {
+		fl := &AssertionFailure{
+			Reference: &AssertionValue{
+				Value: nil,
+			},
+		}
+		fd := df.buildFormatData(ctx, fl)
+		assert.True(t, fd.HaveReference)
+		assert.Equal(t, "nil", fd.Reference)
+	})
+
+	t.Run("int", func(t *testing.T) {
 		fl := &AssertionFailure{
 			Reference: &AssertionValue{
 				Value: int(1_000_000),
@@ -427,7 +503,7 @@ func TestFormatDataFailureReference(t *testing.T) {
 		}
 		fd := df.buildFormatData(ctx, fl)
 		assert.True(t, fd.HaveReference)
-		assert.Equal(t, "1000000", fd.Reference)
+		assert.Equal(t, "1e+06", fd.Reference)
 
 	})
 
@@ -439,7 +515,7 @@ func TestFormatDataFailureReference(t *testing.T) {
 		}
 		fd := df.buildFormatData(ctx, fl)
 		assert.True(t, fd.HaveReference)
-		assert.Equal(t, "1000000", fd.Reference)
+		assert.Equal(t, "1e+06", fd.Reference)
 	})
 
 	t.Run("string", func(t *testing.T) {
@@ -470,7 +546,18 @@ func TestFormatDataFailureDelta(t *testing.T) {
 	df := &DefaultFormatter{}
 	ctx := &AssertionContext{}
 
-	t.Run("integer", func(t *testing.T) {
+	t.Run("nil", func(t *testing.T) {
+		fl := &AssertionFailure{
+			Delta: &AssertionValue{
+				Value: nil,
+			},
+		}
+		fd := df.buildFormatData(ctx, fl)
+		assert.True(t, fd.HaveDelta)
+		assert.Equal(t, "nil", fd.Delta)
+	})
+
+	t.Run("int", func(t *testing.T) {
 		fl := &AssertionFailure{
 			Delta: &AssertionValue{
 				Value: int(1_000_000),
@@ -489,7 +576,7 @@ func TestFormatDataFailureDelta(t *testing.T) {
 		}
 		fd := df.buildFormatData(ctx, fl)
 		assert.True(t, fd.HaveDelta)
-		assert.Equal(t, "1000000.000000", fd.Delta)
+		assert.Equal(t, "1e+06", fd.Delta)
 
 	})
 
@@ -501,7 +588,7 @@ func TestFormatDataFailureDelta(t *testing.T) {
 		}
 		fd := df.buildFormatData(ctx, fl)
 		assert.True(t, fd.HaveDelta)
-		assert.Equal(t, "1000000.000000", fd.Delta)
+		assert.Equal(t, "1e+06", fd.Delta)
 	})
 
 	t.Run("string", func(t *testing.T) {

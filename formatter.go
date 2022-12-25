@@ -391,14 +391,22 @@ func (f *DefaultFormatter) fillDelta(
 	data *FormatData, ctx *AssertionContext, failure *AssertionFailure,
 ) {
 	data.HaveDelta = true
-	data.Delta = formatFloat(failure.Delta.Value)
+	data.Delta = formatValue(failure.Delta.Value)
 }
 
 func formatTyped(value interface{}) string {
+	if isNumber(value) {
+		return fmt.Sprintf("%T(%v)", value, formatValue(value))
+	}
+
 	return fmt.Sprintf("%T(%#v)", value, value)
 }
 
 func formatValue(value interface{}) string {
+	if isNumber(value) {
+		return fmt.Sprintf("%v", value)
+	}
+
 	if !isNil(value) && !isHTTP(value) {
 		if s, _ := value.(fmt.Stringer); s != nil {
 			if ss := s.String(); strings.TrimSpace(ss) != "" {
@@ -426,24 +434,11 @@ func formatBareString(value interface{}) string {
 	return formatValue(value)
 }
 
-func formatFloat(value interface{}) string {
-	switch value.(type) {
-	case float32, float64:
-		return fmt.Sprintf("%f", value)
-	}
-
-	if isNumber(value) {
-		return fmt.Sprintf("%v", value)
-	}
-
-	return formatValue(value)
-}
-
 func formatRange(value interface{}) []string {
 	if rng := exctractRange(value); rng != nil {
 		if isNumber(rng.Min) && isNumber(rng.Max) {
 			return []string{
-				fmt.Sprintf("[%v; %v]", rng.Min, rng.Max),
+				fmt.Sprintf("[%v; %v]", formatValue(rng.Min), formatValue(rng.Max)),
 			}
 		} else {
 			return []string{
