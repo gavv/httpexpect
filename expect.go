@@ -550,7 +550,7 @@ func (e *Expect) DELETE(path string, pathargs ...interface{}) *Request {
 	return e.Request(http.MethodDelete, path, pathargs...)
 }
 
-// Value is a shorthand for NewValue(e.config.Reporter, value).
+// Deprecated: use NewValue or NewValueC instead.
 func (e *Expect) Value(value interface{}) *Value {
 	e.chain.enter("Value()")
 	defer e.chain.leave()
@@ -558,7 +558,7 @@ func (e *Expect) Value(value interface{}) *Value {
 	return newValue(e.chain, value)
 }
 
-// Object is a shorthand for NewObject(e.config.Reporter, value).
+// Deprecated: use NewObject or NewObjectC instead.
 func (e *Expect) Object(value map[string]interface{}) *Object {
 	e.chain.enter("Object()")
 	defer e.chain.leave()
@@ -566,7 +566,7 @@ func (e *Expect) Object(value map[string]interface{}) *Object {
 	return newObject(e.chain, value)
 }
 
-// Array is a shorthand for NewArray(e.config.Reporter, value).
+// Deprecated: use NewArray or NewArrayC instead.
 func (e *Expect) Array(value []interface{}) *Array {
 	e.chain.enter("Array()")
 	defer e.chain.leave()
@@ -574,7 +574,7 @@ func (e *Expect) Array(value []interface{}) *Array {
 	return newArray(e.chain, value)
 }
 
-// String is a shorthand for NewString(e.config.Reporter, value).
+// Deprecated: use NewString or NewStringC instead.
 func (e *Expect) String(value string) *String {
 	e.chain.enter("String()")
 	defer e.chain.leave()
@@ -582,7 +582,7 @@ func (e *Expect) String(value string) *String {
 	return newString(e.chain, value)
 }
 
-// Number is a shorthand for NewNumber(e.config.Reporter, value).
+// Deprecated: use NewNumber or NewNumberC instead.
 func (e *Expect) Number(value float64) *Number {
 	e.chain.enter("Number()")
 	defer e.chain.leave()
@@ -590,7 +590,7 @@ func (e *Expect) Number(value float64) *Number {
 	return newNumber(e.chain, value)
 }
 
-// Boolean is a shorthand for NewBoolean(e.config.Reporter, value).
+// Deprecated: use NewBoolean or NewBooleanC instead.
 func (e *Expect) Boolean(value bool) *Boolean {
 	e.chain.enter("Boolean()")
 	defer e.chain.leave()
