@@ -360,14 +360,21 @@ func (a *Array) Transform(fn func(index int, value interface{}) interface{}) *Ar
 	return newArray(a.chain, array)
 }
 
-// Find returns first matched element,
-// or fails and returns empty (non-nil) value if element was not found
+// Find accepts a function that returns a boolean. The function is ran
+// over the array items. If the function returns true, the item
+// is returned as value. If the function returns false or assertion
+// inside it fails, the item is skipped. If all the items are skipped,
+// then Find fails and returns empty (non-nil) value.
+//
+// If there are any failed assertions in the filtering function, the
+// item is omitted without causing test failure.
 //
 // Example:
 //
 //	array := NewArray(t, []interface{}{1, "foo", 2, "bar"})
 //	foundValue := array.Find(func(index int, value *httpexpect.Value) bool {
-//		return value.String().Raw() != ""
+//		value.String().NotEmpty()		// fails on 1 and 2
+//		return value.Raw() != "bar"		// fails on "bar"
 //	})
 //	foundValue.Equal("foo")	// succeeds
 func (a *Array) Find(fn func(index int, value *Value) bool) *Value {
@@ -412,18 +419,26 @@ func (a *Array) Find(fn func(index int, value *Value) bool) *Value {
 	return newValue(a.chain, []interface{}{})
 }
 
-// FindAll is like Find, but returns slice of all matched values
+// FindAll accepts a function that returns a boolean. The function is ran
+// over the array items. If the function returns true, the item is added
+// to the slice of values. If the function returns false or assertion
+// inside it fails, the item is skipped. After iterating through all the
+// items of the array, slice of values are returned.
+//
+// If there are any failed assertions in the filtering function, the
+// item is omitted without causing test failure.
 //
 // Example:
 //
-//	array := NewArray(t, []interface{}{1, "foo", 2, "bar"})
+//	array := NewArray(t, []interface{}{1, "foo", 2, "bar", "baz"})
 //	foundValues := array.FindAll(func(index int, value *httpexpect.Value) bool {
-//		return value.String().Raw() != ""
+//		value.String().NotEmpty()		// fails on 1 and 2
+//		return value.Raw() != "bar"		// fails on "bar"
 //	})
 //
 //	assert.Equal(t, len(foundValues), 2)
 //	foundValues[0].Equal("foo")
-//	foundValues[1].Equal("bar")
+//	foundValues[1].Equal("baz")
 func (a *Array) FindAll(fn func(index int, value *Value) bool) []Value {
 	a.chain.enter("FindAll()")
 	defer a.chain.leave()
@@ -470,14 +485,21 @@ func (a *Array) FindAll(fn func(index int, value *Value) bool) []Value {
 	return foundValues
 }
 
-// NotFind succeeds if no element matched predicate
-// and fails if there is a match
+// NotFind accepts a function that returns a boolean. The function is ran
+// over the array items. If the function returns true, then NotFind fails
+// and returns empty (non-nil) array. If the function returns false or
+// assertion inside it fails in all iteration, NotFind succeeds and
+// returns original array.
+//
+// If there are any failed assertions in the filtering function, the
+// item is omitted without causing test failure.
 //
 // Example:
 //
 //	array := NewArray(t, []interface{}{1, "foo", 2, "bar"})
 //	afterArray := array.NotFind(func(index int, value *httpexpect.Value) bool {
-//		return value.String().Raw() == "baz"
+//		value.String().NotEmpty()		// fails on 1 and 2
+//		return value.Raw() == "baz"		// fails on "foo" and "bar"
 //	})
 //	afterArray.Equal([]interface{}{1, "foo", 2, "bar"})	// succeeds
 func (a *Array) NotFind(fn func(index int, value *Value) bool) *Array {

@@ -1120,7 +1120,7 @@ func TestObjectFindAll(t *testing.T) {
 			actual = append(actual, value.Raw())
 		}
 
-		assert.ElementsMatch(t, []interface{}{"qux", "corge"}, actual)
+		assert.Equal(t, []interface{}{"qux", "corge"}, actual)
 		assert.Equal(t, object.Raw(), map[string]interface{}{
 			"foo":  "bar",
 			"baz":  "qux",
@@ -1136,13 +1136,14 @@ func TestObjectFindAll(t *testing.T) {
 	t.Run("Find values in array of the multi types", func(ts *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
-			"foo":  "bar",
-			"baz":  true,
-			"qux":  -1,
-			"quux": 2,
+			"foo":   "bar",
+			"baz":   6,
+			"qux":   "quux",
+			"corge": "grault",
 		})
 		foundValues := object.FindAll(func(key string, value *Value) bool {
-			return key == "baz" || value.Number().Raw() == 2.0
+			value.String().NotEmpty()
+			return key != "qux"
 		})
 
 		actual := []interface{}{}
@@ -1150,12 +1151,12 @@ func TestObjectFindAll(t *testing.T) {
 			actual = append(actual, value.Raw())
 		}
 
-		assert.ElementsMatch(t, []interface{}{true, 2.0}, actual)
+		assert.Equal(t, []interface{}{"grault", "bar"}, actual)
 		assert.Equal(t, object.Raw(), map[string]interface{}{
-			"foo":  "bar",
-			"baz":  true,
-			"qux":  -1.0,
-			"quux": 2.0,
+			"foo":   "bar",
+			"baz":   6.0,
+			"qux":   "quux",
+			"corge": "grault",
 		})
 
 		for _, value := range foundValues {
@@ -1181,7 +1182,7 @@ func TestObjectFindAll(t *testing.T) {
 			actual = append(actual, value.Raw())
 		}
 
-		assert.ElementsMatch(t, []interface{}{}, actual)
+		assert.Equal(t, []interface{}{}, actual)
 		assert.Equal(t, object.Raw(), map[string]interface{}{
 			"foo":  "bar",
 			"baz":  true,
@@ -1207,7 +1208,7 @@ func TestObjectFindAll(t *testing.T) {
 			actual = append(actual, value.Raw())
 		}
 
-		assert.ElementsMatch(t, []interface{}{}, actual)
+		assert.Equal(t, []interface{}{}, actual)
 		assert.Equal(t, object.Raw(), map[string]interface{}{})
 
 		for _, value := range foundValues {
