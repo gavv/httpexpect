@@ -25,6 +25,18 @@ func TestDateTimeFailed(t *testing.T) {
 	value.Le(tm)
 	value.InRange(tm, tm)
 	value.NotInRange(tm, tm)
+	value.Zone()
+	value.Year()
+	value.Month()
+	value.Day()
+	value.WeekDay()
+	value.YearDay()
+	value.Hour()
+	value.Minute()
+	value.Second()
+	value.Nanosecond()
+	value.AsUTC()
+	value.AsLocal()
 }
 
 func TestDatetimeConstructors(t *testing.T) {
@@ -175,4 +187,37 @@ func TestDateTimeInRange(t *testing.T) {
 	value.NotInRange(time.Unix(0, 1234+1), time.Unix(0, 1234-1))
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
+}
+
+func TestDateTimeGetters(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewDateTime(reporter, time.Unix(0, 0))
+
+	value.chain.assertNotFailed(t)
+
+	value.Zone().chain.assertNotFailed(t)
+	value.Year().chain.assertNotFailed(t)
+	value.Month().chain.assertNotFailed(t)
+	value.Day().chain.assertNotFailed(t)
+	value.WeekDay().chain.assertNotFailed(t)
+	value.YearDay().chain.assertNotFailed(t)
+	value.Hour().chain.assertNotFailed(t)
+	value.Minute().chain.assertNotFailed(t)
+	value.Second().chain.assertNotFailed(t)
+	value.Nanosecond().chain.assertNotFailed(t)
+	value.AsUTC().chain.assertNotFailed(t)
+	value.AsLocal().chain.assertNotFailed(t)
+
+	expectedZone, _ := time.Unix(0, 0).Zone()
+	assert.Equal(t, expectedZone, value.Zone().Raw())
+	assert.Equal(t, float64(1970), value.Year().Raw())
+	assert.Equal(t, float64(1), value.Month().Raw())
+	assert.Equal(t, float64(1), value.Day().Raw())
+	assert.Equal(t, float64(4), value.WeekDay().Raw())
+	assert.Equal(t, float64(1), value.YearDay().Raw())
+	assert.Equal(t, float64(0), value.Hour().Raw())
+	assert.Equal(t, float64(0), value.Minute().Raw())
+	assert.Equal(t, float64(0), value.Second().Raw())
+	assert.Equal(t, float64(0), value.Nanosecond().Raw())
 }

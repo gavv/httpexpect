@@ -283,3 +283,208 @@ func (dt *DateTime) NotInRange(min, max time.Time) *DateTime {
 
 	return dt
 }
+
+// Zone returns a new String instance with datetime zone.
+//
+// Example:
+//
+//	dt := NewDateTime(t, time.Unix(0, 10))
+//	dt.Zone().Equal("/foo")
+func (dt *DateTime) Zone() *String {
+	dt.chain.enter("Zone()")
+	defer dt.chain.leave()
+
+	if dt.chain.failed() {
+		return newString(dt.chain, "")
+	}
+
+	zone, _ := dt.value.Zone()
+	return newString(dt.chain, zone)
+}
+
+// Year returns a new Number instance with datetime year.
+//
+// Example:
+//
+//	dt := NewDateTime(t, time.Unix(0, 0))
+//	dt.Year().Equal(float64(1970))
+func (dt *DateTime) Year() *Number {
+	dt.chain.enter("Year()")
+	defer dt.chain.leave()
+
+	if dt.chain.failed() {
+		return newNumber(dt.chain, float64(0))
+	}
+
+	return newNumber(dt.chain, float64(dt.value.Year()))
+}
+
+// Month returns a new Number instance with datetime month.
+//
+// Example:
+//
+//	dt := NewDateTime(t, time.Unix(0, 0))
+//	dt.Month().Equal(float64(1))
+func (dt *DateTime) Month() *Number {
+	dt.chain.enter("Month()")
+	defer dt.chain.leave()
+
+	if dt.chain.failed() {
+		return newNumber(dt.chain, float64(0))
+	}
+
+	return newNumber(dt.chain, float64(dt.value.Month()))
+}
+
+// Day returns a new Number instance with datetime day.
+//
+// Example:
+//
+//	dt := NewDateTime(t, time.Unix(0, 0))
+//	dt.Day().Equal(float64(1))
+func (dt *DateTime) Day() *Number {
+	dt.chain.enter("Day()")
+	defer dt.chain.leave()
+
+	if dt.chain.failed() {
+		return newNumber(dt.chain, float64(0))
+	}
+
+	return newNumber(dt.chain, float64(dt.value.Day()))
+}
+
+// WeekDay returns a new Number instance with datetime weekday.
+//
+// Example:
+//
+//	dt := NewDateTime(t, time.Unix(0, 0))
+//	dt.WeekDay().Equal(float64(4))
+func (dt *DateTime) WeekDay() *Number {
+	dt.chain.enter("WeekDay()")
+	defer dt.chain.leave()
+
+	if dt.chain.failed() {
+		return newNumber(dt.chain, float64(0))
+	}
+
+	return newNumber(dt.chain, float64(dt.value.Weekday()))
+}
+
+// YearDay returns a new Number instance with datetime yearday.
+//
+// Example:
+//
+//	dt := NewDateTime(t, time.Unix(0, 0))
+//	dt.YearDay().Equal(float64(1))
+func (dt *DateTime) YearDay() *Number {
+	dt.chain.enter("YearDay()")
+	defer dt.chain.leave()
+
+	if dt.chain.failed() {
+		return newNumber(dt.chain, float64(0))
+	}
+
+	return newNumber(dt.chain, float64(dt.value.YearDay()))
+}
+
+// Hour returns a new Number instance with datetime hour.
+//
+// Example:
+//
+//	dt := NewDateTime(t, time.Unix(0, 0))
+//	dt.Hour().Equal(float64(0))
+func (dt *DateTime) Hour() *Number {
+	dt.chain.enter("Hour()")
+	defer dt.chain.leave()
+
+	if dt.chain.failed() {
+		return newNumber(dt.chain, float64(0))
+	}
+
+	return newNumber(dt.chain, float64(dt.value.Hour()))
+}
+
+// Minute returns a new Number instance with datetime minute.
+//
+// Example:
+//
+//	dt := NewDateTime(t, time.Unix(0, 0))
+//	dt.Minute().Equal(float64(0))
+func (dt *DateTime) Minute() *Number {
+	dt.chain.enter("Minute()")
+	defer dt.chain.leave()
+
+	if dt.chain.failed() {
+		return newNumber(dt.chain, float64(0))
+	}
+
+	return newNumber(dt.chain, float64(dt.value.Minute()))
+}
+
+// Second returns a new Number instance with datetime second.
+//
+// Example:
+//
+//	dt := NewDateTime(t, time.Unix(0, 0))
+//	dt.Second().Equal(float64(0))
+func (dt *DateTime) Second() *Number {
+	dt.chain.enter("Second()")
+	defer dt.chain.leave()
+
+	if dt.chain.failed() {
+		return newNumber(dt.chain, float64(0))
+	}
+
+	return newNumber(dt.chain, float64(dt.value.Second()))
+}
+
+// Nanosecond returns a new Number instance with datetime nanosecond.
+//
+// Example:
+//
+//	dt := NewDateTime(t, time.Unix(0, 0))
+//	dt.Nanosecond().Equal(float64(0))
+func (dt *DateTime) Nanosecond() *Number {
+	dt.chain.enter("Nanosecond()")
+	defer dt.chain.leave()
+
+	if dt.chain.failed() {
+		return newNumber(dt.chain, float64(0))
+	}
+
+	return newNumber(dt.chain, float64(dt.value.Nanosecond()))
+}
+
+// AsUTC returns a new DateTime instance in UTC timeZone.
+//
+// Example:
+//
+//	dt := NewDateTime(t, time.Unix(0, 0))
+//	dt.AsUTC().Zone().Equal("UTC")
+func (dt *DateTime) AsUTC() *DateTime {
+	dt.chain.enter("AsUTC()")
+	defer dt.chain.leave()
+
+	if dt.chain.failed() {
+		return dt
+	}
+
+	return newDateTime(dt.chain, dt.value.UTC())
+}
+
+// AsLocal returns a new DateTime instance in Local timeZone.
+//
+// Example:
+//
+//	dt := NewDateTime(t, time.Unix(0, 0))
+//	dt.AsLocal().Zone().Equal("IST")
+func (dt *DateTime) AsLocal() *DateTime {
+	dt.chain.enter("AsLocal()")
+	defer dt.chain.leave()
+
+	if dt.chain.failed() {
+		return dt
+	}
+
+	return newDateTime(dt.chain, dt.value.Local())
+}
