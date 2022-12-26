@@ -171,7 +171,7 @@ func validateTraits(failure *AssertionFailure, traits fieldTraits) error {
 		break
 	}
 
-	if traits.Range == fieldRequired || traits.Range == fieldOptional {
+	if traits.List == fieldRequired || traits.List == fieldOptional {
 		if failure.Expected != nil {
 			if _, ok := failure.Expected.Value.(*AssertionList); ok {
 				return errors.New(
