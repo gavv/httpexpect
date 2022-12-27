@@ -2,6 +2,7 @@ package httpexpect
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -1289,4 +1290,114 @@ func TestArray_NotFind(t *testing.T) {
 		assert.Same(t, array, afterArray)
 		array.chain.assertFailed(t)
 	})
+}
+func TestArray_IsOrdered(t *testing.T) {
+	reporter := newMockReporter(t)
+	type args struct {
+		values []interface{}
+		less   []func(x, y *Value) bool
+	}
+	tests := []struct {
+		name   string
+		args   args
+		wantOK bool
+	}{
+		{
+			name: "array boolean ordered",
+			args: args{
+				values: []interface{}{false, false, true, true},
+			},
+			wantOK: true,
+		},
+		{
+			name: "array number ordered",
+			args: args{
+				values: []interface{}{1, 2, 3},
+			},
+			wantOK: true,
+		},
+		{
+			name: "array string ordered",
+			args: args{
+				values: []interface{}{"", "a", "b", "ba"},
+			},
+			wantOK: true,
+		},
+		{
+			// FIXME:
+			name: "array duration ordered",
+			args: args{
+				values: []interface{}{1 * time.Second, 2 * time.Second, 3 * time.Second},
+			},
+			wantOK: true,
+		},
+		{
+			// FIXME:
+			name: "array time ordered",
+			args: args{
+				values: []interface{}{
+					time.Now(),
+					time.Now().Add(time.Second),
+					time.Now().Add(2 * time.Second)},
+			},
+			wantOK: true,
+		},
+		{
+			name: "user-defined less function",
+			args: args{
+				values: []interface{}{1, 2, 3},
+				less: []func(x, y *Value) bool{
+					func(x, y *Value) bool {
+						valX, _ := x.Raw().(float64)
+						valY, _ := y.Raw().(float64)
+						return valX >= valY
+					},
+				},
+			},
+			wantOK: false,
+		},
+		{
+			name: "invalid - multiple less functions",
+			args: args{
+				values: []interface{}{1, 2, 3},
+				less: []func(x, y *Value) bool{
+					func(x, y *Value) bool {
+						return false
+					},
+					func(x, y *Value) bool {
+						return true
+					},
+				},
+			},
+			wantOK: false,
+		},
+		{
+			name: "invalid - data type not allowed",
+			args: args{
+				values: []interface{}{[]int{1, 2}, []int{3, 4}, []int{5, 6}},
+				less:   []func(x, y *Value) bool{},
+			},
+			wantOK: false,
+		},
+		{
+			name: "invalid - multiple data types found",
+			args: args{
+				values: []interface{}{1, "abc", true},
+				less:   []func(x, y *Value) bool{},
+			},
+			wantOK: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := NewArray(reporter, tt.args.values)
+			a.IsOrdered(tt.args.less...)
+			if tt.wantOK {
+				a.chain.assertNotFailed(t)
+			} else {
+				a.chain.assertFailed(t)
+			}
+			a.chain.clearFailed()
+		})
+	}
 }

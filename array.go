@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"time"
 )
 
 // Array provides methods to inspect attached []interface{} object
@@ -1206,4 +1207,124 @@ func countElement(array []interface{}, element interface{}) int {
 		}
 	}
 	return count
+}
+
+// IsOrdered succeeds if array is ordered based on optional `comparator` function.
+// For default, it will use built-in comparator function for each data type.
+// It requires all elements in the array to have same data type
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{100, 101, 102})
+//	array.IsOrdered(func(x, y *Value) bool {
+//		valX, _ := x.Raw().(int)
+//		valY, _ := y.Raw().(int)
+//		return valX >= valY
+//	})
+func (a *Array) IsOrdered(less ...func(x, y *Value) bool) *Array {
+	a.chain.enter("IsOrdered()")
+	defer a.chain.leave()
+
+	if a.chain.failed() {
+		return a
+	}
+
+	if len(less) > 1 {
+		a.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected multiple less arguments"),
+			},
+		})
+		return a
+	}
+
+	var fn func(x, y *Value) bool
+	if len(less) == 1 {
+		fn = less[0]
+	} else {
+		// use default comparator based on data type
+		cArr, ok := canonArray(a.chain, a.value)
+		if !ok {
+			return a
+		}
+
+		var currType, prevType string
+		for _, v := range cArr {
+			switch t := v.(type) {
+			case bool:
+				currType = fmt.Sprintf("%T", t)
+				fn = func(x, y *Value) bool {
+					// TODO: implement built-in comparator function for Boolean
+					return (!x.Boolean().value && y.Boolean().value) ||
+						(x.Boolean().value == y.Boolean().value)
+				}
+			case float64:
+				currType = fmt.Sprintf("%T", t)
+				fn = func(x, y *Value) bool {
+					x.Number().Le(y)
+					return !x.chain.failed()
+				}
+			case string:
+				currType = fmt.Sprintf("%T", t)
+				fn = func(x, y *Value) bool {
+					return x.String().value <= y.String().value
+				}
+			case time.Duration:
+				currType = fmt.Sprintf("%T", t)
+				fn = func(x, y *Value) bool {
+					valX, _ := x.value.(Duration)
+					valY, _ := y.value.(time.Duration)
+					valX.Le(valY)
+					return !x.chain.failed()
+				}
+			case time.Time:
+				currType = fmt.Sprintf("%T", t)
+				fn = func(x, y *Value) bool {
+					valX, _ := x.value.(DateTime)
+					valY, _ := y.value.(time.Time)
+					valX.Le(valY)
+					return !x.chain.failed()
+				}
+			default:
+				a.chain.fail(AssertionFailure{
+					Type:   AssertType,
+					Actual: &AssertionValue{v},
+					Errors: []error{
+						errors.New(`expected: data type should be either 
+						boolean, number, string, time.Duration, or time.Time`),
+					},
+				})
+				return a
+			}
+			if currType != prevType && prevType != "" {
+				a.chain.fail(AssertionFailure{
+					Type:   AssertType,
+					Actual: &AssertionValue{v},
+					Errors: []error{
+						errors.New("expected: all elements have same data type"),
+					},
+				})
+				return a
+			}
+			prevType = currType
+		}
+	}
+
+	for i := 0; i < int(a.Length().Raw())-1; i++ {
+		x, y := a.Element(i), a.Element(i+1)
+		if !fn(x, y) {
+			a.chain.fail(AssertionFailure{
+				Type:     AssertLt,
+				Actual:   &AssertionValue{x.value},
+				Expected: &AssertionValue{y.value},
+				Errors: []error{
+					errors.New("expected: actual value must come before expected value"),
+				},
+			})
+			return a
+		}
+	}
+
+	return a
 }
