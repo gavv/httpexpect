@@ -95,86 +95,87 @@ func TestFormatDiff(t *testing.T) {
 }
 
 func TestFormatDataFailureActual(t *testing.T) {
+	tests := []struct {
+		name     string
+		typ      AssertionType
+		val      interface{}
+		assertFn func(t *testing.T, fd *FormatData)
+	}{
+		{
+			name: "AssertType nil",
+			typ:  AssertType,
+			val:  nil,
+			assertFn: func(t *testing.T, fd *FormatData) {
+				assert.True(t, fd.HaveActual)
+				assert.Equal(t, "<nil>(<nil>)", fd.Actual)
+			},
+		},
+		{
+			name: "AssertType int",
+			typ:  AssertType,
+			val:  int(1_000_000),
+			assertFn: func(t *testing.T, fd *FormatData) {
+				assert.True(t, fd.HaveActual)
+				assert.Equal(t, "int(1000000)", fd.Actual)
+			},
+		},
+		{
+			name: "AssertType float32",
+			typ:  AssertType,
+			val:  float32(1_000_000),
+			assertFn: func(t *testing.T, fd *FormatData) {
+				assert.True(t, fd.HaveActual)
+				assert.Equal(t, "float32(1e+06)", fd.Actual)
+			},
+		},
+		{
+			name: "AssertType float64",
+			typ:  AssertType,
+			val:  float64(1_000_000),
+			assertFn: func(t *testing.T, fd *FormatData) {
+				assert.True(t, fd.HaveActual)
+				assert.Equal(t, "float64(1e+06)", fd.Actual)
+			},
+		},
+		{
+			name: "AssertType string",
+			typ:  AssertType,
+			val:  "value string",
+			assertFn: func(t *testing.T, fd *FormatData) {
+				assert.True(t, fd.HaveActual)
+				assert.Equal(t, "string(\"value string\")", fd.Actual)
+			},
+		},
+		{
+			name: "AssertType object",
+			typ:  AssertType,
+			val:  struct{ Name string }{"testName"},
+			assertFn: func(t *testing.T, fd *FormatData) {
+				assert.True(t, fd.HaveActual)
+				assert.Equal(
+					t,
+					"struct { Name string }(struct { Name string }{Name:\"testName\"})",
+					fd.Actual,
+				)
+			},
+		},
+	}
+
 	df := &DefaultFormatter{}
 	ctx := &AssertionContext{}
 
-	t.Run("AssertType nil", func(t *testing.T) {
-		fl := &AssertionFailure{
-			Type: AssertType,
-			Actual: &AssertionValue{
-				Value: nil,
-			},
-		}
-		fd := df.buildFormatData(ctx, fl)
-		assert.True(t, fd.HaveActual)
-		assert.Equal(t, "<nil>(<nil>)", fd.Actual)
-	})
-
-	t.Run("AssertType int", func(t *testing.T) {
-		fl := &AssertionFailure{
-			Type: AssertType,
-			Actual: &AssertionValue{
-				Value: int(1_000_000),
-			},
-		}
-		fd := df.buildFormatData(ctx, fl)
-		assert.True(t, fd.HaveActual)
-		assert.Equal(t, "int(1000000)", fd.Actual)
-
-	})
-
-	t.Run("AssertType float32", func(t *testing.T) {
-		fl := &AssertionFailure{
-			Type: AssertType,
-			Actual: &AssertionValue{
-				Value: float32(1_000_000),
-			},
-		}
-		fd := df.buildFormatData(ctx, fl)
-		assert.True(t, fd.HaveActual)
-		assert.Equal(t, "float32(1e+06)", fd.Actual)
-	})
-
-	t.Run("AssertType float64", func(t *testing.T) {
-		fl := &AssertionFailure{
-			Type: AssertType,
-			Actual: &AssertionValue{
-				Value: float64(1_000_000),
-			},
-		}
-		fd := df.buildFormatData(ctx, fl)
-		assert.True(t, fd.HaveActual)
-		assert.Equal(t, "float64(1e+06)", fd.Actual)
-	})
-
-	t.Run("AssertType string", func(t *testing.T) {
-		fl := &AssertionFailure{
-			Type: AssertType,
-			Actual: &AssertionValue{
-				Value: "value string",
-			},
-		}
-		fd := df.buildFormatData(ctx, fl)
-		assert.True(t, fd.HaveActual)
-		assert.Equal(t, "string(\"value string\")", fd.Actual)
-	})
-
-	t.Run("AssertType object", func(t *testing.T) {
-		obj := struct{ Name string }{"testName"}
-		fl := &AssertionFailure{
-			Type: AssertType,
-			Actual: &AssertionValue{
-				Value: obj,
-			},
-		}
-		fd := df.buildFormatData(ctx, fl)
-		assert.True(t, fd.HaveActual)
-		assert.Equal(
-			t,
-			"struct { Name string }(struct { Name string }{Name:\"testName\"})",
-			fd.Actual,
-		)
-	})
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			fl := &AssertionFailure{
+				Type: tc.typ,
+				Actual: &AssertionValue{
+					Value: tc.val,
+				},
+			}
+			fd := df.buildFormatData(ctx, fl)
+			tc.assertFn(t, fd)
+		})
+	}
 }
 
 func TestFormatDataFailureExpected(t *testing.T) {
