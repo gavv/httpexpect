@@ -52,7 +52,7 @@ func TestFormatValues(t *testing.T) {
 		checkAll(t, formatValue)
 	})
 
-	t.Run("formatString", func(t *testing.T) {
+	t.Run("formatBareString", func(t *testing.T) {
 		checkAll(t, formatBareString)
 	})
 
