@@ -102,6 +102,7 @@ func TestFormatDataFailureActual(t *testing.T) {
 		wantHaveActual bool
 		wantActual     string
 	}{
+		// AssertType
 		{
 			name:           "AssertType nil",
 			assertionType:  AssertType,
@@ -133,16 +134,60 @@ func TestFormatDataFailureActual(t *testing.T) {
 		{
 			name:           "AssertType string",
 			assertionType:  AssertType,
-			assertionValue: "value string",
+			assertionValue: "test string",
 			wantHaveActual: true,
-			wantActual:     "string(\"value string\")",
+			wantActual:     "string(\"test string\")",
 		},
 		{
 			name:           "AssertType object",
 			assertionType:  AssertType,
-			assertionValue: struct{ Name string }{"testName"},
+			assertionValue: struct{ Name string }{"test name"},
 			wantHaveActual: true,
-			wantActual:     "struct { Name string }(struct { Name string }{Name:\"testName\"})",
+			wantActual:     "struct { Name string }(struct { Name string }{Name:\"test name\"})",
+		},
+
+		// AssertValid
+		{
+			name:           "AssertValid nil",
+			assertionType:  AssertValid,
+			assertionValue: nil,
+			wantHaveActual: true,
+			wantActual:     "nil",
+		},
+		{
+			name:           "AssertValid int",
+			assertionType:  AssertValid,
+			assertionValue: int(1_000_000),
+			wantHaveActual: true,
+			wantActual:     "1000000",
+		},
+		{
+			name:           "AssertValid float32",
+			assertionType:  AssertValid,
+			assertionValue: float32(1_000_000),
+			wantHaveActual: true,
+			wantActual:     "1e+06",
+		},
+		{
+			name:           "AssertValid float64",
+			assertionType:  AssertValid,
+			assertionValue: float64(1_000_000),
+			wantHaveActual: true,
+			wantActual:     "1e+06",
+		},
+		{
+			name:           "AssertValid string",
+			assertionType:  AssertValid,
+			assertionValue: "test string",
+			wantHaveActual: true,
+			wantActual:     "\"test string\"",
+		},
+		{
+			name:           "AssertValid object",
+			assertionType:  AssertValid,
+			assertionValue: struct{ Name string }{"test name"},
+			wantHaveActual: true,
+			wantActual:     "{\n  \"Name\": \"test name\"\n}",
 		},
 	}
 
@@ -222,23 +267,23 @@ func TestFormatDataFailureExpected(t *testing.T) {
 			name:          "AssertInRange string",
 			assertionType: AssertInRange,
 			assertionValue: AssertionRange{
-				Min: "string 1",
-				Max: "string 2",
+				Min: "test string 1",
+				Max: "test string 2",
 			},
 			wantHaveExpected: true,
 			wantExpectedKind: kindRange,
-			wantExpected:     []string{"string 1", "string 2"},
+			wantExpected:     []string{"test string 1", "test string 2"},
 		},
 		{
 			name:          "AssertInRange object",
 			assertionType: AssertInRange,
 			assertionValue: AssertionRange{
-				Min: struct{ Name string }{"testName1"},
-				Max: struct{ Name string }{"testName2"},
+				Min: struct{ Name string }{"test name 1"},
+				Max: struct{ Name string }{"test name 2"},
 			},
 			wantHaveExpected: true,
 			wantExpectedKind: kindRange,
-			wantExpected:     []string{"{testName1}", "{testName2}"},
+			wantExpected:     []string{"{test name 1}", "{test name 2}"},
 		},
 
 		// AssertMatchPath
@@ -277,18 +322,18 @@ func TestFormatDataFailureExpected(t *testing.T) {
 		{
 			name:             "AssertMatchPath string",
 			assertionType:    AssertMatchPath,
-			assertionValue:   "match path string",
+			assertionValue:   "test string",
 			wantHaveExpected: true,
 			wantExpectedKind: kindPath,
-			wantExpected:     []string{"match path string"},
+			wantExpected:     []string{"test string"},
 		},
 		{
 			name:             "AssertMatchPath object",
 			assertionType:    AssertMatchPath,
-			assertionValue:   struct{ Name string }{"testName"},
+			assertionValue:   struct{ Name string }{"test name"},
 			wantHaveExpected: true,
 			wantExpectedKind: kindPath,
-			wantExpected:     []string{"{\n  \"Name\": \"testName\"\n}"},
+			wantExpected:     []string{"{\n  \"Name\": \"test name\"\n}"},
 		},
 
 		// AssertMatchFormat
@@ -340,24 +385,24 @@ func TestFormatDataFailureExpected(t *testing.T) {
 			name:          "AssertMatchFormat string",
 			assertionType: AssertMatchFormat,
 			assertionValue: AssertionList{
-				"string 1",
-				"string 2",
+				"test string 1",
+				"test string 2",
 			},
 			wantHaveExpected: true,
 			wantExpectedKind: kindFormatList,
-			wantExpected:     []string{"\"string 1\"", "\"string 2\""},
+			wantExpected:     []string{"\"test string 1\"", "\"test string 2\""},
 		},
 		{
 			name:          "AssertMatchFormat object",
 			assertionType: AssertMatchFormat,
 			assertionValue: AssertionList{
-				struct{ Name string }{"testName1"},
-				struct{ Name string }{"testName2"},
+				struct{ Name string }{"test name 1"},
+				struct{ Name string }{"test name 2"},
 			},
 			wantHaveExpected: true,
 			wantExpectedKind: kindFormatList,
 			wantExpected: []string{
-				"{\n  \"Name\": \"testName1\"\n}", "{\n  \"Name\": \"testName2\"\n}",
+				"{\n  \"Name\": \"test name 1\"\n}", "{\n  \"Name\": \"test name 2\"\n}",
 			},
 		},
 	}
@@ -414,15 +459,15 @@ func TestFormatDataFailureReference(t *testing.T) {
 		},
 		{
 			name:              "string",
-			assertionValue:    "reference string",
+			assertionValue:    "test string",
 			wantHaveReference: true,
-			wantReference:     "\"reference string\"",
+			wantReference:     "\"test string\"",
 		},
 		{
 			name:              "object",
-			assertionValue:    struct{ Name string }{"testName"},
+			assertionValue:    struct{ Name string }{"test name"},
 			wantHaveReference: true,
-			wantReference:     "{\n  \"Name\": \"testName\"\n}",
+			wantReference:     "{\n  \"Name\": \"test name\"\n}",
 		},
 	}
 
@@ -476,15 +521,15 @@ func TestFormatDataFailureDelta(t *testing.T) {
 		},
 		{
 			name:           "string",
-			assertionValue: "delta string",
+			assertionValue: "test string",
 			wantHaveDelta:  true,
-			wantDelta:      "\"delta string\"",
+			wantDelta:      "\"test string\"",
 		},
 		{
 			name:           "object",
-			assertionValue: struct{ Name string }{"testName"},
+			assertionValue: struct{ Name string }{"test name"},
 			wantHaveDelta:  true,
-			wantDelta:      "{\n  \"Name\": \"testName\"\n}",
+			wantDelta:      "{\n  \"Name\": \"test name\"\n}",
 		},
 	}
 
