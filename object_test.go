@@ -1077,7 +1077,7 @@ func TestObjectFind(t *testing.T) {
 			n := value.Number().Raw()
 			return n == 3
 		})
-		assert.Equal(t, []interface{}{}, foundValue.Raw())
+		assert.Equal(t, nil, foundValue.Raw())
 		assert.Equal(t, object.Raw(), map[string]interface{}{
 			"foo":  "bar",
 			"baz":  true,
@@ -1096,8 +1096,46 @@ func TestObjectFind(t *testing.T) {
 			n := value.Number().Raw()
 			return n == 3
 		})
-		assert.Equal(t, []interface{}{}, foundValue.Raw())
+		assert.Equal(t, nil, foundValue.Raw())
 		assert.Equal(t, object.Raw(), map[string]interface{}{})
+
+		foundValue.chain.assertFailed(t)
+		object.chain.assertFailed(t)
+	})
+
+	t.Run("When predicate returns true, but assertion fails, predicate is failed",
+		func(ts *testing.T) {
+			reporter := newMockReporter(t)
+			object := NewObject(reporter, map[string]interface{}{
+				"foo": 1,
+				"bar": 2,
+			})
+			foundValue := object.Find(func(key string, value *Value) bool {
+				value.String().Raw()
+				return true
+			})
+			assert.Equal(t, nil, foundValue.Raw())
+			assert.Equal(t, object.Raw(), map[string]interface{}{
+				"foo": 1.0,
+				"bar": 2.0,
+			})
+
+			foundValue.chain.assertFailed(t)
+			object.chain.assertFailed(t)
+		})
+
+	t.Run("Predicate func is nil", func(ts *testing.T) {
+		reporter := newMockReporter(t)
+		object := NewObject(reporter, map[string]interface{}{
+			"foo": 1,
+			"bar": 2,
+		})
+		foundValue := object.Find(nil)
+		assert.Equal(t, nil, foundValue.Raw())
+		assert.Equal(t, object.Raw(), map[string]interface{}{
+			"foo": 1.0,
+			"bar": 2.0,
+		})
 
 		foundValue.chain.assertFailed(t)
 		object.chain.assertFailed(t)
@@ -1191,9 +1229,9 @@ func TestObjectFindAll(t *testing.T) {
 		})
 
 		for _, value := range foundValues {
-			value.chain.assertFailed(t)
+			value.chain.assertNotFailed(t)
 		}
-		object.chain.assertFailed(t)
+		object.chain.assertNotFailed(t)
 	})
 
 	t.Run("Empty array", func(ts *testing.T) {
@@ -1210,6 +1248,92 @@ func TestObjectFindAll(t *testing.T) {
 
 		assert.Equal(t, []interface{}{}, actual)
 		assert.Equal(t, object.Raw(), map[string]interface{}{})
+
+		for _, value := range foundValues {
+			value.chain.assertNotFailed(t)
+		}
+		object.chain.assertNotFailed(t)
+	})
+
+	t.Run("When predicate returns true, but assertion fails, predicate is failed",
+		func(ts *testing.T) {
+			reporter := newMockReporter(t)
+			object := NewObject(reporter, map[string]interface{}{
+				"foo": 1,
+				"bar": 2,
+			})
+			foundValues := object.FindAll(func(key string, value *Value) bool {
+				value.String().Raw()
+				return true
+			})
+
+			actual := []interface{}{}
+			for _, value := range foundValues {
+				actual = append(actual, value.Raw())
+			}
+
+			assert.Equal(t, []interface{}{}, actual)
+			assert.Equal(t, object.Raw(), map[string]interface{}{
+				"foo": 1.0,
+				"bar": 2.0,
+			})
+
+			for _, value := range foundValues {
+				value.chain.assertNotFailed(t)
+			}
+			object.chain.assertNotFailed(t)
+		})
+
+	t.Run("Assertion failure does not affect subsequent matches", func(ts *testing.T) {
+		reporter := newMockReporter(t)
+		object := NewObject(reporter, map[string]interface{}{
+			"foo":  "bar",
+			"baz":  1,
+			"qux":  2,
+			"quux": "corge",
+		})
+		foundValues := object.FindAll(func(key string, value *Value) bool {
+			value.String().Raw()
+			return true
+		})
+
+		actual := []interface{}{}
+		for _, value := range foundValues {
+			actual = append(actual, value.Raw())
+		}
+
+		assert.Equal(t, []interface{}{"bar", "corge"}, actual)
+		assert.Equal(t, object.Raw(), map[string]interface{}{
+			"foo":  "bar",
+			"baz":  1.0,
+			"qux":  2.0,
+			"quux": "corge",
+		})
+
+		for _, value := range foundValues {
+			value.chain.assertNotFailed(t)
+		}
+		object.chain.assertNotFailed(t)
+	})
+
+	t.Run("Predicate func is nil", func(ts *testing.T) {
+		reporter := newMockReporter(t)
+		object := NewObject(reporter, map[string]interface{}{
+			"foo": 1,
+			"bar": 2,
+		})
+		foundValues := object.FindAll(nil)
+
+		actual := []interface{}{}
+		for _, value := range foundValues {
+			actual = append(actual, value.Raw())
+		}
+
+		assert.Equal(t, []interface{}{}, actual)
+		assert.Equal(t, object.Raw(), map[string]interface{}{
+			"foo": 1.0,
+			"bar": 2.0,
+		})
 
 		for _, value := range foundValues {
 			value.chain.assertFailed(t)
@@ -1258,7 +1382,7 @@ func TestObjectNotFind(t *testing.T) {
 		afterObject := object.NotFind(func(key string, value *Value) bool {
 			return key == "qux"
 		})
-		assert.Equal(t, map[string]interface{}{}, afterObject.Raw())
+		assert.Equal(t, map[string]interface{}(nil), afterObject.Raw())
 		assert.Equal(t, object.Raw(), map[string]interface{}{
 			"foo":  "bar",
 			"baz":  true,
@@ -1281,5 +1405,46 @@ func TestObjectNotFind(t *testing.T) {
 
 		afterObject.chain.assertNotFailed(t)
 		object.chain.assertNotFailed(t)
+	})
+
+	t.Run("When predicate returns true, but assertion fails, predicate is failed",
+		func(ts *testing.T) {
+			reporter := newMockReporter(t)
+			object := NewObject(reporter, map[string]interface{}{
+				"foo": 1,
+				"bar": 2,
+			})
+			afterObject := object.NotFind(func(key string, value *Value) bool {
+				value.String().Raw()
+				return true
+			})
+			assert.Equal(t, map[string]interface{}{
+				"foo": 1.0,
+				"bar": 2.0,
+			}, afterObject.Raw())
+			assert.Equal(t, object.Raw(), map[string]interface{}{
+				"foo": 1.0,
+				"bar": 2.0,
+			})
+
+			afterObject.chain.assertNotFailed(t)
+			object.chain.assertNotFailed(t)
+		})
+
+	t.Run("Predicate func is nil", func(ts *testing.T) {
+		reporter := newMockReporter(t)
+		object := NewObject(reporter, map[string]interface{}{
+			"foo": 1,
+			"bar": 2,
+		})
+		afterObject := object.NotFind(nil)
+		assert.Equal(t, map[string]interface{}(nil), afterObject.Raw())
+		assert.Equal(t, object.Raw(), map[string]interface{}{
+			"foo": 1.0,
+			"bar": 2.0,
+		})
+
+		afterObject.chain.assertFailed(t)
+		object.chain.assertFailed(t)
 	})
 }

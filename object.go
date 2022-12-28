@@ -409,11 +409,11 @@ func (o *Object) Find(fn func(key string, value *Value) bool) *Value {
 		Type:   AssertValid,
 		Actual: &AssertionValue{o.value},
 		Errors: []error{
-			errors.New("expected: value is match in object"),
+			errors.New("expected: at least one object element matched predicate"),
 		},
 	})
 
-	return newValue(o.chain, []interface{}{})
+	return newValue(o.chain, nil)
 }
 
 // FindAll accepts a function that returns a boolean. The function is ran
@@ -485,17 +485,6 @@ func (o *Object) FindAll(fn func(key string, value *Value) bool) []Value {
 		}
 	}
 
-	if len(foundValues) == 0 {
-		o.chain.fail(AssertionFailure{
-			Type:   AssertValid,
-			Actual: &AssertionValue{o.value},
-			Errors: []error{
-				errors.New("expected: value is match in object"),
-			},
-		})
-		return []Value{}
-	}
-
 	return foundValues
 }
 
@@ -563,13 +552,14 @@ func (o *Object) NotFind(fn func(key string, value *Value) bool) *Object {
 		valueChain.replace("NotFind[%q]", key)
 		if fn(key, newValue(valueChain, element)) && !chainFailed {
 			o.chain.fail(AssertionFailure{
-				Type:   AssertValid,
-				Actual: &AssertionValue{o.value},
+				Type:     AssertNotContainsElement,
+				Expected: &AssertionValue{element},
+				Actual:   &AssertionValue{o.value},
 				Errors: []error{
-					errors.New("expected: value is not match in array"),
+					errors.New("expected: none of the array elements match predicate"),
 				},
 			})
-			return newObject(o.chain, map[string]interface{}{})
+			return newObject(o.chain, nil)
 		}
 	}
 

@@ -993,7 +993,7 @@ func TestArrayFind(t *testing.T) {
 		foundValue := array.Find(func(index int, value *Value) bool {
 			return value.Raw() == 2.0
 		})
-		assert.Equal(t, []interface{}{}, foundValue.Raw())
+		assert.Equal(t, nil, foundValue.Raw())
 		assert.Equal(t, array.Raw(), []interface{}{1.0, "foo", true, "bar"})
 
 		array.chain.assertFailed(t)
@@ -1006,12 +1006,39 @@ func TestArrayFind(t *testing.T) {
 		foundValue := array.Find(func(index int, value *Value) bool {
 			return value.Raw() == 2.0
 		})
-		assert.Equal(t, []interface{}{}, foundValue.Raw())
+		assert.Equal(t, nil, foundValue.Raw())
 		assert.Equal(t, array.Raw(), []interface{}{})
 
 		array.chain.assertFailed(t)
 		foundValue.chain.assertFailed(t)
 	})
+
+	t.Run("When predicate returns true, but assertion fails, predicate is failed",
+		func(ts *testing.T) {
+			reporter := newMockReporter(t)
+			array := NewArray(reporter, []interface{}{1, 2})
+			foundValue := array.Find(func(index int, value *Value) bool {
+				value.String().Raw()
+				return true
+			})
+			assert.Equal(t, nil, foundValue.Raw())
+			assert.Equal(t, array.Raw(), []interface{}{1.0, 2.0})
+
+			array.chain.assertFailed(t)
+			foundValue.chain.assertFailed(t)
+		})
+
+	t.Run("Predicate func is nil", func(ts *testing.T) {
+		reporter := newMockReporter(t)
+		array := NewArray(reporter, []interface{}{1, 2})
+		foundValue := array.Find(nil)
+		assert.Equal(t, nil, foundValue.Raw())
+		assert.Equal(t, array.Raw(), []interface{}{1.0, 2.0})
+
+		array.chain.assertFailed(t)
+		foundValue.chain.assertFailed(t)
+	})
+
 }
 
 func TestArrayFindAll(t *testing.T) {
@@ -1071,9 +1098,9 @@ func TestArrayFindAll(t *testing.T) {
 		assert.Equal(t, []interface{}{}, actual)
 		assert.Equal(t, array.Raw(), []interface{}{1.0, "foo", true, "bar"})
 
-		array.chain.assertFailed(t)
+		array.chain.assertNotFailed(t)
 		for _, value := range foundValues {
-			value.chain.assertFailed(t)
+			value.chain.assertNotFailed(t)
 		}
 	})
 
@@ -1090,6 +1117,67 @@ func TestArrayFindAll(t *testing.T) {
 		}
 		assert.Equal(t, []interface{}{}, actual)
 		assert.Equal(t, array.Raw(), []interface{}{})
+
+		array.chain.assertNotFailed(t)
+		for _, value := range foundValues {
+			value.chain.assertNotFailed(t)
+		}
+	})
+
+	t.Run("When predicate returns true, but assertion fails, predicate is failed",
+		func(ts *testing.T) {
+			reporter := newMockReporter(t)
+			array := NewArray(reporter, []interface{}{1, 2})
+			foundValues := array.FindAll(func(index int, value *Value) bool {
+				value.String().Raw()
+				return true
+			})
+
+			actual := []interface{}{}
+			for _, value := range foundValues {
+				actual = append(actual, value.Raw())
+			}
+			assert.Equal(t, []interface{}{}, actual)
+			assert.Equal(t, array.Raw(), []interface{}{1.0, 2.0})
+
+			array.chain.assertNotFailed(t)
+			for _, value := range foundValues {
+				value.chain.assertNotFailed(t)
+			}
+		})
+
+	t.Run("Assertion failure does not affect subsequent matches", func(ts *testing.T) {
+		reporter := newMockReporter(t)
+		array := NewArray(reporter, []interface{}{"foo", 1, 2, "bar"})
+		foundValues := array.FindAll(func(index int, value *Value) bool {
+			value.String().Raw()
+			return true
+		})
+
+		actual := []interface{}{}
+		for _, value := range foundValues {
+			actual = append(actual, value.Raw())
+		}
+		assert.Equal(t, []interface{}{"foo", "bar"}, actual)
+		assert.Equal(t, array.Raw(), []interface{}{"foo", 1.0, 2.0, "bar"})
+
+		array.chain.assertNotFailed(t)
+		for _, value := range foundValues {
+			value.chain.assertNotFailed(t)
+		}
+	})
+
+	t.Run("Predicate func is nil", func(ts *testing.T) {
+		reporter := newMockReporter(t)
+		array := NewArray(reporter, []interface{}{1, 2})
+		foundValues := array.FindAll(nil)
+
+		actual := []interface{}{}
+		for _, value := range foundValues {
+			actual = append(actual, value.Raw())
+		}
+		assert.Equal(t, []interface{}{}, actual)
+		assert.Equal(t, array.Raw(), []interface{}{1.0, 2.0})
 
 		array.chain.assertFailed(t)
 		for _, value := range foundValues {
@@ -1118,7 +1206,7 @@ func TestArrayNotFind(t *testing.T) {
 		afterArray := array.NotFind(func(index int, value *Value) bool {
 			return value.String().NotEmpty().Raw() == "bar"
 		})
-		assert.Equal(t, []interface{}{}, afterArray.Raw())
+		assert.Equal(t, []interface{}(nil), afterArray.Raw())
 		assert.Equal(t, array.Raw(), []interface{}{1.0, "foo", true, "bar"})
 
 		array.chain.assertFailed(t)
@@ -1136,5 +1224,31 @@ func TestArrayNotFind(t *testing.T) {
 
 		array.chain.assertNotFailed(t)
 		foundValue.chain.assertNotFailed(t)
+	})
+
+	t.Run("When predicate returns true, but assertion fails, predicate is failed",
+		func(ts *testing.T) {
+			reporter := newMockReporter(t)
+			array := NewArray(reporter, []interface{}{1, 2})
+			afterArray := array.NotFind(func(index int, value *Value) bool {
+				value.String().Raw()
+				return true
+			})
+			assert.Equal(t, []interface{}{1.0, 2.0}, afterArray.Raw())
+			assert.Equal(t, array.Raw(), []interface{}{1.0, 2.0})
+
+			array.chain.assertNotFailed(t)
+			afterArray.chain.assertNotFailed(t)
+		})
+
+	t.Run("Predicate func is nil", func(ts *testing.T) {
+		reporter := newMockReporter(t)
+		array := NewArray(reporter, []interface{}{1, 2})
+		afterArray := array.NotFind(nil)
+		assert.Equal(t, []interface{}(nil), afterArray.Raw())
+		assert.Equal(t, array.Raw(), []interface{}{1.0, 2.0})
+
+		array.chain.assertFailed(t)
+		afterArray.chain.assertFailed(t)
 	})
 }

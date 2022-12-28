@@ -412,11 +412,11 @@ func (a *Array) Find(fn func(index int, value *Value) bool) *Value {
 		Type:   AssertValid,
 		Actual: &AssertionValue{a.value},
 		Errors: []error{
-			errors.New("expected: value is match in array"),
+			errors.New("expected: at least one array element matched predicate"),
 		},
 	})
 
-	return newValue(a.chain, []interface{}{})
+	return newValue(a.chain, nil)
 }
 
 // FindAll accepts a function that returns a boolean. The function is ran
@@ -471,17 +471,6 @@ func (a *Array) FindAll(fn func(index int, value *Value) bool) []Value {
 		}
 	}
 
-	if len(foundValues) == 0 {
-		a.chain.fail(AssertionFailure{
-			Type:   AssertValid,
-			Actual: &AssertionValue{a.value},
-			Errors: []error{
-				errors.New("expected: value is match in array"),
-			},
-		})
-		return []Value{}
-	}
-
 	return foundValues
 }
 
@@ -530,13 +519,14 @@ func (a *Array) NotFind(fn func(index int, value *Value) bool) *Array {
 		valueChain.replace("NotFind[%v]", index)
 		if fn(index, newValue(valueChain, element)) && !chainFailed {
 			a.chain.fail(AssertionFailure{
-				Type:   AssertValid,
-				Actual: &AssertionValue{a.value},
+				Type:     AssertNotContainsElement,
+				Expected: &AssertionValue{element},
+				Actual:   &AssertionValue{a.value},
 				Errors: []error{
-					errors.New("expected: value is not match in array"),
+					errors.New("expected: none of the array elements match predicate"),
 				},
 			})
-			return newArray(a.chain, []interface{}{})
+			return newArray(a.chain, nil)
 		}
 	}
 
