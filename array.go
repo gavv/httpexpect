@@ -372,6 +372,179 @@ func (a *Array) Transform(fn func(index int, value interface{}) interface{}) *Ar
 	return newArray(a.chain, array)
 }
 
+// Find accepts a function that returns a boolean. The function is ran
+// over the array items. If the function returns true, the item
+// is returned as value. If the function returns false or assertion
+// inside it fails, the item is skipped. If all the items are skipped,
+// then Find fails and returns empty (non-nil) value.
+//
+// If there are any failed assertions in the filtering function, the
+// item is omitted without causing test failure.
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{1, "foo", 2, "bar"})
+//	foundValue := array.Find(func(index int, value *httpexpect.Value) bool {
+//		value.String().NotEmpty()		// fails on 1 and 2
+//		return value.Raw() != "bar"		// fails on "bar"
+//	})
+//	foundValue.Equal("foo")	// succeeds
+func (a *Array) Find(fn func(index int, value *Value) bool) *Value {
+	a.chain.enter("Find()")
+	defer a.chain.leave()
+
+	if a.chain.failed() {
+		return newValue(a.chain, nil)
+	}
+
+	if fn == nil {
+		a.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected nil function argument"),
+			},
+		})
+		return newValue(a.chain, nil)
+	}
+
+	for index, element := range a.value {
+		valueChain := a.chain.clone()
+		valueChain.setSeverity(SeverityLog)
+		chainFailed := false
+		valueChain.setFailCallback(func() {
+			chainFailed = true
+		})
+		valueChain.replace("Find[%v]", index)
+		if fn(index, newValue(valueChain, element)) && !chainFailed {
+			return newValue(a.chain, element)
+		}
+	}
+
+	a.chain.fail(AssertionFailure{
+		Type:   AssertValid,
+		Actual: &AssertionValue{a.value},
+		Errors: []error{
+			errors.New("expected: at least one array element matched predicate"),
+		},
+	})
+
+	return newValue(a.chain, nil)
+}
+
+// FindAll accepts a function that returns a boolean. The function is ran
+// over the array items. If the function returns true, the item is added
+// to the slice of values. If the function returns false or assertion
+// inside it fails, the item is skipped. After iterating through all the
+// items of the array, slice of values are returned.
+//
+// If there are any failed assertions in the filtering function, the
+// item is omitted without causing test failure.
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{1, "foo", 2, "bar", "baz"})
+//	foundValues := array.FindAll(func(index int, value *httpexpect.Value) bool {
+//		value.String().NotEmpty()		// fails on 1 and 2
+//		return value.Raw() != "bar"		// fails on "bar"
+//	})
+//
+//	assert.Equal(t, len(foundValues), 2)
+//	foundValues[0].Equal("foo")
+//	foundValues[1].Equal("baz")
+func (a *Array) FindAll(fn func(index int, value *Value) bool) []Value {
+	a.chain.enter("FindAll()")
+	defer a.chain.leave()
+
+	if a.chain.failed() {
+		return []Value{}
+	}
+
+	if fn == nil {
+		a.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected nil function argument"),
+			},
+		})
+		return []Value{}
+	}
+
+	foundValues := make([]Value, 0, len(a.value))
+	for index, element := range a.value {
+		valueChain := a.chain.clone()
+		valueChain.setSeverity(SeverityLog)
+		chainFailed := false
+		valueChain.setFailCallback(func() {
+			chainFailed = true
+		})
+		valueChain.replace("FindAll[%v]", index)
+		if fn(index, newValue(valueChain, element)) && !chainFailed {
+			foundValues = append(foundValues, *newValue(a.chain, element))
+		}
+	}
+
+	return foundValues
+}
+
+// NotFind accepts a function that returns a boolean. The function is ran
+// over the array items. If the function returns true, then NotFind fails
+// and returns empty (non-nil) array. If the function returns false or
+// assertion inside it fails in all iteration, NotFind succeeds and
+// returns original array.
+//
+// If there are any failed assertions in the filtering function, the
+// item is omitted without causing test failure.
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{1, "foo", 2, "bar"})
+//	afterArray := array.NotFind(func(index int, value *httpexpect.Value) bool {
+//		value.String().NotEmpty()		// fails on 1 and 2
+//		return value.Raw() == "baz"		// fails on "foo" and "bar"
+//	})
+//	afterArray.Equal([]interface{}{1, "foo", 2, "bar"})	// succeeds
+func (a *Array) NotFind(fn func(index int, value *Value) bool) *Array {
+	a.chain.enter("NotFind()")
+	defer a.chain.leave()
+
+	if a.chain.failed() {
+		return newArray(a.chain, nil)
+	}
+
+	if fn == nil {
+		a.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected nil function argument"),
+			},
+		})
+		return newArray(a.chain, nil)
+	}
+
+	for index, element := range a.value {
+		valueChain := a.chain.clone()
+		valueChain.setSeverity(SeverityLog)
+		chainFailed := false
+		valueChain.setFailCallback(func() {
+			chainFailed = true
+		})
+		valueChain.replace("NotFind[%v]", index)
+		if fn(index, newValue(valueChain, element)) && !chainFailed {
+			a.chain.fail(AssertionFailure{
+				Type:     AssertNotContainsElement,
+				Expected: &AssertionValue{element},
+				Actual:   &AssertionValue{a.value},
+				Errors: []error{
+					errors.New("expected: none of the array elements match predicate"),
+				},
+			})
+			return newArray(a.chain, nil)
+		}
+	}
+
+	return a
+}
+
 // Empty succeeds if array is empty.
 //
 // Example:

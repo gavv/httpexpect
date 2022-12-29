@@ -354,6 +354,230 @@ func (o *Object) Transform(fn func(key string, value interface{}) interface{}) *
 	return newObject(o.chain, object)
 }
 
+// Find accepts a function that returns a boolean. The function is ran
+// over the object items. If the function returns true, the item
+// is returned as value. If the function returns false or assertion
+// inside it fails, the item is skipped. If all the items are skipped,
+// then Find fails and returns empty (non-nil) value.
+//
+// If there are any failed assertions in the filtering function, the
+// item is omitted without causing test failure.
+//
+// Example:
+//
+//	object := NewObject(t, map[string]interface{}{
+//		"foo": "bar",
+//		"baz": 6,
+//		"qux": "quux",
+//	})
+//	foundValue := object.Find(func(key string, value *httpexpect.Value)  bool {
+//		value.String().NotEmpty()	// fails on 6
+//		return key == "qux"		// fails on "bar"
+//	})
+//	foundValue.Equal("quux")	// succeeds
+func (o *Object) Find(fn func(key string, value *Value) bool) *Value {
+	o.chain.enter("Find()")
+	defer o.chain.leave()
+
+	if o.chain.failed() {
+		return newValue(o.chain, nil)
+	}
+
+	if fn == nil {
+		o.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected nil function argument"),
+			},
+		})
+		return newValue(o.chain, nil)
+	}
+
+	type kv struct {
+		key   string
+		value interface{}
+	}
+	kvs := make([]kv, 0, len(o.value))
+	for key, element := range o.value {
+		kvs = append(kvs, kv{key: key, value: element})
+	}
+	sort.Slice(kvs, func(i, j int) bool { return kvs[i].key < kvs[j].key })
+
+	for _, kv := range kvs {
+		key, element := kv.key, kv.value
+		valueChain := o.chain.clone()
+		valueChain.setSeverity(SeverityLog)
+		chainFailed := false
+		valueChain.setFailCallback(func() {
+			chainFailed = true
+		})
+		valueChain.replace("Find[%q]", key)
+		if fn(key, newValue(valueChain, element)) && !chainFailed {
+			return newValue(o.chain, element)
+		}
+	}
+
+	o.chain.fail(AssertionFailure{
+		Type:   AssertValid,
+		Actual: &AssertionValue{o.value},
+		Errors: []error{
+			errors.New("expected: at least one object element matched predicate"),
+		},
+	})
+
+	return newValue(o.chain, nil)
+}
+
+// FindAll accepts a function that returns a boolean. The function is ran
+// over the object items. If the function returns true, the item is added
+// to the slice of values. If the function returns false or assertion
+// inside it fails, the item is skipped. After iterating through all the
+// items of the object, slice of values are returned.
+//
+// If there are any failed assertions in the filtering function, the
+// item is omitted without causing test failure.
+//
+// Example:
+//
+//	object := NewObject(t, map[string]interface{}{
+//		"foo": "bar",
+//		"baz": 6,
+//		"qux": "quux",
+//		"corge": "grault",
+//	})
+//	foundValues := object.FindAll(func(key string, value *httpexpect.Value) bool {
+//		value.String().NotEmpty()	// fails on 6
+//		return key != "qux"		// fails on "quux"
+//	})
+//
+//	assert.Equal(t, len(foundValues), 2)
+//	foundValues[0].Equal("grault")	// foundValues are sorted by key of object
+//	foundValues[1].Equal("bar")
+func (o *Object) FindAll(fn func(key string, value *Value) bool) []Value {
+	o.chain.enter("FindAll()")
+	defer o.chain.leave()
+
+	if o.chain.failed() {
+		return []Value{}
+	}
+
+	if fn == nil {
+		o.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected nil function argument"),
+			},
+		})
+		return []Value{}
+	}
+
+	type kv struct {
+		key   string
+		value interface{}
+	}
+	kvs := make([]kv, 0, len(o.value))
+	for key, element := range o.value {
+		kvs = append(kvs, kv{key: key, value: element})
+	}
+	sort.Slice(kvs, func(i, j int) bool { return kvs[i].key < kvs[j].key })
+
+	foundValues := make([]Value, 0, len(o.value))
+
+	for _, kv := range kvs {
+		key, element := kv.key, kv.value
+		valueChain := o.chain.clone()
+		valueChain.setSeverity(SeverityLog)
+		chainFailed := false
+		valueChain.setFailCallback(func() {
+			chainFailed = true
+		})
+		valueChain.replace("FindAll[%q]", key)
+		if fn(key, newValue(valueChain, element)) && !chainFailed {
+			foundValues = append(foundValues, *newValue(o.chain, element))
+		}
+	}
+
+	return foundValues
+}
+
+// NotFind accepts a function that returns a boolean. The function is ran
+// over the object items. If the function returns true, then NotFind fails
+// and returns empty (non-nil) object. If the function returns false or
+// assertion inside it fails in all iteration, NotFind succeeds and
+// returns original object.
+//
+// If there are any failed assertions in the filtering function, the
+// item is omitted without causing test failure.
+//
+// Example:
+//
+//	object := NewObject(t, map[string]interface{}{
+//		"foo": "bar",
+//		"baz": 6,
+//		"qux": "quux",
+//	})
+//	afterObject := object.NotFind(func(key string, value *httpexpect.Value)  bool {
+//		value.String().NotEmpty()	// fails on 6
+//		return key == "corge"		// fails on "bar" and "quux"
+//	})
+//	afterObject.Equal(map[string]interface{}{
+//		"foo": "bar",
+//		"baz": 6,
+//		"qux": "quux",
+//	})	// succeeds
+func (o *Object) NotFind(fn func(key string, value *Value) bool) *Object {
+	o.chain.enter("NotFind()")
+	defer o.chain.leave()
+
+	if o.chain.failed() {
+		return newObject(o.chain, nil)
+	}
+
+	if fn == nil {
+		o.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected nil function argument"),
+			},
+		})
+		return newObject(o.chain, nil)
+	}
+
+	type kv struct {
+		key   string
+		value interface{}
+	}
+	kvs := make([]kv, 0, len(o.value))
+	for key, element := range o.value {
+		kvs = append(kvs, kv{key: key, value: element})
+	}
+	sort.Slice(kvs, func(i, j int) bool { return kvs[i].key < kvs[j].key })
+
+	for _, kv := range kvs {
+		key, element := kv.key, kv.value
+		valueChain := o.chain.clone()
+		valueChain.setSeverity(SeverityLog)
+		chainFailed := false
+		valueChain.setFailCallback(func() {
+			chainFailed = true
+		})
+		valueChain.replace("NotFind[%q]", key)
+		if fn(key, newValue(valueChain, element)) && !chainFailed {
+			o.chain.fail(AssertionFailure{
+				Type:     AssertNotContainsElement,
+				Expected: &AssertionValue{element},
+				Actual:   &AssertionValue{o.value},
+				Errors: []error{
+					errors.New("expected: none of the array elements match predicate"),
+				},
+			})
+			return newObject(o.chain, nil)
+		}
+	}
+
+	return o
+}
+
 // Empty succeeds if object is empty.
 //
 // Example:
