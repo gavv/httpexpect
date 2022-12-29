@@ -526,6 +526,7 @@ func (o *Object) NotFind(fn func(key string, value *Value) bool) *Object {
 				Actual:   &AssertionValue{o.value},
 				Errors: []error{
 					errors.New("expected: none of the object elements match predicate"),
+					fmt.Errorf("element with key %q matches predicate", kv.key),
 				},
 			})
 			return o

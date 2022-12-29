@@ -533,6 +533,7 @@ func (a *Array) NotFind(fn func(index int, value *Value) bool) *Array {
 				Actual:   &AssertionValue{a.value},
 				Errors: []error{
 					errors.New("expected: none of the array elements match predicate"),
+					fmt.Errorf("element with index %d matches predicate", index),
 				},
 			})
 			return a
