@@ -100,13 +100,9 @@ func (o *Object) Keys() *Array {
 	}
 
 	keys := []interface{}{}
-	for k := range o.value {
-		keys = append(keys, k)
+	for _, kv := range o.sortedKV() {
+		keys = append(keys, kv.key)
 	}
-
-	sort.Slice(keys, func(i, j int) bool {
-		return keys[i].(string) < keys[j].(string)
-	})
 
 	return newArray(o.chain, keys)
 }
@@ -126,18 +122,9 @@ func (o *Object) Values() *Array {
 		return newArray(o.chain, nil)
 	}
 
-	keys := []string{}
-	for k := range o.value {
-		keys = append(keys, k)
-	}
-
-	sort.Slice(keys, func(i, j int) bool {
-		return keys[i] < keys[j]
-	})
-
 	values := []interface{}{}
-	for _, k := range keys {
-		values = append(values, o.value[k])
+	for _, kv := range o.sortedKV() {
+		values = append(values, kv.val)
 	}
 
 	return newArray(o.chain, values)
@@ -362,6 +349,8 @@ func (o *Object) Transform(fn func(key string, value interface{}) interface{}) *
 //
 // If no elements were found, a failure is reported.
 //
+// The search is performed in the array of object elements sorted by keys.
+//
 // Example:
 //
 //	object := NewObject(t, map[string]interface{}{
@@ -394,27 +383,16 @@ func (o *Object) Find(fn func(key string, value *Value) bool) *Value {
 		return newValue(o.chain, nil)
 	}
 
-	type kv struct {
-		key   string
-		value interface{}
-	}
-	kvs := make([]kv, 0, len(o.value))
-	for key, element := range o.value {
-		kvs = append(kvs, kv{key: key, value: element})
-	}
-	sort.Slice(kvs, func(i, j int) bool { return kvs[i].key < kvs[j].key })
-
-	for _, kv := range kvs {
-		key, element := kv.key, kv.value
+	for _, kv := range o.sortedKV() {
 		valueChain := o.chain.clone()
 		valueChain.setSeverity(SeverityLog)
 		chainFailed := false
 		valueChain.setFailCallback(func() {
 			chainFailed = true
 		})
-		valueChain.replace("Find[%q]", key)
-		if fn(key, newValue(valueChain, element)) && !chainFailed {
-			return newValue(o.chain, element)
+		valueChain.replace("Find[%q]", kv.key)
+		if fn(kv.key, newValue(valueChain, kv.val)) && !chainFailed {
+			return newValue(o.chain, kv.val)
 		}
 	}
 
@@ -436,6 +414,8 @@ func (o *Object) Find(fn func(key string, value *Value) bool) *Value {
 // element is skipped without causing test failure.
 //
 // If no elements were found, empty slice is returned without reporting error.
+//
+// The search is performed in the array of object elements sorted by keys.
 //
 // Example:
 //
@@ -472,29 +452,18 @@ func (o *Object) FindAll(fn func(key string, value *Value) bool) []Value {
 		return []Value{}
 	}
 
-	type kv struct {
-		key   string
-		value interface{}
-	}
-	kvs := make([]kv, 0, len(o.value))
-	for key, element := range o.value {
-		kvs = append(kvs, kv{key: key, value: element})
-	}
-	sort.Slice(kvs, func(i, j int) bool { return kvs[i].key < kvs[j].key })
-
 	foundValues := make([]Value, 0, len(o.value))
 
-	for _, kv := range kvs {
-		key, element := kv.key, kv.value
+	for _, kv := range o.sortedKV() {
 		valueChain := o.chain.clone()
 		valueChain.setSeverity(SeverityLog)
 		chainFailed := false
 		valueChain.setFailCallback(func() {
 			chainFailed = true
 		})
-		valueChain.replace("FindAll[%q]", key)
-		if fn(key, newValue(valueChain, element)) && !chainFailed {
-			foundValues = append(foundValues, *newValue(o.chain, element))
+		valueChain.replace("FindAll[%q]", kv.key)
+		if fn(kv.key, newValue(valueChain, kv.val)) && !chainFailed {
+			foundValues = append(foundValues, *newValue(o.chain, kv.val))
 		}
 	}
 
@@ -509,6 +478,8 @@ func (o *Object) FindAll(fn func(key string, value *Value) bool) []Value {
 //
 // If the predicate function did not fail and returned true for at least
 // one element, a failure is reported.
+//
+// The search is performed in the array of object elements sorted by keys.
 //
 // Example:
 //
@@ -540,29 +511,18 @@ func (o *Object) NotFind(fn func(key string, value *Value) bool) *Object {
 		return o
 	}
 
-	type kv struct {
-		key   string
-		value interface{}
-	}
-	kvs := make([]kv, 0, len(o.value))
-	for key, element := range o.value {
-		kvs = append(kvs, kv{key: key, value: element})
-	}
-	sort.Slice(kvs, func(i, j int) bool { return kvs[i].key < kvs[j].key })
-
-	for _, kv := range kvs {
-		key, element := kv.key, kv.value
+	for _, kv := range o.sortedKV() {
 		valueChain := o.chain.clone()
 		valueChain.setSeverity(SeverityLog)
 		chainFailed := false
 		valueChain.setFailCallback(func() {
 			chainFailed = true
 		})
-		valueChain.replace("NotFind[%q]", key)
-		if fn(key, newValue(valueChain, element)) && !chainFailed {
+		valueChain.replace("NotFind[%q]", kv.key)
+		if fn(kv.key, newValue(valueChain, kv.val)) && !chainFailed {
 			o.chain.fail(AssertionFailure{
 				Type:     AssertNotContainsElement,
-				Expected: &AssertionValue{element},
+				Expected: &AssertionValue{kv.val},
 				Actual:   &AssertionValue{o.value},
 				Errors: []error{
 					errors.New("expected: none of the object elements match predicate"),
@@ -1018,6 +978,20 @@ func (o *Object) NotValueEqual(key string, value interface{}) *Object {
 // Deprecated: use NotValueEqual instead.
 func (o *Object) ValueNotEqual(key string, value interface{}) *Object {
 	return o.NotValueEqual(key, value)
+}
+
+type kv struct {
+	key string
+	val interface{}
+}
+
+func (o *Object) sortedKV() []kv {
+	kvs := make([]kv, 0, len(o.value))
+	for key, val := range o.value {
+		kvs = append(kvs, kv{key: key, val: val})
+	}
+	sort.Slice(kvs, func(i, j int) bool { return kvs[i].key < kvs[j].key })
+	return kvs
 }
 
 func (o *Object) containsKey(arg string) bool {
