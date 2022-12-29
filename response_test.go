@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestResponseFailed(t *testing.T) {
+func TestResponse_Failed(t *testing.T) {
 	check := func(resp *Response) {
 		resp.chain.assertFailed(t)
 
@@ -96,7 +96,7 @@ func TestResponseFailed(t *testing.T) {
 	})
 }
 
-func TestResponseConstructors(t *testing.T) {
+func TestResponse_Constructors(t *testing.T) {
 	t.Run("Constructor without config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		resp := NewResponse(reporter, &http.Response{})
@@ -112,7 +112,7 @@ func TestResponseConstructors(t *testing.T) {
 	})
 }
 
-func TestResponseRoundTripTime(t *testing.T) {
+func TestResponse_RoundTripTime(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	t.Run("set", func(t *testing.T) {
@@ -148,7 +148,7 @@ func TestResponseRoundTripTime(t *testing.T) {
 	})
 }
 
-func TestResponseDuration(t *testing.T) {
+func TestResponse_Duration(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	t.Run("set", func(t *testing.T) {
@@ -178,7 +178,7 @@ func TestResponseDuration(t *testing.T) {
 	})
 }
 
-func TestResponseStatusRange(t *testing.T) {
+func TestResponse_StatusRange(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	ranges := []StatusRange{
@@ -224,7 +224,7 @@ func TestResponseStatusRange(t *testing.T) {
 	}
 }
 
-func TestResponseStatusList(t *testing.T) {
+func TestResponse_StatusList(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	cases := []struct {
@@ -267,7 +267,7 @@ func TestResponseStatusList(t *testing.T) {
 	}
 }
 
-func TestResponseHeaders(t *testing.T) {
+func TestResponse_Headers(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	headers := map[string][]string{
@@ -306,7 +306,7 @@ func TestResponseHeaders(t *testing.T) {
 	resp.Header("Bad-Header").Empty().chain.assertNotFailed(t)
 }
 
-func TestResponseCookies(t *testing.T) {
+func TestResponse_Cookies(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	headers := map[string][]string{
@@ -352,7 +352,7 @@ func TestResponseCookies(t *testing.T) {
 	assert.True(t, c3.Raw() == nil)
 }
 
-func TestResponseNoCookies(t *testing.T) {
+func TestResponse_NoCookies(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	httpResp := &http.Response{
@@ -374,7 +374,7 @@ func TestResponseNoCookies(t *testing.T) {
 	assert.True(t, c.Raw() == nil)
 }
 
-func TestResponseBody(t *testing.T) {
+func TestResponse_Body(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	httpResp := &http.Response{
@@ -389,7 +389,7 @@ func TestResponseBody(t *testing.T) {
 	resp.chain.clearFailed()
 }
 
-func TestResponseBodyClose(t *testing.T) {
+func TestResponse_BodyClose(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	body := newMockBody("test_body")
@@ -407,7 +407,7 @@ func TestResponseBodyClose(t *testing.T) {
 	resp.chain.assertNotFailed(t)
 }
 
-func TestResponseBodyError(t *testing.T) {
+func TestResponse_BodyError(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	t.Run("read_err", func(t *testing.T) {
@@ -445,7 +445,7 @@ func TestResponseBodyError(t *testing.T) {
 	})
 }
 
-func TestResponseNoContentEmpty(t *testing.T) {
+func TestResponse_NoContentEmpty(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	headers := map[string][]string{
@@ -489,7 +489,7 @@ func TestResponseNoContentEmpty(t *testing.T) {
 	resp.chain.clearFailed()
 }
 
-func TestResponseNoContentNil(t *testing.T) {
+func TestResponse_NoContentNil(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	headers := map[string][]string{
@@ -533,7 +533,7 @@ func TestResponseNoContentNil(t *testing.T) {
 	resp.chain.clearFailed()
 }
 
-func TestResponseNoContentFailed(t *testing.T) {
+func TestResponse_NoContentFailed(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	headers := map[string][]string{
@@ -559,7 +559,7 @@ func TestResponseNoContentFailed(t *testing.T) {
 	resp.chain.clearFailed()
 }
 
-func TestResponseContentType(t *testing.T) {
+func TestResponse_ContentType(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	headers := map[string][]string{
@@ -599,7 +599,7 @@ func TestResponseContentType(t *testing.T) {
 	resp.chain.clearFailed()
 }
 
-func TestResponseContentTypeEmptyCharset(t *testing.T) {
+func TestResponse_ContentTypeEmptyCharset(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	headers := map[string][]string{
@@ -623,7 +623,7 @@ func TestResponseContentTypeEmptyCharset(t *testing.T) {
 	resp.chain.clearFailed()
 }
 
-func TestResponseContentTypeInvalid(t *testing.T) {
+func TestResponse_ContentTypeInvalid(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	headers1 := map[string][]string{
@@ -659,7 +659,7 @@ func TestResponseContentTypeInvalid(t *testing.T) {
 	resp2.chain.clearFailed()
 }
 
-func TestResponseContentEncoding(t *testing.T) {
+func TestResponse_ContentEncoding(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	headers := map[string][]string{
@@ -687,7 +687,7 @@ func TestResponseContentEncoding(t *testing.T) {
 	resp.chain.clearFailed()
 }
 
-func TestResponseTransferEncoding(t *testing.T) {
+func TestResponse_TransferEncoding(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	resp := NewResponse(reporter, &http.Response{
@@ -707,7 +707,7 @@ func TestResponseTransferEncoding(t *testing.T) {
 	resp.chain.clearFailed()
 }
 
-func TestResponseText(t *testing.T) {
+func TestResponse_Text(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	headers := map[string][]string{
@@ -747,7 +747,7 @@ func TestResponseText(t *testing.T) {
 	assert.Equal(t, "hello, world!", resp.Text().Raw())
 }
 
-func TestResponseForm(t *testing.T) {
+func TestResponse_Form(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	headers := map[string][]string{
@@ -792,7 +792,7 @@ func TestResponseForm(t *testing.T) {
 	assert.Equal(t, expected, resp.Form().Raw())
 }
 
-func TestResponseFormBadBody(t *testing.T) {
+func TestResponse_FormBadBody(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	headers := map[string][]string{
@@ -816,7 +816,7 @@ func TestResponseFormBadBody(t *testing.T) {
 	assert.True(t, resp.Form().Raw() == nil)
 }
 
-func TestResponseFormBadType(t *testing.T) {
+func TestResponse_FormBadType(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	headers := map[string][]string{
@@ -840,7 +840,7 @@ func TestResponseFormBadType(t *testing.T) {
 	assert.True(t, resp.Form().Raw() == nil)
 }
 
-func TestResponseJSON(t *testing.T) {
+func TestResponse_JSON(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	headers := map[string][]string{
@@ -881,7 +881,7 @@ func TestResponseJSON(t *testing.T) {
 		map[string]interface{}{"key": "value"}, resp.JSON().Object().Raw())
 }
 
-func TestResponseJSONBadBody(t *testing.T) {
+func TestResponse_JSONBadBody(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	headers := map[string][]string{
@@ -905,7 +905,7 @@ func TestResponseJSONBadBody(t *testing.T) {
 	assert.True(t, resp.JSON().Raw() == nil)
 }
 
-func TestResponseJSONCharsetEmpty(t *testing.T) {
+func TestResponse_JSONCharsetEmpty(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	headers := map[string][]string{
@@ -930,7 +930,7 @@ func TestResponseJSONCharsetEmpty(t *testing.T) {
 		map[string]interface{}{"key": "value"}, resp.JSON().Object().Raw())
 }
 
-func TestResponseJSONCharsetBad(t *testing.T) {
+func TestResponse_JSONCharsetBad(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	headers := map[string][]string{
@@ -954,7 +954,7 @@ func TestResponseJSONCharsetBad(t *testing.T) {
 	assert.Equal(t, nil, resp.JSON().Raw())
 }
 
-func TestResponseJSONP(t *testing.T) {
+func TestResponse_JSONP(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	headers := map[string][]string{
@@ -1007,7 +1007,7 @@ func TestResponseJSONP(t *testing.T) {
 	}
 }
 
-func TestResponseJSONPBadBody(t *testing.T) {
+func TestResponse_JSONPBadBody(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	headers := map[string][]string{
@@ -1036,7 +1036,7 @@ func TestResponseJSONPBadBody(t *testing.T) {
 	}
 }
 
-func TestResponseJSONPCharsetEmpty(t *testing.T) {
+func TestResponse_JSONPCharsetEmpty(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	headers := map[string][]string{
@@ -1061,7 +1061,7 @@ func TestResponseJSONPCharsetEmpty(t *testing.T) {
 		map[string]interface{}{"key": "value"}, resp.JSONP("foo").Object().Raw())
 }
 
-func TestResponseJSONPCharsetBad(t *testing.T) {
+func TestResponse_JSONPCharsetBad(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	headers := map[string][]string{
@@ -1085,7 +1085,7 @@ func TestResponseJSONPCharsetBad(t *testing.T) {
 	assert.Nil(t, resp.JSONP("foo").Raw())
 }
 
-func TestResponseContentOpts(t *testing.T) {
+func TestResponse_ContentOpts(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	type testCase struct {
@@ -1231,7 +1231,7 @@ func TestResponseContentOpts(t *testing.T) {
 	})
 }
 
-func TestResponseUsageChecks(t *testing.T) {
+func TestResponse_UsageChecks(t *testing.T) {
 	t.Run("NewResponse multiple rtt arguments", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		rtt := []time.Duration{time.Second, time.Second}

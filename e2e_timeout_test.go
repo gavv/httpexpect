@@ -46,7 +46,7 @@ func createTimeoutHandler() http.Handler {
 	return mux
 }
 
-func TestE2ETimeoutDeadlineExpired(t *testing.T) {
+func TestE2ETimeout_DeadlineExpired(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
@@ -70,7 +70,7 @@ func TestE2ETimeoutDeadlineExpired(t *testing.T) {
 	assert.True(t, r.reported)
 }
 
-func TestE2ETimeoutSmallBody(t *testing.T) {
+func TestE2ETimeout_SmallBody(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
@@ -92,7 +92,7 @@ func TestE2ETimeoutSmallBody(t *testing.T) {
 	}
 }
 
-func TestE2ETimeoutLargeBody(t *testing.T) {
+func TestE2ETimeout_LargeBody(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}

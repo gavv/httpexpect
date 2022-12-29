@@ -15,7 +15,7 @@ func (*typedNil) String() string {
 	return ""
 }
 
-func TestFormatValues(t *testing.T) {
+func TestFormat_Values(t *testing.T) {
 	checkAll := func(t *testing.T, fn func(interface{}) string) {
 		var tnil *typedNil
 		var tnilPtr fmt.Stringer = tnil
@@ -69,7 +69,7 @@ func TestFormatValues(t *testing.T) {
 	})
 }
 
-func TestFormatDiff(t *testing.T) {
+func TestFormat_Diff(t *testing.T) {
 	checkOK := func(a, b interface{}) {
 		s, ok := formatDiff(a, b)
 		assert.True(t, ok)
@@ -94,7 +94,7 @@ func TestFormatDiff(t *testing.T) {
 	checkOK([]interface{}{"a"}, []interface{}{})
 }
 
-func TestFormatDataFailureActual(t *testing.T) {
+func TestFormat_FailureActual(t *testing.T) {
 	tests := []struct {
 		name           string
 		assertionType  AssertionType
@@ -209,7 +209,7 @@ func TestFormatDataFailureActual(t *testing.T) {
 	}
 }
 
-func TestFormatDataFailureExpected(t *testing.T) {
+func TestFormat_FailureExpected(t *testing.T) {
 	tests := []struct {
 		name             string
 		assertionType    AssertionType
@@ -426,7 +426,7 @@ func TestFormatDataFailureExpected(t *testing.T) {
 	}
 }
 
-func TestFormatDataFailureReference(t *testing.T) {
+func TestFormat_FailureReference(t *testing.T) {
 	tests := []struct {
 		name              string
 		assertionValue    interface{}
@@ -488,7 +488,7 @@ func TestFormatDataFailureReference(t *testing.T) {
 	}
 }
 
-func TestFormatDataFailureDelta(t *testing.T) {
+func TestFormat_FailureDelta(t *testing.T) {
 	tests := []struct {
 		name           string
 		assertionValue interface{}

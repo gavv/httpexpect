@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAssertionHandler(t *testing.T) {
+func TestAssertion_Handler(t *testing.T) {
 	type test struct {
 		formatter *mockFormatter
 		reporter  *mockReporter
@@ -141,7 +141,7 @@ func TestAssertionHandler(t *testing.T) {
 	})
 }
 
-func TestAssertionHandlerPanics(t *testing.T) {
+func TestAssertion_HandlerPanics(t *testing.T) {
 	t.Run("success_nil_Formatter", func(t *testing.T) {
 		handler := &DefaultAssertionHandler{
 			Formatter: nil,
@@ -195,7 +195,7 @@ func TestAssertionHandlerPanics(t *testing.T) {
 	})
 }
 
-func TestAssertionValidation(t *testing.T) {
+func TestAssertion_Validation(t *testing.T) {
 	tests := []struct {
 		testName          string
 		errorContainsText string
@@ -464,7 +464,7 @@ func TestAssertionValidation(t *testing.T) {
 	}
 }
 
-func TestAssertionStrings(t *testing.T) {
+func TestAssertion_Strings(t *testing.T) {
 	t.Run("AssertionType", func(t *testing.T) {
 		for i := 0; i < 100; i++ {
 			assert.NotEmpty(t, AssertionType(i).String())

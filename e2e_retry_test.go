@@ -231,7 +231,7 @@ func testRetries(
 	})
 }
 
-func TestE2ERetryLive(t *testing.T) {
+func TestE2ERetry_Live(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
@@ -256,7 +256,7 @@ func TestE2ERetryLive(t *testing.T) {
 	})
 }
 
-func TestE2ERetryBinderStandard(t *testing.T) {
+func TestE2ERetry_BinderStandard(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
@@ -278,7 +278,7 @@ func TestE2ERetryBinderStandard(t *testing.T) {
 	})
 }
 
-func TestE2ERetryBinderFast(t *testing.T) {
+func TestE2ERetry_BinderFast(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}

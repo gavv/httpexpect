@@ -51,7 +51,7 @@ func testCookieHandler(e *Expect, enabled bool) {
 	}
 }
 
-func TestE2ECookieLiveDisabled(t *testing.T) {
+func TestE2ECookie_LiveDisabled(t *testing.T) {
 	handler := createCookieHandler()
 
 	server := httptest.NewServer(handler)
@@ -68,7 +68,7 @@ func TestE2ECookieLiveDisabled(t *testing.T) {
 	testCookieHandler(e, false)
 }
 
-func TestE2ECookieLiveEnabled(t *testing.T) {
+func TestE2ECookie_LiveEnabled(t *testing.T) {
 	handler := createCookieHandler()
 
 	server := httptest.NewServer(handler)
@@ -85,7 +85,7 @@ func TestE2ECookieLiveEnabled(t *testing.T) {
 	testCookieHandler(e, true)
 }
 
-func TestE2ECookieBinderStandardDisabled(t *testing.T) {
+func TestE2ECookie_BinderStandardDisabled(t *testing.T) {
 	handler := createCookieHandler()
 
 	e := WithConfig(Config{
@@ -100,7 +100,7 @@ func TestE2ECookieBinderStandardDisabled(t *testing.T) {
 	testCookieHandler(e, false)
 }
 
-func TestE2ECookieBinderStandardEnabled(t *testing.T) {
+func TestE2ECookie_BinderStandardEnabled(t *testing.T) {
 	handler := createCookieHandler()
 
 	e := WithConfig(Config{
@@ -115,7 +115,7 @@ func TestE2ECookieBinderStandardEnabled(t *testing.T) {
 	testCookieHandler(e, true)
 }
 
-func TestE2ECookieBinderFastDisabled(t *testing.T) {
+func TestE2ECookie_BinderFastDisabled(t *testing.T) {
 	handler := fasthttpadaptor.NewFastHTTPHandler(createCookieHandler())
 
 	e := WithConfig(Config{
@@ -130,7 +130,7 @@ func TestE2ECookieBinderFastDisabled(t *testing.T) {
 	testCookieHandler(e, false)
 }
 
-func TestE2ECookieBinderFastEnabled(t *testing.T) {
+func TestE2ECookie_BinderFastEnabled(t *testing.T) {
 	handler := fasthttpadaptor.NewFastHTTPHandler(createCookieHandler())
 
 	e := WithConfig(Config{

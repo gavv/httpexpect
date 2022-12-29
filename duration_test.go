@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestDurationFailed(t *testing.T) {
+func TestDuration_Failed(t *testing.T) {
 	chain := newMockChain(t)
 	chain.fail(mockFailure())
 
@@ -24,7 +24,7 @@ func TestDurationFailed(t *testing.T) {
 	value.NotInRange(tm, tm)
 }
 
-func TestDurationConstructors(t *testing.T) {
+func TestDuration_Constructors(t *testing.T) {
 	tm := time.Second
 
 	t.Run("Constructor without config", func(t *testing.T) {
@@ -44,7 +44,7 @@ func TestDurationConstructors(t *testing.T) {
 	})
 }
 
-func TestDurationSet(t *testing.T) {
+func TestDuration_Set(t *testing.T) {
 	chain := newMockChain(t)
 
 	tm := time.Second
@@ -59,7 +59,7 @@ func TestDurationSet(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestDurationUnset(t *testing.T) {
+func TestDuration_Unset(t *testing.T) {
 	chain := newMockChain(t)
 
 	value := newDuration(chain, nil)
@@ -73,7 +73,7 @@ func TestDurationUnset(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestDurationEqual(t *testing.T) {
+func TestDuration_Equal(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewDuration(reporter, time.Second)
@@ -97,7 +97,7 @@ func TestDurationEqual(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestDurationGreater(t *testing.T) {
+func TestDuration_Greater(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewDuration(reporter, time.Second)
@@ -123,7 +123,7 @@ func TestDurationGreater(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestDurationLesser(t *testing.T) {
+func TestDuration_Lesser(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewDuration(reporter, time.Second)
@@ -149,7 +149,7 @@ func TestDurationLesser(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestDurationInRange(t *testing.T) {
+func TestDuration_InRange(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewDuration(reporter, time.Second)

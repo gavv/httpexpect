@@ -24,7 +24,7 @@ func createPrinterHandler() http.Handler {
 	return mux
 }
 
-func TestE2EPrinter(t *testing.T) {
+func TestE2EPrinter_Single(t *testing.T) {
 	handler := createPrinterHandler()
 
 	server := httptest.NewServer(handler)
@@ -50,7 +50,7 @@ func TestE2EPrinter(t *testing.T) {
 	assert.Equal(t, "test_response", string(p.respBody))
 }
 
-func TestE2EPrinterMultiple(t *testing.T) {
+func TestE2EPrinter_Multiple(t *testing.T) {
 	handler := createPrinterHandler()
 
 	server := httptest.NewServer(handler)

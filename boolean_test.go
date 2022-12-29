@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestBooleanFailed(t *testing.T) {
+func TestBoolean_Failed(t *testing.T) {
 	chain := newMockChain(t)
 	chain.fail(mockFailure())
 
@@ -21,7 +21,7 @@ func TestBooleanFailed(t *testing.T) {
 	value.False()
 }
 
-func TestBooleanConstructors(t *testing.T) {
+func TestBoolean_Constructors(t *testing.T) {
 	t.Run("Constructor without config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewBoolean(reporter, true)
@@ -39,7 +39,7 @@ func TestBooleanConstructors(t *testing.T) {
 	})
 }
 
-func TestBooleanGetters(t *testing.T) {
+func TestBoolean_Getters(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewBoolean(reporter, true)
@@ -61,7 +61,7 @@ func TestBooleanGetters(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestBooleanTrue(t *testing.T) {
+func TestBoolean_True(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewBoolean(reporter, true)
@@ -93,7 +93,7 @@ func TestBooleanTrue(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestBooleanFalse(t *testing.T) {
+func TestBoolean_False(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewBoolean(reporter, false)

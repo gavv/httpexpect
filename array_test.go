@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestArrayFailed(t *testing.T) {
+func TestArray_Failed(t *testing.T) {
 	check := func(value *Array) {
 		value.chain.assertFailed(t)
 
@@ -88,7 +88,7 @@ func TestArrayFailed(t *testing.T) {
 	})
 }
 
-func TestArrayConstructors(t *testing.T) {
+func TestArray_Constructors(t *testing.T) {
 	testValue := []interface{}{"Foo", 123}
 
 	t.Run("Constructor without config", func(t *testing.T) {
@@ -108,7 +108,7 @@ func TestArrayConstructors(t *testing.T) {
 	})
 }
 
-func TestArrayGetters(t *testing.T) {
+func TestArray_Getters(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	a := []interface{}{"foo", 123.0}
@@ -155,7 +155,7 @@ func TestArrayGetters(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestArrayEmpty(t *testing.T) {
+func TestArray_Empty(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value1 := NewArray(reporter, nil)
@@ -185,7 +185,7 @@ func TestArrayEmpty(t *testing.T) {
 	value3.chain.clearFailed()
 }
 
-func TestArrayEmptyGetters(t *testing.T) {
+func TestArray_EmptyGetters(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewArray(reporter, []interface{}{})
@@ -207,7 +207,7 @@ func TestArrayEmptyGetters(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestArrayEqualEmpty(t *testing.T) {
+func TestArray_EqualEmpty(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewArray(reporter, []interface{}{})
@@ -231,7 +231,7 @@ func TestArrayEqualEmpty(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestArrayEqualNotEmpty(t *testing.T) {
+func TestArray_EqualNotEmpty(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewArray(reporter, []interface{}{"foo", "bar"})
@@ -271,7 +271,7 @@ func TestArrayEqualNotEmpty(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestArrayEqualTypes(t *testing.T) {
+func TestArray_EqualTypes(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value1 := NewArray(reporter, []interface{}{"foo", "bar"})
@@ -338,7 +338,7 @@ func TestArrayEqualTypes(t *testing.T) {
 	value3.chain.clearFailed()
 }
 
-func TestArrayEqualUnordered(t *testing.T) {
+func TestArray_EqualUnordered(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	t.Run("without_duplicates", func(t *testing.T) {
@@ -422,7 +422,7 @@ func TestArrayEqualUnordered(t *testing.T) {
 	})
 }
 
-func TestArrayElements(t *testing.T) {
+func TestArray_Elements(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewArray(reporter, []interface{}{123, "foo"})
@@ -448,7 +448,7 @@ func TestArrayElements(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestArrayNotElements(t *testing.T) {
+func TestArray_NotElements(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewArray(reporter, []interface{}{123, "foo"})
@@ -474,7 +474,7 @@ func TestArrayNotElements(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestArrayContains(t *testing.T) {
+func TestArray_Contains(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewArray(reporter, []interface{}{123, "foo"})
@@ -524,7 +524,7 @@ func TestArrayContains(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestArrayContainsOnly(t *testing.T) {
+func TestArray_ContainsOnly(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	t.Run("without_duplicates", func(t *testing.T) {
@@ -608,7 +608,7 @@ func TestArrayContainsOnly(t *testing.T) {
 	})
 }
 
-func TestArrayContainsAny(t *testing.T) {
+func TestArray_ContainsAny(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewArray(reporter, []interface{}{123, "foo"})
@@ -662,7 +662,7 @@ func TestArrayContainsAny(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestArrayConvertEqual(t *testing.T) {
+func TestArray_ConvertEqual(t *testing.T) {
 	type (
 		myArray []interface{}
 		myInt   int
@@ -699,7 +699,7 @@ func TestArrayConvertEqual(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestArrayConvertElements(t *testing.T) {
+func TestArray_ConvertElements(t *testing.T) {
 	type (
 		myInt int
 	)
@@ -719,7 +719,7 @@ func TestArrayConvertElements(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestArrayConvertContains(t *testing.T) {
+func TestArray_ConvertContains(t *testing.T) {
 	type (
 		myInt int
 	)
@@ -791,7 +791,7 @@ func TestArrayConvertContains(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestArrayEvery(t *testing.T) {
+func TestArray_Every(t *testing.T) {
 	t.Run("Check validation", func(ts *testing.T) {
 		reporter := newMockReporter(ts)
 		array := NewArray(reporter, []interface{}{2, 4, 6})
@@ -848,7 +848,7 @@ func TestArrayEvery(t *testing.T) {
 	})
 }
 
-func TestArrayTransform(t *testing.T) {
+func TestArray_Transform(t *testing.T) {
 	t.Run("Square Integers", func(ts *testing.T) {
 		reporter := newMockReporter(ts)
 		array := NewArray(reporter, []interface{}{2, 4, 6})
@@ -896,7 +896,7 @@ func TestArrayTransform(t *testing.T) {
 	})
 }
 
-func TestArrayFilter(t *testing.T) {
+func TestArray_Filter(t *testing.T) {
 	t.Run("Filter an array of elements of the same type and validate", func(ts *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1, 2, 3, 4, 5, 6})
@@ -965,7 +965,7 @@ func TestArrayFilter(t *testing.T) {
 		})
 }
 
-func TestArrayFind(t *testing.T) {
+func TestArray_Find(t *testing.T) {
 	t.Run("Elements of the same type", func(ts *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1, 2, 3, 4, 5, 6})
@@ -1075,7 +1075,7 @@ func TestArrayFind(t *testing.T) {
 	})
 }
 
-func TestArrayFindAll(t *testing.T) {
+func TestArray_FindAll(t *testing.T) {
 	t.Run("Elements of the same type", func(ts *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1, 2, 3, 4, 5, 6})
@@ -1220,7 +1220,7 @@ func TestArrayFindAll(t *testing.T) {
 	})
 }
 
-func TestArrayNotFind(t *testing.T) {
+func TestArray_NotFind(t *testing.T) {
 	t.Run("Succeeds if no element matches predicate", func(ts *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1, "foo", true, "bar"})

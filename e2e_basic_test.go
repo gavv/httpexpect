@@ -91,7 +91,7 @@ func testBasicHandler(e *Expect) {
 		Form().ValueEqual("username", "john").ValueEqual("password", "secret")
 }
 
-func TestE2EBasicLiveDefault(t *testing.T) {
+func TestE2EBasic_LiveDefault(t *testing.T) {
 	handler := createBasicHandler()
 
 	server := httptest.NewServer(handler)
@@ -100,7 +100,7 @@ func TestE2EBasicLiveDefault(t *testing.T) {
 	testBasicHandler(Default(t, server.URL))
 }
 
-func TestE2EBasicLiveConfig(t *testing.T) {
+func TestE2EBasic_LiveConfig(t *testing.T) {
 	handler := createBasicHandler()
 
 	server := httptest.NewServer(handler)
@@ -116,7 +116,7 @@ func TestE2EBasicLiveConfig(t *testing.T) {
 	}))
 }
 
-func TestE2EBasicLiveTLS(t *testing.T) {
+func TestE2EBasic_LiveTLS(t *testing.T) {
 	handler := createBasicHandler()
 
 	server := httptest.NewTLSServer(handler)
@@ -135,7 +135,7 @@ func TestE2EBasicLiveTLS(t *testing.T) {
 	}))
 }
 
-func TestE2EBasicLiveLongRun(t *testing.T) {
+func TestE2EBasic_LiveLongRun(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
@@ -152,7 +152,7 @@ func TestE2EBasicLiveLongRun(t *testing.T) {
 	}
 }
 
-func TestE2EBasicBinderStandard(t *testing.T) {
+func TestE2EBasic_BinderStandard(t *testing.T) {
 	handler := createBasicHandler()
 
 	testBasicHandler(WithConfig(Config{
@@ -164,7 +164,7 @@ func TestE2EBasicBinderStandard(t *testing.T) {
 	}))
 }
 
-func TestE2EBasicBinderFast(t *testing.T) {
+func TestE2EBasic_BinderFast(t *testing.T) {
 	handler := fasthttpadaptor.NewFastHTTPHandler(createBasicHandler())
 
 	testBasicHandler(WithConfig(Config{

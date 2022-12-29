@@ -10,7 +10,7 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-func TestE2EFsFastBinder(t *testing.T) {
+func TestE2EFs_FastBinder(t *testing.T) {
 	tempdir, err := ioutil.TempDir("", "httpexpect")
 	if err != nil {
 		t.Fatal(err)

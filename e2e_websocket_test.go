@@ -166,7 +166,7 @@ func testWebsocket(e *Expect) {
 	testWebsocketTypes(e)
 }
 
-func TestE2EWebsocketLive(t *testing.T) {
+func TestE2EWebsocket_Live(t *testing.T) {
 	handler := createWebsocketHandler(wsHandlerOpts{})
 
 	server := httptest.NewServer(handler)
@@ -183,7 +183,7 @@ func TestE2EWebsocketLive(t *testing.T) {
 	testWebsocket(e)
 }
 
-func TestE2EWebsocketHandlerStandard(t *testing.T) {
+func TestE2EWebsocket_HandlerStandard(t *testing.T) {
 	t.Run("dialer-config", func(t *testing.T) {
 		handler := createWebsocketHandler(wsHandlerOpts{})
 
@@ -214,7 +214,7 @@ func TestE2EWebsocketHandlerStandard(t *testing.T) {
 	})
 }
 
-func TestE2EWebsocketHandlerFast(t *testing.T) {
+func TestE2EWebsocket_HandlerFast(t *testing.T) {
 	t.Run("dialer-config", func(t *testing.T) {
 		e := WithConfig(Config{
 			Reporter:        NewAssertReporter(t),
@@ -282,7 +282,7 @@ func testWebsocketTimeout(
 	}
 }
 
-func TestE2EWebsocketTimeouts(t *testing.T) {
+func TestE2EWebsocket_Timeouts(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
@@ -330,7 +330,7 @@ func TestE2EWebsocketTimeouts(t *testing.T) {
 	})
 }
 
-func TestE2EWebsocketClosed(t *testing.T) {
+func TestE2EWebsocket_Closed(t *testing.T) {
 	t.Run("close-write", func(t *testing.T) {
 		handler := createWebsocketHandler(wsHandlerOpts{})
 
@@ -380,7 +380,7 @@ func TestE2EWebsocketClosed(t *testing.T) {
 	})
 }
 
-func TestE2EWebsocketDisconnected(t *testing.T) {
+func TestE2EWebsocket_Disconnected(t *testing.T) {
 	t.Run("disconnect-write", func(t *testing.T) {
 		handler := createWebsocketHandler(wsHandlerOpts{})
 
@@ -451,7 +451,7 @@ func TestE2EWebsocketDisconnected(t *testing.T) {
 	})
 }
 
-func TestE2EWebsocketInvalid(t *testing.T) {
+func TestE2EWebsocket_Invalid(t *testing.T) {
 	handler := createWebsocketHandler(wsHandlerOpts{})
 
 	server := httptest.NewServer(handler)

@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestEnvironmentConstructors(t *testing.T) {
+func TestEnvironment_Constructors(t *testing.T) {
 	t.Run("Constructor without config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		env := NewEnvironment(reporter)
@@ -25,7 +25,7 @@ func TestEnvironmentConstructors(t *testing.T) {
 	})
 }
 
-func TestEnvironmentGeneric(t *testing.T) {
+func TestEnvironment_Generic(t *testing.T) {
 	env := newEnvironment(newMockChain(t))
 
 	assert.False(t, env.Has("good_key"))
@@ -46,7 +46,7 @@ func TestEnvironmentGeneric(t *testing.T) {
 	env.chain.assertFailed(t)
 }
 
-func TestEnvironmentNotFound(t *testing.T) {
+func TestEnvironment_NotFound(t *testing.T) {
 	env := newEnvironment(newMockChain(t))
 
 	assert.Nil(t, env.Get("bad_key"))
@@ -82,7 +82,7 @@ func TestEnvironmentNotFound(t *testing.T) {
 	env.chain.clearFailed()
 }
 
-func TestEnvironmentBool(t *testing.T) {
+func TestEnvironment_Bool(t *testing.T) {
 	tests := []struct {
 		put interface{}
 		get bool
@@ -129,7 +129,7 @@ func TestEnvironmentBool(t *testing.T) {
 	}
 }
 
-func TestEnvironmentInt(t *testing.T) {
+func TestEnvironment_Int(t *testing.T) {
 	tests := []struct {
 		put interface{}
 		get int
@@ -226,7 +226,7 @@ func TestEnvironmentInt(t *testing.T) {
 	}
 }
 
-func TestEnvironmentFloat(t *testing.T) {
+func TestEnvironment_Float(t *testing.T) {
 	tests := []struct {
 		put interface{}
 		get float64
@@ -278,7 +278,7 @@ func TestEnvironmentFloat(t *testing.T) {
 	}
 }
 
-func TestEnvironmentString(t *testing.T) {
+func TestEnvironment_String(t *testing.T) {
 	tests := []struct {
 		put interface{}
 		get string
@@ -320,7 +320,7 @@ func TestEnvironmentString(t *testing.T) {
 	}
 }
 
-func TestEnvironmentBytes(t *testing.T) {
+func TestEnvironment_Bytes(t *testing.T) {
 	tests := []struct {
 		put interface{}
 		get []byte
@@ -362,7 +362,7 @@ func TestEnvironmentBytes(t *testing.T) {
 	}
 }
 
-func TestEnvironmentDuration(t *testing.T) {
+func TestEnvironment_Duration(t *testing.T) {
 	tests := []struct {
 		put interface{}
 		get time.Duration
@@ -404,7 +404,7 @@ func TestEnvironmentDuration(t *testing.T) {
 	}
 }
 
-func TestEnvironmentTime(t *testing.T) {
+func TestEnvironment_Time(t *testing.T) {
 	tests := []struct {
 		put interface{}
 		get time.Time

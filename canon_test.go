@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCanonNumber(t *testing.T) {
+func TestCanon_Number(t *testing.T) {
 	type (
 		myInt int
 	)
@@ -42,7 +42,7 @@ func TestCanonNumber(t *testing.T) {
 	chain.clearFailed()
 }
 
-func TestCanonArray(t *testing.T) {
+func TestCanon_Array(t *testing.T) {
 	type (
 		myArray []interface{}
 		myInt   int
@@ -83,7 +83,7 @@ func TestCanonArray(t *testing.T) {
 	chain.clearFailed()
 }
 
-func TestCanonMap(t *testing.T) {
+func TestCanon_Map(t *testing.T) {
 	type (
 		myMap map[string]interface{}
 		myInt int

@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestCompactPrinter(t *testing.T) {
+func TestPrinter_Compact(t *testing.T) {
 	printer := NewCompactPrinter(t)
 
 	body1 := bytes.NewBufferString("body1")
@@ -25,7 +25,7 @@ func TestCompactPrinter(t *testing.T) {
 	printer.Response(nil, 0)
 }
 
-func TestDebugPrinter(t *testing.T) {
+func TestPrinter_Debug(t *testing.T) {
 	printer := NewDebugPrinter(t, true)
 
 	body1 := bytes.NewBufferString("body1")

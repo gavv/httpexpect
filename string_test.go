@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestStringFailed(t *testing.T) {
+func TestString_Failed(t *testing.T) {
 	chain := newMockChain(t)
 	chain.fail(mockFailure())
 
@@ -46,7 +46,7 @@ func TestStringFailed(t *testing.T) {
 	value.NotIsASCII()
 }
 
-func TestStringConstructors(t *testing.T) {
+func TestString_Constructors(t *testing.T) {
 	t.Run("Constructor without config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewString(reporter, "Hello")
@@ -64,7 +64,7 @@ func TestStringConstructors(t *testing.T) {
 	})
 }
 
-func TestStringGetters(t *testing.T) {
+func TestString_Getters(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewString(reporter, "foo")
@@ -86,7 +86,7 @@ func TestStringGetters(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestStringLength(t *testing.T) {
+func TestString_Length(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewString(reporter, "1234567")
@@ -97,7 +97,7 @@ func TestStringLength(t *testing.T) {
 	assert.Equal(t, 7.0, num.Raw())
 }
 
-func TestStringEmpty(t *testing.T) {
+func TestString_Empty(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value1 := NewString(reporter, "")
@@ -121,7 +121,7 @@ func TestStringEmpty(t *testing.T) {
 	value2.chain.clearFailed()
 }
 
-func TestStringEqual(t *testing.T) {
+func TestString_Equal(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewString(reporter, "foo")
@@ -145,7 +145,7 @@ func TestStringEqual(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestStringEqualFold(t *testing.T) {
+func TestString_EqualFold(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewString(reporter, "foo")
@@ -175,7 +175,7 @@ func TestStringEqualFold(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestStringContains(t *testing.T) {
+func TestString_Contains(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewString(reporter, "11-foo-22")
@@ -197,7 +197,7 @@ func TestStringContains(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestStringContainsFold(t *testing.T) {
+func TestString_ContainsFold(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewString(reporter, "11-foo-22")
@@ -227,7 +227,7 @@ func TestStringContainsFold(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestStringMatchOne(t *testing.T) {
+func TestString_MatchOne(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewString(reporter, "http://example.com/users/john")
@@ -247,7 +247,7 @@ func TestStringMatchOne(t *testing.T) {
 		m2.submatches)
 }
 
-func TestStringMatchAll(t *testing.T) {
+func TestString_MatchAll(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewString(reporter,
@@ -269,7 +269,7 @@ func TestStringMatchAll(t *testing.T) {
 		m[1].submatches)
 }
 
-func TestStringMatchStatus(t *testing.T) {
+func TestString_MatchStatus(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewString(reporter, "a")
@@ -302,7 +302,7 @@ func TestStringMatchStatus(t *testing.T) {
 	assert.Equal(t, []Match{}, value.MatchAll(`[^a]`))
 }
 
-func TestStringMatchInvalid(t *testing.T) {
+func TestString_MatchInvalid(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewString(reporter, "a")
@@ -320,7 +320,7 @@ func TestStringMatchInvalid(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestStringIsAscii(t *testing.T) {
+func TestString_IsAscii(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value1 := NewString(reporter, "Ascii")
@@ -349,7 +349,7 @@ func TestStringIsAscii(t *testing.T) {
 	value5.chain.clearFailed()
 }
 
-func TestStringIsNotAscii(t *testing.T) {
+func TestString_IsNotAscii(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value1 := NewString(reporter, "Ascii")
@@ -378,7 +378,7 @@ func TestStringIsNotAscii(t *testing.T) {
 	value5.chain.clearFailed()
 }
 
-func TestStringAsNumber(t *testing.T) {
+func TestString_AsNumber(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	t.Run("default_base", func(t *testing.T) {
@@ -470,7 +470,7 @@ func TestStringAsNumber(t *testing.T) {
 	})
 }
 
-func TestStringAsBoolean(t *testing.T) {
+func TestString_AsBoolean(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	trueValues := []string{"true", "True"}
@@ -503,7 +503,7 @@ func TestStringAsBoolean(t *testing.T) {
 	}
 }
 
-func TestStringAsDateTime(t *testing.T) {
+func TestString_AsDateTime(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value1 := NewString(reporter, "Tue, 15 Nov 1994 08:12:31 GMT")
@@ -561,7 +561,7 @@ func TestStringAsDateTime(t *testing.T) {
 	}
 }
 
-func TestStringHasPrefix(t *testing.T) {
+func TestString_HasPrefix(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewString(reporter, "Hello World")
@@ -603,7 +603,7 @@ func TestStringHasPrefix(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestStringHasSuffix(t *testing.T) {
+func TestString_HasSuffix(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewString(reporter, "Hello World")
@@ -645,7 +645,7 @@ func TestStringHasSuffix(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestStringHasPrefixFold(t *testing.T) {
+func TestString_HasPrefixFold(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewString(reporter, "Hello World")
@@ -683,7 +683,7 @@ func TestStringHasPrefixFold(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestStringHasSuffixFold(t *testing.T) {
+func TestString_HasSuffixFold(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewString(reporter, "Hello World")

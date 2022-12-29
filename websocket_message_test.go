@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestWebsocketMessageFailed(t *testing.T) {
+func TestWebsocketMessage_Failed(t *testing.T) {
 	chain := newMockChain(t)
 	chain.fail(mockFailure())
 
@@ -30,7 +30,7 @@ func TestWebsocketMessageFailed(t *testing.T) {
 	msg.JSON().chain.assertFailed(t)
 }
 
-func TestWebsocketMessageConstructors(t *testing.T) {
+func TestWebsocketMessage_Constructors(t *testing.T) {
 	t.Run("Constructor without config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		msg := NewWebsocketMessage(reporter, websocket.CloseMessage, nil)
@@ -48,7 +48,7 @@ func TestWebsocketMessageConstructors(t *testing.T) {
 	})
 }
 
-func TestWebsocketMessageBadUsage(t *testing.T) {
+func TestWebsocketMessage_BadUsage(t *testing.T) {
 	chain := newMockChain(t)
 
 	msg := newEmptyWebsocketMessage(chain)
@@ -72,7 +72,7 @@ func TestWebsocketMessageBadUsage(t *testing.T) {
 	msg.chain.clearFailed()
 }
 
-func TestWebsocketMessageCloseMessage(t *testing.T) {
+func TestWebsocketMessage_CloseMessage(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	msg := NewWebsocketMessage(reporter, websocket.CloseMessage, nil, 1000)
@@ -134,7 +134,7 @@ func TestWebsocketMessageCloseMessage(t *testing.T) {
 	msg.chain.clearFailed()
 }
 
-func TestWebsocketMessageTextMessage(t *testing.T) {
+func TestWebsocketMessage_TextMessage(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	msg := NewWebsocketMessage(reporter, websocket.TextMessage, nil, 0)
@@ -180,7 +180,7 @@ func TestWebsocketMessageTextMessage(t *testing.T) {
 	msg.chain.clearFailed()
 }
 
-func TestWebsocketMessageBinaryMessage(t *testing.T) {
+func TestWebsocketMessage_BinaryMessage(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	msg := NewWebsocketMessage(reporter, websocket.BinaryMessage, nil, 0)
@@ -226,7 +226,7 @@ func TestWebsocketMessageBinaryMessage(t *testing.T) {
 	msg.chain.clearFailed()
 }
 
-func TestWebsocketMessageMatchTypes(t *testing.T) {
+func TestWebsocketMessage_MatchTypes(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	msg := NewWebsocketMessage(reporter, websocket.TextMessage, nil, 0)
@@ -264,7 +264,7 @@ func TestWebsocketMessageMatchTypes(t *testing.T) {
 	msg.chain.clearFailed()
 }
 
-func TestWebsocketMessageMatchCodes(t *testing.T) {
+func TestWebsocketMessage_MatchCodes(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	msg := NewWebsocketMessage(reporter, websocket.CloseMessage, nil, 10)
@@ -302,7 +302,7 @@ func TestWebsocketMessageMatchCodes(t *testing.T) {
 	msg.chain.clearFailed()
 }
 
-func TestWebsocketMessageCodeAndType(t *testing.T) {
+func TestWebsocketMessage_CodeAndType(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	m1 := NewWebsocketMessage(reporter, websocket.TextMessage, nil, 10)
@@ -326,7 +326,7 @@ func TestWebsocketMessageCodeAndType(t *testing.T) {
 	m2.chain.clearFailed()
 }
 
-func TestWebsocketMessageNoContent(t *testing.T) {
+func TestWebsocketMessage_NoContent(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	t.Run("text", func(t *testing.T) {
@@ -358,7 +358,7 @@ func TestWebsocketMessageNoContent(t *testing.T) {
 	})
 }
 
-func TestWebsocketMessageBody(t *testing.T) {
+func TestWebsocketMessage_Body(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	body := []byte("test")
@@ -371,7 +371,7 @@ func TestWebsocketMessageBody(t *testing.T) {
 	require.Equal(t, "test", s.Raw())
 }
 
-func TestWebsocketMessageJSON(t *testing.T) {
+func TestWebsocketMessage_JSON(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	t.Run("good", func(t *testing.T) {

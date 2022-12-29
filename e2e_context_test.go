@@ -29,8 +29,8 @@ func (h *waitHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.mux.ServeHTTP(w, r)
 }
 
-func (h *waitHandler) WaitForContextCancellation(w http.ResponseWriter, r *http.Request) {
-	callCount := h.IncrCallCount()
+func (h *waitHandler) waitForContextCancellation(w http.ResponseWriter, r *http.Request) {
+	callCount := h.incrCallCount()
 	// if retries-to-fail are not set then simply wait for the cancellation
 	if h.retriesToFail == 0 {
 		<-r.Context().Done()
@@ -46,8 +46,8 @@ func (h *waitHandler) WaitForContextCancellation(w http.ResponseWriter, r *http.
 	}
 }
 
-func (h *waitHandler) WaitForPerRequestTimeout(w http.ResponseWriter, r *http.Request) {
-	callCount := h.IncrCallCount()
+func (h *waitHandler) waitForPerRequestTimeout(w http.ResponseWriter, r *http.Request) {
+	callCount := h.incrCallCount()
 	// if retries-to-fail are not set or not exhausted yet, simply wait for
 	// the timeout
 	if h.retriesToFail == 0 || callCount < h.retriesToFail+1 {
@@ -58,7 +58,7 @@ func (h *waitHandler) WaitForPerRequestTimeout(w http.ResponseWriter, r *http.Re
 	}
 }
 
-func (h *waitHandler) IncrCallCount() int {
+func (h *waitHandler) incrCallCount() int {
 	h.Lock()
 	defer h.Unlock()
 	h.callCount++
@@ -66,7 +66,7 @@ func (h *waitHandler) IncrCallCount() int {
 	return r
 }
 
-func (h *waitHandler) GetCallCount() int {
+func (h *waitHandler) getCallCount() int {
 	h.RLock()
 	defer h.RUnlock()
 	return h.callCount
@@ -81,8 +81,8 @@ func newWaitHandler(retriesToFail int) *waitHandler {
 		retriesDone:   make(chan struct{}),
 	}
 
-	mux.HandleFunc("/WaitForContextCancellation", handler.WaitForContextCancellation)
-	mux.HandleFunc("/WaitForPerRequestTimeout", handler.WaitForPerRequestTimeout)
+	mux.HandleFunc("/waitForContextCancellation", handler.waitForContextCancellation)
+	mux.HandleFunc("/waitForPerRequestTimeout", handler.waitForPerRequestTimeout)
 
 	return handler
 }
@@ -126,7 +126,7 @@ func (h *expErrorSuppressor) Failure(
 	h.backend.Fail(h.formatter.FormatFailure(ctx, failure))
 }
 
-func TestE2EContextGlobalCancel(t *testing.T) {
+func TestE2EContext_GlobalCancel(t *testing.T) {
 	handler := newWaitHandler(0)
 
 	server := httptest.NewServer(handler)
@@ -149,7 +149,7 @@ func TestE2EContextGlobalCancel(t *testing.T) {
 	done := make(chan struct{})
 
 	go func() {
-		e.GET("/WaitForContextCancellation").
+		e.GET("/waitForContextCancellation").
 			Expect()
 		done <- struct{}{}
 	}()
@@ -162,7 +162,7 @@ func TestE2EContextGlobalCancel(t *testing.T) {
 	assert.True(t, suppressor.expErrorOccurred)
 }
 
-func TestE2EContextGlobalWithRetries(t *testing.T) {
+func TestE2EContext_GlobalWithRetries(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
@@ -191,7 +191,7 @@ func TestE2EContextGlobalWithRetries(t *testing.T) {
 	done := make(chan struct{})
 
 	go func() {
-		e.GET("/WaitForContextCancellation").
+		e.GET("/waitForContextCancellation").
 			WithMaxRetries(maxRetries).
 			Expect()
 		done <- struct{}{}
@@ -205,10 +205,10 @@ func TestE2EContextGlobalWithRetries(t *testing.T) {
 	// expected error should occur
 	assert.True(t, suppressor.expErrorOccurred)
 	// first call + retries to fail should be the call count
-	assert.Equal(t, retriesToFail+1, handler.GetCallCount())
+	assert.Equal(t, retriesToFail+1, handler.getCallCount())
 }
 
-func TestE2EContextPerRequest(t *testing.T) {
+func TestE2EContext_PerRequest(t *testing.T) {
 	handler := newWaitHandler(0)
 
 	server := httptest.NewServer(handler)
@@ -230,7 +230,7 @@ func TestE2EContextPerRequest(t *testing.T) {
 	done := make(chan struct{})
 
 	go func() {
-		e.GET("/WaitForContextCancellation").
+		e.GET("/waitForContextCancellation").
 			WithContext(ctx).
 			Expect()
 		done <- struct{}{}
@@ -244,7 +244,7 @@ func TestE2EContextPerRequest(t *testing.T) {
 	assert.True(t, suppressor.expErrorOccurred)
 }
 
-func TestE2EContextPerRequestWithRetries(t *testing.T) {
+func TestE2EContext_PerRequestWithRetries(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
@@ -272,7 +272,7 @@ func TestE2EContextPerRequestWithRetries(t *testing.T) {
 	done := make(chan struct{})
 
 	go func() {
-		e.GET("/WaitForContextCancellation").
+		e.GET("/waitForContextCancellation").
 			WithMaxRetries(maxRetries).
 			WithContext(ctx).
 			Expect()
@@ -287,10 +287,10 @@ func TestE2EContextPerRequestWithRetries(t *testing.T) {
 	// expected error should occur
 	assert.True(t, suppressor.expErrorOccurred)
 	// first call + retries to fail should be the call count
-	assert.Equal(t, retriesToFail+1, handler.GetCallCount())
+	assert.Equal(t, retriesToFail+1, handler.getCallCount())
 }
 
-func TestE2EContextPerRequestWithTimeout(t *testing.T) {
+func TestE2EContext_PerRequestWithTimeout(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
@@ -310,7 +310,7 @@ func TestE2EContextPerRequestWithTimeout(t *testing.T) {
 		AssertionHandler: suppressor,
 	})
 
-	e.GET("/WaitForPerRequestTimeout").
+	e.GET("/waitForPerRequestTimeout").
 		WithTimeout(TimeOutDuration).
 		Expect()
 
@@ -318,7 +318,7 @@ func TestE2EContextPerRequestWithTimeout(t *testing.T) {
 	assert.True(t, suppressor.expErrorOccurred)
 }
 
-func TestE2EContextPerRequestWithTimeoutAndRetries(t *testing.T) {
+func TestE2EContext_PerRequestWithTimeoutAndRetries(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
@@ -336,17 +336,17 @@ func TestE2EContextPerRequestWithTimeoutAndRetries(t *testing.T) {
 		Reporter: NewAssertReporter(t),
 	})
 
-	e.GET("/WaitForPerRequestTimeout").
+	e.GET("/waitForPerRequestTimeout").
 		WithTimeout(TimeOutDuration).
 		WithMaxRetries(maxRetries).
 		Expect().
 		Status(http.StatusOK)
 
 	// first call + retries to fail should be the call count
-	assert.Equal(t, retriesToFail+1, handler.GetCallCount())
+	assert.Equal(t, retriesToFail+1, handler.getCallCount())
 }
 
-func TestE2EContextPerRequestWithTimeoutCancelledByTimeout(t *testing.T) {
+func TestE2EContext_PerRequestWithTimeoutCancelledByTimeout(t *testing.T) {
 	if testing.Short() {
 		t.Skip()
 	}
@@ -369,7 +369,7 @@ func TestE2EContextPerRequestWithTimeoutCancelledByTimeout(t *testing.T) {
 		AssertionHandler: suppressor,
 	})
 
-	e.GET("/WaitForPerRequestTimeout").
+	e.GET("/waitForPerRequestTimeout").
 		WithContext(ctx).
 		WithTimeout(TimeOutDuration).
 		Expect()
@@ -378,7 +378,7 @@ func TestE2EContextPerRequestWithTimeoutCancelledByTimeout(t *testing.T) {
 	assert.True(t, suppressor.expErrorOccurred)
 }
 
-func TestE2EContextPerRequestWithTimeoutCancelledByContext(t *testing.T) {
+func TestE2EContext_PerRequestWithTimeoutCancelledByContext(t *testing.T) {
 	handler := newWaitHandler(0)
 
 	server := httptest.NewServer(handler)
@@ -400,7 +400,7 @@ func TestE2EContextPerRequestWithTimeoutCancelledByContext(t *testing.T) {
 	done := make(chan struct{})
 
 	go func() {
-		e.GET("/WaitForContextCancellation").
+		e.GET("/waitForContextCancellation").
 			WithContext(ctx).
 			WithTimeout(TimeOutDuration).
 			Expect()
@@ -415,7 +415,7 @@ func TestE2EContextPerRequestWithTimeoutCancelledByContext(t *testing.T) {
 	assert.True(t, suppressor.expErrorOccurred)
 }
 
-func TestE2EContextPerRequestRetry(t *testing.T) {
+func TestE2EContext_PerRequestRetry(t *testing.T) {
 	var m sync.Mutex
 
 	t.Run("not cancelled", func(t *testing.T) {

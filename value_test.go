@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestValueFailed(t *testing.T) {
+func TestValue_Failed(t *testing.T) {
 	chain := newMockChain(t)
 	chain.fail(mockFailure())
 
@@ -40,7 +40,7 @@ func TestValueFailed(t *testing.T) {
 	value.NotEqual(nil)
 }
 
-func TestValueConstructors(t *testing.T) {
+func TestValue_Constructors(t *testing.T) {
 	t.Run("Constructor without config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewValue(reporter, "Test")
@@ -60,7 +60,7 @@ func TestValueConstructors(t *testing.T) {
 	})
 }
 
-func TestValueCastNull(t *testing.T) {
+func TestValue_CastNull(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	var data interface{}
@@ -74,7 +74,7 @@ func TestValueCastNull(t *testing.T) {
 	NewValue(reporter, data).Null().chain.assertNotFailed(t)
 }
 
-func TestValueCastIndirectNull(t *testing.T) {
+func TestValue_CastIndirectNull(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	var data []interface{}
@@ -88,7 +88,7 @@ func TestValueCastIndirectNull(t *testing.T) {
 	NewValue(reporter, data).Null().chain.assertNotFailed(t)
 }
 
-func TestValueCastBad(t *testing.T) {
+func TestValue_CastBad(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	data := func() {}
@@ -102,7 +102,7 @@ func TestValueCastBad(t *testing.T) {
 	NewValue(reporter, data).Null().chain.assertFailed(t)
 }
 
-func TestValueCastObject(t *testing.T) {
+func TestValue_CastObject(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	data := map[string]interface{}{}
@@ -116,7 +116,7 @@ func TestValueCastObject(t *testing.T) {
 	NewValue(reporter, data).Null().chain.assertFailed(t)
 }
 
-func TestValueCastArray(t *testing.T) {
+func TestValue_CastArray(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	data := []interface{}{}
@@ -130,7 +130,7 @@ func TestValueCastArray(t *testing.T) {
 	NewValue(reporter, data).Null().chain.assertFailed(t)
 }
 
-func TestValueCastString(t *testing.T) {
+func TestValue_CastString(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	data := ""
@@ -144,7 +144,7 @@ func TestValueCastString(t *testing.T) {
 	NewValue(reporter, data).Null().chain.assertFailed(t)
 }
 
-func TestValueCastNumber(t *testing.T) {
+func TestValue_CastNumber(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	data := 0.0
@@ -158,7 +158,7 @@ func TestValueCastNumber(t *testing.T) {
 	NewValue(reporter, data).Null().chain.assertFailed(t)
 }
 
-func TestValueCastBoolean(t *testing.T) {
+func TestValue_CastBoolean(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	data := false
@@ -172,7 +172,7 @@ func TestValueCastBoolean(t *testing.T) {
 	NewValue(reporter, data).Null().chain.assertFailed(t)
 }
 
-func TestValueGetObject(t *testing.T) {
+func TestValue_GetObject(t *testing.T) {
 	type (
 		myMap map[string]interface{}
 	)
@@ -198,7 +198,7 @@ func TestValueGetObject(t *testing.T) {
 	assert.Equal(t, map[string]interface{}(data2), inner2.Raw())
 }
 
-func TestValueGetArray(t *testing.T) {
+func TestValue_GetArray(t *testing.T) {
 	type (
 		myArray []interface{}
 	)
@@ -224,7 +224,7 @@ func TestValueGetArray(t *testing.T) {
 	assert.Equal(t, []interface{}(data2), inner2.Raw())
 }
 
-func TestValueGetString(t *testing.T) {
+func TestValue_GetString(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewValue(reporter, "foo")
@@ -235,7 +235,7 @@ func TestValueGetString(t *testing.T) {
 	assert.Equal(t, "foo", inner.Raw())
 }
 
-func TestValueGetNumber(t *testing.T) {
+func TestValue_GetNumber(t *testing.T) {
 	type (
 		myInt int
 	)
@@ -270,7 +270,7 @@ func TestValueGetNumber(t *testing.T) {
 	assert.Equal(t, float64(data3), inner3.Raw())
 }
 
-func TestValueGetBoolean(t *testing.T) {
+func TestValue_GetBoolean(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value1 := NewValue(reporter, true)
@@ -288,7 +288,7 @@ func TestValueGetBoolean(t *testing.T) {
 	assert.Equal(t, false, inner2.Raw())
 }
 
-func TestValueEqual(t *testing.T) {
+func TestValue_Equal(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	data1 := map[string]interface{}{"foo": "bar"}
@@ -315,7 +315,7 @@ func TestValueEqual(t *testing.T) {
 	NewValue(reporter, data1).NotEqual(func() {}).chain.assertFailed(t)
 }
 
-func TestValuePathObject(t *testing.T) {
+func TestValue_PathObject(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	user0 := map[string]interface{}{"name": "john"}
@@ -352,7 +352,7 @@ func TestValuePathObject(t *testing.T) {
 	}
 }
 
-func TestValuePathArray(t *testing.T) {
+func TestValue_PathArray(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	user0 := map[string]interface{}{"name": "john"}
@@ -373,7 +373,7 @@ func TestValuePathArray(t *testing.T) {
 	value.chain.assertNotFailed(t)
 }
 
-func TestValuePathString(t *testing.T) {
+func TestValue_PathString(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	data := "foo"
@@ -384,7 +384,7 @@ func TestValuePathString(t *testing.T) {
 	value.chain.assertNotFailed(t)
 }
 
-func TestValuePathNumber(t *testing.T) {
+func TestValue_PathNumber(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	data := 123
@@ -395,7 +395,7 @@ func TestValuePathNumber(t *testing.T) {
 	value.chain.assertNotFailed(t)
 }
 
-func TestValuePathBoolean(t *testing.T) {
+func TestValue_PathBoolean(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	data := true
@@ -406,7 +406,7 @@ func TestValuePathBoolean(t *testing.T) {
 	value.chain.assertNotFailed(t)
 }
 
-func TestValuePathNull(t *testing.T) {
+func TestValue_PathNull(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewValue(reporter, nil)
@@ -415,7 +415,7 @@ func TestValuePathNull(t *testing.T) {
 	value.chain.assertNotFailed(t)
 }
 
-func TestValuePathError(t *testing.T) {
+func TestValue_PathError(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	data := "foo"
@@ -431,7 +431,7 @@ func TestValuePathError(t *testing.T) {
 }
 
 // based on github.com/yalp/jsonpath
-func TestValuePathExpressions(t *testing.T) {
+func TestValue_PathExpressions(t *testing.T) {
 	data := map[string]interface{}{
 		"A": []interface{}{
 			"string",
@@ -611,7 +611,7 @@ func TestValuePathExpressions(t *testing.T) {
 	})
 }
 
-func TestValuePathIntFloat(t *testing.T) {
+func TestValue_PathIntFloat(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	data := map[string]interface{}{
@@ -631,7 +631,7 @@ func TestValuePathIntFloat(t *testing.T) {
 	assert.Equal(t, 123.0, b.Raw())
 }
 
-func TestValueSchema(t *testing.T) {
+func TestValue_Schema(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	schema := `{

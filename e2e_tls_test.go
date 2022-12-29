@@ -71,7 +71,7 @@ func testAutoTLSHandler(config Config) {
 		Status(http.StatusOK).Body().Equal(`hello`)
 }
 
-func TestE2EAutoTLSLive(t *testing.T) {
+func TestE2EAutoTLS_Live(t *testing.T) {
 	httpsServ := httptest.NewTLSServer(createAutoTLSHandler(""))
 	defer httpsServ.Close()
 
@@ -99,7 +99,7 @@ func TestE2EAutoTLSLive(t *testing.T) {
 	}
 }
 
-func TestE2EAutoTLSBinderStandard(t *testing.T) {
+func TestE2EAutoTLS_BinderStandard(t *testing.T) {
 	handler := createAutoTLSHandler("https://example.com")
 
 	for _, url := range []string{"https://example.com", "http://example.com"} {
@@ -119,7 +119,7 @@ func TestE2EAutoTLSBinderStandard(t *testing.T) {
 	}
 }
 
-func TestE2EAutoTLSBinderFast(t *testing.T) {
+func TestE2EAutoTLS_BinderFast(t *testing.T) {
 	handler := createAutoTLSFastHandler("https://example.com")
 
 	for _, url := range []string{"https://example.com", "http://example.com"} {

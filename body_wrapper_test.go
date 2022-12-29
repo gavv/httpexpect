@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestBodyWrapperRewind(t *testing.T) {
+func TestBodyWrapper_Rewind(t *testing.T) {
 	body := newMockBody("test_body")
 
 	cancelled := false
@@ -35,7 +35,7 @@ func TestBodyWrapperRewind(t *testing.T) {
 	assert.Equal(t, "test_body", string(b))
 }
 
-func TestBodyWrapperGetBody(t *testing.T) {
+func TestBodyWrapper_GetBody(t *testing.T) {
 	body := newMockBody("test_body")
 
 	wrp := newBodyWrapper(body, nil)
@@ -55,7 +55,7 @@ func TestBodyWrapperGetBody(t *testing.T) {
 	assert.Equal(t, "test_body", string(b))
 }
 
-func TestBodyWrapperClose(t *testing.T) {
+func TestBodyWrapper_Close(t *testing.T) {
 	body := newMockBody("test_body")
 
 	cancelled := false
@@ -72,7 +72,7 @@ func TestBodyWrapperClose(t *testing.T) {
 	assert.True(t, cancelled)
 }
 
-func TestBodyWrapperOneError(t *testing.T) {
+func TestBodyWrapper_OneError(t *testing.T) {
 	bodyErr := errors.New("test_error")
 
 	checkReadErr := func(t *testing.T, wrp *bodyWrapper) {
@@ -175,7 +175,7 @@ func TestBodyWrapperOneError(t *testing.T) {
 	})
 }
 
-func TestBodyWrapperTwoErrors(t *testing.T) {
+func TestBodyWrapper_TwoErrors(t *testing.T) {
 	t.Run("read_close", func(t *testing.T) {
 		body := newMockBody("test_body")
 
@@ -217,7 +217,7 @@ func TestBodyWrapperTwoErrors(t *testing.T) {
 	})
 }
 
-func TestBodyWrapperErrorRewind(t *testing.T) {
+func TestBodyWrapper_ErrorRewind(t *testing.T) {
 	body := newMockBody("test_body")
 
 	body.readErr = errors.New("read_error")

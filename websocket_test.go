@@ -10,7 +10,7 @@ import (
 
 func noWsPreSteps(ws *Websocket) {}
 
-func TestWebsocketFailed(t *testing.T) {
+func TestWebsocket_Failed(t *testing.T) {
 	reporter := newMockReporter(t)
 	chain := newChainWithDefaults("test", reporter)
 	config := newMockConfig(reporter)
@@ -44,7 +44,7 @@ func TestWebsocketFailed(t *testing.T) {
 	ws.Close()
 }
 
-func TestWebsocketNilConn(t *testing.T) {
+func TestWebsocket_NilConn(t *testing.T) {
 	config := Config{
 		Reporter: newMockReporter(t),
 	}
@@ -77,7 +77,7 @@ func TestWebsocketNilConn(t *testing.T) {
 	})
 }
 
-func TestWebsocketMockConn(t *testing.T) {
+func TestWebsocket_MockConn(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	config := Config{
@@ -112,7 +112,7 @@ func TestWebsocketMockConn(t *testing.T) {
 	})
 }
 
-func TestWebsocketExpect(t *testing.T) {
+func TestWebsocket_Expect(t *testing.T) {
 	type args struct {
 		failedChain bool
 		wsConn      WebsocketConn
@@ -201,7 +201,7 @@ func TestWebsocketExpect(t *testing.T) {
 	}
 }
 
-func TestWebsocketClose(t *testing.T) {
+func TestWebsocket_Close(t *testing.T) {
 	type args struct {
 		wsConn     WebsocketConn
 		wsPreSteps func(*Websocket)
@@ -272,7 +272,7 @@ func TestWebsocketClose(t *testing.T) {
 	}
 }
 
-func TestWebsocketCloseWithBytes(t *testing.T) {
+func TestWebsocket_CloseWithBytes(t *testing.T) {
 	type args struct {
 		wsConn     WebsocketConn
 		wsPreSteps func(*Websocket)
@@ -348,7 +348,7 @@ func TestWebsocketCloseWithBytes(t *testing.T) {
 	}
 }
 
-func TestWebsocketCloseWithText(t *testing.T) {
+func TestWebsocket_CloseWithText(t *testing.T) {
 	type args struct {
 		wsConn     WebsocketConn
 		wsPreSteps func(*Websocket)
@@ -424,7 +424,7 @@ func TestWebsocketCloseWithText(t *testing.T) {
 	}
 }
 
-func TestWebsocketCloseWithJSON(t *testing.T) {
+func TestWebsocket_CloseWithJSON(t *testing.T) {
 	type args struct {
 		wsConn     WebsocketConn
 		wsPreSteps func(*Websocket)
@@ -518,7 +518,7 @@ func TestWebsocketCloseWithJSON(t *testing.T) {
 	}
 }
 
-func TestWebsocketWriteMessage(t *testing.T) {
+func TestWebsocket_WriteMessage(t *testing.T) {
 	type args struct {
 		wsConn     WebsocketConn
 		wsPreSteps func(*Websocket)
@@ -659,7 +659,7 @@ func TestWebsocketWriteMessage(t *testing.T) {
 	}
 }
 
-func TestWebsocketWriteBytesBinary(t *testing.T) {
+func TestWebsocket_WriteBytesBinary(t *testing.T) {
 	type args struct {
 		wsConn     WebsocketConn
 		wsPreSteps func(*Websocket)
@@ -721,7 +721,7 @@ func TestWebsocketWriteBytesBinary(t *testing.T) {
 	}
 }
 
-func TestWebsocketWriteBytesText(t *testing.T) {
+func TestWebsocket_WriteBytesText(t *testing.T) {
 	type args struct {
 		wsConn     WebsocketConn
 		wsPreSteps func(*Websocket)
@@ -783,7 +783,7 @@ func TestWebsocketWriteBytesText(t *testing.T) {
 	}
 }
 
-func TestWebsocketWriteText(t *testing.T) {
+func TestWebsocket_WriteText(t *testing.T) {
 	type args struct {
 		wsConn     WebsocketConn
 		wsPreSteps func(*Websocket)
@@ -845,7 +845,7 @@ func TestWebsocketWriteText(t *testing.T) {
 	}
 }
 
-func TestWebsocketWriteJSON(t *testing.T) {
+func TestWebsocket_WriteJSON(t *testing.T) {
 	type args struct {
 		wsConn     WebsocketConn
 		wsPreSteps func(*Websocket)
@@ -922,7 +922,7 @@ func TestWebsocketWriteJSON(t *testing.T) {
 	}
 }
 
-func TestWebsocketSubprotocol(t *testing.T) {
+func TestWebsocket_Subprotocol(t *testing.T) {
 	subproto := "soap"
 	ws := NewWebsocketC(Config{
 		Reporter: NewAssertReporter(t),
@@ -935,7 +935,7 @@ func TestWebsocketSubprotocol(t *testing.T) {
 	}
 }
 
-func TestWebsocketSetReadDeadline(t *testing.T) {
+func TestWebsocket_SetReadDeadline(t *testing.T) {
 	type args struct {
 		wsConn WebsocketConn
 	}
@@ -980,7 +980,7 @@ func TestWebsocketSetReadDeadline(t *testing.T) {
 	}
 }
 
-func TestWebsocketSetWriteDeadline(t *testing.T) {
+func TestWebsocket_SetWriteDeadline(t *testing.T) {
 	type args struct {
 		wsConn WebsocketConn
 	}
@@ -1025,7 +1025,7 @@ func TestWebsocketSetWriteDeadline(t *testing.T) {
 	}
 }
 
-func TestWebsocketDisconnect(t *testing.T) {
+func TestWebsocket_Disconnect(t *testing.T) {
 	type args struct {
 		wsConn WebsocketConn
 	}
@@ -1076,7 +1076,7 @@ func TestWebsocketDisconnect(t *testing.T) {
 	}
 }
 
-func TestWebsocketPrintRead(t *testing.T) {
+func TestWebsocket_PrintRead(t *testing.T) {
 	reporter := newMockReporter(t)
 	printer := newMockWsPrinter()
 	config := Config{
@@ -1094,7 +1094,7 @@ func TestWebsocketPrintRead(t *testing.T) {
 	}
 }
 
-func TestWebsocketPrintWrite(t *testing.T) {
+func TestWebsocket_PrintWrite(t *testing.T) {
 	reporter := newMockReporter(t)
 	printer := newMockWsPrinter()
 	config := Config{

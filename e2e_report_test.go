@@ -17,7 +17,7 @@ func (r *recordingReporter) Errorf(msg string, args ...interface{}) {
 	r.reported += fmt.Sprintf(msg, args...)
 }
 
-func TestE2EReportNames(t *testing.T) {
+func TestE2EReport_Names(t *testing.T) {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {

@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestE2EEnvironmentDefault(t *testing.T) {
+func TestE2EEnvironment_Default(t *testing.T) {
 	e1 := Default(t, "")
 	e2 := WithConfig(Config{
 		Reporter: t,
@@ -29,7 +29,7 @@ func TestE2EEnvironmentDefault(t *testing.T) {
 	assert.True(t, e2.Env().Has("key"))
 }
 
-func TestE2EEnvironmentShared(t *testing.T) {
+func TestE2EEnvironment_Shared(t *testing.T) {
 	env := NewEnvironment(t)
 
 	e1 := WithConfig(Config{

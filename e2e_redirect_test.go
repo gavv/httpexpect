@@ -169,7 +169,7 @@ func testRedirects(t *testing.T, createFn func(Reporter) *Expect) {
 	})
 }
 
-func TestE2ERedirectLive(t *testing.T) {
+func TestE2ERedirect_Live(t *testing.T) {
 	handler := createRedirectHandler()
 
 	server := httptest.NewServer(handler)
@@ -183,7 +183,7 @@ func TestE2ERedirectLive(t *testing.T) {
 	})
 }
 
-func TestE2ERedirectBinderStandard(t *testing.T) {
+func TestE2ERedirect_BinderStandard(t *testing.T) {
 	handler := createRedirectHandler()
 
 	testRedirects(t, func(rep Reporter) *Expect {
@@ -197,7 +197,7 @@ func TestE2ERedirectBinderStandard(t *testing.T) {
 	})
 }
 
-func TestE2ERedirectBinderFast(t *testing.T) {
+func TestE2ERedirect_BinderFast(t *testing.T) {
 	handler := createRedirectFastHandler()
 
 	testRedirects(t, func(rep Reporter) *Expect {

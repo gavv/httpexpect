@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMatchFailed(t *testing.T) {
+func TestMatch_Failed(t *testing.T) {
 	chain := newMockChain(t)
 	chain.fail(mockFailure())
 
@@ -22,7 +22,7 @@ func TestMatchFailed(t *testing.T) {
 	value.NotValues("")
 }
 
-func TestMatchConstructors(t *testing.T) {
+func TestMatch_Constructors(t *testing.T) {
 	matches := []string{"m0", "m1", "m2"}
 	names := []string{"", "n1", "n2"}
 
@@ -43,7 +43,7 @@ func TestMatchConstructors(t *testing.T) {
 	})
 }
 
-func TestMatchGetters(t *testing.T) {
+func TestMatch_Getters(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	matches := []string{"m0", "m1", "m2"}
@@ -81,7 +81,7 @@ func TestMatchGetters(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestMatchEmpty(t *testing.T) {
+func TestMatch_Empty(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value1 := NewMatch(reporter, []string{"m"}, nil)
@@ -116,7 +116,7 @@ func TestMatchEmpty(t *testing.T) {
 	value3.chain.clearFailed()
 }
 
-func TestMatchValues(t *testing.T) {
+func TestMatch_Values(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewMatch(reporter, []string{"m0", "m1", "m2"}, nil)
@@ -154,7 +154,7 @@ func TestMatchValues(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestMatchValuesEmpty(t *testing.T) {
+func TestMatch_ValuesEmpty(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value1 := NewMatch(reporter, nil, nil)

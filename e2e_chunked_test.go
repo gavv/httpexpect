@@ -65,7 +65,7 @@ func testChunkedHandler(e *Expect) {
 		JSON().Array().Elements(1, 2)
 }
 
-func TestE2EChunkedLive(t *testing.T) {
+func TestE2EChunked_Live(t *testing.T) {
 	handler := createChunkedHandler()
 
 	server := httptest.NewServer(handler)
@@ -74,7 +74,7 @@ func TestE2EChunkedLive(t *testing.T) {
 	testChunkedHandler(Default(t, server.URL))
 }
 
-func TestE2EChunkedBinderStandard(t *testing.T) {
+func TestE2EChunked_BinderStandard(t *testing.T) {
 	handler := createChunkedHandler()
 
 	testChunkedHandler(WithConfig(Config{
@@ -86,7 +86,7 @@ func TestE2EChunkedBinderStandard(t *testing.T) {
 	}))
 }
 
-func TestE2EChunkedBinderFast(t *testing.T) {
+func TestE2EChunked_BinderFast(t *testing.T) {
 	handler := createChunkedFastHandler(t)
 
 	testChunkedHandler(WithConfig(Config{

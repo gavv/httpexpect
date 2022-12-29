@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestObjectFailed(t *testing.T) {
+func TestObject_Failed(t *testing.T) {
 	check := func(value *Object) {
 		value.chain.assertFailed(t)
 
@@ -81,7 +81,7 @@ func TestObjectFailed(t *testing.T) {
 	})
 }
 
-func TestObjectConstructors(t *testing.T) {
+func TestObject_Constructors(t *testing.T) {
 	test := map[string]interface{}{
 		"foo": 100.0,
 	}
@@ -104,7 +104,7 @@ func TestObjectConstructors(t *testing.T) {
 
 }
 
-func TestObjectGetters(t *testing.T) {
+func TestObject_Getters(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	m := map[string]interface{}{
@@ -177,7 +177,7 @@ func TestObjectGetters(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestObjectEmpty(t *testing.T) {
+func TestObject_Empty(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value1 := NewObject(reporter, nil)
@@ -207,7 +207,7 @@ func TestObjectEmpty(t *testing.T) {
 	value3.chain.clearFailed()
 }
 
-func TestObjectEqualEmpty(t *testing.T) {
+func TestObject_EqualEmpty(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewObject(reporter, map[string]interface{}{})
@@ -231,7 +231,7 @@ func TestObjectEqualEmpty(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestObjectEqual(t *testing.T) {
+func TestObject_Equal(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewObject(reporter, map[string]interface{}{"foo": 123.0})
@@ -279,7 +279,7 @@ func TestObjectEqual(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestObjectEqualStruct(t *testing.T) {
+func TestObject_EqualStruct(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewObject(reporter, map[string]interface{}{
@@ -324,7 +324,7 @@ func TestObjectEqualStruct(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestObjectContainsKey(t *testing.T) {
+func TestObject_ContainsKey(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewObject(reporter, map[string]interface{}{"foo": 123, "bar": ""})
@@ -354,7 +354,7 @@ func TestObjectContainsKey(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestObjectContainsValue(t *testing.T) {
+func TestObject_ContainsValue(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewObject(reporter, map[string]interface{}{"foo": 123, "bar": "xxx"})
@@ -384,7 +384,7 @@ func TestObjectContainsValue(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestObjectContainsValueStruct(t *testing.T) {
+func TestObject_ContainsValueStruct(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewObject(reporter, map[string]interface{}{
@@ -434,7 +434,7 @@ func TestObjectContainsValueStruct(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestObjectContainsSubsetSuccess(t *testing.T) {
+func TestObject_ContainsSubsetSuccess(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewObject(reporter, map[string]interface{}{
@@ -479,7 +479,7 @@ func TestObjectContainsSubsetSuccess(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestObjectContainsSubsetFailed(t *testing.T) {
+func TestObject_ContainsSubsetFailed(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewObject(reporter, map[string]interface{}{
@@ -545,7 +545,7 @@ func TestObjectContainsSubsetFailed(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestObjectContainsSubsetStruct(t *testing.T) {
+func TestObject_ContainsSubsetStruct(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewObject(reporter, map[string]interface{}{
@@ -600,7 +600,7 @@ func TestObjectContainsSubsetStruct(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestObjectValueEqual(t *testing.T) {
+func TestObject_ValueEqual(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewObject(reporter, map[string]interface{}{
@@ -652,7 +652,7 @@ func TestObjectValueEqual(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestObjectValueEqualStruct(t *testing.T) {
+func TestObject_ValueEqualStruct(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewObject(reporter, map[string]interface{}{
@@ -701,7 +701,7 @@ func TestObjectValueEqualStruct(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestObjectConvertEqual(t *testing.T) {
+func TestObject_ConvertEqual(t *testing.T) {
 	type (
 		myMap map[string]interface{}
 		myInt int
@@ -744,7 +744,7 @@ func TestObjectConvertEqual(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestObjectConvertContainsSubset(t *testing.T) {
+func TestObject_ConvertContainsSubset(t *testing.T) {
 	type (
 		myArray []interface{}
 		myMap   map[string]interface{}
@@ -775,7 +775,7 @@ func TestObjectConvertContainsSubset(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestObjectConvertValueEqual(t *testing.T) {
+func TestObject_ConvertValueEqual(t *testing.T) {
 	type (
 		myArray []interface{}
 		myMap   map[string]interface{}
@@ -809,7 +809,7 @@ func TestObjectConvertValueEqual(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestObjectEvery(t *testing.T) {
+func TestObject_Every(t *testing.T) {
 	t.Run("Check Validation", func(ts *testing.T) {
 		reporter := newMockReporter(ts)
 		object := NewObject(reporter, map[string]interface{}{
@@ -879,7 +879,7 @@ func TestObjectEvery(t *testing.T) {
 	})
 }
 
-func TestObjectTransform(t *testing.T) {
+func TestObject_Transform(t *testing.T) {
 	t.Run("Add Hello", func(ts *testing.T) {
 		reporter := newMockReporter(ts)
 		object := NewObject(reporter, map[string]interface{}{
@@ -950,7 +950,7 @@ func TestObjectTransform(t *testing.T) {
 	})
 }
 
-func TestObjectFilter(t *testing.T) {
+func TestObject_Filter(t *testing.T) {
 	t.Run("Filter an object of elements of the same type and validate", func(ts *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
@@ -1042,7 +1042,7 @@ func TestObjectFilter(t *testing.T) {
 		})
 }
 
-func TestObjectFind(t *testing.T) {
+func TestObject_Find(t *testing.T) {
 	t.Run("Elements of the same type", func(ts *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
@@ -1188,7 +1188,7 @@ func TestObjectFind(t *testing.T) {
 	})
 }
 
-func TestObjectFindAll(t *testing.T) {
+func TestObject_FindAll(t *testing.T) {
 	t.Run("Elements of the same type", func(ts *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
@@ -1389,7 +1389,7 @@ func TestObjectFindAll(t *testing.T) {
 	})
 }
 
-func TestObjectNotFind(t *testing.T) {
+func TestObject_NotFind(t *testing.T) {
 	t.Run("Succeeds if no element matches predicate", func(ts *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{

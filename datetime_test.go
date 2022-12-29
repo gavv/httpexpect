@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestDateTimeFailed(t *testing.T) {
+func TestDateTime_Failed(t *testing.T) {
 	chain := newMockChain(t)
 	chain.fail(mockFailure())
 
@@ -27,7 +27,7 @@ func TestDateTimeFailed(t *testing.T) {
 	value.NotInRange(tm, tm)
 }
 
-func TestDatetimeConstructors(t *testing.T) {
+func TestDateTime_Constructors(t *testing.T) {
 	time := time.Unix(0, 1234)
 
 	t.Run("Constructor without config", func(t *testing.T) {
@@ -47,7 +47,7 @@ func TestDatetimeConstructors(t *testing.T) {
 	})
 }
 
-func TestDateTimeEqual(t *testing.T) {
+func TestDateTime_Equal(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewDateTime(reporter, time.Unix(0, 1234))
@@ -71,7 +71,7 @@ func TestDateTimeEqual(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestDateTimeGreater(t *testing.T) {
+func TestDateTime_Greater(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewDateTime(reporter, time.Unix(0, 1234))
@@ -97,7 +97,7 @@ func TestDateTimeGreater(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestDateTimeLesser(t *testing.T) {
+func TestDateTime_Lesser(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewDateTime(reporter, time.Unix(0, 1234))
@@ -123,7 +123,7 @@ func TestDateTimeLesser(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestDateTimeInRange(t *testing.T) {
+func TestDateTime_InRange(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewDateTime(reporter, time.Unix(0, 1234))

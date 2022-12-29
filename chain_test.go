@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestChainFail(t *testing.T) {
+func TestChain_Fail(t *testing.T) {
 	chain := newMockChain(t)
 
 	assert.False(t, chain.failed())
@@ -19,7 +19,7 @@ func TestChainFail(t *testing.T) {
 	assert.True(t, chain.failed())
 }
 
-func TestChainClone(t *testing.T) {
+func TestChain_Clone(t *testing.T) {
 	chain1 := newMockChain(t)
 	chain2 := chain1.clone()
 
@@ -37,7 +37,7 @@ func TestChainClone(t *testing.T) {
 	assert.True(t, chain2.failed())
 }
 
-func TestChainEnv(t *testing.T) {
+func TestChain_Env(t *testing.T) {
 	t.Run("newChainWithConfig", func(t *testing.T) {
 		env1 := NewEnvironment(newMockReporter(t))
 		chain1 := newChainWithConfig("root", Config{
@@ -59,7 +59,7 @@ func TestChainEnv(t *testing.T) {
 	})
 }
 
-func TestChainRoot(t *testing.T) {
+func TestChain_Root(t *testing.T) {
 	t.Run("newChainWithConfig", func(t *testing.T) {
 		chain1 := newChainWithConfig("root", Config{
 			AssertionHandler: &mockAssertionHandler{},
@@ -81,7 +81,7 @@ func TestChainRoot(t *testing.T) {
 	})
 }
 
-func TestChainPath(t *testing.T) {
+func TestChain_Path(t *testing.T) {
 	path := func(c *chain) string {
 		return strings.Join(c.context.Path, ".")
 	}
@@ -127,7 +127,7 @@ func TestChainPath(t *testing.T) {
 	assert.Equal(t, "root", path(chainClone))
 }
 
-func TestChainPanics(t *testing.T) {
+func TestChain_Panics(t *testing.T) {
 	t.Run("nil reporter", func(t *testing.T) {
 		assert.Panics(t, func() {
 			_ = newChainWithDefaults("test", nil)
@@ -183,7 +183,7 @@ func TestChainPanics(t *testing.T) {
 	})
 }
 
-func TestChainReport(t *testing.T) {
+func TestChain_Report(t *testing.T) {
 	r0 := newMockReporter(t)
 
 	chain := newChainWithDefaults("test", r0)
@@ -210,7 +210,7 @@ func TestChainReport(t *testing.T) {
 	assert.True(t, r2.reported)
 }
 
-func TestChainHandler(t *testing.T) {
+func TestChain_Handler(t *testing.T) {
 	handler := &mockAssertionHandler{}
 
 	chain := newChainWithConfig("test", Config{
@@ -236,7 +236,7 @@ func TestChainHandler(t *testing.T) {
 	assert.Nil(t, handler.failure)
 }
 
-func TestChainSeverity(t *testing.T) {
+func TestChain_Severity(t *testing.T) {
 	handler := &mockAssertionHandler{}
 
 	chain := newChainWithConfig("test", Config{
@@ -265,7 +265,7 @@ func TestChainSeverity(t *testing.T) {
 	assert.Equal(t, SeverityLog, handler.failure.Severity)
 }
 
-func TestChainCallback(t *testing.T) {
+func TestChain_Callback(t *testing.T) {
 	handler := &mockAssertionHandler{}
 
 	chain := newChainWithConfig("test", Config{

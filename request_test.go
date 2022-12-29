@@ -20,7 +20,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestRequestFailed(t *testing.T) {
+func TestRequest_Failed(t *testing.T) {
 	reporter := newMockReporter(t)
 	chain := newChainWithDefaults("test", reporter)
 	config := newMockConfig(reporter)
@@ -78,7 +78,7 @@ func TestRequestFailed(t *testing.T) {
 	resp.chain.assertFailed(t)
 }
 
-func TestRequestEmpty(t *testing.T) {
+func TestRequest_Empty(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	client := &mockClient{}
@@ -99,7 +99,7 @@ func TestRequestEmpty(t *testing.T) {
 	resp.chain.assertNotFailed(t)
 }
 
-func TestRequestTime(t *testing.T) {
+func TestRequest_Time(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	client := &mockClient{}
@@ -120,7 +120,7 @@ func TestRequestTime(t *testing.T) {
 	}
 }
 
-func TestRequestMatchers(t *testing.T) {
+func TestRequest_Matchers(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	client := &mockClient{}
@@ -149,7 +149,7 @@ func TestRequestMatchers(t *testing.T) {
 	assert.Same(t, resp, resps[0])
 }
 
-func TestRequestTransformers(t *testing.T) {
+func TestRequest_Transformers(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	client := &mockClient{}
@@ -218,7 +218,7 @@ func TestRequestTransformers(t *testing.T) {
 	})
 }
 
-func TestRequestClient(t *testing.T) {
+func TestRequest_Client(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	client1 := &mockClient{}
@@ -246,7 +246,7 @@ func TestRequestClient(t *testing.T) {
 	req3.chain.assertFailed(t)
 }
 
-func TestRequestHandler(t *testing.T) {
+func TestRequest_Handler(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	var hr1 *http.Request
@@ -283,7 +283,7 @@ func TestRequestHandler(t *testing.T) {
 	req3.chain.assertFailed(t)
 }
 
-func TestRequestHandlerResetClient(t *testing.T) {
+func TestRequest_HandlerResetClient(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	var hr *http.Request
@@ -308,7 +308,7 @@ func TestRequestHandlerResetClient(t *testing.T) {
 	assert.Nil(t, client.req)
 }
 
-func TestRequestHandlerResueClient(t *testing.T) {
+func TestRequest_HandlerResueClient(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	handler1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
@@ -333,7 +333,7 @@ func TestRequestHandlerResueClient(t *testing.T) {
 	assert.True(t, req.config.Client.(*http.Client).Jar == client.Jar)
 }
 
-func TestRequestProto(t *testing.T) {
+func TestRequest_Proto(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	client := &mockClient{}
@@ -368,7 +368,7 @@ func TestRequestProto(t *testing.T) {
 	assert.Equal(t, 0, req.httpReq.ProtoMinor)
 }
 
-func TestRequestURLConcatenate(t *testing.T) {
+func TestRequest_URLConcatenate(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	client := &mockClient{}
@@ -423,7 +423,7 @@ func TestRequestURLConcatenate(t *testing.T) {
 	assert.Equal(t, "http://example.com/", empty3.httpReq.URL.String())
 }
 
-func TestRequestURLOverwrite(t *testing.T) {
+func TestRequest_URLOverwrite(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	client := &mockClient{}
@@ -461,7 +461,7 @@ func TestRequestURLOverwrite(t *testing.T) {
 	}
 }
 
-func TestRequestURLInterpolate(t *testing.T) {
+func TestRequest_URLInterpolate(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	client := &mockClient{}
@@ -546,7 +546,7 @@ func TestRequestURLInterpolate(t *testing.T) {
 	r10.chain.assertFailed(t)
 }
 
-func TestRequestURLQuery(t *testing.T) {
+func TestRequest_URLQuery(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	client := &mockClient{}
@@ -615,7 +615,7 @@ func TestRequestURLQuery(t *testing.T) {
 		WithQueryString("%").chain.assertFailed(t)
 }
 
-func TestRequestHeaders(t *testing.T) {
+func TestRequest_Headers(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	client := &mockClient{}
@@ -655,7 +655,7 @@ func TestRequestHeaders(t *testing.T) {
 	assert.Same(t, &client.resp, resp.Raw())
 }
 
-func TestRequestCookies(t *testing.T) {
+func TestRequest_Cookies(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	client := &mockClient{}
@@ -691,7 +691,7 @@ func TestRequestCookies(t *testing.T) {
 	assert.Same(t, &client.resp, resp.Raw())
 }
 
-func TestRequestBasicAuth(t *testing.T) {
+func TestRequest_BasicAuth(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	client := &mockClient{}
@@ -713,7 +713,7 @@ func TestRequestBasicAuth(t *testing.T) {
 		req.httpReq.Header.Get("Authorization"))
 }
 
-func TestRequestWithHost(t *testing.T) {
+func TestRequest_WithHost(t *testing.T) {
 	factory1 := DefaultRequestFactory{}
 	client1 := &mockClient{}
 	reporter1 := newMockReporter(t)
@@ -776,7 +776,7 @@ func TestRequestWithHost(t *testing.T) {
 	assert.Equal(t, "example1.com", client3.req.Host)
 }
 
-func TestRequestBodyChunked(t *testing.T) {
+func TestRequest_BodyChunked(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	client := &mockClient{}
@@ -807,7 +807,7 @@ func TestRequestBodyChunked(t *testing.T) {
 	assert.Same(t, &client.resp, resp.Raw())
 }
 
-func TestRequestBodyChunkedNil(t *testing.T) {
+func TestRequest_BodyChunkedNil(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	client := &mockClient{}
@@ -831,7 +831,7 @@ func TestRequestBodyChunkedNil(t *testing.T) {
 	assert.Equal(t, int64(0), client.req.ContentLength)
 }
 
-func TestRequestBodyChunkedProto(t *testing.T) {
+func TestRequest_BodyChunkedProto(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	client := &mockClient{}
@@ -864,7 +864,7 @@ func TestRequestBodyChunkedProto(t *testing.T) {
 	assert.Equal(t, 0, req2.httpReq.ProtoMinor)
 }
 
-func TestRequestBodyBytes(t *testing.T) {
+func TestRequest_BodyBytes(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	client := &mockClient{}
@@ -895,7 +895,7 @@ func TestRequestBodyBytes(t *testing.T) {
 	assert.Same(t, &client.resp, resp.Raw())
 }
 
-func TestRequestBodyBytesNil(t *testing.T) {
+func TestRequest_BodyBytesNil(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	client := &mockClient{}
@@ -919,7 +919,7 @@ func TestRequestBodyBytesNil(t *testing.T) {
 	assert.Equal(t, int64(0), client.req.ContentLength)
 }
 
-func TestRequestBodyText(t *testing.T) {
+func TestRequest_BodyText(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	client := &mockClient{}
@@ -956,7 +956,7 @@ func TestRequestBodyText(t *testing.T) {
 	assert.Same(t, &client.resp, resp.Raw())
 }
 
-func TestRequestBodyForm(t *testing.T) {
+func TestRequest_BodyForm(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	client := &mockClient{}
@@ -996,7 +996,7 @@ func TestRequestBodyForm(t *testing.T) {
 	assert.Same(t, &client.resp, resp.Raw())
 }
 
-func TestRequestBodyField(t *testing.T) {
+func TestRequest_BodyField(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	client := &mockClient{}
@@ -1034,7 +1034,7 @@ func TestRequestBodyField(t *testing.T) {
 	assert.Same(t, &client.resp, resp.Raw())
 }
 
-func TestRequestBodyFormStruct(t *testing.T) {
+func TestRequest_BodyFormStruct(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	client := &mockClient{}
@@ -1072,7 +1072,7 @@ func TestRequestBodyFormStruct(t *testing.T) {
 	assert.Same(t, &client.resp, resp.Raw())
 }
 
-func TestRequestBodyFormCombined(t *testing.T) {
+func TestRequest_BodyFormCombined(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	client := &mockClient{}
@@ -1110,7 +1110,7 @@ func TestRequestBodyFormCombined(t *testing.T) {
 	assert.Same(t, &client.resp, resp.Raw())
 }
 
-func TestRequestBodyMultipart(t *testing.T) {
+func TestRequest_BodyMultipart(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	client := &mockClient{}
@@ -1165,7 +1165,7 @@ func TestRequestBodyMultipart(t *testing.T) {
 	assert.True(t, eof == nil)
 }
 
-func TestRequestBodyMultipartFile(t *testing.T) {
+func TestRequest_BodyMultipartFile(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	client := &mockClient{}
@@ -1234,7 +1234,7 @@ func TestRequestBodyMultipartFile(t *testing.T) {
 	assert.True(t, eof == nil)
 }
 
-func TestRequestBodyJSON(t *testing.T) {
+func TestRequest_BodyJSON(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	client := &mockClient{}
@@ -1271,7 +1271,7 @@ func TestRequestBodyJSON(t *testing.T) {
 	assert.Same(t, &client.resp, resp.Raw())
 }
 
-func TestRequestContentLength(t *testing.T) {
+func TestRequest_ContentLength(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	client := &mockClient{}
@@ -1323,7 +1323,7 @@ func TestRequestContentLength(t *testing.T) {
 	assert.True(t, client.req.ContentLength > 0)
 }
 
-func TestRequestContentTypeOverwrite(t *testing.T) {
+func TestRequest_ContentTypeOverwrite(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	client := &mockClient{}
@@ -1371,7 +1371,7 @@ func TestRequestContentTypeOverwrite(t *testing.T) {
 	assert.Equal(t, http.Header{"Content-Type": {"foo", "bar"}}, client.req.Header)
 }
 
-func TestRequestErrorMarshalForm(t *testing.T) {
+func TestRequest_ErrorMarshalForm(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	client := &mockClient{}
@@ -1394,7 +1394,7 @@ func TestRequestErrorMarshalForm(t *testing.T) {
 	assert.True(t, resp.Raw() == nil)
 }
 
-func TestRequestErrorMarshalJSON(t *testing.T) {
+func TestRequest_ErrorMarshalJSON(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	client := &mockClient{}
@@ -1417,7 +1417,7 @@ func TestRequestErrorMarshalJSON(t *testing.T) {
 	assert.True(t, resp.Raw() == nil)
 }
 
-func TestRequestErrorReadFile(t *testing.T) {
+func TestRequest_ErrorReadFile(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	client := &mockClient{
@@ -1443,7 +1443,7 @@ func TestRequestErrorReadFile(t *testing.T) {
 	assert.True(t, resp.Raw() == nil)
 }
 
-func TestRequestErrorSend(t *testing.T) {
+func TestRequest_ErrorSend(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	client := &mockClient{
@@ -1466,7 +1466,7 @@ func TestRequestErrorSend(t *testing.T) {
 	assert.True(t, resp.Raw() == nil)
 }
 
-func TestRequestErrorConflictBody(t *testing.T) {
+func TestRequest_ErrorConflictBody(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	client := &mockClient{
@@ -1526,7 +1526,7 @@ func TestRequestErrorConflictBody(t *testing.T) {
 	req7.chain.assertFailed(t)
 }
 
-func TestRequestErrorConflictType(t *testing.T) {
+func TestRequest_ErrorConflictType(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	client := &mockClient{
@@ -1566,7 +1566,7 @@ func TestRequestErrorConflictType(t *testing.T) {
 	req4.chain.assertFailed(t)
 }
 
-func TestRequestErrorConflictMultipart(t *testing.T) {
+func TestRequest_ErrorConflictMultipart(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
 	client := &mockClient{
@@ -1598,7 +1598,7 @@ func TestRequestErrorConflictMultipart(t *testing.T) {
 	req3.chain.assertFailed(t)
 }
 
-func TestRequestRedirect(t *testing.T) {
+func TestRequest_Redirect(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	t.Run("dont follow redirects policy", func(t *testing.T) {
@@ -2123,7 +2123,7 @@ func TestRequestRedirect(t *testing.T) {
 	})
 }
 
-func TestRequestUsageChecks(t *testing.T) {
+func TestRequest_UsageChecks(t *testing.T) {
 	config := Config{
 		Reporter: newMockReporter(t),
 	}
@@ -2233,7 +2233,7 @@ func TestRequestUsageChecks(t *testing.T) {
 	})
 }
 
-func TestRequestPanics(t *testing.T) {
+func TestRequest_Panics(t *testing.T) {
 	t.Run("newRequest - RequestFactory is nil", func(t *testing.T) {
 		config := Config{
 			RequestFactory:   nil,
@@ -2353,7 +2353,7 @@ func (mt *mockTransportRedirect) WithMaxRedirect(
 	return mt
 }
 
-func TestRequestRetry(t *testing.T) {
+func TestRequest_Retry(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	newNoErrClient := func(cb func(req *http.Request)) *mockClient {

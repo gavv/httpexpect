@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNumberFailed(t *testing.T) {
+func TestNumber_Failed(t *testing.T) {
 	chain := newMockChain(t)
 	chain.fail(mockFailure())
 
@@ -28,7 +28,7 @@ func TestNumberFailed(t *testing.T) {
 	value.NotInRange(0, 0)
 }
 
-func TestNumberConstructors(t *testing.T) {
+func TestNumber_Constructors(t *testing.T) {
 	t.Run("Constructor without config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewNumber(reporter, 10.3)
@@ -46,7 +46,7 @@ func TestNumberConstructors(t *testing.T) {
 	})
 }
 
-func TestNumberGetters(t *testing.T) {
+func TestNumber_Getters(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewNumber(reporter, 123.0)
@@ -68,7 +68,7 @@ func TestNumberGetters(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestNumberEqual(t *testing.T) {
+func TestNumber_Equal(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewNumber(reporter, 1234)
@@ -92,7 +92,7 @@ func TestNumberEqual(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestNumberEqualDelta(t *testing.T) {
+func TestNumber_EqualDelta(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewNumber(reporter, 1234.5)
@@ -130,7 +130,7 @@ func TestNumberEqualDelta(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestNumberEqualNaN(t *testing.T) {
+func TestNumber_EqualNaN(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	v1 := NewNumber(reporter, math.NaN())
@@ -166,7 +166,7 @@ func TestNumberEqualNaN(t *testing.T) {
 	v8.chain.assertFailed(t)
 }
 
-func TestNumberGreater(t *testing.T) {
+func TestNumber_Greater(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewNumber(reporter, 1234)
@@ -192,7 +192,7 @@ func TestNumberGreater(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestNumberLesser(t *testing.T) {
+func TestNumber_Lesser(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewNumber(reporter, 1234)
@@ -218,7 +218,7 @@ func TestNumberLesser(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestNumberInRange(t *testing.T) {
+func TestNumber_InRange(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewNumber(reporter, 1234)
@@ -280,7 +280,7 @@ func TestNumberInRange(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestNumberConvertEqual(t *testing.T) {
+func TestNumber_ConvertEqual(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewNumber(reporter, 1234)
@@ -310,7 +310,7 @@ func TestNumberConvertEqual(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestNumberConvertGreater(t *testing.T) {
+func TestNumber_ConvertGreater(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewNumber(reporter, 1234)
@@ -340,7 +340,7 @@ func TestNumberConvertGreater(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestNumberConvertLesser(t *testing.T) {
+func TestNumber_ConvertLesser(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewNumber(reporter, 1234)
@@ -370,7 +370,7 @@ func TestNumberConvertLesser(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestNumberConvertInRange(t *testing.T) {
+func TestNumber_ConvertInRange(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewNumber(reporter, 1234)

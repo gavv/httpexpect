@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCookieFailed(t *testing.T) {
+func TestCookie_Failed(t *testing.T) {
 	check := func(value *Cookie, isNil bool) {
 		value.chain.assertFailed(t)
 
@@ -56,7 +56,7 @@ func TestCookieFailed(t *testing.T) {
 	})
 }
 
-func TestCookieConstructors(t *testing.T) {
+func TestCookie_Constructors(t *testing.T) {
 	cookie := &http.Cookie{
 		Name:    "Test",
 		Value:   "Test_val",
@@ -91,7 +91,7 @@ func TestCookieConstructors(t *testing.T) {
 	})
 }
 
-func TestCookieGetters(t *testing.T) {
+func TestCookie_Getters(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewCookie(reporter, &http.Cookie{
@@ -122,7 +122,7 @@ func TestCookieGetters(t *testing.T) {
 	value.chain.assertNotFailed(t)
 }
 
-func TestCookieMaxAge(t *testing.T) {
+func TestCookie_MaxAge(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	t.Run("unset", func(t *testing.T) {

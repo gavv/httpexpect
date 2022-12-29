@@ -52,7 +52,7 @@ func (c *mockHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	assert.True(c.t, err == nil)
 }
 
-func TestBinder(t *testing.T) {
+func TestBinder_Basic(t *testing.T) {
 	handler := &mockHandler{
 		t:       t,
 		http10:  true,
@@ -92,7 +92,7 @@ func TestBinder(t *testing.T) {
 	assert.Equal(t, []string(nil), resp.TransferEncoding)
 }
 
-func TestBinderTLS(t *testing.T) {
+func TestBinder_TLS(t *testing.T) {
 	handler := &mockHandler{t: t}
 
 	httpClient := &http.Client{
@@ -141,7 +141,7 @@ func TestBinderTLS(t *testing.T) {
 	assert.Same(t, tlsState, resp.Request.TLS)
 }
 
-func TestBinderChunked(t *testing.T) {
+func TestBinder_Chunked(t *testing.T) {
 	handler := &mockHandler{
 		t:       t,
 		chunked: true,
@@ -167,7 +167,7 @@ func TestBinderChunked(t *testing.T) {
 	assert.Equal(t, []string{"chunked"}, resp.TransferEncoding)
 }
 
-func TestFastBinder(t *testing.T) {
+func TestFastBinder_Basic(t *testing.T) {
 	handler := func(ctx *fasthttp.RequestCtx) {
 		assert.Equal(t, "POST", string(ctx.Request.Header.Method()))
 		assert.Equal(t, "http://example.com/path", string(ctx.Request.Header.RequestURI()))
@@ -243,7 +243,7 @@ func TestFastBinder(t *testing.T) {
 	assert.Equal(t, []string(nil), resp.TransferEncoding)
 }
 
-func TestFastBinderRemoteAddr(t *testing.T) {
+func TestFastBinder_RemoteAddr(t *testing.T) {
 	handler := func(ctx *fasthttp.RequestCtx) {
 		assert.NotNil(t, ctx.RemoteAddr())
 		assert.Equal(t, "tcp", ctx.RemoteAddr().Network())
@@ -278,7 +278,7 @@ func TestFastBinderRemoteAddr(t *testing.T) {
 	assert.Equal(t, `ok`, string(b))
 }
 
-func TestFastBinderProtocol(t *testing.T) {
+func TestFastBinder_Protocol(t *testing.T) {
 	test := func(setProto func(req *http.Request)) {
 		handler := func(ctx *fasthttp.RequestCtx) {
 			assert.Equal(t, "HTTP/1.0", string(ctx.Request.Header.Protocol()))
@@ -323,7 +323,7 @@ func TestFastBinderProtocol(t *testing.T) {
 	})
 }
 
-func TestFastBinderTLS(t *testing.T) {
+func TestFastBinder_TLS(t *testing.T) {
 	var isHTTPS, isTLS bool
 
 	tlsState := &tls.ConnectionState{
@@ -381,7 +381,7 @@ func TestFastBinderTLS(t *testing.T) {
 	assert.True(t, isTLS)
 }
 
-func TestFastBinderChunked(t *testing.T) {
+func TestFastBinder_Chunked(t *testing.T) {
 	handler := func(ctx *fasthttp.RequestCtx) {
 		assert.Equal(t, "POST", string(ctx.Request.Header.Method()))
 		assert.Equal(t, "http://example.com/path", string(ctx.Request.Header.RequestURI()))
@@ -437,7 +437,7 @@ func TestFastBinderChunked(t *testing.T) {
 	assert.Equal(t, []string{"chunked"}, resp.TransferEncoding)
 }
 
-func TestFastBinderEmptyResponse(t *testing.T) {
+func TestFastBinder_EmptyResponse(t *testing.T) {
 	handler := func(*fasthttp.RequestCtx) {}
 
 	client := &http.Client{
@@ -464,7 +464,7 @@ func TestFastBinderEmptyResponse(t *testing.T) {
 	assert.Equal(t, "", string(b))
 }
 
-func TestFastBinderLogger(t *testing.T) {
+func TestFastBinder_Logger(t *testing.T) {
 	handler := func(ctx *fasthttp.RequestCtx) {
 		ctx.Logger().Printf("test_message")
 	}

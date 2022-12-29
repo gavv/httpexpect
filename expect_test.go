@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestExpectMethods(t *testing.T) {
+func TestExpect_Methods(t *testing.T) {
 	client := &mockClient{}
 
 	reporter := NewAssertReporter(t)
@@ -44,7 +44,7 @@ func TestExpectMethods(t *testing.T) {
 	assert.Equal(t, "DELETE", reqs[7].httpReq.Method)
 }
 
-func TestExpectBuilders(t *testing.T) {
+func TestExpect_Builders(t *testing.T) {
 	client := &mockClient{}
 
 	reporter := NewAssertReporter(t)
@@ -81,7 +81,7 @@ func TestExpectBuilders(t *testing.T) {
 	assert.Same(t, r2, reqs2[0])
 }
 
-func TestExpectBuildersCopying(t *testing.T) {
+func TestExpect_BuildersCopying(t *testing.T) {
 	client := &mockClient{}
 
 	reporter := NewAssertReporter(t)
@@ -137,7 +137,7 @@ func TestExpectBuildersCopying(t *testing.T) {
 	assert.Equal(t, 1, counter2b)
 }
 
-func TestExpectMatchers(t *testing.T) {
+func TestExpect_Matchers(t *testing.T) {
 	client := &mockClient{}
 
 	reporter := NewAssertReporter(t)
@@ -180,7 +180,7 @@ func TestExpectMatchers(t *testing.T) {
 	assert.Same(t, resp2, resps2[0])
 }
 
-func TestExpectMatchersCopying(t *testing.T) {
+func TestExpect_MatchersCopying(t *testing.T) {
 	client := &mockClient{}
 
 	reporter := NewAssertReporter(t)
@@ -236,7 +236,7 @@ func TestExpectMatchersCopying(t *testing.T) {
 	assert.Equal(t, 1, counter2b)
 }
 
-func TestExpectValues(t *testing.T) {
+func TestExpect_Values(t *testing.T) {
 	client := &mockClient{}
 
 	r := NewAssertReporter(t)
@@ -262,7 +262,7 @@ func TestExpectValues(t *testing.T) {
 	assert.NotNil(t, e.Boolean(b))
 }
 
-func TestExpectTraverse(t *testing.T) {
+func TestExpect_Traverse(t *testing.T) {
 	client := &mockClient{}
 
 	reporter := NewAssertReporter(t)
@@ -304,7 +304,7 @@ func TestExpectTraverse(t *testing.T) {
 	m.Value("aaa").Array().Element(3).Null()
 }
 
-func TestExpectBranches(t *testing.T) {
+func TestExpect_Branches(t *testing.T) {
 	client := &mockClient{}
 
 	config := Config{
@@ -340,7 +340,7 @@ func TestExpectBranches(t *testing.T) {
 	e4.chain.assertNotFailed(t)
 }
 
-func TestExpectStdCompat(_ *testing.T) {
+func TestExpect_StdCompat(_ *testing.T) {
 	Default(&testing.T{}, "")
 	Default(&testing.B{}, "")
 	Default(testing.TB(&testing.T{}), "")
@@ -360,7 +360,7 @@ func (f *testRequestFactory) NewRequest(
 	return f.lastreq, nil
 }
 
-func TestExpectRequestFactory(t *testing.T) {
+func TestExpect_RequestFactory(t *testing.T) {
 	e1 := WithConfig(Config{
 		BaseURL:  "http://example.com",
 		Reporter: NewAssertReporter(t),
@@ -393,7 +393,7 @@ func TestExpectRequestFactory(t *testing.T) {
 	assert.Nil(t, f3.lastreq)
 }
 
-func TestExpectPanics(t *testing.T) {
+func TestExpect_Panics(t *testing.T) {
 	t.Run("nil_AssertionHandler_nonnil_Reporter", func(t *testing.T) {
 		assert.NotPanics(t, func() {
 			WithConfig(Config{
