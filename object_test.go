@@ -1043,7 +1043,7 @@ func TestObjectFilter(t *testing.T) {
 }
 
 func TestObjectFind(t *testing.T) {
-	t.Run("Find an object of elements of the same type and validate", func(ts *testing.T) {
+	t.Run("Elements of the same type", func(ts *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
 			"foo":  "bar",
@@ -1064,7 +1064,7 @@ func TestObjectFind(t *testing.T) {
 		object.chain.assertNotFailed(t)
 	})
 
-	t.Run("Find an object of elements of the multi type and validate", func(ts *testing.T) {
+	t.Run("Elements of multiple types", func(ts *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
 			"foo":  "bar",
@@ -1112,7 +1112,7 @@ func TestObjectFind(t *testing.T) {
 		object.chain.assertFailed(t)
 	})
 
-	t.Run("Empty Object", func(ts *testing.T) {
+	t.Run("Empty object", func(ts *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{})
 		foundValue := object.Find(func(key string, value *Value) bool {
@@ -1126,7 +1126,7 @@ func TestObjectFind(t *testing.T) {
 		object.chain.assertFailed(t)
 	})
 
-	t.Run("When predicate returns true, but assertion fails, predicate is failed",
+	t.Run("Predicate returns true, assertion fails, no match",
 		func(ts *testing.T) {
 			reporter := newMockReporter(t)
 			object := NewObject(reporter, map[string]interface{}{
@@ -1134,7 +1134,7 @@ func TestObjectFind(t *testing.T) {
 				"bar": 2,
 			})
 			foundValue := object.Find(func(key string, value *Value) bool {
-				value.String().Raw()
+				value.String()
 				return true
 			})
 			assert.Equal(t, nil, foundValue.Raw())
@@ -1145,6 +1145,29 @@ func TestObjectFind(t *testing.T) {
 
 			foundValue.chain.assertFailed(t)
 			object.chain.assertFailed(t)
+		})
+
+	t.Run("Predicate returns true, assertion fails, have match",
+		func(ts *testing.T) {
+			reporter := newMockReporter(t)
+			object := NewObject(reporter, map[string]interface{}{
+				"foo": 1,
+				"bar": 2,
+				"baz": "str",
+			})
+			foundValue := object.Find(func(key string, value *Value) bool {
+				value.String()
+				return true
+			})
+			assert.Equal(t, "str", foundValue.Raw())
+			assert.Equal(t, object.Raw(), map[string]interface{}{
+				"foo": 1.0,
+				"bar": 2.0,
+				"baz": "str",
+			})
+
+			foundValue.chain.assertNotFailed(t)
+			object.chain.assertNotFailed(t)
 		})
 
 	t.Run("Predicate func is nil", func(ts *testing.T) {
@@ -1164,8 +1187,9 @@ func TestObjectFind(t *testing.T) {
 		object.chain.assertFailed(t)
 	})
 }
+
 func TestObjectFindAll(t *testing.T) {
-	t.Run("Find values in array of the same type", func(ts *testing.T) {
+	t.Run("Elements of the same type", func(ts *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
 			"foo":  "bar",
@@ -1194,7 +1218,7 @@ func TestObjectFindAll(t *testing.T) {
 		object.chain.assertNotFailed(t)
 	})
 
-	t.Run("Find values in array of the multi types", func(ts *testing.T) {
+	t.Run("Elements of multiple types", func(ts *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
 			"foo":   "bar",
@@ -1257,7 +1281,7 @@ func TestObjectFindAll(t *testing.T) {
 		object.chain.assertNotFailed(t)
 	})
 
-	t.Run("Empty array", func(ts *testing.T) {
+	t.Run("Empty object", func(ts *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{})
 		foundValues := object.FindAll(func(key string, value *Value) bool {
@@ -1278,7 +1302,7 @@ func TestObjectFindAll(t *testing.T) {
 		object.chain.assertNotFailed(t)
 	})
 
-	t.Run("When predicate returns true, but assertion fails, predicate is failed",
+	t.Run("Predicate returns true, assertion fails, no match",
 		func(ts *testing.T) {
 			reporter := newMockReporter(t)
 			object := NewObject(reporter, map[string]interface{}{
@@ -1286,7 +1310,7 @@ func TestObjectFindAll(t *testing.T) {
 				"bar": 2,
 			})
 			foundValues := object.FindAll(func(key string, value *Value) bool {
-				value.String().Raw()
+				value.String()
 				return true
 			})
 
@@ -1307,7 +1331,7 @@ func TestObjectFindAll(t *testing.T) {
 			object.chain.assertNotFailed(t)
 		})
 
-	t.Run("Assertion failure does not affect subsequent matches", func(ts *testing.T) {
+	t.Run("Predicate returns true, assertion fails, have match", func(ts *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
 			"foo":  "bar",
@@ -1316,7 +1340,7 @@ func TestObjectFindAll(t *testing.T) {
 			"quux": "corge",
 		})
 		foundValues := object.FindAll(func(key string, value *Value) bool {
-			value.String().Raw()
+			value.String()
 			return true
 		})
 
@@ -1366,7 +1390,7 @@ func TestObjectFindAll(t *testing.T) {
 }
 
 func TestObjectNotFind(t *testing.T) {
-	t.Run("Succeeds if no element matched predicate", func(ts *testing.T) {
+	t.Run("Succeeds if no element matches predicate", func(ts *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
 			"foo":  "bar",
@@ -1377,20 +1401,7 @@ func TestObjectNotFind(t *testing.T) {
 		afterObject := object.NotFind(func(key string, value *Value) bool {
 			return key == "corge"
 		})
-		assert.Equal(t, map[string]interface{}{
-			"foo":  "bar",
-			"baz":  true,
-			"qux":  -1.0,
-			"quux": 2.0,
-		}, afterObject.Raw())
-		assert.Equal(t, object.Raw(), map[string]interface{}{
-			"foo":  "bar",
-			"baz":  true,
-			"qux":  -1.0,
-			"quux": 2.0,
-		})
-
-		afterObject.chain.assertNotFailed(t)
+		assert.Same(t, object, afterObject)
 		object.chain.assertNotFailed(t)
 	})
 
@@ -1405,15 +1416,7 @@ func TestObjectNotFind(t *testing.T) {
 		afterObject := object.NotFind(func(key string, value *Value) bool {
 			return key == "qux"
 		})
-		assert.Equal(t, map[string]interface{}(nil), afterObject.Raw())
-		assert.Equal(t, object.Raw(), map[string]interface{}{
-			"foo":  "bar",
-			"baz":  true,
-			"qux":  -1.0,
-			"quux": 2.0,
-		})
-
-		afterObject.chain.assertFailed(t)
+		assert.Same(t, object, afterObject)
 		object.chain.assertFailed(t)
 	})
 
@@ -1423,14 +1426,11 @@ func TestObjectNotFind(t *testing.T) {
 		afterObject := object.NotFind(func(key string, value *Value) bool {
 			return key == "corge"
 		})
-		assert.Equal(t, map[string]interface{}{}, afterObject.Raw())
-		assert.Equal(t, object.Raw(), map[string]interface{}{})
-
-		afterObject.chain.assertNotFailed(t)
+		assert.Same(t, object, afterObject)
 		object.chain.assertNotFailed(t)
 	})
 
-	t.Run("When predicate returns true, but assertion fails, predicate is failed",
+	t.Run("Predicate returns true, assertion fails, no match",
 		func(ts *testing.T) {
 			reporter := newMockReporter(t)
 			object := NewObject(reporter, map[string]interface{}{
@@ -1438,20 +1438,27 @@ func TestObjectNotFind(t *testing.T) {
 				"bar": 2,
 			})
 			afterObject := object.NotFind(func(key string, value *Value) bool {
-				value.String().Raw()
+				value.String()
 				return true
 			})
-			assert.Equal(t, map[string]interface{}{
-				"foo": 1.0,
-				"bar": 2.0,
-			}, afterObject.Raw())
-			assert.Equal(t, object.Raw(), map[string]interface{}{
-				"foo": 1.0,
-				"bar": 2.0,
-			})
-
-			afterObject.chain.assertNotFailed(t)
+			assert.Same(t, object, afterObject)
 			object.chain.assertNotFailed(t)
+		})
+
+	t.Run("Predicate returns true, assertion fails, have match",
+		func(ts *testing.T) {
+			reporter := newMockReporter(t)
+			object := NewObject(reporter, map[string]interface{}{
+				"foo": 1,
+				"bar": 2,
+				"baz": "str",
+			})
+			afterObject := object.NotFind(func(key string, value *Value) bool {
+				value.String()
+				return true
+			})
+			assert.Same(t, object, afterObject)
+			object.chain.assertFailed(t)
 		})
 
 	t.Run("Predicate func is nil", func(ts *testing.T) {
@@ -1461,13 +1468,7 @@ func TestObjectNotFind(t *testing.T) {
 			"bar": 2,
 		})
 		afterObject := object.NotFind(nil)
-		assert.Equal(t, map[string]interface{}(nil), afterObject.Raw())
-		assert.Equal(t, object.Raw(), map[string]interface{}{
-			"foo": 1.0,
-			"bar": 2.0,
-		})
-
-		afterObject.chain.assertFailed(t)
+		assert.Same(t, object, afterObject)
 		object.chain.assertFailed(t)
 	})
 }

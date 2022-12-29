@@ -258,14 +258,14 @@ func (o *Object) Every(fn func(key string, value *Value)) *Object {
 }
 
 // Filter accepts a function that returns a boolean. The function is ran
-// over the object items. If the function returns true, the item passes
-// the filter and is added to the new object of filtered items. If false,
+// over the object elements. If the function returns true, the element passes
+// the filter and is added to the new object of filtered elements. If false,
 // the value is skipped (or in other words filtered out). After iterating
-// through all the items of the original object, the new filtered object
+// through all the elements of the original object, the new filtered object
 // is returned.
 //
 // If there are any failed assertions in the filtering function, the
-// item is omitted without causing test failure.
+// element is omitted without causing test failure.
 //
 // Example:
 //
@@ -354,27 +354,28 @@ func (o *Object) Transform(fn func(key string, value interface{}) interface{}) *
 	return newObject(o.chain, object)
 }
 
-// Find accepts a function that returns a boolean. The function is ran
-// over the object items. If the function returns true, the item
-// is returned as value. If the function returns false or assertion
-// inside it fails, the item is skipped. If all the items are skipped,
-// then Find fails and returns empty (non-nil) value.
+// Find accepts a function that returns a boolean, runs it over the object
+// elements, and returns the first element on which it returned true.
 //
-// If there are any failed assertions in the filtering function, the
-// item is omitted without causing test failure.
+// If there are any failed assertions in the predicate function, the
+// element is skipped without causing test failure.
+//
+// If no elements were found, a failure is reported.
 //
 // Example:
 //
 //	object := NewObject(t, map[string]interface{}{
-//		"foo": "bar",
-//		"baz": 6,
-//		"qux": "quux",
+//		"a": 1,
+//		"b": "foo",
+//		"c": 101,
+//		"d": "bar",
+//		"e": 201,
 //	})
 //	foundValue := object.Find(func(key string, value *httpexpect.Value)  bool {
-//		value.String().NotEmpty()	// fails on 6
-//		return key == "qux"		// fails on "bar"
+//		num := value.Number()      // skip if element is not a string
+//		return num.Raw() > 100     // check element value
 //	})
-//	foundValue.Equal("quux")	// succeeds
+//	foundValue.Equal(101) // succeeds
 func (o *Object) Find(fn func(key string, value *Value) bool) *Value {
 	o.chain.enter("Find()")
 	defer o.chain.leave()
@@ -421,38 +422,38 @@ func (o *Object) Find(fn func(key string, value *Value) bool) *Value {
 		Type:   AssertValid,
 		Actual: &AssertionValue{o.value},
 		Errors: []error{
-			errors.New("expected: at least one object element matched predicate"),
+			errors.New("expected: at least one object element matches predicate"),
 		},
 	})
 
 	return newValue(o.chain, nil)
 }
 
-// FindAll accepts a function that returns a boolean. The function is ran
-// over the object items. If the function returns true, the item is added
-// to the slice of values. If the function returns false or assertion
-// inside it fails, the item is skipped. After iterating through all the
-// items of the object, slice of values are returned.
+// FindAll accepts a function that returns a boolean, runs it over the object
+// elements, and returns all the elements on which it returned true.
 //
-// If there are any failed assertions in the filtering function, the
-// item is omitted without causing test failure.
+// If there are any failed assertions in the predicate function, the
+// element is skipped without causing test failure.
+//
+// If no elements were found, empty slice is returned without reporting error.
 //
 // Example:
 //
 //	object := NewObject(t, map[string]interface{}{
-//		"foo": "bar",
-//		"baz": 6,
-//		"qux": "quux",
-//		"corge": "grault",
+//		"a": 1,
+//		"b": "foo",
+//		"c": 101,
+//		"d": "bar",
+//		"e": 201,
 //	})
-//	foundValues := object.FindAll(func(key string, value *httpexpect.Value) bool {
-//		value.String().NotEmpty()	// fails on 6
-//		return key != "qux"		// fails on "quux"
+//	foundValues := object.FindAll(func(key string, value *httpexpect.Value)  bool {
+//		num := value.Number()      // skip if element is not a string
+//		return num.Raw() > 100     // check element value
 //	})
 //
 //	assert.Equal(t, len(foundValues), 2)
-//	foundValues[0].Equal("grault")	// foundValues are sorted by key of object
-//	foundValues[1].Equal("bar")
+//	foundValues[0].Equal(101)
+//	foundValues[1].Equal(201)
 func (o *Object) FindAll(fn func(key string, value *Value) bool) []Value {
 	o.chain.enter("FindAll()")
 	defer o.chain.leave()
@@ -500,37 +501,33 @@ func (o *Object) FindAll(fn func(key string, value *Value) bool) []Value {
 	return foundValues
 }
 
-// NotFind accepts a function that returns a boolean. The function is ran
-// over the object items. If the function returns true, then NotFind fails
-// and returns empty (non-nil) object. If the function returns false or
-// assertion inside it fails in all iteration, NotFind succeeds and
-// returns original object.
+// NotFind accepts a function that returns a boolean, runs it over the object
+// elelements, and checks that it does not return true for any of the elements.
 //
-// If there are any failed assertions in the filtering function, the
-// item is omitted without causing test failure.
+// If there are any failed assertions in the predicate function, the
+// element is skipped without causing test failure.
+//
+// If the predicate function did not fail and returned true for at least
+// one element, a failure is reported.
 //
 // Example:
 //
 //	object := NewObject(t, map[string]interface{}{
-//		"foo": "bar",
-//		"baz": 6,
-//		"qux": "quux",
+//		"a": 1,
+//		"b": "foo",
+//		"c": 2,
+//		"d": "bar",
 //	})
-//	afterObject := object.NotFind(func(key string, value *httpexpect.Value)  bool {
-//		value.String().NotEmpty()	// fails on 6
-//		return key == "corge"		// fails on "bar" and "quux"
-//	})
-//	afterObject.Equal(map[string]interface{}{
-//		"foo": "bar",
-//		"baz": 6,
-//		"qux": "quux",
-//	})	// succeeds
+//	object.NotFind(func(key string, value *httpexpect.Value) bool {
+//		num := value.Number()    // skip if element is not a number
+//		return num.Raw() > 100   // check element value
+//	}) // succeeds
 func (o *Object) NotFind(fn func(key string, value *Value) bool) *Object {
 	o.chain.enter("NotFind()")
 	defer o.chain.leave()
 
 	if o.chain.failed() {
-		return newObject(o.chain, nil)
+		return o
 	}
 
 	if fn == nil {
@@ -540,7 +537,7 @@ func (o *Object) NotFind(fn func(key string, value *Value) bool) *Object {
 				errors.New("unexpected nil function argument"),
 			},
 		})
-		return newObject(o.chain, nil)
+		return o
 	}
 
 	type kv struct {
@@ -568,10 +565,10 @@ func (o *Object) NotFind(fn func(key string, value *Value) bool) *Object {
 				Expected: &AssertionValue{element},
 				Actual:   &AssertionValue{o.value},
 				Errors: []error{
-					errors.New("expected: none of the array elements match predicate"),
+					errors.New("expected: none of the object elements match predicate"),
 				},
 			})
-			return newObject(o.chain, nil)
+			return o
 		}
 	}
 

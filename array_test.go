@@ -966,7 +966,7 @@ func TestArrayFilter(t *testing.T) {
 }
 
 func TestArrayFind(t *testing.T) {
-	t.Run("Find value in array of the same type", func(ts *testing.T) {
+	t.Run("Elements of the same type", func(ts *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1, 2, 3, 4, 5, 6})
 		foundValue := array.Find(func(index int, value *Value) bool {
@@ -979,7 +979,7 @@ func TestArrayFind(t *testing.T) {
 		foundValue.chain.assertNotFailed(t)
 	})
 
-	t.Run("Find value in arraly of the multi types", func(ts *testing.T) {
+	t.Run("Elements of multiple types", func(ts *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1, "foo", true, "bar"})
 		foundValue := array.Find(func(index int, value *Value) bool {
@@ -993,7 +993,7 @@ func TestArrayFind(t *testing.T) {
 		foundValue.chain.assertNotFailed(t)
 	})
 
-	t.Run("Find first match element", func(ts *testing.T) {
+	t.Run("First match", func(ts *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1, "foo", true, "bar"})
 		foundValue := array.Find(func(index int, value *Value) bool {
@@ -1033,12 +1033,12 @@ func TestArrayFind(t *testing.T) {
 		foundValue.chain.assertFailed(t)
 	})
 
-	t.Run("When predicate returns true, but assertion fails, predicate is failed",
+	t.Run("Predicate returns true, assertion fails, no match",
 		func(ts *testing.T) {
 			reporter := newMockReporter(t)
 			array := NewArray(reporter, []interface{}{1, 2})
 			foundValue := array.Find(func(index int, value *Value) bool {
-				value.String().Raw()
+				value.String()
 				return true
 			})
 			assert.Equal(t, nil, foundValue.Raw())
@@ -1046,6 +1046,21 @@ func TestArrayFind(t *testing.T) {
 
 			array.chain.assertFailed(t)
 			foundValue.chain.assertFailed(t)
+		})
+
+	t.Run("Predicate returns true, assertion fails, have match",
+		func(ts *testing.T) {
+			reporter := newMockReporter(t)
+			array := NewArray(reporter, []interface{}{1, 2, "str"})
+			foundValue := array.Find(func(index int, value *Value) bool {
+				value.String()
+				return true
+			})
+			assert.Equal(t, "str", foundValue.Raw())
+			assert.Equal(t, array.Raw(), []interface{}{1.0, 2.0, "str"})
+
+			array.chain.assertNotFailed(t)
+			foundValue.chain.assertNotFailed(t)
 		})
 
 	t.Run("Predicate func is nil", func(ts *testing.T) {
@@ -1058,11 +1073,10 @@ func TestArrayFind(t *testing.T) {
 		array.chain.assertFailed(t)
 		foundValue.chain.assertFailed(t)
 	})
-
 }
 
 func TestArrayFindAll(t *testing.T) {
-	t.Run("Find values in array of the same type", func(ts *testing.T) {
+	t.Run("Elements of the same type", func(ts *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1, 2, 3, 4, 5, 6})
 		foundValues := array.FindAll(func(index int, value *Value) bool {
@@ -1083,7 +1097,7 @@ func TestArrayFindAll(t *testing.T) {
 		}
 	})
 
-	t.Run("Find values in array of the multi types", func(ts *testing.T) {
+	t.Run("Elements of multiple types", func(ts *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1.0, "foo", true, "bar"})
 		foundValues := array.FindAll(func(index int, value *Value) bool {
@@ -1144,12 +1158,12 @@ func TestArrayFindAll(t *testing.T) {
 		}
 	})
 
-	t.Run("When predicate returns true, but assertion fails, predicate is failed",
+	t.Run("Predicate returns true, assertion fails, no match",
 		func(ts *testing.T) {
 			reporter := newMockReporter(t)
 			array := NewArray(reporter, []interface{}{1, 2})
 			foundValues := array.FindAll(func(index int, value *Value) bool {
-				value.String().Raw()
+				value.String()
 				return true
 			})
 
@@ -1166,11 +1180,11 @@ func TestArrayFindAll(t *testing.T) {
 			}
 		})
 
-	t.Run("Assertion failure does not affect subsequent matches", func(ts *testing.T) {
+	t.Run("Predicate returns true, assertion fails, have matches", func(ts *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{"foo", 1, 2, "bar"})
 		foundValues := array.FindAll(func(index int, value *Value) bool {
-			value.String().Raw()
+			value.String()
 			return true
 		})
 
@@ -1207,17 +1221,14 @@ func TestArrayFindAll(t *testing.T) {
 }
 
 func TestArrayNotFind(t *testing.T) {
-	t.Run("Succeeds if no element matched predicate", func(ts *testing.T) {
+	t.Run("Succeeds if no element matches predicate", func(ts *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1, "foo", true, "bar"})
 		afterArray := array.NotFind(func(index int, value *Value) bool {
 			return value.String().Raw() == "baz"
 		})
-		assert.Equal(t, []interface{}{1.0, "foo", true, "bar"}, afterArray.Raw())
-		assert.Equal(t, array.Raw(), []interface{}{1.0, "foo", true, "bar"})
-
+		assert.Same(t, array, afterArray)
 		array.chain.assertNotFailed(t)
-		afterArray.chain.assertNotFailed(t)
 	})
 
 	t.Run("Fails if there is a match", func(ts *testing.T) {
@@ -1226,49 +1237,49 @@ func TestArrayNotFind(t *testing.T) {
 		afterArray := array.NotFind(func(index int, value *Value) bool {
 			return value.String().NotEmpty().Raw() == "bar"
 		})
-		assert.Equal(t, []interface{}(nil), afterArray.Raw())
-		assert.Equal(t, array.Raw(), []interface{}{1.0, "foo", true, "bar"})
-
+		assert.Same(t, array, afterArray)
 		array.chain.assertFailed(t)
-		afterArray.chain.assertFailed(t)
 	})
 
 	t.Run("Empty array", func(ts *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{})
-		foundValue := array.NotFind(func(index int, value *Value) bool {
+		afterArray := array.NotFind(func(index int, value *Value) bool {
 			return value.Raw() == 2.0
 		})
-		assert.Equal(t, []interface{}{}, foundValue.Raw())
-		assert.Equal(t, array.Raw(), []interface{}{})
-
+		assert.Same(t, array, afterArray)
 		array.chain.assertNotFailed(t)
-		foundValue.chain.assertNotFailed(t)
 	})
 
-	t.Run("When predicate returns true, but assertion fails, predicate is failed",
+	t.Run("Predicate returns true, assertion fails, no match",
 		func(ts *testing.T) {
 			reporter := newMockReporter(t)
 			array := NewArray(reporter, []interface{}{1, 2})
 			afterArray := array.NotFind(func(index int, value *Value) bool {
-				value.String().Raw()
+				value.String()
 				return true
 			})
-			assert.Equal(t, []interface{}{1.0, 2.0}, afterArray.Raw())
-			assert.Equal(t, array.Raw(), []interface{}{1.0, 2.0})
-
+			assert.Same(t, array, afterArray)
 			array.chain.assertNotFailed(t)
-			afterArray.chain.assertNotFailed(t)
+		})
+
+	t.Run("Predicate returns true, assertion fails, have match",
+		func(ts *testing.T) {
+			reporter := newMockReporter(t)
+			array := NewArray(reporter, []interface{}{1, 2, "str"})
+			afterArray := array.NotFind(func(index int, value *Value) bool {
+				value.String()
+				return true
+			})
+			assert.Same(t, array, afterArray)
+			array.chain.assertFailed(t)
 		})
 
 	t.Run("Predicate func is nil", func(ts *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1, 2})
 		afterArray := array.NotFind(nil)
-		assert.Equal(t, []interface{}(nil), afterArray.Raw())
-		assert.Equal(t, array.Raw(), []interface{}{1.0, 2.0})
-
+		assert.Same(t, array, afterArray)
 		array.chain.assertFailed(t)
-		afterArray.chain.assertFailed(t)
 	})
 }

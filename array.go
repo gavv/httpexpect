@@ -280,14 +280,14 @@ func (a *Array) Every(fn func(index int, value *Value)) *Array {
 }
 
 // Filter accepts a function that returns a boolean. The function is ran
-// over the array items. If the function returns true, the item passes
-// the filter and is added to the new array of filtered items. If false,
-// the item is skipped (or in other words filtered out). After iterating
-// through all the items of the original array, the new filtered array
+// over the array elements. If the function returns true, the element passes
+// the filter and is added to the new array of filtered elements. If false,
+// the element is skipped (or in other words filtered out). After iterating
+// through all the elements of the original array, the new filtered array
 // is returned.
 //
 // If there are any failed assertions in the filtering function, the
-// item is omitted without causing test failure.
+// element is omitted without causing test failure.
 //
 // Example:
 //
@@ -372,23 +372,22 @@ func (a *Array) Transform(fn func(index int, value interface{}) interface{}) *Ar
 	return newArray(a.chain, array)
 }
 
-// Find accepts a function that returns a boolean. The function is ran
-// over the array items. If the function returns true, the item
-// is returned as value. If the function returns false or assertion
-// inside it fails, the item is skipped. If all the items are skipped,
-// then Find fails and returns empty (non-nil) value.
+// Find accepts a function that returns a boolean, runs it over the array
+// elements, and returns the first element on which it returned true.
 //
-// If there are any failed assertions in the filtering function, the
-// item is omitted without causing test failure.
+// If there are any failed assertions in the predicate function, the
+// element is skipped without causing test failure.
+//
+// If no elements were found, a failure is reported.
 //
 // Example:
 //
-//	array := NewArray(t, []interface{}{1, "foo", 2, "bar"})
+//	array := NewArray(t, []interface{}{1, "foo", 101, "bar", 201})
 //	foundValue := array.Find(func(index int, value *httpexpect.Value) bool {
-//		value.String().NotEmpty()		// fails on 1 and 2
-//		return value.Raw() != "bar"		// fails on "bar"
+//		num := value.Number()    // skip if element is not a number
+//		return num.Raw() > 100   // check element value
 //	})
-//	foundValue.Equal("foo")	// succeeds
+//	foundValue.Equal(101) // succeeds
 func (a *Array) Find(fn func(index int, value *Value) bool) *Value {
 	a.chain.enter("Find()")
 	defer a.chain.leave()
@@ -424,33 +423,32 @@ func (a *Array) Find(fn func(index int, value *Value) bool) *Value {
 		Type:   AssertValid,
 		Actual: &AssertionValue{a.value},
 		Errors: []error{
-			errors.New("expected: at least one array element matched predicate"),
+			errors.New("expected: at least one array element matches predicate"),
 		},
 	})
 
 	return newValue(a.chain, nil)
 }
 
-// FindAll accepts a function that returns a boolean. The function is ran
-// over the array items. If the function returns true, the item is added
-// to the slice of values. If the function returns false or assertion
-// inside it fails, the item is skipped. After iterating through all the
-// items of the array, slice of values are returned.
+// FindAll accepts a function that returns a boolean, runs it over the array
+// elements, and returns all the elements on which it returned true.
 //
-// If there are any failed assertions in the filtering function, the
-// item is omitted without causing test failure.
+// If there are any failed assertions in the predicate function, the
+// element is skipped without causing test failure.
+//
+// If no elements were found, empty slice is returned without reporting error.
 //
 // Example:
 //
-//	array := NewArray(t, []interface{}{1, "foo", 2, "bar", "baz"})
+//	array := NewArray(t, []interface{}{1, "foo", 101, "bar", 201})
 //	foundValues := array.FindAll(func(index int, value *httpexpect.Value) bool {
-//		value.String().NotEmpty()		// fails on 1 and 2
-//		return value.Raw() != "bar"		// fails on "bar"
+//		num := value.Number()   // skip if element is not a number
+//		return num.Raw() > 100  // check element value
 //	})
 //
 //	assert.Equal(t, len(foundValues), 2)
-//	foundValues[0].Equal("foo")
-//	foundValues[1].Equal("baz")
+//	foundValues[0].Equal(101)
+//	foundValues[1].Equal(201)
 func (a *Array) FindAll(fn func(index int, value *Value) bool) []Value {
 	a.chain.enter("FindAll()")
 	defer a.chain.leave()
@@ -486,29 +484,28 @@ func (a *Array) FindAll(fn func(index int, value *Value) bool) []Value {
 	return foundValues
 }
 
-// NotFind accepts a function that returns a boolean. The function is ran
-// over the array items. If the function returns true, then NotFind fails
-// and returns empty (non-nil) array. If the function returns false or
-// assertion inside it fails in all iteration, NotFind succeeds and
-// returns original array.
+// NotFind accepts a function that returns a boolean, runs it over the array
+// elelements, and checks that it does not return true for any of the elements.
 //
-// If there are any failed assertions in the filtering function, the
-// item is omitted without causing test failure.
+// If there are any failed assertions in the predicate function, the
+// element is skipped without causing test failure.
+//
+// If the predicate function did not fail and returned true for at least
+// one element, a failure is reported.
 //
 // Example:
 //
 //	array := NewArray(t, []interface{}{1, "foo", 2, "bar"})
-//	afterArray := array.NotFind(func(index int, value *httpexpect.Value) bool {
-//		value.String().NotEmpty()		// fails on 1 and 2
-//		return value.Raw() == "baz"		// fails on "foo" and "bar"
-//	})
-//	afterArray.Equal([]interface{}{1, "foo", 2, "bar"})	// succeeds
+//	array.NotFind(func(index int, value *httpexpect.Value) bool {
+//		num := value.Number()    // skip if element is not a number
+//		return num.Raw() > 100   // check element value
+//	}) // succeeds
 func (a *Array) NotFind(fn func(index int, value *Value) bool) *Array {
 	a.chain.enter("NotFind()")
 	defer a.chain.leave()
 
 	if a.chain.failed() {
-		return newArray(a.chain, nil)
+		return a
 	}
 
 	if fn == nil {
@@ -518,7 +515,7 @@ func (a *Array) NotFind(fn func(index int, value *Value) bool) *Array {
 				errors.New("unexpected nil function argument"),
 			},
 		})
-		return newArray(a.chain, nil)
+		return a
 	}
 
 	for index, element := range a.value {
@@ -538,7 +535,7 @@ func (a *Array) NotFind(fn func(index int, value *Value) bool) *Array {
 					errors.New("expected: none of the array elements match predicate"),
 				},
 			})
-			return newArray(a.chain, nil)
+			return a
 		}
 	}
 
