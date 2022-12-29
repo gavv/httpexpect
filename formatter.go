@@ -277,21 +277,21 @@ func (f *DefaultFormatter) fillExpected(
 		data.HaveExpected = true
 		data.ExpectedKind = kindSchema
 		data.Expected = []string{
-			formatString(failure.Expected.Value),
+			formatBareString(failure.Expected.Value),
 		}
 
 	case AssertMatchPath, AssertNotMatchPath:
 		data.HaveExpected = true
 		data.ExpectedKind = kindPath
 		data.Expected = []string{
-			formatString(failure.Expected.Value),
+			formatBareString(failure.Expected.Value),
 		}
 
 	case AssertMatchRegexp, AssertNotMatchRegexp:
 		data.HaveExpected = true
 		data.ExpectedKind = kindRegexp
 		data.Expected = []string{
-			formatString(failure.Expected.Value),
+			formatBareString(failure.Expected.Value),
 		}
 
 	case AssertMatchFormat, AssertNotMatchFormat:
@@ -391,14 +391,22 @@ func (f *DefaultFormatter) fillDelta(
 	data *FormatData, ctx *AssertionContext, failure *AssertionFailure,
 ) {
 	data.HaveDelta = true
-	data.Delta = formatFloat(failure.Delta.Value)
+	data.Delta = formatValue(failure.Delta.Value)
 }
 
 func formatTyped(value interface{}) string {
+	if isNumber(value) {
+		return fmt.Sprintf("%T(%v)", value, formatValue(value))
+	}
+
 	return fmt.Sprintf("%T(%#v)", value, value)
 }
 
 func formatValue(value interface{}) string {
+	if isNumber(value) {
+		return fmt.Sprintf("%v", value)
+	}
+
 	if !isNil(value) && !isHTTP(value) {
 		if s, _ := value.(fmt.Stringer); s != nil {
 			if ss := s.String(); strings.TrimSpace(ss) != "" {
@@ -417,23 +425,10 @@ func formatValue(value interface{}) string {
 	return sq.Sdump(value)
 }
 
-func formatString(value interface{}) string {
+func formatBareString(value interface{}) string {
 	switch v := value.(type) {
 	case string:
 		return v
-	}
-
-	return formatValue(value)
-}
-
-func formatFloat(value interface{}) string {
-	switch value.(type) {
-	case float32, float64:
-		return fmt.Sprintf("%f", value)
-	}
-
-	if isNumber(value) {
-		return fmt.Sprintf("%v", value)
 	}
 
 	return formatValue(value)
@@ -443,7 +438,7 @@ func formatRange(value interface{}) []string {
 	if rng := exctractRange(value); rng != nil {
 		if isNumber(rng.Min) && isNumber(rng.Max) {
 			return []string{
-				fmt.Sprintf("[%v; %v]", rng.Min, rng.Max),
+				fmt.Sprintf("[%v; %v]", formatValue(rng.Min), formatValue(rng.Max)),
 			}
 		} else {
 			return []string{
