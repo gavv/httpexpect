@@ -1,0 +1,20 @@
+name: "detect conflicts"
+
+on:
+  push:
+    branches:
+      - "*"
+    tags:
+      - "!*"
+  pull_request:
+    types: synchronize
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run the action to detect unmergeable PRs
+        uses: cats-oss/github-action-detect-unmergeable@v2.1.1
+        env:
+          LABEL_NEED_REBASE: "needs rebase"
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
