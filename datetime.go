@@ -370,7 +370,8 @@ func (dt *DateTime) WeekDay() *Number {
 	return newNumber(dt.chain, float64(dt.value.Weekday()))
 }
 
-// YearDay returns the day of the year specified by datetime, in the range [1,365] for non-leap years,
+// YearDay returns the day of the year specified by datetime,
+// in the range [1,365] for non-leap years,
 // and [1,366] in leap years..
 //
 // Example:
@@ -388,7 +389,8 @@ func (dt *DateTime) YearDay() *Number {
 	return newNumber(dt.chain, float64(dt.value.YearDay()))
 }
 
-// Hour returns the hour within the day specified by datetime, in the range [0, 23]..
+// Hour returns the hour within the day specified by datetime,
+// in the range [0, 23]..
 //
 // Example:
 //
@@ -405,7 +407,8 @@ func (dt *DateTime) Hour() *Number {
 	return newNumber(dt.chain, float64(dt.value.Hour()))
 }
 
-// Minute returns the minute offset within the hour specified by datetime, in the range [0, 59]..
+// Minute returns the minute offset within the hour specified by datetime,
+// in the range [0, 59]..
 //
 // Example:
 //
@@ -422,7 +425,8 @@ func (dt *DateTime) Minute() *Number {
 	return newNumber(dt.chain, float64(dt.value.Minute()))
 }
 
-// Second returns the second offset within the minute specified by datetime, in the range [0, 59].
+// Second returns the second offset within the minute specified by datetime,
+// in the range [0, 59].
 //
 // Example:
 //
