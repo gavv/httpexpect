@@ -302,7 +302,7 @@ func (dt *DateTime) Zone() *String {
 	return newString(dt.chain, zone)
 }
 
-// Year returns a new Number instance with datetime year.
+// Year returns the year in which datetime occurs.
 //
 // Example:
 //
@@ -319,7 +319,7 @@ func (dt *DateTime) Year() *Number {
 	return newNumber(dt.chain, float64(dt.value.Year()))
 }
 
-// Month returns a new Number instance with datetime month.
+// Month returns the month of the year specified by datetime.
 //
 // Example:
 //
@@ -336,7 +336,7 @@ func (dt *DateTime) Month() *Number {
 	return newNumber(dt.chain, float64(dt.value.Month()))
 }
 
-// Day returns a new Number instance with datetime day.
+// Day returns the day of the month specified datetime.
 //
 // Example:
 //
@@ -353,7 +353,7 @@ func (dt *DateTime) Day() *Number {
 	return newNumber(dt.chain, float64(dt.value.Day()))
 }
 
-// WeekDay returns a new Number instance with datetime weekday.
+// Weekday returns the day of the week specified by datetime.
 //
 // Example:
 //
@@ -370,7 +370,8 @@ func (dt *DateTime) WeekDay() *Number {
 	return newNumber(dt.chain, float64(dt.value.Weekday()))
 }
 
-// YearDay returns a new Number instance with datetime yearday.
+// YearDay returns the day of the year specified by datetime, in the range [1,365] for non-leap years,
+// and [1,366] in leap years..
 //
 // Example:
 //
@@ -387,7 +388,7 @@ func (dt *DateTime) YearDay() *Number {
 	return newNumber(dt.chain, float64(dt.value.YearDay()))
 }
 
-// Hour returns a new Number instance with datetime hour.
+// Hour returns the hour within the day specified by datetime, in the range [0, 23]..
 //
 // Example:
 //
@@ -404,7 +405,7 @@ func (dt *DateTime) Hour() *Number {
 	return newNumber(dt.chain, float64(dt.value.Hour()))
 }
 
-// Minute returns a new Number instance with datetime minute.
+// Minute returns the minute offset within the hour specified by datetime, in the range [0, 59]..
 //
 // Example:
 //
@@ -421,7 +422,7 @@ func (dt *DateTime) Minute() *Number {
 	return newNumber(dt.chain, float64(dt.value.Minute()))
 }
 
-// Second returns a new Number instance with datetime second.
+// Second returns the second offset within the minute specified by datetime, in the range [0, 59].
 //
 // Example:
 //
@@ -438,7 +439,8 @@ func (dt *DateTime) Second() *Number {
 	return newNumber(dt.chain, float64(dt.value.Second()))
 }
 
-// Nanosecond returns a new Number instance with datetime nanosecond.
+// Nanosecond returns the nanosecond offset within the second specified by datetime,
+// in the range [0, 999999999].
 //
 // Example:
 //
