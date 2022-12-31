@@ -877,6 +877,24 @@ func TestObject_Every(t *testing.T) {
 		object.chain.assertFailed(ts)
 		assert.Equal(t, 2, invoked)
 	})
+
+	t.Run("Every traverse fields is ordered", func(ts *testing.T) {
+		reporter := newMockReporter(ts)
+		object := NewObject(reporter, map[string]interface{}{
+			"bar": "123",
+			"baz": "456",
+			"foo": "foo",
+			"foz": "foo",
+			"b":   "789",
+			"c":   "987",
+		})
+		expectedOrder := []string{"b", "bar", "baz", "c", "foo", "foz"}
+		var actualOrder []string
+		object.Every(func(key string, val *Value) {
+			actualOrder = append(actualOrder, key)
+		})
+		assert.Equal(t, expectedOrder, actualOrder)
+	})
 }
 
 func TestObject_Transform(t *testing.T) {
@@ -947,6 +965,23 @@ func TestObject_Transform(t *testing.T) {
 			return value
 		})
 		newObject.chain.assertNotFailed(ts)
+	})
+
+	t.Run("Transform is ordered", func(ts *testing.T) {
+		reporter := newMockReporter(ts)
+		object := NewObject(reporter, map[string]interface{}{
+			"foo": "123",
+			"bar": "456",
+			"b":   "456",
+			"baz": "baz",
+		})
+		expectedOrder := []string{"b", "bar", "baz", "foo"}
+		actualOrder := []string{}
+		object.Transform(func(key string, value interface{}) interface{} {
+			actualOrder = append(actualOrder, key)
+			return value
+		})
+		assert.Equal(t, expectedOrder, actualOrder)
 	})
 }
 
@@ -1040,6 +1075,24 @@ func TestObject_Filter(t *testing.T) {
 			filteredObject.chain.assertNotFailed(t)
 			object.chain.assertNotFailed(t)
 		})
+
+	t.Run("Filter is ordered", func(ts *testing.T) {
+		reporter := newMockReporter(t)
+		object := NewObject(reporter, map[string]interface{}{
+			"foo":  "bar",
+			"baz":  "qux",
+			"bar":  "qux",
+			"b":    "qux",
+			"quux": "corge",
+		})
+		expectedOrder := []string{"b", "bar", "baz", "foo", "quux"}
+		var actualOrder []string
+		object.Filter(func(key string, value *Value) bool {
+			actualOrder = append(actualOrder, key)
+			return false
+		})
+		assert.Equal(t, expectedOrder, actualOrder)
+	})
 }
 
 func TestObject_Find(t *testing.T) {

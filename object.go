@@ -225,15 +225,15 @@ func (o *Object) Every(fn func(key string, value *Value)) *Object {
 
 	chainFailure := false
 
-	for key, val := range o.value {
+	for _, kv := range o.sortedKV() {
 		valueChain := o.chain.clone()
-		valueChain.replace("Every[%q]", key)
+		valueChain.replace("Every[%q]", kv.key)
 
 		valueChain.setFailCallback(func() {
 			chainFailure = true
 		})
 
-		fn(key, newValue(valueChain, val))
+		fn(kv.key, newValue(valueChain, kv.val))
 
 	}
 
@@ -286,16 +286,16 @@ func (o *Object) Filter(fn func(key string, value *Value) bool) *Object {
 
 	filteredObject := make(map[string]interface{})
 
-	for key, element := range o.value {
+	for _, kv := range o.sortedKV() {
 		valueChain := o.chain.clone()
 		valueChain.setSeverity(SeverityLog)
 		chainFailed := false
 		valueChain.setFailCallback(func() {
 			chainFailed = true
 		})
-		valueChain.replace("Filter[%q]", key)
-		if fn(key, newValue(valueChain, element)) && !chainFailed {
-			filteredObject[key] = element
+		valueChain.replace("Filter[%q]", kv.key)
+		if fn(kv.key, newValue(valueChain, kv.val)) && !chainFailed {
+			filteredObject[kv.key] = kv.val
 		}
 	}
 
@@ -333,9 +333,9 @@ func (o *Object) Transform(fn func(key string, value interface{}) interface{}) *
 
 	object := map[string]interface{}{}
 
-	for key, val := range o.value {
-		transformedValue := fn(key, val)
-		object[key] = transformedValue
+	for _, kv := range o.sortedKV() {
+		transformedValue := fn(kv.key, kv.val)
+		object[kv.key] = transformedValue
 	}
 
 	return newObject(o.chain, object)
