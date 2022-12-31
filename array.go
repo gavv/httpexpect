@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"time"
 )
 
 // Array provides methods to inspect attached []interface{} object
@@ -1239,6 +1238,10 @@ func (a *Array) IsOrdered(less ...func(x, y *Value) bool) *Array {
 		return a
 	}
 
+	if len(a.value) == 0 {
+		return a
+	}
+
 	var fn func(x, y *Value) bool
 	if len(less) == 1 {
 		fn = less[0]
@@ -1249,77 +1252,31 @@ func (a *Array) IsOrdered(less ...func(x, y *Value) bool) *Array {
 			return a
 		}
 
-		var currType, prevType string
-		for _, v := range cArr {
-			switch t := v.(type) {
-			case bool:
-				currType = fmt.Sprintf("%T", t)
-				fn = func(x, y *Value) bool {
-					// TODO: implement built-in comparator function for Boolean
-					return (!x.Boolean().value && y.Boolean().value) ||
-						(x.Boolean().value == y.Boolean().value)
-				}
-			case float64:
-				currType = fmt.Sprintf("%T", t)
-				fn = func(x, y *Value) bool {
-					x.Number().Le(y)
-					return !x.chain.failed()
-				}
-			case string:
-				currType = fmt.Sprintf("%T", t)
-				fn = func(x, y *Value) bool {
-					return x.String().value <= y.String().value
-				}
-			case time.Duration:
-				currType = fmt.Sprintf("%T", t)
-				fn = func(x, y *Value) bool {
-					valX, _ := x.value.(Duration)
-					valY, _ := y.value.(time.Duration)
-					valX.Le(valY)
-					return !x.chain.failed()
-				}
-			case time.Time:
-				currType = fmt.Sprintf("%T", t)
-				fn = func(x, y *Value) bool {
-					valX, _ := x.value.(DateTime)
-					valY, _ := y.value.(time.Time)
-					valX.Le(valY)
-					return !x.chain.failed()
-				}
-			default:
-				a.chain.fail(AssertionFailure{
-					Type:   AssertType,
-					Actual: &AssertionValue{v},
-					Errors: []error{
-						errors.New(`expected: data type should be either 
-						boolean, number, string, time.Duration, or time.Time`),
-					},
-				})
-				return a
-			}
-			if currType != prevType && prevType != "" {
-				a.chain.fail(AssertionFailure{
-					Type:   AssertType,
-					Actual: &AssertionValue{v},
-					Errors: []error{
-						errors.New("expected: all elements have same data type"),
-					},
-				})
-				return a
-			}
-			prevType = currType
+		fn = a.getDefaultComparator(cArr)
+		if a.chain.failed() {
+			return a
 		}
 	}
 
 	for i := 0; i < int(a.Length().Raw())-1; i++ {
-		x, y := a.Element(i), a.Element(i+1)
+		xChain := a.chain.clone()
+		xChain.replace("IsOrdered[%d]", i)
+		x := newValue(xChain, a.value[i])
+
+		yChain := a.chain.clone()
+		yChain.replace("IsOrdered[%d]", i+1)
+		y := newValue(yChain, a.value[i+1])
+
 		if !fn(x, y) {
 			a.chain.fail(AssertionFailure{
-				Type:     AssertLt,
-				Actual:   &AssertionValue{x.value},
-				Expected: &AssertionValue{y.value},
+				Type:      AssertLt,
+				Actual:    &AssertionValue{x.value},
+				Expected:  &AssertionValue{y.value},
+				Reference: &AssertionValue{a.value},
 				Errors: []error{
-					errors.New("expected: actual value must come before expected value"),
+					errors.New("expected: array is ordered"),
+					fmt.Errorf("element %v must be less than element %v, but it isn't",
+						x.value, y.value),
 				},
 			})
 			return a
@@ -1327,4 +1284,66 @@ func (a *Array) IsOrdered(less ...func(x, y *Value) bool) *Array {
 	}
 
 	return a
+}
+
+func (a *Array) getDefaultComparator(cArr []interface{}) func(x, y *Value) bool {
+	var fn func(x, y *Value) bool
+	var currType, prevType string
+	var prevElem interface{}
+	for _, v := range cArr {
+		switch t := v.(type) {
+		case bool:
+			currType = fmt.Sprintf("%T", t)
+			fn = func(x, y *Value) bool {
+				xVal, _ := x.Raw().(bool)
+				yVal, _ := y.Raw().(bool)
+				return (!xVal && yVal) || (xVal == yVal)
+			}
+		case float64:
+			currType = fmt.Sprintf("%T", t)
+			fn = func(x, y *Value) bool {
+				xVal, _ := x.Raw().(float64)
+				yVal, _ := y.Raw().(float64)
+				return xVal <= yVal
+			}
+		case string:
+			currType = fmt.Sprintf("%T", t)
+			fn = func(x, y *Value) bool {
+				xVal, _ := x.Raw().(string)
+				yVal, _ := y.Raw().(string)
+				return xVal <= yVal
+			}
+		default:
+			currType = fmt.Sprintf("%T", t)
+			a.chain.fail(AssertionFailure{
+				Type:      AssertBelongs,
+				Actual:    &AssertionValue{currType},
+				Expected:  &AssertionValue{AssertionList{"boolean", "number", "string"}},
+				Reference: &AssertionValue{v},
+				Errors: []error{
+					errors.New(`expected: type of each element of reference array
+					 belongs to given list`),
+					fmt.Errorf("element %v has type %s", v, currType),
+				},
+			})
+			return fn
+		}
+		if prevType != "" && currType != prevType {
+			a.chain.fail(AssertionFailure{
+				Type:      AssertEqual,
+				Actual:    &AssertionValue{currType},
+				Expected:  &AssertionValue{prevType},
+				Reference: &AssertionValue{v},
+				Errors: []error{
+					errors.New("expected: types of all elements of reference array are the same"),
+					fmt.Errorf("previous element %v has type %s and current element %v has type %s",
+						prevElem, prevType, v, currType),
+				},
+			})
+			return fn
+		}
+		prevType = currType
+		prevElem = v
+	}
+	return fn
 }

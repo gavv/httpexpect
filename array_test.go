@@ -2,7 +2,6 @@ package httpexpect
 
 import (
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -1292,10 +1291,10 @@ func TestArray_NotFind(t *testing.T) {
 	})
 }
 func TestArray_IsOrdered(t *testing.T) {
-	reporter := newMockReporter(t)
 	type args struct {
-		values []interface{}
-		less   []func(x, y *Value) bool
+		values      []interface{}
+		less        []func(x, y *Value) bool
+		chainFailed bool
 	}
 	tests := []struct {
 		name   string
@@ -1324,23 +1323,11 @@ func TestArray_IsOrdered(t *testing.T) {
 			wantOK: true,
 		},
 		{
-			// FIXME:
-			name: "array duration ordered",
+			name: "wrong order",
 			args: args{
-				values: []interface{}{1 * time.Second, 2 * time.Second, 3 * time.Second},
+				values: []interface{}{3, 2, 1},
 			},
-			wantOK: true,
-		},
-		{
-			// FIXME:
-			name: "array time ordered",
-			args: args{
-				values: []interface{}{
-					time.Now(),
-					time.Now().Add(time.Second),
-					time.Now().Add(2 * time.Second)},
-			},
-			wantOK: true,
+			wantOK: false,
 		},
 		{
 			name: "user-defined less function",
@@ -1387,9 +1374,24 @@ func TestArray_IsOrdered(t *testing.T) {
 			},
 			wantOK: false,
 		},
+		{
+			name: "empty array",
+			args: args{
+				values: []interface{}{},
+			},
+			wantOK: true,
+		},
+		{
+			name: "chain has failed before",
+			args: args{
+				chainFailed: true,
+			},
+			wantOK: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			reporter := newMockReporter(t)
 			a := NewArray(reporter, tt.args.values)
 			a.IsOrdered(tt.args.less...)
 			if tt.wantOK {
