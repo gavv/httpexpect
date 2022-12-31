@@ -229,11 +229,11 @@ func (f *DefaultFormatter) fillActual(
 
 	case AssertType, AssertNotType:
 		data.HaveActual = true
-		data.Actual = formatTyped(failure.Actual.Value)
+		data.Actual = f.formatTyped(failure.Actual.Value)
 
 	default:
 		data.HaveActual = true
-		data.Actual = formatValue(failure.Actual.Value)
+		data.Actual = f.formatValue(failure.Actual.Value)
 	}
 }
 
@@ -253,11 +253,11 @@ func (f *DefaultFormatter) fillExpected(
 		data.HaveExpected = true
 		data.ExpectedKind = kindValue
 		data.Expected = []string{
-			formatValue(failure.Expected.Value),
+			f.formatValue(failure.Expected.Value),
 		}
 
 		if !f.DisableDiffs && failure.Actual != nil && failure.Expected != nil {
-			data.Diff, data.HaveDiff = formatDiff(
+			data.Diff, data.HaveDiff = f.formatDiff(
 				failure.Expected.Value, failure.Actual.Value)
 		}
 
@@ -265,33 +265,33 @@ func (f *DefaultFormatter) fillExpected(
 		data.HaveExpected = true
 		data.ExpectedKind = kindValue
 		data.Expected = []string{
-			formatValue(failure.Expected.Value),
+			f.formatValue(failure.Expected.Value),
 		}
 
 	case AssertInRange, AssertNotInRange:
 		data.HaveExpected = true
 		data.ExpectedKind = kindRange
-		data.Expected = formatRange(failure.Expected.Value)
+		data.Expected = f.formatRange(failure.Expected.Value)
 
 	case AssertMatchSchema, AssertNotMatchSchema:
 		data.HaveExpected = true
 		data.ExpectedKind = kindSchema
 		data.Expected = []string{
-			formatBareString(failure.Expected.Value),
+			f.formatBareString(failure.Expected.Value),
 		}
 
 	case AssertMatchPath, AssertNotMatchPath:
 		data.HaveExpected = true
 		data.ExpectedKind = kindPath
 		data.Expected = []string{
-			formatBareString(failure.Expected.Value),
+			f.formatBareString(failure.Expected.Value),
 		}
 
 	case AssertMatchRegexp, AssertNotMatchRegexp:
 		data.HaveExpected = true
 		data.ExpectedKind = kindRegexp
 		data.Expected = []string{
-			formatBareString(failure.Expected.Value),
+			f.formatBareString(failure.Expected.Value),
 		}
 
 	case AssertMatchFormat, AssertNotMatchFormat:
@@ -301,33 +301,33 @@ func (f *DefaultFormatter) fillExpected(
 		} else {
 			data.ExpectedKind = kindFormat
 		}
-		data.Expected = formatList(failure.Expected.Value)
+		data.Expected = f.formatList(failure.Expected.Value)
 
 	case AssertContainsKey, AssertNotContainsKey:
 		data.HaveExpected = true
 		data.ExpectedKind = kindKey
 		data.Expected = []string{
-			formatValue(failure.Expected.Value),
+			f.formatValue(failure.Expected.Value),
 		}
 
 	case AssertContainsElement, AssertNotContainsElement:
 		data.HaveExpected = true
 		data.ExpectedKind = kindElement
 		data.Expected = []string{
-			formatValue(failure.Expected.Value),
+			f.formatValue(failure.Expected.Value),
 		}
 
 	case AssertContainsSubset, AssertNotContainsSubset:
 		data.HaveExpected = true
 		data.ExpectedKind = kindSubset
 		data.Expected = []string{
-			formatValue(failure.Expected.Value),
+			f.formatValue(failure.Expected.Value),
 		}
 
 	case AssertBelongs, AssertNotBelongs:
 		data.HaveExpected = true
 		data.ExpectedKind = kindValueList
-		data.Expected = formatList(failure.Expected.Value)
+		data.Expected = f.formatList(failure.Expected.Value)
 	}
 }
 
@@ -384,25 +384,25 @@ func (f *DefaultFormatter) fillReference(
 	data *FormatData, ctx *AssertionContext, failure *AssertionFailure,
 ) {
 	data.HaveReference = true
-	data.Reference = formatValue(failure.Reference.Value)
+	data.Reference = f.formatValue(failure.Reference.Value)
 }
 
 func (f *DefaultFormatter) fillDelta(
 	data *FormatData, ctx *AssertionContext, failure *AssertionFailure,
 ) {
 	data.HaveDelta = true
-	data.Delta = formatValue(failure.Delta.Value)
+	data.Delta = f.formatValue(failure.Delta.Value)
 }
 
-func formatTyped(value interface{}) string {
+func (f *DefaultFormatter) formatTyped(value interface{}) string {
 	if isNumber(value) {
-		return fmt.Sprintf("%T(%v)", value, formatValue(value))
+		return fmt.Sprintf("%T(%v)", value, f.formatValue(value))
 	}
 
 	return fmt.Sprintf("%T(%#v)", value, value)
 }
 
-func formatValue(value interface{}) string {
+func (f *DefaultFormatter) formatValue(value interface{}) string {
 	if isNumber(value) {
 		return fmt.Sprintf("%v", value)
 	}
@@ -425,20 +425,20 @@ func formatValue(value interface{}) string {
 	return sq.Sdump(value)
 }
 
-func formatBareString(value interface{}) string {
+func (f *DefaultFormatter) formatBareString(value interface{}) string {
 	switch v := value.(type) {
 	case string:
 		return v
 	}
 
-	return formatValue(value)
+	return f.formatValue(value)
 }
 
-func formatRange(value interface{}) []string {
+func (f *DefaultFormatter) formatRange(value interface{}) []string {
 	if rng := exctractRange(value); rng != nil {
 		if isNumber(rng.Min) && isNumber(rng.Max) {
 			return []string{
-				fmt.Sprintf("[%v; %v]", formatValue(rng.Min), formatValue(rng.Max)),
+				fmt.Sprintf("[%v; %v]", f.formatValue(rng.Min), f.formatValue(rng.Max)),
 			}
 		} else {
 			return []string{
@@ -448,26 +448,26 @@ func formatRange(value interface{}) []string {
 		}
 	} else {
 		return []string{
-			formatValue(value),
+			f.formatValue(value),
 		}
 	}
 }
 
-func formatList(value interface{}) []string {
+func (f *DefaultFormatter) formatList(value interface{}) []string {
 	if lst := extractList(value); lst != nil {
 		s := make([]string, 0, len(*lst))
 		for _, e := range *lst {
-			s = append(s, formatValue(e))
+			s = append(s, f.formatValue(e))
 		}
 		return s
 	} else {
 		return []string{
-			formatValue(value),
+			f.formatValue(value),
 		}
 	}
 }
 
-func formatDiff(expected, actual interface{}) (string, bool) {
+func (f *DefaultFormatter) formatDiff(expected, actual interface{}) (string, bool) {
 	differ := gojsondiff.New()
 
 	var diff gojsondiff.Diff
@@ -495,9 +495,9 @@ func formatDiff(expected, actual interface{}) (string, bool) {
 	config := formatter.AsciiFormatterConfig{
 		ShowArrayIndex: true,
 	}
-	f := formatter.NewAsciiFormatter(expected, config)
+	fa := formatter.NewAsciiFormatter(expected, config)
 
-	str, err := f.Format(diff)
+	str, err := fa.Format(diff)
 	if err != nil {
 		return "", false
 	}
