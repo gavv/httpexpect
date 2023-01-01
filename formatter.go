@@ -63,10 +63,10 @@ type DefaultFormatter struct {
 // FormatSuccess implements Formatter.FormatSuccess.
 func (f *DefaultFormatter) FormatSuccess(ctx *AssertionContext) string {
 	if f.SuccessTemplate != "" {
-		return f.formatTemplate("SuccessTemplate",
+		return f.applyTemplate("SuccessTemplate",
 			f.SuccessTemplate, f.TemplateFuncs, ctx, nil)
 	} else {
-		return f.formatTemplate("SuccessTemplate",
+		return f.applyTemplate("SuccessTemplate",
 			defaultSuccessTemplate, defaultTemplateFuncs, ctx, nil)
 	}
 }
@@ -76,10 +76,10 @@ func (f *DefaultFormatter) FormatFailure(
 	ctx *AssertionContext, failure *AssertionFailure,
 ) string {
 	if f.FailureTemplate != "" {
-		return f.formatTemplate("FailureTemplate",
+		return f.applyTemplate("FailureTemplate",
 			f.FailureTemplate, f.TemplateFuncs, ctx, failure)
 	} else {
-		return f.formatTemplate("FailureTemplate",
+		return f.applyTemplate("FailureTemplate",
 			defaultFailureTemplate, defaultTemplateFuncs, ctx, failure)
 	}
 }
@@ -131,7 +131,7 @@ const (
 	kindValueList  = "values"
 )
 
-func (f *DefaultFormatter) formatTemplate(
+func (f *DefaultFormatter) applyTemplate(
 	templateName string,
 	templateString string,
 	templateFuncs template.FuncMap,
