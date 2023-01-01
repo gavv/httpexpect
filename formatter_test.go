@@ -9,6 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var mockDefaultFormatter = &DefaultFormatter{}
+
 type typedNil int
 
 func (*typedNil) String() string {
@@ -45,39 +47,39 @@ func TestFormat_Values(t *testing.T) {
 	}
 
 	t.Run("formatTypes", func(t *testing.T) {
-		checkAll(t, formatTyped)
+		checkAll(t, mockDefaultFormatter.formatTyped)
 	})
 
 	t.Run("formatValue", func(t *testing.T) {
-		checkAll(t, formatValue)
+		checkAll(t, mockDefaultFormatter.formatValue)
 	})
 
 	t.Run("formatBareString", func(t *testing.T) {
-		checkAll(t, formatBareString)
+		checkAll(t, mockDefaultFormatter.formatBareString)
 	})
 
 	t.Run("formatRange", func(t *testing.T) {
 		checkAll(t, func(v interface{}) string {
-			return strings.Join(formatRange(v), "")
+			return strings.Join(mockDefaultFormatter.formatRange(v), "")
 		})
 	})
 
 	t.Run("formatList", func(t *testing.T) {
 		checkAll(t, func(v interface{}) string {
-			return strings.Join(formatList(v), "")
+			return strings.Join(mockDefaultFormatter.formatList(v), "")
 		})
 	})
 }
 
 func TestFormat_Diff(t *testing.T) {
 	checkOK := func(a, b interface{}) {
-		s, ok := formatDiff(a, b)
+		s, ok := mockDefaultFormatter.formatDiff(a, b)
 		assert.True(t, ok)
 		assert.NotEqual(t, "", s)
 	}
 
 	checkNotOK := func(a, b interface{}) {
-		s, ok := formatDiff(a, b)
+		s, ok := mockDefaultFormatter.formatDiff(a, b)
 		assert.False(t, ok)
 		assert.Equal(t, "", s)
 	}
