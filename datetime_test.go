@@ -192,7 +192,7 @@ func TestDateTimeInRange(t *testing.T) {
 func TestDateTimeGetters(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	value := NewDateTime(reporter, time.Unix(0, 0))
+	value := NewDateTime(reporter, time.Unix(1405544146, 0))
 
 	value.chain.assertNotFailed(t)
 
@@ -209,15 +209,16 @@ func TestDateTimeGetters(t *testing.T) {
 	value.AsUTC().chain.assertNotFailed(t)
 	value.AsLocal().chain.assertNotFailed(t)
 
-	expectedZone, _ := time.Unix(0, 0).Zone()
+	expectedTime := time.Unix(1405544146, 0)
+	expectedZone, _ := expectedTime.Zone()
 	assert.Equal(t, expectedZone, value.Zone().Raw())
-	assert.Equal(t, float64(1970), value.Year().Raw())
-	assert.Equal(t, float64(1), value.Month().Raw())
-	assert.Equal(t, float64(1), value.Day().Raw())
-	assert.Equal(t, float64(4), value.WeekDay().Raw())
-	assert.Equal(t, float64(1), value.YearDay().Raw())
-	assert.Equal(t, float64(0), value.Hour().Raw())
-	assert.Equal(t, float64(0), value.Minute().Raw())
-	assert.Equal(t, float64(0), value.Second().Raw())
-	assert.Equal(t, float64(0), value.Nanosecond().Raw())
+	assert.Equal(t, float64(expectedTime.Year()), value.Year().Raw())
+	assert.Equal(t, float64(expectedTime.Month()), value.Month().Raw())
+	assert.Equal(t, float64(expectedTime.Day()), value.Day().Raw())
+	assert.Equal(t, float64(expectedTime.Weekday()), value.WeekDay().Raw())
+	assert.Equal(t, float64(expectedTime.YearDay()), value.YearDay().Raw())
+	assert.Equal(t, float64(expectedTime.Hour()), value.Hour().Raw())
+	assert.Equal(t, float64(expectedTime.Minute()), value.Minute().Raw())
+	assert.Equal(t, float64(expectedTime.Second()), value.Second().Raw())
+	assert.Equal(t, float64(expectedTime.Nanosecond()), value.Nanosecond().Raw())
 }
