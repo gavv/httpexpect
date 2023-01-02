@@ -33,7 +33,6 @@ func TestFruits(t *testing.T) {
 		"weight": 200,
 	}
 
-	
 	e.PUT("/fruits/apple").WithJSON(apple).
 		Expect().
 		Status(http.StatusNoContent).NoContent()
@@ -41,9 +40,9 @@ func TestFruits(t *testing.T) {
 	fruitsResult := e.GET("/fruits").
 		Expect().
 		Status(http.StatusOK).JSON().Array()
-	
+
 	fruitsResult.ContainsOnly("orange", "apple")
-	fruitsResult.ContainsAny("orange","melon")
+	fruitsResult.ContainsAny("orange", "melon")
 	fruitsResult.Every(func(index int, value *httpexpect.Value) {
 		value.String().NotEmpty()
 	})
@@ -67,7 +66,7 @@ func TestFruits(t *testing.T) {
 	obj.Value("colors").Array().Element(0).String().Equal("green")
 	obj.Value("colors").Array().Element(1).String().Equal("red")
 	obj.Value("colors").Array().Element(1).String().IsASCII()
-	obj.Value("colors").Array().Element(1).String().HasPrefix("re") 
+	obj.Value("colors").Array().Element(1).String().HasPrefix("re")
 	obj.Value("colors").Array().Element(1).String().HasSuffix("ed")
 
 	obj.Value("weight").Number().Equal(200)

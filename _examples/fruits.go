@@ -7,7 +7,7 @@ import (
 )
 
 type (
-	fruitMap map[string]interface{}
+	fruitMap     map[string]interface{}
 	fruitMapList []fruitMap
 )
 
