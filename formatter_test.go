@@ -259,15 +259,15 @@ func TestFormat_FailureExpected(t *testing.T) {
 			name:          "AssertInRange float32 disable scientific",
 			assertionType: AssertInRange,
 			assertionValue: AssertionRange{
-				Min: float32(1_000_000),
-				Max: float32(2_000_000),
+				Min: float32(-123.456),
+				Max: float32(123.456),
 			},
 			formatter: DefaultFormatter{
 				DisableScientific: true,
 			},
 			wantHaveExpected: true,
 			wantExpectedKind: kindRange,
-			wantExpected:     []string{"[1000000; 2000000]"},
+			wantExpected:     []string{"[-123.45600128173828; 123.45600128173828]"},
 		},
 		{
 			name:          "AssertInRange float64",
