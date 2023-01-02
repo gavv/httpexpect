@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -41,6 +42,9 @@ type DefaultFormatter struct {
 
 	// Exclude diff from failure report.
 	DisableDiffs bool
+
+	// Disable printing floats in scientific form.
+	DisableScientific bool
 
 	// Wrap text to keep lines below given width.
 	// Use zero for default width, and negative value to disable wrapping.
@@ -404,6 +408,15 @@ func (f *DefaultFormatter) formatTyped(value interface{}) string {
 
 func (f *DefaultFormatter) formatValue(value interface{}) string {
 	if isNumber(value) {
+		if f.DisableScientific && isFloat(value) {
+			var ff float64
+			if v, ok := value.(float32); ok {
+				ff = float64(v)
+			} else {
+				ff = value.(float64)
+			}
+			return strconv.FormatFloat(ff, 'f', -1, 64)
+		}
 		return fmt.Sprintf("%v", value)
 	}
 
@@ -542,6 +555,11 @@ func isNumber(value interface{}) bool {
 	}()
 	reflect.ValueOf(value).Convert(reflect.TypeOf(float64(0))).Float()
 	return true
+}
+
+func isFloat(value interface{}) bool {
+	return reflect.TypeOf(value).Kind() == reflect.Float32 ||
+		reflect.TypeOf(value).Kind() == reflect.Float64
 }
 
 func isHTTP(value interface{}) bool {

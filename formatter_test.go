@@ -216,6 +216,7 @@ func TestFormat_FailureExpected(t *testing.T) {
 		name             string
 		assertionType    AssertionType
 		assertionValue   interface{}
+		formatter        DefaultFormatter
 		wantHaveExpected bool
 		wantExpectedKind string
 		wantExpected     []string
@@ -255,6 +256,20 @@ func TestFormat_FailureExpected(t *testing.T) {
 			wantExpected:     []string{"[1e+06; 2e+06]"},
 		},
 		{
+			name:          "AssertInRange float32 disable scientific",
+			assertionType: AssertInRange,
+			assertionValue: AssertionRange{
+				Min: float32(1_000_000),
+				Max: float32(2_000_000),
+			},
+			formatter: DefaultFormatter{
+				DisableScientific: true,
+			},
+			wantHaveExpected: true,
+			wantExpectedKind: kindRange,
+			wantExpected:     []string{"[1000000; 2000000]"},
+		},
+		{
 			name:          "AssertInRange float64",
 			assertionType: AssertInRange,
 			assertionValue: AssertionRange{
@@ -264,6 +279,20 @@ func TestFormat_FailureExpected(t *testing.T) {
 			wantHaveExpected: true,
 			wantExpectedKind: kindRange,
 			wantExpected:     []string{"[1e+06; 2e+06]"},
+		},
+		{
+			name:          "AssertInRange float64 disable scientific",
+			assertionType: AssertInRange,
+			assertionValue: AssertionRange{
+				Min: float64(-123.456),
+				Max: float64(123.456),
+			},
+			formatter: DefaultFormatter{
+				DisableScientific: true,
+			},
+			wantHaveExpected: true,
+			wantExpectedKind: kindRange,
+			wantExpected:     []string{"[-123.456; 123.456]"},
 		},
 		{
 			name:          "AssertInRange string",
@@ -409,7 +438,7 @@ func TestFormat_FailureExpected(t *testing.T) {
 		},
 	}
 
-	df := &DefaultFormatter{}
+	// defFormatter := &DefaultFormatter{}
 	ctx := &AssertionContext{}
 
 	for _, tc := range tests {
@@ -420,7 +449,7 @@ func TestFormat_FailureExpected(t *testing.T) {
 					Value: tc.assertionValue,
 				},
 			}
-			fd := df.buildFormatData(ctx, fl)
+			fd := tc.formatter.buildFormatData(ctx, fl)
 			assert.Equal(t, tc.wantHaveExpected, fd.HaveExpected)
 			assert.Equal(t, tc.wantExpectedKind, fd.ExpectedKind)
 			assert.Equal(t, tc.wantExpected, fd.Expected)
