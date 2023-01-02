@@ -438,7 +438,6 @@ func TestFormat_FailureExpected(t *testing.T) {
 		},
 	}
 
-	// defFormatter := &DefaultFormatter{}
 	ctx := &AssertionContext{}
 
 	for _, tc := range tests {
