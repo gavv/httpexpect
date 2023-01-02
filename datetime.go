@@ -302,7 +302,8 @@ func (dt *DateTime) Zone() *String {
 	return newString(dt.chain, zone)
 }
 
-// Year returns the year in which datetime occurs.
+// Year returns the year in which datetime occurs,
+// in the range [0, 9999]
 //
 // Example:
 //
@@ -319,7 +320,8 @@ func (dt *DateTime) Year() *Number {
 	return newNumber(dt.chain, float64(dt.value.Year()))
 }
 
-// Month returns the month of the year specified by datetime.
+// Month returns the month of the year specified by datetime,
+// in the range [1,12].
 //
 // Example:
 //
@@ -336,7 +338,8 @@ func (dt *DateTime) Month() *Number {
 	return newNumber(dt.chain, float64(dt.value.Month()))
 }
 
-// Day returns the day of the month specified datetime.
+// Day returns the day of the month specified datetime,
+// in the range [1,31].
 //
 // Example:
 //
@@ -353,7 +356,8 @@ func (dt *DateTime) Day() *Number {
 	return newNumber(dt.chain, float64(dt.value.Day()))
 }
 
-// Weekday returns the day of the week specified by datetime.
+// Weekday returns the day of the week specified by datetime,
+// in the range [0, 6].
 //
 // Example:
 //
@@ -372,7 +376,7 @@ func (dt *DateTime) WeekDay() *Number {
 
 // YearDay returns the day of the year specified by datetime,
 // in the range [1,365] for non-leap years,
-// and [1,366] in leap years..
+// and [1,366] in leap years.
 //
 // Example:
 //
@@ -390,7 +394,7 @@ func (dt *DateTime) YearDay() *Number {
 }
 
 // Hour returns the hour within the day specified by datetime,
-// in the range [0, 23]..
+// in the range [0, 23].
 //
 // Example:
 //
@@ -408,7 +412,7 @@ func (dt *DateTime) Hour() *Number {
 }
 
 // Minute returns the minute offset within the hour specified by datetime,
-// in the range [0, 59]..
+// in the range [0, 59].
 //
 // Example:
 //

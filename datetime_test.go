@@ -192,7 +192,8 @@ func TestDateTimeInRange(t *testing.T) {
 func TestDateTimeGetters(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	value := NewDateTime(reporter, time.Unix(1405544146, 0))
+	parsedTime, _ := time.Parse("Jan 2, 2006 at 3:04pm (MST)", "Dec 30, 0000 at 3:04pm (IST)")
+	value := NewDateTime(reporter, parsedTime)
 
 	value.chain.assertNotFailed(t)
 
@@ -209,7 +210,7 @@ func TestDateTimeGetters(t *testing.T) {
 	value.AsUTC().chain.assertNotFailed(t)
 	value.AsLocal().chain.assertNotFailed(t)
 
-	expectedTime := time.Unix(1405544146, 0)
+	expectedTime := parsedTime
 	expectedZone, _ := expectedTime.Zone()
 	assert.Equal(t, expectedZone, value.Zone().Raw())
 	assert.Equal(t, float64(expectedTime.Year()), value.Year().Raw())
