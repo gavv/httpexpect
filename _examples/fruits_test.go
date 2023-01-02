@@ -1,7 +1,6 @@
 package examples
 
 import (
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -87,16 +86,11 @@ func TestFruits(t *testing.T) {
 		Expect().
 		Status(http.StatusOK).JSON().Array()
 
-	for i, element := range fruitsData.Iter() {
+	for _, element := range fruitsData.Iter() {
 		element.Object().ContainsKey("weight")
 		element.Object().ContainsValue("fruit")
 		element.Object().ContainsSubset(map[string]interface{}{
 			"type": "fruit",
 		})
-		for j, _element := range element.Object().Iter() {
-			fmt.Printf("index: %s, element: %v\n", j, _element.Raw())
-		}
-		fmt.Printf("index: %d, element: %v\n", i, element.Raw())	
 	}
-	
 }
