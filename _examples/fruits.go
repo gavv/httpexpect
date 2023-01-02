@@ -8,6 +8,7 @@ import (
 
 type (
 	fruitMap map[string]interface{}
+	fruitMapList []fruitMap
 )
 
 // FruitsHandler creates http.Handler for the fruits server.
@@ -15,6 +16,7 @@ type (
 // Routes:
 //
 //	GET /fruits           get fruit list
+//	GET /fruits/with-data get fruit list of map
 //	GET /fruits/{name}    get fruit
 //	PUT /fruits/{name}    add or update fruit
 func FruitsHandler() http.Handler {
@@ -24,6 +26,10 @@ func FruitsHandler() http.Handler {
 
 	mux.HandleFunc("/fruits", func(w http.ResponseWriter, r *http.Request) {
 		handleFruitList(fruits, w, r)
+	})
+
+	mux.HandleFunc("/fruits/with-data", func(w http.ResponseWriter, r *http.Request) {
+		handleFruitListWithData(w, r)
 	})
 
 	mux.HandleFunc("/fruits/", func(w http.ResponseWriter, r *http.Request) {
@@ -42,6 +48,27 @@ func handleFruitList(fruits fruitMap, w http.ResponseWriter, r *http.Request) {
 		}
 
 		b, err := json.Marshal(ret)
+		if err != nil {
+			panic(err)
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(b)
+
+	default:
+		w.WriteHeader(http.StatusMethodNotAllowed)
+	}
+}
+
+func handleFruitListWithData(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "GET":
+		var data fruitMapList
+		if err := json.NewDecoder(r.Body).Decode(&data); err != nil {
+			panic(err)
+		}
+
+		b, err := json.Marshal(data)
 		if err != nil {
 			panic(err)
 		}
