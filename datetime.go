@@ -288,8 +288,10 @@ func (dt *DateTime) NotInRange(min, max time.Time) *DateTime {
 //
 // Example:
 //
-//	dt := NewDateTime(t, time.Unix(0, 10))
-//	dt.Zone().Equal("/foo")
+//	tm, _ := time.Parse("Jan 2, 2006 at 3:04pm (MST)",
+//					"Dec 30, 2022 at 3:04pm (IST)")
+//	dt := NewDateTime(t, tm)
+//	dt.Zone().Equal("IST")
 func (dt *DateTime) Zone() *String {
 	dt.chain.enter("Zone()")
 	defer dt.chain.leave()
@@ -307,8 +309,9 @@ func (dt *DateTime) Zone() *String {
 //
 // Example:
 //
-//	dt := NewDateTime(t, time.Unix(0, 0))
-//	dt.Year().Equal(float64(1970))
+//	tm, _ := time.Parse("2006-01-02", "2022-12-30")
+//	dt := NewDateTime(t, tm)
+//	dt.Year().Equal(2022)
 func (dt *DateTime) Year() *Number {
 	dt.chain.enter("Year()")
 	defer dt.chain.leave()
@@ -325,8 +328,9 @@ func (dt *DateTime) Year() *Number {
 //
 // Example:
 //
-//	dt := NewDateTime(t, time.Unix(0, 0))
-//	dt.Month().Equal(float64(1))
+//	tm, _ := time.Parse("2006-01-02", "2022-12-30")
+//	dt := NewDateTime(t, tm)
+//	dt.Month().Equal(12)
 func (dt *DateTime) Month() *Number {
 	dt.chain.enter("Month()")
 	defer dt.chain.leave()
@@ -343,8 +347,9 @@ func (dt *DateTime) Month() *Number {
 //
 // Example:
 //
-//	dt := NewDateTime(t, time.Unix(0, 0))
-//	dt.Day().Equal(float64(1))
+//	tm, _ := time.Parse("2006-01-02", "2022-12-30")
+//	dt := NewDateTime(t, tm)
+//	dt.Day().Equal(30)
 func (dt *DateTime) Day() *Number {
 	dt.chain.enter("Day()")
 	defer dt.chain.leave()
@@ -361,8 +366,9 @@ func (dt *DateTime) Day() *Number {
 //
 // Example:
 //
-//	dt := NewDateTime(t, time.Unix(0, 0))
-//	dt.WeekDay().Equal(float64(4))
+//	tm, _ := time.Parse("2006-01-02", "2022-12-30")
+//	dt := NewDateTime(t, tm)
+//	dt.WeekDay().Equal(5)
 func (dt *DateTime) WeekDay() *Number {
 	dt.chain.enter("WeekDay()")
 	defer dt.chain.leave()
@@ -380,8 +386,9 @@ func (dt *DateTime) WeekDay() *Number {
 //
 // Example:
 //
-//	dt := NewDateTime(t, time.Unix(0, 0))
-//	dt.YearDay().Equal(float64(1))
+//	tm, _ := time.Parse("2006-01-02", "2022-12-30")
+//	dt := NewDateTime(t, tm)
+//	dt.YearDay().Equal(364)
 func (dt *DateTime) YearDay() *Number {
 	dt.chain.enter("YearDay()")
 	defer dt.chain.leave()
@@ -398,8 +405,10 @@ func (dt *DateTime) YearDay() *Number {
 //
 // Example:
 //
-//	dt := NewDateTime(t, time.Unix(0, 0))
-//	dt.Hour().Equal(float64(0))
+//	tm, _ := time.Parse("Jan 2, 2006 at 3:04pm (MST)",
+//					"Dec 30, 2022 at 3:04pm (IST)")
+//	dt := NewDateTime(t, tm)
+//	dt.Hour().Equal(15)
 func (dt *DateTime) Hour() *Number {
 	dt.chain.enter("Hour()")
 	defer dt.chain.leave()
@@ -416,8 +425,10 @@ func (dt *DateTime) Hour() *Number {
 //
 // Example:
 //
-//	dt := NewDateTime(t, time.Unix(0, 0))
-//	dt.Minute().Equal(float64(0))
+//	tm, _ := time.Parse("Jan 2, 2006 at 3:04pm (MST)",
+//					"Dec 30, 2022 at 3:04pm (IST)")
+//	dt := NewDateTime(t, tm)
+//	dt.Minute().Equal(4)
 func (dt *DateTime) Minute() *Number {
 	dt.chain.enter("Minute()")
 	defer dt.chain.leave()
@@ -434,8 +445,10 @@ func (dt *DateTime) Minute() *Number {
 //
 // Example:
 //
-//	dt := NewDateTime(t, time.Unix(0, 0))
-//	dt.Second().Equal(float64(0))
+//	tm, _ := time.Parse("Jan 2, 2006 at 3:04pm (MST)",
+//					"Dec 30, 2022 at 3:04pm (IST)")
+//	dt := NewDateTime(t, tm)
+//	dt.Second().Equal(0)
 func (dt *DateTime) Second() *Number {
 	dt.chain.enter("Second()")
 	defer dt.chain.leave()
@@ -452,8 +465,10 @@ func (dt *DateTime) Second() *Number {
 //
 // Example:
 //
-//	dt := NewDateTime(t, time.Unix(0, 0))
-//	dt.Nanosecond().Equal(float64(0))
+//	tm, _ := time.Parse("Jan 2, 2006 at 3:04pm (MST)",
+//					"Dec 30, 2022 at 3:04pm (IST)")
+//	dt := NewDateTime(t, tm)
+//	dt.Nanosecond().Equal(0)
 func (dt *DateTime) Nanosecond() *Number {
 	dt.chain.enter("Nanosecond()")
 	defer dt.chain.leave()
@@ -469,7 +484,9 @@ func (dt *DateTime) Nanosecond() *Number {
 //
 // Example:
 //
-//	dt := NewDateTime(t, time.Unix(0, 0))
+//	tm, _ := time.Parse("Jan 2, 2006 at 3:04pm (MST)",
+//					"Dec 30, 2022 at 3:04pm (IST)")
+//	dt := NewDateTime(t, tm)
 //	dt.AsUTC().Zone().Equal("UTC")
 func (dt *DateTime) AsUTC() *DateTime {
 	dt.chain.enter("AsUTC()")
@@ -486,7 +503,9 @@ func (dt *DateTime) AsUTC() *DateTime {
 //
 // Example:
 //
-//	dt := NewDateTime(t, time.Unix(0, 0))
+//	tm, _ := time.Parse("Jan 2, 2006 at 3:04pm (MST)",
+//					"Dec 30, 2022 at 3:04pm (IST)")
+//	dt := NewDateTime(t, tm)
 //	dt.AsLocal().Zone().Equal("IST")
 func (dt *DateTime) AsLocal() *DateTime {
 	dt.chain.enter("AsLocal()")
