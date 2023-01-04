@@ -288,8 +288,7 @@ func (dt *DateTime) NotInRange(min, max time.Time) *DateTime {
 //
 // Example:
 //
-//	tm, _ := time.Parse("Jan 2, 2006 at 3:04pm (MST)",
-//					"Dec 30, 2022 at 3:04pm (IST)")
+//	tm, _ := time.Parse(time.UnixDate, "FRI Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
 //	dt.Zone().Equal("IST")
 func (dt *DateTime) Zone() *String {
@@ -309,7 +308,7 @@ func (dt *DateTime) Zone() *String {
 //
 // Example:
 //
-//	tm, _ := time.Parse("2006-01-02", "2022-12-30")
+//	tm, _ := time.Parse(time.UnixDate, "FRI Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
 //	dt.Year().Equal(2022)
 func (dt *DateTime) Year() *Number {
@@ -328,7 +327,7 @@ func (dt *DateTime) Year() *Number {
 //
 // Example:
 //
-//	tm, _ := time.Parse("2006-01-02", "2022-12-30")
+//	tm, _ := time.Parse(time.UnixDate, "FRI Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
 //	dt.Month().Equal(12)
 func (dt *DateTime) Month() *Number {
@@ -347,7 +346,7 @@ func (dt *DateTime) Month() *Number {
 //
 // Example:
 //
-//	tm, _ := time.Parse("2006-01-02", "2022-12-30")
+//	tm, _ := time.Parse(time.UnixDate, "FRI Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
 //	dt.Day().Equal(30)
 func (dt *DateTime) Day() *Number {
@@ -366,7 +365,7 @@ func (dt *DateTime) Day() *Number {
 //
 // Example:
 //
-//	tm, _ := time.Parse("2006-01-02", "2022-12-30")
+//	tm, _ := time.Parse(time.UnixDate, "FRI Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
 //	dt.WeekDay().Equal(5)
 func (dt *DateTime) WeekDay() *Number {
@@ -386,7 +385,7 @@ func (dt *DateTime) WeekDay() *Number {
 //
 // Example:
 //
-//	tm, _ := time.Parse("2006-01-02", "2022-12-30")
+//	tm, _ := time.Parse(time.UnixDate, "FRI Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
 //	dt.YearDay().Equal(364)
 func (dt *DateTime) YearDay() *Number {
@@ -405,8 +404,7 @@ func (dt *DateTime) YearDay() *Number {
 //
 // Example:
 //
-//	tm, _ := time.Parse("Jan 2, 2006 at 3:04pm (MST)",
-//					"Dec 30, 2022 at 3:04pm (IST)")
+//	tm, _ := time.Parse(time.UnixDate, "FRI Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
 //	dt.Hour().Equal(15)
 func (dt *DateTime) Hour() *Number {
@@ -425,8 +423,7 @@ func (dt *DateTime) Hour() *Number {
 //
 // Example:
 //
-//	tm, _ := time.Parse("Jan 2, 2006 at 3:04pm (MST)",
-//					"Dec 30, 2022 at 3:04pm (IST)")
+//	tm, _ := time.Parse(time.UnixDate, "FRI Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
 //	dt.Minute().Equal(4)
 func (dt *DateTime) Minute() *Number {
@@ -445,10 +442,9 @@ func (dt *DateTime) Minute() *Number {
 //
 // Example:
 //
-//	tm, _ := time.Parse("Jan 2, 2006 at 3:04pm (MST)",
-//					"Dec 30, 2022 at 3:04pm (IST)")
+//	tm, _ := time.Parse(time.UnixDate, "FRI Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.Second().Equal(0)
+//	dt.Second().Equal(5)
 func (dt *DateTime) Second() *Number {
 	dt.chain.enter("Second()")
 	defer dt.chain.leave()
@@ -465,8 +461,7 @@ func (dt *DateTime) Second() *Number {
 //
 // Example:
 //
-//	tm, _ := time.Parse("Jan 2, 2006 at 3:04pm (MST)",
-//					"Dec 30, 2022 at 3:04pm (IST)")
+//	tm, _ := time.Parse(time.UnixDate, "FRI Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
 //	dt.Nanosecond().Equal(0)
 func (dt *DateTime) Nanosecond() *Number {
@@ -484,8 +479,7 @@ func (dt *DateTime) Nanosecond() *Number {
 //
 // Example:
 //
-//	tm, _ := time.Parse("Jan 2, 2006 at 3:04pm (MST)",
-//					"Dec 30, 2022 at 3:04pm (IST)")
+//	tm, _ := time.Parse(time.UnixDate, "FRI Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
 //	dt.AsUTC().Zone().Equal("UTC")
 func (dt *DateTime) AsUTC() *DateTime {
@@ -503,8 +497,7 @@ func (dt *DateTime) AsUTC() *DateTime {
 //
 // Example:
 //
-//	tm, _ := time.Parse("Jan 2, 2006 at 3:04pm (MST)",
-//					"Dec 30, 2022 at 3:04pm (IST)")
+//	tm, _ := time.Parse(time.UnixDate, "FRI Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
 //	dt.AsLocal().Zone().Equal("IST")
 func (dt *DateTime) AsLocal() *DateTime {
