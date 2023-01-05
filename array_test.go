@@ -115,6 +115,15 @@ func TestArray_Constructors(t *testing.T) {
 	})
 }
 
+func TestArray_Decode(t *testing.T) {
+	target := []interface{}{}
+	testValue := []interface{}{"Foo", 123.0}
+	reporter := newMockReporter(t)
+	arr := NewArray(reporter, testValue)
+	arr.Decode(&target)
+	assert.Equal(reporter, testValue, target)
+}
+
 func TestArray_Getters(t *testing.T) {
 	reporter := newMockReporter(t)
 
