@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"testing"
 	"time"
+	"unsafe"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -88,6 +89,13 @@ func TestCookie_Constructors(t *testing.T) {
 		value.Expires().Equal(time.Unix(1234, 0))
 		value.MaxAge().Equal(123 * time.Second)
 		value.chain.assertNotFailed(t)
+	})
+
+	t.Run("chain Constructor", func(t *testing.T) {
+		chain := newMockChain(t)
+		value := newCookie(chain, cookie)
+		assert.NotEqual(t, unsafe.Pointer(&(value.chain)), unsafe.Pointer(&chain))
+		assert.Equal(t, value.chain.context.Path, chain.context.Path)
 	})
 }
 

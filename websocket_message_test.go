@@ -2,8 +2,10 @@ package httpexpect
 
 import (
 	"testing"
+	"unsafe"
 
 	"github.com/gorilla/websocket"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -45,6 +47,13 @@ func TestWebsocketMessage_Constructors(t *testing.T) {
 		}, websocket.CloseMessage, nil)
 		msg.CloseMessage()
 		msg.chain.assertNotFailed(t)
+	})
+
+	t.Run("chain Constructor", func(t *testing.T) {
+		chain := newMockChain(t)
+		value := newWebsocketMessage(chain, 0, nil)
+		assert.NotEqual(t, unsafe.Pointer(&(value.chain)), unsafe.Pointer(&chain))
+		assert.Equal(t, value.chain.context.Path, chain.context.Path)
 	})
 }
 

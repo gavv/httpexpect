@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"unsafe"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -109,6 +110,19 @@ func TestResponse_Constructors(t *testing.T) {
 			Reporter: reporter,
 		}, &http.Response{})
 		resp.chain.assertNotFailed(t)
+	})
+
+	t.Run("chain Constructor", func(t *testing.T) {
+		chain := newMockChain(t)
+		reporter := newMockReporter(t)
+		config := newMockConfig(reporter)
+		value := newResponse(responseOpts{
+			config:   config,
+			chain:    chain,
+			httpResp: &http.Response{},
+		})
+		assert.NotEqual(t, unsafe.Pointer(&(value.chain)), unsafe.Pointer(&chain))
+		assert.Equal(t, value.chain.context.Path, chain.context.Path)
 	})
 }
 

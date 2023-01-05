@@ -5,6 +5,7 @@ import (
 	"math"
 	"testing"
 	"time"
+	"unsafe"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -22,6 +23,13 @@ func TestEnvironment_Constructors(t *testing.T) {
 			Reporter: reporter,
 		})
 		env.chain.assertNotFailed(t)
+	})
+
+	t.Run("chain Constructor", func(t *testing.T) {
+		chain := newMockChain(t)
+		value := newEnvironment(chain)
+		assert.NotEqual(t, unsafe.Pointer(&(value.chain)), unsafe.Pointer(&chain))
+		assert.Equal(t, value.chain.context.Path, chain.context.Path)
 	})
 }
 

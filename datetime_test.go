@@ -3,6 +3,7 @@ package httpexpect
 import (
 	"testing"
 	"time"
+	"unsafe"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -44,6 +45,13 @@ func TestDateTime_Constructors(t *testing.T) {
 		}, time)
 		value.Equal(time)
 		value.chain.assertNotFailed(t)
+	})
+
+	t.Run("chain Constructor", func(t *testing.T) {
+		chain := newMockChain(t)
+		value := newDateTime(chain, time)
+		assert.NotEqual(t, unsafe.Pointer(&(value.chain)), unsafe.Pointer(&chain))
+		assert.Equal(t, value.chain.context.Path, chain.context.Path)
 	})
 }
 
