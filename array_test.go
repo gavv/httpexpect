@@ -2,7 +2,6 @@ package httpexpect
 
 import (
 	"testing"
-	"unsafe"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -111,7 +110,7 @@ func TestArray_Constructors(t *testing.T) {
 	t.Run("chain Constructor", func(t *testing.T) {
 		chain := newMockChain(t)
 		value := newArray(chain, testValue)
-		assert.NotEqual(t, unsafe.Pointer(&(value.chain)), unsafe.Pointer(&chain))
+		assert.NotSame(t, value.chain, chain)
 		assert.Equal(t, value.chain.context.Path, chain.context.Path)
 	})
 }
