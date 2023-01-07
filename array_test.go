@@ -116,12 +116,58 @@ func TestArray_Constructors(t *testing.T) {
 }
 
 func TestArray_Decode(t *testing.T) {
-	target := []interface{}{}
-	testValue := []interface{}{"Foo", 123.0}
-	reporter := newMockReporter(t)
-	arr := NewArray(reporter, testValue)
-	arr.Decode(&target)
-	assert.Equal(reporter, testValue, target)
+	t.Run("Decode with slice of interface", func(t *testing.T) {
+		target := []interface{}{}
+		testValue := []interface{}{"Foo", 123.0}
+		reporter := newMockReporter(t)
+		arr := NewArray(reporter, testValue)
+		arr.Decode(&target)
+		arr.Equal(target)
+	})
+	t.Run("Decode with slice of struct", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		type S struct {
+			Foo int `json:"foo"`
+		}
+		testValue := []interface{}{
+			map[string]interface{}{
+				"foo": 123,
+			},
+			map[string]interface{}{
+				"foo": 456,
+			},
+		}
+		arr := NewArray(reporter, testValue)
+		target := new([]S)
+		arr.Decode(target)
+		arr.Equal(target)
+	})
+	t.Run("Passing unmarshable value", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		type S struct {
+			Foo int `json:"foo"`
+		}
+		testValue := []interface{}{
+			map[string]interface{}{
+				"foo": 123,
+			},
+			map[string]interface{}{
+				"foo": 456,
+			},
+		}
+		arr := NewArray(reporter, testValue)
+		target := []S{}
+		arr.Decode(target)
+		arr.chain.assertFailed(t)
+	})
+	t.Run("Target is nil", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		testValue := []interface{}{"Foo", 123.0}
+		arr := NewArray(reporter, testValue)
+		arr.Decode(nil)
+		arr.chain.assertFailed(t)
+	})
+
 }
 
 func TestArray_Getters(t *testing.T) {

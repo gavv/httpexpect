@@ -67,13 +67,11 @@ func (a *Array) Raw() []interface{} {
 	return a.value
 }
 
-func (a *Array) Decode(target *[]interface{}) {
-	a.chain.enter("Decode")
+func (a *Array) Decode(target interface{}) *Array {
+	a.chain.enter("Decode()")
 	defer a.chain.leave()
-
-	if decode := canonDecode(a.chain, a.value, target); !decode {
-		a.chain.failed()
-	}
+	canonDecode(a.chain, a.value, target)
+	return a
 }
 
 // Path is similar to Value.Path.
