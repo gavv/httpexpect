@@ -23,6 +23,13 @@ func TestEnvironment_Constructors(t *testing.T) {
 		})
 		env.chain.assertNotFailed(t)
 	})
+
+	t.Run("chain Constructor", func(t *testing.T) {
+		chain := newMockChain(t)
+		value := newEnvironment(chain)
+		assert.NotSame(t, value.chain, chain)
+		assert.Equal(t, value.chain.context.Path, chain.context.Path)
+	})
 }
 
 func TestEnvironment_Generic(t *testing.T) {

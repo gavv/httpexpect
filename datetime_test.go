@@ -45,6 +45,13 @@ func TestDateTime_Constructors(t *testing.T) {
 		value.Equal(time)
 		value.chain.assertNotFailed(t)
 	})
+
+	t.Run("chain Constructor", func(t *testing.T) {
+		chain := newMockChain(t)
+		value := newDateTime(chain, time)
+		assert.NotSame(t, value.chain, chain)
+		assert.Equal(t, value.chain.context.Path, chain.context.Path)
+	})
 }
 
 func TestDateTime_Equal(t *testing.T) {

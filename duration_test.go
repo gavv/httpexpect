@@ -42,6 +42,14 @@ func TestDuration_Constructors(t *testing.T) {
 		value.Equal(tm)
 		value.chain.assertNotFailed(t)
 	})
+
+	t.Run("chain Constructor", func(t *testing.T) {
+		chain := newMockChain(t)
+		value := newDuration(chain, &tm)
+		assert.NotSame(t, value.chain, chain)
+		assert.Equal(t, value.chain.context.Path, chain.context.Path)
+	})
+
 }
 
 func TestDuration_Set(t *testing.T) {

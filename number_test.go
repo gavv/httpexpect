@@ -44,6 +44,13 @@ func TestNumber_Constructors(t *testing.T) {
 		value.Equal(10.3)
 		value.chain.assertNotFailed(t)
 	})
+
+	t.Run("chain Constructor", func(t *testing.T) {
+		chain := newMockChain(t)
+		value := newNumber(chain, 10.3)
+		assert.NotSame(t, value.chain, chain)
+		assert.Equal(t, value.chain.context.Path, chain.context.Path)
+	})
 }
 
 func TestNumber_Getters(t *testing.T) {

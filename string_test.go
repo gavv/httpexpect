@@ -62,6 +62,13 @@ func TestString_Constructors(t *testing.T) {
 		value.Equal("Hello")
 		value.chain.assertNotFailed(t)
 	})
+
+	t.Run("chain Constructor", func(t *testing.T) {
+		chain := newMockChain(t)
+		value := newString(chain, "Hello")
+		assert.NotSame(t, value.chain, chain)
+		assert.Equal(t, value.chain.context.Path, chain.context.Path)
+	})
 }
 
 func TestString_Getters(t *testing.T) {

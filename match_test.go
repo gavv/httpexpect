@@ -41,6 +41,13 @@ func TestMatch_Constructors(t *testing.T) {
 		assert.Equal(t, matches, value.Raw())
 		value.chain.assertNotFailed(t)
 	})
+
+	t.Run("chain Constructor", func(t *testing.T) {
+		chain := newMockChain(t)
+		value := newMatch(chain, matches, names)
+		assert.NotSame(t, value.chain, chain)
+		assert.Equal(t, value.chain.context.Path, chain.context.Path)
+	})
 }
 
 func TestMatch_Getters(t *testing.T) {

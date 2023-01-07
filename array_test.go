@@ -106,6 +106,13 @@ func TestArray_Constructors(t *testing.T) {
 		value.Equal(testValue)
 		value.chain.assertNotFailed(t)
 	})
+
+	t.Run("chain Constructor", func(t *testing.T) {
+		chain := newMockChain(t)
+		value := newArray(chain, testValue)
+		assert.NotSame(t, value.chain, chain)
+		assert.Equal(t, value.chain.context.Path, chain.context.Path)
+	})
 }
 
 func TestArray_Getters(t *testing.T) {

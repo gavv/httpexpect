@@ -102,6 +102,12 @@ func TestObject_Constructors(t *testing.T) {
 		value.chain.assertNotFailed(t)
 	})
 
+	t.Run("chain Constructor", func(t *testing.T) {
+		chain := newMockChain(t)
+		value := newObject(chain, test)
+		assert.NotSame(t, value.chain, chain)
+		assert.Equal(t, value.chain.context.Path, chain.context.Path)
+	})
 }
 
 func TestObject_Getters(t *testing.T) {
