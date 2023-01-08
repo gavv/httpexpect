@@ -86,7 +86,6 @@ func TestArray_Failed(t *testing.T) {
 
 		check(value)
 	})
-
 }
 
 func TestArray_Constructors(t *testing.T) {
