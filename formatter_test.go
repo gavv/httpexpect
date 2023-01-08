@@ -256,20 +256,6 @@ func TestFormat_FailureExpected(t *testing.T) {
 			wantExpected:     []string{"[1e+06; 2e+06]"},
 		},
 		{
-			name:          "AssertInRange float32 disable scientific",
-			assertionType: AssertInRange,
-			assertionValue: AssertionRange{
-				Min: float32(-123.456),
-				Max: float32(123.456),
-			},
-			formatter: DefaultFormatter{
-				DisableScientific: true,
-			},
-			wantHaveExpected: true,
-			wantExpectedKind: kindRange,
-			wantExpected:     []string{"[-123.45600128173828; 123.45600128173828]"},
-		},
-		{
 			name:          "AssertInRange float64",
 			assertionType: AssertInRange,
 			assertionValue: AssertionRange{
@@ -279,20 +265,6 @@ func TestFormat_FailureExpected(t *testing.T) {
 			wantHaveExpected: true,
 			wantExpectedKind: kindRange,
 			wantExpected:     []string{"[1e+06; 2e+06]"},
-		},
-		{
-			name:          "AssertInRange float64 disable scientific",
-			assertionType: AssertInRange,
-			assertionValue: AssertionRange{
-				Min: float64(-123.456),
-				Max: float64(123.456),
-			},
-			formatter: DefaultFormatter{
-				DisableScientific: true,
-			},
-			wantHaveExpected: true,
-			wantExpectedKind: kindRange,
-			wantExpected:     []string{"[-123.456; 123.456]"},
 		},
 		{
 			name:          "AssertInRange string",
@@ -576,6 +548,91 @@ func TestFormat_FailureDelta(t *testing.T) {
 			fd := df.buildFormatData(ctx, fl)
 			assert.Equal(t, tc.wantHaveDelta, fd.HaveDelta)
 			assert.Equal(t, tc.wantDelta, fd.Delta)
+		})
+	}
+}
+
+func TestFormatter_FormatFailure(t *testing.T) {
+	tests := []struct {
+		name             string
+		assertionType    AssertionType
+		assertionValue   interface{}
+		assertionFailure AssertionFailure
+		formatter        DefaultFormatter
+		wantTpl          string
+	}{
+		{
+			name: "AssertInRange float32 true",
+			formatter: DefaultFormatter{
+				DisableScientific: true,
+			},
+			assertionFailure: AssertionFailure{
+				Type: AssertInRange,
+				Expected: &AssertionValue{
+					Value: AssertionRange{
+						Min: float32(-1234567.89),
+						Max: float32(1234567.89),
+					},
+				},
+			},
+			wantTpl: "[-1234567.875; 1234567.875]",
+		},
+		{
+			name: "AssertInRange float32 false",
+			formatter: DefaultFormatter{
+				DisableScientific: false,
+			},
+			assertionFailure: AssertionFailure{
+				Type: AssertInRange,
+				Expected: &AssertionValue{
+					Value: AssertionRange{
+						Min: float32(-1234567.89),
+						Max: float32(1234567.89),
+					},
+				},
+			},
+			wantTpl: "[-1.2345679e+06; 1.2345679e+06]",
+		},
+		{
+			name: "AssertInRange float64 true",
+			formatter: DefaultFormatter{
+				DisableScientific: true,
+			},
+			assertionFailure: AssertionFailure{
+				Type: AssertInRange,
+				Expected: &AssertionValue{
+					Value: AssertionRange{
+						Min: float64(-1234567.89),
+						Max: float64(1234567.89),
+					},
+				},
+			},
+			wantTpl: "[-1234567.89; 1234567.89]",
+		},
+		{
+			name: "AssertInRange float64 false",
+			formatter: DefaultFormatter{
+				DisableScientific: false,
+			},
+			assertionFailure: AssertionFailure{
+				Type: AssertInRange,
+				Expected: &AssertionValue{
+					Value: AssertionRange{
+						Min: float64(-1234567.89),
+						Max: float64(1234567.89),
+					},
+				},
+			},
+			wantTpl: "[-1.23456789e+06; 1.23456789e+06]",
+		},
+	}
+
+	ctx := &AssertionContext{}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			tpl := tc.formatter.FormatFailure(ctx, &tc.assertionFailure)
+			assert.Contains(t, tpl, tc.wantTpl)
 		})
 	}
 }
