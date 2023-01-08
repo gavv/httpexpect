@@ -555,8 +555,6 @@ func TestFormat_FailureDelta(t *testing.T) {
 func TestFormatter_FormatFailure(t *testing.T) {
 	tests := []struct {
 		name             string
-		assertionType    AssertionType
-		assertionValue   interface{}
 		assertionFailure AssertionFailure
 		formatter        DefaultFormatter
 		wantTpl          string
