@@ -43,7 +43,7 @@ type DefaultFormatter struct {
 	// Exclude diff from failure report.
 	DisableDiffs bool
 
-	// Disable printing floats in scientific form.
+	// Disable printing floats in scientific form. If not set, will print floats in decimal.
 	DisableScientific bool
 
 	// Wrap text to keep lines below given width.
