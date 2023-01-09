@@ -219,7 +219,7 @@ func (a *Array) Iter() []Value {
 	ret := []Value{}
 	for n := range a.value {
 		valueChain := a.chain.clone()
-		valueChain.replace("Iter[%d]", n)
+		valueChain.replace("Iter[%v]", n)
 
 		ret = append(ret, *newValue(valueChain, a.value[n]))
 	}
@@ -263,7 +263,7 @@ func (a *Array) Every(fn func(index int, value *Value)) *Array {
 
 	for index, val := range a.value {
 		valueChain := a.chain.clone()
-		valueChain.replace("Every[%d]", index)
+		valueChain.replace("Every[%v]", index)
 
 		valueChain.setFailCallback(func() {
 			chainFailure = true
@@ -319,12 +319,15 @@ func (a *Array) Filter(fn func(index int, value *Value) bool) *Array {
 
 	for index, element := range a.value {
 		valueChain := a.chain.clone()
+		valueChain.replace("Filter[%v]", index)
+
 		valueChain.setSeverity(SeverityLog)
+
 		chainFailed := false
 		valueChain.setFailCallback(func() {
 			chainFailed = true
 		})
-		valueChain.replace("Filter[%v]", index)
+
 		if fn(index, newValue(valueChain, element)) && !chainFailed {
 			filteredArray = append(filteredArray, element)
 		}
@@ -408,12 +411,15 @@ func (a *Array) Find(fn func(index int, value *Value) bool) *Value {
 
 	for index, element := range a.value {
 		valueChain := a.chain.clone()
+		valueChain.replace("Find[%v]", index)
+
 		valueChain.setSeverity(SeverityLog)
+
 		chainFailed := false
 		valueChain.setFailCallback(func() {
 			chainFailed = true
 		})
-		valueChain.replace("Find[%v]", index)
+
 		if fn(index, newValue(valueChain, element)) && !chainFailed {
 			return newValue(a.chain, element)
 		}
@@ -470,12 +476,15 @@ func (a *Array) FindAll(fn func(index int, value *Value) bool) []Value {
 	foundValues := make([]Value, 0, len(a.value))
 	for index, element := range a.value {
 		valueChain := a.chain.clone()
+		valueChain.replace("FindAll[%v]", index)
+
 		valueChain.setSeverity(SeverityLog)
+
 		chainFailed := false
 		valueChain.setFailCallback(func() {
 			chainFailed = true
 		})
-		valueChain.replace("FindAll[%v]", index)
+
 		if fn(index, newValue(valueChain, element)) && !chainFailed {
 			foundValues = append(foundValues, *newValue(a.chain, element))
 		}
@@ -520,12 +529,15 @@ func (a *Array) NotFind(fn func(index int, value *Value) bool) *Array {
 
 	for index, element := range a.value {
 		valueChain := a.chain.clone()
+		valueChain.replace("NotFind[%v]", index)
+
 		valueChain.setSeverity(SeverityLog)
+
 		chainFailed := false
 		valueChain.setFailCallback(func() {
 			chainFailed = true
 		})
-		valueChain.replace("NotFind[%v]", index)
+
 		if fn(index, newValue(valueChain, element)) && !chainFailed {
 			a.chain.fail(AssertionFailure{
 				Type:     AssertNotContainsElement,

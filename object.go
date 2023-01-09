@@ -236,7 +236,6 @@ func (o *Object) Every(fn func(key string, value *Value)) *Object {
 		})
 
 		fn(kv.key, newValue(valueChain, kv.val))
-
 	}
 
 	if chainFailure {
@@ -292,12 +291,15 @@ func (o *Object) Filter(fn func(key string, value *Value) bool) *Object {
 
 	for _, kv := range o.sortedKV() {
 		valueChain := o.chain.clone()
+		valueChain.replace("Filter[%q]", kv.key)
+
 		valueChain.setSeverity(SeverityLog)
+
 		chainFailed := false
 		valueChain.setFailCallback(func() {
 			chainFailed = true
 		})
-		valueChain.replace("Filter[%q]", kv.key)
+
 		if fn(kv.key, newValue(valueChain, kv.val)) && !chainFailed {
 			filteredObject[kv.key] = kv.val
 		}
@@ -391,12 +393,15 @@ func (o *Object) Find(fn func(key string, value *Value) bool) *Value {
 
 	for _, kv := range o.sortedKV() {
 		valueChain := o.chain.clone()
+		valueChain.replace("Find[%q]", kv.key)
+
 		valueChain.setSeverity(SeverityLog)
+
 		chainFailed := false
 		valueChain.setFailCallback(func() {
 			chainFailed = true
 		})
-		valueChain.replace("Find[%q]", kv.key)
+
 		if fn(kv.key, newValue(valueChain, kv.val)) && !chainFailed {
 			return newValue(o.chain, kv.val)
 		}
@@ -462,12 +467,15 @@ func (o *Object) FindAll(fn func(key string, value *Value) bool) []Value {
 
 	for _, kv := range o.sortedKV() {
 		valueChain := o.chain.clone()
+		valueChain.replace("FindAll[%q]", kv.key)
+
 		valueChain.setSeverity(SeverityLog)
+
 		chainFailed := false
 		valueChain.setFailCallback(func() {
 			chainFailed = true
 		})
-		valueChain.replace("FindAll[%q]", kv.key)
+
 		if fn(kv.key, newValue(valueChain, kv.val)) && !chainFailed {
 			foundValues = append(foundValues, *newValue(o.chain, kv.val))
 		}
@@ -519,12 +527,15 @@ func (o *Object) NotFind(fn func(key string, value *Value) bool) *Object {
 
 	for _, kv := range o.sortedKV() {
 		valueChain := o.chain.clone()
+		valueChain.replace("NotFind[%q]", kv.key)
+
 		valueChain.setSeverity(SeverityLog)
+
 		chainFailed := false
 		valueChain.setFailCallback(func() {
 			chainFailed = true
 		})
-		valueChain.replace("NotFind[%q]", kv.key)
+
 		if fn(kv.key, newValue(valueChain, kv.val)) && !chainFailed {
 			o.chain.fail(AssertionFailure{
 				Type:     AssertNotContainsElement,
