@@ -612,7 +612,7 @@ func TestAssertion_ValidateTraits(t *testing.T) {
 			},
 		},
 		{
-			testName:          "Required value on Expected AssertionList with values not being a slice",
+			testName:          "Required Expected AssertionList with values not being a slice",
 			errorContainsText: "but it contains a single element which itself is a list",
 			failure: AssertionFailure{
 				Expected: &AssertionValue{
@@ -650,7 +650,8 @@ func TestAssertion_ValidateTraits(t *testing.T) {
 
 	t.Run("panic unsupported", func(t *testing.T) {
 		assert.Panics(t, func() {
-			validateTraits(&AssertionFailure{}, fieldTraits{List: fieldDenied})
+			err := validateTraits(&AssertionFailure{}, fieldTraits{List: fieldDenied})
+			if err != nil {return}
 		})
 	})
 }
