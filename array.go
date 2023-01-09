@@ -39,8 +39,7 @@ func NewArrayC(config Config, value []interface{}) *Array {
 }
 
 func newArray(parent *chain, val []interface{}) *Array {
-	a := &Array{parent.clone(), nil}
-
+	a := &Array{noCopy: &noCopy{}, chain: parent.clone(), value: nil}
 	if val == nil {
 		a.chain.fail(AssertionFailure{
 			Type:   AssertNotNil,

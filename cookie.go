@@ -46,7 +46,7 @@ func NewCookieC(config Config, value *http.Cookie) *Cookie {
 }
 
 func newCookie(parent *chain, val *http.Cookie) *Cookie {
-	c := &Cookie{parent.clone(), nil}
+	c := &Cookie{noCopy: &noCopy{}, chain: parent.clone(), value: nil}
 
 	if val == nil {
 		c.chain.fail(AssertionFailure{

@@ -37,7 +37,7 @@ func NewDurationC(config Config, value time.Duration) *Duration {
 }
 
 func newDuration(parent *chain, val *time.Duration) *Duration {
-	return &Duration{parent.clone(), val}
+	return &Duration{noCopy: &noCopy{}, chain: parent.clone(), value: val}
 }
 
 // Raw returns underlying time.Duration value attached to Duration.
