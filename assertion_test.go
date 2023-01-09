@@ -651,7 +651,9 @@ func TestAssertion_ValidateTraits(t *testing.T) {
 	t.Run("panic unsupported", func(t *testing.T) {
 		assert.Panics(t, func() {
 			err := validateTraits(&AssertionFailure{}, fieldTraits{List: fieldDenied})
-			if err != nil {return}
+			if err != nil {
+				return
+			}
 		})
 	})
 }
