@@ -7,8 +7,9 @@ import (
 
 // Duration provides methods to inspect attached time.Duration value.
 type Duration struct {
-	chain *chain
-	value *time.Duration
+	noCopy *noCopy
+	chain  *chain
+	value  *time.Duration
 }
 
 // NewDuration returns a new Duration instance.

@@ -14,8 +14,9 @@ import (
 // String provides methods to inspect attached string value
 // (Go representation of JSON string).
 type String struct {
-	chain *chain
-	value string
+	noCopy *noCopy
+	chain  *chain
+	value  string
 }
 
 // NewString returns a new String instance.

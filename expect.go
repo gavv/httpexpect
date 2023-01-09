@@ -88,6 +88,7 @@ import (
 // Expect is a toplevel object that contains user Config and allows
 // to construct Request objects.
 type Expect struct {
+	noCopy   *noCopy
 	config   Config
 	chain    *chain
 	builders []func(*Request)

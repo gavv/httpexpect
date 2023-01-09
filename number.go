@@ -8,8 +8,9 @@ import (
 // Number provides methods to inspect attached float64 value
 // (Go representation of JSON number).
 type Number struct {
-	chain *chain
-	value float64
+	noCopy *noCopy
+	chain  *chain
+	value  float64
 }
 
 // NewNumber returns a new Number instance.

@@ -10,8 +10,9 @@ import (
 // Object provides methods to inspect attached map[string]interface{} object
 // (Go representation of JSON object).
 type Object struct {
-	chain *chain
-	value map[string]interface{}
+	noCopy *noCopy
+	chain  *chain
+	value  map[string]interface{}
 }
 
 // NewObject returns a new Object instance.

@@ -7,8 +7,9 @@ import (
 
 // DateTime provides methods to inspect attached time.Time value.
 type DateTime struct {
-	chain *chain
-	value time.Time
+	noCopy *noCopy
+	chain  *chain
+	value  time.Time
 }
 
 // NewDateTime returns a new DateTime instance.

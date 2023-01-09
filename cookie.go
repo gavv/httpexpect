@@ -8,8 +8,9 @@ import (
 
 // Cookie provides methods to inspect attached http.Cookie value.
 type Cookie struct {
-	chain *chain
-	value *http.Cookie
+	chain  *chain
+	value  *http.Cookie
+	noCopy *noCopy
 }
 
 // NewCookie returns a new Cookie instance.

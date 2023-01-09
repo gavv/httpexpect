@@ -9,8 +9,9 @@ import (
 // Array provides methods to inspect attached []interface{} object
 // (Go representation of JSON array).
 type Array struct {
-	chain *chain
-	value []interface{}
+	noCopy *noCopy
+	chain  *chain
+	value  []interface{}
 }
 
 // NewArray returns a new Array instance.

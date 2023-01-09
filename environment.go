@@ -13,8 +13,9 @@ import (
 //	env.Put("key", "value")
 //	value := env.GetString("key")
 type Environment struct {
-	chain *chain
-	data  map[string]interface{}
+	noCopy *noCopy
+	chain  *chain
+	data   map[string]interface{}
 }
 
 // NewEnvironment returns a new Environment.

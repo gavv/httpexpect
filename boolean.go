@@ -7,8 +7,9 @@ import (
 // Boolean provides methods to inspect attached bool value
 // (Go representation of JSON boolean).
 type Boolean struct {
-	chain *chain
-	value bool
+	noCopy *noCopy
+	chain  *chain
+	value  bool
 }
 
 // NewBoolean returns a new Boolean instance.
