@@ -40,7 +40,7 @@ func NewObjectC(config Config, value map[string]interface{}) *Object {
 }
 
 func newObject(parent *chain, val map[string]interface{}) *Object {
-	o := &Object{parent.clone(), nil}
+	o := &Object{noCopy: &noCopy{}, chain: parent.clone(), value: nil}
 
 	if val == nil {
 		o.chain.fail(AssertionFailure{

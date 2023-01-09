@@ -42,7 +42,7 @@ func NewStringC(config Config, value string) *String {
 }
 
 func newString(parent *chain, val string) *String {
-	return &String{parent.clone(), val}
+	return &String{noCopy: &noCopy{}, chain: parent.clone(), value: val}
 }
 
 // Raw returns underlying value attached to String.

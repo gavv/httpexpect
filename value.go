@@ -71,7 +71,7 @@ func NewValueC(config Config, value interface{}) *Value {
 }
 
 func newValue(parent *chain, val interface{}) *Value {
-	v := &Value{parent.clone(), nil}
+	v := &Value{noCopy: &noCopy{}, chain: parent.clone(), value: nil}
 
 	if val != nil {
 		v.value, _ = canonValue(v.chain, val)
