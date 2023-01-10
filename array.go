@@ -455,12 +455,12 @@ func (a *Array) Find(fn func(index int, value *Value) bool) *Value {
 //	assert.Equal(t, len(foundValues), 2)
 //	foundValues[0].Equal(101)
 //	foundValues[1].Equal(201)
-func (a *Array) FindAll(fn func(index int, value *Value) bool) []Value {
+func (a *Array) FindAll(fn func(index int, value *Value) bool) []*Value {
 	a.chain.enter("FindAll()")
 	defer a.chain.leave()
 
 	if a.chain.failed() {
-		return []Value{}
+		return []*Value{}
 	}
 
 	if fn == nil {
@@ -470,10 +470,11 @@ func (a *Array) FindAll(fn func(index int, value *Value) bool) []Value {
 				errors.New("unexpected nil function argument"),
 			},
 		})
-		return []Value{}
+		return []*Value{}
 	}
 
-	foundValues := make([]Value, 0, len(a.value))
+	foundValues := make([]*Value, 0, len(a.value))
+
 	for index, element := range a.value {
 		valueChain := a.chain.clone()
 		valueChain.replace("FindAll[%v]", index)
@@ -486,7 +487,7 @@ func (a *Array) FindAll(fn func(index int, value *Value) bool) []Value {
 		})
 
 		if fn(index, newValue(valueChain, element)) && !chainFailed {
-			foundValues = append(foundValues, *newValue(a.chain, element))
+			foundValues = append(foundValues, newValue(a.chain, element))
 		}
 	}
 

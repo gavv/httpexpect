@@ -445,12 +445,12 @@ func (o *Object) Find(fn func(key string, value *Value) bool) *Value {
 //	assert.Equal(t, len(foundValues), 2)
 //	foundValues[0].Equal(101)
 //	foundValues[1].Equal(201)
-func (o *Object) FindAll(fn func(key string, value *Value) bool) []Value {
+func (o *Object) FindAll(fn func(key string, value *Value) bool) []*Value {
 	o.chain.enter("FindAll()")
 	defer o.chain.leave()
 
 	if o.chain.failed() {
-		return []Value{}
+		return []*Value{}
 	}
 
 	if fn == nil {
@@ -460,10 +460,10 @@ func (o *Object) FindAll(fn func(key string, value *Value) bool) []Value {
 				errors.New("unexpected nil function argument"),
 			},
 		})
-		return []Value{}
+		return []*Value{}
 	}
 
-	foundValues := make([]Value, 0, len(o.value))
+	foundValues := make([]*Value, 0, len(o.value))
 
 	for _, kv := range o.sortedKV() {
 		valueChain := o.chain.clone()
@@ -477,7 +477,7 @@ func (o *Object) FindAll(fn func(key string, value *Value) bool) []Value {
 		})
 
 		if fn(kv.key, newValue(valueChain, kv.val)) && !chainFailed {
-			foundValues = append(foundValues, *newValue(o.chain, kv.val))
+			foundValues = append(foundValues, newValue(o.chain, kv.val))
 		}
 	}
 
