@@ -1198,28 +1198,17 @@ func (a *Array) NotContainsAny(values ...interface{}) *Array {
 	return a
 }
 
-func countElement(array []interface{}, element interface{}) int {
-	count := 0
-	for _, e := range array {
-		if reflect.DeepEqual(element, e) {
-			count++
-		}
-	}
-	return count
-}
-
 // IsOrdered succeeds if array is ordered based on optional `comparator` function.
 // For default, it will use built-in comparator function for each data type.
-// It requires all elements in the array to have same data type
+// Built-in comparator requires all elements in the array to have same data type.
 //
 // Example:
 //
 //	array := NewArray(t, []interface{}{100, 101, 102})
-//	array.IsOrdered(func(x, y *Value) bool {
-//		valX, _ := x.Raw().(int)
-//		valY, _ := y.Raw().(int)
-//		return valX >= valY
-//	})
+//	array.IsOrdered() // succeeds
+//	array.IsOrdered(func(x, y *httpexpect.Value) bool {
+//		return x.Number().Raw() < y.Number().Raw()
+//	}) // succeeds
 func (a *Array) IsOrdered(less ...func(x, y *Value) bool) *Array {
 	a.chain.enter("IsOrdered()")
 	defer a.chain.leave()
@@ -1242,23 +1231,17 @@ func (a *Array) IsOrdered(less ...func(x, y *Value) bool) *Array {
 		return a
 	}
 
-	var fn func(x, y *Value) bool
+	var lessFn func(x, y *Value) bool
 	if len(less) == 1 {
-		fn = less[0]
+		lessFn = less[0]
 	} else {
-		// use default comparator based on data type
-		cArr, ok := canonArray(a.chain, a.value)
-		if !ok {
-			return a
-		}
-
-		fn = a.getDefaultComparator(cArr)
+		lessFn = a.getBuiltinComparator()
 		if a.chain.failed() {
 			return a
 		}
 	}
 
-	for i := 0; i < int(a.Length().Raw())-1; i++ {
+	for i := 0; i < int(len(a.value))-1; i++ {
 		xChain := a.chain.clone()
 		xChain.replace("IsOrdered[%d]", i)
 		x := newValue(xChain, a.value[i])
@@ -1267,7 +1250,7 @@ func (a *Array) IsOrdered(less ...func(x, y *Value) bool) *Array {
 		yChain.replace("IsOrdered[%d]", i+1)
 		y := newValue(yChain, a.value[i+1])
 
-		if !fn(x, y) {
+		if lessFn(y, x) {
 			a.chain.fail(AssertionFailure{
 				Type:      AssertLt,
 				Actual:    &AssertionValue{x.value},
@@ -1286,64 +1269,78 @@ func (a *Array) IsOrdered(less ...func(x, y *Value) bool) *Array {
 	return a
 }
 
-func (a *Array) getDefaultComparator(cArr []interface{}) func(x, y *Value) bool {
+func (a *Array) getBuiltinComparator() func(x, y *Value) bool {
 	var fn func(x, y *Value) bool
-	var currType, prevType string
-	var prevElem interface{}
-	for _, v := range cArr {
-		switch t := v.(type) {
-		case bool:
-			currType = fmt.Sprintf("%T", t)
-			fn = func(x, y *Value) bool {
-				xVal, _ := x.Raw().(bool)
-				yVal, _ := y.Raw().(bool)
-				return (!xVal && yVal) || (xVal == yVal)
-			}
-		case float64:
-			currType = fmt.Sprintf("%T", t)
-			fn = func(x, y *Value) bool {
-				xVal, _ := x.Raw().(float64)
-				yVal, _ := y.Raw().(float64)
-				return xVal <= yVal
-			}
-		case string:
-			currType = fmt.Sprintf("%T", t)
-			fn = func(x, y *Value) bool {
-				xVal, _ := x.Raw().(string)
-				yVal, _ := y.Raw().(string)
-				return xVal <= yVal
-			}
+	var prev interface{}
+	for _, curr := range a.value {
+		switch curr.(type) {
+		case bool, float64, string:
+			// do nothing
+			// for better performance, function is generated after validating all elements
 		default:
-			currType = fmt.Sprintf("%T", t)
 			a.chain.fail(AssertionFailure{
 				Type:      AssertBelongs,
-				Actual:    &AssertionValue{currType},
-				Expected:  &AssertionValue{AssertionList{"boolean", "number", "string"}},
-				Reference: &AssertionValue{v},
+				Actual:    &AssertionValue{fmt.Sprintf("%T", curr)},
+				Expected:  &AssertionValue{AssertionList{"Boolean", "Number", "String"}},
+				Reference: &AssertionValue{curr},
 				Errors: []error{
-					errors.New(`expected: type of each element of reference array
-					 belongs to given list`),
-					fmt.Errorf("element %v has type %s", v, currType),
+					errors.New("expected: type of each element of reference array" +
+						"belongs to given list"),
+					fmt.Errorf("element %v has type %s", curr, fmt.Sprintf("%T", curr)),
 				},
 			})
 			return fn
 		}
-		if prevType != "" && currType != prevType {
+		if prev != nil && fmt.Sprintf("%T", curr) != fmt.Sprintf("%T", prev) {
 			a.chain.fail(AssertionFailure{
 				Type:      AssertEqual,
-				Actual:    &AssertionValue{currType},
-				Expected:  &AssertionValue{prevType},
-				Reference: &AssertionValue{v},
+				Actual:    &AssertionValue{fmt.Sprintf("%T", curr)},
+				Expected:  &AssertionValue{fmt.Sprintf("%T", prev)},
+				Reference: &AssertionValue{curr},
 				Errors: []error{
 					errors.New("expected: types of all elements of reference array are the same"),
 					fmt.Errorf("previous element %v has type %s and current element %v has type %s",
-						prevElem, prevType, v, currType),
+						prev, fmt.Sprintf("%T", prev), curr, fmt.Sprintf("%T", curr)),
 				},
 			})
 			return fn
 		}
-		prevType = currType
-		prevElem = v
+		prev = curr
 	}
+
+	// generate builtin comparator function
+	if len(a.value) > 0 {
+		switch a.value[0].(type) {
+		case bool:
+			fn = func(x, y *Value) bool {
+				xVal := x.Boolean().Raw()
+				yVal := y.Boolean().Raw()
+				return (!xVal && yVal)
+			}
+		case float64:
+			fn = func(x, y *Value) bool {
+				xVal := x.Number().Raw()
+				yVal := y.Number().Raw()
+				return xVal < yVal
+			}
+		case string:
+			fn = func(x, y *Value) bool {
+				xVal := x.String().Raw()
+				yVal := y.String().Raw()
+				return xVal < yVal
+			}
+		}
+	}
+
 	return fn
+}
+
+func countElement(array []interface{}, element interface{}) int {
+	count := 0
+	for _, e := range array {
+		if reflect.DeepEqual(element, e) {
+			count++
+		}
+	}
+	return count
 }
