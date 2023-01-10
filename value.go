@@ -9,7 +9,6 @@ import (
 // (Go representation of arbitrary JSON value) and cast it to
 // concrete type.
 type Value struct {
-	noCopy *noCopy
 	chain  *chain
 	value  interface{}
 }
@@ -71,7 +70,7 @@ func NewValueC(config Config, value interface{}) *Value {
 }
 
 func newValue(parent *chain, val interface{}) *Value {
-	v := &Value{noCopy: &noCopy{}, chain: parent.clone(), value: nil}
+	v := &Value{parent.clone(), nil}
 
 	if val != nil {
 		v.value, _ = canonValue(v.chain, val)

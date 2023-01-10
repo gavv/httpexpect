@@ -14,7 +14,7 @@ import (
 // String provides methods to inspect attached string value
 // (Go representation of JSON string).
 type String struct {
-	noCopy *noCopy
+	noCopy noCopy
 	chain  *chain
 	value  string
 }
@@ -42,7 +42,7 @@ func NewStringC(config Config, value string) *String {
 }
 
 func newString(parent *chain, val string) *String {
-	return &String{noCopy: &noCopy{}, chain: parent.clone(), value: val}
+	return &String{noCopy: noCopy{}, chain: parent.clone(), value: val}
 }
 
 // Raw returns underlying value attached to String.

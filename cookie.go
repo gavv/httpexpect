@@ -10,7 +10,7 @@ import (
 type Cookie struct {
 	chain  *chain
 	value  *http.Cookie
-	noCopy *noCopy
+	noCopy noCopy
 }
 
 // NewCookie returns a new Cookie instance.
@@ -46,7 +46,7 @@ func NewCookieC(config Config, value *http.Cookie) *Cookie {
 }
 
 func newCookie(parent *chain, val *http.Cookie) *Cookie {
-	c := &Cookie{noCopy: &noCopy{}, chain: parent.clone(), value: nil}
+	c := &Cookie{noCopy: noCopy{}, chain: parent.clone(), value: nil}
 
 	if val == nil {
 		c.chain.fail(AssertionFailure{

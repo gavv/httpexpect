@@ -7,7 +7,7 @@ import (
 // Boolean provides methods to inspect attached bool value
 // (Go representation of JSON boolean).
 type Boolean struct {
-	noCopy *noCopy
+	noCopy noCopy
 	chain  *chain
 	value  bool
 }
@@ -35,7 +35,7 @@ func NewBooleanC(config Config, value bool) *Boolean {
 }
 
 func newBoolean(parent *chain, val bool) *Boolean {
-	return &Boolean{noCopy: &noCopy{}, chain: parent.clone(), value: val}
+	return &Boolean{noCopy: noCopy{}, chain: parent.clone(), value: val}
 }
 
 // Raw returns underlying value attached to Boolean.

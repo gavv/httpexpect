@@ -7,7 +7,7 @@ import (
 
 // Duration provides methods to inspect attached time.Duration value.
 type Duration struct {
-	noCopy *noCopy
+	noCopy noCopy
 	chain  *chain
 	value  *time.Duration
 }
@@ -37,7 +37,7 @@ func NewDurationC(config Config, value time.Duration) *Duration {
 }
 
 func newDuration(parent *chain, val *time.Duration) *Duration {
-	return &Duration{noCopy: &noCopy{}, chain: parent.clone(), value: val}
+	return &Duration{noCopy: noCopy{}, chain: parent.clone(), value: val}
 }
 
 // Raw returns underlying time.Duration value attached to Duration.

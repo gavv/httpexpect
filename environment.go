@@ -13,7 +13,7 @@ import (
 //	env.Put("key", "value")
 //	value := env.GetString("key")
 type Environment struct {
-	noCopy *noCopy
+	noCopy noCopy
 	chain  *chain
 	data   map[string]interface{}
 }

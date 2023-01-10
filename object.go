@@ -10,7 +10,7 @@ import (
 // Object provides methods to inspect attached map[string]interface{} object
 // (Go representation of JSON object).
 type Object struct {
-	noCopy *noCopy
+	noCopy noCopy
 	chain  *chain
 	value  map[string]interface{}
 }
@@ -40,7 +40,7 @@ func NewObjectC(config Config, value map[string]interface{}) *Object {
 }
 
 func newObject(parent *chain, val map[string]interface{}) *Object {
-	o := &Object{noCopy: &noCopy{}, chain: parent.clone(), value: nil}
+	o := &Object{noCopy: noCopy{}, chain: parent.clone(), value: nil}
 
 	if val == nil {
 		o.chain.fail(AssertionFailure{

@@ -26,7 +26,7 @@ type WebsocketConn interface {
 // Websocket provides methods to read from, write into and close WebSocket
 // connection.
 type Websocket struct {
-	noCopy *noCopy
+	noCopy noCopy
 	config Config
 	chain  *chain
 
