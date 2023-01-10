@@ -283,3 +283,230 @@ func (dt *DateTime) NotInRange(min, max time.Time) *DateTime {
 
 	return dt
 }
+
+// Zone returns a new String instance with datetime zone.
+//
+// Example:
+//
+//	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
+//	dt := NewDateTime(t, tm)
+//	dt.Zone().Equal("IST")
+func (dt *DateTime) Zone() *String {
+	dt.chain.enter("Zone()")
+	defer dt.chain.leave()
+
+	if dt.chain.failed() {
+		return newString(dt.chain, "")
+	}
+
+	zone, _ := dt.value.Zone()
+	return newString(dt.chain, zone)
+}
+
+// Year returns the year in which datetime occurs,
+// in the range [0, 9999]
+//
+// Example:
+//
+//	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
+//	dt := NewDateTime(t, tm)
+//	dt.Year().Equal(2022)
+func (dt *DateTime) Year() *Number {
+	dt.chain.enter("Year()")
+	defer dt.chain.leave()
+
+	if dt.chain.failed() {
+		return newNumber(dt.chain, float64(0))
+	}
+
+	return newNumber(dt.chain, float64(dt.value.Year()))
+}
+
+// Month returns the month of the year specified by datetime,
+// in the range [1,12].
+//
+// Example:
+//
+//	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
+//	dt := NewDateTime(t, tm)
+//	dt.Month().Equal(12)
+func (dt *DateTime) Month() *Number {
+	dt.chain.enter("Month()")
+	defer dt.chain.leave()
+
+	if dt.chain.failed() {
+		return newNumber(dt.chain, float64(0))
+	}
+
+	return newNumber(dt.chain, float64(dt.value.Month()))
+}
+
+// Day returns the day of the month specified datetime,
+// in the range [1,31].
+//
+// Example:
+//
+//	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
+//	dt := NewDateTime(t, tm)
+//	dt.Day().Equal(30)
+func (dt *DateTime) Day() *Number {
+	dt.chain.enter("Day()")
+	defer dt.chain.leave()
+
+	if dt.chain.failed() {
+		return newNumber(dt.chain, float64(0))
+	}
+
+	return newNumber(dt.chain, float64(dt.value.Day()))
+}
+
+// Weekday returns the day of the week specified by datetime,
+// in the range [0, 6], 0 corresponds to Sunday
+//
+// Example:
+//
+//	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
+//	dt := NewDateTime(t, tm)
+//	dt.WeekDay().Equal(time.Friday)
+func (dt *DateTime) WeekDay() *Number {
+	dt.chain.enter("WeekDay()")
+	defer dt.chain.leave()
+
+	if dt.chain.failed() {
+		return newNumber(dt.chain, float64(0))
+	}
+
+	return newNumber(dt.chain, float64(dt.value.Weekday()))
+}
+
+// YearDay returns the day of the year specified by datetime,
+// in the range [1,365] for non-leap years,
+// and [1,366] in leap years.
+//
+// Example:
+//
+//	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
+//	dt := NewDateTime(t, tm)
+//	dt.YearDay().Equal(364)
+func (dt *DateTime) YearDay() *Number {
+	dt.chain.enter("YearDay()")
+	defer dt.chain.leave()
+
+	if dt.chain.failed() {
+		return newNumber(dt.chain, float64(0))
+	}
+
+	return newNumber(dt.chain, float64(dt.value.YearDay()))
+}
+
+// Hour returns the hour within the day specified by datetime,
+// in the range [0, 23].
+//
+// Example:
+//
+//	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
+//	dt := NewDateTime(t, tm)
+//	dt.Hour().Equal(15)
+func (dt *DateTime) Hour() *Number {
+	dt.chain.enter("Hour()")
+	defer dt.chain.leave()
+
+	if dt.chain.failed() {
+		return newNumber(dt.chain, float64(0))
+	}
+
+	return newNumber(dt.chain, float64(dt.value.Hour()))
+}
+
+// Minute returns the minute offset within the hour specified by datetime,
+// in the range [0, 59].
+//
+// Example:
+//
+//	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
+//	dt := NewDateTime(t, tm)
+//	dt.Minute().Equal(4)
+func (dt *DateTime) Minute() *Number {
+	dt.chain.enter("Minute()")
+	defer dt.chain.leave()
+
+	if dt.chain.failed() {
+		return newNumber(dt.chain, float64(0))
+	}
+
+	return newNumber(dt.chain, float64(dt.value.Minute()))
+}
+
+// Second returns the second offset within the minute specified by datetime,
+// in the range [0, 59].
+//
+// Example:
+//
+//	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
+//	dt := NewDateTime(t, tm)
+//	dt.Second().Equal(5)
+func (dt *DateTime) Second() *Number {
+	dt.chain.enter("Second()")
+	defer dt.chain.leave()
+
+	if dt.chain.failed() {
+		return newNumber(dt.chain, float64(0))
+	}
+
+	return newNumber(dt.chain, float64(dt.value.Second()))
+}
+
+// Nanosecond returns the nanosecond offset within the second specified by datetime,
+// in the range [0, 999999999].
+//
+// Example:
+//
+//	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
+//	dt := NewDateTime(t, tm)
+//	dt.Nanosecond().Equal(0)
+func (dt *DateTime) Nanosecond() *Number {
+	dt.chain.enter("Nanosecond()")
+	defer dt.chain.leave()
+
+	if dt.chain.failed() {
+		return newNumber(dt.chain, float64(0))
+	}
+
+	return newNumber(dt.chain, float64(dt.value.Nanosecond()))
+}
+
+// AsUTC returns a new DateTime instance in UTC timeZone.
+//
+// Example:
+//
+//	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
+//	dt := NewDateTime(t, tm)
+//	dt.AsUTC().Zone().Equal("UTC")
+func (dt *DateTime) AsUTC() *DateTime {
+	dt.chain.enter("AsUTC()")
+	defer dt.chain.leave()
+
+	if dt.chain.failed() {
+		return dt
+	}
+
+	return newDateTime(dt.chain, dt.value.UTC())
+}
+
+// AsLocal returns a new DateTime instance in Local timeZone.
+//
+// Example:
+//
+//	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
+//	dt := NewDateTime(t, tm)
+//	dt.AsLocal().Zone().Equal("IST")
+func (dt *DateTime) AsLocal() *DateTime {
+	dt.chain.enter("AsLocal()")
+	defer dt.chain.leave()
+
+	if dt.chain.failed() {
+		return dt
+	}
+
+	return newDateTime(dt.chain, dt.value.Local())
+}

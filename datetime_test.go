@@ -25,6 +25,18 @@ func TestDateTime_Failed(t *testing.T) {
 	value.Le(tm)
 	value.InRange(tm, tm)
 	value.NotInRange(tm, tm)
+	value.Zone()
+	value.Year()
+	value.Month()
+	value.Day()
+	value.WeekDay()
+	value.YearDay()
+	value.Hour()
+	value.Minute()
+	value.Second()
+	value.Nanosecond()
+	value.AsUTC()
+	value.AsLocal()
 }
 
 func TestDateTime_Constructors(t *testing.T) {
@@ -182,4 +194,40 @@ func TestDateTime_InRange(t *testing.T) {
 	value.NotInRange(time.Unix(0, 1234+1), time.Unix(0, 1234-1))
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
+}
+
+func TestDateTimeGetters(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	parsedTime, _ := time.Parse(time.UnixDate, "FRI Dec 30 15:04:05 IST 2022")
+
+	value := NewDateTime(reporter, parsedTime)
+
+	value.chain.assertNotFailed(t)
+
+	value.Zone().chain.assertNotFailed(t)
+	value.Year().chain.assertNotFailed(t)
+	value.Month().chain.assertNotFailed(t)
+	value.Day().chain.assertNotFailed(t)
+	value.WeekDay().chain.assertNotFailed(t)
+	value.YearDay().chain.assertNotFailed(t)
+	value.Hour().chain.assertNotFailed(t)
+	value.Minute().chain.assertNotFailed(t)
+	value.Second().chain.assertNotFailed(t)
+	value.Nanosecond().chain.assertNotFailed(t)
+	value.AsUTC().chain.assertNotFailed(t)
+	value.AsLocal().chain.assertNotFailed(t)
+
+	expectedTime := parsedTime
+	expectedZone, _ := expectedTime.Zone()
+	assert.Equal(t, expectedZone, value.Zone().Raw())
+	assert.Equal(t, float64(expectedTime.Year()), value.Year().Raw())
+	assert.Equal(t, float64(expectedTime.Month()), value.Month().Raw())
+	assert.Equal(t, float64(expectedTime.Day()), value.Day().Raw())
+	assert.Equal(t, float64(expectedTime.Weekday()), value.WeekDay().Raw())
+	assert.Equal(t, float64(expectedTime.YearDay()), value.YearDay().Raw())
+	assert.Equal(t, float64(expectedTime.Hour()), value.Hour().Raw())
+	assert.Equal(t, float64(expectedTime.Minute()), value.Minute().Raw())
+	assert.Equal(t, float64(expectedTime.Second()), value.Second().Raw())
+	assert.Equal(t, float64(expectedTime.Nanosecond()), value.Nanosecond().Raw())
 }
