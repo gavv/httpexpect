@@ -9,8 +9,8 @@ import (
 // (Go representation of arbitrary JSON value) and cast it to
 // concrete type.
 type Value struct {
-	chain  *chain
-	value  interface{}
+	chain *chain
+	value interface{}
 }
 
 // NewValue returns a new Value instance.
