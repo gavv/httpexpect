@@ -117,13 +117,13 @@ func TestArray_Constructors(t *testing.T) {
 
 func TestArray_Decode(t *testing.T) {
 	t.Run("Decode with slice of interface", func(t *testing.T) {
-		target := []interface{}{}
+		var target []interface{}
 		testValue := []interface{}{"Foo", 123.0}
 		reporter := newMockReporter(t)
 		arr := NewArray(reporter, testValue)
 		arr.Decode(&target)
-		arr.chain.assertNotFailed(reporter)
-		arr.Equal(target)
+		arr.chain.assertNotFailed(t)
+		assert.Equal(t, testValue, target)
 	})
 	t.Run("Decode with slice of struct", func(t *testing.T) {
 		reporter := newMockReporter(t)
@@ -142,8 +142,17 @@ func TestArray_Decode(t *testing.T) {
 		var target []S
 		actualStruct := []S{{123}, {456}}
 		arr.Decode(&target)
-		arr.chain.assertFailed(reporter)
-		assert.Equal(reporter, actualStruct, target)
+		arr.chain.assertNotFailed(t)
+		assert.Equal(t, actualStruct, target)
+	})
+	t.Run("Empty interface", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		testValue := []interface{}{"Foo", 123.0}
+		var target interface{}
+		arr := NewArray(reporter, testValue)
+		arr.Decode(&target)
+		arr.chain.assertNotFailed(t)
+		assert.Equal(t, testValue, target)
 	})
 	t.Run("Passing unmarshable value", func(t *testing.T) {
 		reporter := newMockReporter(t)
@@ -166,15 +175,7 @@ func TestArray_Decode(t *testing.T) {
 		arr.Decode(nil)
 		arr.chain.assertFailed(t)
 	})
-	t.Run("Empty interface", func(t *testing.T) {
-		reporter := newMockReporter(t)
-		testValue := []interface{}{"Foo", 123.0}
-		var target interface{}
-		arr := NewArray(reporter, testValue)
-		arr.Decode(&target)
-		arr.chain.assertNotFailed(reporter)
-		assert.Equal(reporter, testValue, target)
-	})
+
 }
 
 func TestArray_Getters(t *testing.T) {
