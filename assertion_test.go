@@ -195,7 +195,205 @@ func TestAssertion_HandlerPanics(t *testing.T) {
 	})
 }
 
-func TestAssertion_Validation(t *testing.T) {
+func TestAssertion_ValidateTraits(t *testing.T) {
+	tests := []struct {
+		testName          string
+		errorContainsText string
+		failure           AssertionFailure
+		traits            fieldTraits
+	}{
+		{
+			testName:          "bad Type",
+			errorContainsText: "AssertionType",
+			failure: AssertionFailure{
+				Type: AssertionType(9999),
+			},
+			traits: fieldTraits{
+				Actual: fieldRequired,
+			},
+		},
+		{
+			testName:          "required Actual",
+			errorContainsText: "Actual",
+			failure: AssertionFailure{
+				Actual: nil,
+			},
+			traits: fieldTraits{
+				Actual: fieldRequired,
+			},
+		},
+		{
+			testName:          "denied Actual",
+			errorContainsText: "Actual",
+			failure: AssertionFailure{
+				Actual: &AssertionValue{},
+			},
+			traits: fieldTraits{
+				Actual: fieldDenied,
+			},
+		},
+		{
+			testName:          "required Expected",
+			errorContainsText: "Expected",
+			failure: AssertionFailure{
+				Expected: nil,
+			},
+			traits: fieldTraits{
+				Expected: fieldRequired,
+			},
+		},
+		{
+			testName:          "denied Expected",
+			errorContainsText: "Expected",
+			failure: AssertionFailure{
+				Expected: &AssertionValue{},
+			},
+			traits: fieldTraits{
+				Expected: fieldDenied,
+			},
+		},
+		{
+			testName:          "required on Expected",
+			errorContainsText: "",
+			failure: AssertionFailure{
+				Expected: nil,
+			},
+			traits: fieldTraits{
+				Range: fieldRequired,
+			},
+		},
+		{
+			testName:          "AssertionRange should not be pointer",
+			errorContainsText: "AssertionRange",
+			failure: AssertionFailure{
+				Expected: &AssertionValue{
+					Value: &AssertionRange{},
+				},
+			},
+			traits: fieldTraits{
+				Range: fieldRequired,
+			},
+		},
+		{
+			testName:          "Min should be non-nil",
+			errorContainsText: "AssertionRange",
+			failure: AssertionFailure{
+				Expected: &AssertionValue{
+					Value: AssertionRange{
+						Max: 1,
+					},
+				},
+			},
+			traits: fieldTraits{
+				Range: fieldRequired,
+			},
+		},
+		{
+			testName:          "Max should be non-nil",
+			errorContainsText: "AssertionRange",
+			failure: AssertionFailure{
+				Expected: &AssertionValue{
+					Value: AssertionRange{
+						Min: 1,
+					},
+				},
+			},
+			traits: fieldTraits{
+				Range: fieldRequired,
+			},
+		},
+		{
+			testName:          "AssertionList should not be pointer",
+			errorContainsText: "AssertionValue",
+			failure: AssertionFailure{
+				Expected: &AssertionValue{
+					Value: &AssertionList{},
+				},
+			},
+			traits: fieldTraits{
+				List: fieldRequired,
+			},
+		},
+		{
+			testName:          "AssertionList should be pointer",
+			errorContainsText: "AssertionList",
+			failure: AssertionFailure{
+				Expected: &AssertionValue{
+					Value: &AssertionList{},
+				},
+			},
+			traits: fieldTraits{
+				List: fieldRequired,
+			},
+		},
+		{
+			testName:          "AssertionList should be not nil",
+			errorContainsText: "AssertionList",
+			failure: AssertionFailure{
+				Expected: &AssertionValue{
+					Value: AssertionList{},
+				},
+			},
+			traits: fieldTraits{
+				List: fieldRequired,
+			},
+		},
+		{
+			testName:          "Expected can't be slice of single element",
+			errorContainsText: "",
+			failure: AssertionFailure{
+				Expected: &AssertionValue{
+					Value: AssertionList{[]int{1}},
+				},
+			},
+			traits: fieldTraits{
+				List: fieldRequired,
+			},
+		},
+		{
+			testName:          "required List",
+			errorContainsText: "",
+			failure: AssertionFailure{
+				Expected: nil,
+			},
+			traits: fieldTraits{
+				List: fieldRequired,
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.testName, func(t *testing.T) {
+			err := validateTraits(&test.failure, test.traits)
+			require.Error(t, err)
+			require.Contains(t, err.Error(), test.errorContainsText)
+		})
+	}
+
+	t.Run("no error", func(t *testing.T) {
+		err := validateTraits(&AssertionFailure{}, fieldTraits{})
+		require.Nil(t, err)
+	})
+
+	t.Run("panic unsupported", func(t *testing.T) {
+		assert.Panics(t, func() {
+			err := validateTraits(&AssertionFailure{}, fieldTraits{List: fieldDenied})
+			if err != nil {
+				return
+			}
+		})
+
+		assert.Panics(t, func() {
+			err := validateTraits(&AssertionFailure{}, fieldTraits{Range: fieldDenied})
+			if err != nil {
+				return
+			}
+		})
+	})
+
+}
+
+func TestAssertion_ValidateAssertion(t *testing.T) {
 	tests := []struct {
 		testName          string
 		errorContainsText string
@@ -475,185 +673,5 @@ func TestAssertion_Strings(t *testing.T) {
 		for i := 0; i < 100; i++ {
 			assert.NotEmpty(t, AssertionSeverity(i).String())
 		}
-	})
-}
-
-func TestAssertion_ValidateTraits(t *testing.T) {
-	tests := []struct {
-		testName          string
-		errorContainsText string
-		failure           AssertionFailure
-		traits            fieldTraits
-	}{
-		{
-			testName:          "bad Type",
-			errorContainsText: "AssertionType",
-			failure: AssertionFailure{
-				Type: AssertionType(9999),
-			},
-			traits: fieldTraits{
-				Actual: fieldRequired,
-			},
-		},
-		{
-			testName:          "required Actual",
-			errorContainsText: "should have Actual",
-			failure: AssertionFailure{
-				Actual: nil,
-			},
-			traits: fieldTraits{
-				Actual: fieldRequired,
-			},
-		},
-		{
-			testName:          "denied Actual",
-			errorContainsText: "can't have Actual",
-			failure: AssertionFailure{
-				Actual: &AssertionValue{},
-			},
-			traits: fieldTraits{
-				Actual: fieldDenied,
-			},
-		},
-		{
-			testName:          "required Expected",
-			errorContainsText: "should have Expected",
-			failure: AssertionFailure{
-				Expected: nil,
-			},
-			traits: fieldTraits{
-				Expected: fieldRequired,
-			},
-		},
-		{
-			testName:          "denied Expected",
-			errorContainsText: "can't have Expected",
-			failure: AssertionFailure{
-				Expected: &AssertionValue{},
-			},
-			traits: fieldTraits{
-				Expected: fieldDenied,
-			},
-		},
-		{
-			testName:          "Required value on Expected to be pointer to AssertionRange",
-			errorContainsText: "AssertionValue should contain AssertionRange",
-			failure: AssertionFailure{
-				Expected: &AssertionValue{
-					Value: &AssertionRange{},
-				},
-			},
-			traits: fieldTraits{
-				Range: fieldRequired,
-			},
-		},
-		{
-			testName:          "Required value on Expected to have min on range",
-			errorContainsText: "AssertionRange value should have non-nil Min field",
-			failure: AssertionFailure{
-				Expected: &AssertionValue{
-					Value: AssertionRange{
-						Max: 1,
-					},
-				},
-			},
-			traits: fieldTraits{
-				Range: fieldRequired,
-			},
-		},
-		{
-			testName:          "Required value on Expected to have max on range",
-			errorContainsText: "AssertionRange value should have non-nil Max field",
-			failure: AssertionFailure{
-				Expected: &AssertionValue{
-					Value: AssertionRange{
-						Min: 1,
-					},
-				},
-			},
-			traits: fieldTraits{
-				Range: fieldRequired,
-			},
-		},
-		{
-			testName:          "Required value on Expected to be pointer to AssertionList",
-			errorContainsText: "AssertionValue should contain AssertionList",
-			failure: AssertionFailure{
-				Expected: &AssertionValue{
-					Value: &AssertionList{},
-				},
-			},
-			traits: fieldTraits{
-				List: fieldRequired,
-			},
-		},
-		{
-			testName:          "Required value on Expected to be pointer to AssertionList",
-			errorContainsText: "AssertionValue should contain AssertionList",
-			failure: AssertionFailure{
-				Expected: &AssertionValue{
-					Value: &AssertionList{},
-				},
-			},
-			traits: fieldTraits{
-				List: fieldRequired,
-			},
-		},
-		{
-			testName:          "Required value on Expected AssertionList with len",
-			errorContainsText: "AssertionList should be non-empty",
-			failure: AssertionFailure{
-				Expected: &AssertionValue{
-					Value: AssertionList{},
-				},
-			},
-			traits: fieldTraits{
-				List: fieldRequired,
-			},
-		},
-		{
-			testName:          "Required Expected AssertionList with values not being a slice",
-			errorContainsText: "but it contains a single element which itself is a list",
-			failure: AssertionFailure{
-				Expected: &AssertionValue{
-					Value: AssertionList{[]int{1}},
-				},
-			},
-			traits: fieldTraits{
-				List: fieldRequired,
-			},
-		},
-		{
-			testName:          "Required Expected",
-			errorContainsText: "",
-			failure: AssertionFailure{
-				Expected: nil,
-			},
-			traits: fieldTraits{
-				List: fieldRequired,
-			},
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.testName, func(t *testing.T) {
-			err := validateTraits(&test.failure, test.traits)
-			require.Error(t, err)
-			require.Contains(t, err.Error(), test.errorContainsText)
-		})
-	}
-
-	t.Run("nil Errors", func(t *testing.T) {
-		err := validateTraits(&AssertionFailure{}, fieldTraits{})
-		require.Nil(t, err)
-	})
-
-	t.Run("panic unsupported", func(t *testing.T) {
-		assert.Panics(t, func() {
-			err := validateTraits(&AssertionFailure{}, fieldTraits{List: fieldDenied})
-			if err != nil {
-				return
-			}
-		})
 	})
 }
