@@ -432,7 +432,7 @@ func (e *Expect) Env() *Environment {
 }
 
 func (e *Expect) clone() *Expect {
-	ret := *e
+	ret := *e //nolint
 
 	ret.builders = nil
 	ret.builders = append(ret.builders, e.builders...)
