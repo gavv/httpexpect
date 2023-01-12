@@ -35,7 +35,7 @@ func NewBooleanC(config Config, value bool) *Boolean {
 }
 
 func newBoolean(parent *chain, val bool) *Boolean {
-	return &Boolean{noCopy: noCopy{}, chain: parent.clone(), value: val}
+	return &Boolean{chain: parent.clone(), value: val}
 }
 
 // Raw returns underlying value attached to Boolean.

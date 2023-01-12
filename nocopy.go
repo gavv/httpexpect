@@ -1,11 +1,11 @@
 package httpexpect
 
 // noCopy struct is a special type that is used to prevent a value from being copied.
-// so `go vet` gives a warning if this struct is copied.
-// It has two methods, `Lock` and `Unlock`, that do not do anything.
-// The purpose of the `noCopy` struct is to prevent a value that has
-// it as a field from being copied.
-// Every matcher struct, e.g. Value, Object, Array, etc. contains a chain instance.
+// `go vet` gives a warning if it finds that a struct with a field of this type is being copied.
+// To enable this behavior, this struct provides two methods `Lock` and `Unlock, that do not do anything.
+// See more details here:
+//   https://github.com/golang/go/issues/8005
+//   https://stackoverflow.com/questions/52494458
 
 type noCopy struct{}
 
