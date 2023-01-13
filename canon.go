@@ -106,6 +106,7 @@ func canonDecode(chain *chain, value interface{}, target interface{}) {
 		})
 		return
 	}
+
 	b, err := json.Marshal(value)
 	if err != nil {
 		chain.fail(AssertionFailure{
@@ -115,7 +116,9 @@ func canonDecode(chain *chain, value interface{}, target interface{}) {
 				errors.New("expected: marshable value"),
 			},
 		})
+		return
 	}
+
 	if err := json.Unmarshal(b, target); err != nil {
 		chain.fail(AssertionFailure{
 			Type:   AssertValid,
@@ -124,5 +127,6 @@ func canonDecode(chain *chain, value interface{}, target interface{}) {
 				errors.New("expected: value can be unmarshaled into target argument"),
 			},
 		})
+		return
 	}
 }

@@ -116,20 +116,26 @@ func TestArray_Constructors(t *testing.T) {
 }
 
 func TestArray_Decode(t *testing.T) {
-	t.Run("Decode with slice of interface", func(t *testing.T) {
-		var target []interface{}
-		testValue := []interface{}{"Foo", 123.0}
+	t.Run("Decode into slice of empty interfaces", func(t *testing.T) {
 		reporter := newMockReporter(t)
+
+		testValue := []interface{}{"Foo", 123.0}
 		arr := NewArray(reporter, testValue)
+
+		var target []interface{}
 		arr.Decode(&target)
+
 		arr.chain.assertNotFailed(t)
 		assert.Equal(t, testValue, target)
 	})
-	t.Run("Decode with slice of struct", func(t *testing.T) {
+	t.Run("Decode into slice of structs", func(t *testing.T) {
 		reporter := newMockReporter(t)
+
 		type S struct {
 			Foo int `json:"foo"`
 		}
+
+		actualStruct := []S{{123}, {456}}
 		testValue := []interface{}{
 			map[string]interface{}{
 				"foo": 123,
@@ -139,40 +145,43 @@ func TestArray_Decode(t *testing.T) {
 			},
 		}
 		arr := NewArray(reporter, testValue)
+
 		var target []S
-		actualStruct := []S{{123}, {456}}
 		arr.Decode(&target)
+
 		arr.chain.assertNotFailed(t)
 		assert.Equal(t, actualStruct, target)
 	})
-	t.Run("Empty interface", func(t *testing.T) {
+	t.Run("Decode into empty interface", func(t *testing.T) {
 		reporter := newMockReporter(t)
+
 		testValue := []interface{}{"Foo", 123.0}
-		var target interface{}
 		arr := NewArray(reporter, testValue)
+
+		var target interface{}
 		arr.Decode(&target)
+
 		arr.chain.assertNotFailed(t)
 		assert.Equal(t, testValue, target)
 	})
-	t.Run("Passing unmarshable value", func(t *testing.T) {
+	t.Run("Target is unmarshable", func(t *testing.T) {
 		reporter := newMockReporter(t)
-		testValue := []interface{}{
-			map[string]interface{}{
-				"foo": 123,
-			},
-			map[string]interface{}{
-				"foo": 456,
-			},
-		}
+
+		testValue := []interface{}{"Foo", 123.0}
 		arr := NewArray(reporter, testValue)
+
 		arr.Decode(123)
+
 		arr.chain.assertFailed(t)
 	})
 	t.Run("Target is nil", func(t *testing.T) {
 		reporter := newMockReporter(t)
+
 		testValue := []interface{}{"Foo", 123.0}
 		arr := NewArray(reporter, testValue)
+
 		arr.Decode(nil)
+
 		arr.chain.assertFailed(t)
 	})
 
