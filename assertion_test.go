@@ -253,8 +253,8 @@ func TestAssertion_ValidateTraits(t *testing.T) {
 			},
 		},
 		{
-			testName:          "required on Expected",
-			errorContainsText: "",
+			testName:          "required AssertionRange",
+			errorContainsText: "Expected",
 			failure: AssertionFailure{
 				Expected: nil,
 			},
@@ -315,18 +315,6 @@ func TestAssertion_ValidateTraits(t *testing.T) {
 			},
 		},
 		{
-			testName:          "AssertionList should be pointer",
-			errorContainsText: "AssertionList",
-			failure: AssertionFailure{
-				Expected: &AssertionValue{
-					Value: &AssertionList{},
-				},
-			},
-			traits: fieldTraits{
-				List: fieldRequired,
-			},
-		},
-		{
 			testName:          "AssertionList should be not nil",
 			errorContainsText: "AssertionList",
 			failure: AssertionFailure{
@@ -339,8 +327,8 @@ func TestAssertion_ValidateTraits(t *testing.T) {
 			},
 		},
 		{
-			testName:          "Expected can't be slice of single element",
-			errorContainsText: "",
+			testName:          "AssertionList can't be slice of single element",
+			errorContainsText: "AssertionList",
 			failure: AssertionFailure{
 				Expected: &AssertionValue{
 					Value: AssertionList{[]int{1}},
@@ -351,8 +339,8 @@ func TestAssertion_ValidateTraits(t *testing.T) {
 			},
 		},
 		{
-			testName:          "required List",
-			errorContainsText: "",
+			testName:          "required AssertionList",
+			errorContainsText: "Expected",
 			failure: AssertionFailure{
 				Expected: nil,
 			},
