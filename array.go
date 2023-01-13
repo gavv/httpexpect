@@ -1227,7 +1227,7 @@ func (a *Array) IsOrdered(less ...func(x, y *Value) bool) *Array {
 		return a
 	}
 
-	if len(a.value) == 0 {
+	if len(a.value) <= 1 {
 		return a
 	}
 
@@ -1269,29 +1269,132 @@ func (a *Array) IsOrdered(less ...func(x, y *Value) bool) *Array {
 	return a
 }
 
+// NotOrdered succeeds if array is not ordered based on optional `comparator` function.
+// For default, it will use built-in comparator function for each data type.
+// Built-in comparator requires all elements in the array to have same data type.
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{102, 101, 100})
+//	array.NotOrdered() // succeeds
+//	array.IsOrdered(func(x, y *httpexpect.Value) bool {
+//		return x.Number().Raw() < y.Number().Raw()
+//	}) // succeeds
+func (a *Array) NotOrdered(less ...func(x, y *Value) bool) *Array {
+	a.chain.enter("NotOrdered()")
+	defer a.chain.leave()
+
+	if a.chain.failed() {
+		return a
+	}
+
+	if len(less) > 1 {
+		a.chain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected multiple less arguments"),
+			},
+		})
+		return a
+	}
+
+	if len(a.value) <= 1 {
+		a.chain.fail(AssertionFailure{
+			Type:      AssertLt,
+			Actual:    &AssertionValue{a.value},
+			Expected:  &AssertionValue{a.value}, // FIXME: reverse
+			Reference: &AssertionValue{a.value},
+			Errors: []error{
+				errors.New("expected: array is not ordered"),
+				// fmt.Errorf("element %v must not be less than element %v, but it is",
+				// 	x.value, y.value),
+			},
+		})
+		return a
+	}
+
+	var lessFn func(x, y *Value) bool
+	if len(less) == 1 {
+		lessFn = less[0]
+	} else {
+		lessFn = a.getBuiltinComparator()
+		if a.chain.failed() {
+			return a
+		}
+	}
+
+	var i int
+	ordered := true
+	for i = 0; i < len(a.value)-1; i++ {
+		xChain := a.chain.clone()
+		xChain.replace("NotOrdered[%d]", i)
+		x := newValue(xChain, a.value[i])
+
+		yChain := a.chain.clone()
+		yChain.replace("NotOrdered[%d]", i+1)
+		y := newValue(yChain, a.value[i+1])
+
+		if lessFn(y, x) {
+			ordered = false
+			break
+		}
+	}
+
+	if ordered {
+		a.chain.fail(AssertionFailure{
+			Type:      AssertLt,
+			Actual:    &AssertionValue{a.value},
+			Expected:  &AssertionValue{a.value}, // FIXME:
+			Reference: &AssertionValue{a.value},
+			Errors: []error{
+				errors.New("expected: array is not ordered"),
+				// fmt.Errorf("element %v must not be less than element %v, but it is",
+				// 	x.value, y.value),
+			},
+		})
+	}
+
+	return a
+}
+
 func (a *Array) getBuiltinComparator() func(x, y *Value) bool {
 	var fn func(x, y *Value) bool
+
+	a.validateElementsType()
+	if a.chain.failed() {
+		return fn
+	}
+
+	fn = a.constructLessFn()
+
+	return fn
+}
+
+func (a *Array) validateElementsType() {
 	var prev interface{}
-	for _, curr := range a.value {
+	for idx, curr := range a.value {
 		switch curr.(type) {
-		case bool, float64, string:
+		case bool, float64, string, nil:
 			// do nothing
 			// for better performance, function is generated after validating all elements
 		default:
 			a.chain.fail(AssertionFailure{
-				Type:      AssertBelongs,
-				Actual:    &AssertionValue{fmt.Sprintf("%T", curr)},
-				Expected:  &AssertionValue{AssertionList{"Boolean", "Number", "String"}},
+				Type:   AssertBelongs,
+				Actual: &AssertionValue{fmt.Sprintf("%T", curr)},
+				Expected: &AssertionValue{AssertionList{
+					"Boolean (bool)",
+					"Number (int*, uint*, float32, float64)",
+					"String (string)"}},
 				Reference: &AssertionValue{curr},
 				Errors: []error{
 					errors.New("expected: type of each element of reference array" +
-						"belongs to given list"),
-					fmt.Errorf("element %v has type %s", curr, fmt.Sprintf("%T", curr)),
+						" belongs to given list"),
+					fmt.Errorf("element %v has type %T", curr, curr),
 				},
 			})
-			return fn
+			return
 		}
-		if prev != nil && fmt.Sprintf("%T", curr) != fmt.Sprintf("%T", prev) {
+		if idx > 0 && fmt.Sprintf("%T", curr) != fmt.Sprintf("%T", prev) {
 			a.chain.fail(AssertionFailure{
 				Type:      AssertEqual,
 				Actual:    &AssertionValue{fmt.Sprintf("%T", curr)},
@@ -1299,35 +1402,42 @@ func (a *Array) getBuiltinComparator() func(x, y *Value) bool {
 				Reference: &AssertionValue{curr},
 				Errors: []error{
 					errors.New("expected: types of all elements of reference array are the same"),
-					fmt.Errorf("previous element %v has type %s and current element %v has type %s",
-						prev, fmt.Sprintf("%T", prev), curr, fmt.Sprintf("%T", curr)),
+					fmt.Errorf("element %v has type %T while element %v has type %T",
+						prev, prev, curr, curr),
 				},
 			})
-			return fn
+			return
 		}
 		prev = curr
 	}
+}
 
-	// generate builtin comparator function
+func (a *Array) constructLessFn() func(x, y *Value) bool {
+	var fn func(x, y *Value) bool
 	if len(a.value) > 0 {
 		switch a.value[0].(type) {
 		case bool:
 			fn = func(x, y *Value) bool {
-				xVal := x.Boolean().Raw()
-				yVal := y.Boolean().Raw()
+				xVal := x.Raw().(bool)
+				yVal := y.Raw().(bool)
 				return (!xVal && yVal)
 			}
 		case float64:
 			fn = func(x, y *Value) bool {
-				xVal := x.Number().Raw()
-				yVal := y.Number().Raw()
+				xVal := x.Raw().(float64)
+				yVal := y.Raw().(float64)
 				return xVal < yVal
 			}
 		case string:
 			fn = func(x, y *Value) bool {
-				xVal := x.String().Raw()
-				yVal := y.String().Raw()
+				xVal := x.Raw().(string)
+				yVal := y.Raw().(string)
 				return xVal < yVal
+			}
+		case nil:
+			fn = func(x, y *Value) bool {
+				// `nil` never less than `nil`
+				return false
 			}
 		}
 	}
