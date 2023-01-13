@@ -275,7 +275,7 @@ func TestAssertion_ValidateTraits(t *testing.T) {
 			},
 		},
 		{
-			testName:          "Min should be non-nil",
+			testName:          "AssertionRange.Min should not be nil",
 			errorContainsText: "AssertionRange",
 			failure: AssertionFailure{
 				Expected: &AssertionValue{
@@ -289,7 +289,7 @@ func TestAssertion_ValidateTraits(t *testing.T) {
 			},
 		},
 		{
-			testName:          "Max should be non-nil",
+			testName:          "AssertionRange.Max should not be nil",
 			errorContainsText: "AssertionRange",
 			failure: AssertionFailure{
 				Expected: &AssertionValue{
@@ -300,6 +300,16 @@ func TestAssertion_ValidateTraits(t *testing.T) {
 			},
 			traits: fieldTraits{
 				Range: fieldRequired,
+			},
+		},
+		{
+			testName:          "required AssertionList",
+			errorContainsText: "Expected",
+			failure: AssertionFailure{
+				Expected: nil,
+			},
+			traits: fieldTraits{
+				List: fieldRequired,
 			},
 		},
 		{
@@ -327,22 +337,12 @@ func TestAssertion_ValidateTraits(t *testing.T) {
 			},
 		},
 		{
-			testName:          "AssertionList can't be slice of single element",
+			testName:          "AssertionList should not be slice of single element",
 			errorContainsText: "AssertionList",
 			failure: AssertionFailure{
 				Expected: &AssertionValue{
 					Value: AssertionList{[]int{1}},
 				},
-			},
-			traits: fieldTraits{
-				List: fieldRequired,
-			},
-		},
-		{
-			testName:          "required AssertionList",
-			errorContainsText: "Expected",
-			failure: AssertionFailure{
-				Expected: nil,
 			},
 			traits: fieldTraits{
 				List: fieldRequired,
