@@ -141,14 +141,14 @@ func (n *Number) NotEqual(value interface{}) *Number {
 	return n
 }
 
-// EqualDelta succeeds if two numerals are within delta of each other.
+// InDelta succeeds if two numerals are within delta of each other.
 //
 // Example:
 //
 //	number := NewNumber(t, 123.0)
-//	number.EqualDelta(123.2, 0.3)
-func (n *Number) EqualDelta(value, delta float64) *Number {
-	n.chain.enter("EqualDelta()")
+//	number.InDelta(123.2, 0.3)
+func (n *Number) InDelta(value, delta float64) *Number {
+	n.chain.enter("InDelta()")
 	defer n.chain.leave()
 
 	if n.chain.failed() {
@@ -186,14 +186,14 @@ func (n *Number) EqualDelta(value, delta float64) *Number {
 	return n
 }
 
-// NotEqualDelta succeeds if two numerals are not within delta of each other.
+// NotInDelta succeeds if two numerals are not within delta of each other.
 //
 // Example:
 //
 //	number := NewNumber(t, 123.0)
-//	number.NotEqualDelta(123.2, 0.1)
-func (n *Number) NotEqualDelta(value, delta float64) *Number {
-	n.chain.enter("NotEqualDelta()")
+//	number.NotInDelta(123.2, 0.1)
+func (n *Number) NotInDelta(value, delta float64) *Number {
+	n.chain.enter("NotInDelta()")
 	defer n.chain.leave()
 
 	if n.chain.failed() {
@@ -226,6 +226,101 @@ func (n *Number) NotEqualDelta(value, delta float64) *Number {
 			},
 		})
 		return n
+	}
+
+	return n
+}
+
+// Deprecated: use InDelta instead.
+func (n *Number) EqualDelta(value, delta float64) *Number {
+	return n.InDelta(value, delta)
+}
+
+// Deprecated: use NotInDelta instead.
+func (n *Number) NotEqualDelta(value, delta float64) *Number {
+	return n.NotInDelta(value, delta)
+}
+
+// InRange succeeds if number is within given range [min; max].
+//
+// min and max should have numeric type convertible to float64. Before comparison,
+// they are converted to float64.
+//
+// Example:
+//
+//	number := NewNumber(t, 123)
+//	number.InRange(float32(100), int32(200))  // success
+//	number.InRange(100, 200)                  // success
+//	number.InRange(123, 123)                  // success
+func (n *Number) InRange(min, max interface{}) *Number {
+	n.chain.enter("InRange()")
+	defer n.chain.leave()
+
+	if n.chain.failed() {
+		return n
+	}
+
+	a, ok := canonNumber(n.chain, min)
+	if !ok {
+		return n
+	}
+
+	b, ok := canonNumber(n.chain, max)
+	if !ok {
+		return n
+	}
+
+	if !(n.value >= a && n.value <= b) {
+		n.chain.fail(AssertionFailure{
+			Type:     AssertInRange,
+			Actual:   &AssertionValue{n.value},
+			Expected: &AssertionValue{AssertionRange{a, b}},
+			Errors: []error{
+				errors.New("expected: number is within given range"),
+			},
+		})
+	}
+
+	return n
+}
+
+// NotInRange succeeds if number is not within given range [min; max].
+//
+// min and max should have numeric type convertible to float64. Before comparison,
+// they are converted to float64.
+//
+// Example:
+//
+//	number := NewNumber(t, 100)
+//	number.NotInRange(0, 99)
+//	number.NotInRange(101, 200)
+func (n *Number) NotInRange(min, max interface{}) *Number {
+	n.chain.enter("NotInRange()")
+	defer n.chain.leave()
+
+	if n.chain.failed() {
+		return n
+	}
+
+	a, ok := canonNumber(n.chain, min)
+	if !ok {
+		return n
+	}
+
+	b, ok := canonNumber(n.chain, max)
+	if !ok {
+		return n
+	}
+
+	if n.value >= a && n.value <= b {
+		n.chain.fail(AssertionFailure{
+			Type:     AssertNotInRange,
+			Actual:   &AssertionValue{n.value},
+			Expected: &AssertionValue{AssertionRange{a, b}},
+			Errors: []error{
+				errors.New("expected: number is not within given range"),
+			},
+		})
 	}
 
 	return n
@@ -372,91 +467,6 @@ func (n *Number) Le(value interface{}) *Number {
 			Expected: &AssertionValue{num},
 			Errors: []error{
 				errors.New("expected: number is less than or equal to given value"),
-			},
-		})
-	}
-
-	return n
-}
-
-// InRange succeeds if number is within given range [min; max].
-//
-// min and max should have numeric type convertible to float64. Before comparison,
-// they are converted to float64.
-//
-// Example:
-//
-//	number := NewNumber(t, 123)
-//	number.InRange(float32(100), int32(200))  // success
-//	number.InRange(100, 200)                  // success
-//	number.InRange(123, 123)                  // success
-func (n *Number) InRange(min, max interface{}) *Number {
-	n.chain.enter("InRange()")
-	defer n.chain.leave()
-
-	if n.chain.failed() {
-		return n
-	}
-
-	a, ok := canonNumber(n.chain, min)
-	if !ok {
-		return n
-	}
-
-	b, ok := canonNumber(n.chain, max)
-	if !ok {
-		return n
-	}
-
-	if !(n.value >= a && n.value <= b) {
-		n.chain.fail(AssertionFailure{
-			Type:     AssertInRange,
-			Actual:   &AssertionValue{n.value},
-			Expected: &AssertionValue{AssertionRange{a, b}},
-			Errors: []error{
-				errors.New("expected: number is within given range"),
-			},
-		})
-	}
-
-	return n
-}
-
-// NotInRange succeeds if number is not within given range [min; max].
-//
-// min and max should have numeric type convertible to float64. Before comparison,
-// they are converted to float64.
-//
-// Example:
-//
-//	number := NewNumber(t, 100)
-//	number.NotInRange(0, 99)
-//	number.NotInRange(101, 200)
-func (n *Number) NotInRange(min, max interface{}) *Number {
-	n.chain.enter("NotInRange()")
-	defer n.chain.leave()
-
-	if n.chain.failed() {
-		return n
-	}
-
-	a, ok := canonNumber(n.chain, min)
-	if !ok {
-		return n
-	}
-
-	b, ok := canonNumber(n.chain, max)
-	if !ok {
-		return n
-	}
-
-	if n.value >= a && n.value <= b {
-		n.chain.fail(AssertionFailure{
-			Type:     AssertNotInRange,
-			Actual:   &AssertionValue{n.value},
-			Expected: &AssertionValue{AssertionRange{a, b}},
-			Errors: []error{
-				errors.New("expected: number is not within given range"),
 			},
 		})
 	}

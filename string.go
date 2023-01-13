@@ -795,14 +795,14 @@ func (s *String) IsASCII() *String {
 	return s
 }
 
-// NotIsASCII succeeds if at least one string character does not belong to ASCII.
+// NotASCII succeeds if at least one string character does not belong to ASCII.
 //
 // Example:
 //
 //	str := NewString(t, "こんにちは")
-//	str.NotIsASCII()
-func (s *String) NotIsASCII() *String {
-	s.chain.enter("NotIsASCII()")
+//	str.NotASCII()
+func (s *String) NotASCII() *String {
+	s.chain.enter("NotASCII()")
 	defer s.chain.leave()
 
 	if s.chain.failed() {
@@ -828,6 +828,11 @@ func (s *String) NotIsASCII() *String {
 	}
 
 	return s
+}
+
+// Deprecated: use NotASCII instead.
+func (s *String) NotIsASCII() *String {
+	return s.NotASCII()
 }
 
 // AsNumber parses float from string and returns a new Number instance

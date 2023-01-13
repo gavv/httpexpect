@@ -57,15 +57,15 @@ func (dt *DateTime) Raw() time.Time {
 	return dt.value
 }
 
-// Zone returns a new String instance with datetime zone.
+// GetZone returns a new String instance with datetime zone.
 //
 // Example:
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.Zone().Equal("IST")
-func (dt *DateTime) Zone() *String {
-	dt.chain.enter("Zone()")
+//	dt.GetZone().Equal("IST")
+func (dt *DateTime) GetZone() *String {
+	dt.chain.enter("GetZone()")
 	defer dt.chain.leave()
 
 	if dt.chain.failed() {
@@ -76,16 +76,16 @@ func (dt *DateTime) Zone() *String {
 	return newString(dt.chain, zone)
 }
 
-// Year returns the year in which datetime occurs,
+// GetYear returns the year in which datetime occurs,
 // in the range [0, 9999]
 //
 // Example:
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.Year().Equal(2022)
-func (dt *DateTime) Year() *Number {
-	dt.chain.enter("Year()")
+//	dt.GetYear().Equal(2022)
+func (dt *DateTime) GetYear() *Number {
+	dt.chain.enter("GetYear()")
 	defer dt.chain.leave()
 
 	if dt.chain.failed() {
@@ -95,16 +95,16 @@ func (dt *DateTime) Year() *Number {
 	return newNumber(dt.chain, float64(dt.value.Year()))
 }
 
-// Month returns the month of the year specified by datetime,
+// GetMonth returns the month of the year specified by datetime,
 // in the range [1,12].
 //
 // Example:
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.Month().Equal(12)
-func (dt *DateTime) Month() *Number {
-	dt.chain.enter("Month()")
+//	dt.GetMonth().Equal(12)
+func (dt *DateTime) GetMonth() *Number {
+	dt.chain.enter("GetMonth()")
 	defer dt.chain.leave()
 
 	if dt.chain.failed() {
@@ -114,16 +114,16 @@ func (dt *DateTime) Month() *Number {
 	return newNumber(dt.chain, float64(dt.value.Month()))
 }
 
-// Day returns the day of the month specified datetime,
+// GetDay returns the day of the month specified datetime,
 // in the range [1,31].
 //
 // Example:
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.Day().Equal(30)
-func (dt *DateTime) Day() *Number {
-	dt.chain.enter("Day()")
+//	dt.GetDay().Equal(30)
+func (dt *DateTime) GetDay() *Number {
+	dt.chain.enter("GetDay()")
 	defer dt.chain.leave()
 
 	if dt.chain.failed() {
@@ -140,9 +140,9 @@ func (dt *DateTime) Day() *Number {
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.WeekDay().Equal(time.Friday)
-func (dt *DateTime) WeekDay() *Number {
-	dt.chain.enter("WeekDay()")
+//	dt.GetWeekDay().Equal(time.Friday)
+func (dt *DateTime) GetWeekDay() *Number {
+	dt.chain.enter("GetWeekDay()")
 	defer dt.chain.leave()
 
 	if dt.chain.failed() {
@@ -152,7 +152,7 @@ func (dt *DateTime) WeekDay() *Number {
 	return newNumber(dt.chain, float64(dt.value.Weekday()))
 }
 
-// YearDay returns the day of the year specified by datetime,
+// GetYearDay returns the day of the year specified by datetime,
 // in the range [1,365] for non-leap years,
 // and [1,366] in leap years.
 //
@@ -160,9 +160,9 @@ func (dt *DateTime) WeekDay() *Number {
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.YearDay().Equal(364)
-func (dt *DateTime) YearDay() *Number {
-	dt.chain.enter("YearDay()")
+//	dt.GetYearDay().Equal(364)
+func (dt *DateTime) GetYearDay() *Number {
+	dt.chain.enter("GetYearDay()")
 	defer dt.chain.leave()
 
 	if dt.chain.failed() {
@@ -172,16 +172,16 @@ func (dt *DateTime) YearDay() *Number {
 	return newNumber(dt.chain, float64(dt.value.YearDay()))
 }
 
-// Hour returns the hour within the day specified by datetime,
+// GetHour returns the hour within the day specified by datetime,
 // in the range [0, 23].
 //
 // Example:
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.Hour().Equal(15)
-func (dt *DateTime) Hour() *Number {
-	dt.chain.enter("Hour()")
+//	dt.GetHour().Equal(15)
+func (dt *DateTime) GetHour() *Number {
+	dt.chain.enter("GetHour()")
 	defer dt.chain.leave()
 
 	if dt.chain.failed() {
@@ -191,16 +191,16 @@ func (dt *DateTime) Hour() *Number {
 	return newNumber(dt.chain, float64(dt.value.Hour()))
 }
 
-// Minute returns the minute offset within the hour specified by datetime,
+// GetMinute returns the minute offset within the hour specified by datetime,
 // in the range [0, 59].
 //
 // Example:
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.Minute().Equal(4)
-func (dt *DateTime) Minute() *Number {
-	dt.chain.enter("Minute()")
+//	dt.GetMinute().Equal(4)
+func (dt *DateTime) GetMinute() *Number {
+	dt.chain.enter("GetMinute()")
 	defer dt.chain.leave()
 
 	if dt.chain.failed() {
@@ -210,16 +210,16 @@ func (dt *DateTime) Minute() *Number {
 	return newNumber(dt.chain, float64(dt.value.Minute()))
 }
 
-// Second returns the second offset within the minute specified by datetime,
+// GetSecond returns the second offset within the minute specified by datetime,
 // in the range [0, 59].
 //
 // Example:
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.Second().Equal(5)
-func (dt *DateTime) Second() *Number {
-	dt.chain.enter("Second()")
+//	dt.GetSecond().Equal(5)
+func (dt *DateTime) GetSecond() *Number {
+	dt.chain.enter("GetSecond()")
 	defer dt.chain.leave()
 
 	if dt.chain.failed() {
@@ -229,16 +229,16 @@ func (dt *DateTime) Second() *Number {
 	return newNumber(dt.chain, float64(dt.value.Second()))
 }
 
-// Nanosecond returns the nanosecond offset within the second specified by datetime,
+// GetNanosecond returns the nanosecond offset within the second specified by datetime,
 // in the range [0, 999999999].
 //
 // Example:
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.Nanosecond().Equal(0)
-func (dt *DateTime) Nanosecond() *Number {
-	dt.chain.enter("Nanosecond()")
+//	dt.GetNanosecond().Equal(0)
+func (dt *DateTime) GetNanosecond() *Number {
+	dt.chain.enter("GetNanosecond()")
 	defer dt.chain.leave()
 
 	if dt.chain.failed() {
@@ -297,6 +297,66 @@ func (dt *DateTime) NotEqual(value time.Time) *DateTime {
 			Expected: &AssertionValue{value},
 			Errors: []error{
 				errors.New("expected: time points are non-equal"),
+			},
+		})
+	}
+
+	return dt
+}
+
+// InRange succeeds if DateTime is within given range [min; max].
+//
+// Example:
+//
+//	dt := NewDateTime(t, time.Unix(0, 2))
+//	dt.InRange(time.Unix(0, 1), time.Unix(0, 3))
+//	dt.InRange(time.Unix(0, 2), time.Unix(0, 2))
+func (dt *DateTime) InRange(min, max time.Time) *DateTime {
+	dt.chain.enter("InRange()")
+	defer dt.chain.leave()
+
+	if dt.chain.failed() {
+		return dt
+	}
+
+	if !((dt.value.After(min) || dt.value.Equal(min)) &&
+		(dt.value.Before(max) || dt.value.Equal(max))) {
+		dt.chain.fail(AssertionFailure{
+			Type:     AssertInRange,
+			Actual:   &AssertionValue{dt.value},
+			Expected: &AssertionValue{AssertionRange{min, max}},
+			Errors: []error{
+				errors.New("expected: time point is within given range"),
+			},
+		})
+	}
+
+	return dt
+}
+
+// NotInRange succeeds if DateTime is not within given range [min; max].
+//
+// Example:
+//
+//	dt := NewDateTime(t, time.Unix(0, 10))
+//	dt.NotInRange(time.Unix(0, 1), time.Unix(0, 9))
+//	dt.NotInRange(time.Unix(0, 11), time.Unix(0, 20))
+func (dt *DateTime) NotInRange(min, max time.Time) *DateTime {
+	dt.chain.enter("NotInRange()")
+	defer dt.chain.leave()
+
+	if dt.chain.failed() {
+		return dt
+	}
+
+	if (dt.value.After(min) || dt.value.Equal(min)) &&
+		(dt.value.Before(max) || dt.value.Equal(max)) {
+		dt.chain.fail(AssertionFailure{
+			Type:     AssertNotInRange,
+			Actual:   &AssertionValue{dt.value},
+			Expected: &AssertionValue{AssertionRange{min, max}},
+			Errors: []error{
+				errors.New("expected: time point is not within given range"),
 			},
 		})
 	}
@@ -409,66 +469,6 @@ func (dt *DateTime) Le(value time.Time) *DateTime {
 			Expected: &AssertionValue{value},
 			Errors: []error{
 				errors.New("expected: time point is before or equal to given time"),
-			},
-		})
-	}
-
-	return dt
-}
-
-// InRange succeeds if DateTime is within given range [min; max].
-//
-// Example:
-//
-//	dt := NewDateTime(t, time.Unix(0, 2))
-//	dt.InRange(time.Unix(0, 1), time.Unix(0, 3))
-//	dt.InRange(time.Unix(0, 2), time.Unix(0, 2))
-func (dt *DateTime) InRange(min, max time.Time) *DateTime {
-	dt.chain.enter("InRange()")
-	defer dt.chain.leave()
-
-	if dt.chain.failed() {
-		return dt
-	}
-
-	if !((dt.value.After(min) || dt.value.Equal(min)) &&
-		(dt.value.Before(max) || dt.value.Equal(max))) {
-		dt.chain.fail(AssertionFailure{
-			Type:     AssertInRange,
-			Actual:   &AssertionValue{dt.value},
-			Expected: &AssertionValue{AssertionRange{min, max}},
-			Errors: []error{
-				errors.New("expected: time point is within given range"),
-			},
-		})
-	}
-
-	return dt
-}
-
-// NotInRange succeeds if DateTime is not within given range [min; max].
-//
-// Example:
-//
-//	dt := NewDateTime(t, time.Unix(0, 10))
-//	dt.NotInRange(time.Unix(0, 1), time.Unix(0, 9))
-//	dt.NotInRange(time.Unix(0, 11), time.Unix(0, 20))
-func (dt *DateTime) NotInRange(min, max time.Time) *DateTime {
-	dt.chain.enter("NotInRange()")
-	defer dt.chain.leave()
-
-	if dt.chain.failed() {
-		return dt
-	}
-
-	if (dt.value.After(min) || dt.value.Equal(min)) &&
-		(dt.value.Before(max) || dt.value.Equal(max)) {
-		dt.chain.fail(AssertionFailure{
-			Type:     AssertNotInRange,
-			Actual:   &AssertionValue{dt.value},
-			Expected: &AssertionValue{AssertionRange{min, max}},
-			Errors: []error{
-				errors.New("expected: time point is not within given range"),
 			},
 		})
 	}
