@@ -37,11 +37,14 @@ import (
 //     subsequent failures will be ignored not only in parent chain, but also
 //     in all newly created child chains
 type chain struct {
+	noCopy noCopy
+
 	context  AssertionContext
 	handler  AssertionHandler
 	severity AssertionSeverity
-	failCb   func()
-	failBit  bool
+
+	failCb  func()
+	failBit bool
 }
 
 // Construct chain using config.
@@ -140,12 +143,10 @@ func (c *chain) setResponse(resp *Response) {
 // Create a clone of the chain.
 // Modifications of the clone wont affect the original.
 func (c *chain) clone() *chain {
-	ret := *c
+	copy := *c //nolint
+	copy.context.Path = append(([]string)(nil), c.context.Path...)
 
-	ret.context.Path = nil
-	ret.context.Path = append(ret.context.Path, c.context.Path...)
-
-	return &ret
+	return &copy
 }
 
 // Append string to chain path.
