@@ -8,8 +8,9 @@ import (
 // Number provides methods to inspect attached float64 value
 // (Go representation of JSON number).
 type Number struct {
-	chain *chain
-	value float64
+	noCopy noCopy
+	chain  *chain
+	value  float64
 }
 
 // NewNumber returns a new Number instance.
@@ -35,7 +36,7 @@ func NewNumberC(config Config, value float64) *Number {
 }
 
 func newNumber(parent *chain, val float64) *Number {
-	return &Number{parent.clone(), val}
+	return &Number{chain: parent.clone(), value: val}
 }
 
 // Raw returns underlying value attached to Number.

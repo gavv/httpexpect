@@ -7,8 +7,9 @@ import (
 
 // DateTime provides methods to inspect attached time.Time value.
 type DateTime struct {
-	chain *chain
-	value time.Time
+	noCopy noCopy
+	chain  *chain
+	value  time.Time
 }
 
 // NewDateTime returns a new DateTime instance.
@@ -42,7 +43,7 @@ func NewDateTimeC(config Config, value time.Time) *DateTime {
 }
 
 func newDateTime(parent *chain, val time.Time) *DateTime {
-	return &DateTime{parent.clone(), val}
+	return &DateTime{chain: parent.clone(), value: val}
 }
 
 // Raw returns underlying time.Time value attached to DateTime.

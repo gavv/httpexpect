@@ -9,8 +9,9 @@ import (
 // Array provides methods to inspect attached []interface{} object
 // (Go representation of JSON array).
 type Array struct {
-	chain *chain
-	value []interface{}
+	noCopy noCopy
+	chain  *chain
+	value  []interface{}
 }
 
 // NewArray returns a new Array instance.
@@ -38,7 +39,7 @@ func NewArrayC(config Config, value []interface{}) *Array {
 }
 
 func newArray(parent *chain, val []interface{}) *Array {
-	a := &Array{parent.clone(), nil}
+	a := &Array{chain: parent.clone(), value: nil}
 
 	if val == nil {
 		a.chain.fail(AssertionFailure{

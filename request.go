@@ -28,6 +28,7 @@ import (
 // Request provides methods to incrementally build http.Request object,
 // send it, and receive response.
 type Request struct {
+	noCopy noCopy
 	config Config
 	chain  *chain
 

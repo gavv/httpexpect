@@ -8,8 +8,9 @@ import (
 
 // Cookie provides methods to inspect attached http.Cookie value.
 type Cookie struct {
-	chain *chain
-	value *http.Cookie
+	noCopy noCopy
+	chain  *chain
+	value  *http.Cookie
 }
 
 // NewCookie returns a new Cookie instance.
@@ -45,7 +46,7 @@ func NewCookieC(config Config, value *http.Cookie) *Cookie {
 }
 
 func newCookie(parent *chain, val *http.Cookie) *Cookie {
-	c := &Cookie{parent.clone(), nil}
+	c := &Cookie{chain: parent.clone(), value: nil}
 
 	if val == nil {
 		c.chain.fail(AssertionFailure{
