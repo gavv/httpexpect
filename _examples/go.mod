@@ -10,7 +10,7 @@ require (
 	github.com/gorilla/websocket v1.5.0
 	github.com/kataras/iris/v12 v12.1.8
 	github.com/labstack/echo v3.3.10+incompatible
-	github.com/valyala/fasthttp v1.43.0
+	github.com/valyala/fasthttp v1.44.0
 	google.golang.org/appengine v1.6.7
 )
 
