@@ -67,7 +67,7 @@ func (a *Array) Raw() []interface{} {
 	return a.value
 }
 
-// Decode binds the underlying value attached to the Array to a Target variable.
+// Decode unmarshals the underlying value attached to the Array to a Target variable.
 //
 // Example:
 //
@@ -79,6 +79,11 @@ func (a *Array) Raw() []interface{} {
 func (a *Array) Decode(target interface{}) *Array {
 	a.chain.enter("Decode()")
 	defer a.chain.leave()
+
+	if a.chain.failed() {
+		return a
+	}
+
 	canonDecode(a.chain, a.value, target)
 	return a
 }
