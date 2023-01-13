@@ -7,7 +7,7 @@ import (
 )
 
 type (
-	fruitMap     map[string]interface{}
+	fruitMap map[string]interface{}
 )
 
 // FruitsHandler creates http.Handler for the fruits server.

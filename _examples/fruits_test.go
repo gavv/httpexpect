@@ -46,7 +46,7 @@ func TestFruits(t *testing.T) {
 	})
 	fruits.ContainsAny("orange", "melon")
 	fruits.ContainsOnly("orange", "apple")
-	
+
 	e.GET("/fruits/orange").
 		Expect().
 		Status(http.StatusOK).JSON().Object().Equal(orange).NotEqual(apple)
@@ -75,7 +75,7 @@ func TestFruits(t *testing.T) {
 		Expect().
 		Status(http.StatusNotFound)
 
-	apple["image"] = []map[string]string{{"id":" 1", "url":"http://example.com","type": "fruit"}, {"id": "2", "url":"http://example2.com", "type": "fruit"}}
+	apple["image"] = []map[string]string{{"id": " 1", "url": "http://example.com", "type": "fruit"}, {"id": "2", "url": "http://example2.com", "type": "fruit"}}
 
 	e.PUT("/fruits/apple").WithJSON(apple).
 		Expect().
