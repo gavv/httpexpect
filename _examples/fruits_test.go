@@ -37,16 +37,16 @@ func TestFruits(t *testing.T) {
 		Expect().
 		Status(http.StatusNoContent).NoContent()
 
-	fruitsResult := e.GET("/fruits").
+	fruits := e.GET("/fruits").
 		Expect().
 		Status(http.StatusOK).JSON().Array()
 
-	fruitsResult.ContainsOnly("orange", "apple")
-	fruitsResult.ContainsAny("orange", "melon")
-	fruitsResult.Every(func(index int, value *httpexpect.Value) {
+	fruits.Every(func(index int, value *httpexpect.Value) {
 		value.String().NotEmpty()
 	})
-
+	fruits.ContainsAny("orange", "melon")
+	fruits.ContainsOnly("orange", "apple")
+	
 	e.GET("/fruits/orange").
 		Expect().
 		Status(http.StatusOK).JSON().Object().Equal(orange).NotEqual(apple)
@@ -75,18 +75,18 @@ func TestFruits(t *testing.T) {
 		Expect().
 		Status(http.StatusNotFound)
 
-	var fruits fruitMapList
-	apple["type"] = "fruit"
-	orange["type"] = "fruit"
-	fruits = append(fruits, apple)
-	fruits = append(fruits, orange)
+	apple["image"] = []map[string]string{{"id":" 1", "url":"http://example.com","type": "fruit"}, {"id": "2", "url":"http://example2.com", "type": "fruit"}}
 
-	fruitsData := e.GET("/fruits/with-data").WithJSON(fruits).
+	e.PUT("/fruits/apple").WithJSON(apple).
 		Expect().
-		Status(http.StatusOK).JSON().Array()
+		Status(http.StatusNoContent).NoContent()
 
-	for _, element := range fruitsData.Iter() {
-		element.Object().ContainsKey("weight")
+	object := e.GET("/fruits/apple").
+		Expect().
+		Status(http.StatusOK).JSON().Object()
+
+	for _, element := range object.Value("image").Array().Iter() {
+		element.Object().ContainsKey("id")
 		element.Object().ContainsValue("fruit")
 		element.Object().ContainsSubset(map[string]interface{}{
 			"type": "fruit",
