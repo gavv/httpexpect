@@ -432,15 +432,14 @@ func (e *Expect) Env() *Environment {
 }
 
 func (e *Expect) clone() *Expect {
-	ret := *e //nolint
+	var copy Expect
 
-	ret.builders = nil
-	ret.builders = append(ret.builders, e.builders...)
+	copy.config = e.config
+	copy.chain = e.chain.clone()
+	copy.builders = append(copy.builders, e.builders...)
+	copy.matchers = append(copy.matchers, e.matchers...)
 
-	ret.matchers = nil
-	ret.matchers = append(ret.matchers, e.matchers...)
-
-	return &ret
+	return &copy
 }
 
 // Builder returns a copy of Expect instance with given builder attached to it.
