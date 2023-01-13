@@ -67,6 +67,15 @@ func (a *Array) Raw() []interface{} {
 	return a.value
 }
 
+// Decode binds the underlying value attached to the Array to a Target variable.
+//
+// Example:
+//
+//	var target interface{}
+//	value := []interface{}{"foo",123}
+//	array := NewArray(t,value)
+//	array.Decode(&target)
+//	assert.Equal(t,value,target)
 func (a *Array) Decode(target interface{}) *Array {
 	a.chain.enter("Decode()")
 	defer a.chain.leave()
