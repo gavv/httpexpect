@@ -1276,6 +1276,7 @@ func (a *Array) IsOrdered(less ...func(x, y *Value) bool) *Array {
 
 		if chainFailure {
 			a.chain.setFailed()
+			return a
 		}
 	}
 
