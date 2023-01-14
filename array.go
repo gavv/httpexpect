@@ -1198,10 +1198,12 @@ func (a *Array) NotContainsAny(values ...interface{}) *Array {
 	return a
 }
 
-// IsOrdered succeeds if array is ordered based on optional `comparator` function.
+// IsOrdered succeeds if every element is not less than the previous element
+// as defined on the given `less` comparator function.
 // For default, it will use built-in comparator function for each data type.
 // Built-in comparator requires all elements in the array to have same data type.
-// Array with 0 or 1 element will always pass
+// Array with 0 or 1 element will always succeed
+//
 // Example:
 //
 //	array := NewArray(t, []interface{}{100, 101, 102})
@@ -1241,19 +1243,19 @@ func (a *Array) IsOrdered(less ...func(x, y *Value) bool) *Array {
 		}
 	}
 
-	var xChainFailure, yChainFailure bool
-	for i := 0; i < int(len(a.value))-1; i++ {
+	var chainFailure bool
+	for i := 0; i < len(a.value)-1; i++ {
 		xChain := a.chain.clone()
 		xChain.replace("IsOrdered[%d]", i)
 		xChain.setFailCallback(func() {
-			xChainFailure = true
+			chainFailure = true
 		})
 		x := newValue(xChain, a.value[i])
 
 		yChain := a.chain.clone()
 		yChain.replace("IsOrdered[%d]", i+1)
 		yChain.setFailCallback(func() {
-			yChainFailure = true
+			chainFailure = true
 		})
 		y := newValue(yChain, a.value[i+1])
 
@@ -1271,16 +1273,20 @@ func (a *Array) IsOrdered(less ...func(x, y *Value) bool) *Array {
 			})
 			return a
 		}
-	}
 
-	if xChainFailure || yChainFailure {
-		a.chain.setFailed()
+		if chainFailure {
+			a.chain.setFailed()
+		}
 	}
 
 	return a
 }
 
-// NotOrdered is opposite to `IsOrdered`.
+// NotOrdered succeeds if at least one element is less than the previous element
+// as defined on the given `less` comparator function.
+// For default, it will use built-in comparator function for each data type.
+// Built-in comparator requires all elements in the array to have same data type.
+// Array with 0 or 1 element will always succeed
 //
 // Example:
 //
@@ -1322,20 +1328,20 @@ func (a *Array) NotOrdered(less ...func(x, y *Value) bool) *Array {
 	}
 
 	var i int
-	var xChainFailure, yChainFailure bool
+	var chainFailure bool
 	ordered := true
 	for i = 0; i < len(a.value)-1; i++ {
 		xChain := a.chain.clone()
 		xChain.replace("IsOrdered[%d]", i)
 		xChain.setFailCallback(func() {
-			xChainFailure = true
+			chainFailure = true
 		})
 		x := newValue(xChain, a.value[i])
 
 		yChain := a.chain.clone()
 		yChain.replace("IsOrdered[%d]", i+1)
 		yChain.setFailCallback(func() {
-			yChainFailure = true
+			chainFailure = true
 		})
 		y := newValue(yChain, a.value[i+1])
 
@@ -1343,10 +1349,11 @@ func (a *Array) NotOrdered(less ...func(x, y *Value) bool) *Array {
 			ordered = false
 			break
 		}
-	}
 
-	if xChainFailure || yChainFailure {
-		a.chain.setFailed()
+		if chainFailure {
+			a.chain.setFailed()
+			break
+		}
 	}
 
 	if ordered {

@@ -1356,9 +1356,9 @@ func TestArray_IsOrdered(t *testing.T) {
 				values: []interface{}{1, 2, 3},
 				less: []func(x, y *Value) bool{
 					func(x, y *Value) bool {
-						valX := x.String().Raw()
-						valY := y.String().Raw()
-						return valX < valY
+						x.String()
+						y.String()
+						return false
 					},
 				},
 			},
@@ -1495,12 +1495,12 @@ func TestArray_NotOrdered(t *testing.T) {
 		{
 			name: "invalid - failed type assertion on less function",
 			args: args{
-				values: []interface{}{1, 2, 3},
+				values: []interface{}{1, 2},
 				less: []func(x, y *Value) bool{
 					func(x, y *Value) bool {
-						valX := x.String().Raw()
-						valY := y.String().Raw()
-						return valX >= valY
+						x.String()
+						y.String()
+						return false
 					},
 				},
 			},
