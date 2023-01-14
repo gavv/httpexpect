@@ -31,7 +31,18 @@ func TestFruits(t *testing.T) {
 	apple := map[string]interface{}{
 		"colors": []interface{}{"green", "red"},
 		"weight": 200,
-		"image":  []map[string]string{{"id": " 1", "url": "http://example.com", "type": "fruit"}, {"id": "2", "url": "http://example2.com", "type": "fruit"}},
+		"image": []map[string]string{
+			{
+				"id":   " 1",
+				"url":  "http://example.com",
+				"type": "fruit",
+			},
+			{
+				"id":   "2",
+				"url":  "http://example2.com",
+				"type": "fruit",
+			},
+		},
 	}
 
 	e.PUT("/fruits/apple").WithJSON(apple).
@@ -83,5 +94,4 @@ func TestFruits(t *testing.T) {
 	e.GET("/fruits/melon").
 		Expect().
 		Status(http.StatusNotFound)
-
 }
