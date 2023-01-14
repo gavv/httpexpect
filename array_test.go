@@ -1350,7 +1350,20 @@ func TestArray_IsOrdered(t *testing.T) {
 			},
 			wantOK: true,
 		},
-
+		{
+			name: "invalid - failed type assertion on less function",
+			args: args{
+				values: []interface{}{1, 2, 3},
+				less: []func(x, y *Value) bool{
+					func(x, y *Value) bool {
+						valX := x.String().Raw()
+						valY := y.String().Raw()
+						return valX < valY
+					},
+				},
+			},
+			wantOK: false,
+		},
 		{
 			name: "invalid - multiple less functions",
 			args: args{
@@ -1480,6 +1493,20 @@ func TestArray_NotOrdered(t *testing.T) {
 			wantOK: true,
 		},
 		{
+			name: "invalid - failed type assertion on less function",
+			args: args{
+				values: []interface{}{1, 2, 3},
+				less: []func(x, y *Value) bool{
+					func(x, y *Value) bool {
+						valX := x.String().Raw()
+						valY := y.String().Raw()
+						return valX >= valY
+					},
+				},
+			},
+			wantOK: false,
+		},
+		{
 			name: "invalid - multiple less functions",
 			args: args{
 				values: []interface{}{1, 2, 3},
@@ -1515,14 +1542,14 @@ func TestArray_NotOrdered(t *testing.T) {
 			args: args{
 				values: []interface{}{},
 			},
-			wantOK: false,
+			wantOK: true,
 		},
 		{
 			name: "one element",
 			args: args{
 				values: []interface{}{1},
 			},
-			wantOK: false,
+			wantOK: true,
 		},
 		{
 			name: "chain has failed before",

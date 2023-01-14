@@ -1201,7 +1201,7 @@ func (a *Array) NotContainsAny(values ...interface{}) *Array {
 // IsOrdered succeeds if array is ordered based on optional `comparator` function.
 // For default, it will use built-in comparator function for each data type.
 // Built-in comparator requires all elements in the array to have same data type.
-//
+// Array with 0 or 1 element will always pass
 // Example:
 //
 //	array := NewArray(t, []interface{}{100, 101, 102})
@@ -1241,13 +1241,20 @@ func (a *Array) IsOrdered(less ...func(x, y *Value) bool) *Array {
 		}
 	}
 
+	var xChainFailure, yChainFailure bool
 	for i := 0; i < int(len(a.value))-1; i++ {
 		xChain := a.chain.clone()
 		xChain.replace("IsOrdered[%d]", i)
+		xChain.setFailCallback(func() {
+			xChainFailure = true
+		})
 		x := newValue(xChain, a.value[i])
 
 		yChain := a.chain.clone()
 		yChain.replace("IsOrdered[%d]", i+1)
+		yChain.setFailCallback(func() {
+			yChainFailure = true
+		})
 		y := newValue(yChain, a.value[i+1])
 
 		if lessFn(y, x) {
@@ -1266,18 +1273,20 @@ func (a *Array) IsOrdered(less ...func(x, y *Value) bool) *Array {
 		}
 	}
 
+	if xChainFailure || yChainFailure {
+		a.chain.setFailed()
+	}
+
 	return a
 }
 
-// NotOrdered succeeds if array is not ordered based on optional `comparator` function.
-// For default, it will use built-in comparator function for each data type.
-// Built-in comparator requires all elements in the array to have same data type.
+// NotOrdered is opposite to `IsOrdered`.
 //
 // Example:
 //
 //	array := NewArray(t, []interface{}{102, 101, 100})
 //	array.NotOrdered() // succeeds
-//	array.IsOrdered(func(x, y *httpexpect.Value) bool {
+//	array.NotOrdered(func(x, y *httpexpect.Value) bool {
 //		return x.Number().Raw() < y.Number().Raw()
 //	}) // succeeds
 func (a *Array) NotOrdered(less ...func(x, y *Value) bool) *Array {
@@ -1299,17 +1308,6 @@ func (a *Array) NotOrdered(less ...func(x, y *Value) bool) *Array {
 	}
 
 	if len(a.value) <= 1 {
-		a.chain.fail(AssertionFailure{
-			Type:      AssertLt,
-			Actual:    &AssertionValue{a.value},
-			Expected:  &AssertionValue{a.value}, // FIXME: reverse
-			Reference: &AssertionValue{a.value},
-			Errors: []error{
-				errors.New("expected: array is not ordered"),
-				// fmt.Errorf("element %v must not be less than element %v, but it is",
-				// 	x.value, y.value),
-			},
-		})
 		return a
 	}
 
@@ -1324,14 +1322,21 @@ func (a *Array) NotOrdered(less ...func(x, y *Value) bool) *Array {
 	}
 
 	var i int
+	var xChainFailure, yChainFailure bool
 	ordered := true
 	for i = 0; i < len(a.value)-1; i++ {
 		xChain := a.chain.clone()
-		xChain.replace("NotOrdered[%d]", i)
+		xChain.replace("IsOrdered[%d]", i)
+		xChain.setFailCallback(func() {
+			xChainFailure = true
+		})
 		x := newValue(xChain, a.value[i])
 
 		yChain := a.chain.clone()
-		yChain.replace("NotOrdered[%d]", i+1)
+		yChain.replace("IsOrdered[%d]", i+1)
+		yChain.setFailCallback(func() {
+			yChainFailure = true
+		})
 		y := newValue(yChain, a.value[i+1])
 
 		if lessFn(y, x) {
@@ -1340,16 +1345,16 @@ func (a *Array) NotOrdered(less ...func(x, y *Value) bool) *Array {
 		}
 	}
 
+	if xChainFailure || yChainFailure {
+		a.chain.setFailed()
+	}
+
 	if ordered {
 		a.chain.fail(AssertionFailure{
-			Type:      AssertLt,
-			Actual:    &AssertionValue{a.value},
-			Expected:  &AssertionValue{a.value}, // FIXME:
-			Reference: &AssertionValue{a.value},
+			Type:   AssertValid,
+			Actual: &AssertionValue{a.value},
 			Errors: []error{
 				errors.New("expected: array is not ordered"),
-				// fmt.Errorf("element %v must not be less than element %v, but it is",
-				// 	x.value, y.value),
 			},
 		})
 	}
@@ -1358,16 +1363,12 @@ func (a *Array) NotOrdered(less ...func(x, y *Value) bool) *Array {
 }
 
 func (a *Array) getBuiltinComparator() func(x, y *Value) bool {
-	var fn func(x, y *Value) bool
-
 	a.validateElementsType()
 	if a.chain.failed() {
-		return fn
+		return nil
 	}
 
-	fn = a.constructLessFn()
-
-	return fn
+	return a.constructLessFn()
 }
 
 func (a *Array) validateElementsType() {
@@ -1375,8 +1376,7 @@ func (a *Array) validateElementsType() {
 	for idx, curr := range a.value {
 		switch curr.(type) {
 		case bool, float64, string, nil:
-			// do nothing
-			// for better performance, function is generated after validating all elements
+			// ok, do nothing
 		default:
 			a.chain.fail(AssertionFailure{
 				Type:   AssertBelongs,
@@ -1384,7 +1384,9 @@ func (a *Array) validateElementsType() {
 				Expected: &AssertionValue{AssertionList{
 					"Boolean (bool)",
 					"Number (int*, uint*, float32, float64)",
-					"String (string)"}},
+					"String (string)",
+					"Null (nil)",
+				}},
 				Reference: &AssertionValue{curr},
 				Errors: []error{
 					errors.New("expected: type of each element of reference array" +
@@ -1413,36 +1415,35 @@ func (a *Array) validateElementsType() {
 }
 
 func (a *Array) constructLessFn() func(x, y *Value) bool {
-	var fn func(x, y *Value) bool
 	if len(a.value) > 0 {
 		switch a.value[0].(type) {
 		case bool:
-			fn = func(x, y *Value) bool {
+			return func(x, y *Value) bool {
 				xVal := x.Raw().(bool)
 				yVal := y.Raw().(bool)
 				return (!xVal && yVal)
 			}
 		case float64:
-			fn = func(x, y *Value) bool {
+			return func(x, y *Value) bool {
 				xVal := x.Raw().(float64)
 				yVal := y.Raw().(float64)
 				return xVal < yVal
 			}
 		case string:
-			fn = func(x, y *Value) bool {
+			return func(x, y *Value) bool {
 				xVal := x.Raw().(string)
 				yVal := y.Raw().(string)
 				return xVal < yVal
 			}
 		case nil:
-			fn = func(x, y *Value) bool {
-				// `nil` never less than `nil`
+			return func(x, y *Value) bool {
+				// `nil` is never less than `nil`
 				return false
 			}
 		}
 	}
 
-	return fn
+	return nil
 }
 
 func countElement(array []interface{}, element interface{}) int {
