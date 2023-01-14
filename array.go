@@ -1353,7 +1353,7 @@ func (a *Array) NotOrdered(less ...func(x, y *Value) bool) *Array {
 
 		if chainFailure {
 			a.chain.setFailed()
-			break
+			return a
 		}
 	}
 
