@@ -47,6 +47,7 @@ func TestResponse_Failed(t *testing.T) {
 		resp.ContentType("", "")
 		resp.ContentEncoding("")
 		resp.TransferEncoding("")
+		resp.Alias("foo")
 	}
 
 	t.Run("failed_chain", func(t *testing.T) {
@@ -123,6 +124,19 @@ func TestResponse_Constructors(t *testing.T) {
 		assert.NotSame(t, value.chain, chain)
 		assert.Equal(t, value.chain.context.Path, chain.context.Path)
 	})
+}
+
+func TestResponse_Alias(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	duration := time.Second
+	value1 := NewResponse(reporter, &http.Response{}, duration)
+	assert.Equal(t, []string{"Response()"}, value1.chain.context.Path)
+	assert.Equal(t, []string{"Response()"}, value1.chain.context.AliasedPath)
+
+	value2 := value1.Alias("foo")
+	assert.Equal(t, []string{"Response()"}, value2.chain.context.Path)
+	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
 }
 
 func TestResponse_RoundTripTime(t *testing.T) {

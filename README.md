@@ -695,6 +695,24 @@ e.POST("/fruits").
 	Status(http.StatusOK)
 ```
 
+##### Support for alias in a failure message
+
+```go
+// when test is failed, assertion in the failure message is Request("GET").Expect().JSON().Array().Empty()
+e.GET("/fruits").
+	Expect().
+	Status(http.StatusOK).JSON().Array().Empty()
+
+
+// add alias named fruits
+fruits := e.GET("/fruits").
+	Expect().
+	Status(http.StatusOK).JSON().Array().Alias("fruits")
+
+// assertion is fruits.Empty()
+fruits.Empty()
+```
+
 ##### Printing requests and responses
 
 ```go

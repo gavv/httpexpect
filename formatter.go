@@ -39,6 +39,9 @@ type DefaultFormatter struct {
 	// Exclude assertion path from failure report.
 	DisablePaths bool
 
+	// Exclude aliased assertion path from failure report.
+	DisableAliases bool
+
 	// Exclude diff from failure report.
 	DisableDiffs bool
 
@@ -199,7 +202,11 @@ func (f *DefaultFormatter) fillDescription(
 	}
 
 	if !f.DisablePaths {
-		data.AssertPath = ctx.Path
+		if !f.DisableAliases {
+			data.AssertPath = ctx.AliasedPath
+		} else {
+			data.AssertPath = ctx.Path
+		}
 	}
 
 	if f.LineWidth != 0 {

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/stretchr/testify/assert"
 )
 
 func noWsPreSteps(ws *Websocket) {}
@@ -21,6 +22,7 @@ func TestWebsocket_Failed(t *testing.T) {
 
 	ws.Conn()
 	ws.Raw()
+	ws.Alias("foo")
 	ws.WithReadTimeout(0)
 	ws.WithoutReadTimeout()
 	ws.WithWriteTimeout(0)
@@ -42,6 +44,17 @@ func TestWebsocket_Failed(t *testing.T) {
 
 	ws.Disconnect()
 	ws.Close()
+}
+
+func TestWebsocket_Alias(t *testing.T) {
+	reporter := newMockReporter(t)
+	value1 := NewWebsocketC(Config{Reporter: reporter}, newMockWebsocketConn())
+	assert.Equal(t, []string{"Websocket()"}, value1.chain.context.Path)
+	assert.Equal(t, []string{"Websocket()"}, value1.chain.context.AliasedPath)
+
+	value2 := value1.Alias("foo")
+	assert.Equal(t, []string{"Websocket()"}, value2.chain.context.Path)
+	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
 }
 
 func TestWebsocket_NilConn(t *testing.T) {

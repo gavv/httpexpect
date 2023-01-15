@@ -165,6 +165,16 @@ func (r *Response) Raw() *http.Response {
 	return r.httpResp
 }
 
+// Alias is similar to Value.Alias.
+func (r *Response) Alias(name string) *Response {
+	opChain := r.chain.enter("Alias(%s)", name)
+	defer opChain.leave()
+
+	r.chain.setAlias(name)
+
+	return r
+}
+
 // RoundTripTime returns a new Duration instance with response round-trip time.
 //
 // The returned duration is the time interval starting just before request is

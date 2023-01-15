@@ -20,6 +20,7 @@ func TestMatch_Failed(t *testing.T) {
 	value.NotEmpty()
 	value.Values("")
 	value.NotValues("")
+	value.Alias("foo")
 }
 
 func TestMatch_Constructors(t *testing.T) {
@@ -48,6 +49,24 @@ func TestMatch_Constructors(t *testing.T) {
 		assert.NotSame(t, value.chain, chain)
 		assert.Equal(t, value.chain.context.Path, chain.context.Path)
 	})
+}
+
+func TestMatch_Alias(t *testing.T) {
+	reporter := newMockReporter(t)
+	matches := []string{"m0", "m1", "m2"}
+	names := []string{"", "n1", "n2"}
+
+	value1 := NewMatch(reporter, matches, names)
+	assert.Equal(t, []string{"Match()"}, value1.chain.context.Path)
+	assert.Equal(t, []string{"Match()"}, value1.chain.context.AliasedPath)
+
+	value2 := value1.Alias("foo")
+	assert.Equal(t, []string{"Match()"}, value2.chain.context.Path)
+	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
+
+	value3 := value2.Index(0)
+	assert.Equal(t, []string{"Match()", "Index(0)"}, value3.chain.context.Path)
+	assert.Equal(t, []string{"foo", "Index(0)"}, value3.chain.context.AliasedPath)
 }
 
 func TestMatch_Getters(t *testing.T) {

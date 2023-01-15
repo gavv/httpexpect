@@ -117,6 +117,12 @@ type AssertionContext struct {
 	//   {`Request("GET")`, `Expect()`, `JSON()`, `NotNull()`}
 	Path []string
 
+	// Chain of nested assertion names starting from alias
+	// When alias is not set, AliasedPath has the same value as Path
+	// Example value:
+	//   {`foo`, `NotNull()`} // alias named foo
+	AliasedPath []string
+
 	// Request being sent
 	// May be nil if request was not yet sent
 	Request *Request

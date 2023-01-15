@@ -37,6 +37,7 @@ func TestDateTime_Failed(t *testing.T) {
 	value.GetNanosecond()
 	value.AsUTC()
 	value.AsLocal()
+	value.Alias("foo")
 }
 
 func TestDateTime_Constructors(t *testing.T) {
@@ -64,6 +65,17 @@ func TestDateTime_Constructors(t *testing.T) {
 		assert.NotSame(t, value.chain, chain)
 		assert.Equal(t, value.chain.context.Path, chain.context.Path)
 	})
+}
+
+func TestDateTime_Alias(t *testing.T) {
+	reporter := newMockReporter(t)
+	value1 := NewDateTime(reporter, time.Unix(0, 1234))
+	assert.Equal(t, []string{"DateTime()"}, value1.chain.context.Path)
+	assert.Equal(t, []string{"DateTime()"}, value1.chain.context.AliasedPath)
+
+	value2 := value1.Alias("foo")
+	assert.Equal(t, []string{"DateTime()"}, value2.chain.context.Path)
+	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
 }
 
 func TestDateTime_Equal(t *testing.T) {

@@ -50,6 +50,15 @@ func (n *Number) Raw() float64 {
 	return n.value
 }
 
+// Alias is similar to Value.Alias.
+func (n *Number) Alias(name string) *Number {
+	opChain := n.chain.enter("Alias(%s)", name)
+	defer opChain.leave()
+
+	n.chain.setAlias(name)
+	return n
+}
+
 // Decode unmarshals the underlying value attached to the Number to a target variable.
 // target should be one of these:
 //

@@ -71,6 +71,15 @@ func (c *Cookie) Raw() *http.Cookie {
 	return c.value
 }
 
+// Alias is similar to Value.Alias.
+func (c *Cookie) Alias(name string) *Cookie {
+	opChain := c.chain.enter("Alias(%s)", name)
+	defer opChain.leave()
+
+	c.chain.setAlias(name)
+	return c
+}
+
 // Name returns a new String instance with cookie name.
 //
 // Example:

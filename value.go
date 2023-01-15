@@ -75,6 +75,35 @@ func (v *Value) Raw() interface{} {
 	return v.value
 }
 
+// Alias returns a new Value object with alias.
+// When a test of Value object with alias is failed,
+// an assertion is displayed as a chain starting from the alias.
+//
+// Example:
+//
+//	// In this example, GET /example responds "foo"
+//	foo := e.GET("/example").Expect().Status(http.StatusOK).JSON().Object()
+//
+//	// When a test is failed, an assertion without alias is
+//	// Request("GET").Expect().JSON().Object().Equal()
+//	foo.Equal("bar")
+//
+//	// Set Alias
+//	fooWithAlias := e.GET("/example").
+//		Expect().
+//		Status(http.StatusOK).JSON().Object().Alias("foo")
+//
+//	// When a test is failed, an assertion with alias is
+//	// foo.Equal()
+//	fooWithAlias.Equal("bar")
+func (v *Value) Alias(name string) *Value {
+	opChain := v.chain.enter("Alias(%s)", name)
+	defer opChain.leave()
+
+	v.chain.setAlias(name)
+	return v
+}
+
 // Path returns a new Value object for child object(s) matching given
 // JSONPath expression.
 //

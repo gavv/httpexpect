@@ -71,6 +71,15 @@ func (o *Object) Raw() map[string]interface{} {
 	return o.value
 }
 
+// Alias is similar to Value.Alias.
+func (o *Object) Alias(name string) *Object {
+	opChain := o.chain.enter("Alias(%s)", name)
+	defer opChain.leave()
+
+	o.chain.setAlias(name)
+	return o
+}
+
 // Decode unmarshals the underlying value attached to the Object to a target variable
 // target should be one of this:
 //

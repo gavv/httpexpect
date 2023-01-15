@@ -12,6 +12,7 @@ func TestArray_Failed(t *testing.T) {
 
 		value.Path("$")
 		value.Schema("")
+		value.Alias("foo")
 
 		assert.NotNil(t, value.Length())
 		assert.NotNil(t, value.Element(0))
@@ -238,6 +239,23 @@ func TestArray_Getters(t *testing.T) {
 	assert.Equal(t, 123.0, value.Last().Raw())
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
+}
+
+func TestArray_Alias(t *testing.T) {
+	reporter := newMockReporter(t)
+	value1 := NewArray(reporter, []interface{}{1, 2})
+	assert.Equal(t, []string{"Array()"}, value1.chain.context.Path)
+	assert.Equal(t, []string{"Array()"}, value1.chain.context.AliasedPath)
+
+	value2 := value1.Alias("foo")
+	assert.Equal(t, []string{"Array()"}, value2.chain.context.Path)
+	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
+
+	value3 := value2.Filter(func(index int, value *Value) bool {
+		return value.Number().Raw() > 1
+	})
+	assert.Equal(t, []string{"Array()", "Filter()"}, value3.chain.context.Path)
+	assert.Equal(t, []string{"foo", "Filter()"}, value3.chain.context.AliasedPath)
 }
 
 func TestArray_Empty(t *testing.T) {

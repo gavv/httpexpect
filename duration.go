@@ -54,6 +54,15 @@ func (d *Duration) Raw() time.Duration {
 	return *d.value
 }
 
+// Alias is similar to Value.Alias.
+func (d *Duration) Alias(name string) *Duration {
+	opChain := d.chain.enter("Alias(%s)", name)
+	defer opChain.leave()
+
+	d.chain.setAlias(name)
+	return d
+}
+
 // Deprecated: support for unset durations will be removed. The only method that
 // can create unset duration is Cookie.MaxAge. Instead of Cookie.MaxAge().IsSet(),
 // please use Cookie.HaveMaxAge().

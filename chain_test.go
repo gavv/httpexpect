@@ -241,6 +241,53 @@ func TestChain_Basic(t *testing.T) {
 	})
 }
 
+func TestChain_AliasedPath(t *testing.T) {
+	path := func(c *chain) string {
+		return strings.Join(c.context.Path, ".")
+	}
+	aliasedPath := func(c *chain) string {
+		return strings.Join(c.context.AliasedPath, ".")
+	}
+
+	t.Run("enter_and_leave", func(t *testing.T) {
+		rootChain := newChainWithDefaults("root", newMockReporter(t))
+
+		assert.Equal(t, "root", path(rootChain))
+		assert.Equal(t, "root", aliasedPath(rootChain))
+
+		c1 := rootChain.enter("foo")
+		assert.Equal(t, "root.foo", path(c1))
+		assert.Equal(t, "root.foo", aliasedPath(c1))
+
+		c2 := c1.enter("bar")
+		assert.Equal(t, "root.foo.bar", path(c2))
+		assert.Equal(t, "root.foo.bar", aliasedPath(c2))
+
+		c2.setAlias("alias1")
+		assert.Equal(t, "root.foo.bar", path(c2))
+		assert.Equal(t, "alias1", aliasedPath(c2))
+
+		c3 := c2.enter("baz")
+		assert.Equal(t, "root.foo.bar.baz", path(c3))
+		assert.Equal(t, "alias1.baz", aliasedPath(c3))
+
+		c3.leave()
+		assert.Equal(t, "root.foo.bar.baz", path(c3))
+		assert.Equal(t, "alias1.baz", aliasedPath(c3))
+	})
+
+	t.Run("set_empty", func(t *testing.T) {
+		rootChain := newChainWithDefaults("root", newMockReporter(t))
+
+		assert.Equal(t, "root", path(rootChain))
+		assert.Equal(t, "root", aliasedPath(rootChain))
+
+		rootChain.setAlias("")
+		assert.Equal(t, "root", path(rootChain))
+		assert.Equal(t, "", aliasedPath(rootChain))
+	})
+}
+
 func TestChain_Panics(t *testing.T) {
 	t.Run("nil_reporter", func(t *testing.T) {
 		assert.Panics(t, func() {
@@ -317,6 +364,17 @@ func TestChain_Panics(t *testing.T) {
 		})
 	})
 
+	t.Run("replace_empty_aliased_path", func(t *testing.T) {
+		chain := newChainWithDefaults("", newMockReporter(t))
+
+		opChain := chain.enter("foo")
+		opChain.setAlias("")
+
+		assert.Panics(t, func() {
+			opChain.replace("bar")
+		})
+	})
+
 	t.Run("fail_without_enter", func(t *testing.T) {
 		chain := newChainWithDefaults("test", newMockReporter(t))
 
@@ -344,6 +402,17 @@ func TestChain_Panics(t *testing.T) {
 
 		assert.Panics(t, func() {
 			_ = opChain.clone()
+		})
+	})
+
+	t.Run("alias_after_leave", func(t *testing.T) {
+		chain := newChainWithDefaults("test", newMockReporter(t))
+
+		opChain := chain.enter("foo")
+		opChain.leave()
+
+		assert.Panics(t, func() {
+			opChain.setAlias("bar")
 		})
 	})
 

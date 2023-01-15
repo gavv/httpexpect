@@ -70,6 +70,15 @@ func (a *Array) Raw() []interface{} {
 	return a.value
 }
 
+// Alias is similar to Value.Alias.
+func (a *Array) Alias(name string) *Array {
+	opChain := a.chain.enter("Alias(%s)", name)
+	defer opChain.leave()
+
+	a.chain.setAlias(name)
+	return a
+}
+
 // Decode unmarshals the underlying value attached to the Array to a target variable.
 // target should be one of these:
 //
