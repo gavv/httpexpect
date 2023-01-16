@@ -42,25 +42,25 @@ func (r *RequireReporter) Errorf(message string, args ...interface{}) {
 
 // FatalReporter is a struct that implements the testing.Reporter interface
 // and calls t.Fatalf() when a test fails.
-type FatalReporter struct{
+type FatalReporter struct {
 	backend testing.TB
 }
 
 // Errorf implements Reporter.Errorf.
 func (r *FatalReporter) Errorf(message string, args ...interface{}) {
-    r.backend.Fatalf(message, args...)
+	r.backend.Fatalf(message, args...)
 }
 
 // Report is a method that takes a testing.TB interface and checks if the test
 // has failed by calling the Failed() method. If the test has failed, it calls
 // the Errorf method with the provided testing.TB interface and an error message.
 func (r *FatalReporter) Report(result testing.TB) {
-    if result.Failed() {
-        r.Errorf("Test failed")
-    }
+	if result.Failed() {
+		r.Errorf("Test failed")
+	}
 }
 
 // NeFatalReporter returns a new FatalReporter object.
 func NewFatalReporter(backend testing.TB) *FatalReporter {
-    return &FatalReporter{backend}
+	return &FatalReporter{backend}
 }
