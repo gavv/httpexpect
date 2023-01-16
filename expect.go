@@ -159,6 +159,7 @@ type Config struct {
 	//
 	// You can use AssertReporter, RequireReporter (they use testify),
 	// or *testing.T, or provide custom implementation.
+	// You can also Use FatalReporter that use testing.TB
 	Reporter Reporter
 
 	// Formatter is used to format success and failure messages.
