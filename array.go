@@ -67,15 +67,32 @@ func (a *Array) Raw() []interface{} {
 	return a.value
 }
 
-// Decode unmarshals the underlying value attached to the Array to a Target variable.
+// Decode unmarshals the underlying value attached to the Array to a target variable.
+// target should be one of these:
+//
+// 1) pointer to empty interface
+//
+// 2) pointer to slice of empty interfaces
+//
+// 3) pointer to slice of structs
 //
 // Example:
 //
-//	var target interface{}
-//	value := []interface{}{"foo",123}
-//	array := NewArray(t,value)
-//	array.Decode(&target)
-//	assert.Equal(t,value,target)
+//	type S struct{
+//		Foo int `json:foo`
+//	}
+//	value := []interface{}{
+//		map[string]interface{}{
+//				"foo": 123,
+//			},
+//		map[string]interface{}{
+//				"foo": 456,
+//			},
+//	}
+//	array:=NewArray(t,value)
+//	var target []S
+//	arr.Decode(&target)
+//	assert.Equal(t,[]S{{123},{456}},target)
 func (a *Array) Decode(target interface{}) *Array {
 	a.chain.enter("Decode()")
 	defer a.chain.leave()

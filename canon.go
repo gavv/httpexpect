@@ -93,7 +93,6 @@ func canonValue(chain *chain, in interface{}) (interface{}, bool) {
 }
 
 func canonDecode(chain *chain, value interface{}, target interface{}) {
-
 	if target == nil {
 		chain.fail(AssertionFailure{
 			Type: AssertUsage,

@@ -86,6 +86,18 @@ func TestArray_Failed(t *testing.T) {
 
 		check(value)
 	})
+
+	t.Run("failed_chain_Decode", func(t *testing.T) {
+		chain := newMockChain(t)
+		chain.fail(mockFailure())
+
+		value := []interface{}{123}
+		arr := newArray(chain, value)
+
+		var target []interface{}
+
+		check(arr.Decode(target))
+	})
 }
 
 func TestArray_Constructors(t *testing.T) {
