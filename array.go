@@ -1266,9 +1266,9 @@ func (a *Array) IsOrdered(less ...func(x, y *Value) bool) *Array {
 				Expected:  &AssertionValue{y.value},
 				Reference: &AssertionValue{a.value},
 				Errors: []error{
-					errors.New("expected: array is ordered"),
-					fmt.Errorf("element %v must be less than element %v, but it isn't",
-						x.value, y.value),
+					errors.New("expected: reference array is ordered"),
+					fmt.Errorf("element %v must not be less than element %v, but it is",
+						i+1, i),
 				},
 			})
 			return a
@@ -1362,7 +1362,7 @@ func (a *Array) NotOrdered(less ...func(x, y *Value) bool) *Array {
 			Type:   AssertValid,
 			Actual: &AssertionValue{a.value},
 			Errors: []error{
-				errors.New("expected: array is not ordered"),
+				errors.New("expected: array is not ordered, but it is"),
 			},
 		})
 	}
@@ -1387,33 +1387,43 @@ func (a *Array) validateElementsType() {
 			// ok, do nothing
 		default:
 			a.chain.fail(AssertionFailure{
-				Type:   AssertBelongs,
-				Actual: &AssertionValue{fmt.Sprintf("%T", curr)},
+				Type: AssertBelongs,
+				Actual: &AssertionValue{
+					typeName(fmt.Sprintf("%T", curr)),
+				},
 				Expected: &AssertionValue{AssertionList{
-					"Boolean (bool)",
-					"Number (int*, uint*, float32, float64)",
-					"String (string)",
-					"Null (nil)",
+					typeName("Boolean (bool)"),
+					typeName("Number (int*, uint*, float*)"),
+					typeName("String (string)"),
+					typeName("Null (nil)"),
 				}},
-				Reference: &AssertionValue{curr},
+				Reference: &AssertionValue{
+					a.value,
+				},
 				Errors: []error{
 					errors.New("expected: type of each element of reference array" +
-						" belongs to given list"),
-					fmt.Errorf("element %v has type %T", curr, curr),
+						" belongs to allowed list"),
+					fmt.Errorf("element %v has disallowed type %T", idx, curr),
 				},
 			})
 			return
 		}
 		if idx > 0 && fmt.Sprintf("%T", curr) != fmt.Sprintf("%T", prev) {
 			a.chain.fail(AssertionFailure{
-				Type:      AssertEqual,
-				Actual:    &AssertionValue{fmt.Sprintf("%T", curr)},
-				Expected:  &AssertionValue{fmt.Sprintf("%T", prev)},
-				Reference: &AssertionValue{curr},
+				Type: AssertEqual,
+				Actual: &AssertionValue{
+					typeName(fmt.Sprintf("%T (type of element %v)", curr, idx)),
+				},
+				Expected: &AssertionValue{
+					typeName(fmt.Sprintf("%T (type of element %v)", prev, idx-1)),
+				},
+				Reference: &AssertionValue{
+					a.value,
+				},
 				Errors: []error{
 					errors.New("expected: types of all elements of reference array are the same"),
-					fmt.Errorf("element %v has type %T while element %v has type %T",
-						prev, prev, curr, curr),
+					fmt.Errorf("element %v has type %T, but element %v has type %T",
+						idx-1, prev, idx, curr),
 				},
 			})
 			return
@@ -1462,4 +1472,10 @@ func countElement(array []interface{}, element interface{}) int {
 		}
 	}
 	return count
+}
+
+type typeName string
+
+func (t typeName) String() string {
+	return string(t)
 }

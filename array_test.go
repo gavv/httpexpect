@@ -1290,6 +1290,7 @@ func TestArray_NotFind(t *testing.T) {
 		array.chain.assertFailed(t)
 	})
 }
+
 func TestArray_IsOrdered(t *testing.T) {
 	type args struct {
 		values      []interface{}
