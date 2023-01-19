@@ -187,7 +187,6 @@ func TestArray_Decode(t *testing.T) {
 
 		arr.chain.assertFailed(t)
 	})
-
 }
 
 func TestArray_Getters(t *testing.T) {

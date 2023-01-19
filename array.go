@@ -90,8 +90,10 @@ func (a *Array) Raw() []interface{} {
 //			},
 //	}
 //	array:=NewArray(t,value)
+//
 //	var target []S
 //	arr.Decode(&target)
+//
 //	assert.Equal(t,[]S{{123},{456}},target)
 func (a *Array) Decode(target interface{}) *Array {
 	a.chain.enter("Decode()")
