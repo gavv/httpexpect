@@ -59,21 +59,16 @@ func TestBoolean_Decode(t *testing.T) {
 		assert.Equal(t, true, target)
 	})
 
-	t.Run("Decode into struct", func(t *testing.T) {
+	t.Run("Decode into boolean", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
-		type S struct {
-			Foo bool
-		}
-
-		actualStruct := S{true}
 		value := NewBoolean(reporter, true)
 
-		var target S
+		var target bool
 		value.Decode(&target)
 
 		value.chain.assertNotFailed(t)
-		assert.Equal(t, actualStruct, target)
+		assert.Equal(t, true, target)
 	})
 }
 
