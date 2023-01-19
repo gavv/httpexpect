@@ -23,6 +23,9 @@ func TestArray_Failed(t *testing.T) {
 		value.First().chain.assertFailed(t)
 		value.Last().chain.assertFailed(t)
 
+		var target interface{}
+		value.Decode(&target)
+
 		value.Empty()
 		value.NotEmpty()
 		value.Equal([]interface{}{})
@@ -85,18 +88,6 @@ func TestArray_Failed(t *testing.T) {
 		value := newArray(chain, nil)
 
 		check(value)
-	})
-
-	t.Run("failed_chain_Decode", func(t *testing.T) {
-		chain := newMockChain(t)
-		chain.fail(mockFailure())
-
-		value := []interface{}{123}
-		arr := newArray(chain, value)
-
-		var target []interface{}
-
-		check(arr.Decode(target))
 	})
 }
 
