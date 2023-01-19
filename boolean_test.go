@@ -46,6 +46,37 @@ func TestBoolean_Constructors(t *testing.T) {
 	})
 }
 
+func TestBoolean_Decode(t *testing.T) {
+	t.Run("Decode into empty interface", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewBoolean(reporter, true)
+
+		var target interface{}
+		value.Decode(&target)
+
+		value.chain.assertNotFailed(t)
+		assert.Equal(t, true, target)
+	})
+
+	t.Run("Decode into struct", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		type S struct {
+			Foo bool
+		}
+
+		actualStruct := S{true}
+		value := NewBoolean(reporter, true)
+
+		var target S
+		value.Decode(&target)
+
+		value.chain.assertNotFailed(t)
+		assert.Equal(t, actualStruct, target)
+	})
+}
+
 func TestBoolean_Getters(t *testing.T) {
 	reporter := newMockReporter(t)
 

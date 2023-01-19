@@ -49,6 +49,18 @@ func (b *Boolean) Raw() bool {
 	return b.value
 }
 
+func (b *Boolean) Decode(target interface{}) *Boolean {
+	b.chain.enter("Decode()")
+	defer b.chain.leave()
+
+	if b.chain.failed() {
+		return b
+	}
+
+	canonDecode(b.chain, b.value, target)
+	return b
+}
+
 // Path is similar to Value.Path.
 func (b *Boolean) Path(path string) *Value {
 	b.chain.enter("Path(%q)", path)
