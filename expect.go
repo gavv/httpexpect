@@ -428,7 +428,7 @@ func WithConfig(config Config) *Expect {
 //	e.Env().Put("key", "value")
 //	value := e.Env().GetString("key")
 func (e *Expect) Env() *Environment {
-	return e.chain.getEnv()
+	return e.chain.env()
 }
 
 func (e *Expect) clone() *Expect {

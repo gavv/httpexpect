@@ -105,7 +105,7 @@ func newChainWithDefaults(name string, reporter Reporter) *chain {
 // Get environment associated with chain
 // Chain constructor either gets environment from config or creates a new one.
 // Children chains inherit environment.
-func (c *chain) getEnv() *Environment {
+func (c *chain) env() *Environment {
 	return c.context.Environment
 }
 

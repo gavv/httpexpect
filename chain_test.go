@@ -44,18 +44,18 @@ func TestChain_Env(t *testing.T) {
 			AssertionHandler: &mockAssertionHandler{},
 			Environment:      env1,
 		}.withDefaults())
-		assert.Same(t, env1, chain1.getEnv())
+		assert.Same(t, env1, chain1.env())
 
 		chain2 := newChainWithConfig("root", Config{
 			AssertionHandler: &mockAssertionHandler{},
 			Environment:      nil,
 		}.withDefaults())
-		assert.NotNil(t, chain2.getEnv())
+		assert.NotNil(t, chain2.env())
 	})
 
 	t.Run("newChainWithDefaults", func(t *testing.T) {
 		chain := newChainWithDefaults("root", newMockReporter(t))
-		assert.NotNil(t, chain.getEnv())
+		assert.NotNil(t, chain.env())
 	})
 }
 
