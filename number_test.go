@@ -53,6 +53,63 @@ func TestNumber_Constructors(t *testing.T) {
 	})
 }
 
+func TestNumber_Decode(t *testing.T) {
+	t.Run("Decode into empty interface", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewNumber(reporter, 10.1)
+
+		var target interface{}
+		value.Decode(&target)
+
+		value.chain.assertNotFailed(t)
+		assert.Equal(t, 10.1, target)
+	})
+
+	t.Run("Decode into int variable", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewNumber(reporter, 10)
+
+		var target int
+		value.Decode(&target)
+
+		value.chain.assertNotFailed(t)
+		assert.Equal(t, 10, target)
+	})
+
+	t.Run("Decode into float64 variable", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewNumber(reporter, 10.1)
+
+		var target float64
+		value.Decode(&target)
+
+		value.chain.assertNotFailed(t)
+		assert.Equal(t, 10.1, target)
+	})
+
+	t.Run("Target is unmarshable", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewNumber(reporter, 10.1)
+
+		value.Decode(123)
+
+		value.chain.assertFailed(t)
+	})
+
+	t.Run("Target is nil", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewNumber(reporter, 10.1)
+
+		value.Decode(nil)
+
+		value.chain.assertFailed(t)
+	})
+}
 func TestNumber_Getters(t *testing.T) {
 	reporter := newMockReporter(t)
 
