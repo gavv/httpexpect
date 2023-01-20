@@ -70,6 +70,26 @@ func TestBoolean_Decode(t *testing.T) {
 		value.chain.assertNotFailed(t)
 		assert.Equal(t, true, target)
 	})
+
+	t.Run("Target is unmarshable", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewBoolean(reporter, true)
+
+		value.Decode(123)
+
+		value.chain.assertFailed(t)
+	})
+
+	t.Run("Target is nil", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewBoolean(reporter, true)
+
+		value.Decode(nil)
+
+		value.chain.assertFailed(t)
+	})
 }
 
 func TestBoolean_Getters(t *testing.T) {
