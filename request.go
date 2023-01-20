@@ -40,6 +40,7 @@ type Request struct {
 	minRetryDelay time.Duration
 	maxRetryDelay time.Duration
 	sleepFn       func(d time.Duration) <-chan time.Time
+	hasExpected   bool
 
 	timeout time.Duration
 
@@ -1653,6 +1654,9 @@ func (r *Request) WithMultipart() *Request {
 // Request is sent using Client interface, or WebsocketDialer in case of
 // WebSocket request.
 //
+// After calling Expect, there should not be any more calls of Expect or
+// other WithXXX methods on the same Request instance.
+//
 // Example:
 //
 //	req := NewRequestC(config, "PUT", "http://example.com/path")
@@ -1662,6 +1666,11 @@ func (r *Request) WithMultipart() *Request {
 func (r *Request) Expect() *Response {
 	r.chain.enter("Expect()")
 	defer r.chain.leave()
+
+	if r.hasExpected {
+		r.chain.fail(r.unexpectedExpectError("Expect"))
+		return nil
+	}
 
 	resp := r.roundTrip()
 
@@ -1675,6 +1684,8 @@ func (r *Request) Expect() *Response {
 	for _, matcher := range r.matchers {
 		matcher(resp)
 	}
+
+	r.hasExpected = true
 
 	return resp
 }
@@ -2095,6 +2106,13 @@ func (r *Request) setBody(setter string, reader io.Reader, len int, overwrite bo
 	}
 
 	r.bodySetter = setter
+}
+
+func (r *Request) unexpectedExpectError(funcCall string) AssertionFailure {
+	return AssertionFailure{
+		Type:   AssertUsage,
+		Errors: []error{errors.New("unexpected call to " + funcCall + ": Expect has already been called")},
+	}
 }
 
 func concatPaths(a, b string) string {

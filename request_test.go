@@ -2231,6 +2231,17 @@ func TestRequest_UsageChecks(t *testing.T) {
 		req.Expect()
 		req.chain.assertFailed(t)
 	})
+
+	t.Run("Expect call after an Expect", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			Client:   &mockClient{},
+		}
+		req := NewRequestC(config, "GET", "/")
+		req.Expect()
+		assert.Nil(t, req.Expect())
+		req.chain.assertFailed(t)
+	})
 }
 
 func TestRequest_Panics(t *testing.T) {
