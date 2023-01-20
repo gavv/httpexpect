@@ -49,6 +49,21 @@ func (b *Boolean) Raw() bool {
 	return b.value
 }
 
+// Decode unmarshals the underlying value attached to the Array to a target varibale
+// target should be one of these:
+//
+// 1) pointer to a empty interface
+//
+// 2) pointer to a boolean
+//
+// Example:
+//
+//	b := NewBoolean(t,true)
+//
+//	var target bool
+//	b.Decode(&target)
+//
+//	assert.Equal(t,true,target)
 func (b *Boolean) Decode(target interface{}) *Boolean {
 	b.chain.enter("Decode()")
 	defer b.chain.leave()

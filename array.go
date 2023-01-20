@@ -89,7 +89,7 @@ func (a *Array) Raw() []interface{} {
 //				"foo": 456,
 //			},
 //	}
-//	array:=NewArray(t,value)
+//	array := NewArray(t,value)
 //
 //	var target []S
 //	arr.Decode(&target)
