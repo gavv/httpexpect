@@ -49,7 +49,7 @@ func (b *Boolean) Raw() bool {
 	return b.value
 }
 
-// Decode unmarshals the underlying value attached to the Array to a target varibale
+// Decode unmarshals the underlying value attached to the Array to a target variable
 // target should be one of these:
 //
 // 1) pointer to a empty interface
