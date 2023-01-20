@@ -49,7 +49,7 @@ func (b *Boolean) Raw() bool {
 	return b.value
 }
 
-// Decode unmarshals the underlying value attached to the Array to a target variable
+// Decode unmarshals the underlying value attached to the Boolean to a target variable
 // target should be one of these:
 //
 // 1) pointer to a empty interface
@@ -58,10 +58,10 @@ func (b *Boolean) Raw() bool {
 //
 // Example:
 //
-//	b := NewBoolean(t,true)
+//	value := NewBoolean(t,true)
 //
 //	var target bool
-//	b.Decode(&target)
+//	value.Decode(&target)
 //
 //	assert.Equal(t,true,target)
 func (b *Boolean) Decode(target interface{}) *Boolean {
