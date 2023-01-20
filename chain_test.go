@@ -265,19 +265,53 @@ func TestChain_Severity(t *testing.T) {
 	assert.Equal(t, SeverityLog, handler.failure.Severity)
 }
 
-func TestChain_Callback(t *testing.T) {
+func TestChain_Propagation(t *testing.T) {
 	handler := &mockAssertionHandler{}
 
-	chain := newChainWithConfig("test", Config{
+	chain1 := newChainWithConfig("test", Config{
 		AssertionHandler: handler,
 	}.withDefaults())
 
-	called := false
+	chain2a := chain1.clone()
+	chain2b := chain1.clone()
 
-	chain.setFailCallback(func() {
-		called = true
-	})
+	chain3a := chain2a.clone()
+	chain3b := chain2a.clone()
 
-	chain.fail(mockFailure())
-	assert.True(t, called)
+	chain3a.fail(mockFailure())
+	chain3b.setFailed()
+
+	assert.False(t, chain1.failed())
+	assert.False(t, chain2a.failed())
+	assert.False(t, chain2b.failed())
+	assert.True(t, chain3a.failed())
+	assert.True(t, chain3b.failed())
+
+	assert.True(t, chain1.failedRecursive())
+	assert.True(t, chain2a.failedRecursive())
+	assert.False(t, chain2b.failedRecursive())
+	assert.True(t, chain3a.failedRecursive())
+	assert.True(t, chain3b.failedRecursive())
+}
+
+func TestChain_Reroot(t *testing.T) {
+	handler := &mockAssertionHandler{}
+
+	chain1 := newChainWithConfig("test", Config{
+		AssertionHandler: handler,
+	}.withDefaults())
+
+	chain2 := chain1.clone()
+	chain2.setRoot()
+
+	chain3 := chain2.clone()
+	chain3.setFailed()
+
+	assert.False(t, chain1.failed())
+	assert.False(t, chain2.failed())
+	assert.True(t, chain3.failed())
+
+	assert.False(t, chain1.failedRecursive())
+	assert.True(t, chain2.failedRecursive())
+	assert.True(t, chain3.failedRecursive())
 }

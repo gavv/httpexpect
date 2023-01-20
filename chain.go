@@ -20,9 +20,9 @@ import (
 // When a matcher creates a child matcher, e.g. you call Array.Element() and it returns
 // a new Value for given index, it usually looks like this:
 //
-//	parent.chain.enter("Child()") // appends "Child()" to context.Path
-//	defer parent.chain.leave() // removes "Child()" from context.Path
-//	return newChild(parent.chain) // calls chain.clone()
+//	parent.chain.enter("Child()")  // appends "Child()" to context.Path
+//	defer parent.chain.leave()     // removes "Child()" from context.Path
+//	return newChild(parent.chain)  // calls chain.clone()
 //
 // In result, child matcher will have a clone of chain, which will inherit context,
 // handler, fail bit, and will have "Child()" appended to its context.Path.
@@ -36,15 +36,20 @@ import (
 //   - fail bit is inherited as well; if there were a failure in parent chain,
 //     subsequent failures will be ignored not only in parent chain, but also
 //     in all newly created child chains
+//
+// When a chain is cloned, it keeps track of the parent chain. When a failure is
+// reported, parent chains up to the root are notified that their children
+// have failures (however parent chains are not marked failed).
 type chain struct {
 	noCopy noCopy
+
+	parent            *chain
+	isFailed          bool
+	hasFailedChildren bool
 
 	context  AssertionContext
 	handler  AssertionHandler
 	severity AssertionSeverity
-
-	failCb  func()
-	failBit bool
 }
 
 // Construct chain using config.
@@ -55,7 +60,6 @@ func newChainWithConfig(name string, config Config) *chain {
 		context:  AssertionContext{},
 		handler:  config.AssertionHandler,
 		severity: SeverityError,
-		failBit:  false,
 	}
 
 	c.context.TestName = config.TestName
@@ -88,7 +92,6 @@ func newChainWithDefaults(name string, reporter Reporter) *chain {
 			Reporter:  reporter,
 		},
 		severity: SeverityError,
-		failBit:  false,
 	}
 
 	if name != "" {
@@ -109,11 +112,11 @@ func (c *chain) env() *Environment {
 	return c.context.Environment
 }
 
-// Set callback to be invoked on failure.
-// Callback is invoked after failure is passed to AssertionHandler.
-// Children chains inherit callback.
-func (c *chain) setFailCallback(failCb func()) {
-	c.failCb = failCb
+// Set this chain as tree root.
+// After this call, chain wont have parent.
+// On failure, this chain wont inform any parent about it.
+func (c *chain) setRoot() {
+	c.parent = nil
 }
 
 // Set severity of reported failures.
@@ -143,10 +146,17 @@ func (c *chain) setResponse(resp *Response) {
 // Create a clone of the chain.
 // Modifications of the clone wont affect the original.
 func (c *chain) clone() *chain {
-	copy := *c //nolint
-	copy.context.Path = append(([]string)(nil), c.context.Path...)
+	contextCopy := c.context
+	contextCopy.Path = append(([]string)(nil), contextCopy.Path...)
 
-	return &copy
+	return &chain{
+		parent:            c,
+		isFailed:          c.isFailed,
+		hasFailedChildren: false,
+		context:           contextCopy,
+		handler:           c.handler,
+		severity:          c.severity,
+	}
 }
 
 // Append string to chain path.
@@ -169,7 +179,7 @@ func (c *chain) leave() {
 		panic("unpaired enter/leave")
 	}
 
-	if !c.failBit {
+	if !c.isFailed {
 		c.handler.Success(&c.context)
 	}
 
@@ -180,13 +190,14 @@ func (c *chain) leave() {
 // For tests.
 var chainAssertionValidation = false
 
-// Report failure to AssertionHandler and set fail bit.
+// Report failure to AssertionHandler and invoke setFailed.
 // If fail bit is already set, failure is ignored.
 func (c *chain) fail(failure AssertionFailure) {
-	if c.failBit {
+	if c.isFailed {
 		return
 	}
-	c.failBit = true
+
+	c.setFailed()
 
 	failure.Severity = c.severity
 	if c.severity == SeverityError {
@@ -194,10 +205,6 @@ func (c *chain) fail(failure AssertionFailure) {
 	}
 
 	c.handler.Failure(&c.context, &failure)
-
-	if c.failCb != nil {
-		c.failCb()
-	}
 
 	if chainAssertionValidation {
 		if err := validateAssertion(&failure); err != nil {
@@ -207,27 +214,41 @@ func (c *chain) fail(failure AssertionFailure) {
 }
 
 // Set fail bit.
+// If chain has parent, notify it and all its parents that children have failures.
 func (c *chain) setFailed() {
-	c.failBit = true
+	if c.isFailed {
+		return
+	}
+
+	c.isFailed = true
+
+	for cur := c; cur.parent != nil; cur = cur.parent {
+		cur.parent.hasFailedChildren = true
+	}
 }
 
 // Clear fail bit.
 // For tests.
 func (c *chain) clearFailed() {
-	c.failBit = false
+	c.isFailed = false
+	c.hasFailedChildren = false
 }
 
-// Get fail bit.
-// For tests.
+// Check fail bit.
 func (c *chain) failed() bool {
-	return c.failBit
+	return c.isFailed
+}
+
+// Check fail bit in this chain and any of its children, recursively.
+func (c *chain) failedRecursive() bool {
+	return c.isFailed || c.hasFailedChildren
 }
 
 // Check that chain is not failed.
 // Otherwise report failure to Reporter.
 // For tests.
 func (c *chain) assertNotFailed(r Reporter) {
-	if c.failBit {
+	if c.isFailed {
 		r.Errorf("expected: chain is not failed")
 	}
 }
@@ -236,7 +257,7 @@ func (c *chain) assertNotFailed(r Reporter) {
 // Otherwise report failure to Reporter.
 // For tests.
 func (c *chain) assertFailed(r Reporter) {
-	if !c.failBit {
+	if !c.isFailed {
 		r.Errorf("expected: chain is failed")
 	}
 }

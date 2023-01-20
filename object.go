@@ -273,21 +273,15 @@ func (o *Object) Every(fn func(key string, value *Value)) *Object {
 		return o
 	}
 
-	chainFailure := false
-
 	for _, kv := range o.sortedKV() {
 		valueChain := o.chain.clone()
 		valueChain.replace("Every[%q]", kv.key)
 
-		valueChain.setFailCallback(func() {
-			chainFailure = true
-		})
-
 		fn(kv.key, newValue(valueChain, kv.val))
-	}
 
-	if chainFailure {
-		o.chain.setFailed()
+		if valueChain.failedRecursive() {
+			o.chain.setFailed()
+		}
 	}
 
 	return o
@@ -341,14 +335,10 @@ func (o *Object) Filter(fn func(key string, value *Value) bool) *Object {
 		valueChain := o.chain.clone()
 		valueChain.replace("Filter[%q]", kv.key)
 
+		valueChain.setRoot()
 		valueChain.setSeverity(SeverityLog)
 
-		chainFailed := false
-		valueChain.setFailCallback(func() {
-			chainFailed = true
-		})
-
-		if fn(kv.key, newValue(valueChain, kv.val)) && !chainFailed {
+		if fn(kv.key, newValue(valueChain, kv.val)) && !valueChain.failedRecursive() {
 			filteredObject[kv.key] = kv.val
 		}
 	}
@@ -443,14 +433,10 @@ func (o *Object) Find(fn func(key string, value *Value) bool) *Value {
 		valueChain := o.chain.clone()
 		valueChain.replace("Find[%q]", kv.key)
 
+		valueChain.setRoot()
 		valueChain.setSeverity(SeverityLog)
 
-		chainFailed := false
-		valueChain.setFailCallback(func() {
-			chainFailed = true
-		})
-
-		if fn(kv.key, newValue(valueChain, kv.val)) && !chainFailed {
+		if fn(kv.key, newValue(valueChain, kv.val)) && !valueChain.failedRecursive() {
 			return newValue(o.chain, kv.val)
 		}
 	}
@@ -517,14 +503,10 @@ func (o *Object) FindAll(fn func(key string, value *Value) bool) []*Value {
 		valueChain := o.chain.clone()
 		valueChain.replace("FindAll[%q]", kv.key)
 
+		valueChain.setRoot()
 		valueChain.setSeverity(SeverityLog)
 
-		chainFailed := false
-		valueChain.setFailCallback(func() {
-			chainFailed = true
-		})
-
-		if fn(kv.key, newValue(valueChain, kv.val)) && !chainFailed {
+		if fn(kv.key, newValue(valueChain, kv.val)) && !valueChain.failedRecursive() {
 			foundValues = append(foundValues, newValue(o.chain, kv.val))
 		}
 	}
@@ -577,14 +559,10 @@ func (o *Object) NotFind(fn func(key string, value *Value) bool) *Object {
 		valueChain := o.chain.clone()
 		valueChain.replace("NotFind[%q]", kv.key)
 
+		valueChain.setRoot()
 		valueChain.setSeverity(SeverityLog)
 
-		chainFailed := false
-		valueChain.setFailCallback(func() {
-			chainFailed = true
-		})
-
-		if fn(kv.key, newValue(valueChain, kv.val)) && !chainFailed {
+		if fn(kv.key, newValue(valueChain, kv.val)) && !valueChain.failedRecursive() {
 			o.chain.fail(AssertionFailure{
 				Type:     AssertNotContainsElement,
 				Expected: &AssertionValue{kv.val},

@@ -298,21 +298,15 @@ func (a *Array) Every(fn func(index int, value *Value)) *Array {
 		return a
 	}
 
-	chainFailure := false
-
 	for index, val := range a.value {
 		valueChain := a.chain.clone()
 		valueChain.replace("Every[%v]", index)
 
-		valueChain.setFailCallback(func() {
-			chainFailure = true
-		})
-
 		fn(index, newValue(valueChain, val))
-	}
 
-	if chainFailure {
-		a.chain.setFailed()
+		if valueChain.failedRecursive() {
+			a.chain.setFailed()
+		}
 	}
 
 	return a
@@ -360,14 +354,10 @@ func (a *Array) Filter(fn func(index int, value *Value) bool) *Array {
 		valueChain := a.chain.clone()
 		valueChain.replace("Filter[%v]", index)
 
+		valueChain.setRoot()
 		valueChain.setSeverity(SeverityLog)
 
-		chainFailed := false
-		valueChain.setFailCallback(func() {
-			chainFailed = true
-		})
-
-		if fn(index, newValue(valueChain, element)) && !chainFailed {
+		if fn(index, newValue(valueChain, element)) && !valueChain.failedRecursive() {
 			filteredArray = append(filteredArray, element)
 		}
 	}
@@ -452,14 +442,10 @@ func (a *Array) Find(fn func(index int, value *Value) bool) *Value {
 		valueChain := a.chain.clone()
 		valueChain.replace("Find[%v]", index)
 
+		valueChain.setRoot()
 		valueChain.setSeverity(SeverityLog)
 
-		chainFailed := false
-		valueChain.setFailCallback(func() {
-			chainFailed = true
-		})
-
-		if fn(index, newValue(valueChain, element)) && !chainFailed {
+		if fn(index, newValue(valueChain, element)) && !valueChain.failedRecursive() {
 			return newValue(a.chain, element)
 		}
 	}
@@ -518,14 +504,10 @@ func (a *Array) FindAll(fn func(index int, value *Value) bool) []*Value {
 		valueChain := a.chain.clone()
 		valueChain.replace("FindAll[%v]", index)
 
+		valueChain.setRoot()
 		valueChain.setSeverity(SeverityLog)
 
-		chainFailed := false
-		valueChain.setFailCallback(func() {
-			chainFailed = true
-		})
-
-		if fn(index, newValue(valueChain, element)) && !chainFailed {
+		if fn(index, newValue(valueChain, element)) && !valueChain.failedRecursive() {
 			foundValues = append(foundValues, newValue(a.chain, element))
 		}
 	}
@@ -571,14 +553,10 @@ func (a *Array) NotFind(fn func(index int, value *Value) bool) *Array {
 		valueChain := a.chain.clone()
 		valueChain.replace("NotFind[%v]", index)
 
+		valueChain.setRoot()
 		valueChain.setSeverity(SeverityLog)
 
-		chainFailed := false
-		valueChain.setFailCallback(func() {
-			chainFailed = true
-		})
-
-		if fn(index, newValue(valueChain, element)) && !chainFailed {
+		if fn(index, newValue(valueChain, element)) && !valueChain.failedRecursive() {
 			a.chain.fail(AssertionFailure{
 				Type:     AssertNotContainsElement,
 				Expected: &AssertionValue{element},
@@ -1281,20 +1259,13 @@ func (a *Array) IsOrdered(less ...func(x, y *Value) bool) *Array {
 		}
 	}
 
-	var chainFailure bool
 	for i := 0; i < len(a.value)-1; i++ {
 		xChain := a.chain.clone()
 		xChain.replace("IsOrdered[%d]", i)
-		xChain.setFailCallback(func() {
-			chainFailure = true
-		})
 		x := newValue(xChain, a.value[i])
 
 		yChain := a.chain.clone()
 		yChain.replace("IsOrdered[%d]", i+1)
-		yChain.setFailCallback(func() {
-			chainFailure = true
-		})
 		y := newValue(yChain, a.value[i+1])
 
 		if lessFn(y, x) {
@@ -1312,7 +1283,7 @@ func (a *Array) IsOrdered(less ...func(x, y *Value) bool) *Array {
 			return a
 		}
 
-		if chainFailure {
+		if xChain.failedRecursive() || yChain.failedRecursive() {
 			a.chain.setFailed()
 			return a
 		}
@@ -1366,22 +1337,14 @@ func (a *Array) NotOrdered(less ...func(x, y *Value) bool) *Array {
 		}
 	}
 
-	var i int
-	var chainFailure bool
 	ordered := true
-	for i = 0; i < len(a.value)-1; i++ {
+	for i := 0; i < len(a.value)-1; i++ {
 		xChain := a.chain.clone()
 		xChain.replace("IsOrdered[%d]", i)
-		xChain.setFailCallback(func() {
-			chainFailure = true
-		})
 		x := newValue(xChain, a.value[i])
 
 		yChain := a.chain.clone()
 		yChain.replace("IsOrdered[%d]", i+1)
-		yChain.setFailCallback(func() {
-			chainFailure = true
-		})
 		y := newValue(yChain, a.value[i+1])
 
 		if lessFn(y, x) {
@@ -1389,7 +1352,7 @@ func (a *Array) NotOrdered(less ...func(x, y *Value) bool) *Array {
 			break
 		}
 
-		if chainFailure {
+		if xChain.failedRecursive() || yChain.failedRecursive() {
 			a.chain.setFailed()
 			return a
 		}
