@@ -14,8 +14,9 @@ import (
 // String provides methods to inspect attached string value
 // (Go representation of JSON string).
 type String struct {
-	chain *chain
-	value string
+	noCopy noCopy
+	chain  *chain
+	value  string
 }
 
 // NewString returns a new String instance.
@@ -41,7 +42,7 @@ func NewStringC(config Config, value string) *String {
 }
 
 func newString(parent *chain, val string) *String {
-	return &String{parent.clone(), val}
+	return &String{chain: parent.clone(), value: val}
 }
 
 // Raw returns underlying value attached to String.
@@ -794,14 +795,14 @@ func (s *String) IsASCII() *String {
 	return s
 }
 
-// NotIsASCII succeeds if at least one string character does not belong to ASCII.
+// NotASCII succeeds if at least one string character does not belong to ASCII.
 //
 // Example:
 //
 //	str := NewString(t, "こんにちは")
-//	str.NotIsASCII()
-func (s *String) NotIsASCII() *String {
-	s.chain.enter("NotIsASCII()")
+//	str.NotASCII()
+func (s *String) NotASCII() *String {
+	s.chain.enter("NotASCII()")
 	defer s.chain.leave()
 
 	if s.chain.failed() {
@@ -827,6 +828,11 @@ func (s *String) NotIsASCII() *String {
 	}
 
 	return s
+}
+
+// Deprecated: use NotASCII instead.
+func (s *String) NotIsASCII() *String {
+	return s.NotASCII()
 }
 
 // AsNumber parses float from string and returns a new Number instance

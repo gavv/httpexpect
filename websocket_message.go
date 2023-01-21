@@ -9,7 +9,9 @@ import (
 
 // WebsocketMessage provides methods to inspect message read from WebSocket connection.
 type WebsocketMessage struct {
-	chain     *chain
+	noCopy noCopy
+	chain  *chain
+
 	typ       int
 	content   []byte
 	closeCode int

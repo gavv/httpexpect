@@ -88,6 +88,7 @@ import (
 // Expect is a toplevel object that contains user Config and allows
 // to construct Request objects.
 type Expect struct {
+	noCopy   noCopy
 	config   Config
 	chain    *chain
 	builders []func(*Request)
@@ -431,15 +432,12 @@ func (e *Expect) Env() *Environment {
 }
 
 func (e *Expect) clone() *Expect {
-	ret := *e
-
-	ret.builders = nil
-	ret.builders = append(ret.builders, e.builders...)
-
-	ret.matchers = nil
-	ret.matchers = append(ret.matchers, e.matchers...)
-
-	return &ret
+	return &Expect{
+		config:   e.config,
+		chain:    e.chain.clone(),
+		builders: append(([]func(*Request))(nil), e.builders...),
+		matchers: append(([]func(*Response))(nil), e.matchers...),
+	}
 }
 
 // Builder returns a copy of Expect instance with given builder attached to it.

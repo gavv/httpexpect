@@ -20,6 +20,7 @@ import (
 
 // Response provides methods to inspect attached http.Response object.
 type Response struct {
+	noCopy noCopy
 	config Config
 	chain  *chain
 

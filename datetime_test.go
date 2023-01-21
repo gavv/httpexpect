@@ -25,6 +25,18 @@ func TestDateTime_Failed(t *testing.T) {
 	value.Le(tm)
 	value.InRange(tm, tm)
 	value.NotInRange(tm, tm)
+	value.GetZone()
+	value.GetYear()
+	value.GetMonth()
+	value.GetDay()
+	value.GetWeekDay()
+	value.GetYearDay()
+	value.GetHour()
+	value.GetMinute()
+	value.GetSecond()
+	value.GetNanosecond()
+	value.AsUTC()
+	value.AsLocal()
 }
 
 func TestDateTime_Constructors(t *testing.T) {
@@ -44,6 +56,13 @@ func TestDateTime_Constructors(t *testing.T) {
 		}, time)
 		value.Equal(time)
 		value.chain.assertNotFailed(t)
+	})
+
+	t.Run("chain Constructor", func(t *testing.T) {
+		chain := newMockChain(t)
+		value := newDateTime(chain, time)
+		assert.NotSame(t, value.chain, chain)
+		assert.Equal(t, value.chain.context.Path, chain.context.Path)
 	})
 }
 
@@ -175,4 +194,40 @@ func TestDateTime_InRange(t *testing.T) {
 	value.NotInRange(time.Unix(0, 1234+1), time.Unix(0, 1234-1))
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
+}
+
+func TestDateTimeGetters(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	parsedTime, _ := time.Parse(time.UnixDate, "FRI Dec 30 15:04:05 IST 2022")
+
+	value := NewDateTime(reporter, parsedTime)
+
+	value.chain.assertNotFailed(t)
+
+	value.GetZone().chain.assertNotFailed(t)
+	value.GetYear().chain.assertNotFailed(t)
+	value.GetMonth().chain.assertNotFailed(t)
+	value.GetDay().chain.assertNotFailed(t)
+	value.GetWeekDay().chain.assertNotFailed(t)
+	value.GetYearDay().chain.assertNotFailed(t)
+	value.GetHour().chain.assertNotFailed(t)
+	value.GetMinute().chain.assertNotFailed(t)
+	value.GetSecond().chain.assertNotFailed(t)
+	value.GetNanosecond().chain.assertNotFailed(t)
+	value.AsUTC().chain.assertNotFailed(t)
+	value.AsLocal().chain.assertNotFailed(t)
+
+	expectedTime := parsedTime
+	expectedZone, _ := expectedTime.Zone()
+	assert.Equal(t, expectedZone, value.GetZone().Raw())
+	assert.Equal(t, float64(expectedTime.Year()), value.GetYear().Raw())
+	assert.Equal(t, float64(expectedTime.Month()), value.GetMonth().Raw())
+	assert.Equal(t, float64(expectedTime.Day()), value.GetDay().Raw())
+	assert.Equal(t, float64(expectedTime.Weekday()), value.GetWeekDay().Raw())
+	assert.Equal(t, float64(expectedTime.YearDay()), value.GetYearDay().Raw())
+	assert.Equal(t, float64(expectedTime.Hour()), value.GetHour().Raw())
+	assert.Equal(t, float64(expectedTime.Minute()), value.GetMinute().Raw())
+	assert.Equal(t, float64(expectedTime.Second()), value.GetSecond().Raw())
+	assert.Equal(t, float64(expectedTime.Nanosecond()), value.GetNanosecond().Raw())
 }

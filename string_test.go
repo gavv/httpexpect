@@ -43,7 +43,7 @@ func TestString_Failed(t *testing.T) {
 	value.NotMatch("")
 	value.MatchAll("")
 	value.IsASCII()
-	value.NotIsASCII()
+	value.NotASCII()
 }
 
 func TestString_Constructors(t *testing.T) {
@@ -61,6 +61,13 @@ func TestString_Constructors(t *testing.T) {
 		}, "Hello")
 		value.Equal("Hello")
 		value.chain.assertNotFailed(t)
+	})
+
+	t.Run("chain Constructor", func(t *testing.T) {
+		chain := newMockChain(t)
+		value := newString(chain, "Hello")
+		assert.NotSame(t, value.chain, chain)
+		assert.Equal(t, value.chain.context.Path, chain.context.Path)
 	})
 }
 
@@ -353,27 +360,27 @@ func TestString_IsNotAscii(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value1 := NewString(reporter, "Ascii")
-	value1.NotIsASCII()
+	value1.NotASCII()
 	value1.chain.assertFailed(t)
 	value1.chain.clearFailed()
 
 	value2 := NewString(reporter, "Ascii is アスキー")
-	value2.NotIsASCII()
+	value2.NotASCII()
 	value2.chain.assertNotFailed(t)
 	value2.chain.clearFailed()
 
 	value3 := NewString(reporter, "アスキー")
-	value3.NotIsASCII()
+	value3.NotASCII()
 	value3.chain.assertNotFailed(t)
 	value3.chain.clearFailed()
 
 	value4 := NewString(reporter, string(rune(127)))
-	value4.NotIsASCII()
+	value4.NotASCII()
 	value4.chain.assertFailed(t)
 	value4.chain.clearFailed()
 
 	value5 := NewString(reporter, string(rune(128)))
-	value5.NotIsASCII()
+	value5.NotASCII()
 	value5.chain.assertNotFailed(t)
 	value5.chain.clearFailed()
 }

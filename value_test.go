@@ -58,6 +58,13 @@ func TestValue_Constructors(t *testing.T) {
 		value.chain.assertNotFailed(t)
 		value.String().chain.assertNotFailed(t)
 	})
+
+	t.Run("chain Constructor", func(t *testing.T) {
+		chain := newMockChain(t)
+		value := newValue(chain, "Test")
+		assert.NotSame(t, value.chain, chain)
+		assert.Equal(t, value.chain.context.Path, chain.context.Path)
+	})
 }
 
 func TestValue_CastNull(t *testing.T) {

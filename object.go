@@ -10,8 +10,9 @@ import (
 // Object provides methods to inspect attached map[string]interface{} object
 // (Go representation of JSON object).
 type Object struct {
-	chain *chain
-	value map[string]interface{}
+	noCopy noCopy
+	chain  *chain
+	value  map[string]interface{}
 }
 
 // NewObject returns a new Object instance.
@@ -39,7 +40,7 @@ func NewObjectC(config Config, value map[string]interface{}) *Object {
 }
 
 func newObject(parent *chain, val map[string]interface{}) *Object {
-	o := &Object{parent.clone(), nil}
+	o := &Object{chain: parent.clone(), value: nil}
 
 	if val == nil {
 		o.chain.fail(AssertionFailure{
@@ -85,7 +86,7 @@ func (o *Object) Schema(schema interface{}) *Object {
 }
 
 // Keys returns a new Array instance with object's keys.
-// Keys are sorted.
+// Keys are sorted in ascending order.
 //
 // Example:
 //
@@ -108,7 +109,7 @@ func (o *Object) Keys() *Array {
 }
 
 // Values returns a new Array instance with object's values.
-// Values are sorted by keys.
+// Values are sorted by keys ascending order.
 //
 // Example:
 //
@@ -198,6 +199,8 @@ func (o *Object) Iter() map[string]Value {
 // Every will execute the function for all values in the object irrespective
 // of assertion failures for some values in the object.
 //
+// The function is invoked for key value pairs sorted by keys in ascending order.
+//
 // Example:
 //
 //	object := NewObject(t, map[string]interface{}{"foo": 123, "bar": 456})
@@ -234,7 +237,6 @@ func (o *Object) Every(fn func(key string, value *Value)) *Object {
 		})
 
 		fn(kv.key, newValue(valueChain, kv.val))
-
 	}
 
 	if chainFailure {
@@ -253,6 +255,8 @@ func (o *Object) Every(fn func(key string, value *Value)) *Object {
 //
 // If there are any failed assertions in the filtering function, the
 // element is omitted without causing test failure.
+//
+// The function is invoked for key value pairs sorted by keys in ascending order.
 //
 // Example:
 //
@@ -288,12 +292,15 @@ func (o *Object) Filter(fn func(key string, value *Value) bool) *Object {
 
 	for _, kv := range o.sortedKV() {
 		valueChain := o.chain.clone()
+		valueChain.replace("Filter[%q]", kv.key)
+
 		valueChain.setSeverity(SeverityLog)
+
 		chainFailed := false
 		valueChain.setFailCallback(func() {
 			chainFailed = true
 		})
-		valueChain.replace("Filter[%q]", kv.key)
+
 		if fn(kv.key, newValue(valueChain, kv.val)) && !chainFailed {
 			filteredObject[kv.key] = kv.val
 		}
@@ -304,6 +311,8 @@ func (o *Object) Filter(fn func(key string, value *Value) bool) *Object {
 
 // Transform runs the passed function on all the Elements in the Object
 // and returns a new object without effecting original object.
+//
+// The function is invoked for key value pairs sorted by keys in ascending order.
 //
 // Example:
 //
@@ -349,7 +358,7 @@ func (o *Object) Transform(fn func(key string, value interface{}) interface{}) *
 //
 // If no elements were found, a failure is reported.
 //
-// The search is performed in the array of object elements sorted by keys.
+// The function is invoked for key value pairs sorted by keys in ascending order.
 //
 // Example:
 //
@@ -385,12 +394,15 @@ func (o *Object) Find(fn func(key string, value *Value) bool) *Value {
 
 	for _, kv := range o.sortedKV() {
 		valueChain := o.chain.clone()
+		valueChain.replace("Find[%q]", kv.key)
+
 		valueChain.setSeverity(SeverityLog)
+
 		chainFailed := false
 		valueChain.setFailCallback(func() {
 			chainFailed = true
 		})
-		valueChain.replace("Find[%q]", kv.key)
+
 		if fn(kv.key, newValue(valueChain, kv.val)) && !chainFailed {
 			return newValue(o.chain, kv.val)
 		}
@@ -415,7 +427,7 @@ func (o *Object) Find(fn func(key string, value *Value) bool) *Value {
 //
 // If no elements were found, empty slice is returned without reporting error.
 //
-// The search is performed in the array of object elements sorted by keys.
+// The function is invoked for key value pairs sorted by keys in ascending order.
 //
 // Example:
 //
@@ -434,12 +446,12 @@ func (o *Object) Find(fn func(key string, value *Value) bool) *Value {
 //	assert.Equal(t, len(foundValues), 2)
 //	foundValues[0].Equal(101)
 //	foundValues[1].Equal(201)
-func (o *Object) FindAll(fn func(key string, value *Value) bool) []Value {
+func (o *Object) FindAll(fn func(key string, value *Value) bool) []*Value {
 	o.chain.enter("FindAll()")
 	defer o.chain.leave()
 
 	if o.chain.failed() {
-		return []Value{}
+		return []*Value{}
 	}
 
 	if fn == nil {
@@ -449,21 +461,24 @@ func (o *Object) FindAll(fn func(key string, value *Value) bool) []Value {
 				errors.New("unexpected nil function argument"),
 			},
 		})
-		return []Value{}
+		return []*Value{}
 	}
 
-	foundValues := make([]Value, 0, len(o.value))
+	foundValues := make([]*Value, 0, len(o.value))
 
 	for _, kv := range o.sortedKV() {
 		valueChain := o.chain.clone()
+		valueChain.replace("FindAll[%q]", kv.key)
+
 		valueChain.setSeverity(SeverityLog)
+
 		chainFailed := false
 		valueChain.setFailCallback(func() {
 			chainFailed = true
 		})
-		valueChain.replace("FindAll[%q]", kv.key)
+
 		if fn(kv.key, newValue(valueChain, kv.val)) && !chainFailed {
-			foundValues = append(foundValues, *newValue(o.chain, kv.val))
+			foundValues = append(foundValues, newValue(o.chain, kv.val))
 		}
 	}
 
@@ -479,7 +494,7 @@ func (o *Object) FindAll(fn func(key string, value *Value) bool) []Value {
 // If the predicate function did not fail and returned true for at least
 // one element, a failure is reported.
 //
-// The search is performed in the array of object elements sorted by keys.
+// The function is invoked for key value pairs sorted by keys in ascending order.
 //
 // Example:
 //
@@ -513,12 +528,15 @@ func (o *Object) NotFind(fn func(key string, value *Value) bool) *Object {
 
 	for _, kv := range o.sortedKV() {
 		valueChain := o.chain.clone()
+		valueChain.replace("NotFind[%q]", kv.key)
+
 		valueChain.setSeverity(SeverityLog)
+
 		chainFailed := false
 		valueChain.setFailCallback(func() {
 			chainFailed = true
 		})
-		valueChain.replace("NotFind[%q]", kv.key)
+
 		if fn(kv.key, newValue(valueChain, kv.val)) && !chainFailed {
 			o.chain.fail(AssertionFailure{
 				Type:     AssertNotContainsElement,

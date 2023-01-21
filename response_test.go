@@ -110,6 +110,19 @@ func TestResponse_Constructors(t *testing.T) {
 		}, &http.Response{})
 		resp.chain.assertNotFailed(t)
 	})
+
+	t.Run("chain Constructor", func(t *testing.T) {
+		chain := newMockChain(t)
+		reporter := newMockReporter(t)
+		config := newMockConfig(reporter)
+		value := newResponse(responseOpts{
+			config:   config,
+			chain:    chain,
+			httpResp: &http.Response{},
+		})
+		assert.NotSame(t, value.chain, chain)
+		assert.Equal(t, value.chain.context.Path, chain.context.Path)
+	})
 }
 
 func TestResponse_RoundTripTime(t *testing.T) {
