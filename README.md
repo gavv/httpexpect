@@ -116,6 +116,10 @@ See [`_examples`](_examples) directory for complete standalone examples.
 
     Testing a server running under the [Google App Engine](https://en.wikipedia.org/wiki/Google_App_Engine).
 
+* [`custom_formatter_test.go`](_examples/custom_formatter_test.go)
+
+    Testing with custom formatter for assertion message
+
 ## Quick start
 
 ##### Hello, world!
