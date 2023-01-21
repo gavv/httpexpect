@@ -552,15 +552,18 @@ func TestFormat_FailureDelta(t *testing.T) {
 	}
 }
 
-func TestFormatter_FormatFailure(t *testing.T) {
-	tests := []struct {
+func TestFormatter_DisableScientific(t *testing.T) {
+	type testCase struct {
 		name             string
 		assertionFailure AssertionFailure
 		formatter        DefaultFormatter
-		wantTpl          string
-	}{
+		wantExpected     []string
+		wantDelta        string
+	}
+
+	testCases := []testCase{
 		{
-			name: "AssertInRange float32 true",
+			name: "AssertInRange float32 DisableScientific=true",
 			formatter: DefaultFormatter{
 				DisableScientific: true,
 			},
@@ -573,10 +576,10 @@ func TestFormatter_FormatFailure(t *testing.T) {
 					},
 				},
 			},
-			wantTpl: "[-1234567.875; 1234567.875]",
+			wantExpected: []string{"[-1234567.875; 1234567.875]"},
 		},
 		{
-			name: "AssertInRange float32 false",
+			name: "AssertInRange float32 DisableScientific=false",
 			formatter: DefaultFormatter{
 				DisableScientific: false,
 			},
@@ -589,10 +592,10 @@ func TestFormatter_FormatFailure(t *testing.T) {
 					},
 				},
 			},
-			wantTpl: "[-1.2345679e+06; 1.2345679e+06]",
+			wantExpected: []string{"[-1.2345679e+06; 1.2345679e+06]"},
 		},
 		{
-			name: "AssertInRange float64 true",
+			name: "AssertInRange float64 DisableScientific=true",
 			formatter: DefaultFormatter{
 				DisableScientific: true,
 			},
@@ -605,10 +608,9 @@ func TestFormatter_FormatFailure(t *testing.T) {
 					},
 				},
 			},
-			wantTpl: "[-1234567.89; 1234567.89]",
-		},
+			wantExpected: []string{"[-1234567.89; 1234567.89]"}},
 		{
-			name: "AssertInRange float64 false",
+			name: "AssertInRange float64 DisableScientific=false",
 			formatter: DefaultFormatter{
 				DisableScientific: false,
 			},
@@ -621,16 +623,78 @@ func TestFormatter_FormatFailure(t *testing.T) {
 					},
 				},
 			},
-			wantTpl: "[-1.23456789e+06; 1.23456789e+06]",
+			wantExpected: []string{"[-1.23456789e+06; 1.23456789e+06]"},
 		},
+		{
+			name: "Delta float32 DisableScientific=true",
+			formatter: DefaultFormatter{
+				DisableScientific: true,
+			},
+			assertionFailure: AssertionFailure{
+				Delta: &AssertionValue{
+					Value: float32(1234567.89),
+				},
+			},
+			wantDelta: "1234567.875",
+		},
+		{
+			name: "Delta float32 DisableScientific=false",
+			formatter: DefaultFormatter{
+				DisableScientific: false,
+			},
+			assertionFailure: AssertionFailure{
+				Delta: &AssertionValue{
+					Value: float32(1234567.89),
+				},
+			},
+			wantDelta: "1.2345679e+06",
+		},
+		{
+			name: "Delta float64 DisableScientific=true",
+			formatter: DefaultFormatter{
+				DisableScientific: true,
+			},
+			assertionFailure: AssertionFailure{
+				Delta: &AssertionValue{
+					Value: float64(1234567.89),
+				},
+			},
+			wantDelta: "1234567.89",
+		},
+		{
+			name: "Delta float64 DisableScientific=false",
+			formatter: DefaultFormatter{
+				DisableScientific: false,
+			},
+			assertionFailure: AssertionFailure{
+				Delta: &AssertionValue{
+					Value: float64(1234567.89),
+				},
+			},
+			wantDelta: "1.23456789e+06",
+		},
+	}
+
+	assertFn := func(t *testing.T, tc testCase, fd *FormatData) {
+		if len(tc.wantExpected) > 0 {
+			assert.Equal(t, tc.wantExpected, fd.Expected)
+			return
+		}
+
+		if tc.wantDelta != "" {
+			assert.Equal(t, tc.wantDelta, fd.Delta)
+			return
+		}
+
+		panic("expectation is not set")
 	}
 
 	ctx := &AssertionContext{}
 
-	for _, tc := range tests {
+	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			tpl := tc.formatter.FormatFailure(ctx, &tc.assertionFailure)
-			assert.Contains(t, tpl, tc.wantTpl)
+			fd := tc.formatter.buildFormatData(ctx, &tc.assertionFailure)
+			assertFn(t, tc, fd)
 		})
 	}
 }
