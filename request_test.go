@@ -2453,7 +2453,8 @@ func TestRequest_UsageChecks(t *testing.T) {
 		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
-		assert.Equal(t, req, req.WithHeaders(map[string]string{"Content-Type": "application/json"}))
+		assert.Equal(t, req, req.WithHeaders(
+			map[string]string{"Content-Type": "application/json"}))
 		req.chain.assertFailed(t)
 	})
 

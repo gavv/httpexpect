@@ -2280,8 +2280,10 @@ func (r *Request) setBody(setter string, reader io.Reader, len int, overwrite bo
 
 func (r *Request) unexpectedExpectError(funcCall string) AssertionFailure {
 	return AssertionFailure{
-		Type:   AssertUsage,
-		Errors: []error{errors.New("unexpected call to " + funcCall + ": Expect has already been called")},
+		Type: AssertUsage,
+		Errors: []error{
+			errors.New("unexpected call to " + funcCall + ": Expect has already been called"),
+		},
 	}
 }
 
