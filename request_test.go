@@ -16,6 +16,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -2232,7 +2233,7 @@ func TestRequest_UsageChecks(t *testing.T) {
 		req.chain.assertFailed(t)
 	})
 
-	t.Run("Expect call after an Expect", func(t *testing.T) {
+	t.Run("Expect after an Expect", func(t *testing.T) {
 		config := Config{
 			Reporter: newMockReporter(t),
 			Client:   &mockClient{},
@@ -2240,6 +2241,384 @@ func TestRequest_UsageChecks(t *testing.T) {
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
 		assert.Nil(t, req.Expect())
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithName after an Expect", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			Client:   &mockClient{},
+		}
+		req := NewRequestC(config, "GET", "/")
+		req.Expect()
+		assert.Equal(t, req, req.WithName("Test"))
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithMatcher after an Expect", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			Client:   &mockClient{},
+		}
+		req := NewRequestC(config, "GET", "/")
+		req.Expect()
+		assert.Equal(t, req, req.WithMatcher(func(resp *Response) {
+			resp.Header("API-Version").NotEmpty()
+		}))
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithTransformer after an Expect", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			Client:   &mockClient{},
+		}
+		req := NewRequestC(config, "GET", "/")
+		req.Expect()
+		assert.Equal(t, req, req.WithTransformer(func(r *http.Request) {
+			r.Header.Add("foo", "bar")
+		}))
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithClient after an Expect", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			Client:   &mockClient{},
+		}
+		req := NewRequestC(config, "GET", "/")
+		req.Expect()
+		assert.Equal(t, req, req.WithClient(&mockClient{}))
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithHandler after an Expect", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			Client:   &mockClient{},
+		}
+		req := NewRequestC(config, "GET", "/")
+		req.Expect()
+		assert.Equal(t, req, req.WithHandler(http.NotFoundHandler()))
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithContext after an Expect", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			Client:   &mockClient{},
+		}
+		req := NewRequestC(config, "GET", "/")
+		req.Expect()
+		assert.Equal(t, req, req.WithContext(context.Background()))
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithTimeout after an Expect", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			Client:   &mockClient{},
+		}
+		req := NewRequestC(config, "GET", "/")
+		req.Expect()
+		assert.Equal(t, req, req.WithTimeout(3*time.Second))
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithRetryPolicy after an Expect", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			Client:   &mockClient{},
+		}
+		req := NewRequestC(config, "GET", "/")
+		req.Expect()
+		assert.Equal(t, req, req.WithRetryPolicy(DontRetry))
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithMaxRetries after an Expect", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			Client:   &mockClient{},
+		}
+		req := NewRequestC(config, "GET", "/")
+		req.Expect()
+		assert.Equal(t, req, req.WithMaxRetries(10))
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithRetryDelay after an Expect", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			Client:   &mockClient{},
+		}
+		req := NewRequestC(config, "GET", "/")
+		req.Expect()
+		assert.Equal(t, req, req.WithRetryDelay(time.Second, 5*time.Second))
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithWebsocketUpgrade after an Expect", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			Client:   &mockClient{},
+		}
+		req := NewRequestC(config, "GET", "/")
+		req.Expect()
+		assert.Equal(t, req, req.WithWebsocketUpgrade())
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithWebsocketDialer after an Expect", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			Client:   &mockClient{},
+		}
+		req := NewRequestC(config, "GET", "/")
+		req.Expect()
+		assert.Equal(t, req, req.WithWebsocketDialer(&websocket.Dialer{}))
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithPath after an Expect", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			Client:   &mockClient{},
+		}
+		req := NewRequestC(config, "GET", "/{repo}")
+		req.Expect()
+		assert.Equal(t, req, req.WithPath("repo", "repo1"))
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithPathObject after an Expect", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			Client:   &mockClient{},
+		}
+		req := NewRequestC(config, "GET", "/{repo}")
+		req.Expect()
+		assert.Equal(t, req, req.WithPathObject(map[string]string{"repo": "repo1"}))
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithQuery after an Expect", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			Client:   &mockClient{},
+		}
+		req := NewRequestC(config, "GET", "/")
+		req.Expect()
+		assert.Equal(t, req, req.WithQuery("a", 123))
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithQueryObject after an Expect", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			Client:   &mockClient{},
+		}
+		req := NewRequestC(config, "GET", "/")
+		req.Expect()
+		assert.Equal(t, req, req.WithQueryObject(map[string]string{"a": "val"}))
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithQueryString after an Expect", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			Client:   &mockClient{},
+		}
+		req := NewRequestC(config, "GET", "/")
+		req.Expect()
+		assert.Equal(t, req, req.WithQueryString("a=123&b=hello"))
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithURL after an Expect", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			Client:   &mockClient{},
+		}
+		req := NewRequestC(config, "GET", "/")
+		req.Expect()
+		assert.Equal(t, req, req.WithURL("https://www.github.com"))
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithHeaders after an Expect", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			Client:   &mockClient{},
+		}
+		req := NewRequestC(config, "GET", "/")
+		req.Expect()
+		assert.Equal(t, req, req.WithHeaders(map[string]string{"Content-Type": "application/json"}))
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithHeader after an Expect", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			Client:   &mockClient{},
+		}
+		req := NewRequestC(config, "GET", "/")
+		req.Expect()
+		assert.Equal(t, req, req.WithHeader("Content-Type", "application/json"))
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithCookies after an Expect", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			Client:   &mockClient{},
+		}
+		req := NewRequestC(config, "GET", "/")
+		req.Expect()
+		assert.Equal(t, req, req.WithCookies(map[string]string{"key1": "val1"}))
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithCookie after an Expect", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			Client:   &mockClient{},
+		}
+		req := NewRequestC(config, "GET", "/")
+		req.Expect()
+		assert.Equal(t, req, req.WithCookie("key1", "val1"))
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithBasicAuth after an Expect", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			Client:   &mockClient{},
+		}
+		req := NewRequestC(config, "GET", "/")
+		req.Expect()
+		assert.Equal(t, req, req.WithBasicAuth("user", "pass"))
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithHost after an Expect", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			Client:   &mockClient{},
+		}
+		req := NewRequestC(config, "GET", "/")
+		req.Expect()
+		assert.Equal(t, req, req.WithHost("localhost"))
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithProto after an Expect", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			Client:   &mockClient{},
+		}
+		req := NewRequestC(config, "GET", "/")
+		req.Expect()
+		assert.Equal(t, req, req.WithProto("HTTP/1.1"))
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithChunked after an Expect", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			Client:   &mockClient{},
+		}
+		req := NewRequestC(config, "GET", "/")
+		req.Expect()
+		assert.Equal(t, req, req.WithChunked(bytes.NewReader(nil)))
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithBytes after an Expect", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			Client:   &mockClient{},
+		}
+		req := NewRequestC(config, "GET", "/")
+		req.Expect()
+		assert.Equal(t, req, req.WithBytes(nil))
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithText after an Expect", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			Client:   &mockClient{},
+		}
+		req := NewRequestC(config, "GET", "/")
+		req.Expect()
+		assert.Equal(t, req, req.WithText("hello"))
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithJSON after an Expect", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			Client:   &mockClient{},
+		}
+		req := NewRequestC(config, "GET", "/")
+		req.Expect()
+		assert.Equal(t, req, req.WithJSON(map[string]string{"key1": "val1"}))
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithForm after an Expect", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			Client:   &mockClient{},
+		}
+		req := NewRequestC(config, "GET", "/")
+		req.Expect()
+		assert.Equal(t, req, req.WithForm(map[string]string{"key1": "val1"}))
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithFormField after an Expect", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			Client:   &mockClient{},
+		}
+		req := NewRequestC(config, "GET", "/")
+		req.Expect()
+		assert.Equal(t, req, req.WithFormField("key1", 123))
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithFile after an Expect", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			Client:   &mockClient{},
+		}
+		req := NewRequestC(config, "GET", "/").WithMultipart()
+		req.Expect()
+		assert.Equal(t, req, req.WithFile("foo", "bar", strings.NewReader("baz")))
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithFileBytes after an Expect", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			Client:   &mockClient{},
+		}
+		req := NewRequestC(config, "GET", "/").WithMultipart()
+		req.Expect()
+		assert.Equal(t, req, req.WithFileBytes("foo", "bar", []byte("baz")))
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithMultipart after an Expect", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			Client:   &mockClient{},
+		}
+		req := NewRequestC(config, "GET", "/")
+		req.Expect()
+		assert.Equal(t, req, req.WithMultipart())
 		req.chain.assertFailed(t)
 	})
 }

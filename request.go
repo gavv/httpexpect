@@ -201,6 +201,11 @@ func (r *Request) WithName(name string) *Request {
 	r.chain.enter("WithName()")
 	defer r.chain.leave()
 
+	if r.hasExpected {
+		r.chain.fail(r.unexpectedExpectError("WithName"))
+		return r
+	}
+
 	r.chain.setRequestName(name)
 
 	return r
@@ -221,6 +226,11 @@ func (r *Request) WithMatcher(matcher func(*Response)) *Request {
 	defer r.chain.leave()
 
 	if r.chain.failed() {
+		return r
+	}
+
+	if r.hasExpected {
+		r.chain.fail(r.unexpectedExpectError("WithMatcher"))
 		return r
 	}
 
@@ -251,6 +261,11 @@ func (r *Request) WithTransformer(transform func(*http.Request)) *Request {
 	defer r.chain.leave()
 
 	if r.chain.failed() {
+		return r
+	}
+
+	if r.hasExpected {
+		r.chain.fail(r.unexpectedExpectError("WithTransformer"))
 		return r
 	}
 
@@ -290,6 +305,11 @@ func (r *Request) WithClient(client Client) *Request {
 		return r
 	}
 
+	if r.hasExpected {
+		r.chain.fail(r.unexpectedExpectError("WithClient"))
+		return r
+	}
+
 	if client == nil {
 		r.chain.fail(AssertionFailure{
 			Type: AssertUsage,
@@ -320,6 +340,11 @@ func (r *Request) WithHandler(handler http.Handler) *Request {
 	defer r.chain.leave()
 
 	if r.chain.failed() {
+		return r
+	}
+
+	if r.hasExpected {
+		r.chain.fail(r.unexpectedExpectError("WithHandler"))
 		return r
 	}
 
@@ -368,6 +393,11 @@ func (r *Request) WithContext(ctx context.Context) *Request {
 		return r
 	}
 
+	if r.hasExpected {
+		r.chain.fail(r.unexpectedExpectError("WithContext"))
+		return r
+	}
+
 	if ctx == nil {
 		r.chain.fail(AssertionFailure{
 			Type: AssertUsage,
@@ -403,6 +433,11 @@ func (r *Request) WithTimeout(timeout time.Duration) *Request {
 	defer r.chain.leave()
 
 	if r.chain.failed() {
+		return r
+	}
+
+	if r.hasExpected {
+		r.chain.fail(r.unexpectedExpectError("WithTimeout"))
 		return r
 	}
 
@@ -563,6 +598,11 @@ func (r *Request) WithRetryPolicy(policy RetryPolicy) *Request {
 		return r
 	}
 
+	if r.hasExpected {
+		r.chain.fail(r.unexpectedExpectError("WithRetryPolicy"))
+		return r
+	}
+
 	r.retryPolicy = policy
 
 	return r
@@ -588,6 +628,11 @@ func (r *Request) WithMaxRetries(maxRetries int) *Request {
 	defer r.chain.leave()
 
 	if r.chain.failed() {
+		return r
+	}
+
+	if r.hasExpected {
+		r.chain.fail(r.unexpectedExpectError("WithMaxRetries"))
 		return r
 	}
 
@@ -624,6 +669,11 @@ func (r *Request) WithRetryDelay(minDelay, maxDelay time.Duration) *Request {
 	defer r.chain.leave()
 
 	if r.chain.failed() {
+		return r
+	}
+
+	if r.hasExpected {
+		r.chain.fail(r.unexpectedExpectError("WithRetryDelay"))
 		return r
 	}
 
@@ -674,6 +724,11 @@ func (r *Request) WithWebsocketUpgrade() *Request {
 		return r
 	}
 
+	if r.hasExpected {
+		r.chain.fail(r.unexpectedExpectError("WithWebsocketUpgrade"))
+		return r
+	}
+
 	r.wsUpgrade = true
 
 	return r
@@ -698,6 +753,11 @@ func (r *Request) WithWebsocketDialer(dialer WebsocketDialer) *Request {
 	defer r.chain.leave()
 
 	if r.chain.failed() {
+		return r
+	}
+
+	if r.hasExpected {
+		r.chain.fail(r.unexpectedExpectError("WithWebsocketDialer"))
 		return r
 	}
 
@@ -734,6 +794,11 @@ func (r *Request) WithPath(key string, value interface{}) *Request {
 	defer r.chain.leave()
 
 	if r.chain.failed() {
+		return r
+	}
+
+	if r.hasExpected {
+		r.chain.fail(r.unexpectedExpectError("WithPath"))
 		return r
 	}
 
@@ -783,6 +848,11 @@ func (r *Request) WithPathObject(object interface{}) *Request {
 	defer r.chain.leave()
 
 	if r.chain.failed() {
+		return r
+	}
+
+	if r.hasExpected {
+		r.chain.fail(r.unexpectedExpectError("WithPathObject"))
 		return r
 	}
 
@@ -879,6 +949,11 @@ func (r *Request) WithQuery(key string, value interface{}) *Request {
 		return r
 	}
 
+	if r.hasExpected {
+		r.chain.fail(r.unexpectedExpectError("WithQuery"))
+		return r
+	}
+
 	if value == nil {
 		r.chain.fail(AssertionFailure{
 			Type: AssertUsage,
@@ -924,6 +999,11 @@ func (r *Request) WithQueryObject(object interface{}) *Request {
 	defer r.chain.leave()
 
 	if r.chain.failed() {
+		return r
+	}
+
+	if r.hasExpected {
+		r.chain.fail(r.unexpectedExpectError("WithQueryObject"))
 		return r
 	}
 
@@ -989,6 +1069,11 @@ func (r *Request) WithQueryString(query string) *Request {
 		return r
 	}
 
+	if r.hasExpected {
+		r.chain.fail(r.unexpectedExpectError("WithQueryString"))
+		return r
+	}
+
 	v, err := url.ParseQuery(query)
 
 	if err != nil {
@@ -1031,6 +1116,11 @@ func (r *Request) WithURL(urlStr string) *Request {
 		return r
 	}
 
+	if r.hasExpected {
+		r.chain.fail(r.unexpectedExpectError("WithURL"))
+		return r
+	}
+
 	u, err := url.Parse(urlStr)
 	if err != nil {
 		r.chain.fail(AssertionFailure{
@@ -1065,6 +1155,11 @@ func (r *Request) WithHeaders(headers map[string]string) *Request {
 		return r
 	}
 
+	if r.hasExpected {
+		r.chain.fail(r.unexpectedExpectError("WithHeaders"))
+		return r
+	}
+
 	for k, v := range headers {
 		r.withHeader(k, v)
 	}
@@ -1083,6 +1178,11 @@ func (r *Request) WithHeader(k, v string) *Request {
 	defer r.chain.leave()
 
 	if r.chain.failed() {
+		return r
+	}
+
+	if r.hasExpected {
+		r.chain.fail(r.unexpectedExpectError("WithHeader"))
 		return r
 	}
 
@@ -1126,6 +1226,11 @@ func (r *Request) WithCookies(cookies map[string]string) *Request {
 		return r
 	}
 
+	if r.hasExpected {
+		r.chain.fail(r.unexpectedExpectError("WithCookies"))
+		return r
+	}
+
 	for k, v := range cookies {
 		r.httpReq.AddCookie(&http.Cookie{
 			Name:  k,
@@ -1147,6 +1252,11 @@ func (r *Request) WithCookie(k, v string) *Request {
 	defer r.chain.leave()
 
 	if r.chain.failed() {
+		return r
+	}
+
+	if r.hasExpected {
+		r.chain.fail(r.unexpectedExpectError("WithCookie"))
 		return r
 	}
 
@@ -1176,6 +1286,11 @@ func (r *Request) WithBasicAuth(username, password string) *Request {
 		return r
 	}
 
+	if r.hasExpected {
+		r.chain.fail(r.unexpectedExpectError("WithBasicAuth"))
+		return r
+	}
+
 	r.httpReq.SetBasicAuth(username, password)
 
 	return r
@@ -1192,6 +1307,11 @@ func (r *Request) WithHost(host string) *Request {
 	defer r.chain.leave()
 
 	if r.chain.failed() {
+		return r
+	}
+
+	if r.hasExpected {
+		r.chain.fail(r.unexpectedExpectError("WithHost"))
 		return r
 	}
 
@@ -1213,6 +1333,11 @@ func (r *Request) WithProto(proto string) *Request {
 	defer r.chain.leave()
 
 	if r.chain.failed() {
+		return r
+	}
+
+	if r.hasExpected {
+		r.chain.fail(r.unexpectedExpectError("WithProto"))
 		return r
 	}
 
@@ -1259,6 +1384,11 @@ func (r *Request) WithChunked(reader io.Reader) *Request {
 		return r
 	}
 
+	if r.hasExpected {
+		r.chain.fail(r.unexpectedExpectError("WithChunked"))
+		return r
+	}
+
 	if !r.httpReq.ProtoAtLeast(1, 1) {
 		r.chain.fail(AssertionFailure{
 			Type: AssertUsage,
@@ -1292,6 +1422,11 @@ func (r *Request) WithBytes(b []byte) *Request {
 		return r
 	}
 
+	if r.hasExpected {
+		r.chain.fail(r.unexpectedExpectError("WithBytes"))
+		return r
+	}
+
 	if b == nil {
 		r.setBody("WithBytes()", nil, 0, false)
 	} else {
@@ -1313,6 +1448,11 @@ func (r *Request) WithText(s string) *Request {
 	defer r.chain.leave()
 
 	if r.chain.failed() {
+		return r
+	}
+
+	if r.hasExpected {
+		r.chain.fail(r.unexpectedExpectError("WithText"))
 		return r
 	}
 
@@ -1341,6 +1481,11 @@ func (r *Request) WithJSON(object interface{}) *Request {
 	defer r.chain.leave()
 
 	if r.chain.failed() {
+		return r
+	}
+
+	if r.hasExpected {
+		r.chain.fail(r.unexpectedExpectError("WithJSON"))
 		return r
 	}
 
@@ -1391,6 +1536,11 @@ func (r *Request) WithForm(object interface{}) *Request {
 	defer r.chain.leave()
 
 	if r.chain.failed() {
+		return r
+	}
+
+	if r.hasExpected {
+		r.chain.fail(r.unexpectedExpectError("WithForm"))
 		return r
 	}
 
@@ -1463,6 +1613,11 @@ func (r *Request) WithFormField(key string, value interface{}) *Request {
 		return r
 	}
 
+	if r.hasExpected {
+		r.chain.fail(r.unexpectedExpectError("WithFormField"))
+		return r
+	}
+
 	if r.multipart != nil {
 		r.setType("WithFormField()", "multipart/form-data", false)
 
@@ -1517,6 +1672,11 @@ func (r *Request) WithFile(key, path string, reader ...io.Reader) *Request {
 		return r
 	}
 
+	if r.hasExpected {
+		r.chain.fail(r.unexpectedExpectError("WithFile"))
+		return r
+	}
+
 	if len(reader) > 1 {
 		r.chain.fail(AssertionFailure{
 			Type: AssertUsage,
@@ -1548,6 +1708,11 @@ func (r *Request) WithFileBytes(key, path string, data []byte) *Request {
 	defer r.chain.leave()
 
 	if r.chain.failed() {
+		return r
+	}
+
+	if r.hasExpected {
+		r.chain.fail(r.unexpectedExpectError("WithFileBytes"))
 		return r
 	}
 
@@ -1634,6 +1799,11 @@ func (r *Request) WithMultipart() *Request {
 	defer r.chain.leave()
 
 	if r.chain.failed() {
+		return r
+	}
+
+	if r.hasExpected {
+		r.chain.fail(r.unexpectedExpectError("WithMultipart"))
 		return r
 	}
 
