@@ -409,13 +409,7 @@ func (f *DefaultFormatter) formatTyped(value interface{}) string {
 func (f *DefaultFormatter) formatValue(value interface{}) string {
 	if isNumber(value) {
 		if f.DisableScientific && isFloat(value) {
-			var ff float64
-			if v, ok := value.(float32); ok {
-				ff = float64(v)
-			} else {
-				ff = value.(float64)
-			}
-			return strconv.FormatFloat(ff, 'f', -1, 64)
+			return strconv.FormatFloat(extractFloat(value), 'f', -1, 64)
 		}
 		return fmt.Sprintf("%v", value)
 	}
@@ -436,6 +430,14 @@ func (f *DefaultFormatter) formatValue(value interface{}) string {
 	}
 
 	return sq.Sdump(value)
+}
+
+func extractFloat(value interface{}) float64 {
+	if v, ok := value.(float32); ok {
+		return float64(v)
+	}
+
+	return value.(float64)
 }
 
 func (f *DefaultFormatter) formatBareString(value interface{}) string {
