@@ -408,9 +408,12 @@ func (f *DefaultFormatter) formatTyped(value interface{}) string {
 
 func (f *DefaultFormatter) formatValue(value interface{}) string {
 	if isNumber(value) {
-		if f.DisableScientific && isFloat(value) {
-			return strconv.FormatFloat(extractFloat(value), 'f', -1, 64)
+		if f.DisableScientific {
+			if fl := extractFloat(value); fl != nil {
+				return strconv.FormatFloat(*fl, 'f', -1, 64)
+			}
 		}
+
 		return fmt.Sprintf("%v", value)
 	}
 
@@ -430,14 +433,6 @@ func (f *DefaultFormatter) formatValue(value interface{}) string {
 	}
 
 	return sq.Sdump(value)
-}
-
-func extractFloat(value interface{}) float64 {
-	if v, ok := value.(float32); ok {
-		return float64(v)
-	}
-
-	return value.(float64)
 }
 
 func (f *DefaultFormatter) formatBareString(value interface{}) string {
@@ -544,6 +539,18 @@ func extractList(value interface{}) *AssertionList {
 	}
 }
 
+func extractFloat(value interface{}) *float64 {
+	switch f := value.(type) {
+	case float32:
+		ff := float64(f)
+		return &ff
+	case float64:
+		return &f
+	default:
+		return nil
+	}
+}
+
 func isNil(value interface{}) bool {
 	defer func() {
 		_ = recover()
@@ -557,11 +564,6 @@ func isNumber(value interface{}) bool {
 	}()
 	reflect.ValueOf(value).Convert(reflect.TypeOf(float64(0))).Float()
 	return true
-}
-
-func isFloat(value interface{}) bool {
-	return reflect.TypeOf(value).Kind() == reflect.Float32 ||
-		reflect.TypeOf(value).Kind() == reflect.Float64
 }
 
 func isHTTP(value interface{}) bool {
