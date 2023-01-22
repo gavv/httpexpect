@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
-	"strconv"
 	"strings"
 	"text/template"
 
@@ -21,6 +20,14 @@ type Formatter interface {
 	FormatSuccess(*AssertionContext) string
 	FormatFailure(*AssertionContext, *AssertionFailure) string
 }
+
+type FloatFormatMode int
+
+const (
+	FloatFormatAuto       FloatFormatMode = iota // Print float in scientific notation for large exponent, otherwise print as decimal
+	FloatFormatDecimal                           // Print float in decimal
+	FloatFormatScientific                        // Print float in scientific notation
+)
 
 // DefaultFormatter is the default Formatter implementation.
 //
@@ -43,8 +50,10 @@ type DefaultFormatter struct {
 	// Exclude diff from failure report.
 	DisableDiffs bool
 
-	// Disable printing floats in scientific form. If not set, will print floats in decimal.
-	DisableScientific bool
+	// Float printing format.
+	// If not set, will print small exponent in decimal and
+	// large exponent in scientific notation.
+	FloatFormat FloatFormatMode
 
 	// Wrap text to keep lines below given width.
 	// Use zero for default width, and negative value to disable wrapping.
@@ -408,13 +417,16 @@ func (f *DefaultFormatter) formatTyped(value interface{}) string {
 
 func (f *DefaultFormatter) formatValue(value interface{}) string {
 	if isNumber(value) {
-		if f.DisableScientific {
-			if fl := extractFloat(value); fl != nil {
-				return strconv.FormatFloat(*fl, 'f', -1, 64)
-			}
+		switch f.FloatFormat {
+		case FloatFormatAuto:
+			return fmt.Sprintf("%v", value)
+		case FloatFormatDecimal:
+			return fmt.Sprintf("%f", value)
+		case FloatFormatScientific:
+			return fmt.Sprintf("%e", value)
+		default:
+			panic("invalid float format")
 		}
-
-		return fmt.Sprintf("%v", value)
 	}
 
 	if !isNil(value) && !isHTTP(value) {
