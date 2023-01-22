@@ -2240,7 +2240,7 @@ func TestRequest_UsageChecks(t *testing.T) {
 		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
-		assert.Nil(t, req.Expect())
+		assert.NotNil(t, req.Expect())
 		req.chain.assertFailed(t)
 	})
 
@@ -2251,7 +2251,7 @@ func TestRequest_UsageChecks(t *testing.T) {
 		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
-		assert.Equal(t, req, req.WithName("Test"))
+		assert.Same(t, req, req.WithName("Test"))
 		req.chain.assertFailed(t)
 	})
 
@@ -2262,7 +2262,7 @@ func TestRequest_UsageChecks(t *testing.T) {
 		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
-		assert.Equal(t, req, req.WithMatcher(func(resp *Response) {
+		assert.Same(t, req, req.WithMatcher(func(resp *Response) {
 			resp.Header("API-Version").NotEmpty()
 		}))
 		req.chain.assertFailed(t)
@@ -2275,7 +2275,7 @@ func TestRequest_UsageChecks(t *testing.T) {
 		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
-		assert.Equal(t, req, req.WithTransformer(func(r *http.Request) {
+		assert.Same(t, req, req.WithTransformer(func(r *http.Request) {
 			r.Header.Add("foo", "bar")
 		}))
 		req.chain.assertFailed(t)
@@ -2288,7 +2288,7 @@ func TestRequest_UsageChecks(t *testing.T) {
 		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
-		assert.Equal(t, req, req.WithClient(&mockClient{}))
+		assert.Same(t, req, req.WithClient(&mockClient{}))
 		req.chain.assertFailed(t)
 	})
 
@@ -2299,7 +2299,7 @@ func TestRequest_UsageChecks(t *testing.T) {
 		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
-		assert.Equal(t, req, req.WithHandler(http.NotFoundHandler()))
+		assert.Same(t, req, req.WithHandler(http.NotFoundHandler()))
 		req.chain.assertFailed(t)
 	})
 
@@ -2310,7 +2310,7 @@ func TestRequest_UsageChecks(t *testing.T) {
 		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
-		assert.Equal(t, req, req.WithContext(context.Background()))
+		assert.Same(t, req, req.WithContext(context.Background()))
 		req.chain.assertFailed(t)
 	})
 
@@ -2321,7 +2321,29 @@ func TestRequest_UsageChecks(t *testing.T) {
 		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
-		assert.Equal(t, req, req.WithTimeout(3*time.Second))
+		assert.Same(t, req, req.WithTimeout(3*time.Second))
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithRedirectPolicy after an Expect", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			Client:   &mockClient{},
+		}
+		req := NewRequestC(config, "GET", "/")
+		req.Expect()
+		assert.Same(t, req, req.WithRedirectPolicy(FollowAllRedirects))
+		req.chain.assertFailed(t)
+	})
+
+	t.Run("WithMaxRedirects after an Expect", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+			Client:   &mockClient{},
+		}
+		req := NewRequestC(config, "GET", "/")
+		req.Expect()
+		assert.Same(t, req, req.WithMaxRedirects(3))
 		req.chain.assertFailed(t)
 	})
 
@@ -2332,7 +2354,7 @@ func TestRequest_UsageChecks(t *testing.T) {
 		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
-		assert.Equal(t, req, req.WithRetryPolicy(DontRetry))
+		assert.Same(t, req, req.WithRetryPolicy(DontRetry))
 		req.chain.assertFailed(t)
 	})
 
@@ -2343,7 +2365,7 @@ func TestRequest_UsageChecks(t *testing.T) {
 		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
-		assert.Equal(t, req, req.WithMaxRetries(10))
+		assert.Same(t, req, req.WithMaxRetries(10))
 		req.chain.assertFailed(t)
 	})
 
@@ -2354,7 +2376,7 @@ func TestRequest_UsageChecks(t *testing.T) {
 		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
-		assert.Equal(t, req, req.WithRetryDelay(time.Second, 5*time.Second))
+		assert.Same(t, req, req.WithRetryDelay(time.Second, 5*time.Second))
 		req.chain.assertFailed(t)
 	})
 
@@ -2365,7 +2387,7 @@ func TestRequest_UsageChecks(t *testing.T) {
 		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
-		assert.Equal(t, req, req.WithWebsocketUpgrade())
+		assert.Same(t, req, req.WithWebsocketUpgrade())
 		req.chain.assertFailed(t)
 	})
 
@@ -2376,7 +2398,7 @@ func TestRequest_UsageChecks(t *testing.T) {
 		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
-		assert.Equal(t, req, req.WithWebsocketDialer(&websocket.Dialer{}))
+		assert.Same(t, req, req.WithWebsocketDialer(&websocket.Dialer{}))
 		req.chain.assertFailed(t)
 	})
 
@@ -2387,7 +2409,7 @@ func TestRequest_UsageChecks(t *testing.T) {
 		}
 		req := NewRequestC(config, "GET", "/{repo}")
 		req.Expect()
-		assert.Equal(t, req, req.WithPath("repo", "repo1"))
+		assert.Same(t, req, req.WithPath("repo", "repo1"))
 		req.chain.assertFailed(t)
 	})
 
@@ -2398,7 +2420,7 @@ func TestRequest_UsageChecks(t *testing.T) {
 		}
 		req := NewRequestC(config, "GET", "/{repo}")
 		req.Expect()
-		assert.Equal(t, req, req.WithPathObject(map[string]string{"repo": "repo1"}))
+		assert.Same(t, req, req.WithPathObject(map[string]string{"repo": "repo1"}))
 		req.chain.assertFailed(t)
 	})
 
@@ -2409,7 +2431,7 @@ func TestRequest_UsageChecks(t *testing.T) {
 		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
-		assert.Equal(t, req, req.WithQuery("a", 123))
+		assert.Same(t, req, req.WithQuery("a", 123))
 		req.chain.assertFailed(t)
 	})
 
@@ -2420,7 +2442,7 @@ func TestRequest_UsageChecks(t *testing.T) {
 		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
-		assert.Equal(t, req, req.WithQueryObject(map[string]string{"a": "val"}))
+		assert.Same(t, req, req.WithQueryObject(map[string]string{"a": "val"}))
 		req.chain.assertFailed(t)
 	})
 
@@ -2431,7 +2453,7 @@ func TestRequest_UsageChecks(t *testing.T) {
 		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
-		assert.Equal(t, req, req.WithQueryString("a=123&b=hello"))
+		assert.Same(t, req, req.WithQueryString("a=123&b=hello"))
 		req.chain.assertFailed(t)
 	})
 
@@ -2442,7 +2464,7 @@ func TestRequest_UsageChecks(t *testing.T) {
 		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
-		assert.Equal(t, req, req.WithURL("https://www.github.com"))
+		assert.Same(t, req, req.WithURL("https://www.github.com"))
 		req.chain.assertFailed(t)
 	})
 
@@ -2453,7 +2475,7 @@ func TestRequest_UsageChecks(t *testing.T) {
 		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
-		assert.Equal(t, req, req.WithHeaders(
+		assert.Same(t, req, req.WithHeaders(
 			map[string]string{"Content-Type": "application/json"}))
 		req.chain.assertFailed(t)
 	})
@@ -2465,7 +2487,7 @@ func TestRequest_UsageChecks(t *testing.T) {
 		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
-		assert.Equal(t, req, req.WithHeader("Content-Type", "application/json"))
+		assert.Same(t, req, req.WithHeader("Content-Type", "application/json"))
 		req.chain.assertFailed(t)
 	})
 
@@ -2476,7 +2498,7 @@ func TestRequest_UsageChecks(t *testing.T) {
 		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
-		assert.Equal(t, req, req.WithCookies(map[string]string{"key1": "val1"}))
+		assert.Same(t, req, req.WithCookies(map[string]string{"key1": "val1"}))
 		req.chain.assertFailed(t)
 	})
 
@@ -2487,7 +2509,7 @@ func TestRequest_UsageChecks(t *testing.T) {
 		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
-		assert.Equal(t, req, req.WithCookie("key1", "val1"))
+		assert.Same(t, req, req.WithCookie("key1", "val1"))
 		req.chain.assertFailed(t)
 	})
 
@@ -2498,7 +2520,7 @@ func TestRequest_UsageChecks(t *testing.T) {
 		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
-		assert.Equal(t, req, req.WithBasicAuth("user", "pass"))
+		assert.Same(t, req, req.WithBasicAuth("user", "pass"))
 		req.chain.assertFailed(t)
 	})
 
@@ -2509,7 +2531,7 @@ func TestRequest_UsageChecks(t *testing.T) {
 		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
-		assert.Equal(t, req, req.WithHost("localhost"))
+		assert.Same(t, req, req.WithHost("localhost"))
 		req.chain.assertFailed(t)
 	})
 
@@ -2520,7 +2542,7 @@ func TestRequest_UsageChecks(t *testing.T) {
 		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
-		assert.Equal(t, req, req.WithProto("HTTP/1.1"))
+		assert.Same(t, req, req.WithProto("HTTP/1.1"))
 		req.chain.assertFailed(t)
 	})
 
@@ -2531,7 +2553,7 @@ func TestRequest_UsageChecks(t *testing.T) {
 		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
-		assert.Equal(t, req, req.WithChunked(bytes.NewReader(nil)))
+		assert.Same(t, req, req.WithChunked(bytes.NewReader(nil)))
 		req.chain.assertFailed(t)
 	})
 
@@ -2542,7 +2564,7 @@ func TestRequest_UsageChecks(t *testing.T) {
 		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
-		assert.Equal(t, req, req.WithBytes(nil))
+		assert.Same(t, req, req.WithBytes(nil))
 		req.chain.assertFailed(t)
 	})
 
@@ -2553,7 +2575,7 @@ func TestRequest_UsageChecks(t *testing.T) {
 		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
-		assert.Equal(t, req, req.WithText("hello"))
+		assert.Same(t, req, req.WithText("hello"))
 		req.chain.assertFailed(t)
 	})
 
@@ -2564,7 +2586,7 @@ func TestRequest_UsageChecks(t *testing.T) {
 		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
-		assert.Equal(t, req, req.WithJSON(map[string]string{"key1": "val1"}))
+		assert.Same(t, req, req.WithJSON(map[string]string{"key1": "val1"}))
 		req.chain.assertFailed(t)
 	})
 
@@ -2575,7 +2597,7 @@ func TestRequest_UsageChecks(t *testing.T) {
 		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
-		assert.Equal(t, req, req.WithForm(map[string]string{"key1": "val1"}))
+		assert.Same(t, req, req.WithForm(map[string]string{"key1": "val1"}))
 		req.chain.assertFailed(t)
 	})
 
@@ -2586,7 +2608,7 @@ func TestRequest_UsageChecks(t *testing.T) {
 		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
-		assert.Equal(t, req, req.WithFormField("key1", 123))
+		assert.Same(t, req, req.WithFormField("key1", 123))
 		req.chain.assertFailed(t)
 	})
 
@@ -2597,7 +2619,7 @@ func TestRequest_UsageChecks(t *testing.T) {
 		}
 		req := NewRequestC(config, "GET", "/").WithMultipart()
 		req.Expect()
-		assert.Equal(t, req, req.WithFile("foo", "bar", strings.NewReader("baz")))
+		assert.Same(t, req, req.WithFile("foo", "bar", strings.NewReader("baz")))
 		req.chain.assertFailed(t)
 	})
 
@@ -2608,7 +2630,7 @@ func TestRequest_UsageChecks(t *testing.T) {
 		}
 		req := NewRequestC(config, "GET", "/").WithMultipart()
 		req.Expect()
-		assert.Equal(t, req, req.WithFileBytes("foo", "bar", []byte("baz")))
+		assert.Same(t, req, req.WithFileBytes("foo", "bar", []byte("baz")))
 		req.chain.assertFailed(t)
 	})
 
@@ -2619,7 +2641,7 @@ func TestRequest_UsageChecks(t *testing.T) {
 		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
-		assert.Equal(t, req, req.WithMultipart())
+		assert.Same(t, req, req.WithMultipart())
 		req.chain.assertFailed(t)
 	})
 }

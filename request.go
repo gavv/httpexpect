@@ -40,7 +40,6 @@ type Request struct {
 	minRetryDelay time.Duration
 	maxRetryDelay time.Duration
 	sleepFn       func(d time.Duration) <-chan time.Time
-	hasExpected   bool
 
 	timeout time.Duration
 
@@ -52,9 +51,10 @@ type Request struct {
 	formbuf   *bytes.Buffer
 	multipart *multipart.Writer
 
-	bodySetter string
-	typeSetter string
-	forceType  bool
+	bodySetter   string
+	typeSetter   string
+	forceType    bool
+	expectCalled bool
 
 	wsUpgrade bool
 
@@ -201,8 +201,11 @@ func (r *Request) WithName(name string) *Request {
 	r.chain.enter("WithName()")
 	defer r.chain.leave()
 
-	if r.hasExpected {
-		r.chain.fail(r.unexpectedExpectError("WithName"))
+	if r.chain.failed() {
+		return r
+	}
+
+	if !r.checkOrder("WithName") {
 		return r
 	}
 
@@ -229,8 +232,7 @@ func (r *Request) WithMatcher(matcher func(*Response)) *Request {
 		return r
 	}
 
-	if r.hasExpected {
-		r.chain.fail(r.unexpectedExpectError("WithMatcher"))
+	if !r.checkOrder("WithMatcher") {
 		return r
 	}
 
@@ -264,8 +266,7 @@ func (r *Request) WithTransformer(transform func(*http.Request)) *Request {
 		return r
 	}
 
-	if r.hasExpected {
-		r.chain.fail(r.unexpectedExpectError("WithTransformer"))
+	if !r.checkOrder("WithTransformer") {
 		return r
 	}
 
@@ -305,8 +306,7 @@ func (r *Request) WithClient(client Client) *Request {
 		return r
 	}
 
-	if r.hasExpected {
-		r.chain.fail(r.unexpectedExpectError("WithClient"))
+	if !r.checkOrder("WithClient") {
 		return r
 	}
 
@@ -343,8 +343,7 @@ func (r *Request) WithHandler(handler http.Handler) *Request {
 		return r
 	}
 
-	if r.hasExpected {
-		r.chain.fail(r.unexpectedExpectError("WithHandler"))
+	if !r.checkOrder("WithHandler") {
 		return r
 	}
 
@@ -393,8 +392,7 @@ func (r *Request) WithContext(ctx context.Context) *Request {
 		return r
 	}
 
-	if r.hasExpected {
-		r.chain.fail(r.unexpectedExpectError("WithContext"))
+	if !r.checkOrder("WithContext") {
 		return r
 	}
 
@@ -436,8 +434,7 @@ func (r *Request) WithTimeout(timeout time.Duration) *Request {
 		return r
 	}
 
-	if r.hasExpected {
-		r.chain.fail(r.unexpectedExpectError("WithTimeout"))
+	if !r.checkOrder("WithTimeout") {
 		return r
 	}
 
@@ -506,6 +503,10 @@ func (r *Request) WithRedirectPolicy(policy RedirectPolicy) *Request {
 		return r
 	}
 
+	if !r.checkOrder("WithRedirectPolicy") {
+		return r
+	}
+
 	r.redirectPolicy = policy
 
 	return r
@@ -531,6 +532,10 @@ func (r *Request) WithMaxRedirects(maxRedirects int) *Request {
 	defer r.chain.leave()
 
 	if r.chain.failed() {
+		return r
+	}
+
+	if !r.checkOrder("WithMaxRedirects") {
 		return r
 	}
 
@@ -598,8 +603,7 @@ func (r *Request) WithRetryPolicy(policy RetryPolicy) *Request {
 		return r
 	}
 
-	if r.hasExpected {
-		r.chain.fail(r.unexpectedExpectError("WithRetryPolicy"))
+	if !r.checkOrder("WithRetryPolicy") {
 		return r
 	}
 
@@ -631,8 +635,7 @@ func (r *Request) WithMaxRetries(maxRetries int) *Request {
 		return r
 	}
 
-	if r.hasExpected {
-		r.chain.fail(r.unexpectedExpectError("WithMaxRetries"))
+	if !r.checkOrder("WithMaxRetries") {
 		return r
 	}
 
@@ -672,8 +675,7 @@ func (r *Request) WithRetryDelay(minDelay, maxDelay time.Duration) *Request {
 		return r
 	}
 
-	if r.hasExpected {
-		r.chain.fail(r.unexpectedExpectError("WithRetryDelay"))
+	if !r.checkOrder("WithRetryDelay") {
 		return r
 	}
 
@@ -724,8 +726,7 @@ func (r *Request) WithWebsocketUpgrade() *Request {
 		return r
 	}
 
-	if r.hasExpected {
-		r.chain.fail(r.unexpectedExpectError("WithWebsocketUpgrade"))
+	if !r.checkOrder("WithWebsocketUpgrade") {
 		return r
 	}
 
@@ -756,8 +757,7 @@ func (r *Request) WithWebsocketDialer(dialer WebsocketDialer) *Request {
 		return r
 	}
 
-	if r.hasExpected {
-		r.chain.fail(r.unexpectedExpectError("WithWebsocketDialer"))
+	if !r.checkOrder("WithWebsocketDialer") {
 		return r
 	}
 
@@ -797,8 +797,7 @@ func (r *Request) WithPath(key string, value interface{}) *Request {
 		return r
 	}
 
-	if r.hasExpected {
-		r.chain.fail(r.unexpectedExpectError("WithPath"))
+	if !r.checkOrder("WithPath") {
 		return r
 	}
 
@@ -851,8 +850,7 @@ func (r *Request) WithPathObject(object interface{}) *Request {
 		return r
 	}
 
-	if r.hasExpected {
-		r.chain.fail(r.unexpectedExpectError("WithPathObject"))
+	if !r.checkOrder("WithPathObject") {
 		return r
 	}
 
@@ -949,8 +947,7 @@ func (r *Request) WithQuery(key string, value interface{}) *Request {
 		return r
 	}
 
-	if r.hasExpected {
-		r.chain.fail(r.unexpectedExpectError("WithQuery"))
+	if !r.checkOrder("WithQuery") {
 		return r
 	}
 
@@ -1002,8 +999,7 @@ func (r *Request) WithQueryObject(object interface{}) *Request {
 		return r
 	}
 
-	if r.hasExpected {
-		r.chain.fail(r.unexpectedExpectError("WithQueryObject"))
+	if !r.checkOrder("WithQueryObject") {
 		return r
 	}
 
@@ -1069,8 +1065,7 @@ func (r *Request) WithQueryString(query string) *Request {
 		return r
 	}
 
-	if r.hasExpected {
-		r.chain.fail(r.unexpectedExpectError("WithQueryString"))
+	if !r.checkOrder("WithQueryString") {
 		return r
 	}
 
@@ -1116,8 +1111,7 @@ func (r *Request) WithURL(urlStr string) *Request {
 		return r
 	}
 
-	if r.hasExpected {
-		r.chain.fail(r.unexpectedExpectError("WithURL"))
+	if !r.checkOrder("WithURL") {
 		return r
 	}
 
@@ -1155,8 +1149,7 @@ func (r *Request) WithHeaders(headers map[string]string) *Request {
 		return r
 	}
 
-	if r.hasExpected {
-		r.chain.fail(r.unexpectedExpectError("WithHeaders"))
+	if !r.checkOrder("WithHeaders") {
 		return r
 	}
 
@@ -1181,8 +1174,7 @@ func (r *Request) WithHeader(k, v string) *Request {
 		return r
 	}
 
-	if r.hasExpected {
-		r.chain.fail(r.unexpectedExpectError("WithHeader"))
+	if !r.checkOrder("WithHeader") {
 		return r
 	}
 
@@ -1226,8 +1218,7 @@ func (r *Request) WithCookies(cookies map[string]string) *Request {
 		return r
 	}
 
-	if r.hasExpected {
-		r.chain.fail(r.unexpectedExpectError("WithCookies"))
+	if !r.checkOrder("WithCookies") {
 		return r
 	}
 
@@ -1255,8 +1246,7 @@ func (r *Request) WithCookie(k, v string) *Request {
 		return r
 	}
 
-	if r.hasExpected {
-		r.chain.fail(r.unexpectedExpectError("WithCookie"))
+	if !r.checkOrder("WithCookie") {
 		return r
 	}
 
@@ -1286,8 +1276,7 @@ func (r *Request) WithBasicAuth(username, password string) *Request {
 		return r
 	}
 
-	if r.hasExpected {
-		r.chain.fail(r.unexpectedExpectError("WithBasicAuth"))
+	if !r.checkOrder("WithBasicAuth") {
 		return r
 	}
 
@@ -1310,8 +1299,7 @@ func (r *Request) WithHost(host string) *Request {
 		return r
 	}
 
-	if r.hasExpected {
-		r.chain.fail(r.unexpectedExpectError("WithHost"))
+	if !r.checkOrder("WithHost") {
 		return r
 	}
 
@@ -1336,8 +1324,7 @@ func (r *Request) WithProto(proto string) *Request {
 		return r
 	}
 
-	if r.hasExpected {
-		r.chain.fail(r.unexpectedExpectError("WithProto"))
+	if !r.checkOrder("WithProto") {
 		return r
 	}
 
@@ -1384,11 +1371,9 @@ func (r *Request) WithChunked(reader io.Reader) *Request {
 		return r
 	}
 
-	if r.hasExpected {
-		r.chain.fail(r.unexpectedExpectError("WithChunked"))
+	if !r.checkOrder("WithChunked") {
 		return r
 	}
-
 	if !r.httpReq.ProtoAtLeast(1, 1) {
 		r.chain.fail(AssertionFailure{
 			Type: AssertUsage,
@@ -1422,8 +1407,7 @@ func (r *Request) WithBytes(b []byte) *Request {
 		return r
 	}
 
-	if r.hasExpected {
-		r.chain.fail(r.unexpectedExpectError("WithBytes"))
+	if !r.checkOrder("WithBytes") {
 		return r
 	}
 
@@ -1451,8 +1435,7 @@ func (r *Request) WithText(s string) *Request {
 		return r
 	}
 
-	if r.hasExpected {
-		r.chain.fail(r.unexpectedExpectError("WithText"))
+	if !r.checkOrder("WithText") {
 		return r
 	}
 
@@ -1484,8 +1467,7 @@ func (r *Request) WithJSON(object interface{}) *Request {
 		return r
 	}
 
-	if r.hasExpected {
-		r.chain.fail(r.unexpectedExpectError("WithJSON"))
+	if !r.checkOrder("WithJSON") {
 		return r
 	}
 
@@ -1539,8 +1521,7 @@ func (r *Request) WithForm(object interface{}) *Request {
 		return r
 	}
 
-	if r.hasExpected {
-		r.chain.fail(r.unexpectedExpectError("WithForm"))
+	if !r.checkOrder("WithForm") {
 		return r
 	}
 
@@ -1613,8 +1594,7 @@ func (r *Request) WithFormField(key string, value interface{}) *Request {
 		return r
 	}
 
-	if r.hasExpected {
-		r.chain.fail(r.unexpectedExpectError("WithFormField"))
+	if !r.checkOrder("WithFormField") {
 		return r
 	}
 
@@ -1672,8 +1652,7 @@ func (r *Request) WithFile(key, path string, reader ...io.Reader) *Request {
 		return r
 	}
 
-	if r.hasExpected {
-		r.chain.fail(r.unexpectedExpectError("WithFile"))
+	if !r.checkOrder("WithFile") {
 		return r
 	}
 
@@ -1711,8 +1690,7 @@ func (r *Request) WithFileBytes(key, path string, data []byte) *Request {
 		return r
 	}
 
-	if r.hasExpected {
-		r.chain.fail(r.unexpectedExpectError("WithFileBytes"))
+	if !r.checkOrder("WithFileBytes") {
 		return r
 	}
 
@@ -1802,8 +1780,7 @@ func (r *Request) WithMultipart() *Request {
 		return r
 	}
 
-	if r.hasExpected {
-		r.chain.fail(r.unexpectedExpectError("WithMultipart"))
+	if !r.checkOrder("WithMultipart") {
 		return r
 	}
 
@@ -1837,9 +1814,18 @@ func (r *Request) Expect() *Response {
 	r.chain.enter("Expect()")
 	defer r.chain.leave()
 
-	if r.hasExpected {
-		r.chain.fail(r.unexpectedExpectError("Expect"))
-		return nil
+	if r.chain.failed() {
+		return newResponse(responseOpts{
+			config: r.config,
+			chain:  r.chain,
+		})
+	}
+
+	if !r.checkOrder("Expect") {
+		return newResponse(responseOpts{
+			config: r.config,
+			chain:  r.chain,
+		})
 	}
 
 	resp := r.roundTrip()
@@ -1855,7 +1841,7 @@ func (r *Request) Expect() *Response {
 		matcher(resp)
 	}
 
-	r.hasExpected = true
+	r.expectCalled = true
 
 	return resp
 }
@@ -2278,11 +2264,19 @@ func (r *Request) setBody(setter string, reader io.Reader, len int, overwrite bo
 	r.bodySetter = setter
 }
 
+func (r *Request) checkOrder(funcCall string) bool {
+	if r.expectCalled {
+		r.chain.fail(r.unexpectedExpectError(funcCall))
+		return false
+	}
+	return true
+}
+
 func (r *Request) unexpectedExpectError(funcCall string) AssertionFailure {
 	return AssertionFailure{
 		Type: AssertUsage,
 		Errors: []error{
-			errors.New("unexpected call to " + funcCall + ": Expect has already been called"),
+			fmt.Errorf("unexpected call to " + funcCall + ": Expect has already been called"),
 		},
 	}
 }
