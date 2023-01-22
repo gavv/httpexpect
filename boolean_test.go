@@ -15,6 +15,9 @@ func TestBoolean_Failed(t *testing.T) {
 	value.Path("$")
 	value.Schema("")
 
+	var target interface{}
+	value.Decode(&target)
+
 	value.Equal(false)
 	value.NotEqual(false)
 	value.True()

@@ -16,6 +16,9 @@ func TestNumber_Failed(t *testing.T) {
 	value.Path("$")
 	value.Schema("")
 
+	var target interface{}
+	value.Decode(&target)
+
 	value.Equal(0)
 	value.NotEqual(0)
 	value.InDelta(0, 0)

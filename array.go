@@ -70,11 +70,9 @@ func (a *Array) Raw() []interface{} {
 // Decode unmarshals the underlying value attached to the Array to a target variable.
 // target should be one of these:
 //
-// 1) pointer to empty interface
+// - pointer to an empty interface
 //
-// 2) pointer to slice of empty interfaces
-//
-// 3) pointer to slice of structs
+// - pointer to slice of any type
 //
 // Example:
 //

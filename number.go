@@ -53,11 +53,9 @@ func (n *Number) Raw() float64 {
 // Decode unmarshals the underlying value attached to the Number to a target variable.
 // target should be one of these:
 //
-// 1) pointer to empty interface.
+// - pointer to empty interface.
 //
-// 2) pointer to int variable.
-//
-// 3) pointer to float64 variable.
+// - pointer to any integer or floating type.
 //
 // Example:
 //
