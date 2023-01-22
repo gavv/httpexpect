@@ -87,12 +87,12 @@ func (a *Array) Raw() []interface{} {
 //				"foo": 456,
 //			},
 //	}
-//	array := NewArray(t,value)
+//	array := NewArray(t, value)
 //
 //	var target []S
 //	arr.Decode(&target)
 //
-//	assert.Equal(t,[]S{{123},{456}},target)
+//	assert.Equal(t, []S{{123},{456}}, target)
 func (a *Array) Decode(target interface{}) *Array {
 	a.chain.enter("Decode()")
 	defer a.chain.leave()

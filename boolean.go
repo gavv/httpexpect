@@ -58,12 +58,12 @@ func (b *Boolean) Raw() bool {
 //
 // Example:
 //
-//	value := NewBoolean(t,true)
+//	value := NewBoolean(t, true)
 //
 //	var target bool
 //	value.Decode(&target)
 //
-//	assert.Equal(t,true,target)
+//	assert.Equal(t, true, target)
 func (b *Boolean) Decode(target interface{}) *Boolean {
 	b.chain.enter("Decode()")
 	defer b.chain.leave()

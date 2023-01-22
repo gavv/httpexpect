@@ -59,12 +59,12 @@ func (n *Number) Raw() float64 {
 //
 // Example:
 //
-//	value := NewNumber(t,123)
+//	value := NewNumber(t, 123)
 //
 //	var target interface{}
 //	valude.decode(&target)
 //
-//	assert.Equal(t,123,target)
+//	assert.Equal(t, 123, target)
 func (n *Number) Decode(target interface{}) *Number {
 	n.chain.enter("Decode()")
 	defer n.chain.leave()
