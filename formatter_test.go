@@ -552,7 +552,7 @@ func TestFormat_FailureDelta(t *testing.T) {
 	}
 }
 
-func TestFormatter_DisableScientific(t *testing.T) {
+func TestFormatter_FloatFormat(t *testing.T) {
 	type testCase struct {
 		name             string
 		assertionFailure AssertionFailure
