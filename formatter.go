@@ -24,9 +24,15 @@ type Formatter interface {
 type FloatFormatMode int
 
 const (
-	FloatFormatAuto       FloatFormatMode = iota // Print float in scientific notation for large exponent, otherwise print as decimal
-	FloatFormatDecimal                           // Print float in decimal
-	FloatFormatScientific                        // Print float in scientific notation
+	// Print float in scientific notation for large exponent,
+	// otherwise print as decimal
+	FloatFormatAuto FloatFormatMode = iota
+
+	// Print float in decimal
+	FloatFormatDecimal
+
+	// Print float in scientific notation
+	FloatFormatScientific
 )
 
 // DefaultFormatter is the default Formatter implementation.
