@@ -9,7 +9,7 @@ import (
 
 func TestNumber_Failed(t *testing.T) {
 	chain := newMockChain(t)
-	chain.fail(mockFailure())
+	chain.setFailed()
 
 	value := newNumber(chain, 0)
 

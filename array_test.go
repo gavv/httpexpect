@@ -66,7 +66,7 @@ func TestArray_Failed(t *testing.T) {
 
 	t.Run("failed_chain", func(t *testing.T) {
 		chain := newMockChain(t)
-		chain.fail(mockFailure())
+		chain.setFailed()
 
 		value := newArray(chain, []interface{}{})
 
@@ -83,7 +83,7 @@ func TestArray_Failed(t *testing.T) {
 
 	t.Run("failed_chain_nil_value", func(t *testing.T) {
 		chain := newMockChain(t)
-		chain.fail(mockFailure())
+		chain.setFailed()
 
 		value := newArray(chain, nil)
 
@@ -948,7 +948,7 @@ func TestArray_Transform(t *testing.T) {
 		reporter := newMockReporter(ts)
 		array := NewArray(reporter, []interface{}{2, 4, 6})
 		newArray := array.Transform(nil)
-		newArray.chain.assertFailed(reporter)
+		newArray.chain.assertFailed(t)
 	})
 
 	t.Run("Empty array", func(ts *testing.T) {

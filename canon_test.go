@@ -11,7 +11,8 @@ func TestCanon_Number(t *testing.T) {
 		myInt int
 	)
 
-	chain := newMockChain(t)
+	chain := newMockChain(t).enter("test")
+	defer chain.leave()
 
 	d1, ok := canonNumber(chain, 123)
 	assert.True(t, ok)
@@ -48,7 +49,8 @@ func TestCanon_Array(t *testing.T) {
 		myInt   int
 	)
 
-	chain := newMockChain(t)
+	chain := newMockChain(t).enter("test")
+	defer chain.leave()
 
 	d1, ok := canonArray(chain, []interface{}{123.0, 456.0})
 	assert.True(t, ok)
@@ -89,7 +91,8 @@ func TestCanon_Map(t *testing.T) {
 		myInt int
 	)
 
-	chain := newMockChain(t)
+	chain := newMockChain(t).enter("test")
+	defer chain.leave()
 
 	d1, ok := canonMap(chain, map[string]interface{}{"foo": 123.0})
 	assert.True(t, ok)

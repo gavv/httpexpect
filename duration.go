@@ -58,15 +58,15 @@ func (d *Duration) Raw() time.Duration {
 // can create unset duration is Cookie.MaxAge. Instead of Cookie.MaxAge().IsSet(),
 // please use Cookie.HaveMaxAge().
 func (d *Duration) IsSet() *Duration {
-	d.chain.enter("IsSet()")
-	defer d.chain.leave()
+	opChain := d.chain.enter("IsSet()")
+	defer opChain.leave()
 
-	if d.chain.failed() {
+	if opChain.failed() {
 		return d
 	}
 
 	if d.value == nil {
-		d.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:   AssertNotNil,
 			Actual: &AssertionValue{d.value},
 			Errors: []error{
@@ -82,15 +82,15 @@ func (d *Duration) IsSet() *Duration {
 // can create unset duration is Cookie.MaxAge. Instead of Cookie.MaxAge().NotSet(),
 // please use Cookie.NotHaveMaxAge().
 func (d *Duration) NotSet() *Duration {
-	d.chain.enter("NotSet()")
-	defer d.chain.leave()
+	opChain := d.chain.enter("NotSet()")
+	defer opChain.leave()
 
-	if d.chain.failed() {
+	if opChain.failed() {
 		return d
 	}
 
 	if !(d.value == nil) {
-		d.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:   AssertNotNil,
 			Actual: &AssertionValue{d.value},
 			Errors: []error{
@@ -109,15 +109,15 @@ func (d *Duration) NotSet() *Duration {
 //	d := NewDuration(t, time.Second)
 //	d.Equal(time.Second)
 func (d *Duration) Equal(value time.Duration) *Duration {
-	d.chain.enter("Equal()")
-	defer d.chain.leave()
+	opChain := d.chain.enter("Equal()")
+	defer opChain.leave()
 
-	if d.chain.failed() {
+	if opChain.failed() {
 		return d
 	}
 
 	if d.value == nil {
-		d.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:   AssertNotNil,
 			Actual: &AssertionValue{d.value},
 			Errors: []error{
@@ -128,7 +128,7 @@ func (d *Duration) Equal(value time.Duration) *Duration {
 	}
 
 	if !(*d.value == value) {
-		d.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{d.value},
 			Expected: &AssertionValue{value},
@@ -148,15 +148,15 @@ func (d *Duration) Equal(value time.Duration) *Duration {
 //	d := NewDuration(t, time.Second)
 //	d.NotEqual(time.Minute)
 func (d *Duration) NotEqual(value time.Duration) *Duration {
-	d.chain.enter("NotEqual()")
-	defer d.chain.leave()
+	opChain := d.chain.enter("NotEqual()")
+	defer opChain.leave()
 
-	if d.chain.failed() {
+	if opChain.failed() {
 		return d
 	}
 
 	if d.value == nil {
-		d.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:   AssertNotNil,
 			Actual: &AssertionValue{d.value},
 			Errors: []error{
@@ -166,8 +166,8 @@ func (d *Duration) NotEqual(value time.Duration) *Duration {
 		return d
 	}
 
-	if !(*d.value != value) {
-		d.chain.fail(AssertionFailure{
+	if *d.value == value {
+		opChain.fail(AssertionFailure{
 			Type:     AssertNotEqual,
 			Actual:   &AssertionValue{d.value},
 			Expected: &AssertionValue{value},
@@ -187,15 +187,15 @@ func (d *Duration) NotEqual(value time.Duration) *Duration {
 //	d := NewDuration(t, time.Minute)
 //	d.Gt(time.Second)
 func (d *Duration) Gt(value time.Duration) *Duration {
-	d.chain.enter("Gt()")
-	defer d.chain.leave()
+	opChain := d.chain.enter("Gt()")
+	defer opChain.leave()
 
-	if d.chain.failed() {
+	if opChain.failed() {
 		return d
 	}
 
 	if d.value == nil {
-		d.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:   AssertNotNil,
 			Actual: &AssertionValue{d.value},
 			Errors: []error{
@@ -206,7 +206,7 @@ func (d *Duration) Gt(value time.Duration) *Duration {
 	}
 
 	if !(*d.value > value) {
-		d.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertGt,
 			Actual:   &AssertionValue{d.value},
 			Expected: &AssertionValue{value},
@@ -226,15 +226,15 @@ func (d *Duration) Gt(value time.Duration) *Duration {
 //	d := NewDuration(t, time.Minute)
 //	d.Ge(time.Second)
 func (d *Duration) Ge(value time.Duration) *Duration {
-	d.chain.enter("Ge()")
-	defer d.chain.leave()
+	opChain := d.chain.enter("Ge()")
+	defer opChain.leave()
 
-	if d.chain.failed() {
+	if opChain.failed() {
 		return d
 	}
 
 	if d.value == nil {
-		d.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:   AssertNotNil,
 			Actual: &AssertionValue{d.value},
 			Errors: []error{
@@ -245,7 +245,7 @@ func (d *Duration) Ge(value time.Duration) *Duration {
 	}
 
 	if !(*d.value >= value) {
-		d.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertGe,
 			Actual:   &AssertionValue{d.value},
 			Expected: &AssertionValue{value},
@@ -265,15 +265,15 @@ func (d *Duration) Ge(value time.Duration) *Duration {
 //	d := NewDuration(t, time.Second)
 //	d.Lt(time.Minute)
 func (d *Duration) Lt(value time.Duration) *Duration {
-	d.chain.enter("Lt()")
-	defer d.chain.leave()
+	opChain := d.chain.enter("Lt()")
+	defer opChain.leave()
 
-	if d.chain.failed() {
+	if opChain.failed() {
 		return d
 	}
 
 	if d.value == nil {
-		d.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:   AssertNotNil,
 			Actual: &AssertionValue{d.value},
 			Errors: []error{
@@ -284,7 +284,7 @@ func (d *Duration) Lt(value time.Duration) *Duration {
 	}
 
 	if !(*d.value < value) {
-		d.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertLt,
 			Actual:   &AssertionValue{d.value},
 			Expected: &AssertionValue{value},
@@ -304,15 +304,15 @@ func (d *Duration) Lt(value time.Duration) *Duration {
 //	d := NewDuration(t, time.Second)
 //	d.Le(time.Minute)
 func (d *Duration) Le(value time.Duration) *Duration {
-	d.chain.enter("Le()")
-	defer d.chain.leave()
+	opChain := d.chain.enter("Le()")
+	defer opChain.leave()
 
-	if d.chain.failed() {
+	if opChain.failed() {
 		return d
 	}
 
 	if d.value == nil {
-		d.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:   AssertNotNil,
 			Actual: &AssertionValue{d.value},
 			Errors: []error{
@@ -323,7 +323,7 @@ func (d *Duration) Le(value time.Duration) *Duration {
 	}
 
 	if !(*d.value <= value) {
-		d.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertLe,
 			Actual:   &AssertionValue{d.value},
 			Expected: &AssertionValue{value},
@@ -344,15 +344,15 @@ func (d *Duration) Le(value time.Duration) *Duration {
 //	d.InRange(time.Second, time.Hour)
 //	d.InRange(time.Minute, time.Minute)
 func (d *Duration) InRange(min, max time.Duration) *Duration {
-	d.chain.enter("InRange()")
-	defer d.chain.leave()
+	opChain := d.chain.enter("InRange()")
+	defer opChain.leave()
 
-	if d.chain.failed() {
+	if opChain.failed() {
 		return d
 	}
 
 	if d.value == nil {
-		d.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:   AssertNotNil,
 			Actual: &AssertionValue{d.value},
 			Errors: []error{
@@ -363,7 +363,7 @@ func (d *Duration) InRange(min, max time.Duration) *Duration {
 	}
 
 	if !(*d.value >= min && *d.value <= max) {
-		d.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertInRange,
 			Actual:   &AssertionValue{d.value},
 			Expected: &AssertionValue{AssertionRange{min, max}},
@@ -384,15 +384,15 @@ func (d *Duration) InRange(min, max time.Duration) *Duration {
 //	d.NotInRange(time.Minute, time.Minute-time.Nanosecond)
 //	d.NotInRange(time.Minute+time.Nanosecond, time.Minute*10)
 func (d *Duration) NotInRange(min, max time.Duration) *Duration {
-	d.chain.enter("NotInRange()")
-	defer d.chain.leave()
+	opChain := d.chain.enter("NotInRange()")
+	defer opChain.leave()
 
-	if d.chain.failed() {
+	if opChain.failed() {
 		return d
 	}
 
 	if d.value == nil {
-		d.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:   AssertNotNil,
 			Actual: &AssertionValue{d.value},
 			Errors: []error{
@@ -403,7 +403,7 @@ func (d *Duration) NotInRange(min, max time.Duration) *Duration {
 	}
 
 	if *d.value >= min && *d.value <= max {
-		d.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertNotInRange,
 			Actual:   &AssertionValue{d.value},
 			Expected: &AssertionValue{AssertionRange{min, max}},

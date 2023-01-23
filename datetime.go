@@ -31,13 +31,7 @@ func NewDateTime(reporter Reporter, value time.Time) *DateTime {
 //
 // Requirements for config are same as for WithConfig function.
 //
-// Example:
-//
-//	dt := NewDateTimeC(config, time.Now())
-//	dt.Le(time.Now())
-//
-//	time.Sleep(time.Second)
-//	dt.Lt(time.Now())
+// See NewDateTime for usage example.
 func NewDateTimeC(config Config, value time.Time) *DateTime {
 	return newDateTime(newChainWithConfig("DateTime()", config.withDefaults()), value)
 }
@@ -65,15 +59,15 @@ func (dt *DateTime) Raw() time.Time {
 //	dt := NewDateTime(t, tm)
 //	dt.GetZone().Equal("IST")
 func (dt *DateTime) GetZone() *String {
-	dt.chain.enter("GetZone()")
-	defer dt.chain.leave()
+	opChain := dt.chain.enter("GetZone()")
+	defer opChain.leave()
 
-	if dt.chain.failed() {
-		return newString(dt.chain, "")
+	if opChain.failed() {
+		return newString(opChain, "")
 	}
 
 	zone, _ := dt.value.Zone()
-	return newString(dt.chain, zone)
+	return newString(opChain, zone)
 }
 
 // GetYear returns the year in which datetime occurs,
@@ -85,14 +79,14 @@ func (dt *DateTime) GetZone() *String {
 //	dt := NewDateTime(t, tm)
 //	dt.GetYear().Equal(2022)
 func (dt *DateTime) GetYear() *Number {
-	dt.chain.enter("GetYear()")
-	defer dt.chain.leave()
+	opChain := dt.chain.enter("GetYear()")
+	defer opChain.leave()
 
-	if dt.chain.failed() {
-		return newNumber(dt.chain, float64(0))
+	if opChain.failed() {
+		return newNumber(opChain, float64(0))
 	}
 
-	return newNumber(dt.chain, float64(dt.value.Year()))
+	return newNumber(opChain, float64(dt.value.Year()))
 }
 
 // GetMonth returns the month of the year specified by datetime,
@@ -104,14 +98,14 @@ func (dt *DateTime) GetYear() *Number {
 //	dt := NewDateTime(t, tm)
 //	dt.GetMonth().Equal(12)
 func (dt *DateTime) GetMonth() *Number {
-	dt.chain.enter("GetMonth()")
-	defer dt.chain.leave()
+	opChain := dt.chain.enter("GetMonth()")
+	defer opChain.leave()
 
-	if dt.chain.failed() {
-		return newNumber(dt.chain, float64(0))
+	if opChain.failed() {
+		return newNumber(opChain, float64(0))
 	}
 
-	return newNumber(dt.chain, float64(dt.value.Month()))
+	return newNumber(opChain, float64(dt.value.Month()))
 }
 
 // GetDay returns the day of the month specified datetime,
@@ -123,14 +117,14 @@ func (dt *DateTime) GetMonth() *Number {
 //	dt := NewDateTime(t, tm)
 //	dt.GetDay().Equal(30)
 func (dt *DateTime) GetDay() *Number {
-	dt.chain.enter("GetDay()")
-	defer dt.chain.leave()
+	opChain := dt.chain.enter("GetDay()")
+	defer opChain.leave()
 
-	if dt.chain.failed() {
-		return newNumber(dt.chain, float64(0))
+	if opChain.failed() {
+		return newNumber(opChain, float64(0))
 	}
 
-	return newNumber(dt.chain, float64(dt.value.Day()))
+	return newNumber(opChain, float64(dt.value.Day()))
 }
 
 // Weekday returns the day of the week specified by datetime,
@@ -142,14 +136,14 @@ func (dt *DateTime) GetDay() *Number {
 //	dt := NewDateTime(t, tm)
 //	dt.GetWeekDay().Equal(time.Friday)
 func (dt *DateTime) GetWeekDay() *Number {
-	dt.chain.enter("GetWeekDay()")
-	defer dt.chain.leave()
+	opChain := dt.chain.enter("GetWeekDay()")
+	defer opChain.leave()
 
-	if dt.chain.failed() {
-		return newNumber(dt.chain, float64(0))
+	if opChain.failed() {
+		return newNumber(opChain, float64(0))
 	}
 
-	return newNumber(dt.chain, float64(dt.value.Weekday()))
+	return newNumber(opChain, float64(dt.value.Weekday()))
 }
 
 // GetYearDay returns the day of the year specified by datetime,
@@ -162,14 +156,14 @@ func (dt *DateTime) GetWeekDay() *Number {
 //	dt := NewDateTime(t, tm)
 //	dt.GetYearDay().Equal(364)
 func (dt *DateTime) GetYearDay() *Number {
-	dt.chain.enter("GetYearDay()")
-	defer dt.chain.leave()
+	opChain := dt.chain.enter("GetYearDay()")
+	defer opChain.leave()
 
-	if dt.chain.failed() {
-		return newNumber(dt.chain, float64(0))
+	if opChain.failed() {
+		return newNumber(opChain, float64(0))
 	}
 
-	return newNumber(dt.chain, float64(dt.value.YearDay()))
+	return newNumber(opChain, float64(dt.value.YearDay()))
 }
 
 // GetHour returns the hour within the day specified by datetime,
@@ -181,14 +175,14 @@ func (dt *DateTime) GetYearDay() *Number {
 //	dt := NewDateTime(t, tm)
 //	dt.GetHour().Equal(15)
 func (dt *DateTime) GetHour() *Number {
-	dt.chain.enter("GetHour()")
-	defer dt.chain.leave()
+	opChain := dt.chain.enter("GetHour()")
+	defer opChain.leave()
 
-	if dt.chain.failed() {
-		return newNumber(dt.chain, float64(0))
+	if opChain.failed() {
+		return newNumber(opChain, float64(0))
 	}
 
-	return newNumber(dt.chain, float64(dt.value.Hour()))
+	return newNumber(opChain, float64(dt.value.Hour()))
 }
 
 // GetMinute returns the minute offset within the hour specified by datetime,
@@ -200,14 +194,14 @@ func (dt *DateTime) GetHour() *Number {
 //	dt := NewDateTime(t, tm)
 //	dt.GetMinute().Equal(4)
 func (dt *DateTime) GetMinute() *Number {
-	dt.chain.enter("GetMinute()")
-	defer dt.chain.leave()
+	opChain := dt.chain.enter("GetMinute()")
+	defer opChain.leave()
 
-	if dt.chain.failed() {
-		return newNumber(dt.chain, float64(0))
+	if opChain.failed() {
+		return newNumber(opChain, float64(0))
 	}
 
-	return newNumber(dt.chain, float64(dt.value.Minute()))
+	return newNumber(opChain, float64(dt.value.Minute()))
 }
 
 // GetSecond returns the second offset within the minute specified by datetime,
@@ -219,14 +213,14 @@ func (dt *DateTime) GetMinute() *Number {
 //	dt := NewDateTime(t, tm)
 //	dt.GetSecond().Equal(5)
 func (dt *DateTime) GetSecond() *Number {
-	dt.chain.enter("GetSecond()")
-	defer dt.chain.leave()
+	opChain := dt.chain.enter("GetSecond()")
+	defer opChain.leave()
 
-	if dt.chain.failed() {
-		return newNumber(dt.chain, float64(0))
+	if opChain.failed() {
+		return newNumber(opChain, float64(0))
 	}
 
-	return newNumber(dt.chain, float64(dt.value.Second()))
+	return newNumber(opChain, float64(dt.value.Second()))
 }
 
 // GetNanosecond returns the nanosecond offset within the second specified by datetime,
@@ -238,14 +232,14 @@ func (dt *DateTime) GetSecond() *Number {
 //	dt := NewDateTime(t, tm)
 //	dt.GetNanosecond().Equal(0)
 func (dt *DateTime) GetNanosecond() *Number {
-	dt.chain.enter("GetNanosecond()")
-	defer dt.chain.leave()
+	opChain := dt.chain.enter("GetNanosecond()")
+	defer opChain.leave()
 
-	if dt.chain.failed() {
-		return newNumber(dt.chain, float64(0))
+	if opChain.failed() {
+		return newNumber(opChain, float64(0))
 	}
 
-	return newNumber(dt.chain, float64(dt.value.Nanosecond()))
+	return newNumber(opChain, float64(dt.value.Nanosecond()))
 }
 
 // Equal succeeds if DateTime is equal to given value.
@@ -255,15 +249,15 @@ func (dt *DateTime) GetNanosecond() *Number {
 //	dt := NewDateTime(t, time.Unix(0, 1))
 //	dt.Equal(time.Unix(0, 1))
 func (dt *DateTime) Equal(value time.Time) *DateTime {
-	dt.chain.enter("Equal()")
-	defer dt.chain.leave()
+	opChain := dt.chain.enter("Equal()")
+	defer opChain.leave()
 
-	if dt.chain.failed() {
+	if opChain.failed() {
 		return dt
 	}
 
 	if !dt.value.Equal(value) {
-		dt.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{dt.value},
 			Expected: &AssertionValue{value},
@@ -283,15 +277,15 @@ func (dt *DateTime) Equal(value time.Time) *DateTime {
 //	dt := NewDateTime(t, time.Unix(0, 1))
 //	dt.NotEqual(time.Unix(0, 2))
 func (dt *DateTime) NotEqual(value time.Time) *DateTime {
-	dt.chain.enter("NotEqual()")
-	defer dt.chain.leave()
+	opChain := dt.chain.enter("NotEqual()")
+	defer opChain.leave()
 
-	if dt.chain.failed() {
+	if opChain.failed() {
 		return dt
 	}
 
 	if dt.value.Equal(value) {
-		dt.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertNotEqual,
 			Actual:   &AssertionValue{dt.value},
 			Expected: &AssertionValue{value},
@@ -312,16 +306,16 @@ func (dt *DateTime) NotEqual(value time.Time) *DateTime {
 //	dt.InRange(time.Unix(0, 1), time.Unix(0, 3))
 //	dt.InRange(time.Unix(0, 2), time.Unix(0, 2))
 func (dt *DateTime) InRange(min, max time.Time) *DateTime {
-	dt.chain.enter("InRange()")
-	defer dt.chain.leave()
+	opChain := dt.chain.enter("InRange()")
+	defer opChain.leave()
 
-	if dt.chain.failed() {
+	if opChain.failed() {
 		return dt
 	}
 
 	if !((dt.value.After(min) || dt.value.Equal(min)) &&
 		(dt.value.Before(max) || dt.value.Equal(max))) {
-		dt.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertInRange,
 			Actual:   &AssertionValue{dt.value},
 			Expected: &AssertionValue{AssertionRange{min, max}},
@@ -342,16 +336,16 @@ func (dt *DateTime) InRange(min, max time.Time) *DateTime {
 //	dt.NotInRange(time.Unix(0, 1), time.Unix(0, 9))
 //	dt.NotInRange(time.Unix(0, 11), time.Unix(0, 20))
 func (dt *DateTime) NotInRange(min, max time.Time) *DateTime {
-	dt.chain.enter("NotInRange()")
-	defer dt.chain.leave()
+	opChain := dt.chain.enter("NotInRange()")
+	defer opChain.leave()
 
-	if dt.chain.failed() {
+	if opChain.failed() {
 		return dt
 	}
 
 	if (dt.value.After(min) || dt.value.Equal(min)) &&
 		(dt.value.Before(max) || dt.value.Equal(max)) {
-		dt.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertNotInRange,
 			Actual:   &AssertionValue{dt.value},
 			Expected: &AssertionValue{AssertionRange{min, max}},
@@ -371,15 +365,15 @@ func (dt *DateTime) NotInRange(min, max time.Time) *DateTime {
 //	dt := NewDateTime(t, time.Unix(0, 2))
 //	dt.Gt(time.Unix(0, 1))
 func (dt *DateTime) Gt(value time.Time) *DateTime {
-	dt.chain.enter("Gt()")
-	defer dt.chain.leave()
+	opChain := dt.chain.enter("Gt()")
+	defer opChain.leave()
 
-	if dt.chain.failed() {
+	if opChain.failed() {
 		return dt
 	}
 
 	if !dt.value.After(value) {
-		dt.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertGt,
 			Actual:   &AssertionValue{dt.value},
 			Expected: &AssertionValue{value},
@@ -399,15 +393,15 @@ func (dt *DateTime) Gt(value time.Time) *DateTime {
 //	dt := NewDateTime(t, time.Unix(0, 2))
 //	dt.Ge(time.Unix(0, 1))
 func (dt *DateTime) Ge(value time.Time) *DateTime {
-	dt.chain.enter("Ge()")
-	defer dt.chain.leave()
+	opChain := dt.chain.enter("Ge()")
+	defer opChain.leave()
 
-	if dt.chain.failed() {
+	if opChain.failed() {
 		return dt
 	}
 
 	if !(dt.value.After(value) || dt.value.Equal(value)) {
-		dt.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertGe,
 			Actual:   &AssertionValue{dt.value},
 			Expected: &AssertionValue{value},
@@ -427,15 +421,15 @@ func (dt *DateTime) Ge(value time.Time) *DateTime {
 //	dt := NewDateTime(t, time.Unix(0, 1))
 //	dt.Lt(time.Unix(0, 2))
 func (dt *DateTime) Lt(value time.Time) *DateTime {
-	dt.chain.enter("Lt()")
-	defer dt.chain.leave()
+	opChain := dt.chain.enter("Lt()")
+	defer opChain.leave()
 
-	if dt.chain.failed() {
+	if opChain.failed() {
 		return dt
 	}
 
 	if !dt.value.Before(value) {
-		dt.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertLt,
 			Actual:   &AssertionValue{dt.value},
 			Expected: &AssertionValue{value},
@@ -455,15 +449,15 @@ func (dt *DateTime) Lt(value time.Time) *DateTime {
 //	dt := NewDateTime(t, time.Unix(0, 1))
 //	dt.Le(time.Unix(0, 2))
 func (dt *DateTime) Le(value time.Time) *DateTime {
-	dt.chain.enter("Le()")
-	defer dt.chain.leave()
+	opChain := dt.chain.enter("Le()")
+	defer opChain.leave()
 
-	if dt.chain.failed() {
+	if opChain.failed() {
 		return dt
 	}
 
 	if !(dt.value.Before(value) || dt.value.Equal(value)) {
-		dt.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertLe,
 			Actual:   &AssertionValue{dt.value},
 			Expected: &AssertionValue{value},
@@ -484,14 +478,14 @@ func (dt *DateTime) Le(value time.Time) *DateTime {
 //	dt := NewDateTime(t, tm)
 //	dt.AsUTC().Zone().Equal("UTC")
 func (dt *DateTime) AsUTC() *DateTime {
-	dt.chain.enter("AsUTC()")
-	defer dt.chain.leave()
+	opChain := dt.chain.enter("AsUTC()")
+	defer opChain.leave()
 
-	if dt.chain.failed() {
-		return dt
+	if opChain.failed() {
+		return newDateTime(opChain, time.Unix(0, 0))
 	}
 
-	return newDateTime(dt.chain, dt.value.UTC())
+	return newDateTime(opChain, dt.value.UTC())
 }
 
 // AsLocal returns a new DateTime instance in Local timeZone.
@@ -502,12 +496,12 @@ func (dt *DateTime) AsUTC() *DateTime {
 //	dt := NewDateTime(t, tm)
 //	dt.AsLocal().Zone().Equal("IST")
 func (dt *DateTime) AsLocal() *DateTime {
-	dt.chain.enter("AsLocal()")
-	defer dt.chain.leave()
+	opChain := dt.chain.enter("AsLocal()")
+	defer opChain.leave()
 
-	if dt.chain.failed() {
-		return dt
+	if opChain.failed() {
+		return newDateTime(opChain, time.Unix(0, 0))
 	}
 
-	return newDateTime(dt.chain, dt.value.Local())
+	return newDateTime(opChain, dt.value.Local())
 }

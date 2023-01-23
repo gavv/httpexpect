@@ -8,7 +8,7 @@ import (
 
 func TestBoolean_Failed(t *testing.T) {
 	chain := newMockChain(t)
-	chain.fail(mockFailure())
+	chain.setFailed()
 
 	value := newBoolean(chain, false)
 

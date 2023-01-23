@@ -36,9 +36,9 @@ func NewString(reporter Reporter, value string) *String {
 //
 // Example:
 //
-//	str := NewStringC(config, value)
+//	str := NewStringC(config, "Hello")
 func NewStringC(config Config, value string) *String {
-	return newString(newChainWithConfig("String", config.withDefaults()), value)
+	return newString(newChainWithConfig("String()", config.withDefaults()), value)
 }
 
 func newString(parent *chain, val string) *String {
@@ -85,18 +85,18 @@ func (s *String) Decode(target interface{}) *String {
 
 // Path is similar to Value.Path.
 func (s *String) Path(path string) *Value {
-	s.chain.enter("Path(%q)", path)
-	defer s.chain.leave()
+	opChain := s.chain.enter("Path(%q)", path)
+	defer opChain.leave()
 
-	return jsonPath(s.chain, s.value, path)
+	return jsonPath(opChain, s.value, path)
 }
 
 // Schema is similar to Value.Schema.
 func (s *String) Schema(schema interface{}) *String {
-	s.chain.enter("Schema()")
-	defer s.chain.leave()
+	opChain := s.chain.enter("Schema()")
+	defer opChain.leave()
 
-	jsonSchema(s.chain, s.value, schema)
+	jsonSchema(opChain, s.value, schema)
 	return s
 }
 
@@ -107,14 +107,14 @@ func (s *String) Schema(schema interface{}) *String {
 //	str := NewString(t, "Hello")
 //	str.Length().Equal(5)
 func (s *String) Length() *Number {
-	s.chain.enter("Length()")
-	defer s.chain.leave()
+	opChain := s.chain.enter("Length()")
+	defer opChain.leave()
 
-	if s.chain.failed() {
-		return newNumber(s.chain, 0)
+	if opChain.failed() {
+		return newNumber(opChain, 0)
 	}
 
-	return newNumber(s.chain, float64(len(s.value)))
+	return newNumber(opChain, float64(len(s.value)))
 }
 
 // Empty succeeds if string is empty.
@@ -124,15 +124,15 @@ func (s *String) Length() *Number {
 //	str := NewString(t, "")
 //	str.Empty()
 func (s *String) Empty() *String {
-	s.chain.enter("Empty()")
-	defer s.chain.leave()
+	opChain := s.chain.enter("Empty()")
+	defer opChain.leave()
 
-	if s.chain.failed() {
+	if opChain.failed() {
 		return s
 	}
 
 	if !(s.value == "") {
-		s.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:   AssertEmpty,
 			Actual: &AssertionValue{s.value},
 			Errors: []error{
@@ -151,15 +151,15 @@ func (s *String) Empty() *String {
 //	str := NewString(t, "Hello")
 //	str.NotEmpty()
 func (s *String) NotEmpty() *String {
-	s.chain.enter("NotEmpty()")
-	defer s.chain.leave()
+	opChain := s.chain.enter("NotEmpty()")
+	defer opChain.leave()
 
-	if s.chain.failed() {
+	if opChain.failed() {
 		return s
 	}
 
-	if !(s.value != "") {
-		s.chain.fail(AssertionFailure{
+	if s.value == "" {
+		opChain.fail(AssertionFailure{
 			Type:   AssertNotEmpty,
 			Actual: &AssertionValue{s.value},
 			Errors: []error{
@@ -178,15 +178,15 @@ func (s *String) NotEmpty() *String {
 //	str := NewString(t, "Hello")
 //	str.Equal("Hello")
 func (s *String) Equal(value string) *String {
-	s.chain.enter("Equal()")
-	defer s.chain.leave()
+	opChain := s.chain.enter("Equal()")
+	defer opChain.leave()
 
-	if s.chain.failed() {
+	if opChain.failed() {
 		return s
 	}
 
 	if !(s.value == value) {
-		s.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{s.value},
 			Expected: &AssertionValue{value},
@@ -206,15 +206,15 @@ func (s *String) Equal(value string) *String {
 //	str := NewString(t, "Hello")
 //	str.NotEqual("Goodbye")
 func (s *String) NotEqual(value string) *String {
-	s.chain.enter("NotEqual()")
-	defer s.chain.leave()
+	opChain := s.chain.enter("NotEqual()")
+	defer opChain.leave()
 
-	if s.chain.failed() {
+	if opChain.failed() {
 		return s
 	}
 
-	if !(s.value != value) {
-		s.chain.fail(AssertionFailure{
+	if s.value == value {
+		opChain.fail(AssertionFailure{
 			Type:     AssertNotEqual,
 			Actual:   &AssertionValue{s.value},
 			Expected: &AssertionValue{value},
@@ -235,15 +235,15 @@ func (s *String) NotEqual(value string) *String {
 //	str := NewString(t, "Hello")
 //	str.EqualFold("hELLo")
 func (s *String) EqualFold(value string) *String {
-	s.chain.enter("EqualFold()")
-	defer s.chain.leave()
+	opChain := s.chain.enter("EqualFold()")
+	defer opChain.leave()
 
-	if s.chain.failed() {
+	if opChain.failed() {
 		return s
 	}
 
 	if !strings.EqualFold(s.value, value) {
-		s.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{s.value},
 			Expected: &AssertionValue{value},
@@ -264,15 +264,15 @@ func (s *String) EqualFold(value string) *String {
 //	str := NewString(t, "Hello")
 //	str.NotEqualFold("gOODBYe")
 func (s *String) NotEqualFold(value string) *String {
-	s.chain.enter("NotEqualFold()")
-	defer s.chain.leave()
+	opChain := s.chain.enter("NotEqualFold()")
+	defer opChain.leave()
 
-	if s.chain.failed() {
+	if opChain.failed() {
 		return s
 	}
 
 	if strings.EqualFold(s.value, value) {
-		s.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertNotEqual,
 			Actual:   &AssertionValue{s.value},
 			Expected: &AssertionValue{value},
@@ -292,15 +292,15 @@ func (s *String) NotEqualFold(value string) *String {
 //	str := NewString(t, "Hello")
 //	str.Contains("ell")
 func (s *String) Contains(value string) *String {
-	s.chain.enter("Contains()")
-	defer s.chain.leave()
+	opChain := s.chain.enter("Contains()")
+	defer opChain.leave()
 
-	if s.chain.failed() {
+	if opChain.failed() {
 		return s
 	}
 
 	if !strings.Contains(s.value, value) {
-		s.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertContainsSubset,
 			Actual:   &AssertionValue{s.value},
 			Expected: &AssertionValue{value},
@@ -320,15 +320,15 @@ func (s *String) Contains(value string) *String {
 //	str := NewString(t, "Hello")
 //	str.NotContains("bye")
 func (s *String) NotContains(value string) *String {
-	s.chain.enter("NotContains()")
-	defer s.chain.leave()
+	opChain := s.chain.enter("NotContains()")
+	defer opChain.leave()
 
-	if s.chain.failed() {
+	if opChain.failed() {
 		return s
 	}
 
 	if strings.Contains(s.value, value) {
-		s.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertNotContainsSubset,
 			Actual:   &AssertionValue{s.value},
 			Expected: &AssertionValue{value},
@@ -349,15 +349,15 @@ func (s *String) NotContains(value string) *String {
 //	str := NewString(t, "Hello")
 //	str.ContainsFold("ELL")
 func (s *String) ContainsFold(value string) *String {
-	s.chain.enter("ContainsFold()")
-	defer s.chain.leave()
+	opChain := s.chain.enter("ContainsFold()")
+	defer opChain.leave()
 
-	if s.chain.failed() {
+	if opChain.failed() {
 		return s
 	}
 
 	if !strings.Contains(strings.ToLower(s.value), strings.ToLower(value)) {
-		s.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertContainsSubset,
 			Actual:   &AssertionValue{s.value},
 			Expected: &AssertionValue{value},
@@ -378,15 +378,15 @@ func (s *String) ContainsFold(value string) *String {
 //	str := NewString(t, "Hello")
 //	str.NotContainsFold("BYE")
 func (s *String) NotContainsFold(value string) *String {
-	s.chain.enter("NotContainsFold()")
-	defer s.chain.leave()
+	opChain := s.chain.enter("NotContainsFold()")
+	defer opChain.leave()
 
-	if s.chain.failed() {
+	if opChain.failed() {
 		return s
 	}
 
 	if strings.Contains(strings.ToLower(s.value), strings.ToLower(value)) {
-		s.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertNotContainsSubset,
 			Actual:   &AssertionValue{s.value},
 			Expected: &AssertionValue{value},
@@ -406,15 +406,15 @@ func (s *String) NotContainsFold(value string) *String {
 //	str := NewString(t, "Hello World")
 //	str.HasPrefix("Hello")
 func (s *String) HasPrefix(value string) *String {
-	s.chain.enter("HasPrefix()")
-	defer s.chain.leave()
+	opChain := s.chain.enter("HasPrefix()")
+	defer opChain.leave()
 
-	if s.chain.failed() {
+	if opChain.failed() {
 		return s
 	}
 
 	if !strings.HasPrefix(s.value, value) {
-		s.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertContainsSubset,
 			Actual:   &AssertionValue{s.value},
 			Expected: &AssertionValue{value},
@@ -434,15 +434,15 @@ func (s *String) HasPrefix(value string) *String {
 //	str := NewString(t, "Hello World")
 //	str.NotHasPrefix("Bye")
 func (s *String) NotHasPrefix(value string) *String {
-	s.chain.enter("NotHasPrefix()")
-	defer s.chain.leave()
+	opChain := s.chain.enter("NotHasPrefix()")
+	defer opChain.leave()
 
-	if s.chain.failed() {
+	if opChain.failed() {
 		return s
 	}
 
 	if strings.HasPrefix(s.value, value) {
-		s.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertNotContainsSubset,
 			Actual:   &AssertionValue{s.value},
 			Expected: &AssertionValue{value},
@@ -462,15 +462,15 @@ func (s *String) NotHasPrefix(value string) *String {
 //	str := NewString(t, "Hello World")
 //	str.HasSuffix("World")
 func (s *String) HasSuffix(value string) *String {
-	s.chain.enter("HasSuffix()")
-	defer s.chain.leave()
+	opChain := s.chain.enter("HasSuffix()")
+	defer opChain.leave()
 
-	if s.chain.failed() {
+	if opChain.failed() {
 		return s
 	}
 
 	if !strings.HasSuffix(s.value, value) {
-		s.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertContainsSubset,
 			Actual:   &AssertionValue{s.value},
 			Expected: &AssertionValue{value},
@@ -490,15 +490,15 @@ func (s *String) HasSuffix(value string) *String {
 //	str := NewString(t, "Hello World")
 //	str.NotHasSuffix("Hello")
 func (s *String) NotHasSuffix(value string) *String {
-	s.chain.enter("NotHasSuffix()")
-	defer s.chain.leave()
+	opChain := s.chain.enter("NotHasSuffix()")
+	defer opChain.leave()
 
-	if s.chain.failed() {
+	if opChain.failed() {
 		return s
 	}
 
 	if strings.HasSuffix(s.value, value) {
-		s.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertNotContainsSubset,
 			Actual:   &AssertionValue{s.value},
 			Expected: &AssertionValue{value},
@@ -519,15 +519,15 @@ func (s *String) NotHasSuffix(value string) *String {
 //	str := NewString(t, "Hello World")
 //	str.HasPrefixFold("hello")
 func (s *String) HasPrefixFold(value string) *String {
-	s.chain.enter("HasPrefixFold()")
-	defer s.chain.leave()
+	opChain := s.chain.enter("HasPrefixFold()")
+	defer opChain.leave()
 
-	if s.chain.failed() {
+	if opChain.failed() {
 		return s
 	}
 
 	if !strings.HasPrefix(strings.ToLower(s.value), strings.ToLower(value)) {
-		s.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertContainsSubset,
 			Actual:   &AssertionValue{s.value},
 			Expected: &AssertionValue{value},
@@ -548,15 +548,15 @@ func (s *String) HasPrefixFold(value string) *String {
 //	str := NewString(t, "Hello World")
 //	str.NotHasPrefixFold("Bye")
 func (s *String) NotHasPrefixFold(value string) *String {
-	s.chain.enter("NotHasPrefixFold()")
-	defer s.chain.leave()
+	opChain := s.chain.enter("NotHasPrefixFold()")
+	defer opChain.leave()
 
-	if s.chain.failed() {
+	if opChain.failed() {
 		return s
 	}
 
 	if strings.HasPrefix(strings.ToLower(s.value), strings.ToLower(value)) {
-		s.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertNotContainsSubset,
 			Actual:   &AssertionValue{s.value},
 			Expected: &AssertionValue{value},
@@ -577,15 +577,15 @@ func (s *String) NotHasPrefixFold(value string) *String {
 //	str := NewString(t, "Hello World")
 //	str.HasSuffixFold("world")
 func (s *String) HasSuffixFold(value string) *String {
-	s.chain.enter("HasSuffixFold()")
-	defer s.chain.leave()
+	opChain := s.chain.enter("HasSuffixFold()")
+	defer opChain.leave()
 
-	if s.chain.failed() {
+	if opChain.failed() {
 		return s
 	}
 
 	if !strings.HasSuffix(strings.ToLower(s.value), strings.ToLower(value)) {
-		s.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertContainsSubset,
 			Actual:   &AssertionValue{s.value},
 			Expected: &AssertionValue{value},
@@ -606,15 +606,15 @@ func (s *String) HasSuffixFold(value string) *String {
 //	str := NewString(t, "Hello World")
 //	str.NotHasSuffixFold("Bye")
 func (s *String) NotHasSuffixFold(value string) *String {
-	s.chain.enter("NotHasSuffix()")
-	defer s.chain.leave()
+	opChain := s.chain.enter("NotHasSuffix()")
+	defer opChain.leave()
 
-	if s.chain.failed() {
+	if opChain.failed() {
 		return s
 	}
 
 	if strings.HasSuffix(strings.ToLower(s.value), strings.ToLower(value)) {
-		s.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertNotContainsSubset,
 			Actual:   &AssertionValue{s.value},
 			Expected: &AssertionValue{value},
@@ -649,16 +649,16 @@ func (s *String) NotHasSuffixFold(value string) *String {
 //	m.Name("host").Equal("example.com")
 //	m.Name("user").Equal("john")
 func (s *String) Match(re string) *Match {
-	s.chain.enter("Match()")
-	defer s.chain.leave()
+	opChain := s.chain.enter("Match()")
+	defer opChain.leave()
 
-	if s.chain.failed() {
-		return newMatch(s.chain, nil, nil)
+	if opChain.failed() {
+		return newMatch(opChain, nil, nil)
 	}
 
 	rx, err := regexp.Compile(re)
 	if err != nil {
-		s.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{re},
 			Errors: []error{
@@ -666,12 +666,12 @@ func (s *String) Match(re string) *Match {
 				err,
 			},
 		})
-		return newMatch(s.chain, nil, nil)
+		return newMatch(opChain, nil, nil)
 	}
 
 	match := rx.FindStringSubmatch(s.value)
 	if match == nil {
-		s.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertMatchRegexp,
 			Actual:   &AssertionValue{s.value},
 			Expected: &AssertionValue{re},
@@ -679,10 +679,10 @@ func (s *String) Match(re string) *Match {
 				errors.New("expected: string matches regexp"),
 			},
 		})
-		return newMatch(s.chain, nil, nil)
+		return newMatch(opChain, nil, nil)
 	}
 
-	return newMatch(s.chain, match, rx.SubexpNames())
+	return newMatch(opChain, match, rx.SubexpNames())
 }
 
 // NotMatch succeeds if the string doesn't match to given regexp.
@@ -695,12 +695,12 @@ func (s *String) Match(re string) *Match {
 //	s := NewString(t, "a")
 //	s.NotMatch(`[^a]`)
 func (s *String) NotMatch(re string) *String {
-	s.chain.enter("NotMatch()")
-	defer s.chain.leave()
+	opChain := s.chain.enter("NotMatch()")
+	defer opChain.leave()
 
 	rx, err := regexp.Compile(re)
 	if err != nil {
-		s.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{re},
 			Errors: []error{
@@ -712,7 +712,7 @@ func (s *String) NotMatch(re string) *String {
 	}
 
 	if rx.MatchString(s.value) {
-		s.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertNotMatchRegexp,
 			Actual:   &AssertionValue{s.value},
 			Expected: &AssertionValue{re},
@@ -743,16 +743,16 @@ func (s *String) NotMatch(re string) *String {
 //	m[0].Name("user").Equal("john")
 //	m[1].Name("user").Equal("bob")
 func (s *String) MatchAll(re string) []Match {
-	s.chain.enter("MatchAll()")
-	defer s.chain.leave()
+	opChain := s.chain.enter("MatchAll()")
+	defer opChain.leave()
 
-	if s.chain.failed() {
+	if opChain.failed() {
 		return []Match{}
 	}
 
 	rx, err := regexp.Compile(re)
 	if err != nil {
-		s.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{re},
 			Errors: []error{
@@ -765,7 +765,7 @@ func (s *String) MatchAll(re string) []Match {
 
 	matches := rx.FindAllStringSubmatch(s.value, -1)
 	if matches == nil {
-		s.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertMatchRegexp,
 			Actual:   &AssertionValue{s.value},
 			Expected: &AssertionValue{re},
@@ -779,7 +779,7 @@ func (s *String) MatchAll(re string) []Match {
 	ret := []Match{}
 	for _, match := range matches {
 		ret = append(ret, *newMatch(
-			s.chain,
+			opChain,
 			match,
 			rx.SubexpNames()))
 	}
@@ -794,10 +794,10 @@ func (s *String) MatchAll(re string) []Match {
 //	str := NewString(t, "Hello")
 //	str.IsASCII()
 func (s *String) IsASCII() *String {
-	s.chain.enter("IsASCII()")
-	defer s.chain.leave()
+	opChain := s.chain.enter("IsASCII()")
+	defer opChain.leave()
 
-	if s.chain.failed() {
+	if opChain.failed() {
 		return s
 	}
 
@@ -810,7 +810,7 @@ func (s *String) IsASCII() *String {
 	}
 
 	if !isASCII {
-		s.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{s.value},
 			Errors: []error{
@@ -829,10 +829,10 @@ func (s *String) IsASCII() *String {
 //	str := NewString(t, "こんにちは")
 //	str.NotASCII()
 func (s *String) NotASCII() *String {
-	s.chain.enter("NotASCII()")
-	defer s.chain.leave()
+	opChain := s.chain.enter("NotASCII()")
+	defer opChain.leave()
 
-	if s.chain.failed() {
+	if opChain.failed() {
 		return s
 	}
 
@@ -845,7 +845,7 @@ func (s *String) NotASCII() *String {
 	}
 
 	if isASCII {
-		s.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{s.value},
 			Errors: []error{
@@ -878,21 +878,21 @@ func (s *String) NotIsASCII() *String {
 //	str.AsNumber(10).Equal(100)
 //	str.AsNumber(16).Equal(256)
 func (s *String) AsNumber(base ...int) *Number {
-	s.chain.enter("AsNumber()")
-	defer s.chain.leave()
+	opChain := s.chain.enter("AsNumber()")
+	defer opChain.leave()
 
-	if s.chain.failed() {
-		return newNumber(s.chain, 0)
+	if opChain.failed() {
+		return newNumber(opChain, 0)
 	}
 
 	if len(base) > 1 {
-		s.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
 				errors.New("unexpected multiple base arguments"),
 			},
 		})
-		return newNumber(s.chain, 0)
+		return newNumber(opChain, 0)
 	}
 
 	b := 10
@@ -909,7 +909,7 @@ func (s *String) AsNumber(base ...int) *Number {
 	fnum = float64(inum)
 
 	if err == nil && int64(fnum) != inum {
-		s.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{s.value},
 			Errors: []error{
@@ -917,7 +917,7 @@ func (s *String) AsNumber(base ...int) *Number {
 					" number can be represented as float64 without precision loss"),
 			},
 		})
-		return newNumber(s.chain, 0)
+		return newNumber(opChain, 0)
 	}
 
 	if err != nil && errors.Is(err, strconv.ErrRange) {
@@ -925,7 +925,7 @@ func (s *String) AsNumber(base ...int) *Number {
 		fnum = float64(unum)
 
 		if err == nil && uint64(fnum) != unum {
-			s.chain.fail(AssertionFailure{
+			opChain.fail(AssertionFailure{
 				Type:   AssertValid,
 				Actual: &AssertionValue{s.value},
 				Errors: []error{
@@ -933,7 +933,7 @@ func (s *String) AsNumber(base ...int) *Number {
 						" number can be represented as float64 without precision loss"),
 				},
 			})
-			return newNumber(s.chain, 0)
+			return newNumber(opChain, 0)
 		}
 	}
 
@@ -943,7 +943,7 @@ func (s *String) AsNumber(base ...int) *Number {
 
 	if err != nil {
 		if b == 10 {
-			s.chain.fail(AssertionFailure{
+			opChain.fail(AssertionFailure{
 				Type:   AssertValid,
 				Actual: &AssertionValue{s.value},
 				Errors: []error{
@@ -952,7 +952,7 @@ func (s *String) AsNumber(base ...int) *Number {
 				},
 			})
 		} else {
-			s.chain.fail(AssertionFailure{
+			opChain.fail(AssertionFailure{
 				Type:   AssertValid,
 				Actual: &AssertionValue{s.value},
 				Errors: []error{
@@ -963,10 +963,10 @@ func (s *String) AsNumber(base ...int) *Number {
 				},
 			})
 		}
-		return newNumber(s.chain, 0)
+		return newNumber(opChain, 0)
 	}
 
-	return newNumber(s.chain, fnum)
+	return newNumber(opChain, fnum)
 }
 
 // AsBoolean parses true/false value string and returns a new Boolean instance
@@ -979,22 +979,22 @@ func (s *String) AsNumber(base ...int) *Number {
 //	str := NewString(t, "true")
 //	str.AsBoolean().True()
 func (s *String) AsBoolean() *Boolean {
-	s.chain.enter("AsBoolean()")
-	defer s.chain.leave()
+	opChain := s.chain.enter("AsBoolean()")
+	defer opChain.leave()
 
-	if s.chain.failed() {
-		return newBoolean(s.chain, false)
+	if opChain.failed() {
+		return newBoolean(opChain, false)
 	}
 
 	switch s.value {
 	case "true", "True":
-		return newBoolean(s.chain, true)
+		return newBoolean(opChain, true)
 
 	case "false", "False":
-		return newBoolean(s.chain, false)
+		return newBoolean(opChain, false)
 	}
 
-	s.chain.fail(AssertionFailure{
+	opChain.fail(AssertionFailure{
 		Type:   AssertValid,
 		Actual: &AssertionValue{s.value},
 		Errors: []error{
@@ -1002,7 +1002,7 @@ func (s *String) AsBoolean() *Boolean {
 		},
 	})
 
-	return newBoolean(s.chain, false)
+	return newBoolean(opChain, false)
 }
 
 // AsDateTime parses date/time from string and returns a new DateTime instance
@@ -1022,11 +1022,11 @@ func (s *String) AsBoolean() *Boolean {
 //	str := NewString(t, "15 Nov 94 08:12 GMT")
 //	str.AsDateTime(time.RFC822).Lt(time.Now())
 func (s *String) AsDateTime(format ...string) *DateTime {
-	s.chain.enter("AsDateTime()")
-	defer s.chain.leave()
+	opChain := s.chain.enter("AsDateTime()")
+	defer opChain.leave()
 
-	if s.chain.failed() {
-		return newDateTime(s.chain, time.Unix(0, 0))
+	if opChain.failed() {
+		return newDateTime(opChain, time.Unix(0, 0))
 	}
 
 	var formatList []datetimeFormat
@@ -1067,7 +1067,7 @@ func (s *String) AsDateTime(format ...string) *DateTime {
 
 	if err != nil {
 		if len(formatList) == 1 {
-			s.chain.fail(AssertionFailure{
+			opChain.fail(AssertionFailure{
 				Type:     AssertMatchFormat,
 				Actual:   &AssertionValue{s.value},
 				Expected: &AssertionValue{formatList[0]},
@@ -1081,7 +1081,7 @@ func (s *String) AsDateTime(format ...string) *DateTime {
 			for _, f := range formatList {
 				expectedFormats = append(expectedFormats, f)
 			}
-			s.chain.fail(AssertionFailure{
+			opChain.fail(AssertionFailure{
 				Type:     AssertMatchFormat,
 				Actual:   &AssertionValue{s.value},
 				Expected: &AssertionValue{AssertionList(expectedFormats)},
@@ -1091,10 +1091,10 @@ func (s *String) AsDateTime(format ...string) *DateTime {
 				},
 			})
 		}
-		return newDateTime(s.chain, time.Unix(0, 0))
+		return newDateTime(opChain, time.Unix(0, 0))
 	}
 
-	return newDateTime(s.chain, tm)
+	return newDateTime(opChain, tm)
 }
 
 type datetimeFormat struct {

@@ -25,7 +25,7 @@ func TestRequest_Failed(t *testing.T) {
 	chain := newChainWithDefaults("test", reporter)
 	config := newMockConfig(reporter)
 
-	chain.fail(mockFailure())
+	chain.setFailed()
 
 	req := newRequest(chain, config, "GET", "")
 

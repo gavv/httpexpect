@@ -59,7 +59,7 @@ func TestObject_Failed(t *testing.T) {
 
 	t.Run("failed_chain", func(t *testing.T) {
 		chain := newMockChain(t)
-		chain.fail(mockFailure())
+		chain.setFailed()
 
 		value := newObject(chain, map[string]interface{}{})
 
@@ -76,7 +76,7 @@ func TestObject_Failed(t *testing.T) {
 
 	t.Run("failed_chain_nil_value", func(t *testing.T) {
 		chain := newMockChain(t)
-		chain.fail(mockFailure())
+		chain.setFailed()
 
 		value := newObject(chain, nil)
 
@@ -1043,7 +1043,7 @@ func TestObject_Transform(t *testing.T) {
 			"baz": "b",
 		})
 		newObject := object.Transform(nil)
-		newObject.chain.assertFailed(reporter)
+		newObject.chain.assertFailed(t)
 	})
 
 	t.Run("Empty object", func(ts *testing.T) {

@@ -54,7 +54,7 @@ func TestResponse_Failed(t *testing.T) {
 		chain := newChainWithDefaults("test", reporter)
 		config := newMockConfig(reporter)
 
-		chain.fail(mockFailure())
+		chain.setFailed()
 
 		resp := newResponse(responseOpts{
 			config:   config,
@@ -84,7 +84,7 @@ func TestResponse_Failed(t *testing.T) {
 		chain := newChainWithDefaults("test", reporter)
 		config := newMockConfig(reporter)
 
-		chain.fail(mockFailure())
+		chain.setFailed()
 
 		resp := newResponse(responseOpts{
 			config:   config,

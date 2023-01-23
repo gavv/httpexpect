@@ -31,7 +31,7 @@ func TestCookie_Failed(t *testing.T) {
 
 	t.Run("failed_chain", func(t *testing.T) {
 		chain := newMockChain(t)
-		chain.fail(mockFailure())
+		chain.setFailed()
 
 		value := newCookie(chain, &http.Cookie{})
 
@@ -48,7 +48,7 @@ func TestCookie_Failed(t *testing.T) {
 
 	t.Run("failed_chain_nil_value", func(t *testing.T) {
 		chain := newMockChain(t)
-		chain.fail(mockFailure())
+		chain.setFailed()
 
 		value := newCookie(chain, nil)
 

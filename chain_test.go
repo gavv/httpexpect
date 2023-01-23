@@ -7,173 +7,379 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestChain_Fail(t *testing.T) {
-	chain := newMockChain(t)
+func TestChain_Basic(t *testing.T) {
+	t.Run("clone", func(t *testing.T) {
+		chain1 := newMockChain(t)
+		chain2 := chain1.clone()
 
-	assert.False(t, chain.failed())
+		assert.NotSame(t, chain1, chain2)
+		assert.NotSame(t, chain1.context.Path, chain2.context.Path)
 
-	chain.fail(mockFailure())
-	assert.True(t, chain.failed())
+		assert.False(t, chain1.failed())
+		assert.False(t, chain2.failed())
 
-	chain.fail(mockFailure())
-	assert.True(t, chain.failed())
-}
-
-func TestChain_Clone(t *testing.T) {
-	chain1 := newMockChain(t)
-	chain2 := chain1.clone()
-
-	assert.False(t, chain1.failed())
-	assert.False(t, chain2.failed())
-
-	chain1.fail(mockFailure())
-
-	assert.True(t, chain1.failed())
-	assert.False(t, chain2.failed())
-
-	chain2.fail(mockFailure())
-
-	assert.True(t, chain1.failed())
-	assert.True(t, chain2.failed())
-}
-
-func TestChain_Env(t *testing.T) {
-	t.Run("newChainWithConfig", func(t *testing.T) {
-		env1 := NewEnvironment(newMockReporter(t))
-		chain1 := newChainWithConfig("root", Config{
-			AssertionHandler: &mockAssertionHandler{},
-			Environment:      env1,
-		}.withDefaults())
-		assert.Same(t, env1, chain1.env())
-
-		chain2 := newChainWithConfig("root", Config{
-			AssertionHandler: &mockAssertionHandler{},
-			Environment:      nil,
-		}.withDefaults())
-		assert.NotNil(t, chain2.env())
+		assert.False(t, chain1.treeFailed())
+		assert.False(t, chain2.treeFailed())
 	})
 
-	t.Run("newChainWithDefaults", func(t *testing.T) {
-		chain := newChainWithDefaults("root", newMockReporter(t))
-		assert.NotNil(t, chain.env())
-	})
-}
+	t.Run("enter_leave", func(t *testing.T) {
+		chain1 := newMockChain(t)
+		chain2 := chain1.enter("test")
 
-func TestChain_Root(t *testing.T) {
-	t.Run("newChainWithConfig", func(t *testing.T) {
-		chain1 := newChainWithConfig("root", Config{
-			AssertionHandler: &mockAssertionHandler{},
-		}.withDefaults())
-		assert.Equal(t, []string{"root"}, chain1.context.Path)
+		assert.NotSame(t, chain1, chain2)
+		assert.NotSame(t, chain1.context.Path, chain2.context.Path)
 
-		chain2 := newChainWithConfig("", Config{
-			AssertionHandler: &mockAssertionHandler{},
-		}.withDefaults())
-		assert.Equal(t, []string{}, chain2.context.Path)
+		assert.False(t, chain1.failed())
+		assert.False(t, chain2.failed())
+
+		assert.False(t, chain1.treeFailed())
+		assert.False(t, chain2.treeFailed())
+
+		chain2.leave()
 	})
 
-	t.Run("newChainWithDefaults", func(t *testing.T) {
-		chain1 := newChainWithDefaults("root", newMockReporter(t))
-		assert.Equal(t, []string{"root"}, chain1.context.Path)
+	t.Run("enter_leave_fail", func(t *testing.T) {
+		chain1 := newMockChain(t)
+		chain2 := chain1.enter("test")
 
-		chain2 := newChainWithDefaults("", newMockReporter(t))
-		assert.Equal(t, []string{}, chain2.context.Path)
+		chain2.fail(mockFailure())
+
+		assert.False(t, chain1.failed())
+		assert.True(t, chain2.failed())
+
+		assert.False(t, chain1.treeFailed())
+		assert.True(t, chain2.treeFailed())
+
+		chain1.assertFlags(t, 0)
+		chain2.assertFlags(t, flagFailed)
+
+		chain2.leave() // propagates failure to parents
+
+		assert.True(t, chain1.failed())
+		assert.True(t, chain2.failed())
+
+		assert.True(t, chain1.treeFailed())
+		assert.True(t, chain2.treeFailed())
+
+		chain1.assertFlags(t, flagFailed)
+		chain2.assertFlags(t, flagFailed)
 	})
-}
 
-func TestChain_Path(t *testing.T) {
-	path := func(c *chain) string {
-		return strings.Join(c.context.Path, ".")
-	}
+	t.Run("clone_enter_leave_fail", func(t *testing.T) {
+		chain1 := newMockChain(t)
+		chain2 := chain1.clone()
+		chain3 := chain2.clone()
+		chain3e := chain3.enter("test")
 
-	chain := newChainWithDefaults("root", newMockReporter(t))
+		chain3e.fail(mockFailure())
 
-	assert.Equal(t, "root", path(chain))
+		assert.False(t, chain1.failed())
+		assert.False(t, chain2.failed())
+		assert.False(t, chain3.failed())
+		assert.True(t, chain3e.failed())
 
-	chain.enter("foo")
-	assert.Equal(t, "root.foo", path(chain))
+		assert.False(t, chain1.treeFailed())
+		assert.False(t, chain2.treeFailed())
+		assert.False(t, chain3.treeFailed())
+		assert.True(t, chain3e.treeFailed())
 
-	chain.enter("bar")
-	assert.Equal(t, "root.foo.bar", path(chain))
+		chain1.assertFlags(t, 0)
+		chain2.assertFlags(t, 0)
+		chain3.assertFlags(t, 0)
+		chain3e.assertFlags(t, flagFailed)
 
-	chainClone := chain.clone()
-	chainClone.enter("baz")
+		chain3e.leave() // propagates failure to parents
 
-	assert.Equal(t, "root.foo.bar", path(chain))
-	assert.Equal(t, "root.foo.bar.baz", path(chainClone))
+		assert.False(t, chain1.failed())
+		assert.False(t, chain2.failed())
+		assert.True(t, chain3.failed())
+		assert.True(t, chain3e.failed())
 
-	chain.replace("qux")
-	chainClone.replace("wee")
+		assert.True(t, chain1.treeFailed())
+		assert.True(t, chain2.treeFailed())
+		assert.True(t, chain3.treeFailed())
+		assert.True(t, chain3e.treeFailed())
 
-	assert.Equal(t, "root.foo.qux", path(chain))
-	assert.Equal(t, "root.foo.bar.wee", path(chainClone))
+		chain1.assertFlags(t, flagFailedChildren)
+		chain2.assertFlags(t, flagFailedChildren)
+		chain3.assertFlags(t, flagFailed)
+		chain3e.assertFlags(t, flagFailed)
+	})
 
-	chain.leave()
-	chainClone.leave()
+	t.Run("two_branches", func(t *testing.T) {
+		chain1 := newMockChain(t)
+		chain2 := chain1.clone()
+		chain2e := chain2.enter("test")
+		chain3 := chain2.clone()
+		chain3e := chain3.enter("test")
 
-	assert.Equal(t, "root.foo", path(chain))
-	assert.Equal(t, "root.foo.bar", path(chainClone))
+		chain2e.fail(mockFailure())
+		chain3e.fail(mockFailure())
 
-	chain.leave()
-	chainClone.leave()
+		assert.False(t, chain1.failed())
+		assert.False(t, chain2.failed())
+		assert.True(t, chain2e.failed())
+		assert.False(t, chain3.failed())
+		assert.True(t, chain3e.failed())
 
-	assert.Equal(t, "root", path(chain))
-	assert.Equal(t, "root.foo", path(chainClone))
+		assert.False(t, chain1.treeFailed())
+		assert.False(t, chain2.treeFailed())
+		assert.True(t, chain2e.treeFailed())
+		assert.False(t, chain3.treeFailed())
+		assert.True(t, chain3e.treeFailed())
 
-	chain.leave()
-	chainClone.leave()
+		chain1.assertFlags(t, 0)
+		chain2.assertFlags(t, 0)
+		chain2e.assertFlags(t, flagFailed)
+		chain3.assertFlags(t, 0)
+		chain3e.assertFlags(t, flagFailed)
 
-	assert.Equal(t, "", path(chain))
-	assert.Equal(t, "root", path(chainClone))
+		chain2e.leave() // propagates failure to parents
+		chain3e.leave() // propagates failure to parents
+
+		assert.False(t, chain1.failed())
+		assert.True(t, chain2.failed())
+		assert.True(t, chain2e.failed())
+		assert.True(t, chain3.failed())
+		assert.True(t, chain3e.failed())
+
+		assert.True(t, chain1.treeFailed())
+		assert.True(t, chain2.treeFailed())
+		assert.True(t, chain2e.treeFailed())
+		assert.True(t, chain3.treeFailed())
+		assert.True(t, chain3e.treeFailed())
+
+		chain1.assertFlags(t, flagFailedChildren)
+		chain2.assertFlags(t, flagFailed|flagFailedChildren)
+		chain2e.assertFlags(t, flagFailed)
+		chain3.assertFlags(t, flagFailed)
+		chain3e.assertFlags(t, flagFailed)
+	})
+
+	t.Run("set_root_1", func(t *testing.T) {
+		chain1 := newMockChain(t)
+		chain2 := chain1.clone()
+		chain2.setRoot()
+		chain3 := chain2.clone()
+		chain3e := chain3.enter("test")
+
+		chain3e.fail(mockFailure())
+
+		assert.False(t, chain1.failed())
+		assert.False(t, chain2.failed())
+		assert.False(t, chain3.failed())
+		assert.True(t, chain3e.failed())
+
+		assert.False(t, chain1.treeFailed())
+		assert.False(t, chain2.treeFailed())
+		assert.False(t, chain3.treeFailed())
+		assert.True(t, chain3e.treeFailed())
+
+		chain1.assertFlags(t, 0)
+		chain2.assertFlags(t, 0)
+		chain3.assertFlags(t, 0)
+		chain3e.assertFlags(t, flagFailed)
+
+		chain3e.leave() // propagates failure to parents
+
+		assert.False(t, chain1.failed())
+		assert.False(t, chain2.failed())
+		assert.True(t, chain3.failed())
+		assert.True(t, chain3e.failed())
+
+		assert.False(t, chain1.treeFailed())
+		assert.True(t, chain2.treeFailed())
+		assert.True(t, chain3.treeFailed())
+		assert.True(t, chain3e.treeFailed())
+
+		chain1.assertFlags(t, 0)
+		chain2.assertFlags(t, flagFailedChildren)
+		chain3.assertFlags(t, flagFailed)
+		chain3e.assertFlags(t, flagFailed)
+	})
+
+	t.Run("set_root_2", func(t *testing.T) {
+		chain1 := newMockChain(t)
+		chain2 := chain1.clone()
+		chain3 := chain2.clone()
+		chain3.setRoot()
+		chain3e := chain3.enter("test")
+
+		chain3e.fail(mockFailure())
+
+		assert.False(t, chain1.failed())
+		assert.False(t, chain2.failed())
+		assert.False(t, chain3.failed())
+		assert.True(t, chain3e.failed())
+
+		assert.False(t, chain1.treeFailed())
+		assert.False(t, chain2.treeFailed())
+		assert.False(t, chain3.treeFailed())
+		assert.True(t, chain3e.treeFailed())
+
+		chain1.assertFlags(t, 0)
+		chain2.assertFlags(t, 0)
+		chain3.assertFlags(t, 0)
+		chain3e.assertFlags(t, flagFailed)
+
+		chain3e.leave() // propagates failure to parents
+
+		assert.False(t, chain1.failed())
+		assert.False(t, chain2.failed())
+		assert.True(t, chain3.failed())
+		assert.True(t, chain3e.failed())
+
+		assert.False(t, chain1.treeFailed())
+		assert.False(t, chain2.treeFailed())
+		assert.True(t, chain3.treeFailed())
+		assert.True(t, chain3e.treeFailed())
+
+		chain1.assertFlags(t, 0)
+		chain2.assertFlags(t, 0)
+		chain3.assertFlags(t, flagFailed)
+		chain3e.assertFlags(t, flagFailed)
+	})
 }
 
 func TestChain_Panics(t *testing.T) {
-	t.Run("nil reporter", func(t *testing.T) {
+	t.Run("nil_reporter", func(t *testing.T) {
 		assert.Panics(t, func() {
 			_ = newChainWithDefaults("test", nil)
 		})
 	})
 
-	t.Run("unpaired leave", func(t *testing.T) {
-		chain := newChainWithDefaults("", newMockReporter(t))
+	t.Run("leave_without_enter", func(t *testing.T) {
+		chain := newChainWithDefaults("test", newMockReporter(t))
 
 		assert.Panics(t, func() {
 			chain.leave()
 		})
 	})
 
-	t.Run("unpaired enter/leave", func(t *testing.T) {
-		chain := newChainWithDefaults("", newMockReporter(t))
+	t.Run("leave_on_parent", func(t *testing.T) {
+		chain := newChainWithDefaults("test", newMockReporter(t))
 
-		chain.enter("foo")
-		chain.leave()
+		_ = chain.enter("foo")
 
 		assert.Panics(t, func() {
 			chain.leave()
 		})
 	})
 
-	t.Run("unpaired replace", func(t *testing.T) {
-		chain := newChainWithDefaults("", newMockReporter(t))
+	t.Run("double_leave", func(t *testing.T) {
+		chain := newChainWithDefaults("test", newMockReporter(t))
+
+		opChain := chain.enter("foo")
+		opChain.leave()
+
+		assert.Panics(t, func() {
+			opChain.leave()
+		})
+	})
+
+	t.Run("enter_after_leave", func(t *testing.T) {
+		chain := newChainWithDefaults("test", newMockReporter(t))
+
+		opChain := chain.enter("foo")
+		opChain.leave()
+
+		assert.Panics(t, func() {
+			opChain.enter("bar")
+		})
+	})
+
+	t.Run("replace_without_enter", func(t *testing.T) {
+		chain := newChainWithDefaults("test", newMockReporter(t))
 
 		assert.Panics(t, func() {
 			chain.replace("foo")
 		})
 	})
 
-	t.Run("unpaired enter/replace", func(t *testing.T) {
-		chain := newChainWithDefaults("", newMockReporter(t))
+	t.Run("replace_after_leave", func(t *testing.T) {
+		chain := newChainWithDefaults("test", newMockReporter(t))
 
-		chain.enter("foo")
-		chain.leave()
+		opChain := chain.enter("foo")
+		opChain.leave()
 
 		assert.Panics(t, func() {
-			chain.replace("bar")
+			opChain.replace("bar")
 		})
 	})
 
-	t.Run("invalid assertion", func(t *testing.T) {
+	t.Run("replace_empty_path", func(t *testing.T) {
 		chain := newChainWithDefaults("", newMockReporter(t))
+
+		opChain := chain.enter("")
+
+		assert.Panics(t, func() {
+			opChain.replace("bar")
+		})
+	})
+
+	t.Run("fail_without_enter", func(t *testing.T) {
+		chain := newChainWithDefaults("test", newMockReporter(t))
+
+		assert.Panics(t, func() {
+			chain.fail(mockFailure())
+		})
+	})
+
+	t.Run("fail_after_leave", func(t *testing.T) {
+		chain := newChainWithDefaults("test", newMockReporter(t))
+
+		opChain := chain.enter("foo")
+		opChain.leave()
+
+		assert.Panics(t, func() {
+			opChain.fail(mockFailure())
+		})
+	})
+
+	t.Run("clone_after_leave", func(t *testing.T) {
+		chain := newChainWithDefaults("test", newMockReporter(t))
+
+		opChain := chain.enter("foo")
+		opChain.leave()
+
+		assert.Panics(t, func() {
+			_ = opChain.clone()
+		})
+	})
+
+	t.Run("setters_after_leave", func(t *testing.T) {
+		setterFuncs := []func(chain *chain){
+			func(chain *chain) {
+				chain.setRoot()
+			},
+			func(chain *chain) {
+				chain.setSeverity(SeverityLog)
+			},
+			func(chain *chain) {
+				chain.setRequestName("")
+			},
+			func(chain *chain) {
+				chain.setRequest(nil)
+			},
+			func(chain *chain) {
+				chain.setResponse(nil)
+			},
+		}
+
+		for _, setter := range setterFuncs {
+			chain := newChainWithDefaults("test", newMockReporter(t))
+
+			opChain := chain.enter("foo")
+			opChain.leave()
+
+			assert.Panics(t, func() {
+				setter(opChain)
+			})
+		}
+	})
+
+	t.Run("invalid_assertion", func(t *testing.T) {
+		chain := newChainWithDefaults("test", newMockReporter(t))
 
 		assert.Panics(t, func() {
 			chain.fail(AssertionFailure{
@@ -183,135 +389,183 @@ func TestChain_Panics(t *testing.T) {
 	})
 }
 
-func TestChain_Report(t *testing.T) {
-	r0 := newMockReporter(t)
+func TestChain_Env(t *testing.T) {
+	t.Run("newChainWithConfig_non_nil_env", func(t *testing.T) {
+		env := NewEnvironment(newMockReporter(t))
 
-	chain := newChainWithDefaults("test", r0)
+		chain := newChainWithConfig("root", Config{
+			AssertionHandler: &mockAssertionHandler{},
+			Environment:      env,
+		}.withDefaults())
 
-	r1 := newMockReporter(t)
+		assert.Same(t, env, chain.env())
+	})
 
-	chain.assertNotFailed(r1)
-	assert.False(t, r1.reported)
+	t.Run("newChainWithConfig_nil_env", func(t *testing.T) {
+		chain := newChainWithConfig("root", Config{
+			AssertionHandler: &mockAssertionHandler{},
+			Environment:      nil,
+		}.withDefaults())
 
-	chain.assertFailed(r1)
-	assert.True(t, r1.reported)
+		assert.NotNil(t, chain.env())
+	})
 
-	assert.False(t, chain.failed())
+	t.Run("newChainWithDefaults", func(t *testing.T) {
+		chain := newChainWithDefaults("root", newMockReporter(t))
 
-	chain.fail(mockFailure())
-	assert.True(t, r0.reported)
+		assert.NotNil(t, chain.env())
+	})
+}
 
-	r2 := newMockReporter(t)
+func TestChain_Root(t *testing.T) {
+	t.Run("newChainWithConfig_non_empty_path", func(t *testing.T) {
+		chain := newChainWithConfig("root", Config{
+			AssertionHandler: &mockAssertionHandler{},
+		}.withDefaults())
 
-	chain.assertFailed(r2)
-	assert.False(t, r2.reported)
+		assert.Equal(t, []string{"root"}, chain.context.Path)
+	})
 
-	chain.assertNotFailed(r2)
-	assert.True(t, r2.reported)
+	t.Run("newChainWithConfig_empty_path", func(t *testing.T) {
+		chain := newChainWithConfig("", Config{
+			AssertionHandler: &mockAssertionHandler{},
+		}.withDefaults())
+
+		assert.Equal(t, []string{}, chain.context.Path)
+	})
+
+	t.Run("newChainWithDefaults_non_empty_path", func(t *testing.T) {
+		chain := newChainWithDefaults("root", newMockReporter(t))
+
+		assert.Equal(t, []string{"root"}, chain.context.Path)
+	})
+
+	t.Run("newChainWithDefaults_empty_path", func(t *testing.T) {
+		chain := newChainWithDefaults("", newMockReporter(t))
+
+		assert.Equal(t, []string{}, chain.context.Path)
+	})
+}
+
+func TestChain_Path(t *testing.T) {
+	path := func(c *chain) string {
+		return strings.Join(c.context.Path, ".")
+	}
+
+	rootChain := newChainWithDefaults("root", newMockReporter(t))
+
+	assert.Equal(t, "root", path(rootChain))
+
+	opChain1 := rootChain.enter("foo")
+
+	assert.Equal(t, "root", path(rootChain))
+	assert.Equal(t, "root.foo", path(opChain1))
+
+	opChain2 := opChain1.enter("bar")
+
+	assert.Equal(t, "root", path(rootChain))
+	assert.Equal(t, "root.foo", path(opChain1))
+	assert.Equal(t, "root.foo.bar", path(opChain2))
+
+	opChain2Clone := opChain2.clone()
+	opChain3 := opChain2Clone.enter("baz")
+
+	assert.Equal(t, "root", path(rootChain))
+	assert.Equal(t, "root.foo", path(opChain1))
+	assert.Equal(t, "root.foo.bar", path(opChain2))
+	assert.Equal(t, "root.foo.bar", path(opChain2Clone))
+	assert.Equal(t, "root.foo.bar.baz", path(opChain3))
+
+	opChain1r := opChain1.replace("xxx")
+	opChain3r := opChain3.replace("yyy")
+
+	assert.Equal(t, "root", path(rootChain))
+	assert.Equal(t, "root.foo", path(opChain1))
+	assert.Equal(t, "root.foo.bar", path(opChain2))
+	assert.Equal(t, "root.foo.bar", path(opChain2Clone))
+	assert.Equal(t, "root.foo.bar.baz", path(opChain3))
+	assert.Equal(t, "root.xxx", path(opChain1r))
+	assert.Equal(t, "root.foo.bar.yyy", path(opChain3r))
 }
 
 func TestChain_Handler(t *testing.T) {
-	handler := &mockAssertionHandler{}
+	t.Run("success", func(t *testing.T) {
+		handler := &mockAssertionHandler{}
 
-	chain := newChainWithConfig("test", Config{
-		AssertionHandler: handler,
-	}.withDefaults())
+		chain := newChainWithConfig("test", Config{
+			AssertionHandler: handler,
+		}.withDefaults())
 
-	chain.enter("test")
-	chain.fail(mockFailure())
-	chain.leave()
+		opChain := chain.enter("test")
+		opChain.leave()
 
-	assert.NotNil(t, handler.ctx)
-	assert.NotNil(t, handler.failure)
+		assert.NotNil(t, handler.ctx)
+		assert.Nil(t, handler.failure)
+	})
 
-	chain.clearFailed()
+	t.Run("failure", func(t *testing.T) {
+		handler := &mockAssertionHandler{}
 
-	handler.ctx = nil
-	handler.failure = nil
+		chain := newChainWithConfig("test", Config{
+			AssertionHandler: handler,
+		}.withDefaults())
 
-	chain.enter("test")
-	chain.leave()
+		opChain := chain.enter("test")
+		opChain.fail(mockFailure())
+		opChain.leave()
 
-	assert.NotNil(t, handler.ctx)
-	assert.Nil(t, handler.failure)
+		assert.NotNil(t, handler.ctx)
+		assert.NotNil(t, handler.failure)
+	})
 }
 
 func TestChain_Severity(t *testing.T) {
-	handler := &mockAssertionHandler{}
+	t.Run("default", func(t *testing.T) {
+		handler := &mockAssertionHandler{}
 
-	chain := newChainWithConfig("test", Config{
-		AssertionHandler: handler,
-	}.withDefaults())
+		chain := newChainWithConfig("test", Config{
+			AssertionHandler: handler,
+		}.withDefaults())
 
-	chain.fail(mockFailure())
+		opChain := chain.enter("test")
+		opChain.fail(mockFailure())
+		opChain.leave()
 
-	assert.NotNil(t, handler.failure)
-	assert.Equal(t, SeverityError, handler.failure.Severity)
+		assert.NotNil(t, handler.failure)
+		assert.Equal(t, SeverityError, handler.failure.Severity)
+	})
 
-	chain.clearFailed()
+	t.Run("error", func(t *testing.T) {
+		handler := &mockAssertionHandler{}
 
-	chain.setSeverity(SeverityError)
-	chain.fail(mockFailure())
+		chain := newChainWithConfig("test", Config{
+			AssertionHandler: handler,
+		}.withDefaults())
 
-	assert.NotNil(t, handler.failure)
-	assert.Equal(t, SeverityError, handler.failure.Severity)
+		chain.setSeverity(SeverityError)
 
-	chain.clearFailed()
+		opChain := chain.enter("test")
+		opChain.fail(mockFailure())
+		opChain.leave()
 
-	chain.setSeverity(SeverityLog)
-	chain.fail(mockFailure())
+		assert.NotNil(t, handler.failure)
+		assert.Equal(t, SeverityError, handler.failure.Severity)
+	})
 
-	assert.NotNil(t, handler.failure)
-	assert.Equal(t, SeverityLog, handler.failure.Severity)
-}
+	t.Run("log", func(t *testing.T) {
+		handler := &mockAssertionHandler{}
 
-func TestChain_Propagation(t *testing.T) {
-	handler := &mockAssertionHandler{}
+		chain := newChainWithConfig("test", Config{
+			AssertionHandler: handler,
+		}.withDefaults())
 
-	chain1 := newChainWithConfig("test", Config{
-		AssertionHandler: handler,
-	}.withDefaults())
+		chain.setSeverity(SeverityLog)
 
-	chain2a := chain1.clone()
-	chain2b := chain1.clone()
+		opChain := chain.enter("test")
+		opChain.fail(mockFailure())
+		opChain.leave()
 
-	chain3a := chain2a.clone()
-	chain3b := chain2a.clone()
-
-	chain3a.fail(mockFailure())
-	chain3b.setFailed()
-
-	assert.False(t, chain1.failed())
-	assert.False(t, chain2a.failed())
-	assert.False(t, chain2b.failed())
-	assert.True(t, chain3a.failed())
-	assert.True(t, chain3b.failed())
-
-	assert.True(t, chain1.failedRecursive())
-	assert.True(t, chain2a.failedRecursive())
-	assert.False(t, chain2b.failedRecursive())
-	assert.True(t, chain3a.failedRecursive())
-	assert.True(t, chain3b.failedRecursive())
-}
-
-func TestChain_Reroot(t *testing.T) {
-	handler := &mockAssertionHandler{}
-
-	chain1 := newChainWithConfig("test", Config{
-		AssertionHandler: handler,
-	}.withDefaults())
-
-	chain2 := chain1.clone()
-	chain2.setRoot()
-
-	chain3 := chain2.clone()
-	chain3.setFailed()
-
-	assert.False(t, chain1.failed())
-	assert.False(t, chain2.failed())
-	assert.True(t, chain3.failed())
-
-	assert.False(t, chain1.failedRecursive())
-	assert.True(t, chain2.failedRecursive())
-	assert.True(t, chain3.failedRecursive())
+		assert.NotNil(t, handler.failure)
+		assert.Equal(t, SeverityLog, handler.failure.Severity)
+	})
 }

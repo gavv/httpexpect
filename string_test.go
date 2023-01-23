@@ -10,7 +10,7 @@ import (
 
 func TestString_Failed(t *testing.T) {
 	chain := newMockChain(t)
-	chain.fail(mockFailure())
+	chain.setFailed()
 
 	value := newString(chain, "")
 
