@@ -2276,19 +2276,15 @@ func (r *Request) setBody(
 
 func (r *Request) checkOrder(opChain *chain, funcCall string) bool {
 	if r.expectCalled {
-		opChain.fail(r.unexpectedExpectError(funcCall))
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				fmt.Errorf("unexpected call to " + funcCall + ": Expect has already been called"),
+			},
+		})
 		return false
 	}
 	return true
-}
-
-func (r *Request) unexpectedExpectError(funcCall string) AssertionFailure {
-	return AssertionFailure{
-		Type: AssertUsage,
-		Errors: []error{
-			fmt.Errorf("unexpected call to " + funcCall + ": Expect has already been called"),
-		},
-	}
 }
 
 func concatPaths(a, b string) string {
