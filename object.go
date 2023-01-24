@@ -75,9 +75,7 @@ func (o *Object) Raw() map[string]interface{} {
 // target should be one of this:
 //
 // - pointer to an empty interface
-//
 // - pointer to a map
-//
 // - pointer to a struct
 //
 // Example:
@@ -105,7 +103,7 @@ func (o *Object) Raw() map[string]interface{} {
 //
 //	assert.Equal(t, S{123,[]interface{}{"123", 234.0},
 //		map[string]interface{}{"a": "b"}, struct{ a int }{0},
-//	},target)
+//	}, target)
 func (o *Object) Decode(target interface{}) *Object {
 	o.chain.enter("Decode()")
 	defer o.chain.leave()

@@ -52,9 +52,8 @@ func (b *Boolean) Raw() bool {
 // Decode unmarshals the underlying value attached to the Boolean to a target variable.
 // target should be one of these:
 //
-// - pointer to an empty interface.
-//
-// - pointer to a boolean.
+// - pointer to an empty interface
+// - pointer to a boolean
 //
 // Example:
 //

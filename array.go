@@ -74,8 +74,7 @@ func (a *Array) Raw() []interface{} {
 // target should be one of these:
 //
 // - pointer to an empty interface
-//
-// - pointer to slice of any type
+// - pointer to a slice of any type
 //
 // Example:
 //
@@ -84,18 +83,18 @@ func (a *Array) Raw() []interface{} {
 //	}
 //	value := []interface{}{
 //		map[string]interface{}{
-//				"foo": 123,
-//			},
+//			"foo": 123,
+//		},
 //		map[string]interface{}{
-//				"foo": 456,
-//			},
+//			"foo": 456,
+//		},
 //	}
 //	array := NewArray(t, value)
 //
 //	var target []S
 //	arr.Decode(&target)
 //
-//	assert.Equal(t, []S{{123},{456}}, target)
+//	assert.Equal(t, []S{{123}, {456}}, target)
 func (a *Array) Decode(target interface{}) *Array {
 	a.chain.enter("Decode()")
 	defer a.chain.leave()

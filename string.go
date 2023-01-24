@@ -59,18 +59,17 @@ func (s *String) Raw() string {
 // Decode unmarshals the underlying value attached to the String to a target variable.
 // target should be one of these:
 //
-// - pointer to an empty interface.
-//
-// - pointer to a string variable.
+// - pointer to an empty interface
+// - pointer to a string
 //
 // Example:
 //
-//	value := NewString(i, "foo")
+//	value := NewString(t, "foo")
 //
 //	var target string
 //	value.Decode(&target)
 //
-//	assert.Equal(t,"foo",target)
+//	assert.Equal(t, "foo", target)
 func (s *String) Decode(target interface{}) *String {
 	s.chain.enter("Decode()")
 	defer s.chain.leave()

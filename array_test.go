@@ -131,6 +131,7 @@ func TestArray_Decode(t *testing.T) {
 		arr.chain.assertNotFailed(t)
 		assert.Equal(t, testValue, target)
 	})
+
 	t.Run("Decode into slice of structs", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
@@ -155,6 +156,7 @@ func TestArray_Decode(t *testing.T) {
 		arr.chain.assertNotFailed(t)
 		assert.Equal(t, actualStruct, target)
 	})
+
 	t.Run("Decode into empty interface", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
@@ -167,6 +169,7 @@ func TestArray_Decode(t *testing.T) {
 		arr.chain.assertNotFailed(t)
 		assert.Equal(t, testValue, target)
 	})
+
 	t.Run("Target is unmarshable", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
@@ -177,6 +180,7 @@ func TestArray_Decode(t *testing.T) {
 
 		arr.chain.assertFailed(t)
 	})
+
 	t.Run("Target is nil", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
