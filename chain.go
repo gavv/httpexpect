@@ -212,6 +212,10 @@ func (c *chain) setRequest(req *Request) {
 		panic("can't use chain after leave")
 	}
 
+	if chainValidation && c.context.Request != nil {
+		panic("context.Request already set")
+	}
+
 	c.context.Request = req
 }
 
@@ -223,6 +227,10 @@ func (c *chain) setResponse(resp *Response) {
 
 	if chainValidation && c.state == stateLeaved {
 		panic("can't use chain after leave")
+	}
+
+	if chainValidation && c.context.Response != nil {
+		panic("context.Response already set")
 	}
 
 	c.context.Response = resp
