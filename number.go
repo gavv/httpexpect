@@ -2,7 +2,7 @@ package httpexpect
 
 import (
 	"errors"
-	"math"
+	"math/big"
 )
 
 // Number provides methods to inspect attached float64 value
@@ -10,7 +10,7 @@ import (
 type Number struct {
 	noCopy noCopy
 	chain  *chain
-	value  float64
+	value  big.Float
 }
 
 // NewNumber returns a new Number instance.
@@ -35,8 +35,9 @@ func NewNumberC(config Config, value float64) *Number {
 	return newNumber(newChainWithConfig("Number()", config.withDefaults()), value)
 }
 
-func newNumber(parent *chain, val float64) *Number {
-	return &Number{chain: parent.clone(), value: val}
+func newNumber(parent *chain, val interface{}) *Number {
+	number, _ := canonNumber(parent, val)
+	return &Number{chain: parent.clone(), value: number}
 }
 
 // Raw returns underlying value attached to Number.
@@ -46,8 +47,11 @@ func newNumber(parent *chain, val float64) *Number {
 //
 //	number := NewNumber(t, 123.4)
 //	assert.Equal(t, 123.4, number.Raw())
+//
+// Deprecated: Use AsFloat() instead.
 func (n *Number) Raw() float64 {
-	return n.value
+	value, _ := n.value.Float64()
+	return value
 }
 
 // Path is similar to Value.Path.
@@ -90,7 +94,7 @@ func (n *Number) Equal(value interface{}) *Number {
 		return n
 	}
 
-	if !(n.value == num) {
+	if n.value.Cmp(&num) != 0 {
 		n.chain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{n.value},
@@ -127,7 +131,7 @@ func (n *Number) NotEqual(value interface{}) *Number {
 		return n
 	}
 
-	if !(n.value != num) {
+	if n.value.Cmp(&num) != 0 {
 		n.chain.fail(AssertionFailure{
 			Type:     AssertNotEqual,
 			Actual:   &AssertionValue{n.value},
@@ -147,7 +151,7 @@ func (n *Number) NotEqual(value interface{}) *Number {
 //
 //	number := NewNumber(t, 123.0)
 //	number.EqualDelta(123.2, 0.3)
-func (n *Number) EqualDelta(value, delta float64) *Number {
+func (n *Number) EqualDelta(value, delta interface{}) *Number {
 	n.chain.enter("EqualDelta()")
 	defer n.chain.leave()
 
@@ -155,7 +159,23 @@ func (n *Number) EqualDelta(value, delta float64) *Number {
 		return n
 	}
 
-	if math.IsNaN(n.value) || math.IsNaN(value) || math.IsNaN(delta) {
+	num, ok := canonNumber(n.chain, value)
+	del, okDel := canonNumber(n.chain, delta)
+
+	// if math.IsNaN(n.value) || math.IsNaN(value) || math.IsNaN(delta) {
+	// 	n.chain.fail(AssertionFailure{
+	// 		Type:     AssertEqual,
+	// 		Actual:   &AssertionValue{n.value},
+	// 		Expected: &AssertionValue{value},
+	// 		Delta:    &AssertionValue{delta},
+	// 		Errors: []error{
+	// 			errors.New("expected: numbers are comparable"),
+	// 		},
+	// 	})
+	// 	return n
+	// }
+
+	if !ok || !okDel {
 		n.chain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{n.value},
@@ -168,9 +188,9 @@ func (n *Number) EqualDelta(value, delta float64) *Number {
 		return n
 	}
 
-	diff := n.value - value
+	diff := big.NewFloat(0).Sub(&n.value, &num)
 
-	if diff < -delta || diff > delta {
+	if diff.Cmp(big.NewFloat(0).Neg(&del)) < 0 || diff.Cmp(&del) > 0 {
 		n.chain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{n.value},
@@ -200,7 +220,23 @@ func (n *Number) NotEqualDelta(value, delta float64) *Number {
 		return n
 	}
 
-	if math.IsNaN(n.value) || math.IsNaN(value) || math.IsNaN(delta) {
+	num, ok := canonNumber(n.chain, value)
+	del, okDel := canonNumber(n.chain, delta)
+
+	// if math.IsNaN(n.value) || math.IsNaN(value) || math.IsNaN(delta) {
+	// 	n.chain.fail(AssertionFailure{
+	// 		Type:     AssertNotEqual,
+	// 		Actual:   &AssertionValue{n.value},
+	// 		Expected: &AssertionValue{value},
+	// 		Delta:    &AssertionValue{delta},
+	// 		Errors: []error{
+	// 			errors.New("expected: numbers are comparable"),
+	// 		},
+	// 	})
+	// 	return n
+	// }
+
+	if !ok || !okDel {
 		n.chain.fail(AssertionFailure{
 			Type:     AssertNotEqual,
 			Actual:   &AssertionValue{n.value},
@@ -213,9 +249,9 @@ func (n *Number) NotEqualDelta(value, delta float64) *Number {
 		return n
 	}
 
-	diff := n.value - value
+	diff := big.NewFloat(0).Sub(&n.value, &num)
 
-	if !(diff < -delta || diff > delta) {
+	if !(diff.Cmp(big.NewFloat(0).Neg(&del)) < 0 || diff.Cmp(&del) > 0) {
 		n.chain.fail(AssertionFailure{
 			Type:     AssertNotEqual,
 			Actual:   &AssertionValue{n.value},
@@ -227,7 +263,6 @@ func (n *Number) NotEqualDelta(value, delta float64) *Number {
 		})
 		return n
 	}
-
 	return n
 }
 
@@ -254,7 +289,7 @@ func (n *Number) Gt(value interface{}) *Number {
 		return n
 	}
 
-	if !(n.value > num) {
+	if n.value.Cmp(&num) <= 0 {
 		n.chain.fail(AssertionFailure{
 			Type:     AssertGt,
 			Actual:   &AssertionValue{n.value},
@@ -291,7 +326,7 @@ func (n *Number) Ge(value interface{}) *Number {
 		return n
 	}
 
-	if !(n.value >= num) {
+	if n.value.Cmp(&num) < 0 {
 		n.chain.fail(AssertionFailure{
 			Type:     AssertGe,
 			Actual:   &AssertionValue{n.value},
@@ -328,7 +363,7 @@ func (n *Number) Lt(value interface{}) *Number {
 		return n
 	}
 
-	if !(n.value < num) {
+	if n.value.Cmp(&num) >= 0 {
 		n.chain.fail(AssertionFailure{
 			Type:     AssertLt,
 			Actual:   &AssertionValue{n.value},
@@ -365,7 +400,7 @@ func (n *Number) Le(value interface{}) *Number {
 		return n
 	}
 
-	if !(n.value <= num) {
+	if n.value.Cmp(&num) > 0 {
 		n.chain.fail(AssertionFailure{
 			Type:     AssertLe,
 			Actual:   &AssertionValue{n.value},
@@ -408,7 +443,7 @@ func (n *Number) InRange(min, max interface{}) *Number {
 		return n
 	}
 
-	if !(n.value >= a && n.value <= b) {
+	if n.value.Cmp(&a) < 0 || n.value.Cmp(&b) > 0 {
 		n.chain.fail(AssertionFailure{
 			Type:     AssertInRange,
 			Actual:   &AssertionValue{n.value},
@@ -450,7 +485,7 @@ func (n *Number) NotInRange(min, max interface{}) *Number {
 		return n
 	}
 
-	if n.value >= a && n.value <= b {
+	if n.value.Cmp(&a) >= 0 && n.value.Cmp(&b) <= 0 {
 		n.chain.fail(AssertionFailure{
 			Type:     AssertNotInRange,
 			Actual:   &AssertionValue{n.value},

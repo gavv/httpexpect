@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/big"
 	"reflect"
 )
 
-func canonNumber(chain *chain, in interface{}) (out float64, ok bool) {
+func canonNumber(chain *chain, in interface{}) (out big.Float, ok bool) {
 	ok = true
 	defer func() {
 		if err := recover(); err != nil {
@@ -22,8 +23,58 @@ func canonNumber(chain *chain, in interface{}) (out float64, ok bool) {
 			ok = false
 		}
 	}()
-	out = reflect.ValueOf(in).Convert(reflect.TypeOf(float64(0))).Float()
+	out, ok = canonNumberConvert(in)
 	return
+}
+
+func canonNumberConvert(in interface{}) (out big.Float, ok bool) {
+	value := reflect.ValueOf(in)
+	switch in.(type) {
+	case float64:
+		float := value.Float()
+		return *big.NewFloat(float), true
+	case float32:
+		float := value.Float()
+		return *big.NewFloat(float), true
+	case int8:
+		int := value.Int()
+		return *big.NewFloat(0).SetInt64(int), true
+	case int16:
+		int := value.Int()
+		return *big.NewFloat(0).SetInt64(int), true
+	case int32:
+		int := value.Int()
+		return *big.NewFloat(0).SetInt64(int), true
+	case int64:
+		int := value.Int()
+		return *big.NewFloat(0).SetInt64(int), true
+	case uint8:
+		int := value.Uint()
+		return *big.NewFloat(0).SetUint64(int), true
+	case uint16:
+		int := value.Uint()
+		return *big.NewFloat(0).SetUint64(int), true
+	case uint32:
+		int := value.Uint()
+		return *big.NewFloat(0).SetUint64(int), true
+	case uint64:
+		int := value.Uint()
+		return *big.NewFloat(0).SetUint64(int), true
+	case big.Int:
+		val, ok := in.(big.Int)
+		if ok {
+			return *big.NewFloat(0).SetInt(&val), true
+		}
+		return *big.NewFloat(0), false
+	case big.Float:
+		return in.(big.Float), true
+	case json.Number:
+		data := in.(json.Number).String()
+		num, ok := big.NewFloat(0).SetString(data)
+		return *num, ok
+	default:
+		return *big.NewFloat(0), false
+	}
 }
 
 func canonArray(chain *chain, in interface{}) ([]interface{}, bool) {
