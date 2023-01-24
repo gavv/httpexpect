@@ -2240,6 +2240,7 @@ func TestRequest_OrderChecks(t *testing.T) {
 		Reporter: newMockReporter(t),
 		Client:   &mockClient{},
 	}
+
 	t.Run("Expect after an Expect", func(t *testing.T) {
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
