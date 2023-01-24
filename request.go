@@ -208,7 +208,7 @@ func (r *Request) WithName(name string) *Request {
 		return r
 	}
 
-	if !r.checkOrder(opChain, "WithName") {
+	if !r.checkOrder(opChain, "WithName()") {
 		return r
 	}
 
@@ -235,7 +235,7 @@ func (r *Request) WithMatcher(matcher func(*Response)) *Request {
 		return r
 	}
 
-	if !r.checkOrder(opChain, "WithMatcher") {
+	if !r.checkOrder(opChain, "WithMatcher()") {
 		return r
 	}
 
@@ -269,7 +269,7 @@ func (r *Request) WithTransformer(transform func(*http.Request)) *Request {
 		return r
 	}
 
-	if !r.checkOrder(opChain, "WithTransformer") {
+	if !r.checkOrder(opChain, "WithTransformer()") {
 		return r
 	}
 
@@ -309,7 +309,7 @@ func (r *Request) WithClient(client Client) *Request {
 		return r
 	}
 
-	if !r.checkOrder(opChain, "WithClient") {
+	if !r.checkOrder(opChain, "WithClient()") {
 		return r
 	}
 
@@ -346,7 +346,7 @@ func (r *Request) WithHandler(handler http.Handler) *Request {
 		return r
 	}
 
-	if !r.checkOrder(opChain, "WithHandler") {
+	if !r.checkOrder(opChain, "WithHandler()") {
 		return r
 	}
 
@@ -395,7 +395,7 @@ func (r *Request) WithContext(ctx context.Context) *Request {
 		return r
 	}
 
-	if !r.checkOrder(opChain, "WithContext") {
+	if !r.checkOrder(opChain, "WithContext()") {
 		return r
 	}
 
@@ -437,7 +437,7 @@ func (r *Request) WithTimeout(timeout time.Duration) *Request {
 		return r
 	}
 
-	if !r.checkOrder(opChain, "WithTimeout") {
+	if !r.checkOrder(opChain, "WithTimeout()") {
 		return r
 	}
 
@@ -506,7 +506,7 @@ func (r *Request) WithRedirectPolicy(policy RedirectPolicy) *Request {
 		return r
 	}
 
-	if !r.checkOrder(opChain, "WithRedirectPolicy") {
+	if !r.checkOrder(opChain, "WithRedirectPolicy()") {
 		return r
 	}
 
@@ -538,7 +538,7 @@ func (r *Request) WithMaxRedirects(maxRedirects int) *Request {
 		return r
 	}
 
-	if !r.checkOrder(opChain, "WithMaxRedirects") {
+	if !r.checkOrder(opChain, "WithMaxRedirects()") {
 		return r
 	}
 
@@ -606,7 +606,7 @@ func (r *Request) WithRetryPolicy(policy RetryPolicy) *Request {
 		return r
 	}
 
-	if !r.checkOrder(opChain, "WithRetryPolicy") {
+	if !r.checkOrder(opChain, "WithRetryPolicy()") {
 		return r
 	}
 
@@ -638,7 +638,7 @@ func (r *Request) WithMaxRetries(maxRetries int) *Request {
 		return r
 	}
 
-	if !r.checkOrder(opChain, "WithMaxRetries") {
+	if !r.checkOrder(opChain, "WithMaxRetries()") {
 		return r
 	}
 
@@ -678,7 +678,7 @@ func (r *Request) WithRetryDelay(minDelay, maxDelay time.Duration) *Request {
 		return r
 	}
 
-	if !r.checkOrder(opChain, "WithRetryDelay") {
+	if !r.checkOrder(opChain, "WithRetryDelay()") {
 		return r
 	}
 
@@ -729,7 +729,7 @@ func (r *Request) WithWebsocketUpgrade() *Request {
 		return r
 	}
 
-	if !r.checkOrder(opChain, "WithWebsocketUpgrade") {
+	if !r.checkOrder(opChain, "WithWebsocketUpgrade()") {
 		return r
 	}
 
@@ -760,7 +760,7 @@ func (r *Request) WithWebsocketDialer(dialer WebsocketDialer) *Request {
 		return r
 	}
 
-	if !r.checkOrder(opChain, "WithWebsocketDialer") {
+	if !r.checkOrder(opChain, "WithWebsocketDialer()") {
 		return r
 	}
 
@@ -800,7 +800,7 @@ func (r *Request) WithPath(key string, value interface{}) *Request {
 		return r
 	}
 
-	if !r.checkOrder(opChain, "WithPath") {
+	if !r.checkOrder(opChain, "WithPath()") {
 		return r
 	}
 
@@ -853,7 +853,7 @@ func (r *Request) WithPathObject(object interface{}) *Request {
 		return r
 	}
 
-	if !r.checkOrder(opChain, "WithPathObject") {
+	if !r.checkOrder(opChain, "WithPathObject()") {
 		return r
 	}
 
@@ -950,7 +950,7 @@ func (r *Request) WithQuery(key string, value interface{}) *Request {
 		return r
 	}
 
-	if !r.checkOrder(opChain, "WithQuery") {
+	if !r.checkOrder(opChain, "WithQuery()") {
 		return r
 	}
 
@@ -1002,7 +1002,7 @@ func (r *Request) WithQueryObject(object interface{}) *Request {
 		return r
 	}
 
-	if !r.checkOrder(opChain, "WithQueryObject") {
+	if !r.checkOrder(opChain, "WithQueryObject()") {
 		return r
 	}
 
@@ -1068,7 +1068,7 @@ func (r *Request) WithQueryString(query string) *Request {
 		return r
 	}
 
-	if !r.checkOrder(opChain, "WithQueryString") {
+	if !r.checkOrder(opChain, "WithQueryString()") {
 		return r
 	}
 
@@ -1114,7 +1114,7 @@ func (r *Request) WithURL(urlStr string) *Request {
 		return r
 	}
 
-	if !r.checkOrder(opChain, "WithURL") {
+	if !r.checkOrder(opChain, "WithURL()") {
 		return r
 	}
 
@@ -1152,7 +1152,7 @@ func (r *Request) WithHeaders(headers map[string]string) *Request {
 		return r
 	}
 
-	if !r.checkOrder(opChain, "WithHeaders") {
+	if !r.checkOrder(opChain, "WithHeaders()") {
 		return r
 	}
 
@@ -1177,7 +1177,7 @@ func (r *Request) WithHeader(k, v string) *Request {
 		return r
 	}
 
-	if !r.checkOrder(opChain, "WithHeader") {
+	if !r.checkOrder(opChain, "WithHeader()") {
 		return r
 	}
 
@@ -1221,7 +1221,7 @@ func (r *Request) WithCookies(cookies map[string]string) *Request {
 		return r
 	}
 
-	if !r.checkOrder(opChain, "WithCookies") {
+	if !r.checkOrder(opChain, "WithCookies()") {
 		return r
 	}
 
@@ -1249,7 +1249,7 @@ func (r *Request) WithCookie(k, v string) *Request {
 		return r
 	}
 
-	if !r.checkOrder(opChain, "WithCookie") {
+	if !r.checkOrder(opChain, "WithCookie()") {
 		return r
 	}
 
@@ -1279,7 +1279,7 @@ func (r *Request) WithBasicAuth(username, password string) *Request {
 		return r
 	}
 
-	if !r.checkOrder(opChain, "WithBasicAuth") {
+	if !r.checkOrder(opChain, "WithBasicAuth()") {
 		return r
 	}
 
@@ -1302,7 +1302,7 @@ func (r *Request) WithHost(host string) *Request {
 		return r
 	}
 
-	if !r.checkOrder(opChain, "WithHost") {
+	if !r.checkOrder(opChain, "WithHost()") {
 		return r
 	}
 
@@ -1327,7 +1327,7 @@ func (r *Request) WithProto(proto string) *Request {
 		return r
 	}
 
-	if !r.checkOrder(opChain, "WithProto") {
+	if !r.checkOrder(opChain, "WithProto()") {
 		return r
 	}
 
@@ -1374,7 +1374,7 @@ func (r *Request) WithChunked(reader io.Reader) *Request {
 		return r
 	}
 
-	if !r.checkOrder(opChain, "WithChunked") {
+	if !r.checkOrder(opChain, "WithChunked()") {
 		return r
 	}
 	if !r.httpReq.ProtoAtLeast(1, 1) {
@@ -1410,7 +1410,7 @@ func (r *Request) WithBytes(b []byte) *Request {
 		return r
 	}
 
-	if !r.checkOrder(opChain, "WithBytes") {
+	if !r.checkOrder(opChain, "WithBytes()") {
 		return r
 	}
 
@@ -1438,7 +1438,7 @@ func (r *Request) WithText(s string) *Request {
 		return r
 	}
 
-	if !r.checkOrder(opChain, "WithText") {
+	if !r.checkOrder(opChain, "WithText()") {
 		return r
 	}
 
@@ -1470,7 +1470,7 @@ func (r *Request) WithJSON(object interface{}) *Request {
 		return r
 	}
 
-	if !r.checkOrder(opChain, "WithJSON") {
+	if !r.checkOrder(opChain, "WithJSON()") {
 		return r
 	}
 
@@ -1524,7 +1524,7 @@ func (r *Request) WithForm(object interface{}) *Request {
 		return r
 	}
 
-	if !r.checkOrder(opChain, "WithForm") {
+	if !r.checkOrder(opChain, "WithForm()") {
 		return r
 	}
 
@@ -1597,7 +1597,7 @@ func (r *Request) WithFormField(key string, value interface{}) *Request {
 		return r
 	}
 
-	if !r.checkOrder(opChain, "WithFormField") {
+	if !r.checkOrder(opChain, "WithFormField()") {
 		return r
 	}
 
@@ -1655,7 +1655,7 @@ func (r *Request) WithFile(key, path string, reader ...io.Reader) *Request {
 		return r
 	}
 
-	if !r.checkOrder(opChain, "WithFile") {
+	if !r.checkOrder(opChain, "WithFile()") {
 		return r
 	}
 
@@ -1693,7 +1693,7 @@ func (r *Request) WithFileBytes(key, path string, data []byte) *Request {
 		return r
 	}
 
-	if !r.checkOrder(opChain, "WithFileBytes") {
+	if !r.checkOrder(opChain, "WithFileBytes()") {
 		return r
 	}
 
@@ -1785,7 +1785,7 @@ func (r *Request) WithMultipart() *Request {
 		return r
 	}
 
-	if !r.checkOrder(opChain, "WithMultipart") {
+	if !r.checkOrder(opChain, "WithMultipart()") {
 		return r
 	}
 
@@ -1822,14 +1822,14 @@ func (r *Request) Expect() *Response {
 	if opChain.failed() {
 		return newResponse(responseOpts{
 			config: r.config,
-			chain:  r.chain,
+			chain:  opChain,
 		})
 	}
 
 	if !r.checkOrder(opChain, "Expect") {
 		return newResponse(responseOpts{
 			config: r.config,
-			chain:  r.chain,
+			chain:  opChain,
 		})
 	}
 
@@ -2279,7 +2279,7 @@ func (r *Request) checkOrder(opChain *chain, funcCall string) bool {
 		opChain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
-				fmt.Errorf("unexpected call to " + funcCall + ": Expect has already been called"),
+				fmt.Errorf("unexpected call to %s: Expect() has already been called", funcCall),
 			},
 		})
 		return false
