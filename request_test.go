@@ -2233,11 +2233,14 @@ func TestRequest_UsageChecks(t *testing.T) {
 		req.chain.assertFailed(t)
 	})
 
+}
+
+func TestRequest_OrderChecks(t *testing.T) {
+	config := Config{
+		Reporter: newMockReporter(t),
+		Client:   &mockClient{},
+	}
 	t.Run("Expect after an Expect", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			Client:   &mockClient{},
-		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
 		assert.NotNil(t, req.Expect())
@@ -2245,10 +2248,6 @@ func TestRequest_UsageChecks(t *testing.T) {
 	})
 
 	t.Run("WithName after an Expect", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			Client:   &mockClient{},
-		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
 		assert.Same(t, req, req.WithName("Test"))
@@ -2256,10 +2255,6 @@ func TestRequest_UsageChecks(t *testing.T) {
 	})
 
 	t.Run("WithMatcher after an Expect", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			Client:   &mockClient{},
-		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
 		assert.Same(t, req, req.WithMatcher(func(resp *Response) {
@@ -2269,10 +2264,6 @@ func TestRequest_UsageChecks(t *testing.T) {
 	})
 
 	t.Run("WithTransformer after an Expect", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			Client:   &mockClient{},
-		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
 		assert.Same(t, req, req.WithTransformer(func(r *http.Request) {
@@ -2282,10 +2273,6 @@ func TestRequest_UsageChecks(t *testing.T) {
 	})
 
 	t.Run("WithClient after an Expect", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			Client:   &mockClient{},
-		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
 		assert.Same(t, req, req.WithClient(&mockClient{}))
@@ -2293,10 +2280,6 @@ func TestRequest_UsageChecks(t *testing.T) {
 	})
 
 	t.Run("WithHandler after an Expect", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			Client:   &mockClient{},
-		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
 		assert.Same(t, req, req.WithHandler(http.NotFoundHandler()))
@@ -2304,10 +2287,6 @@ func TestRequest_UsageChecks(t *testing.T) {
 	})
 
 	t.Run("WithContext after an Expect", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			Client:   &mockClient{},
-		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
 		assert.Same(t, req, req.WithContext(context.Background()))
@@ -2315,10 +2294,6 @@ func TestRequest_UsageChecks(t *testing.T) {
 	})
 
 	t.Run("WithTimeout after an Expect", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			Client:   &mockClient{},
-		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
 		assert.Same(t, req, req.WithTimeout(3*time.Second))
@@ -2326,10 +2301,6 @@ func TestRequest_UsageChecks(t *testing.T) {
 	})
 
 	t.Run("WithRedirectPolicy after an Expect", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			Client:   &mockClient{},
-		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
 		assert.Same(t, req, req.WithRedirectPolicy(FollowAllRedirects))
@@ -2337,10 +2308,6 @@ func TestRequest_UsageChecks(t *testing.T) {
 	})
 
 	t.Run("WithMaxRedirects after an Expect", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			Client:   &mockClient{},
-		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
 		assert.Same(t, req, req.WithMaxRedirects(3))
@@ -2348,10 +2315,6 @@ func TestRequest_UsageChecks(t *testing.T) {
 	})
 
 	t.Run("WithRetryPolicy after an Expect", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			Client:   &mockClient{},
-		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
 		assert.Same(t, req, req.WithRetryPolicy(DontRetry))
@@ -2359,10 +2322,6 @@ func TestRequest_UsageChecks(t *testing.T) {
 	})
 
 	t.Run("WithMaxRetries after an Expect", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			Client:   &mockClient{},
-		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
 		assert.Same(t, req, req.WithMaxRetries(10))
@@ -2370,10 +2329,6 @@ func TestRequest_UsageChecks(t *testing.T) {
 	})
 
 	t.Run("WithRetryDelay after an Expect", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			Client:   &mockClient{},
-		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
 		assert.Same(t, req, req.WithRetryDelay(time.Second, 5*time.Second))
@@ -2381,10 +2336,6 @@ func TestRequest_UsageChecks(t *testing.T) {
 	})
 
 	t.Run("WithWebsocketUpgrade after an Expect", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			Client:   &mockClient{},
-		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
 		assert.Same(t, req, req.WithWebsocketUpgrade())
@@ -2392,10 +2343,6 @@ func TestRequest_UsageChecks(t *testing.T) {
 	})
 
 	t.Run("WithWebsocketDialer after an Expect", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			Client:   &mockClient{},
-		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
 		assert.Same(t, req, req.WithWebsocketDialer(&websocket.Dialer{}))
@@ -2403,10 +2350,6 @@ func TestRequest_UsageChecks(t *testing.T) {
 	})
 
 	t.Run("WithPath after an Expect", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			Client:   &mockClient{},
-		}
 		req := NewRequestC(config, "GET", "/{repo}")
 		req.Expect()
 		assert.Same(t, req, req.WithPath("repo", "repo1"))
@@ -2414,10 +2357,6 @@ func TestRequest_UsageChecks(t *testing.T) {
 	})
 
 	t.Run("WithPathObject after an Expect", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			Client:   &mockClient{},
-		}
 		req := NewRequestC(config, "GET", "/{repo}")
 		req.Expect()
 		assert.Same(t, req, req.WithPathObject(map[string]string{"repo": "repo1"}))
@@ -2425,10 +2364,6 @@ func TestRequest_UsageChecks(t *testing.T) {
 	})
 
 	t.Run("WithQuery after an Expect", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			Client:   &mockClient{},
-		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
 		assert.Same(t, req, req.WithQuery("a", 123))
@@ -2436,10 +2371,6 @@ func TestRequest_UsageChecks(t *testing.T) {
 	})
 
 	t.Run("WithQueryObject after an Expect", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			Client:   &mockClient{},
-		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
 		assert.Same(t, req, req.WithQueryObject(map[string]string{"a": "val"}))
@@ -2447,10 +2378,6 @@ func TestRequest_UsageChecks(t *testing.T) {
 	})
 
 	t.Run("WithQueryString after an Expect", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			Client:   &mockClient{},
-		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
 		assert.Same(t, req, req.WithQueryString("a=123&b=hello"))
@@ -2458,10 +2385,6 @@ func TestRequest_UsageChecks(t *testing.T) {
 	})
 
 	t.Run("WithURL after an Expect", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			Client:   &mockClient{},
-		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
 		assert.Same(t, req, req.WithURL("https://www.github.com"))
@@ -2469,10 +2392,6 @@ func TestRequest_UsageChecks(t *testing.T) {
 	})
 
 	t.Run("WithHeaders after an Expect", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			Client:   &mockClient{},
-		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
 		assert.Same(t, req, req.WithHeaders(
@@ -2481,10 +2400,6 @@ func TestRequest_UsageChecks(t *testing.T) {
 	})
 
 	t.Run("WithHeader after an Expect", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			Client:   &mockClient{},
-		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
 		assert.Same(t, req, req.WithHeader("Content-Type", "application/json"))
@@ -2492,10 +2407,6 @@ func TestRequest_UsageChecks(t *testing.T) {
 	})
 
 	t.Run("WithCookies after an Expect", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			Client:   &mockClient{},
-		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
 		assert.Same(t, req, req.WithCookies(map[string]string{"key1": "val1"}))
@@ -2503,10 +2414,6 @@ func TestRequest_UsageChecks(t *testing.T) {
 	})
 
 	t.Run("WithCookie after an Expect", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			Client:   &mockClient{},
-		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
 		assert.Same(t, req, req.WithCookie("key1", "val1"))
@@ -2514,10 +2421,6 @@ func TestRequest_UsageChecks(t *testing.T) {
 	})
 
 	t.Run("WithBasicAuth after an Expect", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			Client:   &mockClient{},
-		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
 		assert.Same(t, req, req.WithBasicAuth("user", "pass"))
@@ -2525,10 +2428,6 @@ func TestRequest_UsageChecks(t *testing.T) {
 	})
 
 	t.Run("WithHost after an Expect", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			Client:   &mockClient{},
-		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
 		assert.Same(t, req, req.WithHost("localhost"))
@@ -2536,10 +2435,6 @@ func TestRequest_UsageChecks(t *testing.T) {
 	})
 
 	t.Run("WithProto after an Expect", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			Client:   &mockClient{},
-		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
 		assert.Same(t, req, req.WithProto("HTTP/1.1"))
@@ -2547,10 +2442,6 @@ func TestRequest_UsageChecks(t *testing.T) {
 	})
 
 	t.Run("WithChunked after an Expect", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			Client:   &mockClient{},
-		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
 		assert.Same(t, req, req.WithChunked(bytes.NewReader(nil)))
@@ -2558,10 +2449,6 @@ func TestRequest_UsageChecks(t *testing.T) {
 	})
 
 	t.Run("WithBytes after an Expect", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			Client:   &mockClient{},
-		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
 		assert.Same(t, req, req.WithBytes(nil))
@@ -2569,10 +2456,6 @@ func TestRequest_UsageChecks(t *testing.T) {
 	})
 
 	t.Run("WithText after an Expect", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			Client:   &mockClient{},
-		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
 		assert.Same(t, req, req.WithText("hello"))
@@ -2580,10 +2463,6 @@ func TestRequest_UsageChecks(t *testing.T) {
 	})
 
 	t.Run("WithJSON after an Expect", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			Client:   &mockClient{},
-		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
 		assert.Same(t, req, req.WithJSON(map[string]string{"key1": "val1"}))
@@ -2591,10 +2470,6 @@ func TestRequest_UsageChecks(t *testing.T) {
 	})
 
 	t.Run("WithForm after an Expect", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			Client:   &mockClient{},
-		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
 		assert.Same(t, req, req.WithForm(map[string]string{"key1": "val1"}))
@@ -2602,10 +2477,6 @@ func TestRequest_UsageChecks(t *testing.T) {
 	})
 
 	t.Run("WithFormField after an Expect", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			Client:   &mockClient{},
-		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
 		assert.Same(t, req, req.WithFormField("key1", 123))
@@ -2613,10 +2484,6 @@ func TestRequest_UsageChecks(t *testing.T) {
 	})
 
 	t.Run("WithFile after an Expect", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			Client:   &mockClient{},
-		}
 		req := NewRequestC(config, "GET", "/").WithMultipart()
 		req.Expect()
 		assert.Same(t, req, req.WithFile("foo", "bar", strings.NewReader("baz")))
@@ -2624,10 +2491,6 @@ func TestRequest_UsageChecks(t *testing.T) {
 	})
 
 	t.Run("WithFileBytes after an Expect", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			Client:   &mockClient{},
-		}
 		req := NewRequestC(config, "GET", "/").WithMultipart()
 		req.Expect()
 		assert.Same(t, req, req.WithFileBytes("foo", "bar", []byte("baz")))
@@ -2635,10 +2498,6 @@ func TestRequest_UsageChecks(t *testing.T) {
 	})
 
 	t.Run("WithMultipart after an Expect", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			Client:   &mockClient{},
-		}
 		req := NewRequestC(config, "GET", "/")
 		req.Expect()
 		assert.Same(t, req, req.WithMultipart())
