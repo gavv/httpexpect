@@ -239,7 +239,7 @@ func (config Config) withDefaults() Config {
 		}
 
 		if config.Reporter == nil {
-			panic("either Reporter or AssertionHandler should be non-nil")
+			panic("either Config.Reporter or Config.AssertionHandler should be non-nil")
 		}
 
 		config.AssertionHandler = &DefaultAssertionHandler{
