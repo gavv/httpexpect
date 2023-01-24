@@ -46,25 +46,7 @@ func NewValue(reporter Reporter, value interface{}) *Value {
 // Requirements for config are same as for WithConfig function.
 // Value may be nil.
 //
-// Example:
-//
-//	value := NewValueC(config, map[string]interface{}{"foo": 123})
-//	value.Object()
-//
-//	value := NewValueC(config, []interface{}{"foo", 123})
-//	value.Array()
-//
-//	value := NewValueC(config, "foo")
-//	value.String()
-//
-//	value := NewValueC(config, 123)
-//	value.Number()
-//
-//	value := NewValueC(config, true)
-//	value.Boolean()
-//
-//	value := NewValueC(config, nil)
-//	value.Null()
+// See NewValue for usage example.
 func NewValueC(config Config, value interface{}) *Value {
 	return newValue(newChainWithConfig("Value()", config.withDefaults()), value)
 }
@@ -72,8 +54,11 @@ func NewValueC(config Config, value interface{}) *Value {
 func newValue(parent *chain, val interface{}) *Value {
 	v := &Value{parent.clone(), nil}
 
+	opChain := v.chain.enter("")
+	defer opChain.leave()
+
 	if val != nil {
-		v.value, _ = canonValue(v.chain, val)
+		v.value, _ = canonValue(opChain, val)
 	}
 
 	return v
@@ -117,10 +102,10 @@ func (v *Value) Raw() interface{} {
 //	    user.String().Equal("john")
 //	}
 func (v *Value) Path(path string) *Value {
-	v.chain.enter("Path(%q)", path)
-	defer v.chain.leave()
+	opChain := v.chain.enter("Path(%q)", path)
+	defer opChain.leave()
 
-	return jsonPath(v.chain, v.value, path)
+	return jsonPath(opChain, v.value, path)
 }
 
 // Schema succeeds if value matches given JSON Schema.
@@ -162,10 +147,10 @@ func (v *Value) Path(path string) *Value {
 //	value := NewValue(t, data)
 //	value.Schema("http://example.com/schema.json")
 func (v *Value) Schema(schema interface{}) *Value {
-	v.chain.enter("Schema()")
-	defer v.chain.leave()
+	opChain := v.chain.enter("Schema()")
+	defer opChain.leave()
 
-	jsonSchema(v.chain, v.value, schema)
+	jsonSchema(opChain, v.value, schema)
 	return v
 }
 
@@ -179,27 +164,27 @@ func (v *Value) Schema(schema interface{}) *Value {
 //	value := NewValue(t, map[string]interface{}{"foo": 123})
 //	value.Object().ContainsKey("foo")
 func (v *Value) Object() *Object {
-	v.chain.enter("Object()")
-	defer v.chain.leave()
+	opChain := v.chain.enter("Object()")
+	defer opChain.leave()
 
-	if v.chain.failed() {
-		return newObject(v.chain, nil)
+	if opChain.failed() {
+		return newObject(opChain, nil)
 	}
 
 	data, ok := v.value.(map[string]interface{})
 
 	if !ok {
-		v.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{v.value},
 			Errors: []error{
 				errors.New("expected: value is map"),
 			},
 		})
-		return newObject(v.chain, nil)
+		return newObject(opChain, nil)
 	}
 
-	return newObject(v.chain, data)
+	return newObject(opChain, data)
 }
 
 // Array returns a new Array attached to underlying value.
@@ -212,27 +197,27 @@ func (v *Value) Object() *Object {
 //	value := NewValue(t, []interface{}{"foo", 123})
 //	value.Array().Elements("foo", 123)
 func (v *Value) Array() *Array {
-	v.chain.enter("Array()")
-	defer v.chain.leave()
+	opChain := v.chain.enter("Array()")
+	defer opChain.leave()
 
-	if v.chain.failed() {
-		return newArray(v.chain, nil)
+	if opChain.failed() {
+		return newArray(opChain, nil)
 	}
 
 	data, ok := v.value.([]interface{})
 
 	if !ok {
-		v.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{v.value},
 			Errors: []error{
 				errors.New("expected: value is array"),
 			},
 		})
-		return newArray(v.chain, nil)
+		return newArray(opChain, nil)
 	}
 
-	return newArray(v.chain, data)
+	return newArray(opChain, data)
 }
 
 // String returns a new String attached to underlying value.
@@ -245,27 +230,27 @@ func (v *Value) Array() *Array {
 //	value := NewValue(t, "foo")
 //	value.String().EqualFold("FOO")
 func (v *Value) String() *String {
-	v.chain.enter("String()")
-	defer v.chain.leave()
+	opChain := v.chain.enter("String()")
+	defer opChain.leave()
 
-	if v.chain.failed() {
-		return newString(v.chain, "")
+	if opChain.failed() {
+		return newString(opChain, "")
 	}
 
 	data, ok := v.value.(string)
 
 	if !ok {
-		v.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{v.value},
 			Errors: []error{
 				errors.New("expected: value is string"),
 			},
 		})
-		return newString(v.chain, "")
+		return newString(opChain, "")
 	}
 
-	return newString(v.chain, data)
+	return newString(opChain, data)
 }
 
 // Number returns a new Number attached to underlying value.
@@ -278,27 +263,27 @@ func (v *Value) String() *String {
 //	value := NewValue(t, 123)
 //	value.Number().InRange(100, 200)
 func (v *Value) Number() *Number {
-	v.chain.enter("Number()")
-	defer v.chain.leave()
+	opChain := v.chain.enter("Number()")
+	defer opChain.leave()
 
-	if v.chain.failed() {
-		return newNumber(v.chain, 0)
+	if opChain.failed() {
+		return newNumber(opChain, 0)
 	}
 
 	data, ok := v.value.(float64)
 
 	if !ok {
-		v.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{v.value},
 			Errors: []error{
 				errors.New("expected: value is number"),
 			},
 		})
-		return newNumber(v.chain, 0)
+		return newNumber(opChain, 0)
 	}
 
-	return newNumber(v.chain, data)
+	return newNumber(opChain, data)
 }
 
 // Boolean returns a new Boolean attached to underlying value.
@@ -311,27 +296,27 @@ func (v *Value) Number() *Number {
 //	value := NewValue(t, true)
 //	value.Boolean().True()
 func (v *Value) Boolean() *Boolean {
-	v.chain.enter("Boolean()")
-	defer v.chain.leave()
+	opChain := v.chain.enter("Boolean()")
+	defer opChain.leave()
 
-	if v.chain.failed() {
-		return newBoolean(v.chain, false)
+	if opChain.failed() {
+		return newBoolean(opChain, false)
 	}
 
 	data, ok := v.value.(bool)
 
 	if !ok {
-		v.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{v.value},
 			Errors: []error{
 				errors.New("expected: value is boolean"),
 			},
 		})
-		return newBoolean(v.chain, false)
+		return newBoolean(opChain, false)
 	}
 
-	return newBoolean(v.chain, data)
+	return newBoolean(opChain, data)
 }
 
 // Null succeeds if value is nil.
@@ -348,15 +333,15 @@ func (v *Value) Boolean() *Boolean {
 //	value := NewValue(t, []interface{}(nil))
 //	value.Null()
 func (v *Value) Null() *Value {
-	v.chain.enter("Null()")
-	defer v.chain.leave()
+	opChain := v.chain.enter("Null()")
+	defer opChain.leave()
 
-	if v.chain.failed() {
+	if opChain.failed() {
 		return v
 	}
 
 	if !(v.value == nil) {
-		v.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:   AssertNil,
 			Actual: &AssertionValue{v.value},
 			Errors: []error{
@@ -382,15 +367,15 @@ func (v *Value) Null() *Value {
 //	value := NewValue(t, make([]interface{}, 0)
 //	value.Null()
 func (v *Value) NotNull() *Value {
-	v.chain.enter("NotNull()")
-	defer v.chain.leave()
+	opChain := v.chain.enter("NotNull()")
+	defer opChain.leave()
 
-	if v.chain.failed() {
+	if opChain.failed() {
 		return v
 	}
 
 	if !(v.value != nil) {
-		v.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:   AssertNotNil,
 			Actual: &AssertionValue{v.value},
 			Errors: []error{
@@ -410,20 +395,20 @@ func (v *Value) NotNull() *Value {
 //	value := NewValue(t, "foo")
 //	value.Equal("foo")
 func (v *Value) Equal(value interface{}) *Value {
-	v.chain.enter("Equal()")
-	defer v.chain.leave()
+	opChain := v.chain.enter("Equal()")
+	defer opChain.leave()
 
-	if v.chain.failed() {
+	if opChain.failed() {
 		return v
 	}
 
-	expected, ok := canonValue(v.chain, value)
+	expected, ok := canonValue(opChain, value)
 	if !ok {
 		return v
 	}
 
 	if !reflect.DeepEqual(expected, v.value) {
-		v.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{v.value},
 			Expected: &AssertionValue{expected},
@@ -444,20 +429,20 @@ func (v *Value) Equal(value interface{}) *Value {
 //	value := NewValue(t, "foo")
 //	value.NorEqual("bar")
 func (v *Value) NotEqual(value interface{}) *Value {
-	v.chain.enter("NotEqual()")
-	defer v.chain.leave()
+	opChain := v.chain.enter("NotEqual()")
+	defer opChain.leave()
 
-	if v.chain.failed() {
+	if opChain.failed() {
 		return v
 	}
 
-	expected, ok := canonValue(v.chain, value)
+	expected, ok := canonValue(opChain, value)
 	if !ok {
 		return v
 	}
 
 	if reflect.DeepEqual(expected, v.value) {
-		v.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertNotEqual,
 			Actual:   &AssertionValue{v.value},
 			Expected: &AssertionValue{expected},

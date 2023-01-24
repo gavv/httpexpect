@@ -60,16 +60,16 @@ func NewWebsocketMessageC(
 func newWebsocketMessage(
 	parent *chain, typ int, content []byte, closeCode ...int,
 ) *WebsocketMessage {
-	m := newEmptyWebsocketMessage(parent)
+	wm := newEmptyWebsocketMessage(parent)
 
-	m.typ = typ
-	m.content = content
+	wm.typ = typ
+	wm.content = content
 
 	if len(closeCode) != 0 {
-		m.closeCode = closeCode[0]
+		wm.closeCode = closeCode[0]
 	}
 
-	return m
+	return wm
 }
 
 func newEmptyWebsocketMessage(parent *chain) *WebsocketMessage {
@@ -80,68 +80,68 @@ func newEmptyWebsocketMessage(parent *chain) *WebsocketMessage {
 
 // Raw returns underlying type, content and close code of WebSocket message.
 // Theses values are originally read from WebSocket connection.
-func (m *WebsocketMessage) Raw() (typ int, content []byte, closeCode int) {
-	return m.typ, m.content, m.closeCode
+func (wm *WebsocketMessage) Raw() (typ int, content []byte, closeCode int) {
+	return wm.typ, wm.content, wm.closeCode
 }
 
 // CloseMessage is a shorthand for m.Type(websocket.CloseMessage).
-func (m *WebsocketMessage) CloseMessage() *WebsocketMessage {
-	m.chain.enter("CloseMessage()")
-	defer m.chain.leave()
+func (wm *WebsocketMessage) CloseMessage() *WebsocketMessage {
+	opChain := wm.chain.enter("CloseMessage()")
+	defer opChain.leave()
 
-	m.checkType(websocket.CloseMessage)
+	wm.checkType(opChain, websocket.CloseMessage)
 
-	return m
+	return wm
 }
 
 // NotCloseMessage is a shorthand for m.NotType(websocket.CloseMessage).
-func (m *WebsocketMessage) NotCloseMessage() *WebsocketMessage {
-	m.chain.enter("NotCloseMessage()")
-	defer m.chain.leave()
+func (wm *WebsocketMessage) NotCloseMessage() *WebsocketMessage {
+	opChain := wm.chain.enter("NotCloseMessage()")
+	defer opChain.leave()
 
-	m.checkNotType(websocket.CloseMessage)
+	wm.checkNotType(opChain, websocket.CloseMessage)
 
-	return m
+	return wm
 }
 
 // BinaryMessage is a shorthand for m.Type(websocket.BinaryMessage).
-func (m *WebsocketMessage) BinaryMessage() *WebsocketMessage {
-	m.chain.enter("BinaryMessage()")
-	defer m.chain.leave()
+func (wm *WebsocketMessage) BinaryMessage() *WebsocketMessage {
+	opChain := wm.chain.enter("BinaryMessage()")
+	defer opChain.leave()
 
-	m.checkType(websocket.BinaryMessage)
+	wm.checkType(opChain, websocket.BinaryMessage)
 
-	return m
+	return wm
 }
 
 // NotBinaryMessage is a shorthand for m.NotType(websocket.BinaryMessage).
-func (m *WebsocketMessage) NotBinaryMessage() *WebsocketMessage {
-	m.chain.enter("NotBinaryMessage()")
-	defer m.chain.leave()
+func (wm *WebsocketMessage) NotBinaryMessage() *WebsocketMessage {
+	opChain := wm.chain.enter("NotBinaryMessage()")
+	defer opChain.leave()
 
-	m.checkNotType(websocket.BinaryMessage)
+	wm.checkNotType(opChain, websocket.BinaryMessage)
 
-	return m
+	return wm
 }
 
 // TextMessage is a shorthand for m.Type(websocket.TextMessage).
-func (m *WebsocketMessage) TextMessage() *WebsocketMessage {
-	m.chain.enter("TextMessage()")
-	defer m.chain.leave()
+func (wm *WebsocketMessage) TextMessage() *WebsocketMessage {
+	opChain := wm.chain.enter("TextMessage()")
+	defer opChain.leave()
 
-	m.checkType(websocket.TextMessage)
+	wm.checkType(opChain, websocket.TextMessage)
 
-	return m
+	return wm
 }
 
 // NotTextMessage is a shorthand for m.NotType(websocket.TextMessage).
-func (m *WebsocketMessage) NotTextMessage() *WebsocketMessage {
-	m.chain.enter("NotTextMessage()")
-	defer m.chain.leave()
+func (wm *WebsocketMessage) NotTextMessage() *WebsocketMessage {
+	opChain := wm.chain.enter("NotTextMessage()")
+	defer opChain.leave()
 
-	m.checkNotType(websocket.TextMessage)
+	wm.checkNotType(opChain, websocket.TextMessage)
 
-	return m
+	return wm
 }
 
 // Type succeeds if WebSocket message type is one of the given.
@@ -153,13 +153,13 @@ func (m *WebsocketMessage) NotTextMessage() *WebsocketMessage {
 //
 //	msg := conn.Expect()
 //	msg.Type(websocket.TextMessage, websocket.BinaryMessage)
-func (m *WebsocketMessage) Type(typ ...int) *WebsocketMessage {
-	m.chain.enter("Type()")
-	defer m.chain.leave()
+func (wm *WebsocketMessage) Type(typ ...int) *WebsocketMessage {
+	opChain := wm.chain.enter("Type()")
+	defer opChain.leave()
 
-	m.checkType(typ...)
+	wm.checkType(opChain, typ...)
 
-	return m
+	return wm
 }
 
 // NotType succeeds if WebSocket message type is none of the given.
@@ -171,22 +171,22 @@ func (m *WebsocketMessage) Type(typ ...int) *WebsocketMessage {
 //
 //	msg := conn.Expect()
 //	msg.NotType(websocket.CloseMessage, websocket.BinaryMessage)
-func (m *WebsocketMessage) NotType(typ ...int) *WebsocketMessage {
-	m.chain.enter("NotType()")
-	defer m.chain.leave()
+func (wm *WebsocketMessage) NotType(typ ...int) *WebsocketMessage {
+	opChain := wm.chain.enter("NotType()")
+	defer opChain.leave()
 
-	m.checkNotType(typ...)
+	wm.checkNotType(opChain, typ...)
 
-	return m
+	return wm
 }
 
-func (m *WebsocketMessage) checkType(typ ...int) {
-	if m.chain.failed() {
+func (wm *WebsocketMessage) checkType(opChain *chain, typ ...int) {
+	if opChain.failed() {
 		return
 	}
 
 	if len(typ) == 0 {
-		m.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
 				errors.New("missing type argument"),
@@ -197,7 +197,7 @@ func (m *WebsocketMessage) checkType(typ ...int) {
 
 	found := false
 	for _, t := range typ {
-		if t == m.typ {
+		if t == wm.typ {
 			found = true
 			break
 		}
@@ -205,18 +205,18 @@ func (m *WebsocketMessage) checkType(typ ...int) {
 
 	if !found {
 		if len(typ) == 1 {
-			m.chain.fail(AssertionFailure{
+			opChain.fail(AssertionFailure{
 				Type:     AssertEqual,
-				Actual:   &AssertionValue{wsMessageType(m.typ)},
+				Actual:   &AssertionValue{wsMessageType(wm.typ)},
 				Expected: &AssertionValue{wsMessageType(typ[0])},
 				Errors: []error{
 					errors.New("expected: message types are equal"),
 				},
 			})
 		} else {
-			m.chain.fail(AssertionFailure{
+			opChain.fail(AssertionFailure{
 				Type:     AssertBelongs,
-				Actual:   &AssertionValue{wsMessageType(m.typ)},
+				Actual:   &AssertionValue{wsMessageType(wm.typ)},
 				Expected: &AssertionValue{AssertionList(wsMessageTypes(typ))},
 				Errors: []error{
 					errors.New("expected: message type belongs to given list"),
@@ -226,13 +226,13 @@ func (m *WebsocketMessage) checkType(typ ...int) {
 	}
 }
 
-func (m *WebsocketMessage) checkNotType(typ ...int) {
-	if m.chain.failed() {
+func (wm *WebsocketMessage) checkNotType(opChain *chain, typ ...int) {
+	if opChain.failed() {
 		return
 	}
 
 	if len(typ) == 0 {
-		m.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
 				errors.New("missing type argument"),
@@ -243,7 +243,7 @@ func (m *WebsocketMessage) checkNotType(typ ...int) {
 
 	found := false
 	for _, t := range typ {
-		if t == m.typ {
+		if t == wm.typ {
 			found = true
 			break
 		}
@@ -251,18 +251,18 @@ func (m *WebsocketMessage) checkNotType(typ ...int) {
 
 	if found {
 		if len(typ) == 1 {
-			m.chain.fail(AssertionFailure{
+			opChain.fail(AssertionFailure{
 				Type:     AssertNotEqual,
-				Actual:   &AssertionValue{wsMessageType(m.typ)},
+				Actual:   &AssertionValue{wsMessageType(wm.typ)},
 				Expected: &AssertionValue{wsMessageType(typ[0])},
 				Errors: []error{
 					errors.New("expected: message types are non-equal"),
 				},
 			})
 		} else {
-			m.chain.fail(AssertionFailure{
+			opChain.fail(AssertionFailure{
 				Type:     AssertNotBelongs,
-				Actual:   &AssertionValue{wsMessageType(m.typ)},
+				Actual:   &AssertionValue{wsMessageType(wm.typ)},
 				Expected: &AssertionValue{AssertionList(wsMessageTypes(typ))},
 				Errors: []error{
 					errors.New("expected: message type does not belong to given list"),
@@ -283,39 +283,39 @@ func (m *WebsocketMessage) checkNotType(typ ...int) {
 //
 //	msg := conn.Expect().Closed()
 //	msg.Code(websocket.CloseNormalClosure, websocket.CloseGoingAway)
-func (m *WebsocketMessage) Code(code ...int) *WebsocketMessage {
-	m.chain.enter("Code()")
-	defer m.chain.leave()
+func (wm *WebsocketMessage) Code(code ...int) *WebsocketMessage {
+	opChain := wm.chain.enter("Code()")
+	defer opChain.leave()
 
-	if m.chain.failed() {
-		return m
+	if opChain.failed() {
+		return wm
 	}
 
 	if len(code) == 0 {
-		m.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
 				errors.New("missing code argument"),
 			},
 		})
-		return m
+		return wm
 	}
 
-	if m.typ != websocket.CloseMessage {
-		m.chain.fail(AssertionFailure{
+	if wm.typ != websocket.CloseMessage {
+		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
-			Actual:   &AssertionValue{wsMessageType(m.typ)},
+			Actual:   &AssertionValue{wsMessageType(wm.typ)},
 			Expected: &AssertionValue{wsMessageType(websocket.CloseMessage)},
 			Errors: []error{
 				errors.New("expected: close message"),
 			},
 		})
-		return m
+		return wm
 	}
 
 	found := false
 	for _, c := range code {
-		if c == m.closeCode {
+		if c == wm.closeCode {
 			found = true
 			break
 		}
@@ -323,18 +323,18 @@ func (m *WebsocketMessage) Code(code ...int) *WebsocketMessage {
 
 	if !found {
 		if len(code) == 1 {
-			m.chain.fail(AssertionFailure{
+			opChain.fail(AssertionFailure{
 				Type:     AssertEqual,
-				Actual:   &AssertionValue{wsCloseCode(m.closeCode)},
+				Actual:   &AssertionValue{wsCloseCode(wm.closeCode)},
 				Expected: &AssertionValue{wsCloseCode(code[0])},
 				Errors: []error{
 					errors.New("expected: close codes are equal"),
 				},
 			})
 		} else {
-			m.chain.fail(AssertionFailure{
+			opChain.fail(AssertionFailure{
 				Type:     AssertBelongs,
-				Actual:   &AssertionValue{wsCloseCode(m.closeCode)},
+				Actual:   &AssertionValue{wsCloseCode(wm.closeCode)},
 				Expected: &AssertionValue{AssertionList(wsCloseCodes(code))},
 				Errors: []error{
 					errors.New("expected: close code belongs to given list"),
@@ -343,7 +343,7 @@ func (m *WebsocketMessage) Code(code ...int) *WebsocketMessage {
 		}
 	}
 
-	return m
+	return wm
 }
 
 // NotCode succeeds if WebSocket close code is none of the given.
@@ -357,39 +357,39 @@ func (m *WebsocketMessage) Code(code ...int) *WebsocketMessage {
 //
 //	msg := conn.Expect().Closed()
 //	msg.NotCode(websocket.CloseAbnormalClosure, websocket.CloseNoStatusReceived)
-func (m *WebsocketMessage) NotCode(code ...int) *WebsocketMessage {
-	m.chain.enter("NotCode()")
-	defer m.chain.leave()
+func (wm *WebsocketMessage) NotCode(code ...int) *WebsocketMessage {
+	opChain := wm.chain.enter("NotCode()")
+	defer opChain.leave()
 
-	if m.chain.failed() {
-		return m
+	if opChain.failed() {
+		return wm
 	}
 
 	if len(code) == 0 {
-		m.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
 				errors.New("missing code argument"),
 			},
 		})
-		return m
+		return wm
 	}
 
-	if m.typ != websocket.CloseMessage {
-		m.chain.fail(AssertionFailure{
+	if wm.typ != websocket.CloseMessage {
+		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
-			Actual:   &AssertionValue{wsMessageType(m.typ)},
+			Actual:   &AssertionValue{wsMessageType(wm.typ)},
 			Expected: &AssertionValue{wsMessageType(websocket.CloseMessage)},
 			Errors: []error{
 				errors.New("expected: close message"),
 			},
 		})
-		return m
+		return wm
 	}
 
 	found := false
 	for _, c := range code {
-		if c == m.closeCode {
+		if c == wm.closeCode {
 			found = true
 			break
 		}
@@ -397,18 +397,18 @@ func (m *WebsocketMessage) NotCode(code ...int) *WebsocketMessage {
 
 	if found {
 		if len(code) == 1 {
-			m.chain.fail(AssertionFailure{
+			opChain.fail(AssertionFailure{
 				Type:     AssertNotEqual,
-				Actual:   &AssertionValue{wsCloseCode(m.closeCode)},
+				Actual:   &AssertionValue{wsCloseCode(wm.closeCode)},
 				Expected: &AssertionValue{wsCloseCode(code[0])},
 				Errors: []error{
 					errors.New("expected: close codes are non-equal"),
 				},
 			})
 		} else {
-			m.chain.fail(AssertionFailure{
+			opChain.fail(AssertionFailure{
 				Type:     AssertNotBelongs,
-				Actual:   &AssertionValue{wsCloseCode(m.closeCode)},
+				Actual:   &AssertionValue{wsCloseCode(wm.closeCode)},
 				Expected: &AssertionValue{AssertionList(wsCloseCodes(code))},
 				Errors: []error{
 					errors.New("expected: close code dose not belong to given list"),
@@ -417,7 +417,7 @@ func (m *WebsocketMessage) NotCode(code ...int) *WebsocketMessage {
 		}
 	}
 
-	return m
+	return wm
 }
 
 // Body returns a new String instance with WebSocket message content.
@@ -427,37 +427,37 @@ func (m *WebsocketMessage) NotCode(code ...int) *WebsocketMessage {
 //	msg := conn.Expect()
 //	msg.Body().NotEmpty()
 //	msg.Body().Length().Equal(100)
-func (m *WebsocketMessage) Body() *String {
-	m.chain.enter("Body()")
-	defer m.chain.leave()
+func (wm *WebsocketMessage) Body() *String {
+	opChain := wm.chain.enter("Body()")
+	defer opChain.leave()
 
-	if m.chain.failed() {
-		return newString(m.chain, "")
+	if opChain.failed() {
+		return newString(opChain, "")
 	}
 
-	return newString(m.chain, string(m.content))
+	return newString(opChain, string(wm.content))
 }
 
 // NoContent succeeds if WebSocket message has no content (is empty).
-func (m *WebsocketMessage) NoContent() *WebsocketMessage {
-	m.chain.enter("NoContent()")
-	defer m.chain.leave()
+func (wm *WebsocketMessage) NoContent() *WebsocketMessage {
+	opChain := wm.chain.enter("NoContent()")
+	defer opChain.leave()
 
-	if m.chain.failed() {
-		return m
+	if opChain.failed() {
+		return wm
 	}
 
-	if !(len(m.content) == 0) {
+	if !(len(wm.content) == 0) {
 		var actual interface{}
-		switch m.typ {
+		switch wm.typ {
 		case websocket.BinaryMessage:
-			actual = m.content
+			actual = wm.content
 
 		default:
-			actual = string(m.content)
+			actual = string(wm.content)
 		}
 
-		m.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:   AssertEmpty,
 			Actual: &AssertionValue{actual},
 			Errors: []error{
@@ -466,7 +466,7 @@ func (m *WebsocketMessage) NoContent() *WebsocketMessage {
 		})
 	}
 
-	return m
+	return wm
 }
 
 // JSON returns a new Value instance with JSON contents of WebSocket message.
@@ -477,29 +477,29 @@ func (m *WebsocketMessage) NoContent() *WebsocketMessage {
 //
 //	msg := conn.Expect()
 //	msg.JSON().Array().Elements("foo", "bar")
-func (m *WebsocketMessage) JSON() *Value {
-	m.chain.enter("JSON()")
-	defer m.chain.leave()
+func (wm *WebsocketMessage) JSON() *Value {
+	opChain := wm.chain.enter("JSON()")
+	defer opChain.leave()
 
-	if m.chain.failed() {
-		return newValue(m.chain, nil)
+	if opChain.failed() {
+		return newValue(opChain, nil)
 	}
 
 	var value interface{}
 
-	if err := json.Unmarshal(m.content, &value); err != nil {
-		m.chain.fail(AssertionFailure{
+	if err := json.Unmarshal(wm.content, &value); err != nil {
+		opChain.fail(AssertionFailure{
 			Type: AssertValid,
 			Actual: &AssertionValue{
-				string(m.content),
+				string(wm.content),
 			},
 			Errors: []error{
 				errors.New("failed to decode json"),
 				err,
 			},
 		})
-		return newValue(m.chain, nil)
+		return newValue(opChain, nil)
 	}
 
-	return newValue(m.chain, value)
+	return newValue(opChain, value)
 }

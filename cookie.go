@@ -34,13 +34,7 @@ func NewCookie(reporter Reporter, value *http.Cookie) *Cookie {
 // Requirements for config are same as for WithConfig function.
 // If value is nil, failure is reported.
 //
-// Example:
-//
-//	cookie := NewCookieC(config, &http.Cookie{...})
-//
-//	cookie.Domain().Equal("example.com")
-//	cookie.Path().Equal("/")
-//	cookie.Expires().InRange(time.Now(), time.Now().Add(time.Hour * 24))
+// See NewCookie for usage example.
 func NewCookieC(config Config, value *http.Cookie) *Cookie {
 	return newCookie(newChainWithConfig("Cookie()", config.withDefaults()), value)
 }
@@ -48,8 +42,11 @@ func NewCookieC(config Config, value *http.Cookie) *Cookie {
 func newCookie(parent *chain, val *http.Cookie) *Cookie {
 	c := &Cookie{chain: parent.clone(), value: nil}
 
+	opChain := c.chain.enter("")
+	defer opChain.leave()
+
 	if val == nil {
-		c.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:   AssertNotNil,
 			Actual: &AssertionValue{val},
 			Errors: []error{
@@ -81,14 +78,14 @@ func (c *Cookie) Raw() *http.Cookie {
 //	cookie := NewCookie(t, &http.Cookie{...})
 //	cookie.Name().Equal("session")
 func (c *Cookie) Name() *String {
-	c.chain.enter("Name()")
-	defer c.chain.leave()
+	opChain := c.chain.enter("Name()")
+	defer opChain.leave()
 
-	if c.chain.failed() {
-		return newString(c.chain, "")
+	if opChain.failed() {
+		return newString(opChain, "")
 	}
 
-	return newString(c.chain, c.value.Name)
+	return newString(opChain, c.value.Name)
 }
 
 // Value returns a new String instance with cookie value.
@@ -98,14 +95,14 @@ func (c *Cookie) Name() *String {
 //	cookie := NewCookie(t, &http.Cookie{...})
 //	cookie.Value().Equal("gH6z7Y")
 func (c *Cookie) Value() *String {
-	c.chain.enter("Value()")
-	defer c.chain.leave()
+	opChain := c.chain.enter("Value()")
+	defer opChain.leave()
 
-	if c.chain.failed() {
-		return newString(c.chain, "")
+	if opChain.failed() {
+		return newString(opChain, "")
 	}
 
-	return newString(c.chain, c.value.Value)
+	return newString(opChain, c.value.Value)
 }
 
 // Domain returns a new String instance with cookie domain.
@@ -115,14 +112,14 @@ func (c *Cookie) Value() *String {
 //	cookie := NewCookie(t, &http.Cookie{...})
 //	cookie.Domain().Equal("example.com")
 func (c *Cookie) Domain() *String {
-	c.chain.enter("Domain()")
-	defer c.chain.leave()
+	opChain := c.chain.enter("Domain()")
+	defer opChain.leave()
 
-	if c.chain.failed() {
-		return newString(c.chain, "")
+	if opChain.failed() {
+		return newString(opChain, "")
 	}
 
-	return newString(c.chain, c.value.Domain)
+	return newString(opChain, c.value.Domain)
 }
 
 // Path returns a new String instance with cookie path.
@@ -132,14 +129,14 @@ func (c *Cookie) Domain() *String {
 //	cookie := NewCookie(t, &http.Cookie{...})
 //	cookie.Path().Equal("/foo")
 func (c *Cookie) Path() *String {
-	c.chain.enter("Path()")
-	defer c.chain.leave()
+	opChain := c.chain.enter("Path()")
+	defer opChain.leave()
 
-	if c.chain.failed() {
-		return newString(c.chain, "")
+	if opChain.failed() {
+		return newString(opChain, "")
 	}
 
-	return newString(c.chain, c.value.Path)
+	return newString(opChain, c.value.Path)
 }
 
 // Expires returns a new DateTime instance with cookie expiration date.
@@ -149,14 +146,14 @@ func (c *Cookie) Path() *String {
 //	cookie := NewCookie(t, &http.Cookie{...})
 //	cookie.Expires().InRange(time.Now(), time.Now().Add(time.Hour * 24))
 func (c *Cookie) Expires() *DateTime {
-	c.chain.enter("Expires()")
-	defer c.chain.leave()
+	opChain := c.chain.enter("Expires()")
+	defer opChain.leave()
 
-	if c.chain.failed() {
-		return newDateTime(c.chain, time.Unix(0, 0))
+	if opChain.failed() {
+		return newDateTime(opChain, time.Unix(0, 0))
 	}
 
-	return newDateTime(c.chain, c.value.Expires)
+	return newDateTime(opChain, c.value.Expires)
 }
 
 // HaveMaxAge succeeds if cookie has Max-Age field.
@@ -169,15 +166,15 @@ func (c *Cookie) Expires() *DateTime {
 //	cookie := NewCookie(t, &http.Cookie{...})
 //	cookie.HaveMaxAge()
 func (c *Cookie) HaveMaxAge() *Cookie {
-	c.chain.enter("HaveMaxAge()")
-	defer c.chain.leave()
+	opChain := c.chain.enter("HaveMaxAge()")
+	defer opChain.leave()
 
-	if c.chain.failed() {
+	if opChain.failed() {
 		return c
 	}
 
 	if c.value.MaxAge == 0 {
-		c.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{c.value},
 			Errors: []error{
@@ -199,15 +196,15 @@ func (c *Cookie) HaveMaxAge() *Cookie {
 //	cookie := NewCookie(t, &http.Cookie{...})
 //	cookie.NotHaveMaxAge()
 func (c *Cookie) NotHaveMaxAge() *Cookie {
-	c.chain.enter("NotHaveMaxAge()")
-	defer c.chain.leave()
+	opChain := c.chain.enter("NotHaveMaxAge()")
+	defer opChain.leave()
 
-	if c.chain.failed() {
+	if opChain.failed() {
 		return c
 	}
 
 	if c.value.MaxAge != 0 {
-		c.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:   AssertNotValid,
 			Actual: &AssertionValue{c.value},
 			Errors: []error{
@@ -232,26 +229,25 @@ func (c *Cookie) NotHaveMaxAge() *Cookie {
 //	cookie.HaveMaxAge()
 //	cookie.MaxAge().InRange(time.Minute, time.Minute*10)
 func (c *Cookie) MaxAge() *Duration {
-	c.chain.enter("MaxAge()")
-	defer c.chain.leave()
+	opChain := c.chain.enter("MaxAge()")
+	defer opChain.leave()
 
-	if c.chain.failed() {
-		return newDuration(c.chain, nil)
+	if opChain.failed() {
+		return newDuration(opChain, nil)
 	}
 
 	switch {
 	case c.value.MaxAge == 0: // zero value means not present
 		// TODO: after removing Duration.IsSet, add failure here (breaking change)
 		_ = (*Duration).IsSet
-
-		return newDuration(c.chain, nil)
+		return newDuration(opChain, nil)
 
 	case c.value.MaxAge < 0: // negative value means present and zero
 		age := time.Duration(0)
-		return newDuration(c.chain, &age)
+		return newDuration(opChain, &age)
 
 	default:
 		age := time.Duration(c.value.MaxAge) * time.Second
-		return newDuration(c.chain, &age)
+		return newDuration(opChain, &age)
 	}
 }

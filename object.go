@@ -34,7 +34,7 @@ func NewObject(reporter Reporter, value map[string]interface{}) *Object {
 //
 // Example:
 //
-//	object := NewObjectC(config, map[string]interface{}{"foo":123})
+//	object := NewObjectC(config, map[string]interface{}{"foo": 123})
 func NewObjectC(config Config, value map[string]interface{}) *Object {
 	return newObject(newChainWithConfig("Object()", config.withDefaults()), value)
 }
@@ -42,8 +42,11 @@ func NewObjectC(config Config, value map[string]interface{}) *Object {
 func newObject(parent *chain, val map[string]interface{}) *Object {
 	o := &Object{chain: parent.clone(), value: nil}
 
+	opChain := o.chain.enter("")
+	defer opChain.leave()
+
 	if val == nil {
-		o.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:   AssertNotNil,
 			Actual: &AssertionValue{val},
 			Errors: []error{
@@ -51,7 +54,7 @@ func newObject(parent *chain, val map[string]interface{}) *Object {
 			},
 		})
 	} else {
-		o.value, _ = canonMap(o.chain, val)
+		o.value, _ = canonMap(opChain, val)
 	}
 
 	return o
@@ -68,20 +71,65 @@ func (o *Object) Raw() map[string]interface{} {
 	return o.value
 }
 
+// Decode unmarshals the underlying value attached to the Object to a target variable
+// target should be one of this:
+//
+// - pointer to an empty interface
+// - pointer to a map
+// - pointer to a struct
+//
+// Example:
+//
+//	type S struct{
+//		Foo int                    `json:"foo"`
+//		Bar []interface{}          `json:"bar"`
+//		Baz map[string]interface{} `json:"baz"`
+//		Bat struct{ a int }        `json:"bat"`
+//	}
+//
+//	m := map[string]interface{}{
+//		"foo": 123,
+//		"bar": []interface{}{"123", 234.0},
+//		"baz": map[string]interface{}{
+//			"a": "b",
+//		},
+//		"bat": struct{ a int }{0},
+//	}
+//
+//	value := NewObject(t, value)
+//
+//	var target S
+//	value.Decode(&target)
+//
+//	assert.Equal(t, S{123,[]interface{}{"123", 234.0},
+//		map[string]interface{}{"a": "b"}, struct{ a int }{0},
+//	}, target)
+func (o *Object) Decode(target interface{}) *Object {
+	opChain := o.chain.enter("Decode()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return o
+	}
+
+	canonDecode(opChain, o.value, target)
+	return o
+}
+
 // Path is similar to Value.Path.
 func (o *Object) Path(path string) *Value {
-	o.chain.enter("Path(%q)", path)
-	defer o.chain.leave()
+	opChain := o.chain.enter("Path(%q)", path)
+	defer opChain.leave()
 
-	return jsonPath(o.chain, o.value, path)
+	return jsonPath(opChain, o.value, path)
 }
 
 // Schema is similar to Value.Schema.
 func (o *Object) Schema(schema interface{}) *Object {
-	o.chain.enter("Schema()")
-	defer o.chain.leave()
+	opChain := o.chain.enter("Schema()")
+	defer opChain.leave()
 
-	jsonSchema(o.chain, o.value, schema)
+	jsonSchema(opChain, o.value, schema)
 	return o
 }
 
@@ -93,11 +141,11 @@ func (o *Object) Schema(schema interface{}) *Object {
 //	object := NewObject(t, map[string]interface{}{"foo": 123, "bar": 456})
 //	object.Keys().ContainsOnly("foo", "bar")
 func (o *Object) Keys() *Array {
-	o.chain.enter("Keys()")
-	defer o.chain.leave()
+	opChain := o.chain.enter("Keys()")
+	defer opChain.leave()
 
-	if o.chain.failed() {
-		return newArray(o.chain, nil)
+	if opChain.failed() {
+		return newArray(opChain, nil)
 	}
 
 	keys := []interface{}{}
@@ -105,7 +153,7 @@ func (o *Object) Keys() *Array {
 		keys = append(keys, kv.key)
 	}
 
-	return newArray(o.chain, keys)
+	return newArray(opChain, keys)
 }
 
 // Values returns a new Array instance with object's values.
@@ -116,11 +164,11 @@ func (o *Object) Keys() *Array {
 //	object := NewObject(t, map[string]interface{}{"foo": 123, "bar": 456})
 //	object.Values().ContainsOnly(123, 456)
 func (o *Object) Values() *Array {
-	o.chain.enter("Values()")
-	defer o.chain.leave()
+	opChain := o.chain.enter("Values()")
+	defer opChain.leave()
 
-	if o.chain.failed() {
-		return newArray(o.chain, nil)
+	if opChain.failed() {
+		return newArray(opChain, nil)
 	}
 
 	values := []interface{}{}
@@ -128,7 +176,7 @@ func (o *Object) Values() *Array {
 		values = append(values, kv.val)
 	}
 
-	return newArray(o.chain, values)
+	return newArray(opChain, values)
 }
 
 // Value returns a new Value instance with value for given key.
@@ -138,17 +186,17 @@ func (o *Object) Values() *Array {
 //	object := NewObject(t, map[string]interface{}{"foo": 123})
 //	object.Value("foo").Number().Equal(123)
 func (o *Object) Value(key string) *Value {
-	o.chain.enter("Value(%q)", key)
-	defer o.chain.leave()
+	opChain := o.chain.enter("Value(%q)", key)
+	defer opChain.leave()
 
-	if o.chain.failed() {
-		return newValue(o.chain, nil)
+	if opChain.failed() {
+		return newValue(opChain, nil)
 	}
 
 	value, ok := o.value[key]
 
 	if !ok {
-		o.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertContainsKey,
 			Actual:   &AssertionValue{o.value},
 			Expected: &AssertionValue{key},
@@ -156,10 +204,10 @@ func (o *Object) Value(key string) *Value {
 				errors.New("expected: map contains key"),
 			},
 		})
-		return newValue(o.chain, nil)
+		return newValue(opChain, nil)
 	}
 
-	return newValue(o.chain, value)
+	return newValue(opChain, value)
 }
 
 // Iter returns a new map of Values attached to object elements.
@@ -173,23 +221,25 @@ func (o *Object) Value(key string) *Value {
 //	    value.Number().Equal(numbers[key])
 //	}
 func (o *Object) Iter() map[string]Value {
-	o.chain.enter("Iter()")
-	defer o.chain.leave()
+	opChain := o.chain.enter("Iter()")
+	defer opChain.leave()
 
-	if o.chain.failed() {
+	if opChain.failed() {
 		return map[string]Value{}
 	}
 
-	obj := make(map[string]Value)
+	ret := map[string]Value{}
 
 	for k, v := range o.value {
-		valueChain := o.chain.clone()
-		valueChain.replace("Iter[%q]", k)
+		func() {
+			valueChain := opChain.replace("Iter[%q]", k)
+			defer valueChain.leave()
 
-		obj[k] = *newValue(valueChain, v)
+			ret[k] = *newValue(valueChain, v)
+		}()
 	}
 
-	return obj
+	return ret
 }
 
 // Every runs the passed function for all the key value pairs in the object.
@@ -209,15 +259,15 @@ func (o *Object) Iter() map[string]Value {
 //	  value.String().NotEmpty()
 //	})
 func (o *Object) Every(fn func(key string, value *Value)) *Object {
-	o.chain.enter("Every()")
-	defer o.chain.leave()
+	opChain := o.chain.enter("Every()")
+	defer opChain.leave()
 
-	if o.chain.failed() {
+	if opChain.failed() {
 		return o
 	}
 
 	if fn == nil {
-		o.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
 				errors.New("unexpected nil function argument"),
@@ -226,21 +276,13 @@ func (o *Object) Every(fn func(key string, value *Value)) *Object {
 		return o
 	}
 
-	chainFailure := false
-
 	for _, kv := range o.sortedKV() {
-		valueChain := o.chain.clone()
-		valueChain.replace("Every[%q]", kv.key)
+		func() {
+			valueChain := opChain.replace("Every[%q]", kv.key)
+			defer valueChain.leave()
 
-		valueChain.setFailCallback(func() {
-			chainFailure = true
-		})
-
-		fn(kv.key, newValue(valueChain, kv.val))
-	}
-
-	if chainFailure {
-		o.chain.setFailed()
+			fn(kv.key, newValue(valueChain, kv.val))
+		}()
 	}
 
 	return o
@@ -271,42 +313,40 @@ func (o *Object) Every(fn func(key string, value *Value)) *Object {
 //	})
 //	filteredObject.Equal(map[string]interface{}{"qux":"quux"})	//succeeds
 func (o *Object) Filter(fn func(key string, value *Value) bool) *Object {
-	o.chain.enter("Filter()")
-	defer o.chain.leave()
+	opChain := o.chain.enter("Filter()")
+	defer opChain.leave()
 
-	if o.chain.failed() {
-		return newObject(o.chain, nil)
+	if opChain.failed() {
+		return newObject(opChain, nil)
 	}
 
 	if fn == nil {
-		o.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
 				errors.New("unexpected nil function argument"),
 			},
 		})
-		return newObject(o.chain, nil)
+		return newObject(opChain, nil)
 	}
 
-	filteredObject := make(map[string]interface{})
+	filteredObject := map[string]interface{}{}
 
 	for _, kv := range o.sortedKV() {
-		valueChain := o.chain.clone()
-		valueChain.replace("Filter[%q]", kv.key)
+		func() {
+			valueChain := opChain.replace("Filter[%q]", kv.key)
+			defer valueChain.leave()
 
-		valueChain.setSeverity(SeverityLog)
+			valueChain.setRoot()
+			valueChain.setSeverity(SeverityLog)
 
-		chainFailed := false
-		valueChain.setFailCallback(func() {
-			chainFailed = true
-		})
-
-		if fn(kv.key, newValue(valueChain, kv.val)) && !chainFailed {
-			filteredObject[kv.key] = kv.val
-		}
+			if fn(kv.key, newValue(valueChain, kv.val)) && !valueChain.treeFailed() {
+				filteredObject[kv.key] = kv.val
+			}
+		}()
 	}
 
-	return newObject(o.chain, filteredObject)
+	return newObject(opChain, filteredObject)
 }
 
 // Transform runs the passed function on all the Elements in the Object
@@ -323,31 +363,30 @@ func (o *Object) Filter(fn func(key string, value *Value) bool) *Object {
 //		})
 //	transformedObject.Equals([]interface{}{"x": "FOO", "y": "BAR"})
 func (o *Object) Transform(fn func(key string, value interface{}) interface{}) *Object {
-	o.chain.enter("Transform()")
-	defer o.chain.leave()
+	opChain := o.chain.enter("Transform()")
+	defer opChain.leave()
 
-	if o.chain.failed() {
-		return newObject(o.chain, nil)
+	if opChain.failed() {
+		return newObject(opChain, nil)
 	}
 
 	if fn == nil {
-		o.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
 				errors.New("unexpected nil function argument"),
 			},
 		})
-		return newObject(o.chain, nil)
+		return newObject(opChain, nil)
 	}
 
-	object := map[string]interface{}{}
+	transformedObject := map[string]interface{}{}
 
 	for _, kv := range o.sortedKV() {
-		transformedValue := fn(kv.key, kv.val)
-		object[kv.key] = transformedValue
+		transformedObject[kv.key] = fn(kv.key, kv.val)
 	}
 
-	return newObject(o.chain, object)
+	return newObject(opChain, transformedObject)
 }
 
 // Find accepts a function that returns a boolean, runs it over the object
@@ -375,40 +414,44 @@ func (o *Object) Transform(fn func(key string, value interface{}) interface{}) *
 //	})
 //	foundValue.Equal(101) // succeeds
 func (o *Object) Find(fn func(key string, value *Value) bool) *Value {
-	o.chain.enter("Find()")
-	defer o.chain.leave()
+	opChain := o.chain.enter("Find()")
+	defer opChain.leave()
 
-	if o.chain.failed() {
-		return newValue(o.chain, nil)
+	if opChain.failed() {
+		return newValue(opChain, nil)
 	}
 
 	if fn == nil {
-		o.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
 				errors.New("unexpected nil function argument"),
 			},
 		})
-		return newValue(o.chain, nil)
+		return newValue(opChain, nil)
 	}
 
 	for _, kv := range o.sortedKV() {
-		valueChain := o.chain.clone()
-		valueChain.replace("Find[%q]", kv.key)
+		found := false
 
-		valueChain.setSeverity(SeverityLog)
+		func() {
+			valueChain := opChain.replace("Find[%q]", kv.key)
+			defer valueChain.leave()
 
-		chainFailed := false
-		valueChain.setFailCallback(func() {
-			chainFailed = true
-		})
+			valueChain.setRoot()
+			valueChain.setSeverity(SeverityLog)
 
-		if fn(kv.key, newValue(valueChain, kv.val)) && !chainFailed {
-			return newValue(o.chain, kv.val)
+			if fn(kv.key, newValue(valueChain, kv.val)) && !valueChain.treeFailed() {
+				found = true
+			}
+		}()
+
+		if found {
+			return newValue(opChain, kv.val)
 		}
 	}
 
-	o.chain.fail(AssertionFailure{
+	opChain.fail(AssertionFailure{
 		Type:   AssertValid,
 		Actual: &AssertionValue{o.value},
 		Errors: []error{
@@ -416,7 +459,7 @@ func (o *Object) Find(fn func(key string, value *Value) bool) *Value {
 		},
 	})
 
-	return newValue(o.chain, nil)
+	return newValue(opChain, nil)
 }
 
 // FindAll accepts a function that returns a boolean, runs it over the object
@@ -447,15 +490,15 @@ func (o *Object) Find(fn func(key string, value *Value) bool) *Value {
 //	foundValues[0].Equal(101)
 //	foundValues[1].Equal(201)
 func (o *Object) FindAll(fn func(key string, value *Value) bool) []*Value {
-	o.chain.enter("FindAll()")
-	defer o.chain.leave()
+	opChain := o.chain.enter("FindAll()")
+	defer opChain.leave()
 
-	if o.chain.failed() {
+	if opChain.failed() {
 		return []*Value{}
 	}
 
 	if fn == nil {
-		o.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
 				errors.New("unexpected nil function argument"),
@@ -467,19 +510,17 @@ func (o *Object) FindAll(fn func(key string, value *Value) bool) []*Value {
 	foundValues := make([]*Value, 0, len(o.value))
 
 	for _, kv := range o.sortedKV() {
-		valueChain := o.chain.clone()
-		valueChain.replace("FindAll[%q]", kv.key)
+		func() {
+			valueChain := opChain.replace("FindAll[%q]", kv.key)
+			defer valueChain.leave()
 
-		valueChain.setSeverity(SeverityLog)
+			valueChain.setRoot()
+			valueChain.setSeverity(SeverityLog)
 
-		chainFailed := false
-		valueChain.setFailCallback(func() {
-			chainFailed = true
-		})
-
-		if fn(kv.key, newValue(valueChain, kv.val)) && !chainFailed {
-			foundValues = append(foundValues, newValue(o.chain, kv.val))
-		}
+			if fn(kv.key, newValue(valueChain, kv.val)) && !valueChain.treeFailed() {
+				foundValues = append(foundValues, newValue(opChain, kv.val))
+			}
+		}()
 	}
 
 	return foundValues
@@ -509,15 +550,15 @@ func (o *Object) FindAll(fn func(key string, value *Value) bool) []*Value {
 //		return num.Raw() > 100   // check element value
 //	}) // succeeds
 func (o *Object) NotFind(fn func(key string, value *Value) bool) *Object {
-	o.chain.enter("NotFind()")
-	defer o.chain.leave()
+	opChain := o.chain.enter("NotFind()")
+	defer opChain.leave()
 
-	if o.chain.failed() {
+	if opChain.failed() {
 		return o
 	}
 
 	if fn == nil {
-		o.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
 				errors.New("unexpected nil function argument"),
@@ -527,18 +568,22 @@ func (o *Object) NotFind(fn func(key string, value *Value) bool) *Object {
 	}
 
 	for _, kv := range o.sortedKV() {
-		valueChain := o.chain.clone()
-		valueChain.replace("NotFind[%q]", kv.key)
+		found := false
 
-		valueChain.setSeverity(SeverityLog)
+		func() {
+			valueChain := opChain.replace("NotFind[%q]", kv.key)
+			defer valueChain.leave()
 
-		chainFailed := false
-		valueChain.setFailCallback(func() {
-			chainFailed = true
-		})
+			valueChain.setRoot()
+			valueChain.setSeverity(SeverityLog)
 
-		if fn(kv.key, newValue(valueChain, kv.val)) && !chainFailed {
-			o.chain.fail(AssertionFailure{
+			if fn(kv.key, newValue(valueChain, kv.val)) && !valueChain.treeFailed() {
+				found = true
+			}
+		}()
+
+		if found {
+			opChain.fail(AssertionFailure{
 				Type:     AssertNotContainsElement,
 				Expected: &AssertionValue{kv.val},
 				Actual:   &AssertionValue{o.value},
@@ -561,15 +606,15 @@ func (o *Object) NotFind(fn func(key string, value *Value) bool) *Object {
 //	object := NewObject(t, map[string]interface{}{})
 //	object.Empty()
 func (o *Object) Empty() *Object {
-	o.chain.enter("Empty()")
-	defer o.chain.leave()
+	opChain := o.chain.enter("Empty()")
+	defer opChain.leave()
 
-	if o.chain.failed() {
+	if opChain.failed() {
 		return o
 	}
 
 	if !(len(o.value) == 0) {
-		o.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:   AssertEmpty,
 			Actual: &AssertionValue{o.value},
 			Errors: []error{
@@ -588,15 +633,15 @@ func (o *Object) Empty() *Object {
 //	object := NewObject(t, map[string]interface{}{"foo": 123})
 //	object.NotEmpty()
 func (o *Object) NotEmpty() *Object {
-	o.chain.enter("NotEmpty()")
-	defer o.chain.leave()
+	opChain := o.chain.enter("NotEmpty()")
+	defer opChain.leave()
 
-	if o.chain.failed() {
+	if opChain.failed() {
 		return o
 	}
 
-	if !(len(o.value) != 0) {
-		o.chain.fail(AssertionFailure{
+	if len(o.value) == 0 {
+		opChain.fail(AssertionFailure{
 			Type:   AssertNotEmpty,
 			Actual: &AssertionValue{o.value},
 			Errors: []error{
@@ -618,20 +663,20 @@ func (o *Object) NotEmpty() *Object {
 //	object := NewObject(t, map[string]interface{}{"foo": 123})
 //	object.Equal(map[string]interface{}{"foo": 123})
 func (o *Object) Equal(value interface{}) *Object {
-	o.chain.enter("Equal()")
-	defer o.chain.leave()
+	opChain := o.chain.enter("Equal()")
+	defer opChain.leave()
 
-	if o.chain.failed() {
+	if opChain.failed() {
 		return o
 	}
 
-	expected, ok := canonMap(o.chain, value)
+	expected, ok := canonMap(opChain, value)
 	if !ok {
 		return o
 	}
 
 	if !reflect.DeepEqual(expected, o.value) {
-		o.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{o.value},
 			Expected: &AssertionValue{expected},
@@ -654,20 +699,20 @@ func (o *Object) Equal(value interface{}) *Object {
 //	object := NewObject(t, map[string]interface{}{"foo": 123})
 //	object.Equal(map[string]interface{}{"bar": 123})
 func (o *Object) NotEqual(value interface{}) *Object {
-	o.chain.enter("NotEqual()")
-	defer o.chain.leave()
+	opChain := o.chain.enter("NotEqual()")
+	defer opChain.leave()
 
-	if o.chain.failed() {
+	if opChain.failed() {
 		return o
 	}
 
-	expected, ok := canonMap(o.chain, value)
+	expected, ok := canonMap(opChain, value)
 	if !ok {
 		return o
 	}
 
 	if reflect.DeepEqual(expected, o.value) {
-		o.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertNotEqual,
 			Actual:   &AssertionValue{o.value},
 			Expected: &AssertionValue{expected},
@@ -687,15 +732,15 @@ func (o *Object) NotEqual(value interface{}) *Object {
 //	object := NewObject(t, map[string]interface{}{"foo": 123})
 //	object.ContainsKey("foo")
 func (o *Object) ContainsKey(key string) *Object {
-	o.chain.enter("ContainsKey()")
-	defer o.chain.leave()
+	opChain := o.chain.enter("ContainsKey()")
+	defer opChain.leave()
 
-	if o.chain.failed() {
+	if opChain.failed() {
 		return o
 	}
 
-	if !o.containsKey(key) {
-		o.chain.fail(AssertionFailure{
+	if !containsKey(opChain, o.value, key) {
+		opChain.fail(AssertionFailure{
 			Type:     AssertContainsKey,
 			Actual:   &AssertionValue{o.value},
 			Expected: &AssertionValue{key},
@@ -715,15 +760,15 @@ func (o *Object) ContainsKey(key string) *Object {
 //	object := NewObject(t, map[string]interface{}{"foo": 123})
 //	object.NotContainsKey("bar")
 func (o *Object) NotContainsKey(key string) *Object {
-	o.chain.enter("NotContainsKey()")
-	defer o.chain.leave()
+	opChain := o.chain.enter("NotContainsKey()")
+	defer opChain.leave()
 
-	if o.chain.failed() {
+	if opChain.failed() {
 		return o
 	}
 
-	if o.containsKey(key) {
-		o.chain.fail(AssertionFailure{
+	if containsKey(opChain, o.value, key) {
+		opChain.fail(AssertionFailure{
 			Type:     AssertNotContainsKey,
 			Actual:   &AssertionValue{o.value},
 			Expected: &AssertionValue{key},
@@ -744,15 +789,15 @@ func (o *Object) NotContainsKey(key string) *Object {
 //	object := NewObject(t, map[string]interface{}{"foo": 123})
 //	object.ContainsValue(123)
 func (o *Object) ContainsValue(value interface{}) *Object {
-	o.chain.enter("ContainsValue()")
-	defer o.chain.leave()
+	opChain := o.chain.enter("ContainsValue()")
+	defer opChain.leave()
 
-	if o.chain.failed() {
+	if opChain.failed() {
 		return o
 	}
 
-	if _, ok := o.containsValue(value); !ok {
-		o.chain.fail(AssertionFailure{
+	if _, ok := containsValue(opChain, o.value, value); !ok {
+		opChain.fail(AssertionFailure{
 			Type:     AssertContainsElement,
 			Actual:   &AssertionValue{o.value},
 			Expected: &AssertionValue{value},
@@ -773,15 +818,15 @@ func (o *Object) ContainsValue(value interface{}) *Object {
 //	object := NewObject(t, map[string]interface{}{"foo": 123})
 //	object.NotContainsValue(456)
 func (o *Object) NotContainsValue(value interface{}) *Object {
-	o.chain.enter("NotContainsValue()")
-	defer o.chain.leave()
+	opChain := o.chain.enter("NotContainsValue()")
+	defer opChain.leave()
 
-	if o.chain.failed() {
+	if opChain.failed() {
 		return o
 	}
 
-	if key, ok := o.containsValue(value); ok {
-		o.chain.fail(AssertionFailure{
+	if key, ok := containsValue(opChain, o.value, value); ok {
+		opChain.fail(AssertionFailure{
 			Type:     AssertNotContainsElement,
 			Actual:   &AssertionValue{o.value},
 			Expected: &AssertionValue{value},
@@ -827,15 +872,15 @@ func (o *Object) NotContainsValue(value interface{}) *Object {
 //	    "bar": []interface{}{"x"},
 //	})
 func (o *Object) ContainsSubset(value interface{}) *Object {
-	o.chain.enter("ContainsSubset()")
-	defer o.chain.leave()
+	opChain := o.chain.enter("ContainsSubset()")
+	defer opChain.leave()
 
-	if o.chain.failed() {
+	if opChain.failed() {
 		return o
 	}
 
-	if !o.containsSubset(value) {
-		o.chain.fail(AssertionFailure{
+	if !containsSubset(opChain, o.value, value) {
+		opChain.fail(AssertionFailure{
 			Type:     AssertContainsSubset,
 			Actual:   &AssertionValue{o.value},
 			Expected: &AssertionValue{value},
@@ -858,15 +903,15 @@ func (o *Object) ContainsSubset(value interface{}) *Object {
 //	object := NewObject(t, map[string]interface{}{"foo": 123, "bar": 456})
 //	object.NotContainsSubset(map[string]interface{}{"foo": 123, "bar": "no-no-no"})
 func (o *Object) NotContainsSubset(value interface{}) *Object {
-	o.chain.enter("NotContainsSubset()")
-	defer o.chain.leave()
+	opChain := o.chain.enter("NotContainsSubset()")
+	defer opChain.leave()
 
-	if o.chain.failed() {
+	if opChain.failed() {
 		return o
 	}
 
-	if o.containsSubset(value) {
-		o.chain.fail(AssertionFailure{
+	if containsSubset(opChain, o.value, value) {
+		opChain.fail(AssertionFailure{
 			Type:     AssertNotContainsSubset,
 			Actual:   &AssertionValue{o.value},
 			Expected: &AssertionValue{value},
@@ -899,15 +944,15 @@ func (o *Object) NotContainsMap(value interface{}) *Object {
 //	object := NewObject(t, map[string]interface{}{"foo": 123})
 //	object.ValueEqual("foo", 123)
 func (o *Object) ValueEqual(key string, value interface{}) *Object {
-	o.chain.enter("ValueEqual(%q)", key)
-	defer o.chain.leave()
+	opChain := o.chain.enter("ValueEqual(%q)", key)
+	defer opChain.leave()
 
-	if o.chain.failed() {
+	if opChain.failed() {
 		return o
 	}
 
-	if !o.containsKey(key) {
-		o.chain.fail(AssertionFailure{
+	if !containsKey(opChain, o.value, key) {
+		opChain.fail(AssertionFailure{
 			Type:     AssertContainsKey,
 			Actual:   &AssertionValue{o.value},
 			Expected: &AssertionValue{key},
@@ -918,13 +963,13 @@ func (o *Object) ValueEqual(key string, value interface{}) *Object {
 		return o
 	}
 
-	expected, ok := canonValue(o.chain, value)
+	expected, ok := canonValue(opChain, value)
 	if !ok {
 		return o
 	}
 
 	if !reflect.DeepEqual(expected, o.value[key]) {
-		o.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{o.value[key]},
 			Expected: &AssertionValue{value},
@@ -953,15 +998,15 @@ func (o *Object) ValueEqual(key string, value interface{}) *Object {
 //	object.NotValueEqual("foo", "bad value")  // success
 //	object.NotValueEqual("bar", "bad value")  // failure! (key is missing)
 func (o *Object) NotValueEqual(key string, value interface{}) *Object {
-	o.chain.enter("ValueNotEqual(%q)", key)
-	defer o.chain.leave()
+	opChain := o.chain.enter("ValueNotEqual(%q)", key)
+	defer opChain.leave()
 
-	if o.chain.failed() {
+	if opChain.failed() {
 		return o
 	}
 
-	if !o.containsKey(key) {
-		o.chain.fail(AssertionFailure{
+	if !containsKey(opChain, o.value, key) {
+		opChain.fail(AssertionFailure{
 			Type:     AssertContainsKey,
 			Actual:   &AssertionValue{o.value},
 			Expected: &AssertionValue{key},
@@ -972,13 +1017,13 @@ func (o *Object) NotValueEqual(key string, value interface{}) *Object {
 		return o
 	}
 
-	expected, ok := canonValue(o.chain, value)
+	expected, ok := canonValue(opChain, value)
 	if !ok {
 		return o
 	}
 
 	if reflect.DeepEqual(expected, o.value[key]) {
-		o.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertNotEqual,
 			Actual:   &AssertionValue{o.value[key]},
 			Expected: &AssertionValue{value},
@@ -1006,60 +1051,77 @@ type kv struct {
 
 func (o *Object) sortedKV() []kv {
 	kvs := make([]kv, 0, len(o.value))
+
 	for key, val := range o.value {
 		kvs = append(kvs, kv{key: key, val: val})
 	}
-	sort.Slice(kvs, func(i, j int) bool { return kvs[i].key < kvs[j].key })
+
+	sort.Slice(kvs, func(i, j int) bool {
+		return kvs[i].key < kvs[j].key
+	})
+
 	return kvs
 }
 
-func (o *Object) containsKey(arg string) bool {
-	for k := range o.value {
-		if k == arg {
+func containsKey(
+	opChain *chain, obj map[string]interface{}, key string,
+) bool {
+	for k := range obj {
+		if k == key {
 			return true
 		}
 	}
 	return false
 }
 
-func (o *Object) containsValue(arg interface{}) (string, bool) {
-	value, ok := canonValue(o.chain, arg)
+func containsValue(
+	opChain *chain, obj map[string]interface{}, val interface{},
+) (string, bool) {
+	canonVal, ok := canonValue(opChain, val)
 	if !ok {
 		return "", false
 	}
-	for k, v := range o.value {
-		if reflect.DeepEqual(value, v) {
+
+	for k, v := range obj {
+		if reflect.DeepEqual(canonVal, v) {
 			return k, true
 		}
 	}
+
 	return "", false
 }
 
-func (o *Object) containsSubset(arg interface{}) bool {
-	value, ok := canonMap(o.chain, arg)
+func containsSubset(
+	opChain *chain, obj map[string]interface{}, val interface{},
+) bool {
+	canonVal, ok := canonMap(opChain, val)
 	if !ok {
 		return false
 	}
-	return checkSubset(o.value, value)
+
+	return isSubset(obj, canonVal)
 }
 
-func checkSubset(outer, inner map[string]interface{}) bool {
+func isSubset(outer, inner map[string]interface{}) bool {
 	for k, iv := range inner {
 		ov, ok := outer[k]
 		if !ok {
 			return false
 		}
+
 		if ovm, ok := ov.(map[string]interface{}); ok {
 			if ivm, ok := iv.(map[string]interface{}); ok {
-				if !checkSubset(ovm, ivm) {
+				if !isSubset(ovm, ivm) {
 					return false
 				}
 				continue
 			}
 		}
+
 		if !reflect.DeepEqual(ov, iv) {
 			return false
 		}
 	}
+
 	return true
 }
