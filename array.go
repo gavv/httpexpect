@@ -96,14 +96,14 @@ func (a *Array) Raw() []interface{} {
 //
 //	assert.Equal(t, []S{{123}, {456}}, target)
 func (a *Array) Decode(target interface{}) *Array {
-	a.chain.enter("Decode()")
-	defer a.chain.leave()
+	opChain := a.chain.enter("Decode()")
+	defer opChain.leave()
 
-	if a.chain.failed() {
+	if opChain.failed() {
 		return a
 	}
 
-	canonDecode(a.chain, a.value, target)
+	canonDecode(opChain, a.value, target)
 	return a
 }
 

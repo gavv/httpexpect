@@ -128,8 +128,9 @@ func TestCanon_Map(t *testing.T) {
 }
 
 func TestCannon_Decode(t *testing.T) {
-	t.Run("target is nill", func(t *testing.T) {
-		chain := newMockChain(t)
+	t.Run("target is nil", func(t *testing.T) {
+		chain := newMockChain(t).enter("test")
+		defer chain.leave()
 
 		canonDecode(chain, 123, nil)
 
@@ -137,7 +138,8 @@ func TestCannon_Decode(t *testing.T) {
 	})
 
 	t.Run("value is not marshallable", func(t *testing.T) {
-		chain := newMockChain(t)
+		chain := newMockChain(t).enter("test")
+		defer chain.leave()
 
 		type S struct {
 			MyFunc func() string
@@ -154,7 +156,8 @@ func TestCannon_Decode(t *testing.T) {
 	})
 
 	t.Run("value is not unmarshallable into target", func(t *testing.T) {
-		chain := newMockChain(t)
+		chain := newMockChain(t).enter("test")
+		defer chain.leave()
 
 		var target int
 		canonDecode(chain, true, target)

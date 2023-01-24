@@ -64,14 +64,14 @@ func (b *Boolean) Raw() bool {
 //
 //	assert.Equal(t, true, target)
 func (b *Boolean) Decode(target interface{}) *Boolean {
-	b.chain.enter("Decode()")
-	defer b.chain.leave()
+	opChain := b.chain.enter("Decode()")
+	defer opChain.leave()
 
-	if b.chain.failed() {
+	if opChain.failed() {
 		return b
 	}
 
-	canonDecode(b.chain, b.value, target)
+	canonDecode(opChain, b.value, target)
 	return b
 }
 

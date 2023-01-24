@@ -105,14 +105,14 @@ func (o *Object) Raw() map[string]interface{} {
 //		map[string]interface{}{"a": "b"}, struct{ a int }{0},
 //	}, target)
 func (o *Object) Decode(target interface{}) *Object {
-	o.chain.enter("Decode()")
-	defer o.chain.leave()
+	opChain := o.chain.enter("Decode()")
+	defer opChain.leave()
 
-	if o.chain.failed() {
+	if opChain.failed() {
 		return o
 	}
 
-	canonDecode(o.chain, o.value, target)
+	canonDecode(opChain, o.value, target)
 	return o
 }
 

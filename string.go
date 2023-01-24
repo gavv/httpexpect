@@ -71,14 +71,14 @@ func (s *String) Raw() string {
 //
 //	assert.Equal(t, "foo", target)
 func (s *String) Decode(target interface{}) *String {
-	s.chain.enter("Decode()")
-	defer s.chain.leave()
+	opChain := s.chain.enter("Decode()")
+	defer opChain.leave()
 
-	if s.chain.failed() {
+	if opChain.failed() {
 		return s
 	}
 
-	canonDecode(s.chain, s.value, target)
+	canonDecode(opChain, s.value, target)
 	return s
 }
 

@@ -65,14 +65,14 @@ func (n *Number) Raw() float64 {
 //
 //	assert.Equal(t, 123, target)
 func (n *Number) Decode(target interface{}) *Number {
-	n.chain.enter("Decode()")
-	defer n.chain.leave()
+	opChain := n.chain.enter("Decode()")
+	defer opChain.leave()
 
-	if n.chain.failed() {
+	if opChain.failed() {
 		return n
 	}
 
-	canonDecode(n.chain, n.value, target)
+	canonDecode(opChain, n.value, target)
 	return n
 }
 
