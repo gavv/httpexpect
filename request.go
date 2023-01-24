@@ -51,9 +51,10 @@ type Request struct {
 	formbuf   *bytes.Buffer
 	multipart *multipart.Writer
 
-	bodySetter string
-	typeSetter string
-	forceType  bool
+	bodySetter   string
+	typeSetter   string
+	forceType    bool
+	expectCalled bool
 
 	wsUpgrade bool
 
@@ -203,6 +204,14 @@ func (r *Request) WithName(name string) *Request {
 	opChain := r.chain.enter("WithName()")
 	defer opChain.leave()
 
+	if opChain.failed() {
+		return r
+	}
+
+	if !r.checkOrder(opChain, "WithName()") {
+		return r
+	}
+
 	r.chain.setRequestName(name)
 
 	return r
@@ -223,6 +232,10 @@ func (r *Request) WithMatcher(matcher func(*Response)) *Request {
 	defer opChain.leave()
 
 	if opChain.failed() {
+		return r
+	}
+
+	if !r.checkOrder(opChain, "WithMatcher()") {
 		return r
 	}
 
@@ -253,6 +266,10 @@ func (r *Request) WithTransformer(transform func(*http.Request)) *Request {
 	defer opChain.leave()
 
 	if opChain.failed() {
+		return r
+	}
+
+	if !r.checkOrder(opChain, "WithTransformer()") {
 		return r
 	}
 
@@ -292,6 +309,10 @@ func (r *Request) WithClient(client Client) *Request {
 		return r
 	}
 
+	if !r.checkOrder(opChain, "WithClient()") {
+		return r
+	}
+
 	if client == nil {
 		opChain.fail(AssertionFailure{
 			Type: AssertUsage,
@@ -322,6 +343,10 @@ func (r *Request) WithHandler(handler http.Handler) *Request {
 	defer opChain.leave()
 
 	if opChain.failed() {
+		return r
+	}
+
+	if !r.checkOrder(opChain, "WithHandler()") {
 		return r
 	}
 
@@ -370,6 +395,10 @@ func (r *Request) WithContext(ctx context.Context) *Request {
 		return r
 	}
 
+	if !r.checkOrder(opChain, "WithContext()") {
+		return r
+	}
+
 	if ctx == nil {
 		opChain.fail(AssertionFailure{
 			Type: AssertUsage,
@@ -405,6 +434,10 @@ func (r *Request) WithTimeout(timeout time.Duration) *Request {
 	defer opChain.leave()
 
 	if opChain.failed() {
+		return r
+	}
+
+	if !r.checkOrder(opChain, "WithTimeout()") {
 		return r
 	}
 
@@ -473,6 +506,10 @@ func (r *Request) WithRedirectPolicy(policy RedirectPolicy) *Request {
 		return r
 	}
 
+	if !r.checkOrder(opChain, "WithRedirectPolicy()") {
+		return r
+	}
+
 	r.redirectPolicy = policy
 
 	return r
@@ -498,6 +535,10 @@ func (r *Request) WithMaxRedirects(maxRedirects int) *Request {
 	defer opChain.leave()
 
 	if opChain.failed() {
+		return r
+	}
+
+	if !r.checkOrder(opChain, "WithMaxRedirects()") {
 		return r
 	}
 
@@ -565,6 +606,10 @@ func (r *Request) WithRetryPolicy(policy RetryPolicy) *Request {
 		return r
 	}
 
+	if !r.checkOrder(opChain, "WithRetryPolicy()") {
+		return r
+	}
+
 	r.retryPolicy = policy
 
 	return r
@@ -590,6 +635,10 @@ func (r *Request) WithMaxRetries(maxRetries int) *Request {
 	defer opChain.leave()
 
 	if opChain.failed() {
+		return r
+	}
+
+	if !r.checkOrder(opChain, "WithMaxRetries()") {
 		return r
 	}
 
@@ -626,6 +675,10 @@ func (r *Request) WithRetryDelay(minDelay, maxDelay time.Duration) *Request {
 	defer opChain.leave()
 
 	if opChain.failed() {
+		return r
+	}
+
+	if !r.checkOrder(opChain, "WithRetryDelay()") {
 		return r
 	}
 
@@ -676,6 +729,10 @@ func (r *Request) WithWebsocketUpgrade() *Request {
 		return r
 	}
 
+	if !r.checkOrder(opChain, "WithWebsocketUpgrade()") {
+		return r
+	}
+
 	r.wsUpgrade = true
 
 	return r
@@ -700,6 +757,10 @@ func (r *Request) WithWebsocketDialer(dialer WebsocketDialer) *Request {
 	defer opChain.leave()
 
 	if opChain.failed() {
+		return r
+	}
+
+	if !r.checkOrder(opChain, "WithWebsocketDialer()") {
 		return r
 	}
 
@@ -736,6 +797,10 @@ func (r *Request) WithPath(key string, value interface{}) *Request {
 	defer opChain.leave()
 
 	if opChain.failed() {
+		return r
+	}
+
+	if !r.checkOrder(opChain, "WithPath()") {
 		return r
 	}
 
@@ -785,6 +850,10 @@ func (r *Request) WithPathObject(object interface{}) *Request {
 	defer opChain.leave()
 
 	if opChain.failed() {
+		return r
+	}
+
+	if !r.checkOrder(opChain, "WithPathObject()") {
 		return r
 	}
 
@@ -881,6 +950,10 @@ func (r *Request) WithQuery(key string, value interface{}) *Request {
 		return r
 	}
 
+	if !r.checkOrder(opChain, "WithQuery()") {
+		return r
+	}
+
 	if value == nil {
 		opChain.fail(AssertionFailure{
 			Type: AssertUsage,
@@ -926,6 +999,10 @@ func (r *Request) WithQueryObject(object interface{}) *Request {
 	defer opChain.leave()
 
 	if opChain.failed() {
+		return r
+	}
+
+	if !r.checkOrder(opChain, "WithQueryObject()") {
 		return r
 	}
 
@@ -991,6 +1068,10 @@ func (r *Request) WithQueryString(query string) *Request {
 		return r
 	}
 
+	if !r.checkOrder(opChain, "WithQueryString()") {
+		return r
+	}
+
 	v, err := url.ParseQuery(query)
 
 	if err != nil {
@@ -1033,6 +1114,10 @@ func (r *Request) WithURL(urlStr string) *Request {
 		return r
 	}
 
+	if !r.checkOrder(opChain, "WithURL()") {
+		return r
+	}
+
 	u, err := url.Parse(urlStr)
 	if err != nil {
 		opChain.fail(AssertionFailure{
@@ -1067,6 +1152,10 @@ func (r *Request) WithHeaders(headers map[string]string) *Request {
 		return r
 	}
 
+	if !r.checkOrder(opChain, "WithHeaders()") {
+		return r
+	}
+
 	for k, v := range headers {
 		r.withHeader(k, v)
 	}
@@ -1085,6 +1174,10 @@ func (r *Request) WithHeader(k, v string) *Request {
 	defer opChain.leave()
 
 	if opChain.failed() {
+		return r
+	}
+
+	if !r.checkOrder(opChain, "WithHeader()") {
 		return r
 	}
 
@@ -1128,6 +1221,10 @@ func (r *Request) WithCookies(cookies map[string]string) *Request {
 		return r
 	}
 
+	if !r.checkOrder(opChain, "WithCookies()") {
+		return r
+	}
+
 	for k, v := range cookies {
 		r.httpReq.AddCookie(&http.Cookie{
 			Name:  k,
@@ -1149,6 +1246,10 @@ func (r *Request) WithCookie(k, v string) *Request {
 	defer opChain.leave()
 
 	if opChain.failed() {
+		return r
+	}
+
+	if !r.checkOrder(opChain, "WithCookie()") {
 		return r
 	}
 
@@ -1178,6 +1279,10 @@ func (r *Request) WithBasicAuth(username, password string) *Request {
 		return r
 	}
 
+	if !r.checkOrder(opChain, "WithBasicAuth()") {
+		return r
+	}
+
 	r.httpReq.SetBasicAuth(username, password)
 
 	return r
@@ -1194,6 +1299,10 @@ func (r *Request) WithHost(host string) *Request {
 	defer opChain.leave()
 
 	if opChain.failed() {
+		return r
+	}
+
+	if !r.checkOrder(opChain, "WithHost()") {
 		return r
 	}
 
@@ -1215,6 +1324,10 @@ func (r *Request) WithProto(proto string) *Request {
 	defer opChain.leave()
 
 	if opChain.failed() {
+		return r
+	}
+
+	if !r.checkOrder(opChain, "WithProto()") {
 		return r
 	}
 
@@ -1261,6 +1374,9 @@ func (r *Request) WithChunked(reader io.Reader) *Request {
 		return r
 	}
 
+	if !r.checkOrder(opChain, "WithChunked()") {
+		return r
+	}
 	if !r.httpReq.ProtoAtLeast(1, 1) {
 		opChain.fail(AssertionFailure{
 			Type: AssertUsage,
@@ -1294,6 +1410,10 @@ func (r *Request) WithBytes(b []byte) *Request {
 		return r
 	}
 
+	if !r.checkOrder(opChain, "WithBytes()") {
+		return r
+	}
+
 	if b == nil {
 		r.setBody(opChain, "WithBytes()", nil, 0, false)
 	} else {
@@ -1315,6 +1435,10 @@ func (r *Request) WithText(s string) *Request {
 	defer opChain.leave()
 
 	if opChain.failed() {
+		return r
+	}
+
+	if !r.checkOrder(opChain, "WithText()") {
 		return r
 	}
 
@@ -1343,6 +1467,10 @@ func (r *Request) WithJSON(object interface{}) *Request {
 	defer opChain.leave()
 
 	if opChain.failed() {
+		return r
+	}
+
+	if !r.checkOrder(opChain, "WithJSON()") {
 		return r
 	}
 
@@ -1393,6 +1521,10 @@ func (r *Request) WithForm(object interface{}) *Request {
 	defer opChain.leave()
 
 	if opChain.failed() {
+		return r
+	}
+
+	if !r.checkOrder(opChain, "WithForm()") {
 		return r
 	}
 
@@ -1465,6 +1597,10 @@ func (r *Request) WithFormField(key string, value interface{}) *Request {
 		return r
 	}
 
+	if !r.checkOrder(opChain, "WithFormField()") {
+		return r
+	}
+
 	if r.multipart != nil {
 		r.setType(opChain, "WithFormField()", "multipart/form-data", false)
 
@@ -1519,6 +1655,10 @@ func (r *Request) WithFile(key, path string, reader ...io.Reader) *Request {
 		return r
 	}
 
+	if !r.checkOrder(opChain, "WithFile()") {
+		return r
+	}
+
 	if len(reader) > 1 {
 		opChain.fail(AssertionFailure{
 			Type: AssertUsage,
@@ -1550,6 +1690,10 @@ func (r *Request) WithFileBytes(key, path string, data []byte) *Request {
 	defer opChain.leave()
 
 	if opChain.failed() {
+		return r
+	}
+
+	if !r.checkOrder(opChain, "WithFileBytes()") {
 		return r
 	}
 
@@ -1641,6 +1785,10 @@ func (r *Request) WithMultipart() *Request {
 		return r
 	}
 
+	if !r.checkOrder(opChain, "WithMultipart()") {
+		return r
+	}
+
 	r.setType(opChain, "WithMultipart()", "multipart/form-data", false)
 
 	if r.multipart == nil {
@@ -1658,6 +1806,9 @@ func (r *Request) WithMultipart() *Request {
 // Request is sent using Client interface, or WebsocketDialer in case of
 // WebSocket request.
 //
+// After calling Expect, there should not be any more calls of Expect or
+// other WithXXX methods on the same Request instance.
+//
 // Example:
 //
 //	req := NewRequestC(config, "PUT", "http://example.com/path")
@@ -1667,6 +1818,20 @@ func (r *Request) WithMultipart() *Request {
 func (r *Request) Expect() *Response {
 	opChain := r.chain.enter("Expect()")
 	defer opChain.leave()
+
+	if opChain.failed() {
+		return newResponse(responseOpts{
+			config: r.config,
+			chain:  opChain,
+		})
+	}
+
+	if !r.checkOrder(opChain, "Expect") {
+		return newResponse(responseOpts{
+			config: r.config,
+			chain:  opChain,
+		})
+	}
 
 	resp := r.roundTrip(opChain)
 
@@ -1680,6 +1845,8 @@ func (r *Request) Expect() *Response {
 	for _, matcher := range r.matchers {
 		matcher(resp)
 	}
+
+	r.expectCalled = true
 
 	return resp
 }
@@ -2105,6 +2272,19 @@ func (r *Request) setBody(
 	}
 
 	r.bodySetter = setter
+}
+
+func (r *Request) checkOrder(opChain *chain, funcCall string) bool {
+	if r.expectCalled {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				fmt.Errorf("unexpected call to %s: Expect() has already been called", funcCall),
+			},
+		})
+		return false
+	}
+	return true
 }
 
 func concatPaths(a, b string) string {
