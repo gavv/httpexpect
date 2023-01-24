@@ -49,6 +49,33 @@ func (b *Boolean) Raw() bool {
 	return b.value
 }
 
+// Decode unmarshals the underlying value attached to the Boolean to a target variable.
+// target should be one of these:
+//
+// - pointer to an empty interface.
+//
+// - pointer to a boolean.
+//
+// Example:
+//
+//	value := NewBoolean(t, true)
+//
+//	var target bool
+//	value.Decode(&target)
+//
+//	assert.Equal(t, true, target)
+func (b *Boolean) Decode(target interface{}) *Boolean {
+	b.chain.enter("Decode()")
+	defer b.chain.leave()
+
+	if b.chain.failed() {
+		return b
+	}
+
+	canonDecode(b.chain, b.value, target)
+	return b
+}
+
 // Path is similar to Value.Path.
 func (b *Boolean) Path(path string) *Value {
 	b.chain.enter("Path(%q)", path)

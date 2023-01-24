@@ -15,6 +15,9 @@ func TestBoolean_Failed(t *testing.T) {
 	value.Path("$")
 	value.Schema("")
 
+	var target interface{}
+	value.Decode(&target)
+
 	value.Equal(false)
 	value.NotEqual(false)
 	value.True()
@@ -43,6 +46,52 @@ func TestBoolean_Constructors(t *testing.T) {
 		value := newBoolean(chain, true)
 		assert.NotSame(t, value.chain, &chain)
 		assert.Equal(t, value.chain.context.Path, chain.context.Path)
+	})
+}
+
+func TestBoolean_Decode(t *testing.T) {
+	t.Run("Decode into empty interface", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewBoolean(reporter, true)
+
+		var target interface{}
+		value.Decode(&target)
+
+		value.chain.assertNotFailed(t)
+		assert.Equal(t, true, target)
+	})
+
+	t.Run("Decode into boolean", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewBoolean(reporter, true)
+
+		var target bool
+		value.Decode(&target)
+
+		value.chain.assertNotFailed(t)
+		assert.Equal(t, true, target)
+	})
+
+	t.Run("Target is unmarshable", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewBoolean(reporter, true)
+
+		value.Decode(123)
+
+		value.chain.assertFailed(t)
+	})
+
+	t.Run("Target is nil", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewBoolean(reporter, true)
+
+		value.Decode(nil)
+
+		value.chain.assertFailed(t)
 	})
 }
 

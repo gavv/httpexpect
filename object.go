@@ -68,6 +68,53 @@ func (o *Object) Raw() map[string]interface{} {
 	return o.value
 }
 
+// Decode unmarshals the underlying value attached to the Object to a target variable
+// target should be one of this:
+//
+// - pointer to an empty interface
+//
+// - pointer to a map
+//
+// - pointer to a struct
+//
+// Example:
+//
+//	type S struct{
+//		Foo int                    `json:"foo"`
+//		Bar []interface{}          `json:"bar"`
+//		Baz map[string]interface{} `json:"baz"`
+//		Bat struct{ a int }        `json:"bat"`
+//	}
+//
+//	m := map[string]interface{}{
+//		"foo": 123,
+//		"bar": []interface{}{"123", 234.0},
+//		"baz": map[string]interface{}{
+//			"a": "b",
+//		},
+//		"bat": struct{ a int }{0},
+//	}
+//
+//	value := NewObject(t, value)
+//
+//	var target S
+//	value.Decode(&target)
+//
+//	assert.Equal(t, S{123,[]interface{}{"123", 234.0},
+//		map[string]interface{}{"a": "b"}, struct{ a int }{0},
+//	},target)
+func (o *Object) Decode(target interface{}) *Object {
+	o.chain.enter("Decode()")
+	defer o.chain.leave()
+
+	if o.chain.failed() {
+		return o
+	}
+
+	canonDecode(o.chain, o.value, target)
+	return o
+}
+
 // Path is similar to Value.Path.
 func (o *Object) Path(path string) *Value {
 	o.chain.enter("Path(%q)", path)

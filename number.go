@@ -50,6 +50,33 @@ func (n *Number) Raw() float64 {
 	return n.value
 }
 
+// Decode unmarshals the underlying value attached to the Number to a target variable.
+// target should be one of these:
+//
+// - pointer to empty interface.
+//
+// - pointer to any integer or floating type.
+//
+// Example:
+//
+//	value := NewNumber(t, 123)
+//
+//	var target interface{}
+//	valude.decode(&target)
+//
+//	assert.Equal(t, 123, target)
+func (n *Number) Decode(target interface{}) *Number {
+	n.chain.enter("Decode()")
+	defer n.chain.leave()
+
+	if n.chain.failed() {
+		return n
+	}
+
+	canonDecode(n.chain, n.value, target)
+	return n
+}
+
 // Path is similar to Value.Path.
 func (n *Number) Path(path string) *Value {
 	n.chain.enter("Path(%q)", path)
