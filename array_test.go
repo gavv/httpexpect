@@ -1290,3 +1290,287 @@ func TestArray_NotFind(t *testing.T) {
 		array.chain.assertFailed(t)
 	})
 }
+
+func TestArray_IsOrdered(t *testing.T) {
+	type args struct {
+		values      []interface{}
+		less        []func(x, y *Value) bool
+		chainFailed bool
+	}
+	tests := []struct {
+		name   string
+		args   args
+		wantOK bool
+	}{
+		{
+			name: "array boolean ordered",
+			args: args{
+				values: []interface{}{false, false, true, true},
+			},
+			wantOK: true,
+		},
+		{
+			name: "array number ordered",
+			args: args{
+				values: []interface{}{1, 1, 2, 3},
+			},
+			wantOK: true,
+		},
+		{
+			name: "array string ordered",
+			args: args{
+				values: []interface{}{"", "a", "b", "ba"},
+			},
+			wantOK: true,
+		},
+		{
+			name: "array of nil elements",
+			args: args{
+				values: []interface{}{nil, nil, nil},
+			},
+			wantOK: true,
+		},
+		{
+			name: "wrong order",
+			args: args{
+				values: []interface{}{3, 2, 1},
+			},
+			wantOK: false,
+		},
+		{
+			name: "user-defined less function",
+			args: args{
+				values: []interface{}{1, 2, 3},
+				less: []func(x, y *Value) bool{
+					func(x, y *Value) bool {
+						valX := x.Number().Raw()
+						valY := y.Number().Raw()
+						return valX < valY
+					},
+				},
+			},
+			wantOK: true,
+		},
+		{
+			name: "invalid - failed type assertion on less function",
+			args: args{
+				values: []interface{}{1, 2, 3},
+				less: []func(x, y *Value) bool{
+					func(x, y *Value) bool {
+						x.String()
+						y.String()
+						return false
+					},
+				},
+			},
+			wantOK: false,
+		},
+		{
+			name: "invalid - multiple less functions",
+			args: args{
+				values: []interface{}{1, 2, 3},
+				less: []func(x, y *Value) bool{
+					func(x, y *Value) bool {
+						return false
+					},
+					func(x, y *Value) bool {
+						return true
+					},
+				},
+			},
+			wantOK: false,
+		},
+		{
+			name: "invalid - data type not allowed",
+			args: args{
+				values: []interface{}{[]int{1, 2}, []int{3, 4}, []int{5, 6}},
+				less:   []func(x, y *Value) bool{},
+			},
+			wantOK: false,
+		},
+		{
+			name: "invalid - multiple data types found",
+			args: args{
+				values: []interface{}{1, "abc", true},
+				less:   []func(x, y *Value) bool{},
+			},
+			wantOK: false,
+		},
+		{
+			name: "empty array",
+			args: args{
+				values: []interface{}{},
+			},
+			wantOK: true,
+		},
+		{
+			name: "one element",
+			args: args{
+				values: []interface{}{1},
+			},
+			wantOK: true,
+		},
+		{
+			name: "chain has failed before",
+			args: args{
+				chainFailed: true,
+			},
+			wantOK: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reporter := newMockReporter(t)
+			a := NewArray(reporter, tt.args.values)
+			a.IsOrdered(tt.args.less...)
+			if tt.wantOK {
+				a.chain.assertNotFailed(t)
+			} else {
+				a.chain.assertFailed(t)
+			}
+			a.chain.clearFailed()
+		})
+	}
+}
+
+func TestArray_NotOrdered(t *testing.T) {
+	type args struct {
+		values      []interface{}
+		less        []func(x, y *Value) bool
+		chainFailed bool
+	}
+	tests := []struct {
+		name   string
+		args   args
+		wantOK bool
+	}{
+		{
+			name: "array boolean not ordered",
+			args: args{
+				values: []interface{}{true, true, false, false},
+			},
+			wantOK: true,
+		},
+		{
+			name: "array number not ordered",
+			args: args{
+				values: []interface{}{3, 1, 1, 2},
+			},
+			wantOK: true,
+		},
+		{
+			name: "array string not ordered",
+			args: args{
+				values: []interface{}{"z", "y", "x", ""},
+			},
+			wantOK: true,
+		},
+		{
+			name: "array of nil elements",
+			args: args{
+				values: []interface{}{nil, nil, nil},
+			},
+			wantOK: false,
+		},
+		{
+			name: "array ordered",
+			args: args{
+				values: []interface{}{1, 2, 3},
+			},
+			wantOK: false,
+		},
+		{
+			name: "user-defined less function",
+			args: args{
+				values: []interface{}{1, 2, 3},
+				less: []func(x, y *Value) bool{
+					func(x, y *Value) bool {
+						valX := x.Number().Raw()
+						valY := y.Number().Raw()
+						return valX >= valY
+					},
+				},
+			},
+			wantOK: true,
+		},
+		{
+			name: "invalid - failed type assertion on less function",
+			args: args{
+				values: []interface{}{1, 2},
+				less: []func(x, y *Value) bool{
+					func(x, y *Value) bool {
+						x.String()
+						y.String()
+						return false
+					},
+				},
+			},
+			wantOK: false,
+		},
+		{
+			name: "invalid - multiple less functions",
+			args: args{
+				values: []interface{}{1, 2, 3},
+				less: []func(x, y *Value) bool{
+					func(x, y *Value) bool {
+						return false
+					},
+					func(x, y *Value) bool {
+						return true
+					},
+				},
+			},
+			wantOK: false,
+		},
+		{
+			name: "invalid - data type not allowed",
+			args: args{
+				values: []interface{}{[]int{1, 2}, []int{3, 4}, []int{5, 6}},
+				less:   []func(x, y *Value) bool{},
+			},
+			wantOK: false,
+		},
+		{
+			name: "invalid - multiple data types found",
+			args: args{
+				values: []interface{}{1, "abc", true},
+				less:   []func(x, y *Value) bool{},
+			},
+			wantOK: false,
+		},
+		{
+			name: "empty array",
+			args: args{
+				values: []interface{}{},
+			},
+			wantOK: true,
+		},
+		{
+			name: "one element",
+			args: args{
+				values: []interface{}{1},
+			},
+			wantOK: true,
+		},
+		{
+			name: "chain has failed before",
+			args: args{
+				chainFailed: true,
+			},
+			wantOK: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			reporter := newMockReporter(t)
+			a := NewArray(reporter, tt.args.values)
+			a.NotOrdered(tt.args.less...)
+			if tt.wantOK {
+				a.chain.assertNotFailed(t)
+			} else {
+				a.chain.assertFailed(t)
+			}
+			a.chain.clearFailed()
+		})
+	}
+}

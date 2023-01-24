@@ -145,13 +145,13 @@ func (n *Number) NotEqual(value interface{}) *Number {
 	return n
 }
 
-// EqualDelta succeeds if two numerals are within delta of each other.
+// InDelta succeeds if two numerals are within delta of each other.
 //
 // Example:
 //
 //	number := NewNumber(t, 123.0)
 //	number.EqualDelta(123.2, 0.3)
-func (n *Number) EqualDelta(value, delta interface{}) *Number {
+func (n *Number) InDelta(value, delta interface{}) *Number {
 	n.chain.enter("EqualDelta()")
 	defer n.chain.leave()
 
@@ -206,14 +206,14 @@ func (n *Number) EqualDelta(value, delta interface{}) *Number {
 	return n
 }
 
-// NotEqualDelta succeeds if two numerals are not within delta of each other.
+// NotInDelta succeeds if two numerals are not within delta of each other.
 //
 // Example:
 //
 //	number := NewNumber(t, 123.0)
-//	number.NotEqualDelta(123.2, 0.1)
-func (n *Number) NotEqualDelta(value, delta float64) *Number {
-	n.chain.enter("NotEqualDelta()")
+//	number.NotInDelta(123.2, 0.1)
+func (n *Number) NotInDelta(value, delta float64) *Number {
+	n.chain.enter("NotInDelta()")
 	defer n.chain.leave()
 
 	if n.chain.failed() {
@@ -264,6 +264,16 @@ func (n *Number) NotEqualDelta(value, delta float64) *Number {
 		return n
 	}
 	return n
+}
+
+// Deprecated: use InDelta instead.
+func (n *Number) EqualDelta(value, delta float64) *Number {
+	return n.InDelta(value, delta)
+}
+
+// Deprecated: use NotInDelta instead.
+func (n *Number) NotEqualDelta(value, delta float64) *Number {
+	return n.NotInDelta(value, delta)
 }
 
 // Gt succeeds if number is greater than given value.

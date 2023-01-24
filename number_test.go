@@ -18,8 +18,8 @@ func TestNumber_Failed(t *testing.T) {
 
 	value.Equal(0)
 	value.NotEqual(0)
-	value.EqualDelta(0, 0)
-	value.NotEqualDelta(0, 0)
+	value.InDelta(0, 0)
+	value.NotInDelta(0, 0)
 	value.Gt(0)
 	value.Ge(0)
 	value.Lt(0)
@@ -99,44 +99,6 @@ func TestNumber_Equal(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestNumber_EqualDelta(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	value := NewNumber(reporter, 1234.5)
-
-	value.EqualDelta(1234.3, 0.3)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.EqualDelta(1234.7, 0.3)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.EqualDelta(1234.3, 0.1)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.EqualDelta(1234.7, 0.1)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotEqualDelta(1234.3, 0.3)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotEqualDelta(1234.7, 0.3)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotEqualDelta(1234.3, 0.1)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotEqualDelta(1234.7, 0.1)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-}
-
 func TestNumber_EqualNaN(t *testing.T) {
 	reporter := newMockReporter(t)
 
@@ -149,79 +111,65 @@ func TestNumber_EqualNaN(t *testing.T) {
 	v2.chain.assertFailed(t)
 
 	v3 := NewNumber(reporter, math.NaN())
-	v3.EqualDelta(1234.0, 0.1)
+	v3.InDelta(1234.0, 0.1)
 	v3.chain.assertFailed(t)
 
 	v4 := NewNumber(reporter, 1234.5)
-	v4.EqualDelta(math.NaN(), 0.1)
+	v4.InDelta(math.NaN(), 0.1)
 	v4.chain.assertFailed(t)
 
 	v5 := NewNumber(reporter, 1234.5)
-	v5.EqualDelta(1234.5, math.NaN())
+	v5.InDelta(1234.5, math.NaN())
 	v5.chain.assertFailed(t)
 
 	v6 := NewNumber(reporter, math.NaN())
-	v6.NotEqualDelta(1234.0, 0.1)
+	v6.NotInDelta(1234.0, 0.1)
 	v6.chain.assertFailed(t)
 
 	v7 := NewNumber(reporter, 1234.5)
-	v7.NotEqualDelta(math.NaN(), 0.1)
+	v7.NotInDelta(math.NaN(), 0.1)
 	v7.chain.assertFailed(t)
 
 	v8 := NewNumber(reporter, 1234.5)
-	v8.NotEqualDelta(1234.5, math.NaN())
+	v8.NotInDelta(1234.5, math.NaN())
 	v8.chain.assertFailed(t)
 }
 
-func TestNumber_Greater(t *testing.T) {
+func TestNumber_InDelta(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	value := NewNumber(reporter, 1234)
+	value := NewNumber(reporter, 1234.5)
 
-	value.Gt(1234 - 1)
+	value.InDelta(1234.3, 0.3)
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.Gt(1234)
+	value.InDelta(1234.7, 0.3)
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.InDelta(1234.3, 0.1)
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.Ge(1234 - 1)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.Ge(1234)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.Ge(1234 + 1)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-}
-
-func TestNumber_Lesser(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	value := NewNumber(reporter, 1234)
-
-	value.Lt(1234 + 1)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.Lt(1234)
+	value.InDelta(1234.7, 0.1)
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.Le(1234 + 1)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.Le(1234)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.Le(1234 - 1)
+	value.NotInDelta(1234.3, 0.3)
 	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInDelta(1234.7, 0.3)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInDelta(1234.3, 0.1)
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInDelta(1234.7, 0.1)
+	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 }
 
@@ -287,6 +235,58 @@ func TestNumber_InRange(t *testing.T) {
 	value.chain.clearFailed()
 }
 
+func TestNumber_Greater(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewNumber(reporter, 1234)
+
+	value.Gt(1234 - 1)
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.Gt(1234)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.Ge(1234 - 1)
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.Ge(1234)
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.Ge(1234 + 1)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+}
+
+func TestNumber_Lesser(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewNumber(reporter, 1234)
+
+	value.Lt(1234 + 1)
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.Lt(1234)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.Le(1234 + 1)
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.Le(1234)
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.Le(1234 - 1)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+}
+
 func TestNumber_ConvertEqual(t *testing.T) {
 	reporter := newMockReporter(t)
 
@@ -313,6 +313,24 @@ func TestNumber_ConvertEqual(t *testing.T) {
 	value.chain.clearFailed()
 
 	value.NotEqual("4321")
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+}
+
+func TestNumber_ConvertInRange(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewNumber(reporter, 1234)
+
+	value.InRange(int64(1233), float32(1235))
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.InRange(int64(1233), "1235")
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.InRange(nil, 1235)
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 }
@@ -373,24 +391,6 @@ func TestNumber_ConvertLesser(t *testing.T) {
 	value.chain.clearFailed()
 
 	value.Le("1235")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-}
-
-func TestNumber_ConvertInRange(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	value := NewNumber(reporter, 1234)
-
-	value.InRange(int64(1233), float32(1235))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.InRange(int64(1233), "1235")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.InRange(nil, 1235)
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 }

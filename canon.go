@@ -29,7 +29,7 @@ func canonNumber(chain *chain, in interface{}) (out big.Float, ok bool) {
 
 func canonNumberConvert(in interface{}) (out big.Float, ok bool) {
 	value := reflect.ValueOf(in)
-	switch in.(type) {
+	switch in := in.(type) {
 	case float64:
 		float := value.Float()
 		return *big.NewFloat(float), true
@@ -61,15 +61,12 @@ func canonNumberConvert(in interface{}) (out big.Float, ok bool) {
 		int := value.Uint()
 		return *big.NewFloat(0).SetUint64(int), true
 	case big.Int:
-		val, ok := in.(big.Int)
-		if ok {
-			return *big.NewFloat(0).SetInt(&val), true
-		}
-		return *big.NewFloat(0), false
+		val := in
+		return *big.NewFloat(0).SetInt(&val), true
 	case big.Float:
-		return in.(big.Float), true
+		return in, true
 	case json.Number:
-		data := in.(json.Number).String()
+		data := in.String()
 		num, ok := big.NewFloat(0).SetString(data)
 		return *num, ok
 	default:
