@@ -159,7 +159,7 @@ type Config struct {
 	//
 	// You can use:
 	// - AssertReporter / RequireReporter (non-fatal / fatal failures using testify package)
-	// - testing.T / FatalReporter (non-fatal / fatal failures 
+	// - testing.T / FatalReporter (non-fatal / fatal failures
 	//   using standard testing package)
 	// - custom implementation
 	Reporter Reporter
