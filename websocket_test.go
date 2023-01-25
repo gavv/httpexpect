@@ -15,7 +15,7 @@ func TestWebsocket_Failed(t *testing.T) {
 	chain := newChainWithDefaults("test", reporter)
 	config := newMockConfig(reporter)
 
-	chain.fail(mockFailure())
+	chain.setFailed()
 
 	ws := newWebsocket(chain, config, nil)
 
@@ -184,7 +184,7 @@ func TestWebsocket_Expect(t *testing.T) {
 			config := newMockConfig(reporter)
 
 			if tt.args.failedChain {
-				chain.fail(mockFailure())
+				chain.setFailed()
 			}
 
 			ws := newWebsocket(chain, config, tt.args.wsConn)
@@ -969,7 +969,9 @@ func TestWebsocket_SetReadDeadline(t *testing.T) {
 			ws := newWebsocket(chain, config, tt.args.wsConn).
 				WithReadTimeout(time.Second)
 
-			ws.setReadDeadline()
+			opChain := ws.chain.enter("test")
+			ws.setReadDeadline(opChain)
+			opChain.leave()
 
 			if tt.assertOk {
 				ws.chain.assertNotFailed(t)
@@ -1014,7 +1016,9 @@ func TestWebsocket_SetWriteDeadline(t *testing.T) {
 			ws := newWebsocket(chain, config, tt.args.wsConn).
 				WithWriteTimeout(time.Second)
 
-			ws.setWriteDeadline()
+			opChain := ws.chain.enter("test")
+			ws.setWriteDeadline(opChain)
+			opChain.leave()
 
 			if tt.assertOk {
 				ws.chain.assertNotFailed(t)

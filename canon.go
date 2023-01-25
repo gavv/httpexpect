@@ -8,11 +8,11 @@ import (
 	"reflect"
 )
 
-func canonNumber(chain *chain, in interface{}) (out big.Float, ok bool) {
+func canonNumber(opChain *chain, in interface{}) (out big.Float, ok bool) {
 	ok = true
 	defer func() {
 		if err := recover(); err != nil {
-			chain.fail(AssertionFailure{
+			opChain.fail(AssertionFailure{
 				Type:   AssertValid,
 				Actual: &AssertionValue{in},
 				Errors: []error{
@@ -74,13 +74,13 @@ func canonNumberConvert(in interface{}) (out big.Float, ok bool) {
 	}
 }
 
-func canonArray(chain *chain, in interface{}) ([]interface{}, bool) {
+func canonArray(opChain *chain, in interface{}) ([]interface{}, bool) {
 	var out []interface{}
-	data, ok := canonValue(chain, in)
+	data, ok := canonValue(opChain, in)
 	if ok {
 		out, ok = data.([]interface{})
 		if !ok {
-			chain.fail(AssertionFailure{
+			opChain.fail(AssertionFailure{
 				Type:   AssertValid,
 				Actual: &AssertionValue{in},
 				Errors: []error{
@@ -92,13 +92,13 @@ func canonArray(chain *chain, in interface{}) ([]interface{}, bool) {
 	return out, ok
 }
 
-func canonMap(chain *chain, in interface{}) (map[string]interface{}, bool) {
+func canonMap(opChain *chain, in interface{}) (map[string]interface{}, bool) {
 	var out map[string]interface{}
-	data, ok := canonValue(chain, in)
+	data, ok := canonValue(opChain, in)
 	if ok {
 		out, ok = data.(map[string]interface{})
 		if !ok {
-			chain.fail(AssertionFailure{
+			opChain.fail(AssertionFailure{
 				Type:   AssertValid,
 				Actual: &AssertionValue{in},
 				Errors: []error{
@@ -110,10 +110,10 @@ func canonMap(chain *chain, in interface{}) (map[string]interface{}, bool) {
 	return out, ok
 }
 
-func canonValue(chain *chain, in interface{}) (interface{}, bool) {
+func canonValue(opChain *chain, in interface{}) (interface{}, bool) {
 	b, err := json.Marshal(in)
 	if err != nil {
-		chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{in},
 			Errors: []error{
@@ -126,7 +126,7 @@ func canonValue(chain *chain, in interface{}) (interface{}, bool) {
 
 	var out interface{}
 	if err := json.Unmarshal(b, &out); err != nil {
-		chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{in},
 			Errors: []error{
@@ -138,4 +138,39 @@ func canonValue(chain *chain, in interface{}) (interface{}, bool) {
 	}
 
 	return out, true
+}
+
+func canonDecode(opChain *chain, value interface{}, target interface{}) {
+	if target == nil {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected nil target argument"),
+			},
+		})
+		return
+	}
+
+	b, err := json.Marshal(value)
+	if err != nil {
+		opChain.fail(AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{value},
+			Errors: []error{
+				errors.New("expected: marshable value"),
+			},
+		})
+		return
+	}
+
+	if err := json.Unmarshal(b, target); err != nil {
+		opChain.fail(AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{target},
+			Errors: []error{
+				errors.New("expected: value can be unmarshaled into target argument"),
+			},
+		})
+		return
+	}
 }

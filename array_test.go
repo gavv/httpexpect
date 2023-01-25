@@ -23,6 +23,9 @@ func TestArray_Failed(t *testing.T) {
 		value.First().chain.assertFailed(t)
 		value.Last().chain.assertFailed(t)
 
+		var target interface{}
+		value.Decode(&target)
+
 		value.Empty()
 		value.NotEmpty()
 		value.Equal([]interface{}{})
@@ -63,7 +66,7 @@ func TestArray_Failed(t *testing.T) {
 
 	t.Run("failed_chain", func(t *testing.T) {
 		chain := newMockChain(t)
-		chain.fail(mockFailure())
+		chain.setFailed()
 
 		value := newArray(chain, []interface{}{})
 
@@ -80,7 +83,7 @@ func TestArray_Failed(t *testing.T) {
 
 	t.Run("failed_chain_nil_value", func(t *testing.T) {
 		chain := newMockChain(t)
-		chain.fail(mockFailure())
+		chain.setFailed()
 
 		value := newArray(chain, nil)
 
@@ -112,6 +115,81 @@ func TestArray_Constructors(t *testing.T) {
 		value := newArray(chain, testValue)
 		assert.NotSame(t, value.chain, chain)
 		assert.Equal(t, value.chain.context.Path, chain.context.Path)
+	})
+}
+
+func TestArray_Decode(t *testing.T) {
+	t.Run("Decode into slice of empty interfaces", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		testValue := []interface{}{"Foo", 123.0}
+		arr := NewArray(reporter, testValue)
+
+		var target []interface{}
+		arr.Decode(&target)
+
+		arr.chain.assertNotFailed(t)
+		assert.Equal(t, testValue, target)
+	})
+
+	t.Run("Decode into slice of structs", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		type S struct {
+			Foo int `json:"foo"`
+		}
+
+		actualStruct := []S{{123}, {456}}
+		testValue := []interface{}{
+			map[string]interface{}{
+				"foo": 123,
+			},
+			map[string]interface{}{
+				"foo": 456,
+			},
+		}
+		arr := NewArray(reporter, testValue)
+
+		var target []S
+		arr.Decode(&target)
+
+		arr.chain.assertNotFailed(t)
+		assert.Equal(t, actualStruct, target)
+	})
+
+	t.Run("Decode into empty interface", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		testValue := []interface{}{"Foo", 123.0}
+		arr := NewArray(reporter, testValue)
+
+		var target interface{}
+		arr.Decode(&target)
+
+		arr.chain.assertNotFailed(t)
+		assert.Equal(t, testValue, target)
+	})
+
+	t.Run("Target is unmarshable", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		testValue := []interface{}{"Foo", 123.0}
+		arr := NewArray(reporter, testValue)
+
+		arr.Decode(123)
+
+		arr.chain.assertFailed(t)
+	})
+
+	t.Run("Target is nil", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		testValue := []interface{}{"Foo", 123.0}
+		arr := NewArray(reporter, testValue)
+
+		arr.Decode(nil)
+
+		arr.chain.assertFailed(t)
 	})
 }
 
@@ -874,7 +952,7 @@ func TestArray_Transform(t *testing.T) {
 		reporter := newMockReporter(ts)
 		array := NewArray(reporter, []interface{}{2, 4, 6})
 		newArray := array.Transform(nil)
-		newArray.chain.assertFailed(reporter)
+		newArray.chain.assertFailed(t)
 	})
 
 	t.Run("Empty array", func(ts *testing.T) {

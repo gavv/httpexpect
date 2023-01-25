@@ -319,25 +319,34 @@ func TestExpect_Branches(t *testing.T) {
 		"baz": 456,
 	}
 
-	resp := WithConfig(config).GET("/url").WithJSON(data).Expect()
+	req := WithConfig(config).GET("/url").WithJSON(data)
+	resp := req.Expect()
 
-	m1 := resp.JSON().Array()
-	m2 := resp.JSON().Object()
+	m1 := resp.JSON().Array()  // fail
+	m2 := resp.JSON().Object() // ok
+	m3 := resp.JSON().Object() // ok
 
-	e1 := m2.Value("foo").Object()
-	e2 := m2.Value("foo").Array().Element(999).String()
-	e3 := m2.Value("foo").Array().Element(0).Number()
-	e4 := m2.Value("foo").Array().Element(0).String()
+	e1 := m2.Value("foo").Object()                      // fail
+	e2 := m2.Value("foo").Array().Element(999).String() // fail
+	e3 := m2.Value("foo").Array().Element(0).Number()   // fail
+	e4 := m2.Value("foo").Array().Element(0).String()   // ok
+	e5 := m2.Value("foo").Array().Element(0).String()   // ok
 
-	e4.Equal("bar")
+	e4.Equal("qux") // fail
+	e5.Equal("bar") // ok
 
-	m1.chain.assertFailed(t)
-	m2.chain.assertNotFailed(t)
+	req.chain.assertFlags(t, flagFailedChildren)
+	resp.chain.assertFlags(t, flagFailedChildren)
 
-	e1.chain.assertFailed(t)
-	e2.chain.assertFailed(t)
-	e3.chain.assertFailed(t)
-	e4.chain.assertNotFailed(t)
+	m1.chain.assertFlags(t, flagFailed)
+	m2.chain.assertFlags(t, flagFailedChildren)
+	m3.chain.assertFlags(t, 0)
+
+	e1.chain.assertFlags(t, flagFailed)
+	e2.chain.assertFlags(t, flagFailed)
+	e3.chain.assertFlags(t, flagFailed)
+	e4.chain.assertFlags(t, flagFailed)
+	e5.chain.assertFlags(t, 0)
 }
 
 func TestExpect_StdCompat(_ *testing.T) {

@@ -11,7 +11,8 @@ func TestCanon_Number(t *testing.T) {
 		myInt int
 	)
 
-	chain := newMockChain(t)
+	chain := newMockChain(t).enter("test")
+	defer chain.leave()
 
 	d1, ok := canonNumber(chain, 123)
 	assert.True(t, ok)
@@ -48,7 +49,8 @@ func TestCanon_Array(t *testing.T) {
 		myInt   int
 	)
 
-	chain := newMockChain(t)
+	chain := newMockChain(t).enter("test")
+	defer chain.leave()
 
 	d1, ok := canonArray(chain, []interface{}{123.0, 456.0})
 	assert.True(t, ok)
@@ -89,7 +91,8 @@ func TestCanon_Map(t *testing.T) {
 		myInt int
 	)
 
-	chain := newMockChain(t)
+	chain := newMockChain(t).enter("test")
+	defer chain.leave()
 
 	d1, ok := canonMap(chain, map[string]interface{}{"foo": 123.0})
 	assert.True(t, ok)
@@ -122,4 +125,43 @@ func TestCanon_Map(t *testing.T) {
 	assert.False(t, ok)
 	chain.assertFailed(t)
 	chain.clearFailed()
+}
+
+func TestCannon_Decode(t *testing.T) {
+	t.Run("target is nil", func(t *testing.T) {
+		chain := newMockChain(t).enter("test")
+		defer chain.leave()
+
+		canonDecode(chain, 123, nil)
+
+		chain.assertFailed(t)
+	})
+
+	t.Run("value is not marshallable", func(t *testing.T) {
+		chain := newMockChain(t).enter("test")
+		defer chain.leave()
+
+		type S struct {
+			MyFunc func() string
+		}
+
+		value := &S{
+			MyFunc: func() string { return "foo" },
+		}
+
+		var target S
+		canonDecode(chain, value, &target)
+
+		chain.assertFailed(t)
+	})
+
+	t.Run("value is not unmarshallable into target", func(t *testing.T) {
+		chain := newMockChain(t).enter("test")
+		defer chain.leave()
+
+		var target int
+		canonDecode(chain, true, target)
+
+		chain.assertFailed(t)
+	})
 }
