@@ -121,7 +121,7 @@ func (n *Number) Equal(value interface{}) *Number {
 	}
 
 	if n.value.Cmp(&num) != 0 {
-		n.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{num},
@@ -176,7 +176,7 @@ func (n *Number) NotEqual(value interface{}) *Number {
 // Example:
 //
 //	number := NewNumber(t, 123.0)
-//	number.EqualDelta(123.2, 0.3)
+//	number.InDelta(123.2, 0.3)
 func (n *Number) InDelta(value, delta interface{}) *Number {
 	opChain := n.chain.enter("InDelta()")
 	defer opChain.leave()
@@ -446,20 +446,20 @@ func (n *Number) Ge(value interface{}) *Number {
 //	number.Lt(float64(124))
 //	number.Lt(int32(124))
 func (n *Number) Lt(value interface{}) *Number {
-	n.chain.enter("Lt()")
-	defer n.chain.leave()
+	opChain := n.chain.enter("Lt()")
+	defer opChain.leave()
 
-	if n.chain.failed() {
+	if opChain.failed() {
 		return n
 	}
 
-	num, ok := canonNumber(n.chain, value)
+	num, ok := canonNumber(opChain, value)
 	if !ok {
 		return n
 	}
 
 	if n.value.Cmp(&num) >= 0 {
-		n.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertLt,
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{num},
@@ -496,7 +496,7 @@ func (n *Number) Le(value interface{}) *Number {
 	}
 
 	if n.value.Cmp(&num) > 0 {
-		n.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertLe,
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{num},
