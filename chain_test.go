@@ -472,8 +472,10 @@ func TestChain_Panics(t *testing.T) {
 	t.Run("invalid_assertion", func(t *testing.T) {
 		chain := newChainWithDefaults("test", newMockReporter(t))
 
+		opChain := chain.enter("foo")
+
 		assert.Panics(t, func() {
-			chain.fail(AssertionFailure{
+			opChain.fail(AssertionFailure{
 				Type: AssertionType(9999),
 			})
 		})
