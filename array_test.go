@@ -33,8 +33,8 @@ func TestArray_Failed(t *testing.T) {
 		value.NotEqual([]interface{}{})
 		value.EqualUnordered([]interface{}{})
 		value.NotEqualUnordered([]interface{}{})
-		value.Elements("foo")
-		value.NotElements("foo")
+		value.ConsistsOf("foo")
+		value.NotConsistsOf("foo")
 		value.Contains("foo")
 		value.NotContains("foo")
 		value.ContainsAll("foo")
@@ -527,54 +527,54 @@ func TestArray_EqualUnordered(t *testing.T) {
 	})
 }
 
-func TestArray_Elements(t *testing.T) {
+func TestArray_ConsistsOf(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewArray(reporter, []interface{}{123, "foo"})
 
-	value.Elements(123)
+	value.ConsistsOf(123)
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.Elements("foo")
+	value.ConsistsOf("foo")
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.Elements("foo", 123)
+	value.ConsistsOf("foo", 123)
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.Elements(123, "foo", "foo")
+	value.ConsistsOf(123, "foo", "foo")
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.Elements(123, "foo")
+	value.ConsistsOf(123, "foo")
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 }
 
-func TestArray_NotElements(t *testing.T) {
+func TestArray_NotConsistsOf(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewArray(reporter, []interface{}{123, "foo"})
 
-	value.NotElements(123)
+	value.NotConsistsOf(123)
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.NotElements("foo")
+	value.NotConsistsOf("foo")
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.NotElements("foo", 123)
+	value.NotConsistsOf("foo", 123)
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.NotElements(123, "foo", "foo")
+	value.NotConsistsOf(123, "foo", "foo")
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.NotElements(123, "foo")
+	value.NotConsistsOf(123, "foo")
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 }
@@ -815,11 +815,11 @@ func TestArray_ConvertElements(t *testing.T) {
 
 	assert.Equal(t, []interface{}{123.0, 456.0}, value.Raw())
 
-	value.Elements(myInt(123), 456.0)
+	value.ConsistsOf(myInt(123), 456.0)
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.Elements(func() {})
+	value.ConsistsOf(func() {})
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 }

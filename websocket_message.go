@@ -485,7 +485,7 @@ func (wm *WebsocketMessage) NoContent() *WebsocketMessage {
 // Example:
 //
 //	msg := conn.Expect()
-//	msg.JSON().Array().Elements("foo", "bar")
+//	msg.JSON().Array().ConsistsOf("foo", "bar")
 func (wm *WebsocketMessage) JSON() *Value {
 	opChain := wm.chain.enter("JSON()")
 	defer opChain.leave()

@@ -224,7 +224,7 @@ func (v *Value) Object() *Object {
 // Example:
 //
 //	value := NewValue(t, []interface{}{"foo", 123})
-//	value.Array().Elements("foo", 123)
+//	value.Array().ConsistsOf("foo", 123)
 func (v *Value) Array() *Array {
 	opChain := v.chain.enter("Array()")
 	defer opChain.leave()

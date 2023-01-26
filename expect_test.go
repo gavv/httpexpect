@@ -293,10 +293,10 @@ func TestExpect_Traverse(t *testing.T) {
 	m.ValueEqual("bbb", data["bbb"])
 	m.ValueEqual("ccc", data["ccc"])
 
-	m.Keys().Elements("aaa", "bbb", "ccc")
-	m.Values().Elements(data["aaa"], data["bbb"], data["ccc"])
+	m.Keys().ConsistsOf("aaa", "bbb", "ccc")
+	m.Values().ConsistsOf(data["aaa"], data["bbb"], data["ccc"])
 
-	m.Value("aaa").Array().Elements("bbb", 123, false, nil)
+	m.Value("aaa").Array().ConsistsOf("bbb", 123, false, nil)
 	m.Value("bbb").String().Equal("hello")
 	m.Value("ccc").Number().Equal(456)
 

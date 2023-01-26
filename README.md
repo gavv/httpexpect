@@ -180,7 +180,7 @@ obj := e.GET("/fruits/apple").
 
 obj.Keys().ContainsOnly("colors", "weight")
 
-obj.Value("colors").Array().Elements("green", "red")
+obj.Value("colors").Array().ConsistsOf("green", "red")
 obj.Value("colors").Array().Element(0).String().Equal("green")
 obj.Value("colors").Array().Element(1).String().Equal("red")
 obj.Value("colors").Array().First().String().Equal("green")

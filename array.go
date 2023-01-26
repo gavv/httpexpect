@@ -885,20 +885,20 @@ func (a *Array) NotEqualUnordered(value interface{}) *Array {
 	return a
 }
 
-// Elements succeeds if array contains all given elements, in given order, and only
+// ConsistsOf succeeds if array contains all given elements, in given order, and only
 // them. Before comparison, array and all elements are converted to canonical form.
 //
 // Example:
 //
 //	array := NewArray(t, []interface{}{"foo", 123})
-//	array.Elements("foo", 123)
+//	array.ConsistsOf("foo", 123)
 //
 // These calls are equivalent:
 //
-//	array.Elements("a", "b")
+//	array.ConsistsOf("a", "b")
 //	array.Equal([]interface{}{"a", "b"})
-func (a *Array) Elements(values ...interface{}) *Array {
-	opChain := a.chain.enter("Elements()")
+func (a *Array) ConsistsOf(values ...interface{}) *Array {
+	opChain := a.chain.enter("ConsistsOf()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -916,7 +916,7 @@ func (a *Array) Elements(values ...interface{}) *Array {
 			Actual:   &AssertionValue{a.value},
 			Expected: &AssertionValue{expected},
 			Errors: []error{
-				errors.New("expected: arrays are equal"),
+				errors.New("expected: array consists of given elements"),
 			},
 		})
 	}
@@ -924,21 +924,21 @@ func (a *Array) Elements(values ...interface{}) *Array {
 	return a
 }
 
-// NotElements is opposite to Elements.
+// NotConsistsOf is opposite to ConsistsOf.
 //
 // Example:
 //
 //	array := NewArray(t, []interface{}{"foo", 123})
-//	array.NotElements("foo")
-//	array.NotElements("foo", 123, 456)
-//	array.NotElements(123, "foo")
+//	array.NotConsistsOf("foo")
+//	array.NotConsistsOf("foo", 123, 456)
+//	array.NotConsistsOf(123, "foo")
 //
 // These calls are equivalent:
 //
-//	array.NotElements("a", "b")
+//	array.NotConsistsOf("a", "b")
 //	array.NotEqual([]interface{}{"a", "b"})
-func (a *Array) NotElements(values ...interface{}) *Array {
-	opChain := a.chain.enter("Elements()")
+func (a *Array) NotConsistsOf(values ...interface{}) *Array {
+	opChain := a.chain.enter("NotConsistsOf()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -956,12 +956,22 @@ func (a *Array) NotElements(values ...interface{}) *Array {
 			Actual:   &AssertionValue{a.value},
 			Expected: &AssertionValue{expected},
 			Errors: []error{
-				errors.New("expected: arrays are non-equal"),
+				errors.New("expected: arrays does not consist of given elements"),
 			},
 		})
 	}
 
 	return a
+}
+
+// Deprecated: use ConsistsOf instead.
+func (a *Array) Elements(values ...interface{}) *Array {
+	return a.ConsistsOf(values...)
+}
+
+// Deprecated: use NotConsistsOf instead.
+func (a *Array) NotElements(values ...interface{}) *Array {
+	return a.NotConsistsOf(values...)
 }
 
 // Deprecated: use ContainsAll or ContainsAny instead.
