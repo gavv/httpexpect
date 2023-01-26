@@ -30,6 +30,7 @@ func TestRequest_Failed(t *testing.T) {
 
 	req := newRequest(chain, config, "GET", "")
 
+	req.Alias("foo")
 	req.WithMatcher(func(resp *Response) {
 	})
 	req.WithTransformer(func(r *http.Request) {
@@ -77,6 +78,28 @@ func TestRequest_Failed(t *testing.T) {
 
 	req.chain.assertFailed(t)
 	resp.chain.assertFailed(t)
+}
+
+func TestRequest_Alias(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
+	client := &mockClient{}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
+	}
+
+	value1 := NewRequestC(config, "GET", "")
+	assert.Equal(t, []string{`Request("GET")`}, value1.chain.context.Path)
+	assert.Equal(t, []string{`Request("GET")`}, value1.chain.context.AliasedPath)
+
+	value2 := value1.Alias("foo")
+	assert.Equal(t, []string{`Request("GET")`}, value2.chain.context.Path)
+	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
 }
 
 func TestRequest_Empty(t *testing.T) {

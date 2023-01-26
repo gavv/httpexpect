@@ -193,8 +193,18 @@ func (r *Request) initReq(opChain *chain, method string) {
 	r.httpReq = httpReq
 }
 
+// Alias is similar to Value.Alias.
+func (r *Request) Alias(name string) *Request {
+	opChain := r.chain.enter("Alias(%q)", name)
+	defer opChain.leave()
+
+	r.chain.setAlias(name)
+	return r
+}
+
 // WithName sets convenient request name.
 // This name will be included in assertion reports for this request.
+// It does not affect assertion chain path, inlike Alias.
 //
 // Example:
 //
