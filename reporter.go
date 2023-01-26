@@ -2,6 +2,7 @@ package httpexpect
 
 import (
 	"fmt"
+	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -37,4 +38,20 @@ func NewRequireReporter(t require.TestingT) *RequireReporter {
 // Errorf implements Reporter.Errorf.
 func (r *RequireReporter) Errorf(message string, args ...interface{}) {
 	r.backend.FailNow(fmt.Sprintf(message, args...))
+}
+
+// FatalReporter is a struct that implements the Reporter interface
+// and calls t.Fatalf() when a test fails.
+type FatalReporter struct {
+	backend testing.TB
+}
+
+// NewFatalReporter returns a new FatalReporter object.
+func NewFatalReporter(backend testing.TB) *FatalReporter {
+	return &FatalReporter{backend}
+}
+
+// Errorf implements Reporter.Errorf.
+func (r *FatalReporter) Errorf(message string, args ...interface{}) {
+	r.backend.Fatalf(message, args...)
 }
