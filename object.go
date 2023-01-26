@@ -358,7 +358,7 @@ func (o *Object) Filter(fn func(key string, value *Value) bool) *Object {
 	return newObject(opChain, filteredObject)
 }
 
-// Transform runs the passed function on all the Elements in the Object
+// Transform runs the passed function on all the elements in the Object
 // and returns a new object without effecting original object.
 //
 // The function is invoked for key value pairs sorted by keys in ascending order.

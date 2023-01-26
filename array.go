@@ -280,7 +280,7 @@ func (a *Array) Iter() []Value {
 	return ret
 }
 
-// Every runs the passed function on all the Elements in the array.
+// Every runs the passed function on all the elements in the array.
 //
 // If assertion inside function fails, the original Array is marked failed.
 //
@@ -379,7 +379,7 @@ func (a *Array) Filter(fn func(index int, value *Value) bool) *Array {
 	return newArray(opChain, filteredArray)
 }
 
-// Transform runs the passed function on all the Elements in the array
+// Transform runs the passed function on all the elements in the array
 // and returns a new array without effeecting original array.
 //
 // Example:
