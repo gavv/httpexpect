@@ -65,7 +65,7 @@ func (d *Duration) Alias(name string) *Duration {
 
 // Deprecated: support for unset durations will be removed. The only method that
 // can create unset duration is Cookie.MaxAge. Instead of Cookie.MaxAge().IsSet(),
-// please use Cookie.HaveMaxAge().
+// please use Cookie.HasMaxAge().
 func (d *Duration) IsSet() *Duration {
 	opChain := d.chain.enter("IsSet()")
 	defer opChain.leave()
@@ -89,7 +89,7 @@ func (d *Duration) IsSet() *Duration {
 
 // Deprecated: support for unset durations will be removed. The only method that
 // can create unset duration is Cookie.MaxAge. Instead of Cookie.MaxAge().NotSet(),
-// please use Cookie.NotHaveMaxAge().
+// please use Cookie.NotHasMaxAge().
 func (d *Duration) NotSet() *Duration {
 	opChain := d.chain.enter("NotSet()")
 	defer opChain.leave()
