@@ -54,6 +54,7 @@ func (n *Number) Raw() float64 {
 // target should be one of these:
 //
 // - pointer to an empty interface
+//
 // - pointer to any integer or floating type
 //
 // Example:

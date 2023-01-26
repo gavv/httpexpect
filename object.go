@@ -75,7 +75,9 @@ func (o *Object) Raw() map[string]interface{} {
 // target should be one of this:
 //
 // - pointer to an empty interface
+//
 // - pointer to a map
+//
 // - pointer to a struct
 //
 // Example:
@@ -84,7 +86,7 @@ func (o *Object) Raw() map[string]interface{} {
 //		Foo int                    `json:"foo"`
 //		Bar []interface{}          `json:"bar"`
 //		Baz map[string]interface{} `json:"baz"`
-//		Bat struct{ a int }        `json:"bat"`
+//		Bat struct{ A int }        `json:"bat"`
 //	}
 //
 //	m := map[string]interface{}{
@@ -93,7 +95,7 @@ func (o *Object) Raw() map[string]interface{} {
 //		"baz": map[string]interface{}{
 //			"a": "b",
 //		},
-//		"bat": struct{ a int }{0},
+//		"bat": struct{ A int }{123},
 //	}
 //
 //	value := NewObject(t, value)
@@ -102,7 +104,7 @@ func (o *Object) Raw() map[string]interface{} {
 //	value.Decode(&target)
 //
 //	assert.Equal(t, S{123,[]interface{}{"123", 234.0},
-//		map[string]interface{}{"a": "b"}, struct{ a int }{0},
+//		map[string]interface{}{"a": "b"}, struct{ A int }{123},
 //	}, target)
 func (o *Object) Decode(target interface{}) *Object {
 	opChain := o.chain.enter("Decode()")

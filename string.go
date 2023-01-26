@@ -60,6 +60,7 @@ func (s *String) Raw() string {
 // target should be one of these:
 //
 // - pointer to an empty interface
+//
 // - pointer to a string
 //
 // Example:

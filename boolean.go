@@ -53,6 +53,7 @@ func (b *Boolean) Raw() bool {
 // target should be one of these:
 //
 // - pointer to an empty interface
+//
 // - pointer to a boolean
 //
 // Example:

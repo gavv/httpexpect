@@ -74,6 +74,7 @@ func (a *Array) Raw() []interface{} {
 // target should be one of these:
 //
 // - pointer to an empty interface
+//
 // - pointer to a slice of any type
 //
 // Example:
