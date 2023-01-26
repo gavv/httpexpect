@@ -4,12 +4,8 @@ import (
 	"testing"
 )
 
-type mockT struct {
-	testing.T
-}
-
 func TestFatalReporter(t *testing.T) {
-	mockBackend := &mockT{}
+	mockBackend := &testing.T{}
 	reporter := NewFatalReporter(mockBackend)
 
 	t.Run("Test Errorf", func(t *testing.T) {
