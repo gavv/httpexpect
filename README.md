@@ -118,7 +118,7 @@ See [`_examples`](_examples) directory for complete standalone examples.
 
 * [`custom_formatter_test.go`](_examples/custom_formatter_test.go)
 
-    Testing with custom formatter for assertion message
+    Testing with custom formatter for assertion messages.
 
 ## Quick start
 
