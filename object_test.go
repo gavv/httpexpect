@@ -195,10 +195,10 @@ func TestObject_Decode(t *testing.T) {
 		value := NewObject(reporter, m)
 
 		actualStruct := S{
-			123,
-			[]interface{}{"123", 234.0},
-			map[string]interface{}{"a": "b"},
-			struct{ A int }{123},
+			Foo: 123,
+			Bar: []interface{}{"123", 234.0},
+			Baz: map[string]interface{}{"a": "b"},
+			Bat: struct{ A int }{123},
 		}
 
 		var target S

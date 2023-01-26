@@ -98,9 +98,9 @@ func TestValue_Decode(t *testing.T) {
 		value := NewValue(reporter, m)
 
 		actualStruct := S{
-			123,
-			[]interface{}{"123", 456.0},
-			struct{ A int }{123},
+			Foo: 123,
+			Bar: []interface{}{"123", 456.0},
+			Baz: struct{ A int }{123},
 		}
 
 		var target S
