@@ -85,6 +85,15 @@ func (ws *Websocket) Raw() *websocket.Conn {
 	return conn
 }
 
+// Alias is similar to Value.Alias.
+func (ws *Websocket) Alias(name string) *Websocket {
+	opChain := ws.chain.enter("Alias(%s)", name)
+	defer opChain.leave()
+
+	ws.chain.setAlias(name)
+	return ws
+}
+
 // WithReadTimeout sets timeout duration for WebSocket connection reads.
 //
 // By default no timeout is used.

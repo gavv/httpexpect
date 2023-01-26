@@ -25,6 +25,8 @@ func TestCookie_Failed(t *testing.T) {
 		assert.NotNil(t, value.Expires())
 		assert.NotNil(t, value.MaxAge())
 
+		value.Alias("foo")
+
 		value.HaveMaxAge()
 		value.NotHaveMaxAge()
 	}
@@ -127,6 +129,24 @@ func TestCookie_Getters(t *testing.T) {
 	assert.Equal(t, 123*time.Second, value.MaxAge().Raw())
 
 	value.chain.assertNotFailed(t)
+}
+
+func TestCookie_Alias(t *testing.T) {
+	reporter := newMockReporter(t)
+	value1 := NewCookie(reporter, &http.Cookie{
+		MaxAge: 0,
+	})
+	assert.Equal(t, []string{"Cookie()"}, value1.chain.context.Path)
+	assert.Equal(t, []string{"Cookie()"}, value1.chain.context.AliasedPath)
+
+	value2 := value1.Alias("foo")
+	assert.Equal(t, []string{"Cookie()"}, value2.chain.context.Path)
+	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
+
+	value3 := value2.Domain()
+	assert.Equal(t, []string{"Cookie()", "Domain()"},
+		value3.chain.context.Path)
+	assert.Equal(t, []string{"foo", "Domain()"}, value3.chain.context.AliasedPath)
 }
 
 func TestCookie_MaxAge(t *testing.T) {

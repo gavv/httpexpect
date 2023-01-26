@@ -51,6 +51,15 @@ func (dt *DateTime) Raw() time.Time {
 	return dt.value
 }
 
+// Alias is similar to Value.Alias.
+func (dt *DateTime) Alias(name string) *DateTime {
+	opChain := dt.chain.enter("Alias(%s)", name)
+	defer opChain.leave()
+
+	dt.chain.setAlias(name)
+	return dt
+}
+
 // GetZone returns a new String instance with datetime zone.
 //
 // Example:
