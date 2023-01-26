@@ -295,6 +295,28 @@ func TestChain_Panics(t *testing.T) {
 		})
 	})
 
+	t.Run("non_nil_request", func(t *testing.T) {
+		chain := newChainWithDefaults("test", newMockReporter(t))
+
+		opChain := chain.enter("foo")
+		opChain.setRequest(&Request{})
+
+		assert.Panics(t, func() {
+			opChain.setRequest(&Request{})
+		})
+	})
+
+	t.Run("non_nil_response", func(t *testing.T) {
+		chain := newChainWithDefaults("test", newMockReporter(t))
+
+		opChain := chain.enter("foo")
+		opChain.setResponse(&Response{})
+
+		assert.Panics(t, func() {
+			opChain.setResponse(&Response{})
+		})
+	})
+
 	t.Run("leave_without_enter", func(t *testing.T) {
 		chain := newChainWithDefaults("test", newMockReporter(t))
 
