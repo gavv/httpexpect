@@ -964,13 +964,7 @@ func (a *Array) NotElements(values ...interface{}) *Array {
 	return a
 }
 
-// Contains succeeds if array contains all given elements (in any order).
-// Before comparison, array and all elements are converted to canonical form.
-//
-// Example:
-//
-//	array := NewArray(t, []interface{}{"foo", 123})
-//	array.Contains(123, "foo")
+// Deprecated: use ContainsAll or ContainsAny instead.
 func (a *Array) Contains(values ...interface{}) *Array {
 	opChain := a.chain.enter("Contains()")
 	defer opChain.leave()
@@ -1002,14 +996,7 @@ func (a *Array) Contains(values ...interface{}) *Array {
 	return a
 }
 
-// NotContains succeeds if array contains none of given elements.
-// Before comparison, array and all elements are converted to canonical form.
-//
-// Example:
-//
-//	array := NewArray(t, []interface{}{"foo", 123})
-//	array.NotContains("bar")         // success
-//	array.NotContains("bar", "foo")  // failure (array contains "foo")
+// Deprecated: use NotContainsAll or NotContainsAny instead.
 func (a *Array) NotContains(values ...interface{}) *Array {
 	opChain := a.chain.enter("NotContains()")
 	defer opChain.leave()
@@ -1036,6 +1023,174 @@ func (a *Array) NotContains(values ...interface{}) *Array {
 				},
 			})
 			break
+		}
+	}
+
+	return a
+}
+
+// ContainsAll succeeds if array contains all given elements (in any order).
+// Before comparison, array and all elements are converted to canonical form.
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{"foo", 123})
+//	array.ContainsAll(123, "foo")
+func (a *Array) ContainsAll(values ...interface{}) *Array {
+	opChain := a.chain.enter("ContainsAll()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return a
+	}
+
+	elements, ok := canonArray(opChain, values)
+	if !ok {
+		return a
+	}
+
+	for _, expected := range elements {
+		if countElement(a.value, expected) == 0 {
+			opChain.fail(AssertionFailure{
+				Type:      AssertContainsElement,
+				Actual:    &AssertionValue{a.value},
+				Expected:  &AssertionValue{expected},
+				Reference: &AssertionValue{values},
+				Errors: []error{
+					errors.New("expected: array contains element from reference array"),
+				},
+			})
+			break
+		}
+	}
+
+	return a
+}
+
+// NotContainsAll succeeds if array does not contain at least one of the elements.
+// Before comparison, array and all elements are converted to canonical form.
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{"foo", 123})
+//	array.NotContainsAll("bar")         // success
+//	array.NotContainsAll(123, "foo")    // failure
+func (a *Array) NotContainsAll(values ...interface{}) *Array {
+	opChain := a.chain.enter("NotContainsAll()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return a
+	}
+
+	elements, ok := canonArray(opChain, values)
+	if !ok {
+		return a
+	}
+
+	haveMissing := false
+
+	for _, expected := range elements {
+		if countElement(a.value, expected) == 0 {
+			haveMissing = true
+			break
+		}
+	}
+
+	if !haveMissing {
+		opChain.fail(AssertionFailure{
+			Type:      AssertNotContainsElement,
+			Actual:    &AssertionValue{a.value},
+			Reference: &AssertionValue{values},
+			Errors: []error{
+				errors.New("expected:" +
+					" array does not contain at least one element from reference array"),
+			},
+		})
+	}
+
+	return a
+}
+
+// ContainsAny succeeds if array contains at least one element from the given elements.
+// Before comparison, array and all elements are converted to canonical form.
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{"foo", 123, 123})
+//	array.ContainsAny(123, "foo", "FOO") // success
+//	array.ContainsAny("FOO") // failure
+func (a *Array) ContainsAny(values ...interface{}) *Array {
+	opChain := a.chain.enter("ContainsAny()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return a
+	}
+
+	elements, ok := canonArray(opChain, values)
+	if !ok {
+		return a
+	}
+
+	foundAny := false
+
+	for _, expected := range elements {
+		if countElement(a.value, expected) != 0 {
+			foundAny = true
+			break
+		}
+	}
+
+	if !foundAny {
+		opChain.fail(AssertionFailure{
+			Type:      AssertContainsElement,
+			Actual:    &AssertionValue{a.value},
+			Reference: &AssertionValue{values},
+			Errors: []error{
+				errors.New("expected:" +
+					" array contains at least one element from reference array"),
+			},
+		})
+	}
+
+	return a
+}
+
+// NotContainsAny succeeds if none of the given elements are in the array.
+// Before comparison, array and all elements are converted to canonical form.
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{"foo", 123})
+//	array.NotContainsAny("bar", 124) // success
+//	array.NotContainsAny(123) // failure
+func (a *Array) NotContainsAny(values ...interface{}) *Array {
+	opChain := a.chain.enter("NotContainsAny()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return a
+	}
+
+	elements, ok := canonArray(opChain, values)
+	if !ok {
+		return a
+	}
+
+	for _, expected := range elements {
+		if countElement(a.value, expected) != 0 {
+			opChain.fail(AssertionFailure{
+				Type:      AssertNotContainsElement,
+				Actual:    &AssertionValue{a.value},
+				Expected:  &AssertionValue{expected},
+				Reference: &AssertionValue{values},
+				Errors: []error{
+					errors.New("expected:" +
+						" array does not contain any elements from reference array"),
+				},
+			})
+			return a
 		}
 	}
 
@@ -1155,91 +1310,6 @@ func (a *Array) NotContainsOnly(values ...interface{}) *Array {
 					" (at least one distinguishing element needed)"),
 			},
 		})
-	}
-
-	return a
-}
-
-// ContainsAny succeeds if array contains at least one element from the given elements.
-// Before comparison, array and all elements are converted
-// to canonical form.
-//
-// Example:
-//
-//	array := NewArray(t, []interface{}{"foo", 123, 123})
-//	array.ContainsAny(123, "foo", "FOO") // success
-//	array.ContainsAny("FOO") // failure
-func (a *Array) ContainsAny(values ...interface{}) *Array {
-	opChain := a.chain.enter("ContainsAny()")
-	defer opChain.leave()
-
-	if opChain.failed() {
-		return a
-	}
-
-	elements, ok := canonArray(opChain, values)
-	if !ok {
-		return a
-	}
-
-	foundAny := false
-
-	for _, expected := range elements {
-		if countElement(a.value, expected) != 0 {
-			foundAny = true
-			break
-		}
-	}
-
-	if !foundAny {
-		opChain.fail(AssertionFailure{
-			Type:      AssertContainsElement,
-			Actual:    &AssertionValue{a.value},
-			Reference: &AssertionValue{values},
-			Errors: []error{
-				errors.New("expected:" +
-					" array contains at least one element from reference array"),
-			},
-		})
-	}
-
-	return a
-}
-
-// NotContainsAny succeeds if none of the given elements are in the array.
-//
-// Example:
-//
-//	array := NewArray(t, []interface{}{"foo", 123})
-//	array.NotContainsAny("bar", 124) // success
-//	array.NotContainsAny(123) // failure
-func (a *Array) NotContainsAny(values ...interface{}) *Array {
-	opChain := a.chain.enter("NotContainsAny()")
-	defer opChain.leave()
-
-	if opChain.failed() {
-		return a
-	}
-
-	elements, ok := canonArray(opChain, values)
-	if !ok {
-		return a
-	}
-
-	for _, expected := range elements {
-		if countElement(a.value, expected) != 0 {
-			opChain.fail(AssertionFailure{
-				Type:      AssertNotContainsElement,
-				Actual:    &AssertionValue{a.value},
-				Expected:  &AssertionValue{expected},
-				Reference: &AssertionValue{values},
-				Errors: []error{
-					errors.New("expected:" +
-						" array does not contain any elements from reference array"),
-				},
-			})
-			return a
-		}
 	}
 
 	return a
