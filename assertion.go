@@ -225,9 +225,9 @@ type AssertionHandler interface {
 
 // DefaultAssertionHandler is default implementation for AssertionHandler.
 //
-// - Formatter is used to format success and failure messages
-// - Reporter is used to report formatted fatal failure messages
-// - Logger is used to print formatted success and non-fatal failure messages
+//  - Formatter is used to format success and failure messages
+//  - Reporter is used to report formatted fatal failure messages
+//  - Logger is used to print formatted success and non-fatal failure messages
 //
 // Formatter and Reporter are required. Logger is optional.
 // By default httpexpect creates DefaultAssertionHandler without Logger.
