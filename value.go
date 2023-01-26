@@ -75,6 +75,47 @@ func (v *Value) Raw() interface{} {
 	return v.value
 }
 
+// Decode unmarshals the underlying value attached to the Object to a target variable
+// target should be one of this:
+//
+// - pointer to an empty interface
+//
+// - pointer to a struct
+//
+// - pointer to slice of any type
+//
+// Example:
+//
+//	type S struct {
+//		Foo int             `json:"foo"`
+//		Bar []interface{}   `json:"bar"`
+//		Baz struct{ A int } `json:"baz"`
+//	}
+//
+//	m := map[string]interface{}{
+//		"foo": 123,
+//		"bar": []interface{}{"123", 456.0},
+//		"baz": struct{ A int }{123},
+//	}
+//
+//	value = NewValue(reporter,m)
+//
+//	var target S
+//	value.Decode(&target)
+//
+//	assert.Equal(t,S{123,[]interface{}{"123", 456.0},struct{ A int }{123},target})
+func (v *Value) Decode(target interface{}) *Value {
+	opChain := v.chain.enter("Decode()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return v
+	}
+
+	canonDecode(opChain, v.value, target)
+	return v
+}
+
 // Path returns a new Value object for child object(s) matching given
 // JSONPath expression.
 //
