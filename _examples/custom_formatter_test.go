@@ -11,7 +11,7 @@ import (
 )
 
 var failureTemplate = `
-Test Failed!
+Test Failure!
 	test name: {{ .TestName | underscore }}
 	request name: {{ .RequestName }}
 	error details: {{ .Errors }}
@@ -73,7 +73,6 @@ func TestFailureTemplate(t *testing.T) {
 
 // TestSuccessTemplate tests with custom `SuccessTemplate`
 func TestSuccessTemplate(t *testing.T) {
-
 	handler := FruitsHandler()
 
 	server := httptest.NewServer(handler)
