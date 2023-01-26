@@ -97,7 +97,7 @@ func (v *Value) Raw() interface{} {
 //	// foo.Equal()
 //	fooWithAlias.Equal("bar")
 func (v *Value) Alias(name string) *Value {
-	opChain := v.chain.enter("Alias(%s)", name)
+	opChain := v.chain.enter("Alias(%q)", name)
 	defer opChain.leave()
 
 	v.chain.setAlias(name)

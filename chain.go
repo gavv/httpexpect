@@ -193,6 +193,22 @@ func (c *chain) setSeverity(severity AssertionSeverity) {
 	c.severity = severity
 }
 
+// Reset aliased path to given string.
+func (c *chain) setAlias(name string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if chainValidation && c.state == stateLeaved {
+		panic("can't use chain after leave")
+	}
+
+	if name != "" {
+		c.context.AliasedPath = []string{name}
+	} else {
+		c.context.AliasedPath = []string{}
+	}
+}
+
 // Store request name in AssertionContext.
 // Child chains inherit context from parent.
 func (c *chain) setRequestName(name string) {
@@ -368,22 +384,6 @@ func (c *chain) leave() {
 			p.mu.Unlock()
 			p = pp
 		}
-	}
-}
-
-// Initialize and set name to aliased path.
-func (c *chain) setAlias(name string) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	if chainValidation && c.state == stateLeaved {
-		panic("can't use chain after leave")
-	}
-
-	if name != "" {
-		c.context.AliasedPath = []string{name}
-	} else {
-		c.context.AliasedPath = []string{}
 	}
 }
 

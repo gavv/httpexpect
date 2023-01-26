@@ -79,11 +79,10 @@ func (m *Match) Raw() []string {
 
 // Alias is similar to Value.Alias.
 func (m *Match) Alias(name string) *Match {
-	opChain := m.chain.enter("Alias(%s)", name)
+	opChain := m.chain.enter("Alias(%q)", name)
 	defer opChain.leave()
 
 	m.chain.setAlias(name)
-
 	return m
 }
 

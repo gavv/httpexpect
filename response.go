@@ -167,11 +167,10 @@ func (r *Response) Raw() *http.Response {
 
 // Alias is similar to Value.Alias.
 func (r *Response) Alias(name string) *Response {
-	opChain := r.chain.enter("Alias(%s)", name)
+	opChain := r.chain.enter("Alias(%q)", name)
 	defer opChain.leave()
 
 	r.chain.setAlias(name)
-
 	return r
 }
 

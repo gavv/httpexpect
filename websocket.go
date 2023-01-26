@@ -87,7 +87,7 @@ func (ws *Websocket) Raw() *websocket.Conn {
 
 // Alias is similar to Value.Alias.
 func (ws *Websocket) Alias(name string) *Websocket {
-	opChain := ws.chain.enter("Alias(%s)", name)
+	opChain := ws.chain.enter("Alias(%q)", name)
 	defer opChain.leave()
 
 	ws.chain.setAlias(name)

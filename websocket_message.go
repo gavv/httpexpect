@@ -86,7 +86,7 @@ func (wm *WebsocketMessage) Raw() (typ int, content []byte, closeCode int) {
 
 // Alias is similar to Value.Alias.
 func (wm *WebsocketMessage) Alias(name string) *WebsocketMessage {
-	opChain := wm.chain.enter("Alias(%s)", name)
+	opChain := wm.chain.enter("Alias(%q)", name)
 	defer opChain.leave()
 
 	wm.chain.setAlias(name)

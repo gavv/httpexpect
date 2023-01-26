@@ -53,7 +53,7 @@ func (dt *DateTime) Raw() time.Time {
 
 // Alias is similar to Value.Alias.
 func (dt *DateTime) Alias(name string) *DateTime {
-	opChain := dt.chain.enter("Alias(%s)", name)
+	opChain := dt.chain.enter("Alias(%q)", name)
 	defer opChain.leave()
 
 	dt.chain.setAlias(name)

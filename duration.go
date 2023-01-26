@@ -56,7 +56,7 @@ func (d *Duration) Raw() time.Duration {
 
 // Alias is similar to Value.Alias.
 func (d *Duration) Alias(name string) *Duration {
-	opChain := d.chain.enter("Alias(%s)", name)
+	opChain := d.chain.enter("Alias(%q)", name)
 	defer opChain.leave()
 
 	d.chain.setAlias(name)

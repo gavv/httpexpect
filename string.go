@@ -56,15 +56,6 @@ func (s *String) Raw() string {
 	return s.value
 }
 
-// Alias is similar to Value.Alias.
-func (s *String) Alias(name string) *String {
-	opChain := s.chain.enter("Alias(%s)", name)
-	defer opChain.leave()
-
-	s.chain.setAlias(name)
-	return s
-}
-
 // Decode unmarshals the underlying value attached to the String to a target variable.
 // target should be one of these:
 //
@@ -88,6 +79,15 @@ func (s *String) Decode(target interface{}) *String {
 	}
 
 	canonDecode(opChain, s.value, target)
+	return s
+}
+
+// Alias is similar to Value.Alias.
+func (s *String) Alias(name string) *String {
+	opChain := s.chain.enter("Alias(%q)", name)
+	defer opChain.leave()
+
+	s.chain.setAlias(name)
 	return s
 }
 

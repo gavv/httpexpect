@@ -49,15 +49,6 @@ func (b *Boolean) Raw() bool {
 	return b.value
 }
 
-// Alias is similar to Value.Alias.
-func (b *Boolean) Alias(name string) *Boolean {
-	opChain := b.chain.enter("Alias(%s)", name)
-	defer opChain.leave()
-
-	b.chain.setAlias(name)
-	return b
-}
-
 // Decode unmarshals the underlying value attached to the Boolean to a target variable.
 // target should be one of these:
 //
@@ -81,6 +72,15 @@ func (b *Boolean) Decode(target interface{}) *Boolean {
 	}
 
 	canonDecode(opChain, b.value, target)
+	return b
+}
+
+// Alias is similar to Value.Alias.
+func (b *Boolean) Alias(name string) *Boolean {
+	opChain := b.chain.enter("Alias(%q)", name)
+	defer opChain.leave()
+
+	b.chain.setAlias(name)
 	return b
 }
 

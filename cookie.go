@@ -73,7 +73,7 @@ func (c *Cookie) Raw() *http.Cookie {
 
 // Alias is similar to Value.Alias.
 func (c *Cookie) Alias(name string) *Cookie {
-	opChain := c.chain.enter("Alias(%s)", name)
+	opChain := c.chain.enter("Alias(%q)", name)
 	defer opChain.leave()
 
 	c.chain.setAlias(name)
