@@ -60,15 +60,15 @@ func (dt *DateTime) Alias(name string) *DateTime {
 	return dt
 }
 
-// GetZone returns a new String instance with datetime zone.
+// Zone returns a new String instance with datetime zone.
 //
 // Example:
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.GetZone().Equal("IST")
-func (dt *DateTime) GetZone() *String {
-	opChain := dt.chain.enter("GetZone()")
+//	dt.Zone().Equal("IST")
+func (dt *DateTime) Zone() *String {
+	opChain := dt.chain.enter("Zone()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -79,16 +79,16 @@ func (dt *DateTime) GetZone() *String {
 	return newString(opChain, zone)
 }
 
-// GetYear returns the year in which datetime occurs,
+// Year returns the year in which datetime occurs,
 // in the range [0, 9999]
 //
 // Example:
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.GetYear().Equal(2022)
-func (dt *DateTime) GetYear() *Number {
-	opChain := dt.chain.enter("GetYear()")
+//	dt.Year().Equal(2022)
+func (dt *DateTime) Year() *Number {
+	opChain := dt.chain.enter("Year()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -98,16 +98,16 @@ func (dt *DateTime) GetYear() *Number {
 	return newNumber(opChain, float64(dt.value.Year()))
 }
 
-// GetMonth returns the month of the year specified by datetime,
+// Month returns the month of the year specified by datetime,
 // in the range [1,12].
 //
 // Example:
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.GetMonth().Equal(12)
-func (dt *DateTime) GetMonth() *Number {
-	opChain := dt.chain.enter("GetMonth()")
+//	dt.Month().Equal(12)
+func (dt *DateTime) Month() *Number {
+	opChain := dt.chain.enter("Month()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -117,16 +117,16 @@ func (dt *DateTime) GetMonth() *Number {
 	return newNumber(opChain, float64(dt.value.Month()))
 }
 
-// GetDay returns the day of the month specified datetime,
+// Day returns the day of the month specified datetime,
 // in the range [1,31].
 //
 // Example:
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.GetDay().Equal(30)
-func (dt *DateTime) GetDay() *Number {
-	opChain := dt.chain.enter("GetDay()")
+//	dt.Day().Equal(30)
+func (dt *DateTime) Day() *Number {
+	opChain := dt.chain.enter("Day()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -143,9 +143,9 @@ func (dt *DateTime) GetDay() *Number {
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.GetWeekDay().Equal(time.Friday)
-func (dt *DateTime) GetWeekDay() *Number {
-	opChain := dt.chain.enter("GetWeekDay()")
+//	dt.WeekDay().Equal(time.Friday)
+func (dt *DateTime) WeekDay() *Number {
+	opChain := dt.chain.enter("WeekDay()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -155,7 +155,7 @@ func (dt *DateTime) GetWeekDay() *Number {
 	return newNumber(opChain, float64(dt.value.Weekday()))
 }
 
-// GetYearDay returns the day of the year specified by datetime,
+// YearDay returns the day of the year specified by datetime,
 // in the range [1,365] for non-leap years,
 // and [1,366] in leap years.
 //
@@ -163,9 +163,9 @@ func (dt *DateTime) GetWeekDay() *Number {
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.GetYearDay().Equal(364)
-func (dt *DateTime) GetYearDay() *Number {
-	opChain := dt.chain.enter("GetYearDay()")
+//	dt.YearDay().Equal(364)
+func (dt *DateTime) YearDay() *Number {
+	opChain := dt.chain.enter("YearDay()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -175,16 +175,16 @@ func (dt *DateTime) GetYearDay() *Number {
 	return newNumber(opChain, float64(dt.value.YearDay()))
 }
 
-// GetHour returns the hour within the day specified by datetime,
+// Hour returns the hour within the day specified by datetime,
 // in the range [0, 23].
 //
 // Example:
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.GetHour().Equal(15)
-func (dt *DateTime) GetHour() *Number {
-	opChain := dt.chain.enter("GetHour()")
+//	dt.Hour().Equal(15)
+func (dt *DateTime) Hour() *Number {
+	opChain := dt.chain.enter("Hour()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -194,16 +194,16 @@ func (dt *DateTime) GetHour() *Number {
 	return newNumber(opChain, float64(dt.value.Hour()))
 }
 
-// GetMinute returns the minute offset within the hour specified by datetime,
+// Minute returns the minute offset within the hour specified by datetime,
 // in the range [0, 59].
 //
 // Example:
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.GetMinute().Equal(4)
-func (dt *DateTime) GetMinute() *Number {
-	opChain := dt.chain.enter("GetMinute()")
+//	dt.Minute().Equal(4)
+func (dt *DateTime) Minute() *Number {
+	opChain := dt.chain.enter("Minute()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -213,16 +213,16 @@ func (dt *DateTime) GetMinute() *Number {
 	return newNumber(opChain, float64(dt.value.Minute()))
 }
 
-// GetSecond returns the second offset within the minute specified by datetime,
+// Second returns the second offset within the minute specified by datetime,
 // in the range [0, 59].
 //
 // Example:
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.GetSecond().Equal(5)
-func (dt *DateTime) GetSecond() *Number {
-	opChain := dt.chain.enter("GetSecond()")
+//	dt.Second().Equal(5)
+func (dt *DateTime) Second() *Number {
+	opChain := dt.chain.enter("Second()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -232,16 +232,16 @@ func (dt *DateTime) GetSecond() *Number {
 	return newNumber(opChain, float64(dt.value.Second()))
 }
 
-// GetNanosecond returns the nanosecond offset within the second specified by datetime,
+// Nanosecond returns the nanosecond offset within the second specified by datetime,
 // in the range [0, 999999999].
 //
 // Example:
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.GetNanosecond().Equal(0)
-func (dt *DateTime) GetNanosecond() *Number {
-	opChain := dt.chain.enter("GetNanosecond()")
+//	dt.Nanosecond().Equal(0)
+func (dt *DateTime) Nanosecond() *Number {
+	opChain := dt.chain.enter("Nanosecond()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -249,6 +249,56 @@ func (dt *DateTime) GetNanosecond() *Number {
 	}
 
 	return newNumber(opChain, float64(dt.value.Nanosecond()))
+}
+
+// Deprecated: use Zone instead.
+func (dt *DateTime) GetZone() *String {
+	return dt.Zone()
+}
+
+// Deprecated: use Year instead.
+func (dt *DateTime) GetYear() *Number {
+	return dt.Year()
+}
+
+// Deprecated: use Month instead.
+func (dt *DateTime) GetMonth() *Number {
+	return dt.Month()
+}
+
+// Deprecated: use Day instead.
+func (dt *DateTime) GetDay() *Number {
+	return dt.Day()
+}
+
+// Deprecated: use WeekDay instead.
+func (dt *DateTime) GetWeekDay() *Number {
+	return dt.WeekDay()
+}
+
+// Deprecated: use YearDay instead.
+func (dt *DateTime) GetYearDay() *Number {
+	return dt.YearDay()
+}
+
+// Deprecated: use Hour instead.
+func (dt *DateTime) GetHour() *Number {
+	return dt.Hour()
+}
+
+// Deprecated: use Minute instead.
+func (dt *DateTime) GetMinute() *Number {
+	return dt.Minute()
+}
+
+// Deprecated: use Second instead.
+func (dt *DateTime) GetSecond() *Number {
+	return dt.Second()
+}
+
+// Deprecated: use Nanosecond instead.
+func (dt *DateTime) GetNanosecond() *Number {
+	return dt.Nanosecond()
 }
 
 // Equal succeeds if DateTime is equal to given value.
