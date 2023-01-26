@@ -12,6 +12,7 @@ func TestArray_Failed(t *testing.T) {
 
 		value.Path("$")
 		value.Schema("")
+		value.Alias("foo")
 
 		assert.NotNil(t, value.Length())
 		assert.NotNil(t, value.Element(0))
@@ -32,14 +33,16 @@ func TestArray_Failed(t *testing.T) {
 		value.NotEqual([]interface{}{})
 		value.EqualUnordered([]interface{}{})
 		value.NotEqualUnordered([]interface{}{})
-		value.Elements("foo")
-		value.NotElements("foo")
+		value.ConsistsOf("foo")
+		value.NotConsistsOf("foo")
 		value.Contains("foo")
 		value.NotContains("foo")
-		value.ContainsOnly("foo")
-		value.NotContainsOnly("foo")
+		value.ContainsAll("foo")
+		value.NotContainsAll("foo")
 		value.ContainsAny("foo")
 		value.NotContainsAny("foo")
+		value.ContainsOnly("foo")
+		value.NotContainsOnly("foo")
 		value.Every(func(_ int, val *Value) {
 			val.String().NotEmpty()
 		})
@@ -238,6 +241,23 @@ func TestArray_Getters(t *testing.T) {
 	assert.Equal(t, 123.0, value.Last().Raw())
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
+}
+
+func TestArray_Alias(t *testing.T) {
+	reporter := newMockReporter(t)
+	value1 := NewArray(reporter, []interface{}{1, 2})
+	assert.Equal(t, []string{"Array()"}, value1.chain.context.Path)
+	assert.Equal(t, []string{"Array()"}, value1.chain.context.AliasedPath)
+
+	value2 := value1.Alias("foo")
+	assert.Equal(t, []string{"Array()"}, value2.chain.context.Path)
+	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
+
+	value3 := value2.Filter(func(index int, value *Value) bool {
+		return value.Number().Raw() > 1
+	})
+	assert.Equal(t, []string{"Array()", "Filter()"}, value3.chain.context.Path)
+	assert.Equal(t, []string{"foo", "Filter()"}, value3.chain.context.AliasedPath)
 }
 
 func TestArray_Empty(t *testing.T) {
@@ -507,54 +527,54 @@ func TestArray_EqualUnordered(t *testing.T) {
 	})
 }
 
-func TestArray_Elements(t *testing.T) {
+func TestArray_ConsistsOf(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewArray(reporter, []interface{}{123, "foo"})
 
-	value.Elements(123)
+	value.ConsistsOf(123)
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.Elements("foo")
+	value.ConsistsOf("foo")
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.Elements("foo", 123)
+	value.ConsistsOf("foo", 123)
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.Elements(123, "foo", "foo")
+	value.ConsistsOf(123, "foo", "foo")
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.Elements(123, "foo")
+	value.ConsistsOf(123, "foo")
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 }
 
-func TestArray_NotElements(t *testing.T) {
+func TestArray_NotConsistsOf(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewArray(reporter, []interface{}{123, "foo"})
 
-	value.NotElements(123)
+	value.NotConsistsOf(123)
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.NotElements("foo")
+	value.NotConsistsOf("foo")
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.NotElements("foo", 123)
+	value.NotConsistsOf("foo", 123)
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.NotElements(123, "foo", "foo")
+	value.NotConsistsOf(123, "foo", "foo")
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.NotElements(123, "foo")
+	value.NotConsistsOf(123, "foo")
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 }
@@ -605,6 +625,60 @@ func TestArray_Contains(t *testing.T) {
 	value.chain.clearFailed()
 
 	value.NotContains([]interface{}{123, "foo"})
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+}
+
+func TestArray_ContainsAny(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewArray(reporter, []interface{}{123, "foo"})
+
+	value.ContainsAny(123)
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.NotContainsAny(123)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.ContainsAny("foo", 123)
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.NotContainsAny("foo", 123)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.ContainsAny("foo", "foo")
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.NotContainsAny("foo", "foo")
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.ContainsAny(123, "foo", "FOO")
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.NotContainsAny(123, "foo", "FOO")
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.ContainsAny("FOO")
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotContainsAny("FOO")
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.ContainsAny([]interface{}{123, "foo"})
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotContainsAny([]interface{}{123, "foo"})
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 }
@@ -693,60 +767,6 @@ func TestArray_ContainsOnly(t *testing.T) {
 	})
 }
 
-func TestArray_ContainsAny(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	value := NewArray(reporter, []interface{}{123, "foo"})
-
-	value.ContainsAny(123)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotContainsAny(123)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.ContainsAny("foo", 123)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotContainsAny("foo", 123)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.ContainsAny("foo", "foo")
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotContainsAny("foo", "foo")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.ContainsAny(123, "foo", "FOO")
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotContainsAny(123, "foo", "FOO")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.ContainsAny("FOO")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotContainsAny("FOO")
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.ContainsAny([]interface{}{123, "foo"})
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotContainsAny([]interface{}{123, "foo"})
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-}
-
 func TestArray_ConvertEqual(t *testing.T) {
 	type (
 		myArray []interface{}
@@ -795,11 +815,11 @@ func TestArray_ConvertElements(t *testing.T) {
 
 	assert.Equal(t, []interface{}{123.0, 456.0}, value.Raw())
 
-	value.Elements(myInt(123), 456.0)
+	value.ConsistsOf(myInt(123), 456.0)
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.Elements(func() {})
+	value.ConsistsOf(func() {})
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 }

@@ -71,6 +71,15 @@ func (c *Cookie) Raw() *http.Cookie {
 	return c.value
 }
 
+// Alias is similar to Value.Alias.
+func (c *Cookie) Alias(name string) *Cookie {
+	opChain := c.chain.enter("Alias(%q)", name)
+	defer opChain.leave()
+
+	c.chain.setAlias(name)
+	return c
+}
+
 // Name returns a new String instance with cookie name.
 //
 // Example:
@@ -156,7 +165,7 @@ func (c *Cookie) Expires() *DateTime {
 	return newDateTime(opChain, c.value.Expires)
 }
 
-// HaveMaxAge succeeds if cookie has Max-Age field.
+// HasMaxAge succeeds if cookie has Max-Age field.
 //
 // In particular, if Max-Age is present and is zero (which means delete
 // cookie now), method succeeds.
@@ -164,9 +173,9 @@ func (c *Cookie) Expires() *DateTime {
 // Example:
 //
 //	cookie := NewCookie(t, &http.Cookie{...})
-//	cookie.HaveMaxAge()
-func (c *Cookie) HaveMaxAge() *Cookie {
-	opChain := c.chain.enter("HaveMaxAge()")
+//	cookie.HasMaxAge()
+func (c *Cookie) HasMaxAge() *Cookie {
+	opChain := c.chain.enter("HasMaxAge()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -186,7 +195,7 @@ func (c *Cookie) HaveMaxAge() *Cookie {
 	return c
 }
 
-// NotHaveMaxAge succeeds if cookie does not have Max-Age field.
+// NotHasMaxAge succeeds if cookie does not have Max-Age field.
 //
 // In particular, if Max-Age is present and is zero (which means delete
 // cookie now), method fails.
@@ -194,9 +203,9 @@ func (c *Cookie) HaveMaxAge() *Cookie {
 // Example:
 //
 //	cookie := NewCookie(t, &http.Cookie{...})
-//	cookie.NotHaveMaxAge()
-func (c *Cookie) NotHaveMaxAge() *Cookie {
-	opChain := c.chain.enter("NotHaveMaxAge()")
+//	cookie.NotHasMaxAge()
+func (c *Cookie) NotHasMaxAge() *Cookie {
+	opChain := c.chain.enter("NotHasMaxAge()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -216,6 +225,16 @@ func (c *Cookie) NotHaveMaxAge() *Cookie {
 	return c
 }
 
+// Deprecated: use HasMaxAge instead.
+func (c *Cookie) HaveMaxAge() *Cookie {
+	return c.HasMaxAge()
+}
+
+// Deprecated: use NotHasMaxAge instead.
+func (c *Cookie) NotHaveMaxAge() *Cookie {
+	return c.NotHasMaxAge()
+}
+
 // MaxAge returns a new Duration instance with cookie Max-Age field.
 //
 // If Max-Age is not present, method fails.
@@ -226,7 +245,7 @@ func (c *Cookie) NotHaveMaxAge() *Cookie {
 // Example:
 //
 //	cookie := NewCookie(t, &http.Cookie{...})
-//	cookie.HaveMaxAge()
+//	cookie.HasMaxAge()
 //	cookie.MaxAge().InRange(time.Minute, time.Minute*10)
 func (c *Cookie) MaxAge() *Duration {
 	opChain := c.chain.enter("MaxAge()")

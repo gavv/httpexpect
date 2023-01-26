@@ -22,6 +22,7 @@ func TestDuration_Failed(t *testing.T) {
 	value.Le(tm)
 	value.InRange(tm, tm)
 	value.NotInRange(tm, tm)
+	value.Alias("foo")
 }
 
 func TestDuration_Constructors(t *testing.T) {
@@ -50,6 +51,17 @@ func TestDuration_Constructors(t *testing.T) {
 		assert.Equal(t, value.chain.context.Path, chain.context.Path)
 	})
 
+}
+
+func TestDuration_Alias(t *testing.T) {
+	reporter := newMockReporter(t)
+	value1 := NewDuration(reporter, time.Second)
+	assert.Equal(t, []string{"Duration()"}, value1.chain.context.Path)
+	assert.Equal(t, []string{"Duration()"}, value1.chain.context.AliasedPath)
+
+	value2 := value1.Alias("foo")
+	assert.Equal(t, []string{"Duration()"}, value2.chain.context.Path)
+	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
 }
 
 func TestDuration_Set(t *testing.T) {

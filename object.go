@@ -118,6 +118,15 @@ func (o *Object) Decode(target interface{}) *Object {
 	return o
 }
 
+// Alias is similar to Value.Alias.
+func (o *Object) Alias(name string) *Object {
+	opChain := o.chain.enter("Alias(%q)", name)
+	defer opChain.leave()
+
+	o.chain.setAlias(name)
+	return o
+}
+
 // Path is similar to Value.Path.
 func (o *Object) Path(path string) *Value {
 	opChain := o.chain.enter("Path(%q)", path)
@@ -351,7 +360,7 @@ func (o *Object) Filter(fn func(key string, value *Value) bool) *Object {
 	return newObject(opChain, filteredObject)
 }
 
-// Transform runs the passed function on all the Elements in the Object
+// Transform runs the passed function on all the elements in the Object
 // and returns a new object without effecting original object.
 //
 // The function is invoked for key value pairs sorted by keys in ascending order.

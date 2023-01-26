@@ -165,6 +165,15 @@ func (r *Response) Raw() *http.Response {
 	return r.httpResp
 }
 
+// Alias is similar to Value.Alias.
+func (r *Response) Alias(name string) *Response {
+	opChain := r.chain.enter("Alias(%q)", name)
+	defer opChain.leave()
+
+	r.chain.setAlias(name)
+	return r
+}
+
 // RoundTripTime returns a new Duration instance with response round-trip time.
 //
 // The returned duration is the time interval starting just before request is
@@ -724,10 +733,10 @@ func (r *Response) getForm(
 // Example:
 //
 //	resp := NewResponse(t, response)
-//	resp.JSON().Array().Elements("foo", "bar")
+//	resp.JSON().Array().ConsistsOf("foo", "bar")
 //	resp.JSON(ContentOpts{
 //	  MediaType: "application/json",
-//	}).Array.Elements("foo", "bar")
+//	}).Array.ConsistsOf("foo", "bar")
 func (r *Response) JSON(options ...ContentOpts) *Value {
 	opChain := r.chain.enter("JSON()")
 	defer opChain.leave()
@@ -791,10 +800,10 @@ func (r *Response) getJSON(opChain *chain, options ...ContentOpts) interface{} {
 // Example:
 //
 //	resp := NewResponse(t, response)
-//	resp.JSONP("myCallback").Array().Elements("foo", "bar")
+//	resp.JSONP("myCallback").Array().ConsistsOf("foo", "bar")
 //	resp.JSONP("myCallback", ContentOpts{
 //	  MediaType: "application/javascript",
-//	}).Array.Elements("foo", "bar")
+//	}).Array.ConsistsOf("foo", "bar")
 func (r *Response) JSONP(callback string, options ...ContentOpts) *Value {
 	opChain := r.chain.enter("JSONP()")
 	defer opChain.leave()

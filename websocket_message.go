@@ -84,6 +84,15 @@ func (wm *WebsocketMessage) Raw() (typ int, content []byte, closeCode int) {
 	return wm.typ, wm.content, wm.closeCode
 }
 
+// Alias is similar to Value.Alias.
+func (wm *WebsocketMessage) Alias(name string) *WebsocketMessage {
+	opChain := wm.chain.enter("Alias(%q)", name)
+	defer opChain.leave()
+
+	wm.chain.setAlias(name)
+	return wm
+}
+
 // CloseMessage is a shorthand for m.Type(websocket.CloseMessage).
 func (wm *WebsocketMessage) CloseMessage() *WebsocketMessage {
 	opChain := wm.chain.enter("CloseMessage()")
@@ -476,7 +485,7 @@ func (wm *WebsocketMessage) NoContent() *WebsocketMessage {
 // Example:
 //
 //	msg := conn.Expect()
-//	msg.JSON().Array().Elements("foo", "bar")
+//	msg.JSON().Array().ConsistsOf("foo", "bar")
 func (wm *WebsocketMessage) JSON() *Value {
 	opChain := wm.chain.enter("JSON()")
 	defer opChain.leave()

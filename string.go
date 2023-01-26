@@ -83,6 +83,15 @@ func (s *String) Decode(target interface{}) *String {
 	return s
 }
 
+// Alias is similar to Value.Alias.
+func (s *String) Alias(name string) *String {
+	opChain := s.chain.enter("Alias(%q)", name)
+	defer opChain.leave()
+
+	s.chain.setAlias(name)
+	return s
+}
+
 // Path is similar to Value.Path.
 func (s *String) Path(path string) *Value {
 	opChain := s.chain.enter("Path(%q)", path)

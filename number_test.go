@@ -18,6 +18,7 @@ func TestNumber_Failed(t *testing.T) {
 
 	var target interface{}
 	value.Decode(&target)
+	value.Alias("foo")
 
 	value.Equal(0)
 	value.NotEqual(0)
@@ -54,6 +55,17 @@ func TestNumber_Constructors(t *testing.T) {
 		assert.NotSame(t, value.chain, chain)
 		assert.Equal(t, value.chain.context.Path, chain.context.Path)
 	})
+}
+
+func TestNumber_Alias(t *testing.T) {
+	reporter := newMockReporter(t)
+	value1 := NewNumber(reporter, 123)
+	assert.Equal(t, []string{"Number()"}, value1.chain.context.Path)
+	assert.Equal(t, []string{"Number()"}, value1.chain.context.AliasedPath)
+
+	value2 := value1.Alias("foo")
+	assert.Equal(t, []string{"Number()"}, value2.chain.context.Path)
+	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
 }
 
 func TestNumber_Decode(t *testing.T) {

@@ -19,6 +19,7 @@ func TestString_Failed(t *testing.T) {
 
 	var target interface{}
 	value.Decode(target)
+	value.Alias("foo")
 
 	value.Length()
 	value.AsBoolean()
@@ -118,6 +119,22 @@ func TestString_Decode(t *testing.T) {
 
 		value.chain.assertFailed(t)
 	})
+}
+
+func TestString_Alias(t *testing.T) {
+	reporter := newMockReporter(t)
+	value1 := NewString(reporter, "123")
+	assert.Equal(t, []string{"String()"}, value1.chain.context.Path)
+	assert.Equal(t, []string{"String()"}, value1.chain.context.AliasedPath)
+
+	value2 := value1.Alias("foo")
+	assert.Equal(t, []string{"String()"}, value2.chain.context.Path)
+	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
+
+	value3 := value2.AsNumber(10)
+	assert.Equal(t, []string{"String()", "AsNumber()"},
+		value3.chain.context.Path)
+	assert.Equal(t, []string{"foo", "AsNumber()"}, value3.chain.context.AliasedPath)
 }
 
 func TestString_Getters(t *testing.T) {

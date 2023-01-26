@@ -62,7 +62,7 @@ func testChunkedHandler(e *Expect) {
 		Status(http.StatusOK).
 		ContentType("application/json").
 		TransferEncoding("chunked").
-		JSON().Array().Elements(1, 2)
+		JSON().Array().ConsistsOf(1, 2)
 }
 
 func TestE2EChunked_Live(t *testing.T) {

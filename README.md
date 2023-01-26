@@ -180,7 +180,7 @@ obj := e.GET("/fruits/apple").
 
 obj.Keys().ContainsOnly("colors", "weight")
 
-obj.Value("colors").Array().Elements("green", "red")
+obj.Value("colors").Array().ConsistsOf("green", "red")
 obj.Value("colors").Array().Element(0).String().Equal("green")
 obj.Value("colors").Array().Element(1).String().Equal("red")
 obj.Value("colors").Array().First().String().Equal("green")
@@ -693,6 +693,26 @@ e.POST("/fruits").
 	WithTimeout(time.Duration(10)*time.Second).
 	Expect().
 	Status(http.StatusOK)
+```
+
+##### Support for aliases in failure messages
+
+```go
+// when the tests fails, assertion path in the failure message is:
+//   Request("GET").Expect().JSON().Array().Empty()
+e.GET("/fruits").
+	Expect().
+	Status(http.StatusOK).JSON().Array().Empty()
+
+
+// assign alias "fruits" to the Array variable
+fruits := e.GET("/fruits").
+	Expect().
+	Status(http.StatusOK).JSON().Array().Alias("fruits")
+
+// assertion path in the failure message is now:
+//   fruits.Empty()
+fruits.Empty()
 ```
 
 ##### Printing requests and responses

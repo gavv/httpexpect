@@ -14,6 +14,7 @@ func TestBoolean_Failed(t *testing.T) {
 
 	value.Path("$")
 	value.Schema("")
+	value.Alias("foo")
 
 	var target interface{}
 	value.Decode(&target)
@@ -115,6 +116,18 @@ func TestBoolean_Getters(t *testing.T) {
 	value.Schema(`{"type": "object"}`)
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
+}
+
+func TestBoolean_Alias(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value1 := NewBoolean(reporter, true)
+	assert.Equal(t, []string{"Boolean()"}, value1.chain.context.Path)
+	assert.Equal(t, []string{"Boolean()"}, value1.chain.context.AliasedPath)
+
+	value2 := value1.Alias("foo")
+	assert.Equal(t, []string{"Boolean()"}, value2.chain.context.Path)
+	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
 }
 
 func TestBoolean_True(t *testing.T) {

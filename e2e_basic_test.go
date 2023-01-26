@@ -72,7 +72,7 @@ func testBasicHandler(e *Expect) {
 
 	e.GET("/{a}/{b}", "baz", "qux").
 		Expect().
-		Status(http.StatusOK).JSON().Array().Elements(true, false)
+		Status(http.StatusOK).JSON().Array().ConsistsOf(true, false)
 
 	e.PUT("/{a}/{b}").
 		WithPath("a", "baz").
