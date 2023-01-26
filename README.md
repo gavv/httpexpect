@@ -695,7 +695,7 @@ e.POST("/fruits").
 	Status(http.StatusOK)
 ```
 
-##### Support for aliases in a failure messages
+##### Support for aliases in failure messages
 
 ```go
 // when the tests fails, assertion path in the failure message is:
