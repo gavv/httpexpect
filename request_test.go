@@ -80,6 +80,24 @@ func TestRequest_Failed(t *testing.T) {
 	resp.chain.assertFailed(t)
 }
 
+func TestRequest_Constructors(t *testing.T) {
+	t.Run("Constructor with config", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		config := newMockConfig(reporter)
+		req := NewRequestC(config, "GET", "")
+		req.chain.assertNotFailed(t)
+	})
+
+	t.Run("chain Constructor", func(t *testing.T) {
+		chain := newMockChain(t)
+		reporter := newMockReporter(t)
+		config := newMockConfig(reporter)
+		req := newRequest(chain, config, "GET", "")
+		assert.NotSame(t, req.chain, chain)
+		assert.Equal(t, req.chain.context.Path, chain.context.Path)
+	})
+}
+
 func TestRequest_Alias(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
