@@ -76,6 +76,20 @@ func (e *Environment) Has(key string) bool {
 	return ok
 }
 
+// Delete removes the value with key from the environment.
+//
+// Example:
+//
+//	env := NewEnvironment(t)
+//	env.Put("key1", "str")
+//	env.Delete("key1")
+func (e *Environment) Delete(key string) {
+	opChain := e.chain.enter("Delete(%q)", key)
+	defer opChain.leave()
+
+	delete(e.data, key)
+}
+
 // Get returns value stored in the environment.
 //
 // If value does not exist, reports failure and returns nil.
