@@ -53,6 +53,5 @@ func NewFatalReporter(backend testing.TB) *FatalReporter {
 
 // Errorf implements Reporter.Errorf.
 func (r *FatalReporter) Errorf(message string, args ...interface{}) {
-	r.backend.Logf(message, args...)
-	r.backend.Fail()
+	r.backend.Fatalf(message, args...)
 }
