@@ -1829,27 +1829,31 @@ func (r *Request) Expect() *Response {
 	opChain := r.chain.enter("Expect()")
 	defer opChain.leave()
 
-	if opChain.failed() {
-		return newResponse(responseOpts{
+	resp := r.expect(opChain)
+
+	if resp == nil {
+		resp = newResponse(responseOpts{
 			config: r.config,
 			chain:  opChain,
 		})
 	}
 
-	if !r.checkOrder(opChain, "Expect") {
-		return newResponse(responseOpts{
-			config: r.config,
-			chain:  opChain,
-		})
+	return resp
+}
+
+func (r *Request) expect(opChain *chain) *Response {
+	if opChain.failed() {
+		return nil
+	}
+
+	if !r.checkOrder(opChain, "Expect()") {
+		return nil
 	}
 
 	resp := r.roundTrip(opChain)
 
 	if resp == nil {
-		return newResponse(responseOpts{
-			config: r.config,
-			chain:  opChain,
-		})
+		return nil
 	}
 
 	for _, matcher := range r.matchers {
