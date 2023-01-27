@@ -22,6 +22,9 @@ func TestValue_Failed(t *testing.T) {
 
 	assert.NotNil(t, value.Path("/"))
 
+	var target interface{}
+	value.Decode(target)
+
 	assert.NotNil(t, value.Object())
 	assert.NotNil(t, value.Array())
 	assert.NotNil(t, value.String())
