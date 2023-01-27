@@ -46,7 +46,7 @@ func TestIrisThings(t *testing.T) {
 
 	names := things.Path("$[*].name").Array()
 
-	names.Elements("foo", "bar")
+	names.ConsistsOf("foo", "bar")
 
 	for n, desc := range things.Path("$..description").Array().Iter() {
 		m := desc.String().Match("(.+) (.+)")

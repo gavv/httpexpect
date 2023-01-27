@@ -422,7 +422,7 @@ func TestString_IsAscii(t *testing.T) {
 	value5.chain.clearFailed()
 }
 
-func TestString_IsNotAscii(t *testing.T) {
+func TestString_NotAscii(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value1 := NewString(reporter, "Ascii")

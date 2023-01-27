@@ -560,7 +560,7 @@ func TestResponse_NoContentNil(t *testing.T) {
 	resp.chain.clearFailed()
 }
 
-func TestResponse_NoContentFailed(t *testing.T) {
+func TestResponse_NoContentFailure(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	headers := map[string][]string{

@@ -157,8 +157,12 @@ type Config struct {
 	// Config.Reporter is used by DefaultAssertionHandler, which is automatically
 	// constructed when AssertionHandler is nil.
 	//
-	// You can use AssertReporter, RequireReporter (they use testify),
-	// or *testing.T, or provide custom implementation.
+	// You can use:
+	//  - AssertReporter / RequireReporter
+	//    (non-fatal / fatal failures using testify package)
+	//  - testing.T / FatalReporter
+	//    (non-fatal / fatal failures using standard testing package)
+	//  - custom implementation
 	Reporter Reporter
 
 	// Formatter is used to format success and failure messages.
@@ -309,7 +313,7 @@ type WebsocketDialer interface {
 }
 
 // Reporter is used to report failures.
-// *testing.T, AssertReporter, and RequireReporter implement this interface.
+// *testing.T, FatalReporter, AssertReporter, RequireReporter implement it.
 type Reporter interface {
 	// Errorf reports failure.
 	// Allowed to return normally or terminate test using t.FailNow().

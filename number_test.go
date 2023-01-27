@@ -57,17 +57,6 @@ func TestNumber_Constructors(t *testing.T) {
 	})
 }
 
-func TestNumber_Alias(t *testing.T) {
-	reporter := newMockReporter(t)
-	value1 := NewNumber(reporter, 123)
-	assert.Equal(t, []string{"Number()"}, value1.chain.context.Path)
-	assert.Equal(t, []string{"Number()"}, value1.chain.context.AliasedPath)
-
-	value2 := value1.Alias("foo")
-	assert.Equal(t, []string{"Number()"}, value2.chain.context.Path)
-	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
-}
-
 func TestNumber_Decode(t *testing.T) {
 	t.Run("Decode into empty interface", func(t *testing.T) {
 		reporter := newMockReporter(t)
@@ -125,6 +114,19 @@ func TestNumber_Decode(t *testing.T) {
 		value.chain.assertFailed(t)
 	})
 }
+
+func TestNumber_Alias(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value1 := NewNumber(reporter, 123)
+	assert.Equal(t, []string{"Number()"}, value1.chain.context.Path)
+	assert.Equal(t, []string{"Number()"}, value1.chain.context.AliasedPath)
+
+	value2 := value1.Alias("foo")
+	assert.Equal(t, []string{"Number()"}, value2.chain.context.Path)
+	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
+}
+
 func TestNumber_Getters(t *testing.T) {
 	reporter := newMockReporter(t)
 

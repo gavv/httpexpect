@@ -61,6 +61,20 @@ func (e *Environment) Put(key string, value interface{}) {
 	e.data[key] = value
 }
 
+// Delete removes the value with key from the environment.
+//
+// Example:
+//
+//	env := NewEnvironment(t)
+//	env.Put("key1", "str")
+//	env.Delete("key1")
+func (e *Environment) Delete(key string) {
+	opChain := e.chain.enter("Delete(%q)", key)
+	defer opChain.leave()
+
+	delete(e.data, key)
+}
+
 // Has returns true if value exists in the environment.
 //
 // Example:

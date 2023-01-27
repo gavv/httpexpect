@@ -59,6 +59,7 @@ func TestWebsocketMessage_Constructors(t *testing.T) {
 
 func TestWebsocketMessage_Alias(t *testing.T) {
 	reporter := newMockReporter(t)
+
 	value1 := NewWebsocketMessage(reporter, websocket.CloseMessage, nil)
 	assert.Equal(t, []string{"WebsocketMessage()"}, value1.chain.context.Path)
 	assert.Equal(t, []string{"WebsocketMessage()"}, value1.chain.context.AliasedPath)
@@ -73,7 +74,7 @@ func TestWebsocketMessage_Alias(t *testing.T) {
 	assert.Equal(t, []string{"foo", "Body()"}, value3.chain.context.AliasedPath)
 }
 
-func TestWebsocketMessage_BadUsage(t *testing.T) {
+func TestWebsocketMessage_UsageChecks(t *testing.T) {
 	chain := newMockChain(t)
 
 	msg := newEmptyWebsocketMessage(chain)

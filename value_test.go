@@ -68,66 +68,20 @@ func TestValue_Constructors(t *testing.T) {
 	})
 }
 
-func TestValue_Decode(t *testing.T) {
-	t.Run("Decode into empty interface", func(t *testing.T) {
-		reporter := newMockReporter(t)
+func TestValue_Alias(t *testing.T) {
+	reporter := newMockReporter(t)
 
-		value := NewValue(reporter, 123.0)
+	value1 := NewValue(reporter, 123)
+	assert.Equal(t, []string{"Value()"}, value1.chain.context.Path)
+	assert.Equal(t, []string{"Value()"}, value1.chain.context.AliasedPath)
 
-		var target interface{}
-		value.Decode(&target)
+	value2 := value1.Alias("foo")
+	assert.Equal(t, []string{"Value()"}, value2.chain.context.Path)
+	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
 
-		value.chain.assertNotFailed(t)
-		assert.Equal(t, 123.0, target)
-	})
-	t.Run("Decode into struct", func(t *testing.T) {
-		reporter := newMockReporter(t)
-
-		type S struct {
-			Foo int             `json:"foo"`
-			Bar []interface{}   `json:"bar"`
-			Baz struct{ A int } `json:"baz"`
-		}
-
-		m := map[string]interface{}{
-			"foo": 123,
-			"bar": []interface{}{"123", 456.0},
-			"baz": struct{ A int }{123},
-		}
-
-		value := NewValue(reporter, m)
-
-		actualStruct := S{
-			Foo: 123,
-			Bar: []interface{}{"123", 456.0},
-			Baz: struct{ A int }{123},
-		}
-
-		var target S
-		value.Decode(&target)
-
-		value.chain.assertNotFailed(t)
-		assert.Equal(t, target, actualStruct)
-	})
-	t.Run("Target is nil", func(t *testing.T) {
-		reporter := newMockReporter(t)
-
-		value := NewValue(reporter, 123)
-
-		value.Decode(nil)
-
-		value.chain.failed()
-	})
-
-	t.Run("Target is unmarshable", func(t *testing.T) {
-		reporter := newMockReporter(t)
-
-		value := NewValue(reporter, 123)
-
-		value.Decode(123)
-
-		value.chain.failed()
-	})
+	value3 := value2.Number()
+	assert.Equal(t, []string{"Value()", "Number()"}, value3.chain.context.Path)
+	assert.Equal(t, []string{"foo", "Number()"}, value3.chain.context.AliasedPath)
 }
 
 func TestValue_CastNull(t *testing.T) {
@@ -240,21 +194,6 @@ func TestValue_CastBoolean(t *testing.T) {
 	NewValue(reporter, data).Boolean().chain.assertNotFailed(t)
 	NewValue(reporter, data).NotNull().chain.assertNotFailed(t)
 	NewValue(reporter, data).Null().chain.assertFailed(t)
-}
-
-func TestValue_Alias(t *testing.T) {
-	reporter := newMockReporter(t)
-	value1 := NewValue(reporter, 123)
-	assert.Equal(t, []string{"Value()"}, value1.chain.context.Path)
-	assert.Equal(t, []string{"Value()"}, value1.chain.context.AliasedPath)
-
-	value2 := value1.Alias("foo")
-	assert.Equal(t, []string{"Value()"}, value2.chain.context.Path)
-	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
-
-	value3 := value2.Number()
-	assert.Equal(t, []string{"Value()", "Number()"}, value3.chain.context.Path)
-	assert.Equal(t, []string{"foo", "Number()"}, value3.chain.context.AliasedPath)
 }
 
 func TestValue_GetObject(t *testing.T) {
