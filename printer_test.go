@@ -46,13 +46,13 @@ func TestPrinter_Debug(t *testing.T) {
 	printer.Response(nil, 0)
 }
 
-type panicReader struct{}
+type errorReader struct{}
 
-func (p panicReader) Read(_ []byte) (n int, err error) {
+func (errorReader) Read(_ []byte) (n int, err error) {
 	return 0, errors.New("error")
 }
 
-func (p panicReader) Close() error {
+func (errorReader) Close() error {
 	return errors.New("error")
 }
 
@@ -70,13 +70,13 @@ func TestPrinter_Panics(t *testing.T) {
 
 		assert.Panics(t, func() {
 			curl.Request(&http.Request{
-				Body: &panicReader{},
+				Body: errorReader{},
 			})
 		})
 
 		assert.Panics(t, func() {
 			curl.Response(&http.Response{
-				Body: &panicReader{},
+				Body: errorReader{},
 			}, 0)
 		})
 	})
