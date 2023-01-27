@@ -206,6 +206,7 @@ e.GET("/user").
 	JSON().
 	Decode(&user)
 ```
+
 ##### JSON Schema and JSON Path
 
 ```go
