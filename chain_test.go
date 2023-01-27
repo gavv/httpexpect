@@ -295,7 +295,7 @@ func TestChain_Panics(t *testing.T) {
 		})
 	})
 
-	t.Run("non_nil_request", func(t *testing.T) {
+	t.Run("set_request_twice", func(t *testing.T) {
 		chain := newChainWithDefaults("test", newMockReporter(t))
 
 		opChain := chain.enter("foo")
@@ -306,7 +306,7 @@ func TestChain_Panics(t *testing.T) {
 		})
 	})
 
-	t.Run("non_nil_response", func(t *testing.T) {
+	t.Run("set_response_twice", func(t *testing.T) {
 		chain := newChainWithDefaults("test", newMockReporter(t))
 
 		opChain := chain.enter("foo")
