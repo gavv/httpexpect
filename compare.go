@@ -6,13 +6,13 @@ import (
 )
 
 func arrayComparator(opChain *chain, array []interface{}) func(x, y *Value) bool {
-	if !arrayComparatorValidate(opChain, array) {
+	if !arrayCompValidate(opChain, array) {
 		return nil
 	}
-	return arrayComparatorConstruct(array)
+	return arrayCompConstruct(array)
 }
 
-func arrayComparatorValidate(opChain *chain, array []interface{}) bool {
+func arrayCompValidate(opChain *chain, array []interface{}) bool {
 	var prev interface{}
 	for index, curr := range array {
 		switch curr.(type) {
@@ -56,7 +56,8 @@ func arrayComparatorValidate(opChain *chain, array []interface{}) bool {
 					array,
 				},
 				Errors: []error{
-					errors.New("expected: types of all elements of reference array are the same"),
+					errors.New("expected:" +
+						" types of all elements of reference array are the same"),
 					fmt.Errorf("element %v has type %T, but element %v has type %T",
 						index-1, prev, index, curr),
 				},
@@ -70,7 +71,7 @@ func arrayComparatorValidate(opChain *chain, array []interface{}) bool {
 	return true
 }
 
-func arrayComparatorConstruct(array []interface{}) func(x, y *Value) bool {
+func arrayCompConstruct(array []interface{}) func(x, y *Value) bool {
 	if len(array) > 0 {
 		switch array[0].(type) {
 		case bool:
@@ -98,7 +99,6 @@ func arrayComparatorConstruct(array []interface{}) func(x, y *Value) bool {
 			}
 		}
 	}
-
 	return nil
 }
 
