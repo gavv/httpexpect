@@ -74,11 +74,9 @@ func (o *Object) Raw() map[string]interface{} {
 // Decode unmarshals the underlying value attached to the Object to a target variable
 // target should be one of this:
 //
-// - pointer to an empty interface
-//
-// - pointer to a map
-//
-// - pointer to a struct
+//   - pointer to an empty interface
+//   - pointer to a map
+//   - pointer to a struct
 //
 // Example:
 //

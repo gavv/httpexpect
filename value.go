@@ -78,11 +78,9 @@ func (v *Value) Raw() interface{} {
 // Decode unmarshals the underlying value attached to the Object to a target variable
 // target should be one of this:
 //
-// - pointer to an empty interface
-//
-// - pointer to a struct
-//
-// - pointer to slice of any type
+//   - pointer to an empty interface
+//   - pointer to a struct
+//   - pointer to slice of any type
 //
 // Example:
 //
