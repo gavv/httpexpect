@@ -32,7 +32,7 @@ func TestEnvironment_Constructors(t *testing.T) {
 	})
 }
 
-func TestEnvironment_Generic(t *testing.T) {
+func TestEnvironment_Basic(t *testing.T) {
 	env := newEnvironment(newMockChain(t))
 
 	assert.False(t, env.Has("good_key"))

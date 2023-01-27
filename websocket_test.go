@@ -48,6 +48,7 @@ func TestWebsocket_Failed(t *testing.T) {
 
 func TestWebsocket_Alias(t *testing.T) {
 	reporter := newMockReporter(t)
+
 	value1 := NewWebsocketC(Config{Reporter: reporter}, newMockWebsocketConn())
 	assert.Equal(t, []string{"Websocket()"}, value1.chain.context.Path)
 	assert.Equal(t, []string{"Websocket()"}, value1.chain.context.AliasedPath)

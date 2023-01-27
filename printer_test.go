@@ -57,7 +57,7 @@ func (errorReader) Close() error {
 }
 
 func TestPrinter_Panics(t *testing.T) {
-	t.Run("panic_curl_printer", func(t *testing.T) {
+	t.Run("CurlPrinter", func(t *testing.T) {
 		curl := NewCurlPrinter(t)
 
 		assert.Panics(t, func() {
@@ -65,7 +65,7 @@ func TestPrinter_Panics(t *testing.T) {
 		})
 	})
 
-	t.Run("panic_debug_printer", func(t *testing.T) {
+	t.Run("DebugPrinter", func(t *testing.T) {
 		curl := NewDebugPrinter(t, true)
 
 		assert.Panics(t, func() {

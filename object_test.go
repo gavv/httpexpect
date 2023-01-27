@@ -114,24 +114,6 @@ func TestObject_Constructors(t *testing.T) {
 	})
 }
 
-func TestObject_Alias(t *testing.T) {
-	reporter := newMockReporter(t)
-	value1 := NewObject(reporter, map[string]interface{}{
-		"foo": 100.0,
-	})
-	assert.Equal(t, []string{"Object()"}, value1.chain.context.Path)
-	assert.Equal(t, []string{"Object()"}, value1.chain.context.AliasedPath)
-
-	value2 := value1.Alias("bar")
-	assert.Equal(t, []string{"Object()"}, value2.chain.context.Path)
-	assert.Equal(t, []string{"bar"}, value2.chain.context.AliasedPath)
-
-	value3 := value2.Values()
-	assert.Equal(t, []string{"Object()", "Values()"},
-		value3.chain.context.Path)
-	assert.Equal(t, []string{"bar", "Values()"}, value3.chain.context.AliasedPath)
-}
-
 func TestObject_Decode(t *testing.T) {
 	t.Run("Decode into empty interface", func(t *testing.T) {
 		reporter := newMockReporter(t)
@@ -241,6 +223,26 @@ func TestObject_Decode(t *testing.T) {
 		value.chain.assertFailed(t)
 	})
 }
+
+func TestObject_Alias(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value1 := NewObject(reporter, map[string]interface{}{
+		"foo": 100.0,
+	})
+	assert.Equal(t, []string{"Object()"}, value1.chain.context.Path)
+	assert.Equal(t, []string{"Object()"}, value1.chain.context.AliasedPath)
+
+	value2 := value1.Alias("bar")
+	assert.Equal(t, []string{"Object()"}, value2.chain.context.Path)
+	assert.Equal(t, []string{"bar"}, value2.chain.context.AliasedPath)
+
+	value3 := value2.Values()
+	assert.Equal(t, []string{"Object()", "Values()"},
+		value3.chain.context.Path)
+	assert.Equal(t, []string{"bar", "Values()"}, value3.chain.context.AliasedPath)
+}
+
 func TestObject_Getters(t *testing.T) {
 	reporter := newMockReporter(t)
 
@@ -616,7 +618,7 @@ func TestObject_ContainsSubsetSuccess(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestObject_ContainsSubsetFailed(t *testing.T) {
+func TestObject_ContainsSubsetFailure(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewObject(reporter, map[string]interface{}{

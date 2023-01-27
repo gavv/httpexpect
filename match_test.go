@@ -53,6 +53,7 @@ func TestMatch_Constructors(t *testing.T) {
 
 func TestMatch_Alias(t *testing.T) {
 	reporter := newMockReporter(t)
+
 	matches := []string{"m0", "m1", "m2"}
 	names := []string{"", "n1", "n2"}
 
