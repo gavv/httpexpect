@@ -295,6 +295,28 @@ func TestChain_Panics(t *testing.T) {
 		})
 	})
 
+	t.Run("set_request_twice", func(t *testing.T) {
+		chain := newChainWithDefaults("test", newMockReporter(t))
+
+		opChain := chain.enter("foo")
+		opChain.setRequest(&Request{})
+
+		assert.Panics(t, func() {
+			opChain.setRequest(&Request{})
+		})
+	})
+
+	t.Run("set_response_twice", func(t *testing.T) {
+		chain := newChainWithDefaults("test", newMockReporter(t))
+
+		opChain := chain.enter("foo")
+		opChain.setResponse(&Response{})
+
+		assert.Panics(t, func() {
+			opChain.setResponse(&Response{})
+		})
+	})
+
 	t.Run("leave_without_enter", func(t *testing.T) {
 		chain := newChainWithDefaults("test", newMockReporter(t))
 
@@ -450,8 +472,10 @@ func TestChain_Panics(t *testing.T) {
 	t.Run("invalid_assertion", func(t *testing.T) {
 		chain := newChainWithDefaults("test", newMockReporter(t))
 
+		opChain := chain.enter("foo")
+
 		assert.Panics(t, func() {
-			chain.fail(AssertionFailure{
+			opChain.fail(AssertionFailure{
 				Type: AssertionType(9999),
 			})
 		})
