@@ -105,7 +105,7 @@ type Config struct {
 	TestName string
 
 	// BaseURL is a URL to prepended to all requests.
-	// My be empty.
+	// May be empty.
 	//
 	// If non-empty, trailing slash is allowed (but not required) and is appended
 	// automatically.
@@ -182,16 +182,16 @@ type Config struct {
 	//
 	// Every time an assertion is made, AssertionHandler is invoked with detailed
 	// info about the assertion. On failure, AssertionHandler is responsible to
-	// format error and report it to test suite.
+	// format error and report it to the test suite.
 	//
 	// If AssertionHandler is nil, DefaultAssertionHandler is constructed, with
 	// Formatter set to Config.Formatter, Reporter set to Config.Reporter, and
-	// Logger set to nil. DefaultAssertionHandler will just delegates formatting
+	// Logger set to nil. DefaultAssertionHandler will just delegate formatting
 	// and reporting to Formatter and Reporter.
 	//
 	// If you're happy with DefaultAssertionHandler, but want to enable logging
 	// of successful assertions and non-fatal failures, you can manually construct
-	// DefaultAssertionHandler and set its Logger field to non-nil value.
+	// DefaultAssertionHandler and set its Logger field to a non-nil value.
 	//
 	// Usually you don't need custom AssertionHandler and it's enough just to
 	// set Reporter. Use AssertionHandler for more precise control of reports.
@@ -201,7 +201,7 @@ type Config struct {
 	// May be nil.
 	//
 	// If printer implements WebsocketPrinter interface, it will be also used
-	// to print WebSocket messages.
+	// to print Websocket messages.
 	//
 	// You can use CompactPrinter, DebugPrinter, CurlPrinter, or provide
 	// custom implementation.
@@ -307,7 +307,7 @@ type Client interface {
 //	  WebsocketDialer: httpexpect.NewWebsocketDialer(myHandler),
 //	})
 type WebsocketDialer interface {
-	// Dial establishes new WebSocket connection and returns response
+	// Dial establishes new Websocket connection and returns response
 	// of handshake result.
 	Dial(url string, reqH http.Header) (*websocket.Conn, *http.Response, error)
 }
@@ -356,7 +356,7 @@ func New(t LoggerReporter, baseURL string) *Expect {
 //
 // t is usually *testing.T, but can be any matching implementation.
 //
-// baseURL specifies URL to be prepended to all requests. My be empty. If non-empty,
+// baseURL specifies URL to be prepended to all requests. May be empty. If non-empty,
 // trailing slash is allowed (but not required) and is appended automatically.
 //
 // Default is a shorthand for WithConfig. It uses:
