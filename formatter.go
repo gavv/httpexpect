@@ -21,17 +21,21 @@ type Formatter interface {
 	FormatFailure(*AssertionContext, *AssertionFailure) string
 }
 
-type FloatFormatMode int
+// FloatFormat defines the format for printing float
+type FloatFormat int
 
 const (
-	// Print float in scientific notation for large exponent,
-	// otherwise print as decimal
-	FloatFormatAuto FloatFormatMode = iota
+	// Print floats in scientific notation for large exponents,
+	// otherwise print in decimal notation.
+	// Similar to %g format.
+	FloatFormatAuto FloatFormat = iota
 
-	// Print float in decimal
+	// Always print floats in decimal notation.
+	// Similar to %f format.
 	FloatFormatDecimal
 
-	// Print float in scientific notation
+	// Always print floats in scientific notation.
+	// Similar to %e format.
 	FloatFormatScientific
 )
 
@@ -57,9 +61,8 @@ type DefaultFormatter struct {
 	DisableDiffs bool
 
 	// Float printing format.
-	// If not set, will print small exponent in decimal and
-	// large exponent in scientific notation.
-	FloatFormat FloatFormatMode
+	// Default is FloatFormatAuto.
+	FloatFormat FloatFormat
 
 	// Wrap text to keep lines below given width.
 	// Use zero for default width, and negative value to disable wrapping.
