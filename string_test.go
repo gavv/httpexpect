@@ -25,7 +25,7 @@ func TestString_Failed(t *testing.T) {
 	value.AsBoolean()
 	value.AsNumber()
 	value.AsDateTime()
-	value.Empty()
+	value.IsEmpty()
 	value.NotEmpty()
 	value.Equal("")
 	value.NotEqual("")
@@ -175,7 +175,7 @@ func TestString_Empty(t *testing.T) {
 
 	value1 := NewString(reporter, "")
 
-	value1.Empty()
+	value1.IsEmpty()
 	value1.chain.assertNotFailed(t)
 	value1.chain.clearFailed()
 
@@ -185,7 +185,7 @@ func TestString_Empty(t *testing.T) {
 
 	value2 := NewString(reporter, "a")
 
-	value2.Empty()
+	value2.IsEmpty()
 	value2.chain.assertFailed(t)
 	value2.chain.clearFailed()
 

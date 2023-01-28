@@ -330,7 +330,7 @@ func TestResponse_Headers(t *testing.T) {
 		}
 	}
 
-	resp.Header("Bad-Header").Empty().chain.assertNotFailed(t)
+	resp.Header("Bad-Header").IsEmpty().chain.assertNotFailed(t)
 }
 
 func TestResponse_Cookies(t *testing.T) {

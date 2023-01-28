@@ -604,14 +604,14 @@ func (a *Array) NotFind(fn func(index int, value *Value) bool) *Array {
 	return a
 }
 
-// Empty succeeds if array is empty.
+// IsEmpty succeeds if array is empty.
 //
 // Example:
 //
 //	array := NewArray(t, []interface{}{})
-//	array.Empty()
-func (a *Array) Empty() *Array {
-	opChain := a.chain.enter("Empty()")
+//	array.IsEmpty()
+func (a *Array) IsEmpty() *Array {
+	opChain := a.chain.enter("IsEmpty()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -656,6 +656,11 @@ func (a *Array) NotEmpty() *Array {
 	}
 
 	return a
+}
+
+// Deprecated: use IsEmpty instead.
+func (a *Array) Empty() *Array {
+	return a.IsEmpty()
 }
 
 // Equal succeeds if array is equal to given value.

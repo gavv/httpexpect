@@ -114,7 +114,7 @@ func testWebsocketSession(e *Expect) {
 		Websocket()
 	defer ws.Disconnect()
 
-	ws.Subprotocol().Empty()
+	ws.Subprotocol().IsEmpty()
 
 	ws.WriteBytesBinary([]byte("my binary bytes")).
 		Expect().

@@ -16,7 +16,7 @@ func TestMatch_Failed(t *testing.T) {
 	assert.NotNil(t, value.Index(0))
 	assert.NotNil(t, value.Name(""))
 
-	value.Empty()
+	value.IsEmpty()
 	value.NotEmpty()
 	value.Values("")
 	value.NotValues("")
@@ -118,7 +118,7 @@ func TestMatch_Empty(t *testing.T) {
 	assert.Equal(t, []string{}, value2.Raw())
 	assert.Equal(t, []string{}, value3.Raw())
 
-	value1.Empty()
+	value1.IsEmpty()
 	value1.chain.assertFailed(t)
 	value1.chain.clearFailed()
 
@@ -126,7 +126,7 @@ func TestMatch_Empty(t *testing.T) {
 	value1.chain.assertNotFailed(t)
 	value1.chain.clearFailed()
 
-	value2.Empty()
+	value2.IsEmpty()
 	value2.chain.assertNotFailed(t)
 	value2.chain.clearFailed()
 
@@ -134,7 +134,7 @@ func TestMatch_Empty(t *testing.T) {
 	value2.chain.assertFailed(t)
 	value2.chain.clearFailed()
 
-	value3.Empty()
+	value3.IsEmpty()
 	value3.chain.assertNotFailed(t)
 	value3.chain.clearFailed()
 

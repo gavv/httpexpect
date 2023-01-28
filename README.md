@@ -149,7 +149,7 @@ func TestFruits(t *testing.T) {
 	// is it working?
 	e.GET("/fruits").
 		Expect().
-		Status(http.StatusOK).JSON().Array().Empty()
+		Status(http.StatusOK).JSON().Array().IsEmpty()
 }
 ```
 
@@ -724,10 +724,10 @@ e.POST("/fruits").
 
 ```go
 // when the tests fails, assertion path in the failure message is:
-//   Request("GET").Expect().JSON().Array().Empty()
+//   Request("GET").Expect().JSON().Array().IsEmpty()
 e.GET("/fruits").
 	Expect().
-	Status(http.StatusOK).JSON().Array().Empty()
+	Status(http.StatusOK).JSON().Array().IsEmpty()
 
 
 // assign alias "fruits" to the Array variable
@@ -736,8 +736,8 @@ fruits := e.GET("/fruits").
 	Status(http.StatusOK).JSON().Array().Alias("fruits")
 
 // assertion path in the failure message is now:
-//   fruits.Empty()
-fruits.Empty()
+//   fruits.IsEmpty()
+fruits.IsEmpty()
 ```
 
 ##### Printing requests and responses

@@ -608,14 +608,14 @@ func (o *Object) NotFind(fn func(key string, value *Value) bool) *Object {
 	return o
 }
 
-// Empty succeeds if object is empty.
+// IsEmpty succeeds if object is empty.
 //
 // Example:
 //
 //	object := NewObject(t, map[string]interface{}{})
-//	object.Empty()
-func (o *Object) Empty() *Object {
-	opChain := o.chain.enter("Empty()")
+//	object.IsEmpty()
+func (o *Object) IsEmpty() *Object {
+	opChain := o.chain.enter("IsEmpty()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -660,6 +660,11 @@ func (o *Object) NotEmpty() *Object {
 	}
 
 	return o
+}
+
+// Deprecated: use IsEmpty instead.
+func (o *Object) Empty() *Object {
+	return o.IsEmpty()
 }
 
 // Equal succeeds if object is equal to given value.

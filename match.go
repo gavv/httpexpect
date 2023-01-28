@@ -186,14 +186,14 @@ func (m *Match) Name(name string) *String {
 	return newString(opChain, m.submatches[index])
 }
 
-// Empty succeeds if submatches array is empty.
+// IsEmpty succeeds if submatches array is empty.
 //
 // Example:
 //
 //	m := NewMatch(t, submatches, names)
-//	m.Empty()
-func (m *Match) Empty() *Match {
-	opChain := m.chain.enter("Empty()")
+//	m.IsEmpty()
+func (m *Match) IsEmpty() *Match {
+	opChain := m.chain.enter("IsEmpty()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -238,6 +238,11 @@ func (m *Match) NotEmpty() *Match {
 	}
 
 	return m
+}
+
+// Deprecated: use IsEmpty instead.
+func (m *Match) Empty() *Match {
+	return m.IsEmpty()
 }
 
 // Values succeeds if submatches array, starting from index 1, is equal to

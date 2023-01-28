@@ -125,14 +125,14 @@ func (s *String) Length() *Number {
 	return newNumber(opChain, float64(len(s.value)))
 }
 
-// Empty succeeds if string is empty.
+// IsEmpty succeeds if string is empty.
 //
 // Example:
 //
 //	str := NewString(t, "")
-//	str.Empty()
-func (s *String) Empty() *String {
-	opChain := s.chain.enter("Empty()")
+//	str.IsEmpty()
+func (s *String) IsEmpty() *String {
+	opChain := s.chain.enter("IsEmpty()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -177,6 +177,11 @@ func (s *String) NotEmpty() *String {
 	}
 
 	return s
+}
+
+// Deprecated: use IsEmpty instead.
+func (s *String) Empty() *String {
+	return s.IsEmpty()
 }
 
 // Equal succeeds if string is equal to given Go string.

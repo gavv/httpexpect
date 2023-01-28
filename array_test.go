@@ -27,7 +27,7 @@ func TestArray_Failed(t *testing.T) {
 		var target interface{}
 		value.Decode(&target)
 
-		value.Empty()
+		value.IsEmpty()
 		value.NotEmpty()
 		value.Equal([]interface{}{})
 		value.NotEqual([]interface{}{})
@@ -272,7 +272,7 @@ func TestArray_Empty(t *testing.T) {
 
 	value2 := NewArray(reporter, []interface{}{})
 
-	value2.Empty()
+	value2.IsEmpty()
 	value2.chain.assertNotFailed(t)
 	value2.chain.clearFailed()
 
@@ -282,7 +282,7 @@ func TestArray_Empty(t *testing.T) {
 
 	value3 := NewArray(reporter, []interface{}{""})
 
-	value3.Empty()
+	value3.IsEmpty()
 	value3.chain.assertFailed(t)
 	value3.chain.clearFailed()
 
