@@ -191,22 +191,6 @@ obj.Value("colors").Array().First().String().Equal("green")
 obj.Value("colors").Array().Last().String().Equal("red")
 ```
 
-##### Decode
-
-```go
-type User struct {
-	Name   string `json:"name"`
-	Age    int    `json:"age"`
-	Gender string `json:"gender"`
-}
-var user User
-e.GET("/user").
-	Expect().
-	Status(http.StatusOK).
-	JSON().
-	Decode(&user)
-```
-
 ##### JSON Schema and JSON Path
 
 ```go
@@ -233,6 +217,27 @@ repos.Schema(schema)
 // run JSONPath query and iterate results
 for _, private := range repos.Path("$..private").Array().Iter() {
 	private.Boolean().False()
+}
+```
+
+##### JSON decoding
+
+```go
+type User struct {
+	Name   string `json:"name"`
+	Age    int    `json:"age"`
+	Gender string `json:"gender"`
+}
+
+var user User
+e.GET("/user").
+	Expect().
+	Status(http.StatusOK).
+	JSON().
+	Decode(&user)
+	
+if user.Name != "octocat" {
+	t.Fail()
 }
 ```
 
