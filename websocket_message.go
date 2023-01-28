@@ -435,7 +435,7 @@ func (wm *WebsocketMessage) NotCode(code ...int) *WebsocketMessage {
 //
 //	msg := conn.Expect()
 //	msg.Body().NotEmpty()
-//	msg.Body().Length().Equal(100)
+//	msg.Body().Length().IsEqual(100)
 func (wm *WebsocketMessage) Body() *String {
 	opChain := wm.chain.enter("Body()")
 	defer opChain.leave()

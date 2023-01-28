@@ -71,11 +71,11 @@ func TestCookie_Constructors(t *testing.T) {
 	t.Run("Constructor without config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewCookie(reporter, cookie)
-		value.Name().Equal("Test")
-		value.Value().Equal("Test_val")
-		value.Domain().Equal("example.com")
-		value.Expires().Equal(time.Unix(1234, 0))
-		value.MaxAge().Equal(123 * time.Second)
+		value.Name().IsEqual("Test")
+		value.Value().IsEqual("Test_val")
+		value.Domain().IsEqual("example.com")
+		value.Expires().IsEqual(time.Unix(1234, 0))
+		value.MaxAge().IsEqual(123 * time.Second)
 		value.chain.assertNotFailed(t)
 	})
 
@@ -84,11 +84,11 @@ func TestCookie_Constructors(t *testing.T) {
 		value := NewCookieC(Config{
 			Reporter: reporter,
 		}, cookie)
-		value.Name().Equal("Test")
-		value.Value().Equal("Test_val")
-		value.Domain().Equal("example.com")
-		value.Expires().Equal(time.Unix(1234, 0))
-		value.MaxAge().Equal(123 * time.Second)
+		value.Name().IsEqual("Test")
+		value.Value().IsEqual("Test_val")
+		value.Domain().IsEqual("example.com")
+		value.Expires().IsEqual(time.Unix(1234, 0))
+		value.MaxAge().IsEqual(123 * time.Second)
 		value.chain.assertNotFailed(t)
 	})
 
@@ -189,7 +189,7 @@ func TestCookie_MaxAge(t *testing.T) {
 		require.Equal(t, time.Duration(0), *value.MaxAge().value)
 
 		value.MaxAge().IsSet().chain.assertNotFailed(t)
-		value.MaxAge().Equal(0).chain.assertNotFailed(t)
+		value.MaxAge().IsEqual(0).chain.assertNotFailed(t)
 	})
 
 	t.Run("non-zero", func(t *testing.T) {
@@ -209,6 +209,6 @@ func TestCookie_MaxAge(t *testing.T) {
 		require.Equal(t, 3*time.Second, *value.MaxAge().value)
 
 		value.MaxAge().IsSet().chain.assertNotFailed(t)
-		value.MaxAge().Equal(3 * time.Second).chain.assertNotFailed(t)
+		value.MaxAge().IsEqual(3 * time.Second).chain.assertNotFailed(t)
 	})
 }

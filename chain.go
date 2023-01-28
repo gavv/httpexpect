@@ -29,7 +29,7 @@ import (
 // Chains are linked into a tree. Child chain corresponds to nested matchers
 // and assertions. For example, when the user invokes:
 //
-//	e.GET("/test").Expect().JSON().Equal(...)
+//	e.GET("/test").Expect().JSON().IsEqual(...)
 //
 // each nested call (GET, Expect, JSON, Equal) will create a child chain.
 //

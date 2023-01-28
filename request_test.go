@@ -2080,7 +2080,7 @@ func TestRequest_Redirect(t *testing.T) {
 			resp := req.Expect().
 				Status(tp.redirectHTTPStatusCode).
 				Header("Location").
-				Equal("/redirect")
+				IsEqual("/redirect")
 			resp.chain.assertNotFailed(t)
 
 			// Should set GetBody
@@ -2123,7 +2123,7 @@ func TestRequest_Redirect(t *testing.T) {
 			resp := req.Expect().
 				Status(tp.redirectHTTPStatusCode).
 				Header("Location").
-				Equal("/redirect")
+				IsEqual("/redirect")
 			resp.chain.assertNotFailed(t)
 
 			// Should set GetBody

@@ -101,14 +101,14 @@ func (b *Boolean) Schema(schema interface{}) *Boolean {
 	return b
 }
 
-// Equal succeeds if boolean is equal to given value.
+// IsEqual succeeds if boolean is equal to given value.
 //
 // Example:
 //
 //	boolean := NewBoolean(t, true)
-//	boolean.Equal(true)
-func (b *Boolean) Equal(value bool) *Boolean {
-	opChain := b.chain.enter("Equal()")
+//	boolean.IsEqual(true)
+func (b *Boolean) IsEqual(value bool) *Boolean {
+	opChain := b.chain.enter("IsEqual()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -155,6 +155,11 @@ func (b *Boolean) NotEqual(value bool) *Boolean {
 	}
 
 	return b
+}
+
+// Deprecated: use IsEqual instead.
+func (b *Boolean) Equal(value bool) *Boolean {
+	return b.IsEqual(value)
 }
 
 // True succeeds if boolean is true.

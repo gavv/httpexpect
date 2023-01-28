@@ -61,14 +61,14 @@ func testAutoTLSHandler(config Config) {
 		Status(http.StatusOK).Body()
 
 	if strings.HasPrefix(config.BaseURL, "https://") {
-		tls.Equal(`yes`)
+		tls.IsEqual(`yes`)
 	} else {
-		tls.Equal(`no`)
+		tls.IsEqual(`no`)
 	}
 
 	e.POST("/protected").
 		Expect().
-		Status(http.StatusOK).Body().Equal(`hello`)
+		Status(http.StatusOK).Body().IsEqual(`hello`)
 }
 
 func TestE2EAutoTLS_Live(t *testing.T) {

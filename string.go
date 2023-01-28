@@ -113,7 +113,7 @@ func (s *String) Schema(schema interface{}) *String {
 // Example:
 //
 //	str := NewString(t, "Hello")
-//	str.Length().Equal(5)
+//	str.Length().IsEqual(5)
 func (s *String) Length() *Number {
 	opChain := s.chain.enter("Length()")
 	defer opChain.leave()
@@ -184,14 +184,14 @@ func (s *String) Empty() *String {
 	return s.IsEmpty()
 }
 
-// Equal succeeds if string is equal to given Go string.
+// IsEqual succeeds if string is equal to given Go string.
 //
 // Example:
 //
 //	str := NewString(t, "Hello")
-//	str.Equal("Hello")
-func (s *String) Equal(value string) *String {
-	opChain := s.chain.enter("Equal()")
+//	str.IsEqual("Hello")
+func (s *String) IsEqual(value string) *String {
+	opChain := s.chain.enter("IsEqual()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -240,15 +240,20 @@ func (s *String) NotEqual(value string) *String {
 	return s
 }
 
-// EqualFold succeeds if string is equal to given Go string after applying Unicode
+// Deprecated: use IsEqual instead.
+func (s *String) Equal(value string) *String {
+	return s.IsEqual(value)
+}
+
+// IsEqualFold succeeds if string is equal to given Go string after applying Unicode
 // case-folding (so it's a case-insensitive match).
 //
 // Example:
 //
 //	str := NewString(t, "Hello")
-//	str.EqualFold("hELLo")
-func (s *String) EqualFold(value string) *String {
-	opChain := s.chain.enter("EqualFold()")
+//	str.IsEqualFold("hELLo")
+func (s *String) IsEqualFold(value string) *String {
+	opChain := s.chain.enter("IsEqualFold()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -296,6 +301,11 @@ func (s *String) NotEqualFold(value string) *String {
 	}
 
 	return s
+}
+
+// Deprecated: use IsEqualFold instead.
+func (s *String) EqualFold(value string) *String {
+	return s.IsEqualFold(value)
 }
 
 // Contains succeeds if string contains given Go string as a substring.
@@ -653,14 +663,14 @@ func (s *String) NotHasSuffixFold(value string) *String {
 //	m := s.Match(`http://(?P<host>.+)/users/(?P<user>.+)`)
 //
 //	m.NotEmpty()
-//	m.Length().Equal(3)
+//	m.Length().IsEqual(3)
 //
-//	m.Index(0).Equal("http://example.com/users/john")
-//	m.Index(1).Equal("example.com")
-//	m.Index(2).Equal("john")
+//	m.Index(0).IsEqual("http://example.com/users/john")
+//	m.Index(1).IsEqual("example.com")
+//	m.Index(2).IsEqual("john")
 //
-//	m.Name("host").Equal("example.com")
-//	m.Name("user").Equal("john")
+//	m.Name("host").IsEqual("example.com")
+//	m.Name("user").IsEqual("john")
 func (s *String) Match(re string) *Match {
 	opChain := s.chain.enter("Match()")
 	defer opChain.leave()
@@ -753,8 +763,8 @@ func (s *String) NotMatch(re string) *String {
 //
 //	m := s.MatchAll(`http://(?P<host>\S+)/users/(?P<user>\S+)`)
 //
-//	m[0].Name("user").Equal("john")
-//	m[1].Name("user").Equal("bob")
+//	m[0].Name("user").IsEqual("john")
+//	m[1].Name("user").IsEqual("bob")
 func (s *String) MatchAll(re string) []Match {
 	opChain := s.chain.enter("MatchAll()")
 	defer opChain.leave()
@@ -884,12 +894,12 @@ func (s *String) NotIsASCII() *String {
 // Example:
 //
 //	str := NewString(t, "100")
-//	str.AsNumber().Equal(100)
+//	str.AsNumber().IsEqual(100)
 //
 // Specifying base:
 //
-//	str.AsNumber(10).Equal(100)
-//	str.AsNumber(16).Equal(256)
+//	str.AsNumber(10).IsEqual(100)
+//	str.AsNumber(16).IsEqual(256)
 func (s *String) AsNumber(base ...int) *Number {
 	opChain := s.chain.enter("AsNumber()")
 	defer opChain.leave()

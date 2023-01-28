@@ -107,28 +107,28 @@ func testRetries(
 		e.POST("/test").
 			WithText(`test`).
 			Expect().
-			Status(http.StatusInternalServerError).Body().Equal(`test`)
+			Status(http.StatusInternalServerError).Body().IsEqual(`test`)
 
 		rc.Reset(2, http.StatusInternalServerError)
 		e.POST("/test").
 			WithText(`test`).
 			WithMaxRetries(0).
 			Expect().
-			Status(http.StatusInternalServerError).Body().Equal(`test`)
+			Status(http.StatusInternalServerError).Body().IsEqual(`test`)
 
 		rc.Reset(2, http.StatusInternalServerError)
 		e.POST("/test").
 			WithText(`test`).
 			WithMaxRetries(1).
 			Expect().
-			Status(http.StatusInternalServerError).Body().Equal(`test`)
+			Status(http.StatusInternalServerError).Body().IsEqual(`test`)
 
 		rc.Reset(2, http.StatusInternalServerError)
 		e.POST("/test").
 			WithText(`test`).
 			WithMaxRetries(2).
 			Expect().
-			Status(http.StatusOK).Body().Equal(`test`)
+			Status(http.StatusOK).Body().IsEqual(`test`)
 	})
 
 	t.Run("DontRetry", func(t *testing.T) {

@@ -193,7 +193,7 @@ func (o *Object) Values() *Array {
 // Example:
 //
 //	object := NewObject(t, map[string]interface{}{"foo": 123})
-//	object.Value("foo").Number().Equal(123)
+//	object.Value("foo").Number().IsEqual(123)
 func (o *Object) Value(key string) *Value {
 	opChain := o.chain.enter("Value(%q)", key)
 	defer opChain.leave()
@@ -227,7 +227,7 @@ func (o *Object) Value(key string) *Value {
 //	object := NewObject(t, numbers)
 //
 //	for key, value := range object.Iter() {
-//	    value.Number().Equal(numbers[key])
+//	    value.Number().IsEqual(numbers[key])
 //	}
 func (o *Object) Iter() map[string]Value {
 	opChain := o.chain.enter("Iter()")
@@ -320,7 +320,7 @@ func (o *Object) Every(fn func(key string, value *Value)) *Object {
 //		value.String().NotEmpty()		//fails on 6
 //		return value.Raw() != "bar"		//fails on "bar"
 //	})
-//	filteredObject.Equal(map[string]interface{}{"qux":"quux"})	//succeeds
+//	filteredObject.IsEqual(map[string]interface{}{"qux":"quux"})	//succeeds
 func (o *Object) Filter(fn func(key string, value *Value) bool) *Object {
 	opChain := o.chain.enter("Filter()")
 	defer opChain.leave()
@@ -370,7 +370,7 @@ func (o *Object) Filter(fn func(key string, value *Value) bool) *Object {
 //		func(key string, value interface{}) interface{} {
 //			return strings.ToUpper(value.(string))
 //		})
-//	transformedObject.Equals([]interface{}{"x": "FOO", "y": "BAR"})
+//	transformedObject.IsEqual([]interface{}{"x": "FOO", "y": "BAR"})
 func (o *Object) Transform(fn func(key string, value interface{}) interface{}) *Object {
 	opChain := o.chain.enter("Transform()")
 	defer opChain.leave()
@@ -421,7 +421,7 @@ func (o *Object) Transform(fn func(key string, value interface{}) interface{}) *
 //		num := value.Number()      // skip if element is not a string
 //		return num.Raw() > 100     // check element value
 //	})
-//	foundValue.Equal(101) // succeeds
+//	foundValue.IsEqual(101) // succeeds
 func (o *Object) Find(fn func(key string, value *Value) bool) *Value {
 	opChain := o.chain.enter("Find()")
 	defer opChain.leave()
@@ -496,8 +496,8 @@ func (o *Object) Find(fn func(key string, value *Value) bool) *Value {
 //	})
 //
 //	assert.Equal(t, len(foundValues), 2)
-//	foundValues[0].Equal(101)
-//	foundValues[1].Equal(201)
+//	foundValues[0].IsEqual(101)
+//	foundValues[1].IsEqual(201)
 func (o *Object) FindAll(fn func(key string, value *Value) bool) []*Value {
 	opChain := o.chain.enter("FindAll()")
 	defer opChain.leave()
@@ -667,7 +667,7 @@ func (o *Object) Empty() *Object {
 	return o.IsEmpty()
 }
 
-// Equal succeeds if object is equal to given value.
+// IsEqual succeeds if object is equal to given value.
 // Before comparison, both object and value are converted to canonical form.
 //
 // value should be map[string]interface{} or struct.
@@ -675,9 +675,9 @@ func (o *Object) Empty() *Object {
 // Example:
 //
 //	object := NewObject(t, map[string]interface{}{"foo": 123})
-//	object.Equal(map[string]interface{}{"foo": 123})
-func (o *Object) Equal(value interface{}) *Object {
-	opChain := o.chain.enter("Equal()")
+//	object.IsEqual(map[string]interface{}{"foo": 123})
+func (o *Object) IsEqual(value interface{}) *Object {
+	opChain := o.chain.enter("IsEqual()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -711,7 +711,7 @@ func (o *Object) Equal(value interface{}) *Object {
 // Example:
 //
 //	object := NewObject(t, map[string]interface{}{"foo": 123})
-//	object.Equal(map[string]interface{}{"bar": 123})
+//	object.IsEqual(map[string]interface{}{"bar": 123})
 func (o *Object) NotEqual(value interface{}) *Object {
 	opChain := o.chain.enter("NotEqual()")
 	defer opChain.leave()
@@ -737,6 +737,11 @@ func (o *Object) NotEqual(value interface{}) *Object {
 	}
 
 	return o
+}
+
+// Deprecated: use IsEqual instead.
+func (o *Object) Equal(value interface{}) *Object {
+	return o.IsEqual(value)
 }
 
 // ContainsKey succeeds if object contains given key.

@@ -29,9 +29,9 @@ func TestArray_Failed(t *testing.T) {
 
 		value.IsEmpty()
 		value.NotEmpty()
-		value.Equal([]interface{}{})
+		value.IsEqual([]interface{}{})
 		value.NotEqual([]interface{}{})
-		value.EqualUnordered([]interface{}{})
+		value.IsEqualUnordered([]interface{}{})
 		value.NotEqualUnordered([]interface{}{})
 		value.ConsistsOf("foo")
 		value.NotConsistsOf("foo")
@@ -100,7 +100,7 @@ func TestArray_Constructors(t *testing.T) {
 	t.Run("Constructor without config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewArray(reporter, testValue)
-		value.Equal(testValue)
+		value.IsEqual(testValue)
 		value.chain.assertNotFailed(t)
 	})
 
@@ -109,7 +109,7 @@ func TestArray_Constructors(t *testing.T) {
 		value := NewArrayC(Config{
 			Reporter: reporter,
 		}, testValue)
-		value.Equal(testValue)
+		value.IsEqual(testValue)
 		value.chain.assertNotFailed(t)
 	})
 
@@ -320,7 +320,7 @@ func TestArray_EqualEmpty(t *testing.T) {
 
 	assert.Equal(t, []interface{}{}, value.Raw())
 
-	value.Equal([]interface{}{})
+	value.IsEqual([]interface{}{})
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
@@ -328,7 +328,7 @@ func TestArray_EqualEmpty(t *testing.T) {
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.Equal([]interface{}{""})
+	value.IsEqual([]interface{}{""})
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
@@ -344,7 +344,7 @@ func TestArray_EqualNotEmpty(t *testing.T) {
 
 	assert.Equal(t, []interface{}{"foo", "bar"}, value.Raw())
 
-	value.Equal([]interface{}{})
+	value.IsEqual([]interface{}{})
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
@@ -352,7 +352,7 @@ func TestArray_EqualNotEmpty(t *testing.T) {
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.Equal([]interface{}{"foo"})
+	value.IsEqual([]interface{}{"foo"})
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
@@ -360,7 +360,7 @@ func TestArray_EqualNotEmpty(t *testing.T) {
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.Equal([]interface{}{"bar", "foo"})
+	value.IsEqual([]interface{}{"bar", "foo"})
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
@@ -368,7 +368,7 @@ func TestArray_EqualNotEmpty(t *testing.T) {
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.Equal([]interface{}{"foo", "bar"})
+	value.IsEqual([]interface{}{"foo", "bar"})
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
@@ -391,11 +391,11 @@ func TestArray_EqualTypes(t *testing.T) {
 		},
 	})
 
-	value1.Equal([]string{"foo", "bar"})
+	value1.IsEqual([]string{"foo", "bar"})
 	value1.chain.assertNotFailed(t)
 	value1.chain.clearFailed()
 
-	value1.Equal([]string{"bar", "foo"})
+	value1.IsEqual([]string{"bar", "foo"})
 	value1.chain.assertFailed(t)
 	value1.chain.clearFailed()
 
@@ -407,11 +407,11 @@ func TestArray_EqualTypes(t *testing.T) {
 	value1.chain.assertNotFailed(t)
 	value1.chain.clearFailed()
 
-	value2.Equal([]int{123, 456})
+	value2.IsEqual([]int{123, 456})
 	value2.chain.assertNotFailed(t)
 	value2.chain.clearFailed()
 
-	value2.Equal([]int{456, 123})
+	value2.IsEqual([]int{456, 123})
 	value2.chain.assertFailed(t)
 	value2.chain.clearFailed()
 
@@ -427,11 +427,11 @@ func TestArray_EqualTypes(t *testing.T) {
 		Foo int `json:"foo"`
 	}
 
-	value3.Equal([]S{{123}, {456}})
+	value3.IsEqual([]S{{123}, {456}})
 	value3.chain.assertNotFailed(t)
 	value3.chain.clearFailed()
 
-	value3.Equal([]S{{456}, {123}})
+	value3.IsEqual([]S{{456}, {123}})
 	value3.chain.assertFailed(t)
 	value3.chain.clearFailed()
 
@@ -450,7 +450,7 @@ func TestArray_EqualUnordered(t *testing.T) {
 	t.Run("without_duplicates", func(t *testing.T) {
 		value := NewArray(reporter, []interface{}{123, "foo"})
 
-		value.EqualUnordered([]interface{}{123})
+		value.IsEqualUnordered([]interface{}{123})
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 
@@ -458,7 +458,7 @@ func TestArray_EqualUnordered(t *testing.T) {
 		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
 
-		value.EqualUnordered([]interface{}{"foo"})
+		value.IsEqualUnordered([]interface{}{"foo"})
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 
@@ -466,7 +466,7 @@ func TestArray_EqualUnordered(t *testing.T) {
 		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
 
-		value.EqualUnordered([]interface{}{123, "foo", "foo"})
+		value.IsEqualUnordered([]interface{}{123, "foo", "foo"})
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 
@@ -474,7 +474,7 @@ func TestArray_EqualUnordered(t *testing.T) {
 		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
 
-		value.EqualUnordered([]interface{}{123, "foo"})
+		value.IsEqualUnordered([]interface{}{123, "foo"})
 		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
 
@@ -482,7 +482,7 @@ func TestArray_EqualUnordered(t *testing.T) {
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 
-		value.EqualUnordered([]interface{}{"foo", 123})
+		value.IsEqualUnordered([]interface{}{"foo", 123})
 		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
 
@@ -494,7 +494,7 @@ func TestArray_EqualUnordered(t *testing.T) {
 	t.Run("with_duplicates", func(t *testing.T) {
 		value := NewArray(reporter, []interface{}{123, "foo", "foo"})
 
-		value.EqualUnordered([]interface{}{123, "foo"})
+		value.IsEqualUnordered([]interface{}{123, "foo"})
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 
@@ -502,7 +502,7 @@ func TestArray_EqualUnordered(t *testing.T) {
 		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
 
-		value.EqualUnordered([]interface{}{123, 123, "foo"})
+		value.IsEqualUnordered([]interface{}{123, 123, "foo"})
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 
@@ -510,7 +510,7 @@ func TestArray_EqualUnordered(t *testing.T) {
 		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
 
-		value.EqualUnordered([]interface{}{123, "foo", "foo"})
+		value.IsEqualUnordered([]interface{}{123, "foo", "foo"})
 		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
 
@@ -518,7 +518,7 @@ func TestArray_EqualUnordered(t *testing.T) {
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 
-		value.EqualUnordered([]interface{}{"foo", 123, "foo"})
+		value.IsEqualUnordered([]interface{}{"foo", 123, "foo"})
 		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
 
@@ -780,7 +780,7 @@ func TestArray_ConvertEqual(t *testing.T) {
 
 	assert.Equal(t, []interface{}{123.0, 456.0}, value.Raw())
 
-	value.Equal(myArray{myInt(123), 456.0})
+	value.IsEqual(myArray{myInt(123), 456.0})
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
@@ -788,7 +788,7 @@ func TestArray_ConvertEqual(t *testing.T) {
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.Equal([]interface{}{"123", "456"})
+	value.IsEqual([]interface{}{"123", "456"})
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
@@ -796,7 +796,7 @@ func TestArray_ConvertEqual(t *testing.T) {
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.Equal(nil)
+	value.IsEqual(nil)
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 

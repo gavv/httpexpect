@@ -185,10 +185,10 @@ obj := e.GET("/fruits/apple").
 obj.Keys().ContainsOnly("colors", "weight")
 
 obj.Value("colors").Array().ConsistsOf("green", "red")
-obj.Value("colors").Array().Element(0).String().Equal("green")
-obj.Value("colors").Array().Element(1).String().Equal("red")
-obj.Value("colors").Array().First().String().Equal("green")
-obj.Value("colors").Array().Last().String().Equal("red")
+obj.Value("colors").Array().Element(0).String().IsEqual("green")
+obj.Value("colors").Array().Element(1).String().IsEqual("red")
+obj.Value("colors").Array().First().String().IsEqual("green")
+obj.Value("colors").Array().Last().String().IsEqual("red")
 ```
 
 ##### JSON Schema and JSON Path
@@ -317,9 +317,9 @@ c := e.GET("/users/john").
 	Expect().
 	Status(http.StatusOK).Cookie("session")
 
-c.Value().Equal(sessionID)
-c.Domain().Equal("example.com")
-c.Path().Equal("/")
+c.Value().IsEqual(sessionID)
+c.Domain().IsEqual("example.com")
+c.Path().IsEqual("/")
 c.Expires().InRange(t, t.Add(time.Hour * 24))
 ```
 
@@ -337,12 +337,12 @@ m := e.GET("/users/john").
 	Expect().
 	Header("Location").Match("http://(?P<host>.+)/users/(?P<user>.+)")
 
-m.Index(0).Equal("http://example.com/users/john")
-m.Index(1).Equal("example.com")
-m.Index(2).Equal("john")
+m.Index(0).IsEqual("http://example.com/users/john")
+m.Index(1).IsEqual("example.com")
+m.Index(2).IsEqual("john")
 
-m.Name("host").Equal("example.com")
-m.Name("user").Equal("john")
+m.Name("host").IsEqual("example.com")
+m.Name("user").IsEqual("john")
 ```
 
 ##### Redirection support
@@ -407,7 +407,7 @@ defer ws.Disconnect()
 
 ws.WriteText("some request").
 	Expect().
-	TextMessage().Body().Equal("some response")
+	TextMessage().Body().IsEqual("some response")
 
 ws.CloseWithText("bye").
 	Expect().

@@ -27,9 +27,9 @@ func TestString_Failed(t *testing.T) {
 	value.AsDateTime()
 	value.IsEmpty()
 	value.NotEmpty()
-	value.Equal("")
+	value.IsEqual("")
 	value.NotEqual("")
-	value.EqualFold("")
+	value.IsEqualFold("")
 	value.NotEqualFold("")
 	value.Contains("")
 	value.NotContains("")
@@ -54,7 +54,7 @@ func TestString_Constructors(t *testing.T) {
 	t.Run("Constructor without config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewString(reporter, "Hello")
-		value.Equal("Hello")
+		value.IsEqual("Hello")
 		value.chain.assertNotFailed(t)
 	})
 
@@ -63,7 +63,7 @@ func TestString_Constructors(t *testing.T) {
 		value := NewStringC(Config{
 			Reporter: reporter,
 		}, "Hello")
-		value.Equal("Hello")
+		value.IsEqual("Hello")
 		value.chain.assertNotFailed(t)
 	})
 
@@ -201,11 +201,11 @@ func TestString_Equal(t *testing.T) {
 
 	assert.Equal(t, "foo", value.Raw())
 
-	value.Equal("foo")
+	value.IsEqual("foo")
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.Equal("FOO")
+	value.IsEqual("FOO")
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
@@ -223,15 +223,15 @@ func TestString_EqualFold(t *testing.T) {
 
 	value := NewString(reporter, "foo")
 
-	value.EqualFold("foo")
+	value.IsEqualFold("foo")
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.EqualFold("FOO")
+	value.IsEqualFold("FOO")
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.EqualFold("foo2")
+	value.IsEqualFold("foo2")
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 

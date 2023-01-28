@@ -111,14 +111,14 @@ func (d *Duration) NotSet() *Duration {
 	return d
 }
 
-// Equal succeeds if Duration is equal to given value.
+// IsEqual succeeds if Duration is equal to given value.
 //
 // Example:
 //
 //	d := NewDuration(t, time.Second)
-//	d.Equal(time.Second)
-func (d *Duration) Equal(value time.Duration) *Duration {
-	opChain := d.chain.enter("Equal()")
+//	d.IsEqual(time.Second)
+func (d *Duration) IsEqual(value time.Duration) *Duration {
+	opChain := d.chain.enter("IsEqual()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -187,6 +187,11 @@ func (d *Duration) NotEqual(value time.Duration) *Duration {
 	}
 
 	return d
+}
+
+// Deprecated: use IsEqual instead.
+func (d *Duration) Equal(value time.Duration) *Duration {
+	return d.IsEqual(value)
 }
 
 // Gt succeeds if Duration is greater than given value.

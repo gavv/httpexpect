@@ -66,7 +66,7 @@ func (dt *DateTime) Alias(name string) *DateTime {
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.Zone().Equal("IST")
+//	dt.Zone().IsEqual("IST")
 func (dt *DateTime) Zone() *String {
 	opChain := dt.chain.enter("Zone()")
 	defer opChain.leave()
@@ -86,7 +86,7 @@ func (dt *DateTime) Zone() *String {
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.Year().Equal(2022)
+//	dt.Year().IsEqual(2022)
 func (dt *DateTime) Year() *Number {
 	opChain := dt.chain.enter("Year()")
 	defer opChain.leave()
@@ -105,7 +105,7 @@ func (dt *DateTime) Year() *Number {
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.Month().Equal(12)
+//	dt.Month().IsEqual(12)
 func (dt *DateTime) Month() *Number {
 	opChain := dt.chain.enter("Month()")
 	defer opChain.leave()
@@ -124,7 +124,7 @@ func (dt *DateTime) Month() *Number {
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.Day().Equal(30)
+//	dt.Day().IsEqual(30)
 func (dt *DateTime) Day() *Number {
 	opChain := dt.chain.enter("Day()")
 	defer opChain.leave()
@@ -143,7 +143,7 @@ func (dt *DateTime) Day() *Number {
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.WeekDay().Equal(time.Friday)
+//	dt.WeekDay().IsEqual(time.Friday)
 func (dt *DateTime) WeekDay() *Number {
 	opChain := dt.chain.enter("WeekDay()")
 	defer opChain.leave()
@@ -163,7 +163,7 @@ func (dt *DateTime) WeekDay() *Number {
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.YearDay().Equal(364)
+//	dt.YearDay().IsEqual(364)
 func (dt *DateTime) YearDay() *Number {
 	opChain := dt.chain.enter("YearDay()")
 	defer opChain.leave()
@@ -182,7 +182,7 @@ func (dt *DateTime) YearDay() *Number {
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.Hour().Equal(15)
+//	dt.Hour().IsEqual(15)
 func (dt *DateTime) Hour() *Number {
 	opChain := dt.chain.enter("Hour()")
 	defer opChain.leave()
@@ -201,7 +201,7 @@ func (dt *DateTime) Hour() *Number {
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.Minute().Equal(4)
+//	dt.Minute().IsEqual(4)
 func (dt *DateTime) Minute() *Number {
 	opChain := dt.chain.enter("Minute()")
 	defer opChain.leave()
@@ -220,7 +220,7 @@ func (dt *DateTime) Minute() *Number {
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.Second().Equal(5)
+//	dt.Second().IsEqual(5)
 func (dt *DateTime) Second() *Number {
 	opChain := dt.chain.enter("Second()")
 	defer opChain.leave()
@@ -239,7 +239,7 @@ func (dt *DateTime) Second() *Number {
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.Nanosecond().Equal(0)
+//	dt.Nanosecond().IsEqual(0)
 func (dt *DateTime) Nanosecond() *Number {
 	opChain := dt.chain.enter("Nanosecond()")
 	defer opChain.leave()
@@ -301,14 +301,14 @@ func (dt *DateTime) GetNanosecond() *Number {
 	return dt.Nanosecond()
 }
 
-// Equal succeeds if DateTime is equal to given value.
+// IsEqual succeeds if DateTime is equal to given value.
 //
 // Example:
 //
 //	dt := NewDateTime(t, time.Unix(0, 1))
-//	dt.Equal(time.Unix(0, 1))
-func (dt *DateTime) Equal(value time.Time) *DateTime {
-	opChain := dt.chain.enter("Equal()")
+//	dt.IsEqual(time.Unix(0, 1))
+func (dt *DateTime) IsEqual(value time.Time) *DateTime {
+	opChain := dt.chain.enter("IsEqual()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -355,6 +355,11 @@ func (dt *DateTime) NotEqual(value time.Time) *DateTime {
 	}
 
 	return dt
+}
+
+// Deprecated: use IsEqual instead.
+func (dt *DateTime) Equal(value time.Time) *DateTime {
+	return dt.IsEqual(value)
 }
 
 // InRange succeeds if DateTime is within given range [min; max].
@@ -535,7 +540,7 @@ func (dt *DateTime) Le(value time.Time) *DateTime {
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.AsUTC().Zone().Equal("UTC")
+//	dt.AsUTC().Zone().IsEqual("UTC")
 func (dt *DateTime) AsUTC() *DateTime {
 	opChain := dt.chain.enter("AsUTC()")
 	defer opChain.leave()
@@ -553,7 +558,7 @@ func (dt *DateTime) AsUTC() *DateTime {
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.AsLocal().Zone().Equal("IST")
+//	dt.AsLocal().Zone().IsEqual("IST")
 func (dt *DateTime) AsLocal() *DateTime {
 	opChain := dt.chain.enter("AsLocal()")
 	defer opChain.leave()

@@ -22,8 +22,8 @@ type Cookie struct {
 //
 //	cookie := NewCookie(t, &http.Cookie{...})
 //
-//	cookie.Domain().Equal("example.com")
-//	cookie.Path().Equal("/")
+//	cookie.Domain().IsEqual("example.com")
+//	cookie.Path().IsEqual("/")
 //	cookie.Expires().InRange(time.Now(), time.Now().Add(time.Hour * 24))
 func NewCookie(reporter Reporter, value *http.Cookie) *Cookie {
 	return newCookie(newChainWithDefaults("Cookie()", reporter), value)
@@ -85,7 +85,7 @@ func (c *Cookie) Alias(name string) *Cookie {
 // Example:
 //
 //	cookie := NewCookie(t, &http.Cookie{...})
-//	cookie.Name().Equal("session")
+//	cookie.Name().IsEqual("session")
 func (c *Cookie) Name() *String {
 	opChain := c.chain.enter("Name()")
 	defer opChain.leave()
@@ -102,7 +102,7 @@ func (c *Cookie) Name() *String {
 // Example:
 //
 //	cookie := NewCookie(t, &http.Cookie{...})
-//	cookie.Value().Equal("gH6z7Y")
+//	cookie.Value().IsEqual("gH6z7Y")
 func (c *Cookie) Value() *String {
 	opChain := c.chain.enter("Value()")
 	defer opChain.leave()
@@ -119,7 +119,7 @@ func (c *Cookie) Value() *String {
 // Example:
 //
 //	cookie := NewCookie(t, &http.Cookie{...})
-//	cookie.Domain().Equal("example.com")
+//	cookie.Domain().IsEqual("example.com")
 func (c *Cookie) Domain() *String {
 	opChain := c.chain.enter("Domain()")
 	defer opChain.leave()
@@ -136,7 +136,7 @@ func (c *Cookie) Domain() *String {
 // Example:
 //
 //	cookie := NewCookie(t, &http.Cookie{...})
-//	cookie.Path().Equal("/foo")
+//	cookie.Path().IsEqual("/foo")
 func (c *Cookie) Path() *String {
 	opChain := c.chain.enter("Path()")
 	defer opChain.leave()

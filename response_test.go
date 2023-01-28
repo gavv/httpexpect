@@ -154,7 +154,7 @@ func TestResponse_RoundTripTime(t *testing.T) {
 		assert.Equal(t, time.Second, rt.Raw())
 
 		rt.IsSet()
-		rt.Equal(time.Second)
+		rt.IsEqual(time.Second)
 		rt.chain.assertNotFailed(t)
 	})
 
@@ -322,11 +322,11 @@ func TestResponse_Headers(t *testing.T) {
 	resp.chain.assertFailed(t)
 	resp.chain.clearFailed()
 
-	resp.Headers().Equal(headers).chain.assertNotFailed(t)
+	resp.Headers().IsEqual(headers).chain.assertNotFailed(t)
 
 	for k, v := range headers {
 		for _, h := range []string{k, strings.ToLower(k), strings.ToUpper(k)} {
-			resp.Header(h).Equal(v[0]).chain.assertNotFailed(t)
+			resp.Header(h).IsEqual(v[0]).chain.assertNotFailed(t)
 		}
 	}
 

@@ -20,7 +20,7 @@ func TestNumber_Failed(t *testing.T) {
 	value.Decode(&target)
 	value.Alias("foo")
 
-	value.Equal(0)
+	value.IsEqual(0)
 	value.NotEqual(0)
 	value.InDelta(0, 0)
 	value.NotInDelta(0, 0)
@@ -36,7 +36,7 @@ func TestNumber_Constructors(t *testing.T) {
 	t.Run("Constructor without config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewNumber(reporter, 10.3)
-		value.Equal(10.3)
+		value.IsEqual(10.3)
 		value.chain.assertNotFailed(t)
 	})
 
@@ -45,7 +45,7 @@ func TestNumber_Constructors(t *testing.T) {
 		value := NewNumberC(Config{
 			Reporter: reporter,
 		}, 10.3)
-		value.Equal(10.3)
+		value.IsEqual(10.3)
 		value.chain.assertNotFailed(t)
 	})
 
@@ -156,11 +156,11 @@ func TestNumber_Equal(t *testing.T) {
 
 	assert.Equal(t, 1234, int(value.Raw()))
 
-	value.Equal(1234)
+	value.IsEqual(1234)
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.Equal(4321)
+	value.IsEqual(4321)
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
@@ -177,11 +177,11 @@ func TestNumber_EqualNaN(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	v1 := NewNumber(reporter, math.NaN())
-	v1.Equal(1234.5)
+	v1.IsEqual(1234.5)
 	v1.chain.assertFailed(t)
 
 	v2 := NewNumber(reporter, 1234.5)
-	v2.Equal(math.NaN())
+	v2.IsEqual(math.NaN())
 	v2.chain.assertFailed(t)
 
 	v3 := NewNumber(reporter, math.NaN())
@@ -366,15 +366,15 @@ func TestNumber_ConvertEqual(t *testing.T) {
 
 	value := NewNumber(reporter, 1234)
 
-	value.Equal(int64(1234))
+	value.IsEqual(int64(1234))
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.Equal(float32(1234))
+	value.IsEqual(float32(1234))
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.Equal("1234")
+	value.IsEqual("1234")
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 

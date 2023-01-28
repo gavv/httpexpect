@@ -378,7 +378,7 @@ func statusListText(values []int) []interface{} {
 // Example:
 //
 //	resp := NewResponse(t, response)
-//	resp.Headers().Value("Content-Type").String().Equal("application-json")
+//	resp.Headers().Value("Content-Type").String().IsEqual("application-json")
 func (r *Response) Headers() *Object {
 	opChain := r.chain.enter("Headers()")
 	defer opChain.leave()
@@ -398,7 +398,7 @@ func (r *Response) Headers() *Object {
 // Example:
 //
 //	resp := NewResponse(t, response)
-//	resp.Header("Content-Type").Equal("application-json")
+//	resp.Header("Content-Type").IsEqual("application-json")
 //	resp.Header("Date").AsDateTime().Le(time.Now())
 func (r *Response) Header(header string) *String {
 	opChain := r.chain.enter("Header(%q)", header)
@@ -449,7 +449,7 @@ func (r *Response) Cookies() *Array {
 // Example:
 //
 //	resp := NewResponse(t, response)
-//	resp.Cookie("session").Domain().Equal("example.com")
+//	resp.Cookie("session").Domain().IsEqual("example.com")
 func (r *Response) Cookie(name string) *Cookie {
 	opChain := r.chain.enter("Cookie(%q)", name)
 	defer opChain.leave()
@@ -523,7 +523,7 @@ func (r *Response) Websocket() *Websocket {
 //
 //	resp := NewResponse(t, response)
 //	resp.Body().NotEmpty()
-//	resp.Body().Length().Equal(100)
+//	resp.Body().Length().IsEqual(100)
 func (r *Response) Body() *String {
 	opChain := r.chain.enter("Body()")
 	defer opChain.leave()
@@ -630,10 +630,10 @@ type ContentOpts struct {
 // Example:
 //
 //	resp := NewResponse(t, response)
-//	resp.Text().Equal("hello, world!")
+//	resp.Text().IsEqual("hello, world!")
 //	resp.Text(ContentOpts{
 //	  MediaType: "text/plain",
-//	}).Equal("hello, world!")
+//	}).IsEqual("hello, world!")
 func (r *Response) Text(options ...ContentOpts) *String {
 	opChain := r.chain.enter("Text()")
 	defer opChain.leave()
@@ -670,10 +670,10 @@ func (r *Response) Text(options ...ContentOpts) *String {
 // Example:
 //
 //	resp := NewResponse(t, response)
-//	resp.Form().Value("foo").Equal("bar")
+//	resp.Form().Value("foo").IsEqual("bar")
 //	resp.Form(ContentOpts{
 //	  MediaType: "application/x-www-form-urlencoded",
-//	}).Value("foo").Equal("bar")
+//	}).Value("foo").IsEqual("bar")
 func (r *Response) Form(options ...ContentOpts) *Object {
 	opChain := r.chain.enter("Form()")
 	defer opChain.leave()

@@ -24,7 +24,7 @@ func TestObject_Failed(t *testing.T) {
 
 		value.IsEmpty()
 		value.NotEmpty()
-		value.Equal(nil)
+		value.IsEqual(nil)
 		value.NotEqual(nil)
 		value.ContainsKey("foo")
 		value.NotContainsKey("foo")
@@ -93,7 +93,7 @@ func TestObject_Constructors(t *testing.T) {
 	t.Run("Constructor without config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewObject(reporter, test)
-		value.Equal(test)
+		value.IsEqual(test)
 		value.chain.assertNotFailed(t)
 	})
 
@@ -102,7 +102,7 @@ func TestObject_Constructors(t *testing.T) {
 		value := NewObjectC(Config{
 			Reporter: reporter,
 		}, test)
-		value.Equal(test)
+		value.IsEqual(test)
 		value.chain.assertNotFailed(t)
 	})
 
@@ -356,7 +356,7 @@ func TestObject_EqualEmpty(t *testing.T) {
 
 	assert.Equal(t, map[string]interface{}{}, value.Raw())
 
-	value.Equal(map[string]interface{}{})
+	value.IsEqual(map[string]interface{}{})
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
@@ -364,7 +364,7 @@ func TestObject_EqualEmpty(t *testing.T) {
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.Equal(map[string]interface{}{"": nil})
+	value.IsEqual(map[string]interface{}{"": nil})
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
@@ -380,7 +380,7 @@ func TestObject_Equal(t *testing.T) {
 
 	assert.Equal(t, map[string]interface{}{"foo": 123.0}, value.Raw())
 
-	value.Equal(map[string]interface{}{})
+	value.IsEqual(map[string]interface{}{})
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
@@ -388,7 +388,7 @@ func TestObject_Equal(t *testing.T) {
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.Equal(map[string]interface{}{"FOO": 123.0})
+	value.IsEqual(map[string]interface{}{"FOO": 123.0})
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
@@ -396,7 +396,7 @@ func TestObject_Equal(t *testing.T) {
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.Equal(map[string]interface{}{"foo": 456.0})
+	value.IsEqual(map[string]interface{}{"foo": 456.0})
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
@@ -404,7 +404,7 @@ func TestObject_Equal(t *testing.T) {
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.Equal(map[string]interface{}{"foo": 123.0})
+	value.IsEqual(map[string]interface{}{"foo": 123.0})
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
@@ -412,7 +412,7 @@ func TestObject_Equal(t *testing.T) {
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.Equal(nil)
+	value.IsEqual(nil)
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
@@ -449,7 +449,7 @@ func TestObject_EqualStruct(t *testing.T) {
 		},
 	}
 
-	value.Equal(s)
+	value.IsEqual(s)
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
@@ -457,7 +457,7 @@ func TestObject_EqualStruct(t *testing.T) {
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.Equal(S{})
+	value.IsEqual(S{})
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
@@ -853,7 +853,7 @@ func TestObject_ConvertEqual(t *testing.T) {
 
 	value := NewObject(reporter, map[string]interface{}{"foo": 123})
 
-	value.Equal(map[string]interface{}{"foo": "123"})
+	value.IsEqual(map[string]interface{}{"foo": "123"})
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
@@ -861,7 +861,7 @@ func TestObject_ConvertEqual(t *testing.T) {
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.Equal(map[string]interface{}{"foo": 123.0})
+	value.IsEqual(map[string]interface{}{"foo": 123.0})
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
@@ -869,7 +869,7 @@ func TestObject_ConvertEqual(t *testing.T) {
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.Equal(map[string]interface{}{"foo": 123})
+	value.IsEqual(map[string]interface{}{"foo": 123})
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
@@ -877,7 +877,7 @@ func TestObject_ConvertEqual(t *testing.T) {
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.Equal(myMap{"foo": myInt(123)})
+	value.IsEqual(myMap{"foo": myInt(123)})
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 

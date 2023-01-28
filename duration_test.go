@@ -14,7 +14,7 @@ func TestDuration_Failed(t *testing.T) {
 	tm := time.Second
 	value := newDuration(chain, &tm)
 
-	value.Equal(tm)
+	value.IsEqual(tm)
 	value.NotEqual(tm)
 	value.Gt(tm)
 	value.Ge(tm)
@@ -31,7 +31,7 @@ func TestDuration_Constructors(t *testing.T) {
 	t.Run("Constructor without config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewDuration(reporter, tm)
-		value.Equal(tm)
+		value.IsEqual(tm)
 		value.chain.assertNotFailed(t)
 	})
 
@@ -40,7 +40,7 @@ func TestDuration_Constructors(t *testing.T) {
 		value := NewDurationC(Config{
 			Reporter: reporter,
 		}, tm)
-		value.Equal(tm)
+		value.IsEqual(tm)
 		value.chain.assertNotFailed(t)
 	})
 
@@ -101,11 +101,11 @@ func TestDuration_Equal(t *testing.T) {
 
 	assert.Equal(t, time.Second, value.Raw())
 
-	value.Equal(time.Second)
+	value.IsEqual(time.Second)
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.Equal(time.Minute)
+	value.IsEqual(time.Minute)
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 

@@ -138,7 +138,7 @@ func (a *Array) Schema(schema interface{}) *Array {
 // Example:
 //
 //	array := NewArray(t, []interface{}{1, 2, 3})
-//	array.Length().Equal(3)
+//	array.Length().IsEqual(3)
 func (a *Array) Length() *Number {
 	opChain := a.chain.enter("Length()")
 	defer opChain.leave()
@@ -158,8 +158,8 @@ func (a *Array) Length() *Number {
 // Example:
 //
 //	array := NewArray(t, []interface{}{"foo", 123})
-//	array.Element(0).String().Equal("foo")
-//	array.Element(1).Number().Equal(123)
+//	array.Element(0).String().IsEqual("foo")
+//	array.Element(1).Number().IsEqual(123)
 func (a *Array) Element(index int) *Value {
 	opChain := a.chain.enter("Element(%d)", index)
 	defer opChain.leave()
@@ -194,7 +194,7 @@ func (a *Array) Element(index int) *Value {
 // Example:
 //
 //	array := NewArray(t, []interface{}{"foo", 123})
-//	array.First().String().Equal("foo")
+//	array.First().String().IsEqual("foo")
 func (a *Array) First() *Value {
 	opChain := a.chain.enter("First()")
 	defer opChain.leave()
@@ -225,7 +225,7 @@ func (a *Array) First() *Value {
 // Example:
 //
 //	array := NewArray(t, []interface{}{"foo", 123})
-//	array.Last().Number().Equal(123)
+//	array.Last().Number().IsEqual(123)
 func (a *Array) Last() *Value {
 	opChain := a.chain.enter("Last()")
 	defer opChain.leave()
@@ -256,7 +256,7 @@ func (a *Array) Last() *Value {
 //	array := NewArray(t, strings)
 //
 //	for index, value := range array.Iter() {
-//	    value.String().Equal(strings[index])
+//	    value.String().IsEqual(strings[index])
 //	}
 func (a *Array) Iter() []Value {
 	opChain := a.chain.enter("Iter()")
@@ -341,7 +341,7 @@ func (a *Array) Every(fn func(index int, value *Value)) *Array {
 //		value.String().NotEmpty()		//fails on 1 and 2
 //		return value.Raw() != "bar"		//fails on "bar"
 //	})
-//	filteredArray.Equal([]interface{}{"foo"})	//succeeds
+//	filteredArray.IsEqual([]interface{}{"foo"})	//succeeds
 func (a *Array) Filter(fn func(index int, value *Value) bool) *Array {
 	opChain := a.chain.enter("Filter()")
 	defer opChain.leave()
@@ -389,7 +389,7 @@ func (a *Array) Filter(fn func(index int, value *Value) bool) *Array {
 //		func(index int, value interface{}) interface{} {
 //			return strings.ToUpper(value.(string))
 //		})
-//	transformedArray.Equals([]interface{}{"FOO", "BAR"})
+//	transformedArray.IsEqual([]interface{}{"FOO", "BAR"})
 func (a *Array) Transform(fn func(index int, value interface{}) interface{}) *Array {
 	opChain := a.chain.enter("Transform()")
 	defer opChain.leave()
@@ -432,7 +432,7 @@ func (a *Array) Transform(fn func(index int, value interface{}) interface{}) *Ar
 //		num := value.Number()    // skip if element is not a number
 //		return num.Raw() > 100   // check element value
 //	})
-//	foundValue.Equal(101) // succeeds
+//	foundValue.IsEqual(101) // succeeds
 func (a *Array) Find(fn func(index int, value *Value) bool) *Value {
 	opChain := a.chain.enter("Find()")
 	defer opChain.leave()
@@ -499,8 +499,8 @@ func (a *Array) Find(fn func(index int, value *Value) bool) *Value {
 //	})
 //
 //	assert.Equal(t, len(foundValues), 2)
-//	foundValues[0].Equal(101)
-//	foundValues[1].Equal(201)
+//	foundValues[0].IsEqual(101)
+//	foundValues[1].IsEqual(201)
 func (a *Array) FindAll(fn func(index int, value *Value) bool) []*Value {
 	opChain := a.chain.enter("FindAll()")
 	defer opChain.leave()
@@ -663,7 +663,7 @@ func (a *Array) Empty() *Array {
 	return a.IsEmpty()
 }
 
-// Equal succeeds if array is equal to given value.
+// IsEqual succeeds if array is equal to given value.
 // Before comparison, both array and value are converted to canonical form.
 //
 // value should be a slice of any type.
@@ -671,15 +671,15 @@ func (a *Array) Empty() *Array {
 // Example:
 //
 //	array := NewArray(t, []interface{}{"foo", 123})
-//	array.Equal([]interface{}{"foo", 123})
+//	array.IsEqual([]interface{}{"foo", 123})
 //
 //	array := NewArray(t, []interface{}{"foo", "bar"})
-//	array.Equal([]string{}{"foo", "bar"})
+//	array.IsEqual([]string{}{"foo", "bar"})
 //
 //	array := NewArray(t, []interface{}{123, 456})
-//	array.Equal([]int{}{123, 456})
-func (a *Array) Equal(value interface{}) *Array {
-	opChain := a.chain.enter("Equal()")
+//	array.IsEqual([]int{}{123, 456})
+func (a *Array) IsEqual(value interface{}) *Array {
+	opChain := a.chain.enter("IsEqual()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -741,15 +741,20 @@ func (a *Array) NotEqual(value interface{}) *Array {
 	return a
 }
 
-// EqualUnordered succeeds if array is equal to another array, ignoring element
+// Deprecated: use IsEqual instead.
+func (a *Array) Equal(value interface{}) *Array {
+	return a.IsEqual(value)
+}
+
+// IsEqualUnordered succeeds if array is equal to another array, ignoring element
 // order. Before comparison, both arrays are converted to canonical form.
 //
 // Example:
 //
 //	array := NewArray(t, []interface{}{"foo", 123})
-//	array.EqualUnordered([]interface{}{123, "foo"})
-func (a *Array) EqualUnordered(value interface{}) *Array {
-	opChain := a.chain.enter("EqualUnordered()")
+//	array.IsEqualUnordered([]interface{}{123, "foo"})
+func (a *Array) IsEqualUnordered(value interface{}) *Array {
+	opChain := a.chain.enter("IsEqualUnordered()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -890,6 +895,11 @@ func (a *Array) NotEqualUnordered(value interface{}) *Array {
 	return a
 }
 
+// Deprecated: use IsEqualUnordered instead.
+func (a *Array) EqualUnordered(value interface{}) *Array {
+	return a.IsEqualUnordered(value)
+}
+
 // ConsistsOf succeeds if array contains all given elements, in given order, and only
 // them. Before comparison, array and all elements are converted to canonical form.
 //
@@ -901,7 +911,7 @@ func (a *Array) NotEqualUnordered(value interface{}) *Array {
 // These calls are equivalent:
 //
 //	array.ConsistsOf("a", "b")
-//	array.Equal([]interface{}{"a", "b"})
+//	array.IsEqual([]interface{}{"a", "b"})
 func (a *Array) ConsistsOf(values ...interface{}) *Array {
 	opChain := a.chain.enter("ConsistsOf()")
 	defer opChain.leave()

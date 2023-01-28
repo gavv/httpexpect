@@ -120,8 +120,8 @@ func (v *Value) Decode(target interface{}) *Value {
 //	foo := e.GET("/example").Expect().Status(http.StatusOK).JSON().Object()
 //
 //	// When a test is failed, an assertion without alias is
-//	// Request("GET").Expect().JSON().Object().Equal()
-//	foo.Equal("bar")
+//	// Request("GET").Expect().JSON().Object().IsEqual()
+//	foo.IsEqual("bar")
 //
 //	// Set Alias
 //	fooWithAlias := e.GET("/example").
@@ -129,8 +129,8 @@ func (v *Value) Decode(target interface{}) *Value {
 //		Status(http.StatusOK).JSON().Object().Alias("foo")
 //
 //	// When a test is failed, an assertion with alias is
-//	// foo.Equal()
-//	fooWithAlias.Equal("bar")
+//	// foo.IsEqual()
+//	fooWithAlias.IsEqual("bar")
 func (v *Value) Alias(name string) *Value {
 	opChain := v.chain.enter("Alias(%q)", name)
 	defer opChain.leave()
@@ -154,8 +154,8 @@ func (v *Value) Alias(name string) *Value {
 //	json := `{"users": [{"name": "john"}, {"name": "bob"}]}`
 //	value := NewValue(t, json)
 //
-//	value.Path("$.users[0].name").String().Equal("john")
-//	value.Path("$.users[1].name").String().Equal("bob")
+//	value.Path("$.users[0].name").String().IsEqual("john")
+//	value.Path("$.users[1].name").String().IsEqual("bob")
 //
 // Example 2:
 //
@@ -163,7 +163,7 @@ func (v *Value) Alias(name string) *Value {
 //	value := NewValue(t, json)
 //
 //	for _, user := range value.Path("$..user").Array().Iter() {
-//	    user.String().Equal("john")
+//	    user.String().IsEqual("john")
 //	}
 func (v *Value) Path(path string) *Value {
 	opChain := v.chain.enter("Path(%q)", path)
@@ -292,7 +292,7 @@ func (v *Value) Array() *Array {
 // Example:
 //
 //	value := NewValue(t, "foo")
-//	value.String().EqualFold("FOO")
+//	value.String().IsEqualFold("FOO")
 func (v *Value) String() *String {
 	opChain := v.chain.enter("String()")
 	defer opChain.leave()
@@ -451,15 +451,15 @@ func (v *Value) NotNull() *Value {
 	return v
 }
 
-// Equal succeeds if value is equal to another value (e.g. map, slice, string, etc).
+// IsEqual succeeds if value is equal to another value (e.g. map, slice, string, etc).
 // Before comparison, both values are converted to canonical form.
 //
 // Example:
 //
 //	value := NewValue(t, "foo")
-//	value.Equal("foo")
-func (v *Value) Equal(value interface{}) *Value {
-	opChain := v.chain.enter("Equal()")
+//	value.IsEqual("foo")
+func (v *Value) IsEqual(value interface{}) *Value {
+	opChain := v.chain.enter("IsEqual()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -517,4 +517,9 @@ func (v *Value) NotEqual(value interface{}) *Value {
 	}
 
 	return v
+}
+
+// Deprecated: use IsEqual instead.
+func (v *Value) Equal(value interface{}) *Value {
+	return v.IsEqual(value)
 }

@@ -17,7 +17,7 @@ func TestDateTime_Failed(t *testing.T) {
 
 	value.chain.assertFailed(t)
 
-	value.Equal(tm)
+	value.IsEqual(tm)
 	value.NotEqual(tm)
 	value.Gt(tm)
 	value.Ge(tm)
@@ -46,7 +46,7 @@ func TestDateTime_Constructors(t *testing.T) {
 	t.Run("Constructor without config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewDateTime(reporter, time)
-		value.Equal(time)
+		value.IsEqual(time)
 		value.chain.assertNotFailed(t)
 	})
 
@@ -55,7 +55,7 @@ func TestDateTime_Constructors(t *testing.T) {
 		value := NewDateTimeC(Config{
 			Reporter: reporter,
 		}, time)
-		value.Equal(time)
+		value.IsEqual(time)
 		value.chain.assertNotFailed(t)
 	})
 
@@ -122,11 +122,11 @@ func TestDateTime_Equal(t *testing.T) {
 
 	assert.True(t, time.Unix(0, 1234).Equal(value.Raw()))
 
-	value.Equal(time.Unix(0, 1234))
+	value.IsEqual(time.Unix(0, 1234))
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.Equal(time.Unix(0, 4321))
+	value.IsEqual(time.Unix(0, 4321))
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 

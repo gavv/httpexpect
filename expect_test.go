@@ -283,7 +283,7 @@ func TestExpect_Traverse(t *testing.T) {
 
 	m := resp.JSON().Object()
 
-	m.Equal(data)
+	m.IsEqual(data)
 
 	m.ContainsKey("aaa")
 	m.ContainsKey("bbb")
@@ -297,8 +297,8 @@ func TestExpect_Traverse(t *testing.T) {
 	m.Values().ConsistsOf(data["aaa"], data["bbb"], data["ccc"])
 
 	m.Value("aaa").Array().ConsistsOf("bbb", 123, false, nil)
-	m.Value("bbb").String().Equal("hello")
-	m.Value("ccc").Number().Equal(456)
+	m.Value("bbb").String().IsEqual("hello")
+	m.Value("ccc").Number().IsEqual(456)
 
 	m.Value("aaa").Array().Element(2).Boolean().False()
 	m.Value("aaa").Array().Element(3).Null()
@@ -332,8 +332,8 @@ func TestExpect_Branches(t *testing.T) {
 	e4 := m2.Value("foo").Array().Element(0).String()   // ok
 	e5 := m2.Value("foo").Array().Element(0).String()   // ok
 
-	e4.Equal("qux") // fail
-	e5.Equal("bar") // ok
+	e4.IsEqual("qux") // fail
+	e5.IsEqual("bar") // ok
 
 	req.chain.assertFlags(t, flagFailedChildren)
 	resp.chain.assertFlags(t, flagFailedChildren)

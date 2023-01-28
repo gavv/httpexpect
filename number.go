@@ -102,7 +102,7 @@ func (n *Number) Schema(schema interface{}) *Number {
 	return n
 }
 
-// Equal succeeds if number is equal to given value.
+// IsEqual succeeds if number is equal to given value.
 //
 // value should have numeric type convertible to float64. Before comparison,
 // it is converted to float64.
@@ -110,10 +110,10 @@ func (n *Number) Schema(schema interface{}) *Number {
 // Example:
 //
 //	number := NewNumber(t, 123)
-//	number.Equal(float64(123))
-//	number.Equal(int32(123))
-func (n *Number) Equal(value interface{}) *Number {
-	opChain := n.chain.enter("Equal()")
+//	number.IsEqual(float64(123))
+//	number.IsEqual(int32(123))
+func (n *Number) IsEqual(value interface{}) *Number {
+	opChain := n.chain.enter("IsEqual()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -174,6 +174,11 @@ func (n *Number) NotEqual(value interface{}) *Number {
 	}
 
 	return n
+}
+
+// Deprecated: use IsEqual instead.
+func (n *Number) Equal(value interface{}) *Number {
+	return n.IsEqual(value)
 }
 
 // InDelta succeeds if two numerals are within delta of each other.

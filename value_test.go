@@ -40,7 +40,7 @@ func TestValue_Failed(t *testing.T) {
 	value.Null()
 	value.NotNull()
 
-	value.Equal(nil)
+	value.IsEqual(nil)
 	value.NotEqual(nil)
 }
 
@@ -48,7 +48,7 @@ func TestValue_Constructors(t *testing.T) {
 	t.Run("Constructor without config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewValue(reporter, "Test")
-		value.Equal("Test")
+		value.IsEqual("Test")
 		value.chain.assertNotFailed(t)
 		value.String().chain.assertNotFailed(t)
 	})
@@ -58,7 +58,7 @@ func TestValue_Constructors(t *testing.T) {
 		value := NewValueC(Config{
 			Reporter: reporter,
 		}, "Test")
-		value.Equal("Test")
+		value.IsEqual("Test")
 		value.chain.assertNotFailed(t)
 		value.String().chain.assertNotFailed(t)
 	})
@@ -385,24 +385,24 @@ func TestValue_Equal(t *testing.T) {
 	data1 := map[string]interface{}{"foo": "bar"}
 	data2 := "baz"
 
-	NewValue(reporter, data1).Equal(data1).chain.assertNotFailed(t)
-	NewValue(reporter, data2).Equal(data2).chain.assertNotFailed(t)
+	NewValue(reporter, data1).IsEqual(data1).chain.assertNotFailed(t)
+	NewValue(reporter, data2).IsEqual(data2).chain.assertNotFailed(t)
 
 	NewValue(reporter, data1).NotEqual(data1).chain.assertFailed(t)
 	NewValue(reporter, data2).NotEqual(data2).chain.assertFailed(t)
 
-	NewValue(reporter, data1).Equal(data2).chain.assertFailed(t)
-	NewValue(reporter, data2).Equal(data1).chain.assertFailed(t)
+	NewValue(reporter, data1).IsEqual(data2).chain.assertFailed(t)
+	NewValue(reporter, data2).IsEqual(data1).chain.assertFailed(t)
 
 	NewValue(reporter, data1).NotEqual(data2).chain.assertNotFailed(t)
 	NewValue(reporter, data2).NotEqual(data1).chain.assertNotFailed(t)
 
-	NewValue(reporter, nil).Equal(nil).chain.assertNotFailed(t)
+	NewValue(reporter, nil).IsEqual(nil).chain.assertNotFailed(t)
 
-	NewValue(reporter, nil).Equal(map[string]interface{}(nil)).chain.assertNotFailed(t)
-	NewValue(reporter, nil).Equal(map[string]interface{}{}).chain.assertFailed(t)
+	NewValue(reporter, nil).IsEqual(map[string]interface{}(nil)).chain.assertNotFailed(t)
+	NewValue(reporter, nil).IsEqual(map[string]interface{}{}).chain.assertFailed(t)
 
-	NewValue(reporter, data1).Equal(func() {}).chain.assertFailed(t)
+	NewValue(reporter, data1).IsEqual(func() {}).chain.assertFailed(t)
 	NewValue(reporter, data1).NotEqual(func() {}).chain.assertFailed(t)
 }
 
@@ -430,8 +430,8 @@ func TestValue_PathObject(t *testing.T) {
 	value.chain.assertNotFailed(t)
 
 	names := value.Path("$..name").Array().Iter()
-	names[0].String().Equal("john").chain.assertNotFailed(t)
-	names[1].String().Equal("bob").chain.assertNotFailed(t)
+	names[0].String().IsEqual("john").chain.assertNotFailed(t)
+	names[1].String().IsEqual("bob").chain.assertNotFailed(t)
 	value.chain.assertNotFailed(t)
 
 	for _, key := range []string{"$.bad", "!"} {

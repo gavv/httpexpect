@@ -19,7 +19,7 @@ func TestBoolean_Failed(t *testing.T) {
 	var target interface{}
 	value.Decode(&target)
 
-	value.Equal(false)
+	value.IsEqual(false)
 	value.NotEqual(false)
 	value.True()
 	value.False()
@@ -29,7 +29,7 @@ func TestBoolean_Constructors(t *testing.T) {
 	t.Run("Constructor without config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewBoolean(reporter, true)
-		value.Equal(true)
+		value.IsEqual(true)
 		value.chain.assertNotFailed(t)
 	})
 
@@ -38,7 +38,7 @@ func TestBoolean_Constructors(t *testing.T) {
 		value := NewBooleanC(Config{
 			Reporter: reporter,
 		}, true)
-		value.Equal(true)
+		value.IsEqual(true)
 		value.chain.assertNotFailed(t)
 	})
 
@@ -137,11 +137,11 @@ func TestBoolean_True(t *testing.T) {
 
 	assert.Equal(t, true, value.Raw())
 
-	value.Equal(true)
+	value.IsEqual(true)
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.Equal(false)
+	value.IsEqual(false)
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
@@ -169,11 +169,11 @@ func TestBoolean_False(t *testing.T) {
 
 	assert.Equal(t, false, value.Raw())
 
-	value.Equal(true)
+	value.IsEqual(true)
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.Equal(false)
+	value.IsEqual(false)
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
