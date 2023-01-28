@@ -76,11 +76,7 @@ func (v *Value) Raw() interface{} {
 }
 
 // Decode unmarshals the underlying value attached to the Object to a target variable
-// target should be one of this:
-//
-//   - pointer to an empty interface
-//   - pointer to a struct
-//   - pointer to slice of any type
+// target should be pointer to any type.
 //
 // Example:
 //
@@ -101,7 +97,7 @@ func (v *Value) Raw() interface{} {
 //	var target S
 //	value.Decode(&target)
 //
-//	assert.Equal(t,S{123,[]interface{}{"123", 456.0},struct{ A int }{123},target})
+//	assert.Equal(t, S{123, []interface{}{"123", 456.0},struct{ A int }{123}, target})
 func (v *Value) Decode(target interface{}) *Value {
 	opChain := v.chain.enter("Decode()")
 	defer opChain.leave()
