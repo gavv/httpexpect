@@ -83,6 +83,7 @@ func TestValue_Decode(t *testing.T) {
 		value.chain.assertNotFailed(t)
 		assert.Equal(t, 123.0, target)
 	})
+
 	t.Run("Decode into struct", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
@@ -112,6 +113,7 @@ func TestValue_Decode(t *testing.T) {
 		value.chain.assertNotFailed(t)
 		assert.Equal(t, target, actualStruct)
 	})
+
 	t.Run("Target is nil", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
