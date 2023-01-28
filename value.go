@@ -97,7 +97,7 @@ func (v *Value) Raw() interface{} {
 //	var target S
 //	value.Decode(&target)
 //
-//	assert.Equal(t, S{123, []interface{}{"123", 456.0},struct{ A int }{123}, target})
+//	assert.Equal(t, S{123, []interface{}{"123", 456.0}, struct{ A int }{123}, target})
 func (v *Value) Decode(target interface{}) *Value {
 	opChain := v.chain.enter("Decode()")
 	defer opChain.leave()
