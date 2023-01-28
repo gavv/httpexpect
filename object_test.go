@@ -162,7 +162,7 @@ func TestObject_Decode(t *testing.T) {
 			Foo int                    `json:"foo"`
 			Bar []interface{}          `json:"bar"`
 			Baz map[string]interface{} `json:"baz"`
-			Bat struct{ a int }        `json:"bat"`
+			Bat struct{ A int }        `json:"bat"`
 		}
 
 		m := map[string]interface{}{
@@ -171,13 +171,16 @@ func TestObject_Decode(t *testing.T) {
 			"baz": map[string]interface{}{
 				"a": "b",
 			},
-			"bat": struct{ a int }{0},
+			"bat": struct{ A int }{123},
 		}
 
 		value := NewObject(reporter, m)
 
-		actualStruct := S{123, []interface{}{"123", 234.0},
-			map[string]interface{}{"a": "b"}, struct{ a int }{0},
+		actualStruct := S{
+			Foo: 123,
+			Bar: []interface{}{"123", 234.0},
+			Baz: map[string]interface{}{"a": "b"},
+			Bat: struct{ A int }{123},
 		}
 
 		var target S

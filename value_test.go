@@ -22,6 +22,9 @@ func TestValue_Failed(t *testing.T) {
 
 	assert.NotNil(t, value.Path("/"))
 
+	var target interface{}
+	value.Decode(target)
+
 	assert.NotNil(t, value.Object())
 	assert.NotNil(t, value.Array())
 	assert.NotNil(t, value.String())
@@ -65,6 +68,70 @@ func TestValue_Constructors(t *testing.T) {
 		value := newValue(chain, "Test")
 		assert.NotSame(t, value.chain, chain)
 		assert.Equal(t, value.chain.context.Path, chain.context.Path)
+	})
+}
+
+func TestValue_Decode(t *testing.T) {
+	t.Run("Decode into empty interface", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewValue(reporter, 123.0)
+
+		var target interface{}
+		value.Decode(&target)
+
+		value.chain.assertNotFailed(t)
+		assert.Equal(t, 123.0, target)
+	})
+
+	t.Run("Decode into struct", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		type S struct {
+			Foo int             `json:"foo"`
+			Bar []interface{}   `json:"bar"`
+			Baz struct{ A int } `json:"baz"`
+		}
+
+		m := map[string]interface{}{
+			"foo": 123,
+			"bar": []interface{}{"123", 456.0},
+			"baz": struct{ A int }{123},
+		}
+
+		value := NewValue(reporter, m)
+
+		actualStruct := S{
+			123,
+			[]interface{}{"123", 456.0},
+			struct{ A int }{123},
+		}
+
+		var target S
+		value.Decode(&target)
+
+		value.chain.assertNotFailed(t)
+		assert.Equal(t, target, actualStruct)
+	})
+
+	t.Run("Target is nil", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewValue(reporter, 123)
+
+		value.Decode(nil)
+
+		value.chain.failed()
+	})
+
+	t.Run("Target is unmarshable", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewValue(reporter, 123)
+
+		value.Decode(123)
+
+		value.chain.failed()
 	})
 }
 

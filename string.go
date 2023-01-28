@@ -59,8 +59,8 @@ func (s *String) Raw() string {
 // Decode unmarshals the underlying value attached to the String to a target variable.
 // target should be one of these:
 //
-// - pointer to an empty interface
-// - pointer to a string
+//   - pointer to an empty interface
+//   - pointer to a string
 //
 // Example:
 //

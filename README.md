@@ -220,6 +220,27 @@ for _, private := range repos.Path("$..private").Array().Iter() {
 }
 ```
 
+##### JSON decoding
+
+```go
+type User struct {
+	Name   string `json:"name"`
+	Age    int    `json:"age"`
+	Gender string `json:"gender"`
+}
+
+var user User
+e.GET("/user").
+	Expect().
+	Status(http.StatusOK).
+	JSON().
+	Decode(&user)
+	
+if user.Name != "octocat" {
+	t.Fail()
+}
+```
+
 ##### Forms
 
 ```go
