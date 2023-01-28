@@ -44,7 +44,7 @@ func TestE2EPrinter_Single(t *testing.T) {
 		WithText("test_request").
 		Expect().
 		Text().
-		Equal("test_response")
+		IsEqual("test_response")
 
 	assert.Equal(t, "test_request", string(p.reqBody))
 	assert.Equal(t, "test_response", string(p.respBody))
@@ -72,7 +72,7 @@ func TestE2EPrinter_Multiple(t *testing.T) {
 		WithText("test_request").
 		Expect().
 		Text().
-		Equal("test_response")
+		IsEqual("test_response")
 
 	assert.Equal(t, "test_request", string(p1.reqBody))
 	assert.Equal(t, "test_response", string(p1.respBody))

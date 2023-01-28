@@ -42,5 +42,5 @@ func TestE2EFs_FastBinder(t *testing.T) {
 	e.GET("/hello").
 		Expect().
 		Status(http.StatusOK).
-		Text().Equal("hello, world!")
+		Text().IsEqual("hello, world!")
 }

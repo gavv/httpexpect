@@ -72,14 +72,14 @@ func testBasicHandler(e *Expect) {
 
 	e.GET("/{a}/{b}", "baz", "qux").
 		Expect().
-		Status(http.StatusOK).JSON().Array().Elements(true, false)
+		Status(http.StatusOK).JSON().Array().ConsistsOf(true, false)
 
 	e.PUT("/{a}/{b}").
 		WithPath("a", "baz").
 		WithPath("b", "qux").
 		WithJSON(map[string]string{"test": "ok"}).
 		Expect().
-		Status(http.StatusOK).Body().Equal("ok")
+		Status(http.StatusOK).Body().IsEqual("ok")
 
 	auth := e.Builder(func(req *Request) {
 		req.WithBasicAuth("john", "secret")

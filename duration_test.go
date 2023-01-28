@@ -9,12 +9,12 @@ import (
 
 func TestDuration_Failed(t *testing.T) {
 	chain := newMockChain(t)
-	chain.fail(mockFailure())
+	chain.setFailed()
 
 	tm := time.Second
 	value := newDuration(chain, &tm)
 
-	value.Equal(tm)
+	value.IsEqual(tm)
 	value.NotEqual(tm)
 	value.Gt(tm)
 	value.Ge(tm)
@@ -22,6 +22,7 @@ func TestDuration_Failed(t *testing.T) {
 	value.Le(tm)
 	value.InRange(tm, tm)
 	value.NotInRange(tm, tm)
+	value.Alias("foo")
 }
 
 func TestDuration_Constructors(t *testing.T) {
@@ -30,7 +31,7 @@ func TestDuration_Constructors(t *testing.T) {
 	t.Run("Constructor without config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewDuration(reporter, tm)
-		value.Equal(tm)
+		value.IsEqual(tm)
 		value.chain.assertNotFailed(t)
 	})
 
@@ -39,7 +40,7 @@ func TestDuration_Constructors(t *testing.T) {
 		value := NewDurationC(Config{
 			Reporter: reporter,
 		}, tm)
-		value.Equal(tm)
+		value.IsEqual(tm)
 		value.chain.assertNotFailed(t)
 	})
 
@@ -50,6 +51,18 @@ func TestDuration_Constructors(t *testing.T) {
 		assert.Equal(t, value.chain.context.Path, chain.context.Path)
 	})
 
+}
+
+func TestDuration_Alias(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value1 := NewDuration(reporter, time.Second)
+	assert.Equal(t, []string{"Duration()"}, value1.chain.context.Path)
+	assert.Equal(t, []string{"Duration()"}, value1.chain.context.AliasedPath)
+
+	value2 := value1.Alias("foo")
+	assert.Equal(t, []string{"Duration()"}, value2.chain.context.Path)
+	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
 }
 
 func TestDuration_Set(t *testing.T) {
@@ -88,11 +101,11 @@ func TestDuration_Equal(t *testing.T) {
 
 	assert.Equal(t, time.Second, value.Raw())
 
-	value.Equal(time.Second)
+	value.IsEqual(time.Second)
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.Equal(time.Minute)
+	value.IsEqual(time.Minute)
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 

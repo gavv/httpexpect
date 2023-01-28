@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/stretchr/testify/assert"
 )
 
 func noWsPreSteps(ws *Websocket) {}
@@ -15,12 +16,13 @@ func TestWebsocket_Failed(t *testing.T) {
 	chain := newChainWithDefaults("test", reporter)
 	config := newMockConfig(reporter)
 
-	chain.fail(mockFailure())
+	chain.setFailed()
 
 	ws := newWebsocket(chain, config, nil)
 
 	ws.Conn()
 	ws.Raw()
+	ws.Alias("foo")
 	ws.WithReadTimeout(0)
 	ws.WithoutReadTimeout()
 	ws.WithWriteTimeout(0)
@@ -42,6 +44,18 @@ func TestWebsocket_Failed(t *testing.T) {
 
 	ws.Disconnect()
 	ws.Close()
+}
+
+func TestWebsocket_Alias(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value1 := NewWebsocketC(Config{Reporter: reporter}, newMockWebsocketConn())
+	assert.Equal(t, []string{"Websocket()"}, value1.chain.context.Path)
+	assert.Equal(t, []string{"Websocket()"}, value1.chain.context.AliasedPath)
+
+	value2 := value1.Alias("foo")
+	assert.Equal(t, []string{"Websocket()"}, value2.chain.context.Path)
+	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
 }
 
 func TestWebsocket_NilConn(t *testing.T) {
@@ -184,7 +198,7 @@ func TestWebsocket_Expect(t *testing.T) {
 			config := newMockConfig(reporter)
 
 			if tt.args.failedChain {
-				chain.fail(mockFailure())
+				chain.setFailed()
 			}
 
 			ws := newWebsocket(chain, config, tt.args.wsConn)
@@ -969,7 +983,9 @@ func TestWebsocket_SetReadDeadline(t *testing.T) {
 			ws := newWebsocket(chain, config, tt.args.wsConn).
 				WithReadTimeout(time.Second)
 
-			ws.setReadDeadline()
+			opChain := ws.chain.enter("test")
+			ws.setReadDeadline(opChain)
+			opChain.leave()
 
 			if tt.assertOk {
 				ws.chain.assertNotFailed(t)
@@ -1014,7 +1030,9 @@ func TestWebsocket_SetWriteDeadline(t *testing.T) {
 			ws := newWebsocket(chain, config, tt.args.wsConn).
 				WithWriteTimeout(time.Second)
 
-			ws.setWriteDeadline()
+			opChain := ws.chain.enter("test")
+			ws.setWriteDeadline(opChain)
+			opChain.leave()
 
 			if tt.assertOk {
 				ws.chain.assertNotFailed(t)

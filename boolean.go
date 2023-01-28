@@ -49,39 +49,74 @@ func (b *Boolean) Raw() bool {
 	return b.value
 }
 
+// Decode unmarshals the underlying value attached to the Boolean to a target variable.
+// target should be one of these:
+//
+//   - pointer to an empty interface
+//   - pointer to a boolean
+//
+// Example:
+//
+//	value := NewBoolean(t, true)
+//
+//	var target bool
+//	value.Decode(&target)
+//
+//	assert.Equal(t, true, target)
+func (b *Boolean) Decode(target interface{}) *Boolean {
+	opChain := b.chain.enter("Decode()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return b
+	}
+
+	canonDecode(opChain, b.value, target)
+	return b
+}
+
+// Alias is similar to Value.Alias.
+func (b *Boolean) Alias(name string) *Boolean {
+	opChain := b.chain.enter("Alias(%q)", name)
+	defer opChain.leave()
+
+	b.chain.setAlias(name)
+	return b
+}
+
 // Path is similar to Value.Path.
 func (b *Boolean) Path(path string) *Value {
-	b.chain.enter("Path(%q)", path)
-	defer b.chain.leave()
+	opChain := b.chain.enter("Path(%q)", path)
+	defer opChain.leave()
 
-	return jsonPath(b.chain, b.value, path)
+	return jsonPath(opChain, b.value, path)
 }
 
 // Schema is similar to Value.Schema.
 func (b *Boolean) Schema(schema interface{}) *Boolean {
-	b.chain.enter("Schema()")
-	defer b.chain.leave()
+	opChain := b.chain.enter("Schema()")
+	defer opChain.leave()
 
-	jsonSchema(b.chain, b.value, schema)
+	jsonSchema(opChain, b.value, schema)
 	return b
 }
 
-// Equal succeeds if boolean is equal to given value.
+// IsEqual succeeds if boolean is equal to given value.
 //
 // Example:
 //
 //	boolean := NewBoolean(t, true)
-//	boolean.Equal(true)
-func (b *Boolean) Equal(value bool) *Boolean {
-	b.chain.enter("Equal()")
-	defer b.chain.leave()
+//	boolean.IsEqual(true)
+func (b *Boolean) IsEqual(value bool) *Boolean {
+	opChain := b.chain.enter("IsEqual()")
+	defer opChain.leave()
 
-	if b.chain.failed() {
+	if opChain.failed() {
 		return b
 	}
 
 	if !(b.value == value) {
-		b.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{b.value},
 			Expected: &AssertionValue{value},
@@ -101,15 +136,15 @@ func (b *Boolean) Equal(value bool) *Boolean {
 //	boolean := NewBoolean(t, true)
 //	boolean.NotEqual(false)
 func (b *Boolean) NotEqual(value bool) *Boolean {
-	b.chain.enter("NotEqual()")
-	defer b.chain.leave()
+	opChain := b.chain.enter("NotEqual()")
+	defer opChain.leave()
 
-	if b.chain.failed() {
+	if opChain.failed() {
 		return b
 	}
 
-	if !(b.value != value) {
-		b.chain.fail(AssertionFailure{
+	if b.value == value {
+		opChain.fail(AssertionFailure{
 			Type:     AssertNotEqual,
 			Actual:   &AssertionValue{b.value},
 			Expected: &AssertionValue{value},
@@ -122,6 +157,11 @@ func (b *Boolean) NotEqual(value bool) *Boolean {
 	return b
 }
 
+// Deprecated: use IsEqual instead.
+func (b *Boolean) Equal(value bool) *Boolean {
+	return b.IsEqual(value)
+}
+
 // True succeeds if boolean is true.
 //
 // Example:
@@ -129,15 +169,15 @@ func (b *Boolean) NotEqual(value bool) *Boolean {
 //	boolean := NewBoolean(t, true)
 //	boolean.True()
 func (b *Boolean) True() *Boolean {
-	b.chain.enter("True()")
-	defer b.chain.leave()
+	opChain := b.chain.enter("True()")
+	defer opChain.leave()
 
-	if b.chain.failed() {
+	if opChain.failed() {
 		return b
 	}
 
 	if !(b.value == true) {
-		b.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{b.value},
 			Expected: &AssertionValue{true},
@@ -157,15 +197,15 @@ func (b *Boolean) True() *Boolean {
 //	boolean := NewBoolean(t, false)
 //	boolean.False()
 func (b *Boolean) False() *Boolean {
-	b.chain.enter("False()")
-	defer b.chain.leave()
+	opChain := b.chain.enter("False()")
+	defer opChain.leave()
 
-	if b.chain.failed() {
+	if opChain.failed() {
 		return b
 	}
 
 	if !(b.value == false) {
-		b.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{b.value},
 			Expected: &AssertionValue{false},

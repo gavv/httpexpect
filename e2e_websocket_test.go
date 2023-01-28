@@ -101,7 +101,7 @@ func testWebsocketHeader(e *Expect) {
 		Status(http.StatusSwitchingProtocols)
 
 	hdr := resp.Header("X-Test")
-	hdr.Equal("test_header")
+	hdr.IsEqual("test_header")
 
 	ws := resp.Websocket()
 	ws.Disconnect()
@@ -114,19 +114,19 @@ func testWebsocketSession(e *Expect) {
 		Websocket()
 	defer ws.Disconnect()
 
-	ws.Subprotocol().Empty()
+	ws.Subprotocol().IsEmpty()
 
 	ws.WriteBytesBinary([]byte("my binary bytes")).
 		Expect().
-		BinaryMessage().Body().Equal("my binary bytes")
+		BinaryMessage().Body().IsEqual("my binary bytes")
 
 	ws.WriteBytesText([]byte("my text bytes")).
 		Expect().
-		TextMessage().Body().Equal("my text bytes")
+		TextMessage().Body().IsEqual("my text bytes")
 
 	ws.WriteText("my text").
 		Expect().
-		TextMessage().Body().Equal("my text")
+		TextMessage().Body().IsEqual("my text")
 
 	ws.WriteJSON(struct {
 		Message string `json:"message"`
@@ -148,11 +148,11 @@ func testWebsocketTypes(e *Expect) {
 
 	ws.WriteMessage(websocket.TextMessage, []byte("test")).
 		Expect().
-		Type(websocket.TextMessage).Body().Equal("test")
+		Type(websocket.TextMessage).Body().IsEqual("test")
 
 	ws.WriteMessage(websocket.BinaryMessage, []byte("test")).
 		Expect().
-		Type(websocket.BinaryMessage).Body().Equal("test")
+		Type(websocket.BinaryMessage).Body().IsEqual("test")
 
 	ws.WriteMessage(websocket.CloseMessage, []byte("test")).
 		Expect().

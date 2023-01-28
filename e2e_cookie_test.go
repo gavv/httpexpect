@@ -40,12 +40,12 @@ func testCookieHandler(e *Expect, enabled bool) {
 
 	r.Cookies().ContainsOnly("myname")
 	c := r.Cookie("myname")
-	c.Value().Equal("myvalue")
-	c.Path().Equal("/")
-	c.Expires().Equal(time.Date(3000, 0, 0, 0, 0, 0, 0, time.UTC))
+	c.Value().IsEqual("myvalue")
+	c.Path().IsEqual("/")
+	c.Expires().IsEqual(time.Date(3000, 0, 0, 0, 0, 0, 0, time.UTC))
 
 	if enabled {
-		e.GET("/get").Expect().Status(http.StatusOK).Text().Equal("myvalue")
+		e.GET("/get").Expect().Status(http.StatusOK).Text().IsEqual("myvalue")
 	} else {
 		e.GET("/get").Expect().Status(http.StatusBadRequest)
 	}

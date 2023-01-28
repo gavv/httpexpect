@@ -9,14 +9,18 @@ import (
 
 func TestNumber_Failed(t *testing.T) {
 	chain := newMockChain(t)
-	chain.fail(mockFailure())
+	chain.setFailed()
 
 	value := newNumber(chain, 0)
 
 	value.Path("$")
 	value.Schema("")
 
-	value.Equal(0)
+	var target interface{}
+	value.Decode(&target)
+	value.Alias("foo")
+
+	value.IsEqual(0)
 	value.NotEqual(0)
 	value.InDelta(0, 0)
 	value.NotInDelta(0, 0)
@@ -32,7 +36,7 @@ func TestNumber_Constructors(t *testing.T) {
 	t.Run("Constructor without config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewNumber(reporter, 10.3)
-		value.Equal(10.3)
+		value.IsEqual(10.3)
 		value.chain.assertNotFailed(t)
 	})
 
@@ -41,7 +45,7 @@ func TestNumber_Constructors(t *testing.T) {
 		value := NewNumberC(Config{
 			Reporter: reporter,
 		}, 10.3)
-		value.Equal(10.3)
+		value.IsEqual(10.3)
 		value.chain.assertNotFailed(t)
 	})
 
@@ -51,6 +55,76 @@ func TestNumber_Constructors(t *testing.T) {
 		assert.NotSame(t, value.chain, chain)
 		assert.Equal(t, value.chain.context.Path, chain.context.Path)
 	})
+}
+
+func TestNumber_Decode(t *testing.T) {
+	t.Run("Decode into empty interface", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewNumber(reporter, 10.1)
+
+		var target interface{}
+		value.Decode(&target)
+
+		value.chain.assertNotFailed(t)
+		assert.Equal(t, 10.1, target)
+	})
+
+	t.Run("Decode into int variable", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewNumber(reporter, 10)
+
+		var target int
+		value.Decode(&target)
+
+		value.chain.assertNotFailed(t)
+		assert.Equal(t, 10, target)
+	})
+
+	t.Run("Decode into float64 variable", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewNumber(reporter, 10.1)
+
+		var target float64
+		value.Decode(&target)
+
+		value.chain.assertNotFailed(t)
+		assert.Equal(t, 10.1, target)
+	})
+
+	t.Run("Target is unmarshable", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewNumber(reporter, 10.1)
+
+		value.Decode(123)
+
+		value.chain.assertFailed(t)
+	})
+
+	t.Run("Target is nil", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewNumber(reporter, 10.1)
+
+		value.Decode(nil)
+
+		value.chain.assertFailed(t)
+	})
+}
+
+func TestNumber_Alias(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value1 := NewNumber(reporter, 123)
+	assert.Equal(t, []string{"Number()"}, value1.chain.context.Path)
+	assert.Equal(t, []string{"Number()"}, value1.chain.context.AliasedPath)
+
+	value2 := value1.Alias("foo")
+	assert.Equal(t, []string{"Number()"}, value2.chain.context.Path)
+	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
 }
 
 func TestNumber_Getters(t *testing.T) {
@@ -82,11 +156,11 @@ func TestNumber_Equal(t *testing.T) {
 
 	assert.Equal(t, 1234, int(value.Raw()))
 
-	value.Equal(1234)
+	value.IsEqual(1234)
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.Equal(4321)
+	value.IsEqual(4321)
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
@@ -103,11 +177,11 @@ func TestNumber_EqualNaN(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	v1 := NewNumber(reporter, math.NaN())
-	v1.Equal(1234.5)
+	v1.IsEqual(1234.5)
 	v1.chain.assertFailed(t)
 
 	v2 := NewNumber(reporter, 1234.5)
-	v2.Equal(math.NaN())
+	v2.IsEqual(math.NaN())
 	v2.chain.assertFailed(t)
 
 	v3 := NewNumber(reporter, math.NaN())
@@ -292,15 +366,15 @@ func TestNumber_ConvertEqual(t *testing.T) {
 
 	value := NewNumber(reporter, 1234)
 
-	value.Equal(int64(1234))
+	value.IsEqual(int64(1234))
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.Equal(float32(1234))
+	value.IsEqual(float32(1234))
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.Equal("1234")
+	value.IsEqual("1234")
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 

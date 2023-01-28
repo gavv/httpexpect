@@ -9,7 +9,7 @@ import (
 
 func TestDateTime_Failed(t *testing.T) {
 	chain := newMockChain(t)
-	chain.fail(mockFailure())
+	chain.setFailed()
 
 	tm := time.Unix(0, 0)
 
@@ -17,7 +17,7 @@ func TestDateTime_Failed(t *testing.T) {
 
 	value.chain.assertFailed(t)
 
-	value.Equal(tm)
+	value.IsEqual(tm)
 	value.NotEqual(tm)
 	value.Gt(tm)
 	value.Ge(tm)
@@ -25,18 +25,19 @@ func TestDateTime_Failed(t *testing.T) {
 	value.Le(tm)
 	value.InRange(tm, tm)
 	value.NotInRange(tm, tm)
-	value.GetZone()
-	value.GetYear()
-	value.GetMonth()
-	value.GetDay()
-	value.GetWeekDay()
-	value.GetYearDay()
-	value.GetHour()
-	value.GetMinute()
-	value.GetSecond()
-	value.GetNanosecond()
+	value.Zone()
+	value.Year()
+	value.Month()
+	value.Day()
+	value.WeekDay()
+	value.YearDay()
+	value.Hour()
+	value.Minute()
+	value.Second()
+	value.Nanosecond()
 	value.AsUTC()
 	value.AsLocal()
+	value.Alias("foo")
 }
 
 func TestDateTime_Constructors(t *testing.T) {
@@ -45,7 +46,7 @@ func TestDateTime_Constructors(t *testing.T) {
 	t.Run("Constructor without config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewDateTime(reporter, time)
-		value.Equal(time)
+		value.IsEqual(time)
 		value.chain.assertNotFailed(t)
 	})
 
@@ -54,7 +55,7 @@ func TestDateTime_Constructors(t *testing.T) {
 		value := NewDateTimeC(Config{
 			Reporter: reporter,
 		}, time)
-		value.Equal(time)
+		value.IsEqual(time)
 		value.chain.assertNotFailed(t)
 	})
 
@@ -66,6 +67,54 @@ func TestDateTime_Constructors(t *testing.T) {
 	})
 }
 
+func TestDateTime_Alias(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value1 := NewDateTime(reporter, time.Unix(0, 1234))
+	assert.Equal(t, []string{"DateTime()"}, value1.chain.context.Path)
+	assert.Equal(t, []string{"DateTime()"}, value1.chain.context.AliasedPath)
+
+	value2 := value1.Alias("foo")
+	assert.Equal(t, []string{"DateTime()"}, value2.chain.context.Path)
+	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
+}
+
+func TestDateTime_Getters(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	parsedTime, _ := time.Parse(time.UnixDate, "FRI Dec 30 15:04:05 IST 2022")
+
+	value := NewDateTime(reporter, parsedTime)
+
+	value.chain.assertNotFailed(t)
+
+	value.Zone().chain.assertNotFailed(t)
+	value.Year().chain.assertNotFailed(t)
+	value.Month().chain.assertNotFailed(t)
+	value.Day().chain.assertNotFailed(t)
+	value.WeekDay().chain.assertNotFailed(t)
+	value.YearDay().chain.assertNotFailed(t)
+	value.Hour().chain.assertNotFailed(t)
+	value.Minute().chain.assertNotFailed(t)
+	value.Second().chain.assertNotFailed(t)
+	value.Nanosecond().chain.assertNotFailed(t)
+	value.AsUTC().chain.assertNotFailed(t)
+	value.AsLocal().chain.assertNotFailed(t)
+
+	expectedTime := parsedTime
+	expectedZone, _ := expectedTime.Zone()
+	assert.Equal(t, expectedZone, value.Zone().Raw())
+	assert.Equal(t, float64(expectedTime.Year()), value.Year().Raw())
+	assert.Equal(t, float64(expectedTime.Month()), value.Month().Raw())
+	assert.Equal(t, float64(expectedTime.Day()), value.Day().Raw())
+	assert.Equal(t, float64(expectedTime.Weekday()), value.WeekDay().Raw())
+	assert.Equal(t, float64(expectedTime.YearDay()), value.YearDay().Raw())
+	assert.Equal(t, float64(expectedTime.Hour()), value.Hour().Raw())
+	assert.Equal(t, float64(expectedTime.Minute()), value.Minute().Raw())
+	assert.Equal(t, float64(expectedTime.Second()), value.Second().Raw())
+	assert.Equal(t, float64(expectedTime.Nanosecond()), value.Nanosecond().Raw())
+}
+
 func TestDateTime_Equal(t *testing.T) {
 	reporter := newMockReporter(t)
 
@@ -73,11 +122,11 @@ func TestDateTime_Equal(t *testing.T) {
 
 	assert.True(t, time.Unix(0, 1234).Equal(value.Raw()))
 
-	value.Equal(time.Unix(0, 1234))
+	value.IsEqual(time.Unix(0, 1234))
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.Equal(time.Unix(0, 4321))
+	value.IsEqual(time.Unix(0, 4321))
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
@@ -194,40 +243,4 @@ func TestDateTime_InRange(t *testing.T) {
 	value.NotInRange(time.Unix(0, 1234+1), time.Unix(0, 1234-1))
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
-}
-
-func TestDateTimeGetters(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	parsedTime, _ := time.Parse(time.UnixDate, "FRI Dec 30 15:04:05 IST 2022")
-
-	value := NewDateTime(reporter, parsedTime)
-
-	value.chain.assertNotFailed(t)
-
-	value.GetZone().chain.assertNotFailed(t)
-	value.GetYear().chain.assertNotFailed(t)
-	value.GetMonth().chain.assertNotFailed(t)
-	value.GetDay().chain.assertNotFailed(t)
-	value.GetWeekDay().chain.assertNotFailed(t)
-	value.GetYearDay().chain.assertNotFailed(t)
-	value.GetHour().chain.assertNotFailed(t)
-	value.GetMinute().chain.assertNotFailed(t)
-	value.GetSecond().chain.assertNotFailed(t)
-	value.GetNanosecond().chain.assertNotFailed(t)
-	value.AsUTC().chain.assertNotFailed(t)
-	value.AsLocal().chain.assertNotFailed(t)
-
-	expectedTime := parsedTime
-	expectedZone, _ := expectedTime.Zone()
-	assert.Equal(t, expectedZone, value.GetZone().Raw())
-	assert.Equal(t, float64(expectedTime.Year()), value.GetYear().Raw())
-	assert.Equal(t, float64(expectedTime.Month()), value.GetMonth().Raw())
-	assert.Equal(t, float64(expectedTime.Day()), value.GetDay().Raw())
-	assert.Equal(t, float64(expectedTime.Weekday()), value.GetWeekDay().Raw())
-	assert.Equal(t, float64(expectedTime.YearDay()), value.GetYearDay().Raw())
-	assert.Equal(t, float64(expectedTime.Hour()), value.GetHour().Raw())
-	assert.Equal(t, float64(expectedTime.Minute()), value.GetMinute().Raw())
-	assert.Equal(t, float64(expectedTime.Second()), value.GetSecond().Raw())
-	assert.Equal(t, float64(expectedTime.Nanosecond()), value.GetNanosecond().Raw())
 }

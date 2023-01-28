@@ -68,27 +68,34 @@ func TestFruits(t *testing.T) {
 		Status(http.StatusOK).
 		JSON().Object().ContainsKey("weight").ValueEqual("weight", 100)
 
-	obj := e.GET("/fruits/apple").
+	fruit := e.GET("/fruits/apple").
 		Expect().
 		Status(http.StatusOK).JSON().Object()
 
-	obj.Keys().ContainsOnly("colors", "weight", "image")
+	fruit.Keys().ContainsOnly("colors", "weight", "image")
 
-	obj.Value("colors").Array().Elements("green", "red")
-	obj.Value("colors").Array().Element(0).String().Equal("green")
-	obj.Value("colors").Array().Element(1).String().Equal("red")
-	obj.Value("colors").Array().Element(1).String().IsASCII()
-	obj.Value("colors").Array().Element(1).String().HasPrefix("re")
-	obj.Value("colors").Array().Element(1).String().HasSuffix("ed")
+	colors := fruit.Value("colors").Array()
+	colors.Alias("colors")
 
-	obj.Value("weight").Number().Equal(200)
+	colors.ConsistsOf("green", "red")
 
-	for _, element := range obj.Value("image").Array().Iter() {
-		element.Object().ContainsKey("id")
-		element.Object().ContainsValue("fruit")
-		element.Object().ContainsSubset(map[string]interface{}{
-			"type": "fruit",
-		})
+	colors.Length().Equal(2)
+	colors.Element(0).String().Equal("green")
+	colors.Element(1).String().Equal("red")
+
+	colors.Element(0).String().IsASCII()
+	colors.Element(0).String().HasPrefix("gr")
+	colors.Element(0).String().HasSuffix("een")
+
+	fruit.Value("weight").Number().Equal(200)
+
+	for _, element := range fruit.Value("image").Array().Iter() {
+		element.Object().
+			ContainsKey("type").
+			ContainsValue("fruit").
+			ContainsSubset(map[string]interface{}{
+				"type": "fruit",
+			})
 	}
 
 	e.GET("/fruits/melon").

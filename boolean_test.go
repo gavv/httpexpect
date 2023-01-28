@@ -8,14 +8,18 @@ import (
 
 func TestBoolean_Failed(t *testing.T) {
 	chain := newMockChain(t)
-	chain.fail(mockFailure())
+	chain.setFailed()
 
 	value := newBoolean(chain, false)
 
 	value.Path("$")
 	value.Schema("")
+	value.Alias("foo")
 
-	value.Equal(false)
+	var target interface{}
+	value.Decode(&target)
+
+	value.IsEqual(false)
 	value.NotEqual(false)
 	value.True()
 	value.False()
@@ -25,7 +29,7 @@ func TestBoolean_Constructors(t *testing.T) {
 	t.Run("Constructor without config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewBoolean(reporter, true)
-		value.Equal(true)
+		value.IsEqual(true)
 		value.chain.assertNotFailed(t)
 	})
 
@@ -34,7 +38,7 @@ func TestBoolean_Constructors(t *testing.T) {
 		value := NewBooleanC(Config{
 			Reporter: reporter,
 		}, true)
-		value.Equal(true)
+		value.IsEqual(true)
 		value.chain.assertNotFailed(t)
 	})
 
@@ -44,6 +48,64 @@ func TestBoolean_Constructors(t *testing.T) {
 		assert.NotSame(t, value.chain, &chain)
 		assert.Equal(t, value.chain.context.Path, chain.context.Path)
 	})
+}
+
+func TestBoolean_Decode(t *testing.T) {
+	t.Run("Decode into empty interface", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewBoolean(reporter, true)
+
+		var target interface{}
+		value.Decode(&target)
+
+		value.chain.assertNotFailed(t)
+		assert.Equal(t, true, target)
+	})
+
+	t.Run("Decode into boolean", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewBoolean(reporter, true)
+
+		var target bool
+		value.Decode(&target)
+
+		value.chain.assertNotFailed(t)
+		assert.Equal(t, true, target)
+	})
+
+	t.Run("Target is unmarshable", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewBoolean(reporter, true)
+
+		value.Decode(123)
+
+		value.chain.assertFailed(t)
+	})
+
+	t.Run("Target is nil", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewBoolean(reporter, true)
+
+		value.Decode(nil)
+
+		value.chain.assertFailed(t)
+	})
+}
+
+func TestBoolean_Alias(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value1 := NewBoolean(reporter, true)
+	assert.Equal(t, []string{"Boolean()"}, value1.chain.context.Path)
+	assert.Equal(t, []string{"Boolean()"}, value1.chain.context.AliasedPath)
+
+	value2 := value1.Alias("foo")
+	assert.Equal(t, []string{"Boolean()"}, value2.chain.context.Path)
+	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
 }
 
 func TestBoolean_Getters(t *testing.T) {
@@ -75,11 +137,11 @@ func TestBoolean_True(t *testing.T) {
 
 	assert.Equal(t, true, value.Raw())
 
-	value.Equal(true)
+	value.IsEqual(true)
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.Equal(false)
+	value.IsEqual(false)
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
@@ -107,11 +169,11 @@ func TestBoolean_False(t *testing.T) {
 
 	assert.Equal(t, false, value.Raw())
 
-	value.Equal(true)
+	value.IsEqual(true)
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.Equal(false)
+	value.IsEqual(false)
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 

@@ -32,7 +32,7 @@ func TestEnvironment_Constructors(t *testing.T) {
 	})
 }
 
-func TestEnvironment_Generic(t *testing.T) {
+func TestEnvironment_Basic(t *testing.T) {
 	env := newEnvironment(newMockChain(t))
 
 	assert.False(t, env.Has("good_key"))
@@ -51,6 +51,26 @@ func TestEnvironment_Generic(t *testing.T) {
 
 	assert.Nil(t, env.Get("bad_key"))
 	env.chain.assertFailed(t)
+}
+
+func TestEnvironment_Delete(t *testing.T) {
+	env := newEnvironment(newMockChain(t))
+
+	env.Put("good_key", 123)
+	env.chain.assertNotFailed(t)
+
+	assert.True(t, env.Has("good_key"))
+	assert.NotNil(t, env.Get("good_key"))
+	assert.Equal(t, 123, env.Get("good_key").(int))
+	env.chain.assertNotFailed(t)
+
+	env.Delete("good_key")
+	env.chain.assertNotFailed(t)
+
+	assert.False(t, env.Has("good_key"))
+	assert.Nil(t, env.Get("good_key"))
+	env.chain.assertFailed(t)
+	env.chain.clearFailed()
 }
 
 func TestEnvironment_NotFound(t *testing.T) {

@@ -30,7 +30,7 @@ func NewNumber(reporter Reporter, value float64) *Number {
 //
 // Example:
 //
-//	number := NewNumberC(config, value)
+//	number := NewNumberC(config, 123.4)
 func NewNumberC(config Config, value float64) *Number {
 	return newNumber(newChainWithConfig("Number()", config.withDefaults()), value)
 }
@@ -50,24 +50,59 @@ func (n *Number) Raw() float64 {
 	return n.value
 }
 
+// Decode unmarshals the underlying value attached to the Number to a target variable.
+// target should be one of these:
+//
+//   - pointer to an empty interface
+//   - pointer to any integer or floating type
+//
+// Example:
+//
+//	value := NewNumber(t, 123)
+//
+//	var target interface{}
+//	valude.decode(&target)
+//
+//	assert.Equal(t, 123, target)
+func (n *Number) Decode(target interface{}) *Number {
+	opChain := n.chain.enter("Decode()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return n
+	}
+
+	canonDecode(opChain, n.value, target)
+	return n
+}
+
+// Alias is similar to Value.Alias.
+func (n *Number) Alias(name string) *Number {
+	opChain := n.chain.enter("Alias(%q)", name)
+	defer opChain.leave()
+
+	n.chain.setAlias(name)
+	return n
+}
+
 // Path is similar to Value.Path.
 func (n *Number) Path(path string) *Value {
-	n.chain.enter("Path(%q)", path)
-	defer n.chain.leave()
+	opChain := n.chain.enter("Path(%q)", path)
+	defer opChain.leave()
 
-	return jsonPath(n.chain, n.value, path)
+	return jsonPath(opChain, n.value, path)
 }
 
 // Schema is similar to Value.Schema.
 func (n *Number) Schema(schema interface{}) *Number {
-	n.chain.enter("Schema()")
-	defer n.chain.leave()
+	opChain := n.chain.enter("Schema()")
+	defer opChain.leave()
 
-	jsonSchema(n.chain, n.value, schema)
+	jsonSchema(opChain, n.value, schema)
 	return n
 }
 
-// Equal succeeds if number is equal to given value.
+// IsEqual succeeds if number is equal to given value.
 //
 // value should have numeric type convertible to float64. Before comparison,
 // it is converted to float64.
@@ -75,23 +110,23 @@ func (n *Number) Schema(schema interface{}) *Number {
 // Example:
 //
 //	number := NewNumber(t, 123)
-//	number.Equal(float64(123))
-//	number.Equal(int32(123))
-func (n *Number) Equal(value interface{}) *Number {
-	n.chain.enter("Equal()")
-	defer n.chain.leave()
+//	number.IsEqual(float64(123))
+//	number.IsEqual(int32(123))
+func (n *Number) IsEqual(value interface{}) *Number {
+	opChain := n.chain.enter("IsEqual()")
+	defer opChain.leave()
 
-	if n.chain.failed() {
+	if opChain.failed() {
 		return n
 	}
 
-	num, ok := canonNumber(n.chain, value)
+	num, ok := canonNumber(opChain, value)
 	if !ok {
 		return n
 	}
 
 	if !(n.value == num) {
-		n.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{num},
@@ -115,20 +150,20 @@ func (n *Number) Equal(value interface{}) *Number {
 //	number.NotEqual(float64(321))
 //	number.NotEqual(int32(321))
 func (n *Number) NotEqual(value interface{}) *Number {
-	n.chain.enter("NotEqual()")
-	defer n.chain.leave()
+	opChain := n.chain.enter("NotEqual()")
+	defer opChain.leave()
 
-	if n.chain.failed() {
+	if opChain.failed() {
 		return n
 	}
 
-	num, ok := canonNumber(n.chain, value)
+	num, ok := canonNumber(opChain, value)
 	if !ok {
 		return n
 	}
 
-	if !(n.value != num) {
-		n.chain.fail(AssertionFailure{
+	if n.value == num {
+		opChain.fail(AssertionFailure{
 			Type:     AssertNotEqual,
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{num},
@@ -141,6 +176,11 @@ func (n *Number) NotEqual(value interface{}) *Number {
 	return n
 }
 
+// Deprecated: use IsEqual instead.
+func (n *Number) Equal(value interface{}) *Number {
+	return n.IsEqual(value)
+}
+
 // InDelta succeeds if two numerals are within delta of each other.
 //
 // Example:
@@ -148,15 +188,15 @@ func (n *Number) NotEqual(value interface{}) *Number {
 //	number := NewNumber(t, 123.0)
 //	number.InDelta(123.2, 0.3)
 func (n *Number) InDelta(value, delta float64) *Number {
-	n.chain.enter("InDelta()")
-	defer n.chain.leave()
+	opChain := n.chain.enter("InDelta()")
+	defer opChain.leave()
 
-	if n.chain.failed() {
+	if opChain.failed() {
 		return n
 	}
 
 	if math.IsNaN(n.value) || math.IsNaN(value) || math.IsNaN(delta) {
-		n.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{value},
@@ -171,7 +211,7 @@ func (n *Number) InDelta(value, delta float64) *Number {
 	diff := n.value - value
 
 	if diff < -delta || diff > delta {
-		n.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{value},
@@ -193,15 +233,15 @@ func (n *Number) InDelta(value, delta float64) *Number {
 //	number := NewNumber(t, 123.0)
 //	number.NotInDelta(123.2, 0.1)
 func (n *Number) NotInDelta(value, delta float64) *Number {
-	n.chain.enter("NotInDelta()")
-	defer n.chain.leave()
+	opChain := n.chain.enter("NotInDelta()")
+	defer opChain.leave()
 
-	if n.chain.failed() {
+	if opChain.failed() {
 		return n
 	}
 
 	if math.IsNaN(n.value) || math.IsNaN(value) || math.IsNaN(delta) {
-		n.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertNotEqual,
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{value},
@@ -216,7 +256,7 @@ func (n *Number) NotInDelta(value, delta float64) *Number {
 	diff := n.value - value
 
 	if !(diff < -delta || diff > delta) {
-		n.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertNotEqual,
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{value},
@@ -253,25 +293,25 @@ func (n *Number) NotEqualDelta(value, delta float64) *Number {
 //	number.InRange(100, 200)                  // success
 //	number.InRange(123, 123)                  // success
 func (n *Number) InRange(min, max interface{}) *Number {
-	n.chain.enter("InRange()")
-	defer n.chain.leave()
+	opChain := n.chain.enter("InRange()")
+	defer opChain.leave()
 
-	if n.chain.failed() {
+	if opChain.failed() {
 		return n
 	}
 
-	a, ok := canonNumber(n.chain, min)
+	a, ok := canonNumber(opChain, min)
 	if !ok {
 		return n
 	}
 
-	b, ok := canonNumber(n.chain, max)
+	b, ok := canonNumber(opChain, max)
 	if !ok {
 		return n
 	}
 
 	if !(n.value >= a && n.value <= b) {
-		n.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertInRange,
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{AssertionRange{a, b}},
@@ -295,25 +335,25 @@ func (n *Number) InRange(min, max interface{}) *Number {
 //	number.NotInRange(0, 99)
 //	number.NotInRange(101, 200)
 func (n *Number) NotInRange(min, max interface{}) *Number {
-	n.chain.enter("NotInRange()")
-	defer n.chain.leave()
+	opChain := n.chain.enter("NotInRange()")
+	defer opChain.leave()
 
-	if n.chain.failed() {
+	if opChain.failed() {
 		return n
 	}
 
-	a, ok := canonNumber(n.chain, min)
+	a, ok := canonNumber(opChain, min)
 	if !ok {
 		return n
 	}
 
-	b, ok := canonNumber(n.chain, max)
+	b, ok := canonNumber(opChain, max)
 	if !ok {
 		return n
 	}
 
 	if n.value >= a && n.value <= b {
-		n.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertNotInRange,
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{AssertionRange{a, b}},
@@ -337,20 +377,20 @@ func (n *Number) NotInRange(min, max interface{}) *Number {
 //	number.Gt(float64(122))
 //	number.Gt(int32(122))
 func (n *Number) Gt(value interface{}) *Number {
-	n.chain.enter("Gt()")
-	defer n.chain.leave()
+	opChain := n.chain.enter("Gt()")
+	defer opChain.leave()
 
-	if n.chain.failed() {
+	if opChain.failed() {
 		return n
 	}
 
-	num, ok := canonNumber(n.chain, value)
+	num, ok := canonNumber(opChain, value)
 	if !ok {
 		return n
 	}
 
 	if !(n.value > num) {
-		n.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertGt,
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{num},
@@ -374,20 +414,20 @@ func (n *Number) Gt(value interface{}) *Number {
 //	number.Ge(float64(122))
 //	number.Ge(int32(122))
 func (n *Number) Ge(value interface{}) *Number {
-	n.chain.enter("Ge()")
-	defer n.chain.leave()
+	opChain := n.chain.enter("Ge()")
+	defer opChain.leave()
 
-	if n.chain.failed() {
+	if opChain.failed() {
 		return n
 	}
 
-	num, ok := canonNumber(n.chain, value)
+	num, ok := canonNumber(opChain, value)
 	if !ok {
 		return n
 	}
 
 	if !(n.value >= num) {
-		n.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertGe,
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{num},
@@ -411,20 +451,20 @@ func (n *Number) Ge(value interface{}) *Number {
 //	number.Lt(float64(124))
 //	number.Lt(int32(124))
 func (n *Number) Lt(value interface{}) *Number {
-	n.chain.enter("Lt()")
-	defer n.chain.leave()
+	opChain := n.chain.enter("Lt()")
+	defer opChain.leave()
 
-	if n.chain.failed() {
+	if opChain.failed() {
 		return n
 	}
 
-	num, ok := canonNumber(n.chain, value)
+	num, ok := canonNumber(opChain, value)
 	if !ok {
 		return n
 	}
 
 	if !(n.value < num) {
-		n.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertLt,
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{num},
@@ -448,20 +488,20 @@ func (n *Number) Lt(value interface{}) *Number {
 //	number.Le(float64(124))
 //	number.Le(int32(124))
 func (n *Number) Le(value interface{}) *Number {
-	n.chain.enter("Le()")
-	defer n.chain.leave()
+	opChain := n.chain.enter("Le()")
+	defer opChain.leave()
 
-	if n.chain.failed() {
+	if opChain.failed() {
 		return n
 	}
 
-	num, ok := canonNumber(n.chain, value)
+	num, ok := canonNumber(opChain, value)
 	if !ok {
 		return n
 	}
 
 	if !(n.value <= num) {
-		n.chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertLe,
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{num},
