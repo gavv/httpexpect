@@ -91,7 +91,7 @@ func (e *Environment) Delete(key string) {
 //	}
 func (e *Environment) Has(key string) bool {
 	e.rw.RLock()
-	defer e.rw.RLocker()
+	defer e.rw.RUnlock()
 
 	opChain := e.chain.enter("Has(%q)", key)
 	defer opChain.leave()
@@ -110,7 +110,7 @@ func (e *Environment) Has(key string) bool {
 //	value2 := env.Get("key1").(int)
 func (e *Environment) Get(key string) interface{} {
 	e.rw.RLock()
-	defer e.rw.RLocker()
+	defer e.rw.RUnlock()
 
 	opChain := e.chain.enter("Get(%q)", key)
 	defer opChain.leave()
@@ -129,7 +129,7 @@ func (e *Environment) Get(key string) interface{} {
 //	value := env.GetBool("key")
 func (e *Environment) GetBool(key string) bool {
 	e.rw.RLock()
-	defer e.rw.RLocker()
+	defer e.rw.RUnlock()
 
 	opChain := e.chain.enter("GetBool(%q)", key)
 	defer opChain.leave()
@@ -164,7 +164,7 @@ func (e *Environment) GetBool(key string) bool {
 //	value := env.GetInt("key")
 func (e *Environment) GetInt(key string) int {
 	e.rw.RLock()
-	defer e.rw.RLocker()
+	defer e.rw.RUnlock()
 
 	opChain := e.chain.enter("GetInt(%q)", key)
 	defer opChain.leave()
@@ -252,7 +252,7 @@ func (e *Environment) GetInt(key string) int {
 //	value := env.GetFloat("key")
 func (e *Environment) GetFloat(key string) float64 {
 	e.rw.RLock()
-	defer e.rw.RLocker()
+	defer e.rw.RUnlock()
 
 	opChain := e.chain.enter("GetFloat(%q)", key)
 	defer opChain.leave()
@@ -295,7 +295,7 @@ func (e *Environment) GetFloat(key string) float64 {
 //	value := env.GetString("key")
 func (e *Environment) GetString(key string) string {
 	e.rw.RLock()
-	defer e.rw.RLocker()
+	defer e.rw.RUnlock()
 
 	opChain := e.chain.enter("GetString(%q)", key)
 	defer opChain.leave()
@@ -329,7 +329,7 @@ func (e *Environment) GetString(key string) string {
 //	value := env.GetBytes("key")
 func (e *Environment) GetBytes(key string) []byte {
 	e.rw.RLock()
-	defer e.rw.RLocker()
+	defer e.rw.RUnlock()
 
 	opChain := e.chain.enter("GetBytes(%q)", key)
 	defer opChain.leave()
@@ -364,7 +364,7 @@ func (e *Environment) GetBytes(key string) []byte {
 //	value := env.GetDuration("key")
 func (e *Environment) GetDuration(key string) time.Duration {
 	e.rw.RLock()
-	defer e.rw.RLocker()
+	defer e.rw.RUnlock()
 
 	opChain := e.chain.enter("GetDuration(%q)", key)
 	defer opChain.leave()
@@ -399,7 +399,7 @@ func (e *Environment) GetDuration(key string) time.Duration {
 //	value := env.GetTime("key")
 func (e *Environment) GetTime(key string) time.Time {
 	e.rw.RLock()
-	defer e.rw.RLocker()
+	defer e.rw.RUnlock()
 
 	opChain := e.chain.enter("GetTime(%q)", key)
 	defer opChain.leave()
