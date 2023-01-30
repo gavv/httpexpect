@@ -366,6 +366,96 @@ func (n *Number) NotInRange(min, max interface{}) *Number {
 	return n
 }
 
+// InList succeeds if number is listed by given [values...].
+//
+// values should have array of numeric type convertible to float64. Before
+// comparison, it is converted to float64.
+//
+// Example:
+//
+//	number := NewNumber(t, 123)
+//	number.InList(float64(123), int32(123))
+func (n *Number) InList(values ...interface{}) *Number {
+	opChain := n.chain.enter("IsList()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return n
+	}
+
+	arr, _ := canonArray(opChain, values)
+
+	var isListed bool
+	for _, v := range arr {
+		num, ok := canonNumber(opChain, v)
+		if !ok {
+			return n
+		}
+
+		if n.value == num {
+			isListed = true
+		}
+	}
+
+	if !isListed {
+		opChain.fail(AssertionFailure{
+			Type:     AssertBelongs,
+			Actual:   &AssertionValue{n.value},
+			Expected: &AssertionValue{AssertionList(values)},
+			Errors: []error{
+				errors.New("expected: number is listed"),
+			},
+		})
+	}
+
+	return n
+}
+
+// NotInList succeeds if number is listed by given [values...].
+//
+// values should have array of numeric type convertible to float64. Before
+// comparison, it is converted to float64.
+//
+// Example:
+//
+//	number := NewNumber(t, 123)
+//	number.NotInList(float64(456), int32(456))
+func (n *Number) NotInList(values ...interface{}) *Number {
+	opChain := n.chain.enter("NotInList()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return n
+	}
+
+	arr, _ := canonArray(opChain, values)
+
+	var isListed bool
+	for _, v := range arr {
+		num, ok := canonNumber(opChain, v)
+		if !ok {
+			return n
+		}
+
+		if n.value == num {
+			isListed = true
+		}
+	}
+
+	if isListed {
+		opChain.fail(AssertionFailure{
+			Type:     AssertNotBelongs,
+			Actual:   &AssertionValue{n.value},
+			Expected: &AssertionValue{AssertionList(values)},
+			Errors: []error{
+				errors.New("expected: number is not listed"),
+			},
+		})
+	}
+
+	return n
+}
+
 // Gt succeeds if number is greater than given value.
 //
 // value should have numeric type convertible to float64. Before comparison,
