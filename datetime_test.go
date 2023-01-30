@@ -25,6 +25,8 @@ func TestDateTime_Failed(t *testing.T) {
 	value.Le(tm)
 	value.InRange(tm, tm)
 	value.NotInRange(tm, tm)
+	value.InList(tm, tm)
+	value.NotInList(tm, tm)
 	value.Zone()
 	value.Year()
 	value.Month()
@@ -241,6 +243,60 @@ func TestDateTime_InRange(t *testing.T) {
 	value.chain.clearFailed()
 
 	value.NotInRange(time.Unix(0, 1234+1), time.Unix(0, 1234-1))
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+}
+
+func TestDateTime_InList(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewDateTime(reporter, time.Unix(0, 1234))
+
+	value.InList(time.Unix(0, 1234), time.Unix(0, 1234))
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList(time.Unix(0, 1234), time.Unix(0, 1234))
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.InList(time.Unix(0, 1234-1), time.Unix(0, 1234))
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList(time.Unix(0, 1234-1), time.Unix(0, 1234))
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.InList(time.Unix(0, 1234), time.Unix(0, 1234+1))
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList(time.Unix(0, 1234), time.Unix(0, 1234+1))
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.InList(time.Unix(0, 1234+1), time.Unix(0, 1234+2))
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList(time.Unix(0, 1234+1), time.Unix(0, 1234+2))
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.InList(time.Unix(0, 1234-2), time.Unix(0, 1234-1))
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList(time.Unix(0, 1234-2), time.Unix(0, 1234-1))
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.InList(time.Unix(0, 1234+1), time.Unix(0, 1234-1))
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList(time.Unix(0, 1234+1), time.Unix(0, 1234-1))
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 }

@@ -422,6 +422,68 @@ func (dt *DateTime) NotInRange(min, max time.Time) *DateTime {
 	return dt
 }
 
+// InList succeeds if DateTime is listed by given [values...].
+//
+// Example:
+//
+//	dt := NewDateTime(t, time.Unix(0, 2))
+//	dt.InRange(time.Unix(0, 1), time.Unix(0, 2))
+func (dt *DateTime) InList(values ...time.Time) *DateTime {
+	opChain := dt.chain.enter("InRange()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return dt
+	}
+
+	for _, v := range values {
+		if dt.value.Equal(v) {
+			return dt
+		}
+	}
+
+	opChain.fail(AssertionFailure{
+		Type:     AssertBelongs,
+		Actual:   &AssertionValue{dt.value},
+		Expected: &AssertionValue{AssertionList(timeList(values))},
+		Errors: []error{
+			errors.New("expected: time point is listed"),
+		},
+	})
+
+	return dt
+}
+
+// NotInList succeeds if DateTime is not listed by given [values...].
+//
+// Example:
+//
+//	dt := NewDateTime(t, time.Unix(0, 2))
+//	dt.InRange(time.Unix(0, 1), time.Unix(0, 3))
+func (dt *DateTime) NotInList(values ...time.Time) *DateTime {
+	opChain := dt.chain.enter("NotInList()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return dt
+	}
+
+	for _, v := range values {
+		if dt.value.Equal(v) {
+			opChain.fail(AssertionFailure{
+				Type:     AssertNotBelongs,
+				Actual:   &AssertionValue{dt.value},
+				Expected: &AssertionValue{AssertionList(timeList(values))},
+				Errors: []error{
+					errors.New("expected: time point is not listed"),
+				},
+			})
+		}
+	}
+
+	return dt
+}
+
 // Gt succeeds if DateTime is greater than given value.
 //
 // Example:
@@ -568,4 +630,13 @@ func (dt *DateTime) AsLocal() *DateTime {
 	}
 
 	return newDateTime(opChain, dt.value.Local())
+}
+
+func timeList(values []time.Time) []interface{} {
+	l := make([]interface{}, 0, len(values))
+	for _, v := range values {
+		l = append(l, v)
+	}
+
+	return l
 }
