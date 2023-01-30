@@ -744,6 +744,96 @@ func (o *Object) Equal(value interface{}) *Object {
 	return o.IsEqual(value)
 }
 
+// InList succeeds if object is listed by given [values...].
+// Before comparison, both object and value are converted to canonical form.
+//
+// values should be an array of map[string]interface{} or struct.
+//
+// Example:
+//
+//	object := NewObject(t, map[string]interface{}{"foo": 123})
+//	object.InList(map[string]interface{}{"foo": 123})
+func (o *Object) InList(values ...interface{}) *Object {
+	opChain := o.chain.enter("InList()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return o
+	}
+
+	arr, _ := canonArray(opChain, values)
+
+	var isListed bool
+	for _, v := range arr {
+		expected, ok := canonMap(opChain, v)
+		if !ok {
+			return o
+		}
+
+		if reflect.DeepEqual(expected, o.value) {
+			isListed = true
+		}
+	}
+
+	if !isListed {
+		opChain.fail(AssertionFailure{
+			Type:     AssertBelongs,
+			Actual:   &AssertionValue{o.value},
+			Expected: &AssertionValue{AssertionList(values)},
+			Errors: []error{
+				errors.New("expected: map is listed"),
+			},
+		})
+	}
+
+	return o
+}
+
+// NotInList succeeds if object is not listed by given [values...].
+// Before comparison, both object and value are converted to canonical form.
+//
+// values should be an array of map[string]interface{} or struct.
+//
+// Example:
+//
+//	object := NewObject(t, map[string]interface{}{"foo": 123})
+//	object.InList(map[string]interface{}{"bar": 456})
+func (o *Object) NotInList(values ...interface{}) *Object {
+	opChain := o.chain.enter("NotInList()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return o
+	}
+
+	arr, _ := canonArray(opChain, values)
+
+	var isListed bool
+	for _, v := range arr {
+		expected, ok := canonMap(opChain, v)
+		if !ok {
+			return o
+		}
+
+		if reflect.DeepEqual(expected, o.value) {
+			isListed = true
+		}
+	}
+
+	if isListed {
+		opChain.fail(AssertionFailure{
+			Type:     AssertNotBelongs,
+			Actual:   &AssertionValue{o.value},
+			Expected: &AssertionValue{AssertionList(values)},
+			Errors: []error{
+				errors.New("expected: map is not listed"),
+			},
+		})
+	}
+
+	return o
+}
+
 // ContainsKey succeeds if object contains given key.
 //
 // Example:
