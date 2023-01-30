@@ -776,10 +776,6 @@ func (a *Array) InList(values ...interface{}) *Array {
 		return a
 	}
 
-	if len(arr) == 1 {
-		return a.IsEqual(arr[0])
-	}
-
 	var isListed bool
 	for _, v := range values {
 		expected, ok := canonArray(opChain, v)
@@ -834,10 +830,6 @@ func (a *Array) NotInList(values ...interface{}) *Array {
 	arr, ok := canonArray(opChain, values)
 	if !ok {
 		return a
-	}
-
-	if len(arr) == 1 {
-		return a.NotEqual(arr[0])
 	}
 
 	var isListed bool
