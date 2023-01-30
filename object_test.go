@@ -438,27 +438,45 @@ func TestObject_InList(t *testing.T) {
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.InList(map[string]interface{}{"FOO": 123.0}, map[string]interface{}{"BAR": 456.0})
+	value.InList(
+		map[string]interface{}{"FOO": 123.0},
+		map[string]interface{}{"BAR": 456.0},
+	)
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.NotInList(map[string]interface{}{"FOO": 123.0}, map[string]interface{}{"BAR": 456.0})
+	value.NotInList(
+		map[string]interface{}{"FOO": 123.0},
+		map[string]interface{}{"BAR": 456.0},
+	)
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.InList(map[string]interface{}{"foo": 456.0}, map[string]interface{}{"bar": 123.0})
+	value.InList(
+		map[string]interface{}{"foo": 456.0},
+		map[string]interface{}{"bar": 123.0},
+	)
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.NotInList(map[string]interface{}{"foo": 456.0}, map[string]interface{}{"bar": 123.0})
+	value.NotInList(
+		map[string]interface{}{"foo": 456.0},
+		map[string]interface{}{"bar": 123.0},
+	)
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.InList(map[string]interface{}{"foo": 123.0}, map[string]interface{}{"bar": 456.0})
+	value.InList(
+		map[string]interface{}{"foo": 123.0},
+		map[string]interface{}{"bar": 456.0},
+	)
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.NotInList(map[string]interface{}{"foo": 123.0}, map[string]interface{}{"bar": 456.0})
+	value.NotInList(
+		map[string]interface{}{"foo": 123.0},
+		map[string]interface{}{"bar": 456.0},
+	)
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
