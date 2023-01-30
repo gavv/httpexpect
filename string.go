@@ -245,6 +245,70 @@ func (s *String) Equal(value string) *String {
 	return s.IsEqual(value)
 }
 
+// InList succeeds if string is listed by given [values...].
+//
+// Example:
+//
+//	str := NewString(t, "Hello")
+//	str.InList("Hello", "Goodbye")
+func (s *String) InList(values ...string) *String {
+	opChain := s.chain.enter("InList()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return s
+	}
+
+	for _, v := range values {
+		if s.value == v {
+			return s
+		}
+	}
+
+	opChain.fail(AssertionFailure{
+		Type:     AssertBelongs,
+		Actual:   &AssertionValue{s.value},
+		Expected: &AssertionValue{AssertionList(stringList(values))},
+		Errors: []error{
+			errors.New("expected: string is listed"),
+		},
+	})
+
+	return s
+}
+
+// NotInList succeeds if string is not listed by given [values...].
+//
+// Example:
+//
+//	str := NewString(t, "Hello")
+//	str.NotInList("NotInList", "Goodbye")
+func (s *String) NotInList(values ...string) *String {
+	opChain := s.chain.enter("NotInList()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return s
+	}
+
+	for _, v := range values {
+		if s.value == v {
+			opChain.fail(AssertionFailure{
+				Type:     AssertNotBelongs,
+				Actual:   &AssertionValue{s.value},
+				Expected: &AssertionValue{AssertionList(stringList(values))},
+				Errors: []error{
+					errors.New("expected: string is not listed"),
+				},
+			})
+
+			return s
+		}
+	}
+
+	return s
+}
+
 // IsEqualFold succeeds if string is equal to given Go string after applying Unicode
 // case-folding (so it's a case-insensitive match).
 //
@@ -1141,4 +1205,13 @@ func (s *String) Number() *Number {
 // Deprecated: use AsDateTime instead.
 func (s *String) DateTime(layout ...string) *DateTime {
 	return s.AsDateTime(layout...)
+}
+
+func stringList(values []string) []interface{} {
+	s := make([]interface{}, 0, len(values))
+	for _, v := range values {
+		s = append(s, v)
+	}
+
+	return s
 }
