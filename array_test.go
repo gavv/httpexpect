@@ -386,19 +386,19 @@ func TestArray_InList(t *testing.T) {
 
 	assert.Equal(t, []interface{}{"foo", "bar"}, value.Raw())
 
+	value.InList()
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList()
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
 	value.InList([]interface{}{})
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
 	value.NotInList([]interface{}{})
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.InList([]interface{}{"foo"})
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInList([]interface{}{"foo"})
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 

@@ -750,7 +750,8 @@ func (a *Array) Equal(value interface{}) *Array {
 // Before comparison, both array and value are converted to canonical form.
 //
 // values should be an array of slice of any type. This comparison adheres
-// element order.
+// element order. For values with length 1, it behaves the same way with
+// IsEqual.
 //
 // Example:
 //
@@ -770,8 +771,13 @@ func (a *Array) InList(values ...interface{}) *Array {
 		return a
 	}
 
-	if len(values) <= 1 {
-		return a.IsEqual(values[0])
+	arr, ok := canonArray(opChain, values)
+	if !ok {
+		return a
+	}
+
+	if len(arr) == 1 {
+		return a.IsEqual(arr[0])
 	}
 
 	var isListed bool
@@ -790,7 +796,7 @@ func (a *Array) InList(values ...interface{}) *Array {
 		opChain.fail(AssertionFailure{
 			Type:     AssertBelongs,
 			Actual:   &AssertionValue{a.value},
-			Expected: &AssertionValue{AssertionList(values)},
+			Expected: &AssertionValue{AssertionList(arr)},
 			Errors: []error{
 				errors.New("expected: arrays are listed"),
 			},
@@ -804,7 +810,8 @@ func (a *Array) InList(values ...interface{}) *Array {
 // Before comparison, both array and value are converted to canonical form.
 //
 // values should be an array of slice of any type. This comparison adheres
-// element order.
+// element order. For values with length 1, it behaves the same way with
+// NotEqual.
 //
 // Example:
 //
@@ -824,12 +831,17 @@ func (a *Array) NotInList(values ...interface{}) *Array {
 		return a
 	}
 
-	if len(values) <= 1 {
-		return a.NotEqual(values[0])
+	arr, ok := canonArray(opChain, values)
+	if !ok {
+		return a
+	}
+
+	if len(arr) == 1 {
+		return a.NotEqual(arr[0])
 	}
 
 	var isListed bool
-	for _, v := range values {
+	for _, v := range arr {
 		expected, ok := canonArray(opChain, v)
 		if !ok {
 			return a
@@ -844,7 +856,7 @@ func (a *Array) NotInList(values ...interface{}) *Array {
 		opChain.fail(AssertionFailure{
 			Type:     AssertNotBelongs,
 			Actual:   &AssertionValue{a.value},
-			Expected: &AssertionValue{AssertionList(values)},
+			Expected: &AssertionValue{AssertionList(arr)},
 			Errors: []error{
 				errors.New("expected: arrays are not listed"),
 			},
