@@ -162,6 +162,77 @@ func (b *Boolean) Equal(value bool) *Boolean {
 	return b.IsEqual(value)
 }
 
+// InList succeeds if boolean is listed by given [values...].
+//
+// Example:
+//
+//	boolean := NewBoolean(t, true)
+//	boolean.InList(true, false)
+func (b *Boolean) InList(values ...bool) *Boolean {
+	opChain := b.chain.enter("InList()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return b
+	}
+
+	for _, v := range values {
+		if b.value == v {
+			return b
+		}
+	}
+
+	opChain.fail(AssertionFailure{
+		Type:     AssertBelongs,
+		Actual:   &AssertionValue{b.value},
+		Expected: &AssertionValue{AssertionList(boolList(values))},
+		Errors: []error{
+			errors.New("expected: boolean is listed"),
+		},
+	})
+
+	return b
+}
+
+// NotInList succeeds if boolean is not listed by given [values...].
+//
+// Example:
+//
+//	boolean := NewBoolean(t, true)
+//	boolean.NotInList(true, false)
+func (b *Boolean) NotInList(values ...bool) *Boolean {
+	opChain := b.chain.enter("NotInList()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return b
+	}
+
+	for _, v := range values {
+		if b.value == v {
+			opChain.fail(AssertionFailure{
+				Type:     AssertNotBelongs,
+				Actual:   &AssertionValue{b.value},
+				Expected: &AssertionValue{AssertionList(boolList(values))},
+				Errors: []error{
+					errors.New("expected: boolean is not listed"),
+				},
+			})
+		}
+	}
+
+	return b
+}
+
+func boolList(values []bool) []interface{} {
+	l := make([]interface{}, 0, len(values))
+	for _, v := range values {
+		l = append(l, v)
+	}
+
+	return l
+}
+
 // True succeeds if boolean is true.
 //
 // Example:

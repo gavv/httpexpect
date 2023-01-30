@@ -21,6 +21,8 @@ func TestBoolean_Failed(t *testing.T) {
 
 	value.IsEqual(false)
 	value.NotEqual(false)
+	value.InList(false)
+	value.NotInList(false)
 	value.True()
 	value.False()
 }
@@ -160,6 +162,14 @@ func TestBoolean_True(t *testing.T) {
 	value.False()
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
+
+	value.InList(true, true)
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList(true, false)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
 }
 
 func TestBoolean_False(t *testing.T) {
@@ -190,6 +200,14 @@ func TestBoolean_False(t *testing.T) {
 	value.chain.clearFailed()
 
 	value.False()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.InList(true, true)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList(true, true)
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 }
