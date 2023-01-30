@@ -523,3 +523,79 @@ func (v *Value) NotEqual(value interface{}) *Value {
 func (v *Value) Equal(value interface{}) *Value {
 	return v.IsEqual(value)
 }
+
+// InList succeeds if value is listed by given [values....]
+// (e.g. map, slice, string, etc).
+// Before comparison, both values are converted to canonical form.
+//
+// Example:
+//
+//	value := NewValue(t, "foo")
+//	value.InList("foo", map[string]interface{}{"bar": true})
+func (v *Value) InList(values ...interface{}) *Value {
+	opChain := v.chain.enter("InList()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return v
+	}
+
+	for _, val := range values {
+		expected, ok := canonValue(opChain, val)
+		if !ok {
+			return v
+		}
+
+		if reflect.DeepEqual(expected, v.value) {
+			return v
+		}
+	}
+
+	opChain.fail(AssertionFailure{
+		Type:     AssertBelongs,
+		Actual:   &AssertionValue{v.value},
+		Expected: &AssertionValue{AssertionList(values)},
+		Errors: []error{
+			errors.New("expected: value is listed"),
+		},
+	})
+
+	return v
+}
+
+// NotInList succeeds if value is not listed by given [values....]
+// (e.g. map, slice, string, etc).
+// Before comparison, both values are converted to canonical form.
+//
+// Example:
+//
+//	value := NewValue(t, "foo")
+//	value.NotInList("bar", map[string]interface{}{"bar": true})
+func (v *Value) NotInList(values ...interface{}) *Value {
+	opChain := v.chain.enter("NotInList()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return v
+	}
+
+	for _, val := range values {
+		expected, ok := canonValue(opChain, val)
+		if !ok {
+			return v
+		}
+
+		if reflect.DeepEqual(expected, v.value) {
+			opChain.fail(AssertionFailure{
+				Type:     AssertNotBelongs,
+				Actual:   &AssertionValue{v.value},
+				Expected: &AssertionValue{AssertionList(values)},
+				Errors: []error{
+					errors.New("expected: value is not listed"),
+				},
+			})
+		}
+	}
+
+	return v
+}
