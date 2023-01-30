@@ -746,6 +746,114 @@ func (a *Array) Equal(value interface{}) *Array {
 	return a.IsEqual(value)
 }
 
+// InList succeeds if array is listed by given [values...].
+// Before comparison, both array and value are converted to canonical form.
+//
+// values should be an array of slice of any type. This comparison adheres
+// element order.
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{"foo", 123})
+//	array.InList([]interface{}{"foo", 123})
+//
+//	array := NewArray(t, []interface{}{"foo", "bar"})
+//	array.InList([]string{}{"foo", "bar"})
+//
+//	array := NewArray(t, []interface{}{123, 456})
+//	array.InList([]int{}{123, 456})
+func (a *Array) InList(values ...interface{}) *Array {
+	opChain := a.chain.enter("InList()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return a
+	}
+
+	if len(values) <= 1 {
+		return a.IsEqual(values[0])
+	}
+
+	var isListed bool
+	for _, v := range values {
+		expected, ok := canonArray(opChain, v)
+		if !ok {
+			return a
+		}
+
+		if reflect.DeepEqual(expected, a.value) {
+			isListed = true
+		}
+	}
+
+	if !isListed {
+		opChain.fail(AssertionFailure{
+			Type:     AssertBelongs,
+			Actual:   &AssertionValue{a.value},
+			Expected: &AssertionValue{AssertionList(values)},
+			Errors: []error{
+				errors.New("expected: arrays are listed"),
+			},
+		})
+	}
+
+	return a
+}
+
+// NotInList succeeds if array is not listed by given [values...].
+// Before comparison, both array and value are converted to canonical form.
+//
+// values should be an array of slice of any type. This comparison adheres
+// element order.
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{"foo", 123})
+//	array.NotInList([]interface{}{"bar", 456})
+//
+//	array := NewArray(t, []interface{}{"foo", "bar"})
+//	array.NotInList([]string{}{"bar", "foo"})
+//
+//	array := NewArray(t, []interface{}{123, 456})
+//	array.NotInList([]int{}{789, 901})
+func (a *Array) NotInList(values ...interface{}) *Array {
+	opChain := a.chain.enter("NotInList()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return a
+	}
+
+	if len(values) <= 1 {
+		return a.NotEqual(values[0])
+	}
+
+	var isListed bool
+	for _, v := range values {
+		expected, ok := canonArray(opChain, v)
+		if !ok {
+			return a
+		}
+
+		if reflect.DeepEqual(expected, a.value) {
+			isListed = true
+		}
+	}
+
+	if isListed {
+		opChain.fail(AssertionFailure{
+			Type:     AssertNotBelongs,
+			Actual:   &AssertionValue{a.value},
+			Expected: &AssertionValue{AssertionList(values)},
+			Errors: []error{
+				errors.New("expected: arrays are not listed"),
+			},
+		})
+	}
+
+	return a
+}
+
 // IsEqualUnordered succeeds if array is equal to another array, ignoring element
 // order. Before comparison, both arrays are converted to canonical form.
 //
