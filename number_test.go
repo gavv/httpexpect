@@ -316,6 +316,14 @@ func TestNumber_InList(t *testing.T) {
 
 	value := NewNumber(reporter, 1234)
 
+	value.InList()
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList()
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
 	value.InList(1234, 4567)
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
