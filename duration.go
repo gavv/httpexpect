@@ -444,6 +444,17 @@ func (d *Duration) InList(values ...time.Duration) *Duration {
 		return d
 	}
 
+	if len(values) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty list argument"),
+			},
+		})
+
+		return d
+	}
+
 	if d.value == nil {
 		opChain.fail(AssertionFailure{
 			Type:   AssertNotNil,
@@ -484,6 +495,17 @@ func (d *Duration) NotInList(values ...time.Duration) *Duration {
 	defer opChain.leave()
 
 	if opChain.failed() {
+		return d
+	}
+
+	if len(values) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty list argument"),
+			},
+		})
+
 		return d
 	}
 

@@ -229,10 +229,18 @@ func TestDuration_InRange(t *testing.T) {
 func TestDuration_InList(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	newDuration(newMockChain(t), nil).InList().chain.assertFailed(t)
-	newDuration(newMockChain(t), nil).NotInList().chain.assertFailed(t)
+	newDuration(newMockChain(t), nil).InList(time.Second).chain.assertFailed(t)
+	newDuration(newMockChain(t), nil).NotInList(time.Second).chain.assertFailed(t)
 
 	value := NewDuration(reporter, time.Second)
+
+	value.InList()
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList()
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
 
 	value.InList(time.Second, time.Minute)
 	value.chain.assertNotFailed(t)
