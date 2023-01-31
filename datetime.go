@@ -436,6 +436,17 @@ func (dt *DateTime) InList(values ...time.Time) *DateTime {
 		return dt
 	}
 
+	if len(values) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty list argument"),
+			},
+		})
+
+		return dt
+	}
+
 	for _, v := range values {
 		if dt.value.Equal(v) {
 			return dt
@@ -465,6 +476,17 @@ func (dt *DateTime) NotInList(values ...time.Time) *DateTime {
 	defer opChain.leave()
 
 	if opChain.failed() {
+		return dt
+	}
+
+	if len(values) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty list argument"),
+			},
+		})
+
 		return dt
 	}
 

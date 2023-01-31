@@ -252,6 +252,14 @@ func TestDateTime_InList(t *testing.T) {
 
 	value := NewDateTime(reporter, time.Unix(0, 1234))
 
+	value.InList()
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList()
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
 	value.InList(time.Unix(0, 1234), time.Unix(0, 1234))
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
