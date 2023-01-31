@@ -761,10 +761,19 @@ func (o *Object) InList(values ...interface{}) *Object {
 		return o
 	}
 
-	arr, _ := canonArray(opChain, values)
+	if len(values) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty list argument"),
+			},
+		})
+
+		return o
+	}
 
 	var isListed bool
-	for _, v := range arr {
+	for _, v := range values {
 		expected, ok := canonMap(opChain, v)
 		if !ok {
 			return o
@@ -806,10 +815,19 @@ func (o *Object) NotInList(values ...interface{}) *Object {
 		return o
 	}
 
-	arr, _ := canonArray(opChain, values)
+	if len(values) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty list argument"),
+			},
+		})
+
+		return o
+	}
 
 	var isListed bool
-	for _, v := range arr {
+	for _, v := range values {
 		expected, ok := canonMap(opChain, v)
 		if !ok {
 			return o

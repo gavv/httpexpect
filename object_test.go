@@ -430,6 +430,14 @@ func TestObject_InList(t *testing.T) {
 
 	assert.Equal(t, map[string]interface{}{"foo": 123.0}, value.Raw())
 
+	value.InList()
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList()
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
 	value.InList(map[string]interface{}{})
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
