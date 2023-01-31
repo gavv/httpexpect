@@ -420,6 +420,9 @@ func TestValue_InList(t *testing.T) {
 		Data: []int{1, 2, 3, 4},
 	}
 
+	NewValue(reporter, data1).InList().chain.assertFailed(t)
+	NewValue(reporter, data2).NotInList().chain.assertFailed(t)
+
 	NewValue(reporter, data1).InList(data1, data3).chain.assertNotFailed(t)
 	NewValue(reporter, data2).NotInList(data1, data3).chain.assertNotFailed(t)
 

@@ -540,6 +540,17 @@ func (v *Value) InList(values ...interface{}) *Value {
 		return v
 	}
 
+	if len(values) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty list argument"),
+			},
+		})
+
+		return v
+	}
+
 	for _, val := range values {
 		expected, ok := canonValue(opChain, val)
 		if !ok {
@@ -576,6 +587,17 @@ func (v *Value) NotInList(values ...interface{}) *Value {
 	defer opChain.leave()
 
 	if opChain.failed() {
+		return v
+	}
+
+	if len(values) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty list argument"),
+			},
+		})
+
 		return v
 	}
 
