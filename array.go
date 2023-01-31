@@ -771,8 +771,14 @@ func (a *Array) InList(values ...interface{}) *Array {
 		return a
 	}
 
-	arr, ok := canonArray(opChain, values)
-	if !ok {
+	if len(values) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty list argument"),
+			},
+		})
+
 		return a
 	}
 
@@ -792,7 +798,7 @@ func (a *Array) InList(values ...interface{}) *Array {
 		opChain.fail(AssertionFailure{
 			Type:     AssertBelongs,
 			Actual:   &AssertionValue{a.value},
-			Expected: &AssertionValue{AssertionList(arr)},
+			Expected: &AssertionValue{AssertionList(values)},
 			Errors: []error{
 				errors.New("expected: arrays are listed"),
 			},
@@ -827,13 +833,19 @@ func (a *Array) NotInList(values ...interface{}) *Array {
 		return a
 	}
 
-	arr, ok := canonArray(opChain, values)
-	if !ok {
+	if len(values) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty list argument"),
+			},
+		})
+
 		return a
 	}
 
 	var isListed bool
-	for _, v := range arr {
+	for _, v := range values {
 		expected, ok := canonArray(opChain, v)
 		if !ok {
 			return a
@@ -848,7 +860,7 @@ func (a *Array) NotInList(values ...interface{}) *Array {
 		opChain.fail(AssertionFailure{
 			Type:     AssertNotBelongs,
 			Actual:   &AssertionValue{a.value},
-			Expected: &AssertionValue{AssertionList(arr)},
+			Expected: &AssertionValue{AssertionList(values)},
 			Errors: []error{
 				errors.New("expected: arrays are not listed"),
 			},

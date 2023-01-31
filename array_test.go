@@ -394,6 +394,14 @@ func TestArray_InList(t *testing.T) {
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
+	value.InList("foo", "bar")
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList("foo", "bar")
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
 	value.InList([]interface{}{})
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
