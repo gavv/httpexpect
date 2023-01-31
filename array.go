@@ -750,8 +750,7 @@ func (a *Array) Equal(value interface{}) *Array {
 // Before comparison, both array and value are converted to canonical form.
 //
 // values should be an array of slice of any type. This comparison adheres
-// element order. For values with length 1, it behaves the same way with
-// IsEqual.
+// element order.
 //
 // Example:
 //
@@ -812,8 +811,7 @@ func (a *Array) InList(values ...interface{}) *Array {
 // Before comparison, both array and value are converted to canonical form.
 //
 // values should be an array of slice of any type. This comparison adheres
-// element order. For values with length 1, it behaves the same way with
-// NotEqual.
+// element order.
 //
 // Example:
 //
