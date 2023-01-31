@@ -211,3 +211,17 @@ func TestBoolean_False(t *testing.T) {
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 }
+
+func TestBoolean_ZeroLengthInList(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewBoolean(reporter, true)
+
+	value.InList()
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList()
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+}

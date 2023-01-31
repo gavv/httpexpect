@@ -176,6 +176,17 @@ func (b *Boolean) InList(values ...bool) *Boolean {
 		return b
 	}
 
+	if len(values) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty list argument"),
+			},
+		})
+
+		return b
+	}
+
 	for _, v := range values {
 		if b.value == v {
 			return b
@@ -205,6 +216,17 @@ func (b *Boolean) NotInList(values ...bool) *Boolean {
 	defer opChain.leave()
 
 	if opChain.failed() {
+		return b
+	}
+
+	if len(values) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty list argument"),
+			},
+		})
+
 		return b
 	}
 
