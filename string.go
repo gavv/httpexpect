@@ -259,6 +259,17 @@ func (s *String) InList(values ...string) *String {
 		return s
 	}
 
+	if len(values) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty list argument"),
+			},
+		})
+
+		return s
+	}
+
 	for _, v := range values {
 		if s.value == v {
 			return s
@@ -288,6 +299,17 @@ func (s *String) NotInList(values ...string) *String {
 	defer opChain.leave()
 
 	if opChain.failed() {
+		return s
+	}
+
+	if len(values) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty list argument"),
+			},
+		})
+
 		return s
 	}
 

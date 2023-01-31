@@ -227,6 +227,14 @@ func TestString_List(t *testing.T) {
 
 	assert.Equal(t, "foo", value.Raw())
 
+	value.InList()
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.InList()
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
 	value.InList("foo", "bar")
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
