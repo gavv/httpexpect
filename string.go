@@ -245,7 +245,8 @@ func (s *String) Equal(value string) *String {
 	return s.IsEqual(value)
 }
 
-// InList succeeds if string is listed by given [values...].
+// InList succeeds if string is equal to one of the elements from given
+// list of strings.
 //
 // Example:
 //
@@ -281,14 +282,15 @@ func (s *String) InList(values ...string) *String {
 		Actual:   &AssertionValue{s.value},
 		Expected: &AssertionValue{AssertionList(stringList(values))},
 		Errors: []error{
-			errors.New("expected: string is listed"),
+			errors.New("expected: string is equal to one of the values"),
 		},
 	})
 
 	return s
 }
 
-// NotInList succeeds if string is not listed by given [values...].
+// NotInList succeeds if string is not equal to any of the elements from
+// given list of strings.
 //
 // Example:
 //
@@ -320,7 +322,7 @@ func (s *String) NotInList(values ...string) *String {
 				Actual:   &AssertionValue{s.value},
 				Expected: &AssertionValue{AssertionList(stringList(values))},
 				Errors: []error{
-					errors.New("expected: string is not listed"),
+					errors.New("expected: string is not equal to any of the values"),
 				},
 			})
 
