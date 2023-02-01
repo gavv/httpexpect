@@ -88,6 +88,8 @@ func TestFruits(t *testing.T) {
 	colors.Element(0).String().HasSuffix("een")
 
 	fruit.Value("weight").Number().IsEqual(200)
+	fruit.Value("weight").Number().InList(100, 200, 300)
+	fruit.Value("weight").Number().NotInList(400, 500, 600)
 
 	for _, element := range fruit.Value("image").Array().Iter() {
 		element.Object().
