@@ -1089,7 +1089,7 @@ func (s *String) AsNumber(base ...int) *Number {
 // Example:
 //
 //	str := NewString(t, "true")
-//	str.AsBoolean().True()
+//	str.AsBoolean().IsTrue()
 func (s *String) AsBoolean() *Boolean {
 	opChain := s.chain.enter("AsBoolean()")
 	defer opChain.leave()

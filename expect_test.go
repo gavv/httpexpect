@@ -300,7 +300,7 @@ func TestExpect_Traverse(t *testing.T) {
 	m.Value("bbb").String().IsEqual("hello")
 	m.Value("ccc").Number().IsEqual(456)
 
-	m.Value("aaa").Array().Element(2).Boolean().False()
+	m.Value("aaa").Array().Element(2).Boolean().IsFalse()
 	m.Value("aaa").Array().Element(3).IsNull()
 }
 

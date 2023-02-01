@@ -20,12 +20,12 @@ func TestBoolean_FailedChain(t *testing.T) {
 	var target interface{}
 	value.Decode(&target)
 
+	value.IsTrue()
+	value.IsFalse()
 	value.IsEqual(false)
 	value.NotEqual(false)
 	value.InList(false)
 	value.NotInList(false)
-	value.True()
-	value.False()
 }
 
 func TestBoolean_Constructors(t *testing.T) {
@@ -156,11 +156,11 @@ func TestBoolean_True(t *testing.T) {
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.True()
+	value.IsTrue()
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.False()
+	value.IsFalse()
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
@@ -196,11 +196,11 @@ func TestBoolean_False(t *testing.T) {
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.True()
+	value.IsTrue()
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.False()
+	value.IsFalse()
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 

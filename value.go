@@ -358,7 +358,7 @@ func (v *Value) Number() *Number {
 // Example:
 //
 //	value := NewValue(t, true)
-//	value.Boolean().True()
+//	value.Boolean().IsTrue()
 func (v *Value) Boolean() *Boolean {
 	opChain := v.chain.enter("Boolean()")
 	defer opChain.leave()
