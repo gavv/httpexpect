@@ -124,6 +124,16 @@ func TestResponse_Constructors(t *testing.T) {
 		assert.NotSame(t, value.chain, chain)
 		assert.Equal(t, value.chain.context.Path, chain.context.Path)
 	})
+
+	t.Run("Constructor does not read http response body first", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		resp := NewResponse(reporter, &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       ioutil.NopCloser(bytes.NewBufferString("body")),
+		})
+		assert.Nil(t, resp.content)
+		assert.False(t, resp.hasRead)
+	})
 }
 
 func TestResponse_Alias(t *testing.T) {
