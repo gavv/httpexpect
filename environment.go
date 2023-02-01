@@ -56,11 +56,11 @@ func newEnvironment(parent *chain) *Environment {
 //	env.Put("key1", "str")
 //	env.Put("key2", 123)
 func (e *Environment) Put(key string, value interface{}) {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-
 	opChain := e.chain.enter("Put(%q)", key)
 	defer opChain.leave()
+
+	e.mu.Lock()
+	defer e.mu.Unlock()
 
 	e.data[key] = value
 }
@@ -73,11 +73,11 @@ func (e *Environment) Put(key string, value interface{}) {
 //	env.Put("key1", "str")
 //	env.Delete("key1")
 func (e *Environment) Delete(key string) {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-
 	opChain := e.chain.enter("Delete(%q)", key)
 	defer opChain.leave()
+
+	e.mu.Lock()
+	defer e.mu.Unlock()
 
 	delete(e.data, key)
 }
@@ -90,11 +90,11 @@ func (e *Environment) Delete(key string) {
 //	   ...
 //	}
 func (e *Environment) Has(key string) bool {
-	e.mu.RLock()
-	defer e.mu.RUnlock()
-
 	opChain := e.chain.enter("Has(%q)", key)
 	defer opChain.leave()
+
+	e.mu.RLock()
+	defer e.mu.RUnlock()
 
 	_, ok := e.data[key]
 	return ok
