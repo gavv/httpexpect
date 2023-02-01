@@ -10,8 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var mockDefaultFormatter = &DefaultFormatter{}
-
 type typedNil int
 
 func (*typedNil) String() string {
@@ -19,6 +17,8 @@ func (*typedNil) String() string {
 }
 
 func TestFormat_Values(t *testing.T) {
+	var mockDefaultFormatter = &DefaultFormatter{}
+
 	checkAll := func(t *testing.T, fn func(interface{}) string) {
 		var tnil *typedNil
 		var tnilPtr fmt.Stringer = tnil
@@ -35,6 +35,8 @@ func TestFormat_Values(t *testing.T) {
 		check(fn(tnil))
 		check(fn(tnilPtr))
 		check(fn(123))
+		check(fn(float32(123)))
+		check(fn(float64(123)))
 		check(fn("hello"))
 		check(fn(time.Second))
 		check(fn(time.Unix(0, 0)))
@@ -47,32 +49,34 @@ func TestFormat_Values(t *testing.T) {
 		check(fn(AssertionList([]interface{}{1, 2})))
 	}
 
-	t.Run("formatTyped", func(t *testing.T) {
-		checkAll(t, mockDefaultFormatter.formatTyped)
-	})
-
 	t.Run("formatValue", func(t *testing.T) {
 		checkAll(t, mockDefaultFormatter.formatValue)
 	})
 
-	t.Run("formatBareString", func(t *testing.T) {
-		checkAll(t, mockDefaultFormatter.formatBareString)
+	t.Run("formatTypedValue", func(t *testing.T) {
+		checkAll(t, mockDefaultFormatter.formatTypedValue)
 	})
 
-	t.Run("formatRange", func(t *testing.T) {
+	t.Run("formatMatchValue", func(t *testing.T) {
+		checkAll(t, mockDefaultFormatter.formatMatchValue)
+	})
+
+	t.Run("formatRangeValue", func(t *testing.T) {
 		checkAll(t, func(v interface{}) string {
-			return strings.Join(mockDefaultFormatter.formatRange(v), "")
+			return strings.Join(mockDefaultFormatter.formatRangeValue(v), "")
 		})
 	})
 
-	t.Run("formatList", func(t *testing.T) {
+	t.Run("formatListValue", func(t *testing.T) {
 		checkAll(t, func(v interface{}) string {
-			return strings.Join(mockDefaultFormatter.formatList(v), "")
+			return strings.Join(mockDefaultFormatter.formatListValue(v), "")
 		})
 	})
 }
 
 func TestFormat_Diff(t *testing.T) {
+	var mockDefaultFormatter = &DefaultFormatter{}
+
 	checkOK := func(a, b interface{}) {
 		s, ok := mockDefaultFormatter.formatDiff(a, b)
 		assert.True(t, ok)

@@ -263,7 +263,7 @@ func (f *DefaultFormatter) fillActual(
 
 	case AssertType, AssertNotType:
 		data.HaveActual = true
-		data.Actual = f.formatTyped(failure.Actual.Value)
+		data.Actual = f.formatTypedValue(failure.Actual.Value)
 
 	default:
 		data.HaveActual = true
@@ -305,27 +305,27 @@ func (f *DefaultFormatter) fillExpected(
 	case AssertInRange, AssertNotInRange:
 		data.HaveExpected = true
 		data.ExpectedKind = kindRange
-		data.Expected = f.formatRange(failure.Expected.Value)
+		data.Expected = f.formatRangeValue(failure.Expected.Value)
 
 	case AssertMatchSchema, AssertNotMatchSchema:
 		data.HaveExpected = true
 		data.ExpectedKind = kindSchema
 		data.Expected = []string{
-			f.formatBareString(failure.Expected.Value),
+			f.formatMatchValue(failure.Expected.Value),
 		}
 
 	case AssertMatchPath, AssertNotMatchPath:
 		data.HaveExpected = true
 		data.ExpectedKind = kindPath
 		data.Expected = []string{
-			f.formatBareString(failure.Expected.Value),
+			f.formatMatchValue(failure.Expected.Value),
 		}
 
 	case AssertMatchRegexp, AssertNotMatchRegexp:
 		data.HaveExpected = true
 		data.ExpectedKind = kindRegexp
 		data.Expected = []string{
-			f.formatBareString(failure.Expected.Value),
+			f.formatMatchValue(failure.Expected.Value),
 		}
 
 	case AssertMatchFormat, AssertNotMatchFormat:
@@ -335,7 +335,7 @@ func (f *DefaultFormatter) fillExpected(
 		} else {
 			data.ExpectedKind = kindFormat
 		}
-		data.Expected = f.formatList(failure.Expected.Value)
+		data.Expected = f.formatListValue(failure.Expected.Value)
 
 	case AssertContainsKey, AssertNotContainsKey:
 		data.HaveExpected = true
@@ -361,7 +361,7 @@ func (f *DefaultFormatter) fillExpected(
 	case AssertBelongs, AssertNotBelongs:
 		data.HaveExpected = true
 		data.ExpectedKind = kindValueList
-		data.Expected = f.formatList(failure.Expected.Value)
+		data.Expected = f.formatListValue(failure.Expected.Value)
 	}
 }
 
@@ -428,21 +428,13 @@ func (f *DefaultFormatter) fillDelta(
 	data.Delta = f.formatValue(failure.Delta.Value)
 }
 
-func (f *DefaultFormatter) formatTyped(value interface{}) string {
-	if isNumber(value) {
-		return fmt.Sprintf("%T(%v)", value, f.formatValue(value))
-	}
-
-	return fmt.Sprintf("%T(%#v)", value, value)
-}
-
 func (f *DefaultFormatter) formatValue(value interface{}) string {
 	if flt := extractFloat32(value); flt != nil {
-		return f.formatFloat(*flt, 32)
+		return f.formatFloatValue(*flt, 32)
 	}
 
 	if flt := extractFloat64(value); flt != nil {
-		return f.formatFloat(*flt, 64)
+		return f.formatFloatValue(*flt, 64)
 	}
 
 	if !isNil(value) && !isHTTP(value) {
@@ -459,11 +451,10 @@ func (f *DefaultFormatter) formatValue(value interface{}) string {
 	sq := litter.Options{
 		Separator: defaultIndent,
 	}
-
 	return sq.Sdump(value)
 }
 
-func (f *DefaultFormatter) formatFloat(value float64, bits int) string {
+func (f *DefaultFormatter) formatFloatValue(value float64, bits int) string {
 	switch f.FloatFormat {
 	case FloatFormatAuto:
 		if _, frac := math.Modf(value); frac != 0 {
@@ -483,16 +474,23 @@ func (f *DefaultFormatter) formatFloat(value float64, bits int) string {
 	}
 }
 
-func (f *DefaultFormatter) formatBareString(value interface{}) string {
-	switch v := value.(type) {
-	case string:
-		return v
+func (f *DefaultFormatter) formatTypedValue(value interface{}) string {
+	if isNumber(value) {
+		return fmt.Sprintf("%T(%v)", value, f.formatValue(value))
+	}
+
+	return fmt.Sprintf("%T(%#v)", value, value)
+}
+
+func (f *DefaultFormatter) formatMatchValue(value interface{}) string {
+	if str := extractString(value); str != nil {
+		return *str
 	}
 
 	return f.formatValue(value)
 }
 
-func (f *DefaultFormatter) formatRange(value interface{}) []string {
+func (f *DefaultFormatter) formatRangeValue(value interface{}) []string {
 	if rng := exctractRange(value); rng != nil {
 		if isNumber(rng.Min) && isNumber(rng.Max) {
 			return []string{
@@ -511,7 +509,7 @@ func (f *DefaultFormatter) formatRange(value interface{}) []string {
 	}
 }
 
-func (f *DefaultFormatter) formatList(value interface{}) []string {
+func (f *DefaultFormatter) formatListValue(value interface{}) []string {
 	if lst := extractList(value); lst != nil {
 		s := make([]string, 0, len(*lst))
 		for _, e := range *lst {
@@ -565,23 +563,10 @@ func (f *DefaultFormatter) formatDiff(expected, actual interface{}) (string, boo
 	return diffText, true
 }
 
-func exctractRange(value interface{}) *AssertionRange {
-	switch rng := value.(type) {
-	case AssertionRange:
-		return &rng
-	case *AssertionRange: // invalid, but we handle it
-		return rng
-	default:
-		return nil
-	}
-}
-
-func extractList(value interface{}) *AssertionList {
-	switch lst := value.(type) {
-	case AssertionList:
-		return &lst
-	case *AssertionList: // invalid, but we handle it
-		return lst
+func extractString(value interface{}) *string {
+	switch s := value.(type) {
+	case string:
+		return &s
 	default:
 		return nil
 	}
@@ -601,6 +586,28 @@ func extractFloat64(value interface{}) *float64 {
 	switch f := value.(type) {
 	case float64:
 		return &f
+	default:
+		return nil
+	}
+}
+
+func exctractRange(value interface{}) *AssertionRange {
+	switch rng := value.(type) {
+	case AssertionRange:
+		return &rng
+	case *AssertionRange: // invalid, but we handle it
+		return rng
+	default:
+		return nil
+	}
+}
+
+func extractList(value interface{}) *AssertionList {
+	switch lst := value.(type) {
+	case AssertionList:
+		return &lst
+	case *AssertionList: // invalid, but we handle it
+		return lst
 	default:
 		return nil
 	}
