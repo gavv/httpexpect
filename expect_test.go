@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestExpect_Methods(t *testing.T) {
+func TestExpect_Requests(t *testing.T) {
 	client := &mockClient{}
 
 	reporter := NewAssertReporter(t)

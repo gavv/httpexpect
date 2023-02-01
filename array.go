@@ -904,7 +904,8 @@ func (a *Array) EqualUnordered(value interface{}) *Array {
 // list of arrays. Before comparison, both array and each value are converted
 // to canonical form.
 //
-// Each value should be a slice of any type.
+// Each value should be a slice of any type. If at least one value has wrong
+// type, failure is reported.
 //
 // Example:
 //
@@ -937,7 +938,7 @@ func (a *Array) InList(values ...interface{}) *Array {
 
 		if reflect.DeepEqual(expected, a.value) {
 			isListed = true
-			break
+			// continue loop to check that all values are correct
 		}
 	}
 
@@ -959,7 +960,8 @@ func (a *Array) InList(values ...interface{}) *Array {
 // given list of arrays. Before comparison, both array and each value are
 // converted to canonical form.
 //
-// Each value should be a slice of any type.
+// Each value should be a slice of any type. If at least one value has wrong
+// type, failure is reported.
 //
 // Example:
 //

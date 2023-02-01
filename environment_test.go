@@ -10,13 +10,13 @@ import (
 )
 
 func TestEnvironment_Constructors(t *testing.T) {
-	t.Run("Constructor without config", func(t *testing.T) {
+	t.Run("reporter", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		env := NewEnvironment(reporter)
 		env.chain.assertNotFailed(t)
 	})
 
-	t.Run("Constructor with config", func(t *testing.T) {
+	t.Run("config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		env := NewEnvironmentC(Config{
 			Reporter: reporter,
@@ -24,7 +24,7 @@ func TestEnvironment_Constructors(t *testing.T) {
 		env.chain.assertNotFailed(t)
 	})
 
-	t.Run("chain Constructor", func(t *testing.T) {
+	t.Run("chain", func(t *testing.T) {
 		chain := newMockChain(t)
 		value := newEnvironment(chain)
 		assert.NotSame(t, value.chain, chain)

@@ -12,23 +12,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestResponse_Failed(t *testing.T) {
+func TestResponse_FailedChain(t *testing.T) {
 	check := func(resp *Response) {
 		resp.chain.assertFailed(t)
 
-		assert.NotNil(t, resp.RoundTripTime())
-		assert.NotNil(t, resp.Duration())
-		assert.NotNil(t, resp.Headers())
-		assert.NotNil(t, resp.Header("foo"))
-		assert.NotNil(t, resp.Cookies())
-		assert.NotNil(t, resp.Cookie("foo"))
-		assert.NotNil(t, resp.Body())
-		assert.NotNil(t, resp.Text())
-		assert.NotNil(t, resp.Form())
-		assert.NotNil(t, resp.JSON())
-		assert.NotNil(t, resp.JSONP(""))
-		assert.NotNil(t, resp.Websocket())
+		resp.Alias("foo")
 
+		resp.RoundTripTime().chain.assertFailed(t)
+		resp.Duration().chain.assertFailed(t)
 		resp.Headers().chain.assertFailed(t)
 		resp.Header("foo").chain.assertFailed(t)
 		resp.Cookies().chain.assertFailed(t)
@@ -47,7 +38,6 @@ func TestResponse_Failed(t *testing.T) {
 		resp.ContentType("", "")
 		resp.ContentEncoding("")
 		resp.TransferEncoding("")
-		resp.Alias("foo")
 	}
 
 	t.Run("failed_chain", func(t *testing.T) {
@@ -98,13 +88,13 @@ func TestResponse_Failed(t *testing.T) {
 }
 
 func TestResponse_Constructors(t *testing.T) {
-	t.Run("Constructor without config", func(t *testing.T) {
+	t.Run("reporter", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		resp := NewResponse(reporter, &http.Response{})
 		resp.chain.assertNotFailed(t)
 	})
 
-	t.Run("Constructor with config", func(t *testing.T) {
+	t.Run("config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		resp := NewResponseC(Config{
 			Reporter: reporter,
@@ -112,7 +102,7 @@ func TestResponse_Constructors(t *testing.T) {
 		resp.chain.assertNotFailed(t)
 	})
 
-	t.Run("chain Constructor", func(t *testing.T) {
+	t.Run("chain", func(t *testing.T) {
 		chain := newMockChain(t)
 		reporter := newMockReporter(t)
 		config := newMockConfig(reporter)

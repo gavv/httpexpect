@@ -7,52 +7,53 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestDateTime_Failed(t *testing.T) {
+func TestDateTime_FailedChain(t *testing.T) {
 	chain := newMockChain(t)
 	chain.setFailed()
 
 	tm := time.Unix(0, 0)
-
 	value := newDateTime(chain, tm)
-
 	value.chain.assertFailed(t)
+
+	value.Alias("foo")
 
 	value.IsEqual(tm)
 	value.NotEqual(tm)
-	value.Gt(tm)
-	value.Ge(tm)
-	value.Lt(tm)
-	value.Le(tm)
 	value.InRange(tm, tm)
 	value.NotInRange(tm, tm)
 	value.InList(tm, tm)
 	value.NotInList(tm, tm)
-	value.Zone()
-	value.Year()
-	value.Month()
-	value.Day()
-	value.WeekDay()
-	value.YearDay()
-	value.Hour()
-	value.Minute()
-	value.Second()
-	value.Nanosecond()
-	value.AsUTC()
-	value.AsLocal()
-	value.Alias("foo")
+	value.Gt(tm)
+	value.Ge(tm)
+	value.Lt(tm)
+	value.Le(tm)
+
+	value.Zone().chain.assertFailed(t)
+	value.Year().chain.assertFailed(t)
+	value.Month().chain.assertFailed(t)
+	value.Day().chain.assertFailed(t)
+	value.WeekDay().chain.assertFailed(t)
+	value.YearDay().chain.assertFailed(t)
+	value.Hour().chain.assertFailed(t)
+	value.Minute().chain.assertFailed(t)
+	value.Second().chain.assertFailed(t)
+	value.Nanosecond().chain.assertFailed(t)
+
+	value.AsUTC().chain.assertFailed(t)
+	value.AsLocal().chain.assertFailed(t)
 }
 
 func TestDateTime_Constructors(t *testing.T) {
 	time := time.Unix(0, 1234)
 
-	t.Run("Constructor without config", func(t *testing.T) {
+	t.Run("reporter", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewDateTime(reporter, time)
 		value.IsEqual(time)
 		value.chain.assertNotFailed(t)
 	})
 
-	t.Run("Constructor with config", func(t *testing.T) {
+	t.Run("config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewDateTimeC(Config{
 			Reporter: reporter,
@@ -61,7 +62,7 @@ func TestDateTime_Constructors(t *testing.T) {
 		value.chain.assertNotFailed(t)
 	})
 
-	t.Run("chain Constructor", func(t *testing.T) {
+	t.Run("chain", func(t *testing.T) {
 		chain := newMockChain(t)
 		value := newDateTime(chain, time)
 		assert.NotSame(t, value.chain, chain)

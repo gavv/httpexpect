@@ -6,13 +6,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestBoolean_Failed(t *testing.T) {
+func TestBoolean_FailedChain(t *testing.T) {
 	chain := newMockChain(t)
 	chain.setFailed()
 
 	value := newBoolean(chain, false)
+	value.chain.assertFailed(t)
 
-	value.Path("$")
+	value.Path("$").chain.assertFailed(t)
 	value.Schema("")
 	value.Alias("foo")
 
@@ -28,14 +29,14 @@ func TestBoolean_Failed(t *testing.T) {
 }
 
 func TestBoolean_Constructors(t *testing.T) {
-	t.Run("Constructor without config", func(t *testing.T) {
+	t.Run("reporter", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewBoolean(reporter, true)
 		value.IsEqual(true)
 		value.chain.assertNotFailed(t)
 	})
 
-	t.Run("Constructor with config", func(t *testing.T) {
+	t.Run("config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewBooleanC(Config{
 			Reporter: reporter,
@@ -44,7 +45,7 @@ func TestBoolean_Constructors(t *testing.T) {
 		value.chain.assertNotFailed(t)
 	})
 
-	t.Run("chain Constructor", func(t *testing.T) {
+	t.Run("chain", func(t *testing.T) {
 		chain := newMockChain(t)
 		value := newBoolean(chain, true)
 		assert.NotSame(t, value.chain, &chain)

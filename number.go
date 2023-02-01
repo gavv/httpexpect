@@ -369,7 +369,8 @@ func (n *Number) NotInRange(min, max interface{}) *Number {
 // InList succeeds if the number is equal to one of the values from given list
 // of numbers. Before comparison, each value is converted to canonical form.
 //
-// Each value should be numeric type convertible to float64.
+// Each value should be numeric type convertible to float64. If at least one
+// value has wrong type, failure is reported.
 //
 // Example:
 //
@@ -402,7 +403,7 @@ func (n *Number) InList(values ...interface{}) *Number {
 
 		if n.value == num {
 			isListed = true
-			break
+			// continue loop to check that all values are correct
 		}
 	}
 
@@ -423,7 +424,8 @@ func (n *Number) InList(values ...interface{}) *Number {
 // NotInList succeeds if the number is not equal to any of the values from given
 // list of numbers. Before comparison, each value is converted to canonical form.
 //
-// Each value should be numeric type convertible to float64.
+// Each value should be numeric type convertible to float64. If at least one
+// value has wrong type, failure is reported.
 //
 // Example:
 //

@@ -8,31 +8,30 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestString_Failed(t *testing.T) {
+func TestString_FailedChain(t *testing.T) {
 	chain := newMockChain(t)
 	chain.setFailed()
 
 	value := newString(chain, "")
+	value.chain.assertFailed(t)
 
-	value.Path("$")
+	value.Path("$").chain.assertFailed(t)
 	value.Schema("")
+	value.Alias("foo")
 
 	var target interface{}
 	value.Decode(target)
-	value.Alias("foo")
 
-	value.Length()
-	value.AsBoolean()
-	value.AsNumber()
-	value.AsDateTime()
+	value.Length().chain.assertFailed(t)
+
 	value.IsEmpty()
 	value.NotEmpty()
 	value.IsEqual("")
 	value.NotEqual("")
-	value.InList("")
-	value.NotInList("")
 	value.IsEqualFold("")
 	value.NotEqualFold("")
+	value.InList("")
+	value.NotInList("")
 	value.Contains("")
 	value.NotContains("")
 	value.ContainsFold("")
@@ -45,22 +44,28 @@ func TestString_Failed(t *testing.T) {
 	value.NotHasPrefixFold("")
 	value.HasSuffixFold("")
 	value.NotHasSuffixFold("")
-	value.Match("")
-	value.NotMatch("")
-	value.MatchAll("")
 	value.IsASCII()
 	value.NotASCII()
+
+	value.Match("").chain.assertFailed(t)
+	value.NotMatch("")
+	assert.NotNil(t, value.MatchAll(""))
+	assert.Equal(t, 0, len(value.MatchAll("")))
+
+	value.AsBoolean().chain.assertFailed(t)
+	value.AsNumber().chain.assertFailed(t)
+	value.AsDateTime().chain.assertFailed(t)
 }
 
 func TestString_Constructors(t *testing.T) {
-	t.Run("Constructor without config", func(t *testing.T) {
+	t.Run("reporter", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewString(reporter, "Hello")
 		value.IsEqual("Hello")
 		value.chain.assertNotFailed(t)
 	})
 
-	t.Run("Constructor with config", func(t *testing.T) {
+	t.Run("config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewStringC(Config{
 			Reporter: reporter,
@@ -69,7 +74,7 @@ func TestString_Constructors(t *testing.T) {
 		value.chain.assertNotFailed(t)
 	})
 
-	t.Run("chain Constructor", func(t *testing.T) {
+	t.Run("chain", func(t *testing.T) {
 		chain := newMockChain(t)
 		value := newString(chain, "Hello")
 		assert.NotSame(t, value.chain, chain)
@@ -220,7 +225,37 @@ func TestString_Equal(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestString_List(t *testing.T) {
+func TestString_EqualFold(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewString(reporter, "foo")
+
+	value.IsEqualFold("foo")
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.IsEqualFold("FOO")
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.IsEqualFold("foo2")
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotEqualFold("foo")
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotEqualFold("FOO")
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotEqualFold("foo2")
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+}
+
+func TestString_InList(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewString(reporter, "foo")
@@ -249,36 +284,6 @@ func TestString_List(t *testing.T) {
 
 	value.NotInList("foo", "BAR")
 	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-}
-
-func TestString_EqualFold(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	value := NewString(reporter, "foo")
-
-	value.IsEqualFold("foo")
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.IsEqualFold("FOO")
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.IsEqualFold("foo2")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotEqualFold("foo")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotEqualFold("FOO")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotEqualFold("foo2")
-	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 }
 

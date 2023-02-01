@@ -747,7 +747,8 @@ func (o *Object) Equal(value interface{}) *Object {
 // InList succeeds if whole object is equal to one of the values from given list
 // of objects. Before comparison, each value is converted to canonical form.
 //
-// Each value should be map[string]interface{} or struct.
+// Each value should be map[string]interface{} or struct. If at least one value
+// has wrong type, failure is reported.
 //
 // Example:
 //
@@ -783,7 +784,7 @@ func (o *Object) InList(values ...interface{}) *Object {
 
 		if reflect.DeepEqual(expected, o.value) {
 			isListed = true
-			break
+			// continue loop to check that all values are correct
 		}
 	}
 
@@ -806,7 +807,8 @@ func (o *Object) InList(values ...interface{}) *Object {
 // from given list of objects. Before comparison, each value is converted to
 // canonical form.
 //
-// Each value should be map[string]interface{} or struct.
+// Each value should be map[string]interface{} or struct. If at least one value
+// has wrong type, failure is reported.
 //
 // Example:
 //

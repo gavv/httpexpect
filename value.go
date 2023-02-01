@@ -822,8 +822,10 @@ func (v *Value) Equal(value interface{}) *Value {
 }
 
 // InList succeeds if whole value is equal to one of the values from given
-// list of values (e.g. map, slice, string, etc).
-// Before comparison, all values are converted to canonical form.
+// list of values (e.g. map, slice, string, etc). Before comparison, all
+// values are converted to canonical form.
+//
+// If at least one value has wrong type, failure is reported.
 //
 // Example:
 //
@@ -856,7 +858,7 @@ func (v *Value) InList(values ...interface{}) *Value {
 
 		if reflect.DeepEqual(expected, v.value) {
 			isListed = true
-			break
+			// continue loop to check that all values are correct
 		}
 	}
 
@@ -877,6 +879,8 @@ func (v *Value) InList(values ...interface{}) *Value {
 // NotInList succeeds if the whole value is not equal to any of the values from
 // given list of values (e.g. map, slice, string, etc).
 // Before comparison, all values are converted to canonical form.
+//
+// If at least one value has wrong type, failure is reported.
 //
 // Example:
 //
