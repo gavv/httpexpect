@@ -5,8 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"net/http"
-	"reflect"
 	"strconv"
 	"strings"
 	"text/template"
@@ -610,35 +608,6 @@ func extractList(value interface{}) *AssertionList {
 		return lst
 	default:
 		return nil
-	}
-}
-
-func isNil(value interface{}) bool {
-	defer func() {
-		_ = recover()
-	}()
-	return value == nil || reflect.ValueOf(value).IsNil()
-}
-
-func isNumber(value interface{}) bool {
-	defer func() {
-		_ = recover()
-	}()
-	reflect.ValueOf(value).Convert(reflect.TypeOf(float64(0))).Float()
-	return true
-}
-
-func isHTTP(value interface{}) bool {
-	switch value.(type) {
-	case *http.Client, http.Client,
-		*http.Transport, http.Transport,
-		*http.Request, http.Request,
-		*http.Response, http.Response,
-		*http.Header, http.Header,
-		*http.Cookie, http.Cookie:
-		return true
-	default:
-		return false
 	}
 }
 

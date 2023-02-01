@@ -11,6 +11,14 @@ func validateAssertion(failure *AssertionFailure) error {
 		return errors.New("AssertionFailure should have non-empty Errors list")
 	}
 
+	for _, err := range failure.Errors {
+		if err == nil {
+			return errors.New("AssertionFailure should not have nil in Errors")
+		} else if isNil(err) {
+			return errors.New("AssertionFailure should not have typed-nil in Errors")
+		}
+	}
+
 	if err := validateType(failure); err != nil {
 		return err
 	}

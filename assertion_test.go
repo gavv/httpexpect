@@ -8,6 +8,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type typedErrorNil int
+
+func (*typedErrorNil) Error() string {
+	return ""
+}
+
 func TestAssertion_Handler(t *testing.T) {
 	type test struct {
 		formatter *mockFormatter
@@ -382,6 +388,12 @@ func TestAssertion_ValidateTraits(t *testing.T) {
 }
 
 func TestAssertion_ValidateAssertion(t *testing.T) {
+	var tnil *typedErrorNil
+	var tnilPtr error = tnil
+
+	assert.Nil(t, tnilPtr)
+	assert.NotEqual(t, nil, tnilPtr)
+
 	tests := []struct {
 		testName          string
 		errorContainsText string
@@ -406,11 +418,27 @@ func TestAssertion_ValidateAssertion(t *testing.T) {
 			},
 		},
 		{
-			testName:          "empty Errros",
+			testName:          "empty Errors",
 			errorContainsText: "Errors",
 			input: AssertionFailure{
 				Type:   AssertOperation,
 				Errors: []error{},
+			},
+		},
+		{
+			testName:          "nil in Errors",
+			errorContainsText: "Errors",
+			input: AssertionFailure{
+				Type:   AssertOperation,
+				Errors: []error{nil},
+			},
+		},
+		{
+			testName:          "typed nil in Errors",
+			errorContainsText: "Errors",
+			input: AssertionFailure{
+				Type:   AssertOperation,
+				Errors: []error{tnilPtr},
 			},
 		},
 		{

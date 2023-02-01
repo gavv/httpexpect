@@ -10,9 +10,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type typedNil int
+type typedStingerNil int
 
-func (*typedNil) String() string {
+func (*typedStingerNil) String() string {
 	return ""
 }
 
@@ -20,7 +20,7 @@ func TestFormat_Values(t *testing.T) {
 	var mockDefaultFormatter = &DefaultFormatter{}
 
 	checkAll := func(t *testing.T, fn func(interface{}) string) {
-		var tnil *typedNil
+		var tnil *typedStingerNil
 		var tnilPtr fmt.Stringer = tnil
 
 		assert.Nil(t, tnilPtr)
