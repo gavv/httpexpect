@@ -448,20 +448,24 @@ func (dt *DateTime) InList(values ...time.Time) *DateTime {
 		return dt
 	}
 
+	var isListed bool
 	for _, v := range values {
 		if dt.value.Equal(v) {
-			return dt
+			isListed = true
+			break
 		}
 	}
 
-	opChain.fail(AssertionFailure{
-		Type:     AssertBelongs,
-		Actual:   &AssertionValue{dt.value},
-		Expected: &AssertionValue{AssertionList(timeList(values))},
-		Errors: []error{
-			errors.New("expected: time point is equal to one of the values"),
-		},
-	})
+	if !isListed {
+		opChain.fail(AssertionFailure{
+			Type:     AssertBelongs,
+			Actual:   &AssertionValue{dt.value},
+			Expected: &AssertionValue{AssertionList(timeList(values))},
+			Errors: []error{
+				errors.New("expected: time point is equal to one of the values"),
+			},
+		})
+	}
 
 	return dt
 }
@@ -502,6 +506,7 @@ func (dt *DateTime) NotInList(values ...time.Time) *DateTime {
 					errors.New("expected: time point is not equal to any of the values"),
 				},
 			})
+			break
 		}
 	}
 
