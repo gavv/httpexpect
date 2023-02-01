@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var mockDefaultFormatter = &DefaultFormatter{}
@@ -46,7 +47,7 @@ func TestFormat_Values(t *testing.T) {
 		check(fn(AssertionList([]interface{}{1, 2})))
 	}
 
-	t.Run("formatTypes", func(t *testing.T) {
+	t.Run("formatTyped", func(t *testing.T) {
 		checkAll(t, mockDefaultFormatter.formatTyped)
 	})
 
@@ -554,259 +555,213 @@ func TestFormat_FailureDelta(t *testing.T) {
 
 func TestFormatter_FloatFormat(t *testing.T) {
 	type testCase struct {
-		name             string
-		assertionFailure AssertionFailure
-		formatter        DefaultFormatter
-		wantExpected     []string
-		wantDelta        string
+		name     string
+		format   FloatFormat
+		value    interface{}
+		wantText string
+	}
+
+	testCases := []testCase{
+		// float32
+		{
+			name:     "float32 auto small exponent",
+			format:   FloatFormatAuto,
+			value:    float32(1.2345678),
+			wantText: "1.2345678",
+		},
+		{
+			name:     "float32 auto large exponent",
+			format:   FloatFormatAuto,
+			value:    float32(1234567.8),
+			wantText: "1.2345678e+06",
+		},
+		{
+			name:     "float32 decimal",
+			format:   FloatFormatDecimal,
+			value:    float32(1234567.8),
+			wantText: "1234567.8",
+		},
+		{
+			name:     "float32 scientific",
+			format:   FloatFormatScientific,
+			value:    float32(1.2345678),
+			wantText: "1.2345678e+00",
+		},
+		// float64
+		{
+			name:     "float64 auto small exponent",
+			format:   FloatFormatAuto,
+			value:    float64(1.23456789),
+			wantText: "1.23456789",
+		},
+		{
+			name:     "float64 auto large exponent",
+			format:   FloatFormatAuto,
+			value:    float64(12345678.9),
+			wantText: "1.23456789e+07",
+		},
+		{
+			name:     "float64 decimal",
+			format:   FloatFormatDecimal,
+			value:    float64(12345678.9),
+			wantText: "12345678.9",
+		},
+		{
+			name:     "float64 scientific",
+			format:   FloatFormatScientific,
+			value:    float64(1.23456789),
+			wantText: "1.23456789e+00",
+		},
+		// no fractional part
+		{
+			name:     "nofrac auto",
+			format:   FloatFormatAuto,
+			value:    float32(12345678),
+			wantText: "1.2345678e+07",
+		},
+		{
+			name:     "nofrac decimal",
+			format:   FloatFormatDecimal,
+			value:    float32(12345678),
+			wantText: "12345678",
+		},
+		{
+			name:     "nofrac scientific",
+			format:   FloatFormatScientific,
+			value:    float32(12345678),
+			wantText: "1.2345678e+07",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			formatter := DefaultFormatter{
+				FloatFormat: tc.format,
+			}
+			formatData := formatter.buildFormatData(
+				&AssertionContext{},
+				&AssertionFailure{
+					Type:   AssertValid,
+					Actual: &AssertionValue{tc.value},
+				})
+			assert.Equal(t, tc.wantText, formatData.Actual)
+		})
+	}
+}
+
+func TestFormatter_FloatFields(t *testing.T) {
+	type testCase struct {
+		name     string
+		format   FloatFormat
+		value    float64
+		wantText string
 	}
 
 	testCases := []testCase{
 		{
-			name: "AssertInRange float32 auto small exponent",
-			formatter: DefaultFormatter{
-				FloatFormat: FloatFormatAuto,
-			},
-			assertionFailure: AssertionFailure{
-				Type: AssertInRange,
-				Expected: &AssertionValue{
-					Value: AssertionRange{
-						Min: float32(-1.2345678),
-						Max: float32(1.2345678),
-					},
-				},
-			},
-			wantExpected: []string{"[-1.2345678; 1.2345678]"},
+			name:     "auto",
+			format:   FloatFormatAuto,
+			value:    12345678,
+			wantText: "1.2345678e+07",
 		},
 		{
-			name: "AssertInRange float32 auto large exponent",
-			formatter: DefaultFormatter{
-				FloatFormat: FloatFormatAuto,
-			},
-			assertionFailure: AssertionFailure{
-				Type: AssertInRange,
-				Expected: &AssertionValue{
-					Value: AssertionRange{
-						Min: float32(-12345678.9),
-						Max: float32(12345678.9),
-					},
-				},
-			},
-			wantExpected: []string{"[-1.2345679e+07; 1.2345679e+07]"},
+			name:     "decimal",
+			format:   FloatFormatDecimal,
+			value:    12345678,
+			wantText: "12345678",
 		},
 		{
-			name: "AssertInRange float32 decimal",
-			formatter: DefaultFormatter{
-				FloatFormat: FloatFormatDecimal,
-			},
-			assertionFailure: AssertionFailure{
-				Type: AssertInRange,
-				Expected: &AssertionValue{
-					Value: AssertionRange{
-						Min: float32(-12345678.9),
-						Max: float32(12345678.9),
-					},
-				},
-			},
-			wantExpected: []string{"[-12345679; 12345679]"},
-		},
-		{
-			name: "AssertInRange float32 scientific",
-			formatter: DefaultFormatter{
-				FloatFormat: FloatFormatScientific,
-			},
-			assertionFailure: AssertionFailure{
-				Type: AssertInRange,
-				Expected: &AssertionValue{
-					Value: AssertionRange{
-						Min: float32(-1.2345678),
-						Max: float32(1.2345678),
-					},
-				},
-			},
-			wantExpected: []string{"[-1.2345678e+00; 1.2345678e+00]"},
-		},
-		{
-			name: "AssertInRange float64 auto small exponent",
-			formatter: DefaultFormatter{
-				FloatFormat: FloatFormatAuto,
-			},
-			assertionFailure: AssertionFailure{
-				Type: AssertInRange,
-				Expected: &AssertionValue{
-					Value: AssertionRange{
-						Min: float64(-1.23456789),
-						Max: float64(1.23456789),
-					},
-				},
-			},
-			wantExpected: []string{"[-1.23456789; 1.23456789]"},
-		},
-		{
-			name: "AssertInRange float64 auto large exponent",
-			formatter: DefaultFormatter{
-				FloatFormat: FloatFormatAuto,
-			},
-			assertionFailure: AssertionFailure{
-				Type: AssertInRange,
-				Expected: &AssertionValue{
-					Value: AssertionRange{
-						Min: float64(-12345678.9),
-						Max: float64(12345678.9),
-					},
-				},
-			},
-			wantExpected: []string{"[-1.23456789e+07; 1.23456789e+07]"},
-		},
-		{
-			name: "AssertInRange float64 decimal",
-			formatter: DefaultFormatter{
-				FloatFormat: FloatFormatDecimal,
-			},
-			assertionFailure: AssertionFailure{
-				Type: AssertInRange,
-				Expected: &AssertionValue{
-					Value: AssertionRange{
-						Min: float64(-12345678.9),
-						Max: float64(12345678.9),
-					},
-				},
-			},
-			wantExpected: []string{"[-12345678.9; 12345678.9]"}},
-		{
-			name: "AssertInRange float64 scientific",
-			formatter: DefaultFormatter{
-				FloatFormat: FloatFormatScientific,
-			},
-			assertionFailure: AssertionFailure{
-				Type: AssertInRange,
-				Expected: &AssertionValue{
-					Value: AssertionRange{
-						Min: float64(-1.23456789),
-						Max: float64(1.23456789),
-					},
-				},
-			},
-			wantExpected: []string{"[-1.23456789e+00; 1.23456789e+00]"},
-		},
-		{
-			name: "Delta float32 auto small exponent",
-			formatter: DefaultFormatter{
-				FloatFormat: FloatFormatAuto,
-			},
-			assertionFailure: AssertionFailure{
-				Delta: &AssertionValue{
-					Value: float32(1.2345678),
-				},
-			},
-			wantDelta: "1.2345678",
-		},
-		{
-			name: "Delta float32 auto large exponent",
-			formatter: DefaultFormatter{
-				FloatFormat: FloatFormatAuto,
-			},
-			assertionFailure: AssertionFailure{
-				Delta: &AssertionValue{
-					Value: float32(1234567.8),
-				},
-			},
-			wantDelta: "1.2345678e+06",
-		},
-		{
-			name: "Delta float32 decimal",
-			formatter: DefaultFormatter{
-				FloatFormat: FloatFormatDecimal,
-			},
-			assertionFailure: AssertionFailure{
-				Delta: &AssertionValue{
-					Value: float32(1234567.8),
-				},
-			},
-			wantDelta: "1234567.8",
-		},
-		{
-			name: "Delta float32 scientific",
-			formatter: DefaultFormatter{
-				FloatFormat: FloatFormatScientific,
-			},
-			assertionFailure: AssertionFailure{
-				Delta: &AssertionValue{
-					Value: float32(1.2345678),
-				},
-			},
-			wantDelta: "1.2345678e+00",
-		},
-		{
-			name: "Delta float64 auto small exponent",
-			formatter: DefaultFormatter{
-				FloatFormat: FloatFormatAuto,
-			},
-			assertionFailure: AssertionFailure{
-				Delta: &AssertionValue{
-					Value: float64(1.23456789),
-				},
-			},
-			wantDelta: "1.23456789",
-		},
-		{
-			name: "Delta float64 auto large exponent",
-			formatter: DefaultFormatter{
-				FloatFormat: FloatFormatAuto,
-			},
-			assertionFailure: AssertionFailure{
-				Delta: &AssertionValue{
-					Value: float64(12345678.9),
-				},
-			},
-			wantDelta: "1.23456789e+07",
-		},
-		{
-			name: "Delta float64 decimal",
-			formatter: DefaultFormatter{
-				FloatFormat: FloatFormatDecimal,
-			},
-			assertionFailure: AssertionFailure{
-				Delta: &AssertionValue{
-					Value: float64(12345678.9),
-				},
-			},
-			wantDelta: "12345678.9",
-		},
-		{
-			name: "Delta float64 scientific",
-			formatter: DefaultFormatter{
-				FloatFormat: FloatFormatScientific,
-			},
-			assertionFailure: AssertionFailure{
-				Delta: &AssertionValue{
-					Value: float64(1.23456789),
-				},
-			},
-			wantDelta: "1.23456789e+00",
+			name:     "scientific",
+			format:   FloatFormatScientific,
+			value:    12345678,
+			wantText: "1.2345678e+07",
 		},
 	}
-
-	assertFn := func(t *testing.T, tc testCase, fd *FormatData) {
-		if len(tc.wantExpected) > 0 {
-			assert.Equal(t, tc.wantExpected, fd.Expected)
-			return
-		}
-
-		if tc.wantDelta != "" {
-			assert.Equal(t, tc.wantDelta, fd.Delta)
-			return
-		}
-
-		panic("expectation is not set")
-	}
-
-	ctx := &AssertionContext{}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			fd := tc.formatter.buildFormatData(ctx, &tc.assertionFailure)
-			assertFn(t, tc, fd)
+			formatter := DefaultFormatter{
+				FloatFormat: tc.format,
+			}
+
+			t.Run("actual", func(t *testing.T) {
+				formatData := formatter.buildFormatData(
+					&AssertionContext{},
+					&AssertionFailure{
+						Type:   AssertValid,
+						Actual: &AssertionValue{tc.value},
+					})
+				assert.Equal(t, tc.wantText, formatData.Actual)
+			})
+
+			t.Run("expected", func(t *testing.T) {
+				formatData := formatter.buildFormatData(
+					&AssertionContext{},
+					&AssertionFailure{
+						Type:     AssertEqual,
+						Actual:   &AssertionValue{},
+						Expected: &AssertionValue{tc.value},
+					})
+				require.Equal(t, 1, len(formatData.Expected))
+				assert.Equal(t, tc.wantText, formatData.Expected[0])
+			})
+
+			t.Run("reference", func(t *testing.T) {
+				formatData := formatter.buildFormatData(
+					&AssertionContext{},
+					&AssertionFailure{
+						Type:      AssertEqual,
+						Actual:    &AssertionValue{},
+						Expected:  &AssertionValue{},
+						Reference: &AssertionValue{tc.value},
+					})
+				assert.Equal(t, tc.wantText, formatData.Reference)
+			})
+
+			t.Run("delta", func(t *testing.T) {
+				formatData := formatter.buildFormatData(
+					&AssertionContext{},
+					&AssertionFailure{
+						Type:     AssertEqual,
+						Actual:   &AssertionValue{},
+						Expected: &AssertionValue{},
+						Delta:    &AssertionValue{tc.value},
+					})
+				assert.Equal(t, tc.wantText, formatData.Delta)
+			})
+
+			t.Run("range", func(t *testing.T) {
+				formatData := formatter.buildFormatData(
+					&AssertionContext{},
+					&AssertionFailure{
+						Type:   AssertInRange,
+						Actual: &AssertionValue{},
+						Expected: &AssertionValue{AssertionRange{
+							Min: tc.value,
+							Max: tc.value,
+						}},
+					})
+				require.Equal(t, 1, len(formatData.Expected))
+				assert.Equal(t,
+					fmt.Sprintf("[%s; %s]", tc.wantText, tc.wantText),
+					formatData.Expected[0])
+			})
+
+			t.Run("list", func(t *testing.T) {
+				formatData := formatter.buildFormatData(
+					&AssertionContext{},
+					&AssertionFailure{
+						Type:   AssertBelongs,
+						Actual: &AssertionValue{},
+						Expected: &AssertionValue{AssertionList{
+							tc.value,
+							tc.value,
+						}},
+					})
+				require.Equal(t, 2, len(formatData.Expected))
+				assert.Equal(t, tc.wantText, formatData.Expected[0])
+				assert.Equal(t, tc.wantText, formatData.Expected[1])
+			})
 		})
 	}
 }
