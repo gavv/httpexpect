@@ -30,6 +30,8 @@ type Response struct {
 
 	content []byte
 	cookies []*http.Cookie
+
+	hasRead bool
 }
 
 // NewResponse returns a new Response instance.
@@ -116,7 +118,6 @@ func newResponse(opts responseOpts) *Response {
 	r.httpResp = opts.httpResp
 	r.websocket = opts.websocket
 
-	r.content = getResponseContent(opChain, r.httpResp)
 	r.cookies = r.httpResp.Cookies()
 
 	if len(opts.rtt) > 0 {
@@ -157,6 +158,14 @@ func getResponseContent(opChain *chain, resp *http.Response) []byte {
 	}
 
 	return content
+}
+
+func (r *Response) getContent(opChain *chain) []byte {
+	if !r.hasRead {
+		r.content = getResponseContent(opChain, r.httpResp)
+		r.hasRead = true
+	}
+	return r.content
 }
 
 // Raw returns underlying http.Response object.
@@ -528,7 +537,11 @@ func (r *Response) Body() *String {
 	opChain := r.chain.enter("Body()")
 	defer opChain.leave()
 
-	return newString(opChain, string(r.content))
+	if opChain.failed() {
+		return newString(opChain, "")
+	}
+
+	return newString(opChain, string(r.getContent(opChain)))
 }
 
 // NoContent succeeds if response contains empty Content-Type header and
@@ -544,7 +557,7 @@ func (r *Response) NoContent() *Response {
 	contentType := r.httpResp.Header.Get("Content-Type")
 
 	r.checkEqual(opChain, `"Content-Type" header`, "", contentType)
-	r.checkEqual(opChain, "body", "", string(r.content))
+	r.checkEqual(opChain, "body", "", string(r.getContent(opChain)))
 
 	return r
 }
@@ -656,7 +669,7 @@ func (r *Response) Text(options ...ContentOpts) *String {
 		return newString(opChain, "")
 	}
 
-	content := string(r.content)
+	content := string(r.getContent(opChain))
 
 	return newString(opChain, content)
 }
@@ -704,7 +717,7 @@ func (r *Response) getForm(
 		return nil
 	}
 
-	decoder := form.NewDecoder(bytes.NewReader(r.content))
+	decoder := form.NewDecoder(bytes.NewReader(r.getContent(opChain)))
 
 	var object map[string]interface{}
 
@@ -712,7 +725,7 @@ func (r *Response) getForm(
 		opChain.fail(AssertionFailure{
 			Type: AssertValid,
 			Actual: &AssertionValue{
-				string(r.content),
+				string(r.getContent(opChain)),
 			},
 			Errors: []error{
 				errors.New("failed to decode form"),
@@ -767,11 +780,11 @@ func (r *Response) getJSON(opChain *chain, options ...ContentOpts) interface{} {
 
 	var value interface{}
 
-	if err := json.Unmarshal(r.content, &value); err != nil {
+	if err := json.Unmarshal(r.getContent(opChain), &value); err != nil {
 		opChain.fail(AssertionFailure{
 			Type: AssertValid,
 			Actual: &AssertionValue{
-				string(r.content),
+				string(r.getContent(opChain)),
 			},
 			Errors: []error{
 				errors.New("failed to decode json"),
@@ -838,13 +851,13 @@ func (r *Response) getJSONP(
 		return nil
 	}
 
-	m := jsonp.FindSubmatch(r.content)
+	m := jsonp.FindSubmatch(r.getContent(opChain))
 
 	if len(m) != 3 || string(m[1]) != callback {
 		opChain.fail(AssertionFailure{
 			Type: AssertValid,
 			Actual: &AssertionValue{
-				string(r.content),
+				string(r.getContent(opChain)),
 			},
 			Errors: []error{
 				fmt.Errorf(`expected: JSONP body in form of "%s(<valid json>)"`,
@@ -860,7 +873,7 @@ func (r *Response) getJSONP(
 		opChain.fail(AssertionFailure{
 			Type: AssertValid,
 			Actual: &AssertionValue{
-				string(r.content),
+				string(r.getContent(opChain)),
 			},
 			Errors: []error{
 				errors.New("failed to decode json"),
