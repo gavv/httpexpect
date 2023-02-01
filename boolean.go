@@ -162,7 +162,8 @@ func (b *Boolean) Equal(value bool) *Boolean {
 	return b.IsEqual(value)
 }
 
-// InList succeeds if boolean is listed by given [values...].
+// InList succeeds if boolean is equal to one of the elements from given
+// list of booleans.
 //
 // Example:
 //
@@ -198,14 +199,15 @@ func (b *Boolean) InList(values ...bool) *Boolean {
 		Actual:   &AssertionValue{b.value},
 		Expected: &AssertionValue{AssertionList(boolList(values))},
 		Errors: []error{
-			errors.New("expected: boolean is listed"),
+			errors.New("expected: boolean is equal to one of the values"),
 		},
 	})
 
 	return b
 }
 
-// NotInList succeeds if boolean is not listed by given [values...].
+// NotInList succeeds if boolean is not equal to any of the elements from
+// given list of booleans.
 //
 // Example:
 //
@@ -237,7 +239,7 @@ func (b *Boolean) NotInList(values ...bool) *Boolean {
 				Actual:   &AssertionValue{b.value},
 				Expected: &AssertionValue{AssertionList(boolList(values))},
 				Errors: []error{
-					errors.New("expected: boolean is not listed"),
+					errors.New("expected: boolean is not equal to any of the values"),
 				},
 			})
 		}
