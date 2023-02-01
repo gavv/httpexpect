@@ -37,7 +37,7 @@ func TestValue_Failed(t *testing.T) {
 	value.Number().chain.assertFailed(t)
 	value.Boolean().chain.assertFailed(t)
 
-	value.Null()
+	value.IsNull()
 	value.NotNull()
 
 	value.IsEqual(nil)
@@ -177,7 +177,7 @@ func TestValue_CastNull(t *testing.T) {
 	NewValue(reporter, data).Number().chain.assertFailed(t)
 	NewValue(reporter, data).Boolean().chain.assertFailed(t)
 	NewValue(reporter, data).NotNull().chain.assertFailed(t)
-	NewValue(reporter, data).Null().chain.assertNotFailed(t)
+	NewValue(reporter, data).IsNull().chain.assertNotFailed(t)
 }
 
 func TestValue_CastIndirectNull(t *testing.T) {
@@ -191,7 +191,7 @@ func TestValue_CastIndirectNull(t *testing.T) {
 	NewValue(reporter, data).Number().chain.assertFailed(t)
 	NewValue(reporter, data).Boolean().chain.assertFailed(t)
 	NewValue(reporter, data).NotNull().chain.assertFailed(t)
-	NewValue(reporter, data).Null().chain.assertNotFailed(t)
+	NewValue(reporter, data).IsNull().chain.assertNotFailed(t)
 }
 
 func TestValue_CastBad(t *testing.T) {
@@ -205,7 +205,7 @@ func TestValue_CastBad(t *testing.T) {
 	NewValue(reporter, data).Number().chain.assertFailed(t)
 	NewValue(reporter, data).Boolean().chain.assertFailed(t)
 	NewValue(reporter, data).NotNull().chain.assertFailed(t)
-	NewValue(reporter, data).Null().chain.assertFailed(t)
+	NewValue(reporter, data).IsNull().chain.assertFailed(t)
 }
 
 func TestValue_CastObject(t *testing.T) {
@@ -219,7 +219,7 @@ func TestValue_CastObject(t *testing.T) {
 	NewValue(reporter, data).Number().chain.assertFailed(t)
 	NewValue(reporter, data).Boolean().chain.assertFailed(t)
 	NewValue(reporter, data).NotNull().chain.assertNotFailed(t)
-	NewValue(reporter, data).Null().chain.assertFailed(t)
+	NewValue(reporter, data).IsNull().chain.assertFailed(t)
 }
 
 func TestValue_CastArray(t *testing.T) {
@@ -233,7 +233,7 @@ func TestValue_CastArray(t *testing.T) {
 	NewValue(reporter, data).Number().chain.assertFailed(t)
 	NewValue(reporter, data).Boolean().chain.assertFailed(t)
 	NewValue(reporter, data).NotNull().chain.assertNotFailed(t)
-	NewValue(reporter, data).Null().chain.assertFailed(t)
+	NewValue(reporter, data).IsNull().chain.assertFailed(t)
 }
 
 func TestValue_CastString(t *testing.T) {
@@ -247,7 +247,7 @@ func TestValue_CastString(t *testing.T) {
 	NewValue(reporter, data).Number().chain.assertFailed(t)
 	NewValue(reporter, data).Boolean().chain.assertFailed(t)
 	NewValue(reporter, data).NotNull().chain.assertNotFailed(t)
-	NewValue(reporter, data).Null().chain.assertFailed(t)
+	NewValue(reporter, data).IsNull().chain.assertFailed(t)
 }
 
 func TestValue_CastNumber(t *testing.T) {
@@ -261,7 +261,7 @@ func TestValue_CastNumber(t *testing.T) {
 	NewValue(reporter, data).Number().chain.assertNotFailed(t)
 	NewValue(reporter, data).Boolean().chain.assertFailed(t)
 	NewValue(reporter, data).NotNull().chain.assertNotFailed(t)
-	NewValue(reporter, data).Null().chain.assertFailed(t)
+	NewValue(reporter, data).IsNull().chain.assertFailed(t)
 }
 
 func TestValue_CastBoolean(t *testing.T) {
@@ -275,7 +275,7 @@ func TestValue_CastBoolean(t *testing.T) {
 	NewValue(reporter, data).Number().chain.assertFailed(t)
 	NewValue(reporter, data).Boolean().chain.assertNotFailed(t)
 	NewValue(reporter, data).NotNull().chain.assertNotFailed(t)
-	NewValue(reporter, data).Null().chain.assertFailed(t)
+	NewValue(reporter, data).IsNull().chain.assertFailed(t)
 }
 
 func TestValue_GetObject(t *testing.T) {

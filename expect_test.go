@@ -301,7 +301,7 @@ func TestExpect_Traverse(t *testing.T) {
 	m.Value("ccc").Number().IsEqual(456)
 
 	m.Value("aaa").Array().Element(2).Boolean().False()
-	m.Value("aaa").Array().Element(3).Null()
+	m.Value("aaa").Array().Element(3).IsNull()
 }
 
 func TestExpect_Branches(t *testing.T) {

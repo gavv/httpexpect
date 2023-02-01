@@ -36,7 +36,7 @@ type Value struct {
 //	value.IsBoolean()
 //
 //	value := NewValue(t, nil)
-//	value.Null()
+//	value.IsNull()
 func NewValue(reporter Reporter, value interface{}) *Value {
 	return newValue(newChainWithDefaults("Value()", reporter), value)
 }
@@ -383,7 +383,7 @@ func (v *Value) Boolean() *Boolean {
 	return newBoolean(opChain, data)
 }
 
-// Null succeeds if value is nil.
+// IsNull succeeds if value is nil.
 //
 // Note that non-nil interface{} that points to nil value (e.g. nil slice or map)
 // is also treated as null value. Empty (non-nil) slice or map, empty string, and
@@ -392,12 +392,12 @@ func (v *Value) Boolean() *Boolean {
 // Example:
 //
 //	value := NewValue(t, nil)
-//	value.Null()
+//	value.IsNull()
 //
 //	value := NewValue(t, []interface{}(nil))
-//	value.Null()
-func (v *Value) Null() *Value {
-	opChain := v.chain.enter("Null()")
+//	value.IsNull()
+func (v *Value) IsNull() *Value {
+	opChain := v.chain.enter("IsNull()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -449,6 +449,11 @@ func (v *Value) NotNull() *Value {
 	}
 
 	return v
+}
+
+// Deprecated: use IsNull instead.
+func (v *Value) Null() *Value {
+	return v.IsNull()
 }
 
 // IsObject succeeds if the underlying value is an object.
