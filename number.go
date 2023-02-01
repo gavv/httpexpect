@@ -404,6 +404,7 @@ func (n *Number) InList(values ...interface{}) *Number {
 
 		if n.value == num {
 			isListed = true
+			break
 		}
 	}
 
@@ -450,7 +451,6 @@ func (n *Number) NotInList(values ...interface{}) *Number {
 		return n
 	}
 
-	var isListed bool
 	for _, v := range values {
 		num, ok := canonNumber(opChain, v)
 		if !ok {
@@ -458,19 +458,16 @@ func (n *Number) NotInList(values ...interface{}) *Number {
 		}
 
 		if n.value == num {
-			isListed = true
+			opChain.fail(AssertionFailure{
+				Type:     AssertNotBelongs,
+				Actual:   &AssertionValue{n.value},
+				Expected: &AssertionValue{AssertionList(values)},
+				Errors: []error{
+					errors.New("expected: number is not equal to any of the values"),
+				},
+			})
+			break
 		}
-	}
-
-	if isListed {
-		opChain.fail(AssertionFailure{
-			Type:     AssertNotBelongs,
-			Actual:   &AssertionValue{n.value},
-			Expected: &AssertionValue{AssertionList(values)},
-			Errors: []error{
-				errors.New("expected: number is not equal to any of the values"),
-			},
-		})
 	}
 
 	return n
