@@ -744,15 +744,19 @@ func (o *Object) Equal(value interface{}) *Object {
 	return o.IsEqual(value)
 }
 
-// InList succeeds if object is listed by given [values...].
-// Before comparison, both object and value are converted to canonical form.
+// InList succeeds if whole object is equal to one of the elements from given
+// list of objects.
+// Before comparison, each object is converted to canonical form.
 //
-// values should be an array of map[string]interface{} or struct.
+// Each value should be map[string]interface{} or struct.
 //
 // Example:
 //
 //	object := NewObject(t, map[string]interface{}{"foo": 123})
-//	object.InList(map[string]interface{}{"foo": 123})
+//	object.InList(
+//		map[string]interface{}{"foo": 123},
+//		map[string]interface{}{"bar": 456},
+//	)
 func (o *Object) InList(values ...interface{}) *Object {
 	opChain := o.chain.enter("InList()")
 	defer opChain.leave()
@@ -790,7 +794,7 @@ func (o *Object) InList(values ...interface{}) *Object {
 			Actual:   &AssertionValue{o.value},
 			Expected: &AssertionValue{AssertionList(values)},
 			Errors: []error{
-				errors.New("expected: map is listed"),
+				errors.New("expected: map is equal to one of the values"),
 			},
 		})
 	}
@@ -798,15 +802,19 @@ func (o *Object) InList(values ...interface{}) *Object {
 	return o
 }
 
-// NotInList succeeds if object is not listed by given [values...].
-// Before comparison, both object and value are converted to canonical form.
+// NotInList succeeds if whole object is equal to any of the elements from
+// given list of objects.
+// Before comparison, each object is converted to canonical form.
 //
-// values should be an array of map[string]interface{} or struct.
+// Each value should be map[string]interface{} or struct.
 //
 // Example:
 //
 //	object := NewObject(t, map[string]interface{}{"foo": 123})
-//	object.InList(map[string]interface{}{"bar": 456})
+//	object.NotInList(
+//		map[string]interface{}{"bar": 456},
+//		map[string]interface{}{"baz": 789},
+//	)
 func (o *Object) NotInList(values ...interface{}) *Object {
 	opChain := o.chain.enter("NotInList()")
 	defer opChain.leave()
@@ -844,7 +852,7 @@ func (o *Object) NotInList(values ...interface{}) *Object {
 			Actual:   &AssertionValue{o.value},
 			Expected: &AssertionValue{AssertionList(values)},
 			Errors: []error{
-				errors.New("expected: map is not listed"),
+				errors.New("expected: map is not equal to any of the values"),
 			},
 		})
 	}
