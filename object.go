@@ -785,6 +785,7 @@ func (o *Object) InList(values ...interface{}) *Object {
 
 		if reflect.DeepEqual(expected, o.value) {
 			isListed = true
+			break
 		}
 	}
 
@@ -834,7 +835,6 @@ func (o *Object) NotInList(values ...interface{}) *Object {
 		return o
 	}
 
-	var isListed bool
 	for _, v := range values {
 		expected, ok := canonMap(opChain, v)
 		if !ok {
@@ -842,19 +842,16 @@ func (o *Object) NotInList(values ...interface{}) *Object {
 		}
 
 		if reflect.DeepEqual(expected, o.value) {
-			isListed = true
+			opChain.fail(AssertionFailure{
+				Type:     AssertNotBelongs,
+				Actual:   &AssertionValue{o.value},
+				Expected: &AssertionValue{AssertionList(values)},
+				Errors: []error{
+					errors.New("expected: map is not equal to any of the values"),
+				},
+			})
+			break
 		}
-	}
-
-	if isListed {
-		opChain.fail(AssertionFailure{
-			Type:     AssertNotBelongs,
-			Actual:   &AssertionValue{o.value},
-			Expected: &AssertionValue{AssertionList(values)},
-			Errors: []error{
-				errors.New("expected: map is not equal to any of the values"),
-			},
-		})
 	}
 
 	return o
