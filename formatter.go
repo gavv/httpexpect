@@ -21,6 +21,25 @@ type Formatter interface {
 	FormatFailure(*AssertionContext, *AssertionFailure) string
 }
 
+// FloatFormat defines the format for printing float
+type FloatFormat int
+
+const (
+	// Print floats in scientific notation for large exponents,
+	// otherwise print in decimal notation.
+	// Similar to %g format.
+	FloatFormatAuto FloatFormat = iota
+
+	// Always print floats in decimal notation.
+	// Similar to %f format.
+	FloatFormatDecimal
+
+	// Always print floats in scientific notation.
+	// Similar to %f format, with precision set to the smallest number of digits
+	// necessary to identify the value uniquely.
+	FloatFormatScientific
+)
+
 // DefaultFormatter is the default Formatter implementation.
 //
 // DefaultFormatter gathers values from AssertionContext and AssertionFailure,
@@ -44,6 +63,10 @@ type DefaultFormatter struct {
 
 	// Exclude diff from failure report.
 	DisableDiffs bool
+
+	// Float printing format.
+	// Default is FloatFormatAuto.
+	FloatFormat FloatFormat
 
 	// Wrap text to keep lines below given width.
 	// Use zero for default width, and negative value to disable wrapping.
@@ -411,7 +434,16 @@ func (f *DefaultFormatter) formatTyped(value interface{}) string {
 
 func (f *DefaultFormatter) formatValue(value interface{}) string {
 	if isNumber(value) {
-		return fmt.Sprintf("%v", value)
+		switch f.FloatFormat {
+		case FloatFormatAuto:
+			return fmt.Sprintf("%v", value)
+		case FloatFormatDecimal:
+			return fmt.Sprintf("%f", value)
+		case FloatFormatScientific:
+			return fmt.Sprintf("%e", value)
+		default:
+			panic("invalid float format")
+		}
 	}
 
 	if !isNil(value) && !isHTTP(value) {
@@ -531,6 +563,18 @@ func extractList(value interface{}) *AssertionList {
 		return &lst
 	case *AssertionList: // invalid, but we handle it
 		return lst
+	default:
+		return nil
+	}
+}
+
+func extractFloat(value interface{}) *float64 {
+	switch f := value.(type) {
+	case float32:
+		ff := float64(f)
+		return &ff
+	case float64:
+		return &f
 	default:
 		return nil
 	}

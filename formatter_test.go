@@ -216,6 +216,7 @@ func TestFormat_FailureExpected(t *testing.T) {
 		name             string
 		assertionType    AssertionType
 		assertionValue   interface{}
+		formatter        DefaultFormatter
 		wantHaveExpected bool
 		wantExpectedKind string
 		wantExpected     []string
@@ -409,7 +410,6 @@ func TestFormat_FailureExpected(t *testing.T) {
 		},
 	}
 
-	df := &DefaultFormatter{}
 	ctx := &AssertionContext{}
 
 	for _, tc := range tests {
@@ -420,7 +420,7 @@ func TestFormat_FailureExpected(t *testing.T) {
 					Value: tc.assertionValue,
 				},
 			}
-			fd := df.buildFormatData(ctx, fl)
+			fd := tc.formatter.buildFormatData(ctx, fl)
 			assert.Equal(t, tc.wantHaveExpected, fd.HaveExpected)
 			assert.Equal(t, tc.wantExpectedKind, fd.ExpectedKind)
 			assert.Equal(t, tc.wantExpected, fd.Expected)
@@ -548,6 +548,265 @@ func TestFormat_FailureDelta(t *testing.T) {
 			fd := df.buildFormatData(ctx, fl)
 			assert.Equal(t, tc.wantHaveDelta, fd.HaveDelta)
 			assert.Equal(t, tc.wantDelta, fd.Delta)
+		})
+	}
+}
+
+func TestFormatter_FloatFormat(t *testing.T) {
+	type testCase struct {
+		name             string
+		assertionFailure AssertionFailure
+		formatter        DefaultFormatter
+		wantExpected     []string
+		wantDelta        string
+	}
+
+	testCases := []testCase{
+		{
+			name: "AssertInRange float32 auto small exponent",
+			formatter: DefaultFormatter{
+				FloatFormat: FloatFormatAuto,
+			},
+			assertionFailure: AssertionFailure{
+				Type: AssertInRange,
+				Expected: &AssertionValue{
+					Value: AssertionRange{
+						Min: float32(-1.23456789),
+						Max: float32(1.23456789),
+					},
+				},
+			},
+			wantExpected: []string{"[-1.2345679; 1.2345679]"},
+		},
+		{
+			name: "AssertInRange float32 auto large exponent",
+			formatter: DefaultFormatter{
+				FloatFormat: FloatFormatAuto,
+			},
+			assertionFailure: AssertionFailure{
+				Type: AssertInRange,
+				Expected: &AssertionValue{
+					Value: AssertionRange{
+						Min: float32(-12345678.9),
+						Max: float32(12345678.9),
+					},
+				},
+			},
+			wantExpected: []string{"[-1.2345679e+07; 1.2345679e+07]"},
+		},
+		{
+			name: "AssertInRange float32 decimal",
+			formatter: DefaultFormatter{
+				FloatFormat: FloatFormatDecimal,
+			},
+			assertionFailure: AssertionFailure{
+				Type: AssertInRange,
+				Expected: &AssertionValue{
+					Value: AssertionRange{
+						Min: float32(-12345678.9),
+						Max: float32(12345678.9),
+					},
+				},
+			},
+			wantExpected: []string{"[-12345679.000000; 12345679.000000]"},
+		},
+		{
+			name: "AssertInRange float32 scientific",
+			formatter: DefaultFormatter{
+				FloatFormat: FloatFormatScientific,
+			},
+			assertionFailure: AssertionFailure{
+				Type: AssertInRange,
+				Expected: &AssertionValue{
+					Value: AssertionRange{
+						Min: float32(-1.23456789),
+						Max: float32(1.23456789),
+					},
+				},
+			},
+			wantExpected: []string{"[-1.234568e+00; 1.234568e+00]"},
+		},
+		{
+			name: "AssertInRange float64 auto small exponent",
+			formatter: DefaultFormatter{
+				FloatFormat: FloatFormatAuto,
+			},
+			assertionFailure: AssertionFailure{
+				Type: AssertInRange,
+				Expected: &AssertionValue{
+					Value: AssertionRange{
+						Min: float64(-1.23456789),
+						Max: float64(1.23456789),
+					},
+				},
+			},
+			wantExpected: []string{"[-1.23456789; 1.23456789]"},
+		},
+		{
+			name: "AssertInRange float64 auto large exponent",
+			formatter: DefaultFormatter{
+				FloatFormat: FloatFormatAuto,
+			},
+			assertionFailure: AssertionFailure{
+				Type: AssertInRange,
+				Expected: &AssertionValue{
+					Value: AssertionRange{
+						Min: float64(-12345678.9),
+						Max: float64(12345678.9),
+					},
+				},
+			},
+			wantExpected: []string{"[-1.23456789e+07; 1.23456789e+07]"},
+		},
+		{
+			name: "AssertInRange float64 decimal",
+			formatter: DefaultFormatter{
+				FloatFormat: FloatFormatDecimal,
+			},
+			assertionFailure: AssertionFailure{
+				Type: AssertInRange,
+				Expected: &AssertionValue{
+					Value: AssertionRange{
+						Min: float64(-12345678.9),
+						Max: float64(12345678.9),
+					},
+				},
+			},
+			wantExpected: []string{"[-12345678.900000; 12345678.900000]"}},
+		{
+			name: "AssertInRange float64 scientific",
+			formatter: DefaultFormatter{
+				FloatFormat: FloatFormatScientific,
+			},
+			assertionFailure: AssertionFailure{
+				Type: AssertInRange,
+				Expected: &AssertionValue{
+					Value: AssertionRange{
+						Min: float64(-1.23456789),
+						Max: float64(1.23456789),
+					},
+				},
+			},
+			wantExpected: []string{"[-1.234568e+00; 1.234568e+00]"},
+		},
+		{
+			name: "Delta float32 auto small exponent",
+			formatter: DefaultFormatter{
+				FloatFormat: FloatFormatAuto,
+			},
+			assertionFailure: AssertionFailure{
+				Delta: &AssertionValue{
+					Value: float32(1.23456789),
+				},
+			},
+			wantDelta: "1.2345679",
+		},
+		{
+			name: "Delta float32 auto large exponent",
+			formatter: DefaultFormatter{
+				FloatFormat: FloatFormatAuto,
+			},
+			assertionFailure: AssertionFailure{
+				Delta: &AssertionValue{
+					Value: float32(12345678.9),
+				},
+			},
+			wantDelta: "1.2345679e+07",
+		},
+		{
+			name: "Delta float32 decimal",
+			formatter: DefaultFormatter{
+				FloatFormat: FloatFormatDecimal,
+			},
+			assertionFailure: AssertionFailure{
+				Delta: &AssertionValue{
+					Value: float32(12345678.9),
+				},
+			},
+			wantDelta: "12345679.000000",
+		},
+		{
+			name: "Delta float32 scientific",
+			formatter: DefaultFormatter{
+				FloatFormat: FloatFormatScientific,
+			},
+			assertionFailure: AssertionFailure{
+				Delta: &AssertionValue{
+					Value: float32(1.23456789),
+				},
+			},
+			wantDelta: "1.234568e+00",
+		},
+		{
+			name: "Delta float64 auto small exponent",
+			formatter: DefaultFormatter{
+				FloatFormat: FloatFormatAuto,
+			},
+			assertionFailure: AssertionFailure{
+				Delta: &AssertionValue{
+					Value: float64(1.23456789),
+				},
+			},
+			wantDelta: "1.23456789",
+		},
+		{
+			name: "Delta float64 auto large exponent",
+			formatter: DefaultFormatter{
+				FloatFormat: FloatFormatAuto,
+			},
+			assertionFailure: AssertionFailure{
+				Delta: &AssertionValue{
+					Value: float64(12345678.9),
+				},
+			},
+			wantDelta: "1.23456789e+07",
+		},
+		{
+			name: "Delta float64 decimal",
+			formatter: DefaultFormatter{
+				FloatFormat: FloatFormatDecimal,
+			},
+			assertionFailure: AssertionFailure{
+				Delta: &AssertionValue{
+					Value: float64(12345678.9),
+				},
+			},
+			wantDelta: "12345678.900000",
+		},
+		{
+			name: "Delta float64 scientific",
+			formatter: DefaultFormatter{
+				FloatFormat: FloatFormatScientific,
+			},
+			assertionFailure: AssertionFailure{
+				Delta: &AssertionValue{
+					Value: float64(1.23456789),
+				},
+			},
+			wantDelta: "1.234568e+00",
+		},
+	}
+
+	assertFn := func(t *testing.T, tc testCase, fd *FormatData) {
+		if len(tc.wantExpected) > 0 {
+			assert.Equal(t, tc.wantExpected, fd.Expected)
+			return
+		}
+
+		if tc.wantDelta != "" {
+			assert.Equal(t, tc.wantDelta, fd.Delta)
+			return
+		}
+
+		panic("expectation is not set")
+	}
+
+	ctx := &AssertionContext{}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			fd := tc.formatter.buildFormatData(ctx, &tc.assertionFailure)
+			assertFn(t, tc, fd)
 		})
 	}
 }
