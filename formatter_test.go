@@ -571,12 +571,12 @@ func TestFormatter_FloatFormat(t *testing.T) {
 				Type: AssertInRange,
 				Expected: &AssertionValue{
 					Value: AssertionRange{
-						Min: float32(-1.23456789),
-						Max: float32(1.23456789),
+						Min: float32(-1.2345678),
+						Max: float32(1.2345678),
 					},
 				},
 			},
-			wantExpected: []string{"[-1.2345679; 1.2345679]"},
+			wantExpected: []string{"[-1.2345678; 1.2345678]"},
 		},
 		{
 			name: "AssertInRange float32 auto large exponent",
@@ -608,7 +608,7 @@ func TestFormatter_FloatFormat(t *testing.T) {
 					},
 				},
 			},
-			wantExpected: []string{"[-12345679.000000; 12345679.000000]"},
+			wantExpected: []string{"[-12345679; 12345679]"},
 		},
 		{
 			name: "AssertInRange float32 scientific",
@@ -619,12 +619,12 @@ func TestFormatter_FloatFormat(t *testing.T) {
 				Type: AssertInRange,
 				Expected: &AssertionValue{
 					Value: AssertionRange{
-						Min: float32(-1.23456789),
-						Max: float32(1.23456789),
+						Min: float32(-1.2345678),
+						Max: float32(1.2345678),
 					},
 				},
 			},
-			wantExpected: []string{"[-1.234568e+00; 1.234568e+00]"},
+			wantExpected: []string{"[-1.2345678e+00; 1.2345678e+00]"},
 		},
 		{
 			name: "AssertInRange float64 auto small exponent",
@@ -672,7 +672,7 @@ func TestFormatter_FloatFormat(t *testing.T) {
 					},
 				},
 			},
-			wantExpected: []string{"[-12345678.900000; 12345678.900000]"}},
+			wantExpected: []string{"[-12345678.9; 12345678.9]"}},
 		{
 			name: "AssertInRange float64 scientific",
 			formatter: DefaultFormatter{
@@ -687,7 +687,7 @@ func TestFormatter_FloatFormat(t *testing.T) {
 					},
 				},
 			},
-			wantExpected: []string{"[-1.234568e+00; 1.234568e+00]"},
+			wantExpected: []string{"[-1.23456789e+00; 1.23456789e+00]"},
 		},
 		{
 			name: "Delta float32 auto small exponent",
@@ -696,10 +696,10 @@ func TestFormatter_FloatFormat(t *testing.T) {
 			},
 			assertionFailure: AssertionFailure{
 				Delta: &AssertionValue{
-					Value: float32(1.23456789),
+					Value: float32(1.2345678),
 				},
 			},
-			wantDelta: "1.2345679",
+			wantDelta: "1.2345678",
 		},
 		{
 			name: "Delta float32 auto large exponent",
@@ -708,10 +708,10 @@ func TestFormatter_FloatFormat(t *testing.T) {
 			},
 			assertionFailure: AssertionFailure{
 				Delta: &AssertionValue{
-					Value: float32(12345678.9),
+					Value: float32(1234567.8),
 				},
 			},
-			wantDelta: "1.2345679e+07",
+			wantDelta: "1.2345678e+06",
 		},
 		{
 			name: "Delta float32 decimal",
@@ -720,10 +720,10 @@ func TestFormatter_FloatFormat(t *testing.T) {
 			},
 			assertionFailure: AssertionFailure{
 				Delta: &AssertionValue{
-					Value: float32(12345678.9),
+					Value: float32(1234567.8),
 				},
 			},
-			wantDelta: "12345679.000000",
+			wantDelta: "1234567.8",
 		},
 		{
 			name: "Delta float32 scientific",
@@ -732,10 +732,10 @@ func TestFormatter_FloatFormat(t *testing.T) {
 			},
 			assertionFailure: AssertionFailure{
 				Delta: &AssertionValue{
-					Value: float32(1.23456789),
+					Value: float32(1.2345678),
 				},
 			},
-			wantDelta: "1.234568e+00",
+			wantDelta: "1.2345678e+00",
 		},
 		{
 			name: "Delta float64 auto small exponent",
@@ -771,7 +771,7 @@ func TestFormatter_FloatFormat(t *testing.T) {
 					Value: float64(12345678.9),
 				},
 			},
-			wantDelta: "12345678.900000",
+			wantDelta: "12345678.9",
 		},
 		{
 			name: "Delta float64 scientific",
@@ -783,7 +783,7 @@ func TestFormatter_FloatFormat(t *testing.T) {
 					Value: float64(1.23456789),
 				},
 			},
-			wantDelta: "1.234568e+00",
+			wantDelta: "1.23456789e+00",
 		},
 	}
 

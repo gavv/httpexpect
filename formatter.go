@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -20,25 +21,6 @@ type Formatter interface {
 	FormatSuccess(*AssertionContext) string
 	FormatFailure(*AssertionContext, *AssertionFailure) string
 }
-
-// FloatFormat defines the format for printing float
-type FloatFormat int
-
-const (
-	// Print floats in scientific notation for large exponents,
-	// otherwise print in decimal notation.
-	// Similar to %g format.
-	FloatFormatAuto FloatFormat = iota
-
-	// Always print floats in decimal notation.
-	// Similar to %f format.
-	FloatFormatDecimal
-
-	// Always print floats in scientific notation.
-	// Similar to %f format, with precision set to the smallest number of digits
-	// necessary to identify the value uniquely.
-	FloatFormatScientific
-)
 
 // DefaultFormatter is the default Formatter implementation.
 //
@@ -109,6 +91,27 @@ func (f *DefaultFormatter) FormatFailure(
 			defaultFailureTemplate, defaultTemplateFuncs, ctx, failure)
 	}
 }
+
+// FloatFormat defines the format in which all floats are printed.
+type FloatFormat int
+
+const (
+	// Print floats in scientific notation for large exponents,
+	// otherwise print in decimal notation.
+	// Precision is the smallest needed to identify the value uniquely.
+	// Similar to %g format.
+	FloatFormatAuto FloatFormat = iota
+
+	// Always print floats in decimal notation.
+	// Precision is the smallest needed to identify the value uniquely.
+	// Similar to %f format.
+	FloatFormatDecimal
+
+	// Always print floats in scientific notation.
+	// Precision is the smallest needed to identify the value uniquely.
+	// Similar to %e format.
+	FloatFormatScientific
+)
 
 // FormatData defines data passed to template engine when DefaultFormatter
 // formats assertion. You can use these fields in your custom templates.
@@ -433,17 +436,12 @@ func (f *DefaultFormatter) formatTyped(value interface{}) string {
 }
 
 func (f *DefaultFormatter) formatValue(value interface{}) string {
-	if isNumber(value) {
-		switch f.FloatFormat {
-		case FloatFormatAuto:
-			return fmt.Sprintf("%v", value)
-		case FloatFormatDecimal:
-			return fmt.Sprintf("%f", value)
-		case FloatFormatScientific:
-			return fmt.Sprintf("%e", value)
-		default:
-			panic("invalid float format")
-		}
+	if flt := extractFloat32(value); flt != nil {
+		return f.formatFloat(*flt, 32)
+	}
+
+	if flt := extractFloat64(value); flt != nil {
+		return f.formatFloat(*flt, 64)
 	}
 
 	if !isNil(value) && !isHTTP(value) {
@@ -462,6 +460,19 @@ func (f *DefaultFormatter) formatValue(value interface{}) string {
 	}
 
 	return sq.Sdump(value)
+}
+
+func (f *DefaultFormatter) formatFloat(value float64, bits int) string {
+	switch f.FloatFormat {
+	case FloatFormatAuto:
+		return strconv.FormatFloat(value, 'g', -1, bits)
+	case FloatFormatDecimal:
+		return strconv.FormatFloat(value, 'f', -1, bits)
+	case FloatFormatScientific:
+		return strconv.FormatFloat(value, 'e', -1, bits)
+	default:
+		return fmt.Sprintf("%v", value)
+	}
 }
 
 func (f *DefaultFormatter) formatBareString(value interface{}) string {
@@ -568,11 +579,18 @@ func extractList(value interface{}) *AssertionList {
 	}
 }
 
-func extractFloat(value interface{}) *float64 {
+func extractFloat32(value interface{}) *float64 {
 	switch f := value.(type) {
 	case float32:
 		ff := float64(f)
 		return &ff
+	default:
+		return nil
+	}
+}
+
+func extractFloat64(value interface{}) *float64 {
+	switch f := value.(type) {
 	case float64:
 		return &f
 	default:
