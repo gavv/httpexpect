@@ -188,20 +188,24 @@ func (b *Boolean) InList(values ...bool) *Boolean {
 		return b
 	}
 
+	var isListed bool
 	for _, v := range values {
 		if b.value == v {
-			return b
+			isListed = true
+			break
 		}
 	}
 
-	opChain.fail(AssertionFailure{
-		Type:     AssertBelongs,
-		Actual:   &AssertionValue{b.value},
-		Expected: &AssertionValue{AssertionList(boolList(values))},
-		Errors: []error{
-			errors.New("expected: boolean is equal to one of the values"),
-		},
-	})
+	if !isListed {
+		opChain.fail(AssertionFailure{
+			Type:     AssertBelongs,
+			Actual:   &AssertionValue{b.value},
+			Expected: &AssertionValue{AssertionList(boolList(values))},
+			Errors: []error{
+				errors.New("expected: boolean is equal to one of the values"),
+			},
+		})
+	}
 
 	return b
 }
@@ -242,6 +246,7 @@ func (b *Boolean) NotInList(values ...bool) *Boolean {
 					errors.New("expected: boolean is not equal to any of the values"),
 				},
 			})
+			break
 		}
 	}
 
