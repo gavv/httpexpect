@@ -42,6 +42,9 @@ func TestValue_Failed(t *testing.T) {
 
 	value.IsEqual(nil)
 	value.NotEqual(nil)
+
+	value.InList(nil)
+	value.NotInList(nil)
 }
 
 func TestValue_Constructors(t *testing.T) {
@@ -404,6 +407,39 @@ func TestValue_Equal(t *testing.T) {
 
 	NewValue(reporter, data1).IsEqual(func() {}).chain.assertFailed(t)
 	NewValue(reporter, data1).NotEqual(func() {}).chain.assertFailed(t)
+}
+
+func TestValue_InList(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	data1 := map[string]interface{}{"foo": "bar"}
+	data2 := "baz"
+	data3 := struct {
+		Data []int `json:"data"`
+	}{
+		Data: []int{1, 2, 3, 4},
+	}
+
+	NewValue(reporter, data1).InList().chain.assertFailed(t)
+	NewValue(reporter, data2).NotInList().chain.assertFailed(t)
+
+	NewValue(reporter, data1).InList(data1, data3).chain.assertNotFailed(t)
+	NewValue(reporter, data2).NotInList(data1, data3).chain.assertNotFailed(t)
+
+	NewValue(reporter, data1).InList(data2, data3).chain.assertFailed(t)
+	NewValue(reporter, data2).NotInList(data2, data3).chain.assertFailed(t)
+
+	NewValue(reporter, data1).InList(data2).chain.assertFailed(t)
+	NewValue(reporter, data2).NotInList(data2).chain.assertFailed(t)
+
+	NewValue(reporter, data1).InList(data1).chain.assertNotFailed(t)
+	NewValue(reporter, data2).NotInList(data1).chain.assertNotFailed(t)
+
+	NewValue(reporter, nil).InList(map[string]interface{}(nil)).chain.assertNotFailed(t)
+	NewValue(reporter, nil).NotInList(map[string]interface{}{}).chain.assertNotFailed(t)
+
+	NewValue(reporter, data1).InList(func() {}).chain.assertFailed(t)
+	NewValue(reporter, data1).NotInList(func() {}).chain.assertFailed(t)
 }
 
 func TestValue_PathObject(t *testing.T) {

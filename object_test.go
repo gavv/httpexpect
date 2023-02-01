@@ -26,6 +26,8 @@ func TestObject_Failed(t *testing.T) {
 		value.NotEmpty()
 		value.IsEqual(nil)
 		value.NotEqual(nil)
+		value.InList(nil)
+		value.NotInList(nil)
 		value.ContainsKey("foo")
 		value.NotContainsKey("foo")
 		value.ContainsValue("foo")
@@ -417,6 +419,92 @@ func TestObject_Equal(t *testing.T) {
 	value.chain.clearFailed()
 
 	value.NotEqual(nil)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+}
+
+func TestObject_InList(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewObject(reporter, map[string]interface{}{"foo": 123.0})
+
+	assert.Equal(t, map[string]interface{}{"foo": 123.0}, value.Raw())
+
+	value.InList()
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList()
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.InList(map[string]interface{}{})
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList(map[string]interface{}{})
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.InList(
+		map[string]interface{}{"FOO": 123.0},
+		map[string]interface{}{"BAR": 456.0},
+	)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList(
+		map[string]interface{}{"FOO": 123.0},
+		map[string]interface{}{"BAR": 456.0},
+	)
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.InList(
+		map[string]interface{}{"foo": 456.0},
+		map[string]interface{}{"bar": 123.0},
+	)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList(
+		map[string]interface{}{"foo": 456.0},
+		map[string]interface{}{"bar": 123.0},
+	)
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.InList(
+		map[string]interface{}{"foo": 123.0},
+		map[string]interface{}{"bar": 456.0},
+	)
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList(
+		map[string]interface{}{"foo": 123.0},
+		map[string]interface{}{"bar": 456.0},
+	)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.InList(struct {
+		Foo float64 `json:"foo"`
+	}{Foo: 123.00})
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList(struct {
+		Foo float64 `json:"foo"`
+	}{Foo: 123.00})
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.InList(nil)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList(nil)
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 }

@@ -366,6 +366,113 @@ func (n *Number) NotInRange(min, max interface{}) *Number {
 	return n
 }
 
+// InList succeeds if number is equal to one of the elements from given
+// list of numbers.
+// Before comparison, each value is converted to canonical form.
+//
+// Each value should be numeric type convertible to float64.
+//
+// Example:
+//
+//	number := NewNumber(t, 123)
+//	number.InList(float64(123), int32(123))
+func (n *Number) InList(values ...interface{}) *Number {
+	opChain := n.chain.enter("IsList()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return n
+	}
+
+	if len(values) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty list argument"),
+			},
+		})
+
+		return n
+	}
+
+	var isListed bool
+	for _, v := range values {
+		num, ok := canonNumber(opChain, v)
+		if !ok {
+			return n
+		}
+
+		if n.value == num {
+			isListed = true
+			break
+		}
+	}
+
+	if !isListed {
+		opChain.fail(AssertionFailure{
+			Type:     AssertBelongs,
+			Actual:   &AssertionValue{n.value},
+			Expected: &AssertionValue{AssertionList(values)},
+			Errors: []error{
+				errors.New("expected: number is equal to one of the values"),
+			},
+		})
+	}
+
+	return n
+}
+
+// NotInList succeeds if whole array is not equal to any of the elements
+// from given list of numbers.
+// Before comparison, each value is converted to canonical form.
+//
+// Each value should be numeric type convertible to float64.
+//
+// Example:
+//
+//	number := NewNumber(t, 123)
+//	number.NotInList(float64(456), int32(456))
+func (n *Number) NotInList(values ...interface{}) *Number {
+	opChain := n.chain.enter("NotInList()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return n
+	}
+
+	if len(values) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty list argument"),
+			},
+		})
+
+		return n
+	}
+
+	for _, v := range values {
+		num, ok := canonNumber(opChain, v)
+		if !ok {
+			return n
+		}
+
+		if n.value == num {
+			opChain.fail(AssertionFailure{
+				Type:     AssertNotBelongs,
+				Actual:   &AssertionValue{n.value},
+				Expected: &AssertionValue{AssertionList(values)},
+				Errors: []error{
+					errors.New("expected: number is not equal to any of the values"),
+				},
+			})
+			break
+		}
+	}
+
+	return n
+}
+
 // Gt succeeds if number is greater than given value.
 //
 // value should have numeric type convertible to float64. Before comparison,

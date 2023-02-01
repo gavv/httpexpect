@@ -523,3 +523,106 @@ func (v *Value) NotEqual(value interface{}) *Value {
 func (v *Value) Equal(value interface{}) *Value {
 	return v.IsEqual(value)
 }
+
+// InList succeeds if whole value is equal to one of the elements from given
+// list of values (e.g. map, slice, string, etc).
+// Before comparison, each value are converted to canonical form.
+//
+// Example:
+//
+//	value := NewValue(t, "foo")
+//	value.InList("foo", map[string]interface{}{"bar": true})
+func (v *Value) InList(values ...interface{}) *Value {
+	opChain := v.chain.enter("InList()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return v
+	}
+
+	if len(values) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty list argument"),
+			},
+		})
+
+		return v
+	}
+
+	var isListed bool
+	for _, val := range values {
+		expected, ok := canonValue(opChain, val)
+		if !ok {
+			return v
+		}
+
+		if reflect.DeepEqual(expected, v.value) {
+			isListed = true
+			break
+		}
+	}
+
+	if !isListed {
+		opChain.fail(AssertionFailure{
+			Type:     AssertBelongs,
+			Actual:   &AssertionValue{v.value},
+			Expected: &AssertionValue{AssertionList(values)},
+			Errors: []error{
+				errors.New("expected: value is equal to one of the values"),
+			},
+		})
+	}
+
+	return v
+}
+
+// NotInList succeeds if whole value is not equal to any of the elements from
+// given list of values (e.g. map, slice, string, etc).
+// Before comparison, each value are converted to canonical form.
+//
+// Example:
+//
+//	value := NewValue(t, "foo")
+//	value.NotInList("bar", map[string]interface{}{"bar": true})
+func (v *Value) NotInList(values ...interface{}) *Value {
+	opChain := v.chain.enter("NotInList()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return v
+	}
+
+	if len(values) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty list argument"),
+			},
+		})
+
+		return v
+	}
+
+	for _, val := range values {
+		expected, ok := canonValue(opChain, val)
+		if !ok {
+			return v
+		}
+
+		if reflect.DeepEqual(expected, v.value) {
+			opChain.fail(AssertionFailure{
+				Type:     AssertNotBelongs,
+				Actual:   &AssertionValue{v.value},
+				Expected: &AssertionValue{AssertionList(values)},
+				Errors: []error{
+					errors.New("expected: value is not equal to any of the values"),
+				},
+			})
+			break
+		}
+	}
+
+	return v
+}

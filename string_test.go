@@ -29,6 +29,8 @@ func TestString_Failed(t *testing.T) {
 	value.NotEmpty()
 	value.IsEqual("")
 	value.NotEqual("")
+	value.InList("")
+	value.NotInList("")
 	value.IsEqualFold("")
 	value.NotEqualFold("")
 	value.Contains("")
@@ -214,6 +216,38 @@ func TestString_Equal(t *testing.T) {
 	value.chain.clearFailed()
 
 	value.NotEqual("foo")
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+}
+
+func TestString_List(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewString(reporter, "foo")
+
+	assert.Equal(t, "foo", value.Raw())
+
+	value.InList()
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.InList()
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.InList("foo", "bar")
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.InList("FOO", "BAR")
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList("FOO", "bar")
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList("foo", "BAR")
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 }

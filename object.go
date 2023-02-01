@@ -744,6 +744,119 @@ func (o *Object) Equal(value interface{}) *Object {
 	return o.IsEqual(value)
 }
 
+// InList succeeds if whole object is equal to one of the elements from given
+// list of objects.
+// Before comparison, each object is converted to canonical form.
+//
+// Each value should be map[string]interface{} or struct.
+//
+// Example:
+//
+//	object := NewObject(t, map[string]interface{}{"foo": 123})
+//	object.InList(
+//		map[string]interface{}{"foo": 123},
+//		map[string]interface{}{"bar": 456},
+//	)
+func (o *Object) InList(values ...interface{}) *Object {
+	opChain := o.chain.enter("InList()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return o
+	}
+
+	if len(values) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty list argument"),
+			},
+		})
+
+		return o
+	}
+
+	var isListed bool
+	for _, v := range values {
+		expected, ok := canonMap(opChain, v)
+		if !ok {
+			return o
+		}
+
+		if reflect.DeepEqual(expected, o.value) {
+			isListed = true
+			break
+		}
+	}
+
+	if !isListed {
+		opChain.fail(AssertionFailure{
+			Type:     AssertBelongs,
+			Actual:   &AssertionValue{o.value},
+			Expected: &AssertionValue{AssertionList(values)},
+			Errors: []error{
+				errors.New("expected: map is equal to one of the values"),
+			},
+		})
+	}
+
+	return o
+}
+
+// NotInList succeeds if whole object is equal to any of the elements from
+// given list of objects.
+// Before comparison, each object is converted to canonical form.
+//
+// Each value should be map[string]interface{} or struct.
+//
+// Example:
+//
+//	object := NewObject(t, map[string]interface{}{"foo": 123})
+//	object.NotInList(
+//		map[string]interface{}{"bar": 456},
+//		map[string]interface{}{"baz": 789},
+//	)
+func (o *Object) NotInList(values ...interface{}) *Object {
+	opChain := o.chain.enter("NotInList()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return o
+	}
+
+	if len(values) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty list argument"),
+			},
+		})
+
+		return o
+	}
+
+	for _, v := range values {
+		expected, ok := canonMap(opChain, v)
+		if !ok {
+			return o
+		}
+
+		if reflect.DeepEqual(expected, o.value) {
+			opChain.fail(AssertionFailure{
+				Type:     AssertNotBelongs,
+				Actual:   &AssertionValue{o.value},
+				Expected: &AssertionValue{AssertionList(values)},
+				Errors: []error{
+					errors.New("expected: map is not equal to any of the values"),
+				},
+			})
+			break
+		}
+	}
+
+	return o
+}
+
 // ContainsKey succeeds if object contains given key.
 //
 // Example:

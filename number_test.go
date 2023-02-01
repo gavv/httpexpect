@@ -22,6 +22,8 @@ func TestNumber_Failed(t *testing.T) {
 
 	value.IsEqual(0)
 	value.NotEqual(0)
+	value.InList(0)
+	value.NotInList(0)
 	value.InDelta(0, 0)
 	value.NotInDelta(0, 0)
 	value.Gt(0)
@@ -305,6 +307,52 @@ func TestNumber_InRange(t *testing.T) {
 	value.chain.clearFailed()
 
 	value.NotInRange("1234+1", 1234+2)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+}
+
+func TestNumber_InList(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewNumber(reporter, 1234)
+
+	value.InList()
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList()
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.InList(1234, 4567)
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList(1234, 4567)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.InList(1234.00, 4567.00)
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList(1234.00, 4567.00)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.InList(4567.00, 1234.01)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList(4567.00, 1234.01)
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.InList(1234+1, "1234")
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList("1234+1", 1234+2)
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 }

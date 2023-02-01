@@ -162,6 +162,97 @@ func (b *Boolean) Equal(value bool) *Boolean {
 	return b.IsEqual(value)
 }
 
+// InList succeeds if boolean is equal to one of the elements from given
+// list of booleans.
+//
+// Example:
+//
+//	boolean := NewBoolean(t, true)
+//	boolean.InList(true, false)
+func (b *Boolean) InList(values ...bool) *Boolean {
+	opChain := b.chain.enter("InList()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return b
+	}
+
+	if len(values) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty list argument"),
+			},
+		})
+
+		return b
+	}
+
+	var isListed bool
+	for _, v := range values {
+		if b.value == v {
+			isListed = true
+			break
+		}
+	}
+
+	if !isListed {
+		opChain.fail(AssertionFailure{
+			Type:     AssertBelongs,
+			Actual:   &AssertionValue{b.value},
+			Expected: &AssertionValue{AssertionList(boolList(values))},
+			Errors: []error{
+				errors.New("expected: boolean is equal to one of the values"),
+			},
+		})
+	}
+
+	return b
+}
+
+// NotInList succeeds if boolean is not equal to any of the elements from
+// given list of booleans.
+//
+// Example:
+//
+//	boolean := NewBoolean(t, true)
+//	boolean.NotInList(true, false)
+func (b *Boolean) NotInList(values ...bool) *Boolean {
+	opChain := b.chain.enter("NotInList()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return b
+	}
+
+	if len(values) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty list argument"),
+			},
+		})
+
+		return b
+	}
+
+	for _, v := range values {
+		if b.value == v {
+			opChain.fail(AssertionFailure{
+				Type:     AssertNotBelongs,
+				Actual:   &AssertionValue{b.value},
+				Expected: &AssertionValue{AssertionList(boolList(values))},
+				Errors: []error{
+					errors.New("expected: boolean is not equal to any of the values"),
+				},
+			})
+			break
+		}
+	}
+
+	return b
+}
+
 // True succeeds if boolean is true.
 //
 // Example:
@@ -216,4 +307,13 @@ func (b *Boolean) False() *Boolean {
 	}
 
 	return b
+}
+
+func boolList(values []bool) []interface{} {
+	l := make([]interface{}, 0, len(values))
+	for _, v := range values {
+		l = append(l, v)
+	}
+
+	return l
 }

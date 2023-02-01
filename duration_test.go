@@ -16,6 +16,8 @@ func TestDuration_Failed(t *testing.T) {
 
 	value.IsEqual(tm)
 	value.NotEqual(tm)
+	value.InList(tm)
+	value.NotInList(tm)
 	value.Gt(tm)
 	value.Ge(tm)
 	value.Lt(tm)
@@ -220,6 +222,55 @@ func TestDuration_InRange(t *testing.T) {
 	value.chain.clearFailed()
 
 	value.NotInRange(time.Second+1, time.Second-1)
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+}
+
+func TestDuration_InList(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	newDuration(newMockChain(t), nil).InList(time.Second).chain.assertFailed(t)
+	newDuration(newMockChain(t), nil).NotInList(time.Second).chain.assertFailed(t)
+
+	value := NewDuration(reporter, time.Second)
+
+	value.InList()
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList()
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.InList(time.Second, time.Minute)
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList(time.Second, time.Minute)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.InList(time.Second-1, time.Minute)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList(time.Second-1, time.Minute)
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.InList(time.Second, time.Second+1)
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList(time.Second, time.Second+1)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.InList(time.Second+1, time.Second-1)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList(time.Second+1, time.Second-1)
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 }

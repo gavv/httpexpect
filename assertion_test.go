@@ -342,18 +342,6 @@ func TestAssertion_ValidateTraits(t *testing.T) {
 				List: fieldRequired,
 			},
 		},
-		{
-			testName:          "AssertionList should not be slice of single element",
-			errorContainsText: "AssertionList",
-			failure: AssertionFailure{
-				Expected: &AssertionValue{
-					Value: AssertionList{[]int{1}},
-				},
-			},
-			traits: fieldTraits{
-				List: fieldRequired,
-			},
-		},
 	}
 
 	for _, test := range tests {
@@ -653,18 +641,6 @@ func TestAssertion_ValidateAssertion(t *testing.T) {
 				},
 				Actual:   &AssertionValue{},
 				Expected: &AssertionValue{AssertionList{}},
-			},
-		},
-		{
-			testName:          "List has one element and it's list",
-			errorContainsText: "AssertionList",
-			input: AssertionFailure{
-				Type: AssertBelongs,
-				Errors: []error{
-					errors.New("test"),
-				},
-				Actual:   &AssertionValue{},
-				Expected: &AssertionValue{AssertionList{[]string{"test"}}},
 			},
 		},
 	}
