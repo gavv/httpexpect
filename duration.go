@@ -467,20 +467,24 @@ func (d *Duration) InList(values ...time.Duration) *Duration {
 		return d
 	}
 
+	var isListed bool
 	for _, v := range values {
 		if *d.value == v {
-			return d
+			isListed = true
+			break
 		}
 	}
 
-	opChain.fail(AssertionFailure{
-		Type:     AssertBelongs,
-		Actual:   &AssertionValue{d.value},
-		Expected: &AssertionValue{AssertionList(durationList(values))},
-		Errors: []error{
-			errors.New("expected: duration is equal to one of the values"),
-		},
-	})
+	if !isListed {
+		opChain.fail(AssertionFailure{
+			Type:     AssertBelongs,
+			Actual:   &AssertionValue{d.value},
+			Expected: &AssertionValue{AssertionList(durationList(values))},
+			Errors: []error{
+				errors.New("expected: duration is equal to one of the values"),
+			},
+		})
+	}
 
 	return d
 }
@@ -533,6 +537,7 @@ func (d *Duration) NotInList(values ...time.Duration) *Duration {
 					errors.New("expected: duration is not equal to any of the values"),
 				},
 			})
+			break
 		}
 	}
 
