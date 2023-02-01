@@ -430,7 +430,8 @@ func (d *Duration) NotInRange(min, max time.Duration) *Duration {
 	return d
 }
 
-// InList succeeds if Duration is listed by given duration [values...].
+// InList succeeds if Duration is equal to one of the elements from given
+// list of time.Duration.
 //
 // Example:
 //
@@ -477,14 +478,15 @@ func (d *Duration) InList(values ...time.Duration) *Duration {
 		Actual:   &AssertionValue{d.value},
 		Expected: &AssertionValue{AssertionList(durationList(values))},
 		Errors: []error{
-			errors.New("expected: duration is listed"),
+			errors.New("expected: duration is equal to one of the values"),
 		},
 	})
 
 	return d
 }
 
-// NotInList succeeds if Duration is not listed by given duration [values...].
+// NotInList succeeds if Duration is not equal to any of the elements from
+// given list of time.Duration.
 //
 // Example:
 //
@@ -528,7 +530,7 @@ func (d *Duration) NotInList(values ...time.Duration) *Duration {
 				Actual:   &AssertionValue{d.value},
 				Expected: &AssertionValue{AssertionList(durationList(values))},
 				Errors: []error{
-					errors.New("expected: duration is not listed"),
+					errors.New("expected: duration is not equal to any of the values"),
 				},
 			})
 		}
