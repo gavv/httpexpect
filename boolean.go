@@ -253,15 +253,6 @@ func (b *Boolean) NotInList(values ...bool) *Boolean {
 	return b
 }
 
-func boolList(values []bool) []interface{} {
-	l := make([]interface{}, 0, len(values))
-	for _, v := range values {
-		l = append(l, v)
-	}
-
-	return l
-}
-
 // True succeeds if boolean is true.
 //
 // Example:
@@ -316,4 +307,13 @@ func (b *Boolean) False() *Boolean {
 	}
 
 	return b
+}
+
+func boolList(values []bool) []interface{} {
+	l := make([]interface{}, 0, len(values))
+	for _, v := range values {
+		l = append(l, v)
+	}
+
+	return l
 }
