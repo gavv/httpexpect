@@ -843,7 +843,7 @@ func TestRequest_BodyChunked(t *testing.T) {
 	assert.Equal(t, "METHOD", client.req.Method)
 	assert.Equal(t, "url", client.req.URL.String())
 	assert.Equal(t, make(http.Header), client.req.Header)
-	assert.Equal(t, "body", string(resp.content))
+	assert.Equal(t, "body", string(resp.getContent(resp.chain)))
 
 	assert.Same(t, &client.resp, resp.Raw())
 }
@@ -931,7 +931,7 @@ func TestRequest_BodyBytes(t *testing.T) {
 	assert.Equal(t, "METHOD", client.req.Method)
 	assert.Equal(t, "/path", client.req.URL.String())
 	assert.Equal(t, make(http.Header), client.req.Header)
-	assert.Equal(t, "body", string(resp.content))
+	assert.Equal(t, "body", string(resp.getContent(resp.chain)))
 
 	assert.Same(t, &client.resp, resp.Raw())
 }
@@ -992,7 +992,7 @@ func TestRequest_BodyText(t *testing.T) {
 	assert.Equal(t, "METHOD", client.req.Method)
 	assert.Equal(t, "url", client.req.URL.String())
 	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
-	assert.Equal(t, "some text", string(resp.content))
+	assert.Equal(t, "some text", string(resp.getContent(resp.chain)))
 
 	assert.Same(t, &client.resp, resp.Raw())
 }
@@ -1032,7 +1032,7 @@ func TestRequest_BodyForm(t *testing.T) {
 	assert.Equal(t, "METHOD", client.req.Method)
 	assert.Equal(t, "url", client.req.URL.String())
 	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
-	assert.Equal(t, `a=1&b=2`, string(resp.content))
+	assert.Equal(t, `a=1&b=2`, string(resp.getContent(resp.chain)))
 
 	assert.Same(t, &client.resp, resp.Raw())
 }
@@ -1070,7 +1070,7 @@ func TestRequest_BodyFormField(t *testing.T) {
 	assert.Equal(t, "METHOD", client.req.Method)
 	assert.Equal(t, "url", client.req.URL.String())
 	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
-	assert.Equal(t, `a=1&b=2`, string(resp.content))
+	assert.Equal(t, `a=1&b=2`, string(resp.getContent(resp.chain)))
 
 	assert.Same(t, &client.resp, resp.Raw())
 }
@@ -1108,7 +1108,7 @@ func TestRequest_BodyFormStruct(t *testing.T) {
 	assert.Equal(t, "METHOD", client.req.Method)
 	assert.Equal(t, "url", client.req.URL.String())
 	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
-	assert.Equal(t, `a=1&b=2`, string(resp.content))
+	assert.Equal(t, `a=1&b=2`, string(resp.getContent(resp.chain)))
 
 	assert.Same(t, &client.resp, resp.Raw())
 }
@@ -1146,7 +1146,7 @@ func TestRequest_BodyFormCombined(t *testing.T) {
 	assert.Equal(t, "METHOD", client.req.Method)
 	assert.Equal(t, "url", client.req.URL.String())
 	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
-	assert.Equal(t, `a=1&b=2&c=3`, string(resp.content))
+	assert.Equal(t, `a=1&b=2&c=3`, string(resp.getContent(resp.chain)))
 
 	assert.Same(t, &client.resp, resp.Raw())
 }
@@ -1182,7 +1182,7 @@ func TestRequest_BodyMultipart(t *testing.T) {
 	assert.Equal(t, "multipart/form-data", mediatype)
 	assert.True(t, params["boundary"] != "")
 
-	reader := multipart.NewReader(bytes.NewReader(resp.content), params["boundary"])
+	reader := multipart.NewReader(bytes.NewReader(resp.getContent(resp.chain)), params["boundary"])
 
 	part1, _ := reader.NextPart()
 	assert.Equal(t, "b", part1.FormName())
@@ -1245,7 +1245,7 @@ func TestRequest_BodyMultipartFile(t *testing.T) {
 	assert.Equal(t, "multipart/form-data", mediatype)
 	assert.True(t, params["boundary"] != "")
 
-	reader := multipart.NewReader(bytes.NewReader(resp.content), params["boundary"])
+	reader := multipart.NewReader(bytes.NewReader(resp.getContent(resp.chain)), params["boundary"])
 
 	part1, _ := reader.NextPart()
 	assert.Equal(t, "a", part1.FormName())
@@ -1307,7 +1307,7 @@ func TestRequest_BodyJSON(t *testing.T) {
 	assert.Equal(t, "METHOD", client.req.Method)
 	assert.Equal(t, "url", client.req.URL.String())
 	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
-	assert.Equal(t, `{"key":"value"}`, string(resp.content))
+	assert.Equal(t, `{"key":"value"}`, string(resp.getContent(resp.chain)))
 
 	assert.Same(t, &client.resp, resp.Raw())
 }
