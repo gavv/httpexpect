@@ -631,6 +631,25 @@ func TestFormatter_FloatFormat(t *testing.T) {
 			value:    float32(12345678),
 			wantText: "1.2345678e+07",
 		},
+		// integer
+		{
+			name:     "integer auto",
+			format:   FloatFormatAuto,
+			value:    int(12345678),
+			wantText: "12345678",
+		},
+		{
+			name:     "integer decimal",
+			format:   FloatFormatDecimal,
+			value:    int(12345678),
+			wantText: "12345678",
+		},
+		{
+			name:     "integer scientific",
+			format:   FloatFormatScientific,
+			value:    int(12345678),
+			wantText: "12345678",
+		},
 	}
 
 	for _, tc := range testCases {
