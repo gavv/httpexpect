@@ -524,9 +524,9 @@ func (v *Value) Equal(value interface{}) *Value {
 	return v.IsEqual(value)
 }
 
-// InList succeeds if value is listed by given [values....]
-// (e.g. map, slice, string, etc).
-// Before comparison, both values are converted to canonical form.
+// InList succeeds if whole value is equal to one of the elements from given
+// list of values (e.g. map, slice, string, etc).
+// Before comparison, each value are converted to canonical form.
 //
 // Example:
 //
@@ -567,16 +567,16 @@ func (v *Value) InList(values ...interface{}) *Value {
 		Actual:   &AssertionValue{v.value},
 		Expected: &AssertionValue{AssertionList(values)},
 		Errors: []error{
-			errors.New("expected: value is listed"),
+			errors.New("expected: value is equal to one of the values"),
 		},
 	})
 
 	return v
 }
 
-// NotInList succeeds if value is not listed by given [values....]
-// (e.g. map, slice, string, etc).
-// Before comparison, both values are converted to canonical form.
+// NotInList succeeds if whole value is not equal to any of the elements from
+// given list of values (e.g. map, slice, string, etc).
+// Before comparison, each value are converted to canonical form.
 //
 // Example:
 //
@@ -613,7 +613,7 @@ func (v *Value) NotInList(values ...interface{}) *Value {
 				Actual:   &AssertionValue{v.value},
 				Expected: &AssertionValue{AssertionList(values)},
 				Errors: []error{
-					errors.New("expected: value is not listed"),
+					errors.New("expected: value is not equal to any of the values"),
 				},
 			})
 		}
