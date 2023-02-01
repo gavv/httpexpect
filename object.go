@@ -744,9 +744,8 @@ func (o *Object) Equal(value interface{}) *Object {
 	return o.IsEqual(value)
 }
 
-// InList succeeds if whole object is equal to one of the elements from given
-// list of objects.
-// Before comparison, each object is converted to canonical form.
+// InList succeeds if whole object is equal to one of the values from given list
+// of objects. Before comparison, each value is converted to canonical form.
 //
 // Each value should be map[string]interface{} or struct.
 //
@@ -772,7 +771,6 @@ func (o *Object) InList(values ...interface{}) *Object {
 				errors.New("unexpected empty list argument"),
 			},
 		})
-
 		return o
 	}
 
@@ -798,14 +796,15 @@ func (o *Object) InList(values ...interface{}) *Object {
 				errors.New("expected: map is equal to one of the values"),
 			},
 		})
+		return o
 	}
 
 	return o
 }
 
-// NotInList succeeds if whole object is equal to any of the elements from
-// given list of objects.
-// Before comparison, each object is converted to canonical form.
+// NotInList succeeds if the whole object is not equal to any of the values
+// from given list of objects. Before comparison, each value is converted to
+// canonical form.
 //
 // Each value should be map[string]interface{} or struct.
 //
@@ -831,7 +830,6 @@ func (o *Object) NotInList(values ...interface{}) *Object {
 				errors.New("unexpected empty list argument"),
 			},
 		})
-
 		return o
 	}
 
@@ -850,7 +848,7 @@ func (o *Object) NotInList(values ...interface{}) *Object {
 					errors.New("expected: map is not equal to any of the values"),
 				},
 			})
-			break
+			return o
 		}
 	}
 

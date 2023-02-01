@@ -212,7 +212,7 @@ func TestBoolean_False(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestBoolean_ZeroLengthInList(t *testing.T) {
+func TestBoolean_UsageChecks(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewBoolean(reporter, true)

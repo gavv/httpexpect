@@ -422,7 +422,7 @@ func (dt *DateTime) NotInRange(min, max time.Time) *DateTime {
 	return dt
 }
 
-// InList succeeds if DateTime is equal to one of the elements from given
+// InList succeeds if DateTime is equal to one of the values from given
 // list of time.Time.
 //
 // Example:
@@ -430,7 +430,7 @@ func (dt *DateTime) NotInRange(min, max time.Time) *DateTime {
 //	dt := NewDateTime(t, time.Unix(0, 2))
 //	dt.InRange(time.Unix(0, 1), time.Unix(0, 2))
 func (dt *DateTime) InList(values ...time.Time) *DateTime {
-	opChain := dt.chain.enter("InRange()")
+	opChain := dt.chain.enter("InList()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -444,7 +444,6 @@ func (dt *DateTime) InList(values ...time.Time) *DateTime {
 				errors.New("unexpected empty list argument"),
 			},
 		})
-
 		return dt
 	}
 
@@ -470,7 +469,7 @@ func (dt *DateTime) InList(values ...time.Time) *DateTime {
 	return dt
 }
 
-// NotInList succeeds if DateTime is not equal to any of the elements from
+// NotInList succeeds if DateTime is not equal to any of the values from
 // given list of time.Time.
 //
 // Example:
@@ -492,7 +491,6 @@ func (dt *DateTime) NotInList(values ...time.Time) *DateTime {
 				errors.New("unexpected empty list argument"),
 			},
 		})
-
 		return dt
 	}
 
@@ -506,7 +504,7 @@ func (dt *DateTime) NotInList(values ...time.Time) *DateTime {
 					errors.New("expected: time point is not equal to any of the values"),
 				},
 			})
-			break
+			return dt
 		}
 	}
 

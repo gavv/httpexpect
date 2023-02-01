@@ -366,9 +366,8 @@ func (n *Number) NotInRange(min, max interface{}) *Number {
 	return n
 }
 
-// InList succeeds if number is equal to one of the elements from given
-// list of numbers.
-// Before comparison, each value is converted to canonical form.
+// InList succeeds if the number is equal to one of the values from given list
+// of numbers. Before comparison, each value is converted to canonical form.
 //
 // Each value should be numeric type convertible to float64.
 //
@@ -391,7 +390,6 @@ func (n *Number) InList(values ...interface{}) *Number {
 				errors.New("unexpected empty list argument"),
 			},
 		})
-
 		return n
 	}
 
@@ -422,9 +420,8 @@ func (n *Number) InList(values ...interface{}) *Number {
 	return n
 }
 
-// NotInList succeeds if whole array is not equal to any of the elements
-// from given list of numbers.
-// Before comparison, each value is converted to canonical form.
+// NotInList succeeds if the number is not equal to any of the values from given
+// list of numbers. Before comparison, each value is converted to canonical form.
 //
 // Each value should be numeric type convertible to float64.
 //
@@ -447,7 +444,6 @@ func (n *Number) NotInList(values ...interface{}) *Number {
 				errors.New("unexpected empty list argument"),
 			},
 		})
-
 		return n
 	}
 
@@ -466,7 +462,7 @@ func (n *Number) NotInList(values ...interface{}) *Number {
 					errors.New("expected: number is not equal to any of the values"),
 				},
 			})
-			break
+			return n
 		}
 	}
 

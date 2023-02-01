@@ -524,9 +524,9 @@ func (v *Value) Equal(value interface{}) *Value {
 	return v.IsEqual(value)
 }
 
-// InList succeeds if whole value is equal to one of the elements from given
+// InList succeeds if whole value is equal to one of the values from given
 // list of values (e.g. map, slice, string, etc).
-// Before comparison, each value are converted to canonical form.
+// Before comparison, all values are converted to canonical form.
 //
 // Example:
 //
@@ -547,7 +547,6 @@ func (v *Value) InList(values ...interface{}) *Value {
 				errors.New("unexpected empty list argument"),
 			},
 		})
-
 		return v
 	}
 
@@ -578,9 +577,9 @@ func (v *Value) InList(values ...interface{}) *Value {
 	return v
 }
 
-// NotInList succeeds if whole value is not equal to any of the elements from
+// NotInList succeeds if the whole value is not equal to any of the values from
 // given list of values (e.g. map, slice, string, etc).
-// Before comparison, each value are converted to canonical form.
+// Before comparison, all values are converted to canonical form.
 //
 // Example:
 //
@@ -601,7 +600,6 @@ func (v *Value) NotInList(values ...interface{}) *Value {
 				errors.New("unexpected empty list argument"),
 			},
 		})
-
 		return v
 	}
 
@@ -620,7 +618,7 @@ func (v *Value) NotInList(values ...interface{}) *Value {
 					errors.New("expected: value is not equal to any of the values"),
 				},
 			})
-			break
+			return v
 		}
 	}
 

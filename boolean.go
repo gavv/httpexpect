@@ -162,7 +162,7 @@ func (b *Boolean) Equal(value bool) *Boolean {
 	return b.IsEqual(value)
 }
 
-// InList succeeds if boolean is equal to one of the elements from given
+// InList succeeds if boolean is equal to one of the values from given
 // list of booleans.
 //
 // Example:
@@ -184,7 +184,6 @@ func (b *Boolean) InList(values ...bool) *Boolean {
 				errors.New("unexpected empty list argument"),
 			},
 		})
-
 		return b
 	}
 
@@ -210,13 +209,13 @@ func (b *Boolean) InList(values ...bool) *Boolean {
 	return b
 }
 
-// NotInList succeeds if boolean is not equal to any of the elements from
+// NotInList succeeds if boolean is not equal to any of the values from
 // given list of booleans.
 //
 // Example:
 //
 //	boolean := NewBoolean(t, true)
-//	boolean.NotInList(true, false)
+//	boolean.NotInList(true, false) // failure
 func (b *Boolean) NotInList(values ...bool) *Boolean {
 	opChain := b.chain.enter("NotInList()")
 	defer opChain.leave()
@@ -232,7 +231,6 @@ func (b *Boolean) NotInList(values ...bool) *Boolean {
 				errors.New("unexpected empty list argument"),
 			},
 		})
-
 		return b
 	}
 
@@ -246,7 +244,7 @@ func (b *Boolean) NotInList(values ...bool) *Boolean {
 					errors.New("expected: boolean is not equal to any of the values"),
 				},
 			})
-			break
+			return b
 		}
 	}
 

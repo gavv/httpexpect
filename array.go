@@ -746,115 +746,6 @@ func (a *Array) Equal(value interface{}) *Array {
 	return a.IsEqual(value)
 }
 
-// InList succeeds if whole array is equal to one of the elements from given
-// list of arrays.
-// Before comparison, both array and each value are converted to canonical
-// form.
-//
-// Each value should be a slice of any type.
-//
-// Example:
-//
-//	array := NewArray(t, []interface{}{"foo", 123})
-//	array.InList([]interface{}{"foo", 123}, []interface{}{"bar", "456"})
-func (a *Array) InList(values ...interface{}) *Array {
-	opChain := a.chain.enter("InList()")
-	defer opChain.leave()
-
-	if opChain.failed() {
-		return a
-	}
-
-	if len(values) == 0 {
-		opChain.fail(AssertionFailure{
-			Type: AssertUsage,
-			Errors: []error{
-				errors.New("unexpected empty list argument"),
-			},
-		})
-
-		return a
-	}
-
-	var isListed bool
-	for _, v := range values {
-		expected, ok := canonArray(opChain, v)
-		if !ok {
-			return a
-		}
-
-		if reflect.DeepEqual(expected, a.value) {
-			isListed = true
-			break
-		}
-	}
-
-	if !isListed {
-		opChain.fail(AssertionFailure{
-			Type:     AssertBelongs,
-			Actual:   &AssertionValue{a.value},
-			Expected: &AssertionValue{AssertionList(values)},
-			Errors: []error{
-				errors.New("expected: arrays is equal to one of the values"),
-			},
-		})
-	}
-
-	return a
-}
-
-// NotInList succeeds if whole array is not equal to any of the elements
-// from given list of arrays.
-// Before comparison, both array and each value are converted to canonical
-// form.
-//
-// Each value should be a slice of any type.
-//
-// Example:
-//
-//	array := NewArray(t, []interface{}{"foo", 123})
-//	array.NotInList([]interface{}{"bar", 456}, []interface{}{"baz", "foo"})
-func (a *Array) NotInList(values ...interface{}) *Array {
-	opChain := a.chain.enter("NotInList()")
-	defer opChain.leave()
-
-	if opChain.failed() {
-		return a
-	}
-
-	if len(values) == 0 {
-		opChain.fail(AssertionFailure{
-			Type: AssertUsage,
-			Errors: []error{
-				errors.New("unexpected empty list argument"),
-			},
-		})
-
-		return a
-	}
-
-	for _, v := range values {
-		expected, ok := canonArray(opChain, v)
-		if !ok {
-			return a
-		}
-
-		if reflect.DeepEqual(expected, a.value) {
-			opChain.fail(AssertionFailure{
-				Type:     AssertNotBelongs,
-				Actual:   &AssertionValue{a.value},
-				Expected: &AssertionValue{AssertionList(values)},
-				Errors: []error{
-					errors.New("expected: arrays is not equal to any of the values"),
-				},
-			})
-			break
-		}
-	}
-
-	return a
-}
-
 // IsEqualUnordered succeeds if array is equal to another array, ignoring element
 // order. Before comparison, both arrays are converted to canonical form.
 //
@@ -1007,6 +898,111 @@ func (a *Array) NotEqualUnordered(value interface{}) *Array {
 // Deprecated: use IsEqualUnordered instead.
 func (a *Array) EqualUnordered(value interface{}) *Array {
 	return a.IsEqualUnordered(value)
+}
+
+// InList succeeds if the whole array is equal to one of the values from given
+// list of arrays. Before comparison, both array and each value are converted
+// to canonical form.
+//
+// Each value should be a slice of any type.
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{"foo", 123})
+//	array.InList([]interface{}{"foo", 123}, []interface{}{"bar", "456"})
+func (a *Array) InList(values ...interface{}) *Array {
+	opChain := a.chain.enter("InList()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return a
+	}
+
+	if len(values) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty list argument"),
+			},
+		})
+		return a
+	}
+
+	var isListed bool
+	for _, v := range values {
+		expected, ok := canonArray(opChain, v)
+		if !ok {
+			return a
+		}
+
+		if reflect.DeepEqual(expected, a.value) {
+			isListed = true
+			break
+		}
+	}
+
+	if !isListed {
+		opChain.fail(AssertionFailure{
+			Type:     AssertBelongs,
+			Actual:   &AssertionValue{a.value},
+			Expected: &AssertionValue{AssertionList(values)},
+			Errors: []error{
+				errors.New("expected: array is equal to one of the values"),
+			},
+		})
+	}
+
+	return a
+}
+
+// NotInList succeeds if the whole array is not equal to any of the values from
+// given list of arrays. Before comparison, both array and each value are
+// converted to canonical form.
+//
+// Each value should be a slice of any type.
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{"foo", 123})
+//	array.NotInList([]interface{}{"bar", 456}, []interface{}{"baz", "foo"})
+func (a *Array) NotInList(values ...interface{}) *Array {
+	opChain := a.chain.enter("NotInList()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return a
+	}
+
+	if len(values) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty list argument"),
+			},
+		})
+		return a
+	}
+
+	for _, v := range values {
+		expected, ok := canonArray(opChain, v)
+		if !ok {
+			return a
+		}
+
+		if reflect.DeepEqual(expected, a.value) {
+			opChain.fail(AssertionFailure{
+				Type:     AssertNotBelongs,
+				Actual:   &AssertionValue{a.value},
+				Expected: &AssertionValue{AssertionList(values)},
+				Errors: []error{
+					errors.New("expected: array is not equal to any of the values"),
+				},
+			})
+			return a
+		}
+	}
+
+	return a
 }
 
 // ConsistsOf succeeds if array contains all given elements, in given order, and only

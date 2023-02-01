@@ -430,7 +430,7 @@ func (d *Duration) NotInRange(min, max time.Duration) *Duration {
 	return d
 }
 
-// InList succeeds if Duration is equal to one of the elements from given
+// InList succeeds if Duration is equal to one of the values from given
 // list of time.Duration.
 //
 // Example:
@@ -452,7 +452,6 @@ func (d *Duration) InList(values ...time.Duration) *Duration {
 				errors.New("unexpected empty list argument"),
 			},
 		})
-
 		return d
 	}
 
@@ -489,7 +488,7 @@ func (d *Duration) InList(values ...time.Duration) *Duration {
 	return d
 }
 
-// NotInList succeeds if Duration is not equal to any of the elements from
+// NotInList succeeds if Duration is not equal to any of the values from
 // given list of time.Duration.
 //
 // Example:
@@ -511,7 +510,6 @@ func (d *Duration) NotInList(values ...time.Duration) *Duration {
 				errors.New("unexpected empty list argument"),
 			},
 		})
-
 		return d
 	}
 
@@ -523,7 +521,6 @@ func (d *Duration) NotInList(values ...time.Duration) *Duration {
 				errors.New("expected: duration is present"),
 			},
 		})
-
 		return d
 	}
 
@@ -537,7 +534,7 @@ func (d *Duration) NotInList(values ...time.Duration) *Duration {
 					errors.New("expected: duration is not equal to any of the values"),
 				},
 			})
-			break
+			return d
 		}
 	}
 
