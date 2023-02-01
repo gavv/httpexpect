@@ -16,92 +16,7 @@ func (*typedStingerNil) String() string {
 	return ""
 }
 
-func TestFormat_Values(t *testing.T) {
-	var mockDefaultFormatter = &DefaultFormatter{}
-
-	checkAll := func(t *testing.T, fn func(interface{}) string) {
-		var tnil *typedStingerNil
-		var tnilPtr fmt.Stringer = tnil
-
-		assert.Nil(t, tnilPtr)
-		assert.NotEqual(t, nil, tnilPtr)
-
-		check := func(s string) {
-			t.Logf("\n%s", s)
-			assert.NotEmpty(t, s)
-		}
-
-		check(fn(nil))
-		check(fn(tnil))
-		check(fn(tnilPtr))
-		check(fn(123))
-		check(fn(float32(123)))
-		check(fn(float64(123)))
-		check(fn("hello"))
-		check(fn(time.Second))
-		check(fn(time.Unix(0, 0)))
-		check(fn([]interface{}{1, 2}))
-		check(fn(map[string]string{"a": "b"}))
-		check(fn(make(chan int)))
-		check(fn(AssertionRange{1, 2}))
-		check(fn(&AssertionRange{1, 2}))
-		check(fn(AssertionRange{"a", "b"}))
-		check(fn(AssertionList([]interface{}{1, 2})))
-	}
-
-	t.Run("formatValue", func(t *testing.T) {
-		checkAll(t, mockDefaultFormatter.formatValue)
-	})
-
-	t.Run("formatTypedValue", func(t *testing.T) {
-		checkAll(t, mockDefaultFormatter.formatTypedValue)
-	})
-
-	t.Run("formatMatchValue", func(t *testing.T) {
-		checkAll(t, mockDefaultFormatter.formatMatchValue)
-	})
-
-	t.Run("formatRangeValue", func(t *testing.T) {
-		checkAll(t, func(v interface{}) string {
-			return strings.Join(mockDefaultFormatter.formatRangeValue(v), "")
-		})
-	})
-
-	t.Run("formatListValue", func(t *testing.T) {
-		checkAll(t, func(v interface{}) string {
-			return strings.Join(mockDefaultFormatter.formatListValue(v), "")
-		})
-	})
-}
-
-func TestFormat_Diff(t *testing.T) {
-	var mockDefaultFormatter = &DefaultFormatter{}
-
-	checkOK := func(a, b interface{}) {
-		s, ok := mockDefaultFormatter.formatDiff(a, b)
-		assert.True(t, ok)
-		assert.NotEqual(t, "", s)
-	}
-
-	checkNotOK := func(a, b interface{}) {
-		s, ok := mockDefaultFormatter.formatDiff(a, b)
-		assert.False(t, ok)
-		assert.Equal(t, "", s)
-	}
-
-	checkNotOK(map[string]interface{}{}, []interface{}{})
-	checkNotOK([]interface{}{}, map[string]interface{}{})
-	checkNotOK("foo", "bar")
-	checkNotOK(func() {}, func() {})
-
-	checkNotOK(map[string]interface{}{}, map[string]interface{}{})
-	checkNotOK([]interface{}{}, []interface{}{})
-
-	checkOK(map[string]interface{}{"a": 1}, map[string]interface{}{})
-	checkOK([]interface{}{"a"}, []interface{}{})
-}
-
-func TestFormat_FailureActual(t *testing.T) {
+func TestFormatter_FailureActual(t *testing.T) {
 	tests := []struct {
 		name           string
 		assertionType  AssertionType
@@ -216,7 +131,7 @@ func TestFormat_FailureActual(t *testing.T) {
 	}
 }
 
-func TestFormat_FailureExpected(t *testing.T) {
+func TestFormatter_FailureExpected(t *testing.T) {
 	tests := []struct {
 		name             string
 		assertionType    AssertionType
@@ -433,7 +348,7 @@ func TestFormat_FailureExpected(t *testing.T) {
 	}
 }
 
-func TestFormat_FailureReference(t *testing.T) {
+func TestFormatter_FailureReference(t *testing.T) {
 	tests := []struct {
 		name              string
 		assertionValue    interface{}
@@ -495,7 +410,7 @@ func TestFormat_FailureReference(t *testing.T) {
 	}
 }
 
-func TestFormat_FailureDelta(t *testing.T) {
+func TestFormatter_FailureDelta(t *testing.T) {
 	tests := []struct {
 		name           string
 		assertionValue interface{}
@@ -787,4 +702,89 @@ func TestFormatter_FloatFields(t *testing.T) {
 			})
 		})
 	}
+}
+
+func TestFormatter_FormatValue(t *testing.T) {
+	var formatter = &DefaultFormatter{}
+
+	checkAll := func(t *testing.T, fn func(interface{}) string) {
+		var tnil *typedStingerNil
+		var tnilPtr fmt.Stringer = tnil
+
+		assert.Nil(t, tnilPtr)
+		assert.NotEqual(t, nil, tnilPtr)
+
+		check := func(s string) {
+			t.Logf("\n%s", s)
+			assert.NotEmpty(t, s)
+		}
+
+		check(fn(nil))
+		check(fn(tnil))
+		check(fn(tnilPtr))
+		check(fn(123))
+		check(fn(float32(123)))
+		check(fn(float64(123)))
+		check(fn("hello"))
+		check(fn(time.Second))
+		check(fn(time.Unix(0, 0)))
+		check(fn([]interface{}{1, 2}))
+		check(fn(map[string]string{"a": "b"}))
+		check(fn(make(chan int)))
+		check(fn(AssertionRange{1, 2}))
+		check(fn(&AssertionRange{1, 2}))
+		check(fn(AssertionRange{"a", "b"}))
+		check(fn(AssertionList([]interface{}{1, 2})))
+	}
+
+	t.Run("formatValue", func(t *testing.T) {
+		checkAll(t, formatter.formatValue)
+	})
+
+	t.Run("formatTypedValue", func(t *testing.T) {
+		checkAll(t, formatter.formatTypedValue)
+	})
+
+	t.Run("formatMatchValue", func(t *testing.T) {
+		checkAll(t, formatter.formatMatchValue)
+	})
+
+	t.Run("formatRangeValue", func(t *testing.T) {
+		checkAll(t, func(v interface{}) string {
+			return strings.Join(formatter.formatRangeValue(v), "")
+		})
+	})
+
+	t.Run("formatListValue", func(t *testing.T) {
+		checkAll(t, func(v interface{}) string {
+			return strings.Join(formatter.formatListValue(v), "")
+		})
+	})
+}
+
+func TestFormatter_FormatDiff(t *testing.T) {
+	var formatter = &DefaultFormatter{}
+
+	checkOK := func(a, b interface{}) {
+		s, ok := formatter.formatDiff(a, b)
+		assert.True(t, ok)
+		assert.NotEqual(t, "", s)
+	}
+
+	checkNotOK := func(a, b interface{}) {
+		s, ok := formatter.formatDiff(a, b)
+		assert.False(t, ok)
+		assert.Equal(t, "", s)
+	}
+
+	checkNotOK(map[string]interface{}{}, []interface{}{})
+	checkNotOK([]interface{}{}, map[string]interface{}{})
+	checkNotOK("foo", "bar")
+	checkNotOK(func() {}, func() {})
+
+	checkNotOK(map[string]interface{}{}, map[string]interface{}{})
+	checkNotOK([]interface{}{}, []interface{}{})
+
+	checkOK(map[string]interface{}{"a": 1}, map[string]interface{}{})
+	checkOK([]interface{}{"a"}, []interface{}{})
 }
