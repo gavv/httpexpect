@@ -247,7 +247,7 @@ func (f *DefaultFormatter) fillErrors(
 	data *FormatData, ctx *AssertionContext, failure *AssertionFailure,
 ) {
 	for _, err := range failure.Errors {
-		if err == nil {
+		if isNil(err) {
 			continue
 		}
 		data.Errors = append(data.Errors, err.Error())
