@@ -21,19 +21,19 @@ type Value struct {
 // Example:
 //
 //	value := NewValue(t, map[string]interface{}{"foo": 123})
-//	value.Object()
+//	value.IsObject()
 //
 //	value := NewValue(t, []interface{}{"foo", 123})
-//	value.Array()
+//	value.IsArray()
 //
 //	value := NewValue(t, "foo")
-//	value.String()
+//	value.IsString()
 //
 //	value := NewValue(t, 123)
-//	value.Number()
+//	value.IsNumber()
 //
 //	value := NewValue(t, true)
-//	value.Boolean()
+//	value.IsBoolean()
 //
 //	value := NewValue(t, nil)
 //	value.Null()
@@ -242,7 +242,7 @@ func (v *Value) Object() *Object {
 			Type:   AssertValid,
 			Actual: &AssertionValue{v.value},
 			Errors: []error{
-				errors.New("expected: value is map"),
+				errors.New("expected: value is object"),
 			},
 		})
 		return newObject(opChain, nil)
@@ -428,8 +428,8 @@ func (v *Value) Null() *Value {
 //	value := NewValue(t, "")
 //	value.NotNull()
 //
-//	value := NewValue(t, make([]interface{}, 0)
-//	value.Null()
+//	value := NewValue(t, make([]interface{}, 0))
+//	value.NotNull()
 func (v *Value) NotNull() *Value {
 	opChain := v.chain.enter("NotNull()")
 	defer opChain.leave()
@@ -438,12 +438,304 @@ func (v *Value) NotNull() *Value {
 		return v
 	}
 
-	if !(v.value != nil) {
+	if v.value == nil {
 		opChain.fail(AssertionFailure{
 			Type:   AssertNotNil,
 			Actual: &AssertionValue{v.value},
 			Errors: []error{
 				errors.New("expected: value is non-null"),
+			},
+		})
+	}
+
+	return v
+}
+
+// IsObject succeeds if the underlying value is an object.
+//
+// If underlying value is not an object (map[string]interface{}), failure is reported.
+//
+// Example:
+//
+//	value := NewValue(t, map[string]interface{}{"foo": 123})
+//	value.IsObject()
+func (v *Value) IsObject() *Value {
+	opChain := v.chain.enter("IsObject()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return v
+	}
+
+	if _, ok := v.value.(map[string]interface{}); !ok {
+		opChain.fail(AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{v.value},
+			Errors: []error{
+				errors.New("expected: value is object"),
+			},
+		})
+	}
+
+	return v
+}
+
+// NotObject succeeds if the underlying value is not an object.
+//
+// If underlying value is an object (map[string]interface{}), failure is reported.
+//
+// Example:
+//
+//	value := NewValue(t, nil)
+//	value.NotObject()
+func (v *Value) NotObject() *Value {
+	opChain := v.chain.enter("NotObject()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return v
+	}
+
+	if _, ok := v.value.(map[string]interface{}); ok {
+		opChain.fail(AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{v.value},
+			Errors: []error{
+				errors.New("expected: value is not object"),
+			},
+		})
+	}
+
+	return v
+}
+
+// IsArray succeeds if the underlying value is an array.
+//
+// If underlying value is not an array ([]interface{}), failure is reported.
+//
+// Example:
+//
+//	value := NewValue(t, []interface{}{"foo", "123"})
+//	value.IsArray()
+func (v *Value) IsArray() *Value {
+	opChain := v.chain.enter("IsArray()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return v
+	}
+
+	if _, ok := v.value.([]interface{}); !ok {
+		opChain.fail(AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{v.value},
+			Errors: []error{
+				errors.New("expected: value is array"),
+			},
+		})
+	}
+
+	return v
+}
+
+// NotArray succeeds if the underlying value is not an array.
+//
+// If underlying value is an array ([]interface{}), failure is reported.
+//
+// Example:
+//
+//	value := NewValue(t, nil)
+//	value.NotArray()
+func (v *Value) NotArray() *Value {
+	opChain := v.chain.enter("NotArray()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return v
+	}
+
+	if _, ok := v.value.([]interface{}); ok {
+		opChain.fail(AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{v.value},
+			Errors: []error{
+				errors.New("expected: value is not array"),
+			},
+		})
+	}
+
+	return v
+}
+
+// IsString succeeds if the underlying value is a string.
+//
+// If underlying value is not a string, failure is reported.
+//
+// Example:
+//
+//	value := NewValue(t, "foo")
+//	value.IsString()
+func (v *Value) IsString() *Value {
+	opChain := v.chain.enter("IsString()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return v
+	}
+
+	if _, ok := v.value.(string); !ok {
+		opChain.fail(AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{v.value},
+			Errors: []error{
+				errors.New("expected: value is string"),
+			},
+		})
+	}
+
+	return v
+}
+
+// NotString succeeds if the underlying value is not a string.
+//
+// If underlying value is a string, failure is reported.
+//
+// Example:
+//
+//	value := NewValue(t, nil)
+//	value.NotString()
+func (v *Value) NotString() *Value {
+	opChain := v.chain.enter("NotString()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return v
+	}
+
+	if _, ok := v.value.(string); ok {
+		opChain.fail(AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{v.value},
+			Errors: []error{
+				errors.New("expected: value is not string"),
+			},
+		})
+	}
+
+	return v
+}
+
+// IsNumber succeeds if the underlying value is a number.
+//
+// If underlying value is not a number (numeric type convertible to float64),
+// failure is reported
+//
+// Example:
+//
+//	value := NewValue(t, 123)
+//	value.IsNumber()
+func (v *Value) IsNumber() *Value {
+	opChain := v.chain.enter("IsNumber()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return v
+	}
+
+	if _, ok := v.value.(float64); !ok {
+		opChain.fail(AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{v.value},
+			Errors: []error{
+				errors.New("expected: value is number"),
+			},
+		})
+	}
+
+	return v
+}
+
+// NotNumber succeeds if the underlying value is a not a number.
+//
+// If underlying value is a number (numeric type convertible to float64),
+// failure is reported
+//
+// Example:
+//
+//	value := NewValue(t, nil)
+//	value.NotNumber()
+func (v *Value) NotNumber() *Value {
+	opChain := v.chain.enter("NotNumber()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return v
+	}
+
+	if _, ok := v.value.(float64); ok {
+		opChain.fail(AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{v.value},
+			Errors: []error{
+				errors.New("expected: value is not number"),
+			},
+		})
+	}
+
+	return v
+}
+
+// IsBoolean succeeds if the underlying value is a boolean.
+//
+// If underlying value is not a boolean, failure is reported.
+//
+// Example:
+//
+//	value := NewValue(t, true)
+//	value.IsBoolean()
+func (v *Value) IsBoolean() *Value {
+	opChain := v.chain.enter("IsBoolean()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return v
+	}
+
+	if _, ok := v.value.(bool); !ok {
+		opChain.fail(AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{v.value},
+			Errors: []error{
+				errors.New("expected: value is boolean"),
+			},
+		})
+	}
+
+	return v
+}
+
+// NotBoolean succeeds if the underlying value is not a boolean.
+//
+// If underlying value is a boolean, failure is reported.
+//
+// Example:
+//
+//	value := NewValue(t, nil)
+//	value.NotBoolean()
+func (v *Value) NotBoolean() *Value {
+	opChain := v.chain.enter("NotBoolean()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return v
+	}
+
+	if _, ok := v.value.(bool); ok {
+		opChain.fail(AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{v.value},
+			Errors: []error{
+				errors.New("expected: value is not boolean"),
 			},
 		})
 	}
@@ -531,7 +823,7 @@ func (v *Value) Equal(value interface{}) *Value {
 // Example:
 //
 //	value := NewValue(t, "foo")
-//	value.InList("foo", map[string]interface{}{"bar": true})
+//	value.InList("foo", 123)
 func (v *Value) InList(values ...interface{}) *Value {
 	opChain := v.chain.enter("InList()")
 	defer opChain.leave()
@@ -584,7 +876,7 @@ func (v *Value) InList(values ...interface{}) *Value {
 // Example:
 //
 //	value := NewValue(t, "foo")
-//	value.NotInList("bar", map[string]interface{}{"bar": true})
+//	value.NotInList("bar", 123)
 func (v *Value) NotInList(values ...interface{}) *Value {
 	opChain := v.chain.enter("NotInList()")
 	defer opChain.leave()
@@ -620,298 +912,6 @@ func (v *Value) NotInList(values ...interface{}) *Value {
 			})
 			return v
 		}
-	}
-
-	return v
-}
-
-// IsObject succeeds if the underlying value is an object.
-//
-// If underlying value is not an object (map[string]interface{}), failure is reported.
-//
-// Example:
-//
-//	value := NewValue(t, map[string]interface{}{"foo": 123})
-//	value.IsObject()
-func (v *Value) IsObject() *Value {
-	opChain := v.chain.enter("IsObject()")
-	defer opChain.leave()
-
-	if opChain.failed() {
-		return v
-	}
-
-	if _, ok := v.value.(map[string]interface{}); !ok {
-		opChain.fail(AssertionFailure{
-			Type:   AssertValid,
-			Actual: &AssertionValue{v.value},
-			Errors: []error{
-				errors.New("expected: value is object"),
-			},
-		})
-	}
-
-	return v
-}
-
-// NotObject succeeds if the underlying value is not an object.
-//
-// If underlying value is an object (map[string]interface{}), failure is reported.
-//
-// Example:
-//
-//	value := NewValue(t, map[string]interface{}{"foo": 123})
-//	value.NotObject()
-func (v *Value) NotObject() *Value {
-	opChain := v.chain.enter("NotObject()")
-	defer opChain.leave()
-
-	if opChain.failed() {
-		return v
-	}
-
-	if _, ok := v.value.(map[string]interface{}); ok {
-		opChain.fail(AssertionFailure{
-			Type:   AssertValid,
-			Actual: &AssertionValue{v.value},
-			Errors: []error{
-				errors.New("expected: value is not object"),
-			},
-		})
-	}
-
-	return v
-}
-
-// IsArray succeeds if the underlying value is an array.
-//
-// If underlying value is not an array ([]interface{}), failure is reported.
-//
-// Example:
-//
-//	value := NewValue(t, []interface{}{"foo", "123"})
-//	value.IsArray()
-func (v *Value) IsArray() *Value {
-	opChain := v.chain.enter("IsArray()")
-	defer opChain.leave()
-
-	if opChain.failed() {
-		return v
-	}
-
-	if _, ok := v.value.([]interface{}); !ok {
-		opChain.fail(AssertionFailure{
-			Type:   AssertValid,
-			Actual: &AssertionValue{v.value},
-			Errors: []error{
-				errors.New("expected: value is array"),
-			},
-		})
-	}
-
-	return v
-}
-
-// NotArray succeeds if the underlying value is not an array.
-//
-// If underlying value is an array ([]interface{}), failure is reported.
-//
-// Example:
-//
-//	value := NewValue(t, []interface{}{"foo", "123"})
-//	value.NotArray()
-func (v *Value) NotArray() *Value {
-	opChain := v.chain.enter("NotArray()")
-	defer opChain.leave()
-
-	if opChain.failed() {
-		return v
-	}
-
-	if _, ok := v.value.([]interface{}); ok {
-		opChain.fail(AssertionFailure{
-			Type:   AssertValid,
-			Actual: &AssertionValue{v.value},
-			Errors: []error{
-				errors.New("expected: value is not array"),
-			},
-		})
-	}
-
-	return v
-}
-
-// IsString succeeds if the underlying value is a string.
-//
-// If underlying value is not a string, failure is reported.
-//
-// Example:
-//
-//	value := NewValue(t, "foo")
-//	value.IsString()
-func (v *Value) IsString() *Value {
-	opChain := v.chain.enter("IsString()")
-	defer opChain.leave()
-
-	if opChain.failed() {
-		return v
-	}
-
-	if _, ok := v.value.(string); !ok {
-		opChain.fail(AssertionFailure{
-			Type:   AssertValid,
-			Actual: &AssertionValue{v.value},
-			Errors: []error{
-				errors.New("expected: value is string"),
-			},
-		})
-	}
-
-	return v
-}
-
-// NotString succeeds if the underlying value is not a string.
-//
-// If underlying value is a string, failure is reported.
-//
-// Example:
-//
-//	value := NewValue(t, "foo")
-//	value.NotString()
-func (v *Value) NotString() *Value {
-	opChain := v.chain.enter("NotString()")
-	defer opChain.leave()
-
-	if opChain.failed() {
-		return v
-	}
-
-	if _, ok := v.value.(string); ok {
-		opChain.fail(AssertionFailure{
-			Type:   AssertValid,
-			Actual: &AssertionValue{v.value},
-			Errors: []error{
-				errors.New("expected: value is not string"),
-			},
-		})
-	}
-
-	return v
-}
-
-// IsNumber succeeds if the underlying value is a number.
-//
-// If underlying value is not a number (numeric type convertible to float64),
-// failure is reported
-//
-// Example:
-//
-//	value := NewValue(t, 123)
-//	value.IsNumber()
-func (v *Value) IsNumber() *Value {
-	opChain := v.chain.enter("IsNumber()")
-	defer opChain.leave()
-
-	if opChain.failed() {
-		return v
-	}
-
-	if _, ok := v.value.(float64); !ok {
-		opChain.fail(AssertionFailure{
-			Type:   AssertValid,
-			Actual: &AssertionValue{v.value},
-			Errors: []error{
-				errors.New("expected: value is number"),
-			},
-		})
-	}
-
-	return v
-}
-
-// NotNumber succeeds if the underlying value is a not a number.
-//
-// If underlying value is a number (numeric type convertible to float64),
-// failure is reported
-//
-// Example:
-//
-//	value := NewValue(t, 123)
-//	value.NotNumber()
-func (v *Value) NotNumber() *Value {
-	opChain := v.chain.enter("NotNumber()")
-	defer opChain.leave()
-
-	if opChain.failed() {
-		return v
-	}
-
-	if _, ok := v.value.(float64); ok {
-		opChain.fail(AssertionFailure{
-			Type:   AssertValid,
-			Actual: &AssertionValue{v.value},
-			Errors: []error{
-				errors.New("expected: value is not number"),
-			},
-		})
-	}
-
-	return v
-}
-
-// IsBoolean succeeds if the underlying value is a boolean.
-//
-// If underlying value is not a boolean, failure is reported.
-//
-// Example:
-//
-//	value := NewValue(t, true)
-//	value.IsBoolean()
-func (v *Value) IsBoolean() *Value {
-	opChain := v.chain.enter("IsBoolean()")
-	defer opChain.leave()
-
-	if opChain.failed() {
-		return v
-	}
-
-	if _, ok := v.value.(bool); !ok {
-		opChain.fail(AssertionFailure{
-			Type:   AssertValid,
-			Actual: &AssertionValue{v.value},
-			Errors: []error{
-				errors.New("expected: value is boolean"),
-			},
-		})
-	}
-
-	return v
-}
-
-// NotBoolean succeeds if the underlying value is not a boolean.
-//
-// If underlying value is a boolean, failure is reported.
-//
-// Example:
-//
-//	value := NewValue(t, true)
-//	value.NotBoolean()
-func (v *Value) NotBoolean() *Value {
-	opChain := v.chain.enter("NotBoolean()")
-	defer opChain.leave()
-
-	if opChain.failed() {
-		return v
-	}
-
-	if _, ok := v.value.(bool); ok {
-		opChain.fail(AssertionFailure{
-			Type:   AssertValid,
-			Actual: &AssertionValue{v.value},
-			Errors: []error{
-				errors.New("expected: value is not boolean"),
-			},
-		})
 	}
 
 	return v
