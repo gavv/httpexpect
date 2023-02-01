@@ -271,20 +271,23 @@ func (s *String) InList(values ...string) *String {
 		return s
 	}
 
+	var isListed bool
 	for _, v := range values {
 		if s.value == v {
-			return s
+			isListed = true
 		}
 	}
 
-	opChain.fail(AssertionFailure{
-		Type:     AssertBelongs,
-		Actual:   &AssertionValue{s.value},
-		Expected: &AssertionValue{AssertionList(stringList(values))},
-		Errors: []error{
-			errors.New("expected: string is equal to one of the values"),
-		},
-	})
+	if !isListed {
+		opChain.fail(AssertionFailure{
+			Type:     AssertBelongs,
+			Actual:   &AssertionValue{s.value},
+			Expected: &AssertionValue{AssertionList(stringList(values))},
+			Errors: []error{
+				errors.New("expected: string is equal to one of the values"),
+			},
+		})
+	}
 
 	return s
 }
@@ -325,8 +328,7 @@ func (s *String) NotInList(values ...string) *String {
 					errors.New("expected: string is not equal to any of the values"),
 				},
 			})
-
-			return s
+			break
 		}
 	}
 
