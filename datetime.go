@@ -422,7 +422,8 @@ func (dt *DateTime) NotInRange(min, max time.Time) *DateTime {
 	return dt
 }
 
-// InList succeeds if DateTime is listed by given [values...].
+// InList succeeds if DateTime is equal to one of the elements from given
+// list of time.Time.
 //
 // Example:
 //
@@ -458,14 +459,15 @@ func (dt *DateTime) InList(values ...time.Time) *DateTime {
 		Actual:   &AssertionValue{dt.value},
 		Expected: &AssertionValue{AssertionList(timeList(values))},
 		Errors: []error{
-			errors.New("expected: time point is listed"),
+			errors.New("expected: time point is equal to one of the values"),
 		},
 	})
 
 	return dt
 }
 
-// NotInList succeeds if DateTime is not listed by given [values...].
+// NotInList succeeds if DateTime is not equal to any of the elements from
+// given list of time.Time.
 //
 // Example:
 //
@@ -497,7 +499,7 @@ func (dt *DateTime) NotInList(values ...time.Time) *DateTime {
 				Actual:   &AssertionValue{dt.value},
 				Expected: &AssertionValue{AssertionList(timeList(values))},
 				Errors: []error{
-					errors.New("expected: time point is not listed"),
+					errors.New("expected: time point is not equal to any of the values"),
 				},
 			})
 		}
