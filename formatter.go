@@ -35,7 +35,8 @@ const (
 	FloatFormatDecimal
 
 	// Always print floats in scientific notation.
-	// Similar to %e format.
+	// Similar to %f format, with precision set to the smallest number of digits
+	// necessary to identify the value uniquely.
 	FloatFormatScientific
 )
 
