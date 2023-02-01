@@ -551,6 +551,7 @@ func (v *Value) InList(values ...interface{}) *Value {
 		return v
 	}
 
+	var isListed bool
 	for _, val := range values {
 		expected, ok := canonValue(opChain, val)
 		if !ok {
@@ -558,18 +559,21 @@ func (v *Value) InList(values ...interface{}) *Value {
 		}
 
 		if reflect.DeepEqual(expected, v.value) {
-			return v
+			isListed = true
+			break
 		}
 	}
 
-	opChain.fail(AssertionFailure{
-		Type:     AssertBelongs,
-		Actual:   &AssertionValue{v.value},
-		Expected: &AssertionValue{AssertionList(values)},
-		Errors: []error{
-			errors.New("expected: value is equal to one of the values"),
-		},
-	})
+	if !isListed {
+		opChain.fail(AssertionFailure{
+			Type:     AssertBelongs,
+			Actual:   &AssertionValue{v.value},
+			Expected: &AssertionValue{AssertionList(values)},
+			Errors: []error{
+				errors.New("expected: value is equal to one of the values"),
+			},
+		})
+	}
 
 	return v
 }
@@ -616,6 +620,7 @@ func (v *Value) NotInList(values ...interface{}) *Value {
 					errors.New("expected: value is not equal to any of the values"),
 				},
 			})
+			break
 		}
 	}
 
