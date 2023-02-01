@@ -746,22 +746,17 @@ func (a *Array) Equal(value interface{}) *Array {
 	return a.IsEqual(value)
 }
 
-// InList succeeds if array is listed by given [values...].
-// Before comparison, both array and value are converted to canonical form.
+// InList succeeds if whole array is equal to one of the elements from given
+// list of arrays.
+// Before comparison, both array and each value are converted to canonical
+// form.
 //
-// values should be an array of slice of any type. This comparison adheres
-// element order.
+// Each value should be a slice of any type.
 //
 // Example:
 //
 //	array := NewArray(t, []interface{}{"foo", 123})
-//	array.InList([]interface{}{"foo", 123})
-//
-//	array := NewArray(t, []interface{}{"foo", "bar"})
-//	array.InList([]string{}{"foo", "bar"})
-//
-//	array := NewArray(t, []interface{}{123, 456})
-//	array.InList([]int{}{123, 456})
+//	array.InList([]interface{}{"foo", 123}, []interface{}{"bar", "456"})
 func (a *Array) InList(values ...interface{}) *Array {
 	opChain := a.chain.enter("InList()")
 	defer opChain.leave()
@@ -799,7 +794,7 @@ func (a *Array) InList(values ...interface{}) *Array {
 			Actual:   &AssertionValue{a.value},
 			Expected: &AssertionValue{AssertionList(values)},
 			Errors: []error{
-				errors.New("expected: arrays are listed"),
+				errors.New("expected: arrays is equal to one of the values"),
 			},
 		})
 	}
@@ -807,22 +802,17 @@ func (a *Array) InList(values ...interface{}) *Array {
 	return a
 }
 
-// NotInList succeeds if array is not listed by given [values...].
-// Before comparison, both array and value are converted to canonical form.
+// NotInList succeeds if whole array is not equal to any of the elements
+// from given list of arrays.
+// Before comparison, both array and each value are converted to canonical
+// form.
 //
-// values should be an array of slice of any type. This comparison adheres
-// element order.
+// Each value should be a slice of any type.
 //
 // Example:
 //
 //	array := NewArray(t, []interface{}{"foo", 123})
-//	array.NotInList([]interface{}{"bar", 456})
-//
-//	array := NewArray(t, []interface{}{"foo", "bar"})
-//	array.NotInList([]string{}{"bar", "foo"})
-//
-//	array := NewArray(t, []interface{}{123, 456})
-//	array.NotInList([]int{}{789, 901})
+//	array.NotInList([]interface{}{"bar", 456}, []interface{}{"baz", "foo"})
 func (a *Array) NotInList(values ...interface{}) *Array {
 	opChain := a.chain.enter("NotInList()")
 	defer opChain.leave()
@@ -860,7 +850,7 @@ func (a *Array) NotInList(values ...interface{}) *Array {
 			Actual:   &AssertionValue{a.value},
 			Expected: &AssertionValue{AssertionList(values)},
 			Errors: []error{
-				errors.New("expected: arrays are not listed"),
+				errors.New("expected: arrays is not equal to any of the values"),
 			},
 		})
 	}
