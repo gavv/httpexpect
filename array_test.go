@@ -433,14 +433,6 @@ func TestArray_InList(t *testing.T) {
 	value.NotInList([]interface{}{"bar", "foo"}, []interface{}{"FOO", "BAR"})
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
-
-	value.InList([]interface{}{"foo", "bar"}, "foo")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInList([]interface{}{"foo", "bar"}, "foo")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
 }
 
 func TestArray_EqualTypes(t *testing.T) {

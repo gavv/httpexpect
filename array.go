@@ -785,6 +785,7 @@ func (a *Array) InList(values ...interface{}) *Array {
 
 		if reflect.DeepEqual(expected, a.value) {
 			isListed = true
+			break
 		}
 	}
 
@@ -832,7 +833,6 @@ func (a *Array) NotInList(values ...interface{}) *Array {
 		return a
 	}
 
-	var isListed bool
 	for _, v := range values {
 		expected, ok := canonArray(opChain, v)
 		if !ok {
@@ -840,19 +840,16 @@ func (a *Array) NotInList(values ...interface{}) *Array {
 		}
 
 		if reflect.DeepEqual(expected, a.value) {
-			isListed = true
+			opChain.fail(AssertionFailure{
+				Type:     AssertNotBelongs,
+				Actual:   &AssertionValue{a.value},
+				Expected: &AssertionValue{AssertionList(values)},
+				Errors: []error{
+					errors.New("expected: arrays is not equal to any of the values"),
+				},
+			})
+			break
 		}
-	}
-
-	if isListed {
-		opChain.fail(AssertionFailure{
-			Type:     AssertNotBelongs,
-			Actual:   &AssertionValue{a.value},
-			Expected: &AssertionValue{AssertionList(values)},
-			Errors: []error{
-				errors.New("expected: arrays is not equal to any of the values"),
-			},
-		})
 	}
 
 	return a
