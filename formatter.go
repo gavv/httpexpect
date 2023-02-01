@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"reflect"
 	"strconv"
@@ -465,11 +466,18 @@ func (f *DefaultFormatter) formatValue(value interface{}) string {
 func (f *DefaultFormatter) formatFloat(value float64, bits int) string {
 	switch f.FloatFormat {
 	case FloatFormatAuto:
-		return strconv.FormatFloat(value, 'g', -1, bits)
+		if _, frac := math.Modf(value); frac != 0 {
+			return strconv.FormatFloat(value, 'g', -1, bits)
+		} else {
+			return strconv.FormatFloat(value, 'f', -1, bits)
+		}
+
 	case FloatFormatDecimal:
 		return strconv.FormatFloat(value, 'f', -1, bits)
+
 	case FloatFormatScientific:
 		return strconv.FormatFloat(value, 'e', -1, bits)
+
 	default:
 		return fmt.Sprintf("%v", value)
 	}
