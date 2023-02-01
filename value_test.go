@@ -45,6 +45,18 @@ func TestValue_Failed(t *testing.T) {
 
 	value.InList(nil)
 	value.NotInList(nil)
+
+	value.IsObject().chain.assertFailed(t)
+	value.IsArray().chain.assertFailed(t)
+	value.IsString().chain.assertFailed(t)
+	value.IsNumber().chain.assertFailed(t)
+	value.IsBoolean().chain.assertFailed(t)
+
+	value.NotObject().chain.assertFailed(t)
+	value.NotArray().chain.assertFailed(t)
+	value.NotString().chain.assertFailed(t)
+	value.NotNumber().chain.assertFailed(t)
+	value.NotBoolean().chain.assertFailed(t)
 }
 
 func TestValue_Constructors(t *testing.T) {
@@ -813,4 +825,108 @@ func TestValue_Schema(t *testing.T) {
 
 	NewValue(reporter, data1).Schema("file:///bad/path").chain.assertFailed(t)
 	NewValue(reporter, data1).Schema("{ bad json").chain.assertFailed(t)
+}
+
+func TestValue_IsObject(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	data := map[string]interface{}{"foo": 123.0}
+
+	value1 := NewValue(reporter, data)
+	value1.IsObject()
+	value1.chain.assertNotFailed(t)
+
+	value1.NotObject()
+	value1.chain.assertFailed(t)
+	value1.chain.clearFailed()
+
+	value2 := NewValue(reporter, "foo")
+	value2.IsObject()
+	value2.chain.assertFailed(t)
+	value2.chain.clearFailed()
+
+	value2.NotObject()
+	value2.chain.assertNotFailed(t)
+}
+
+func TestValue_IsArray(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	data := []interface{}{"foo", "123"}
+
+	value1 := NewValue(reporter, data)
+	value1.IsArray()
+	value1.chain.assertNotFailed(t)
+
+	value1.NotArray()
+	value1.chain.assertFailed(t)
+	value1.chain.clearFailed()
+
+	value2 := NewValue(reporter, "foo")
+	value2.IsArray()
+	value2.chain.assertFailed(t)
+	value2.chain.clearFailed()
+
+	value2.NotArray()
+	value2.chain.assertNotFailed(t)
+}
+
+func TestValue_IsString(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value1 := NewValue(reporter, "foo")
+	value1.IsString()
+	value1.chain.assertNotFailed(t)
+
+	value1.NotString()
+	value1.chain.assertFailed(t)
+	value1.chain.clearFailed()
+
+	value2 := NewValue(reporter, 123)
+	value2.IsString()
+	value2.chain.assertFailed(t)
+	value2.chain.clearFailed()
+
+	value2.NotString()
+	value2.chain.assertNotFailed(t)
+}
+
+func TestValue_IsNumber(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value1 := NewValue(reporter, 123)
+	value1.IsNumber()
+	value1.chain.assertNotFailed(t)
+
+	value1.NotNumber()
+	value1.chain.assertFailed(t)
+	value1.chain.clearFailed()
+
+	value2 := NewValue(reporter, "foo")
+	value2.IsNumber()
+	value2.chain.assertFailed(t)
+	value2.chain.clearFailed()
+
+	value2.NotNumber()
+	value2.chain.assertNotFailed(t)
+}
+
+func TestValue_IsBoolean(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value1 := NewValue(reporter, true)
+	value1.IsBoolean()
+	value1.chain.assertNotFailed(t)
+
+	value1.NotBoolean()
+	value1.chain.assertFailed(t)
+	value1.chain.clearFailed()
+
+	value2 := NewValue(reporter, "foo")
+	value2.IsBoolean()
+	value2.chain.assertFailed(t)
+	value2.chain.clearFailed()
+
+	value2.NotBoolean()
+	value2.chain.assertNotFailed(t)
 }
