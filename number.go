@@ -366,10 +366,11 @@ func (n *Number) NotInRange(min, max interface{}) *Number {
 	return n
 }
 
-// InList succeeds if number is listed by given [values...].
+// InList succeeds if number is equal to one of the elements from given
+// list of numbers.
+// Before comparison, each value is converted to canonical form.
 //
-// values should have array of numeric type convertible to float64. Before
-// comparison, it is converted to float64.
+// Each value should be numeric type convertible to float64.
 //
 // Example:
 //
@@ -412,7 +413,7 @@ func (n *Number) InList(values ...interface{}) *Number {
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{AssertionList(values)},
 			Errors: []error{
-				errors.New("expected: number is listed"),
+				errors.New("expected: number is equal to one of the values"),
 			},
 		})
 	}
@@ -420,10 +421,11 @@ func (n *Number) InList(values ...interface{}) *Number {
 	return n
 }
 
-// NotInList succeeds if number is listed by given [values...].
+// NotInList succeeds if whole array is not equal to any of the elements
+// from given list of numbers.
+// Before comparison, each value is converted to canonical form.
 //
-// values should have array of numeric type convertible to float64. Before
-// comparison, it is converted to float64.
+// Each value should be numeric type convertible to float64.
 //
 // Example:
 //
@@ -466,7 +468,7 @@ func (n *Number) NotInList(values ...interface{}) *Number {
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{AssertionList(values)},
 			Errors: []error{
-				errors.New("expected: number is not listed"),
+				errors.New("expected: number is not equal to any of the values"),
 			},
 		})
 	}
