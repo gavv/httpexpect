@@ -1182,7 +1182,8 @@ func TestRequest_BodyMultipart(t *testing.T) {
 	assert.Equal(t, "multipart/form-data", mediatype)
 	assert.True(t, params["boundary"] != "")
 
-	reader := multipart.NewReader(bytes.NewReader(resp.getContent(resp.chain)), params["boundary"])
+	reader := multipart.NewReader(bytes.NewReader(resp.getContent(resp.chain)),
+		params["boundary"])
 
 	part1, _ := reader.NextPart()
 	assert.Equal(t, "b", part1.FormName())
@@ -1245,7 +1246,8 @@ func TestRequest_BodyMultipartFile(t *testing.T) {
 	assert.Equal(t, "multipart/form-data", mediatype)
 	assert.True(t, params["boundary"] != "")
 
-	reader := multipart.NewReader(bytes.NewReader(resp.getContent(resp.chain)), params["boundary"])
+	reader := multipart.NewReader(bytes.NewReader(resp.getContent(resp.chain)),
+		params["boundary"])
 
 	part1, _ := reader.NextPart()
 	assert.Equal(t, "a", part1.FormName())
