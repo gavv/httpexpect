@@ -124,7 +124,7 @@ func newResponse(opts responseOpts) *Response {
 		r.rtt = &rtt
 	}
 
-	opChain.setResponse(r)
+	r.chain.setResponse(r)
 
 	return r
 }
