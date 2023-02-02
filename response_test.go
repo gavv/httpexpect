@@ -122,7 +122,7 @@ func TestResponse_Constructors(t *testing.T) {
 			Body:       ioutil.NopCloser(bytes.NewBufferString("body")),
 		})
 		assert.Nil(t, resp.content)
-		assert.False(t, resp.hasRead)
+		assert.False(t, resp.contentReceived)
 	})
 }
 

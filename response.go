@@ -31,7 +31,7 @@ type Response struct {
 	content []byte
 	cookies []*http.Cookie
 
-	hasRead bool
+	contentReceived bool
 }
 
 // NewResponse returns a new Response instance.
@@ -161,9 +161,9 @@ func getResponseContent(opChain *chain, resp *http.Response) []byte {
 }
 
 func (r *Response) getContent(opChain *chain) []byte {
-	if !r.hasRead {
+	if !r.contentReceived {
 		r.content = getResponseContent(opChain, r.httpResp)
-		r.hasRead = true
+		r.contentReceived = true
 	}
 	return r.content
 }
