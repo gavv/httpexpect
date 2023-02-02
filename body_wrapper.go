@@ -35,8 +35,7 @@ func newBodyWrapper(reader io.ReadCloser, cancelFunc context.CancelFunc) *bodyWr
 		cancelFunc: cancelFunc,
 	}
 
-	// This is not strictly necessary because we should always call close.
-	// This is just a reinsurance.
+	// Finalizer will close body if closeAndCancel was never called.
 	runtime.SetFinalizer(bw, (*bodyWrapper).Close)
 
 	return bw
