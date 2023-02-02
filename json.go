@@ -10,14 +10,14 @@ import (
 	"github.com/yalp/jsonpath"
 )
 
-func jsonPath(chain *chain, value interface{}, path string) *Value {
-	if chain.failed() {
-		return newValue(chain, nil)
+func jsonPath(opChain *chain, value interface{}, path string) *Value {
+	if opChain.failed() {
+		return newValue(opChain, nil)
 	}
 
 	filterFn, err := jsonpath.Prepare(path)
 	if err != nil {
-		chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{path},
 			Errors: []error{
@@ -25,12 +25,12 @@ func jsonPath(chain *chain, value interface{}, path string) *Value {
 				err,
 			},
 		})
-		return newValue(chain, nil)
+		return newValue(opChain, nil)
 	}
 
 	result, err := filterFn(value)
 	if err != nil {
-		chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertMatchPath,
 			Actual:   &AssertionValue{value},
 			Expected: &AssertionValue{path},
@@ -39,14 +39,14 @@ func jsonPath(chain *chain, value interface{}, path string) *Value {
 				err,
 			},
 		})
-		return newValue(chain, nil)
+		return newValue(opChain, nil)
 	}
 
-	return newValue(chain, result)
+	return newValue(opChain, result)
 }
 
-func jsonSchema(chain *chain, value, schema interface{}) {
-	if chain.failed() {
+func jsonSchema(opChain *chain, value, schema interface{}) {
+	if opChain.failed() {
 		return
 	}
 
@@ -81,7 +81,7 @@ func jsonSchema(chain *chain, value, schema interface{}) {
 
 	result, err := gojsonschema.Validate(schemaLoader, valueLoader)
 	if err != nil {
-		chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{schema},
 			Errors: []error{
@@ -99,7 +99,7 @@ func jsonSchema(chain *chain, value, schema interface{}) {
 		for _, err := range result.Errors() {
 			errors = append(errors, fmt.Errorf("%s", err))
 		}
-		chain.fail(AssertionFailure{
+		opChain.fail(AssertionFailure{
 			Type:     AssertMatchSchema,
 			Actual:   &AssertionValue{value},
 			Expected: &AssertionValue{schemaData},

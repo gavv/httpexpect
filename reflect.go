@@ -5,14 +5,14 @@ import (
 	"reflect"
 )
 
-func isNil(value interface{}) bool {
+func refIsNil(value interface{}) bool {
 	defer func() {
 		_ = recover()
 	}()
 	return value == nil || reflect.ValueOf(value).IsNil()
 }
 
-func isNumber(value interface{}) bool {
+func refIsNum(value interface{}) bool {
 	defer func() {
 		_ = recover()
 	}()
@@ -20,7 +20,7 @@ func isNumber(value interface{}) bool {
 	return true
 }
 
-func isHTTP(value interface{}) bool {
+func refIsHTTP(value interface{}) bool {
 	switch value.(type) {
 	case *http.Client, http.Client,
 		*http.Transport, http.Transport,
