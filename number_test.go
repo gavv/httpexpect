@@ -468,6 +468,15 @@ func TestNumber_ConvertInRange(t *testing.T) {
 	value.NotInRange(int64(1233), "NOT NUMBER")
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
+
+	value.InRange("NOT NUMBER", float32(1235))
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInRange("NOT NUMBER", float32(1235))
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
 }
 
 func TestNumber_ConvertInList(t *testing.T) {

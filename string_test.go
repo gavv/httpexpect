@@ -266,7 +266,7 @@ func TestString_InList(t *testing.T) {
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.InList()
+	value.NotInList()
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
