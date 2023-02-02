@@ -17,7 +17,7 @@ func TestGinHandler(t *testing.T) {
 	e := httpexpect.WithConfig(httpexpect.Config{
 		Client: &http.Client{
 			Transport: httpexpect.NewBinder(handler),
-			Jar:       httpexpect.NewJar(),
+			Jar:       httpexpect.NewCookieJar(),
 		},
 		Reporter: httpexpect.NewAssertReporter(t),
 		Printers: []httpexpect.Printer{

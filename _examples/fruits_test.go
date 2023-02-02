@@ -18,7 +18,7 @@ func TestFruits(t *testing.T) {
 
 	e.GET("/fruits").
 		Expect().
-		Status(http.StatusOK).JSON().Array().Empty()
+		Status(http.StatusOK).JSON().Array().IsEmpty()
 
 	orange := map[string]interface{}{
 		"weight": 100,
@@ -61,7 +61,7 @@ func TestFruits(t *testing.T) {
 
 	e.GET("/fruits/orange").
 		Expect().
-		Status(http.StatusOK).JSON().Object().Equal(orange).NotEqual(apple)
+		Status(http.StatusOK).JSON().Object().IsEqual(orange).NotEqual(apple)
 
 	e.GET("/fruits/orange").
 		Expect().
@@ -79,15 +79,15 @@ func TestFruits(t *testing.T) {
 
 	colors.ConsistsOf("green", "red")
 
-	colors.Length().Equal(2)
-	colors.Element(0).String().Equal("green")
-	colors.Element(1).String().Equal("red")
+	colors.Length().IsEqual(2)
+	colors.Element(0).String().IsEqual("green")
+	colors.Element(1).String().IsEqual("red")
 
 	colors.Element(0).String().IsASCII()
 	colors.Element(0).String().HasPrefix("gr")
 	colors.Element(0).String().HasSuffix("een")
 
-	fruit.Value("weight").Number().Equal(200)
+	fruit.Value("weight").Number().IsEqual(200)
 
 	for _, element := range fruit.Value("image").Array().Iter() {
 		element.Object().

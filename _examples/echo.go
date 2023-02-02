@@ -40,7 +40,7 @@ func EchoHandler() http.Handler {
 
 	r := e.Group("/restricted")
 
-	r.Use(middleware.JWT([]byte("secret")))
+	r.Use(middleware.JWT([]byte("secret"))) //nolint
 
 	r.GET("/hello", func(ctx echo.Context) error {
 		return ctx.String(http.StatusOK, "hello, world!")
