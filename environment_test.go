@@ -53,32 +53,17 @@ func TestEnvironment_Basic(t *testing.T) {
 	env.chain.assertFailed(t)
 }
 
-type customReporter struct {
-	testing  *testing.T
-	reported bool
-}
-
-func newCustomReporter(t *testing.T) *customReporter {
-	return &customReporter{testing: t}
-}
-
-func (c *customReporter) Errorf(message string, args ...interface{}) {
-	env := NewEnvironment(c)
-	env.Get("key1")
-	c.testing.Logf("Fail: "+message, args...)
-	c.reported = true
-}
-func TestEnvironment_Deadlock(t *testing.T) {
-	reporter := newCustomReporter(t)
+func TestEnvironment_Reentrant(t *testing.T) {
+	reporter := newMockReporter(t)
 
 	env := NewEnvironment(reporter)
 
-	env.Put("key1", map[string]string{
-		"Foo": "123",
-	},
-	)
-	env.GetString("key1")
-	env.chain.failed()
+	reporter.reportCb = func() {
+		env.Put("good_key", 123)
+	}
+
+	env.Get("key")
+	env.chain.assertFailed(t)
 }
 
 func TestEnvironment_Delete(t *testing.T) {
