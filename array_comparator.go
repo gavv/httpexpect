@@ -6,13 +6,6 @@ import (
 )
 
 func arrayComparator(opChain *chain, array []interface{}) func(x, y *Value) bool {
-	if !arrayCompValidate(opChain, array) {
-		return nil
-	}
-	return arrayCompConstruct(array)
-}
-
-func arrayCompValidate(opChain *chain, array []interface{}) bool {
 	var prev interface{}
 	for index, curr := range array {
 		switch curr.(type) {
@@ -23,13 +16,13 @@ func arrayCompValidate(opChain *chain, array []interface{}) bool {
 			opChain.fail(AssertionFailure{
 				Type: AssertBelongs,
 				Actual: &AssertionValue{
-					typeName(fmt.Sprintf("%T", curr)),
+					unquotedType(fmt.Sprintf("%T", curr)),
 				},
 				Expected: &AssertionValue{AssertionList{
-					typeName("Boolean (bool)"),
-					typeName("Number (int*, uint*, float*)"),
-					typeName("String (string)"),
-					typeName("Null (nil)"),
+					unquotedType("Boolean (bool)"),
+					unquotedType("Number (int*, uint*, float*)"),
+					unquotedType("String (string)"),
+					unquotedType("Null (nil)"),
 				}},
 				Reference: &AssertionValue{
 					array,
@@ -40,17 +33,17 @@ func arrayCompValidate(opChain *chain, array []interface{}) bool {
 					fmt.Errorf("element %v has disallowed type %T", index, curr),
 				},
 			})
-			return false
+			return nil
 		}
 
 		if index > 0 && fmt.Sprintf("%T", curr) != fmt.Sprintf("%T", prev) {
 			opChain.fail(AssertionFailure{
 				Type: AssertEqual,
 				Actual: &AssertionValue{
-					typeName(fmt.Sprintf("%T (type of element %v)", curr, index)),
+					unquotedType(fmt.Sprintf("%T (type of element %v)", curr, index)),
 				},
 				Expected: &AssertionValue{
-					typeName(fmt.Sprintf("%T (type of element %v)", prev, index-1)),
+					unquotedType(fmt.Sprintf("%T (type of element %v)", prev, index-1)),
 				},
 				Reference: &AssertionValue{
 					array,
@@ -62,48 +55,43 @@ func arrayCompValidate(opChain *chain, array []interface{}) bool {
 						index-1, prev, index, curr),
 				},
 			})
-			return false
+			return nil
 		}
 
 		prev = curr
 	}
 
-	return true
-}
-
-func arrayCompConstruct(array []interface{}) func(x, y *Value) bool {
-	if len(array) > 0 {
-		switch array[0].(type) {
-		case bool:
-			return func(x, y *Value) bool {
-				xVal := x.Raw().(bool)
-				yVal := y.Raw().(bool)
-				return (!xVal && yVal)
-			}
-		case float64:
-			return func(x, y *Value) bool {
-				xVal := x.Raw().(float64)
-				yVal := y.Raw().(float64)
-				return xVal < yVal
-			}
-		case string:
-			return func(x, y *Value) bool {
-				xVal := x.Raw().(string)
-				yVal := y.Raw().(string)
-				return xVal < yVal
-			}
-		case nil:
-			return func(x, y *Value) bool {
-				// `nil` is never less than `nil`
-				return false
-			}
+	switch array[0].(type) {
+	case bool:
+		return func(x, y *Value) bool {
+			xVal := x.Raw().(bool)
+			yVal := y.Raw().(bool)
+			return (!xVal && yVal)
+		}
+	case float64:
+		return func(x, y *Value) bool {
+			xVal := x.Raw().(float64)
+			yVal := y.Raw().(float64)
+			return xVal < yVal
+		}
+	case string:
+		return func(x, y *Value) bool {
+			xVal := x.Raw().(string)
+			yVal := y.Raw().(string)
+			return xVal < yVal
+		}
+	case nil:
+		return func(x, y *Value) bool {
+			// `nil` is never less than `nil`
+			return false
 		}
 	}
+
 	return nil
 }
 
-type typeName string
+type unquotedType string
 
-func (t typeName) String() string {
+func (t unquotedType) String() string {
 	return string(t)
 }
