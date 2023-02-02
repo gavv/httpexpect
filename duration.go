@@ -475,10 +475,15 @@ func (d *Duration) InList(values ...time.Duration) *Duration {
 	}
 
 	if !isListed {
+		valueList := make([]interface{}, 0, len(values))
+		for _, v := range values {
+			valueList = append(valueList, v)
+		}
+
 		opChain.fail(AssertionFailure{
 			Type:     AssertBelongs,
 			Actual:   &AssertionValue{d.value},
-			Expected: &AssertionValue{AssertionList(durationList(values))},
+			Expected: &AssertionValue{AssertionList(valueList)},
 			Errors: []error{
 				errors.New("expected: duration is equal to one of the values"),
 			},
@@ -526,26 +531,23 @@ func (d *Duration) NotInList(values ...time.Duration) *Duration {
 
 	for _, v := range values {
 		if *d.value == v {
+			valueList := make([]interface{}, 0, len(values))
+			for _, v := range values {
+				valueList = append(valueList, v)
+			}
+
 			opChain.fail(AssertionFailure{
 				Type:     AssertNotBelongs,
 				Actual:   &AssertionValue{d.value},
-				Expected: &AssertionValue{AssertionList(durationList(values))},
+				Expected: &AssertionValue{AssertionList(valueList)},
 				Errors: []error{
 					errors.New("expected: duration is not equal to any of the values"),
 				},
 			})
+
 			return d
 		}
 	}
 
 	return d
-}
-
-func durationList(values []time.Duration) []interface{} {
-	l := make([]interface{}, 0, len(values))
-	for _, v := range values {
-		l = append(l, v)
-	}
-
-	return l
 }

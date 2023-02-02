@@ -456,10 +456,15 @@ func (dt *DateTime) InList(values ...time.Time) *DateTime {
 	}
 
 	if !isListed {
+		valueList := make([]interface{}, 0, len(values))
+		for _, v := range values {
+			valueList = append(valueList, v)
+		}
+
 		opChain.fail(AssertionFailure{
 			Type:     AssertBelongs,
 			Actual:   &AssertionValue{dt.value},
-			Expected: &AssertionValue{AssertionList(timeList(values))},
+			Expected: &AssertionValue{AssertionList(valueList)},
 			Errors: []error{
 				errors.New("expected: time point is equal to one of the values"),
 			},
@@ -496,14 +501,20 @@ func (dt *DateTime) NotInList(values ...time.Time) *DateTime {
 
 	for _, v := range values {
 		if dt.value.Equal(v) {
+			valueList := make([]interface{}, 0, len(values))
+			for _, v := range values {
+				valueList = append(valueList, v)
+			}
+
 			opChain.fail(AssertionFailure{
 				Type:     AssertNotBelongs,
 				Actual:   &AssertionValue{dt.value},
-				Expected: &AssertionValue{AssertionList(timeList(values))},
+				Expected: &AssertionValue{AssertionList(valueList)},
 				Errors: []error{
 					errors.New("expected: time point is not equal to any of the values"),
 				},
 			})
+
 			return dt
 		}
 	}
@@ -657,13 +668,4 @@ func (dt *DateTime) AsLocal() *DateTime {
 	}
 
 	return newDateTime(opChain, dt.value.Local())
-}
-
-func timeList(values []time.Time) []interface{} {
-	l := make([]interface{}, 0, len(values))
-	for _, v := range values {
-		l = append(l, v)
-	}
-
-	return l
 }

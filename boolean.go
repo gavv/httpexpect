@@ -264,10 +264,15 @@ func (b *Boolean) InList(values ...bool) *Boolean {
 	}
 
 	if !isListed {
+		valueList := make([]interface{}, 0, len(values))
+		for _, v := range values {
+			valueList = append(valueList, v)
+		}
+
 		opChain.fail(AssertionFailure{
 			Type:     AssertBelongs,
 			Actual:   &AssertionValue{b.value},
-			Expected: &AssertionValue{AssertionList(boolList(values))},
+			Expected: &AssertionValue{AssertionList(valueList)},
 			Errors: []error{
 				errors.New("expected: boolean is equal to one of the values"),
 			},
@@ -304,26 +309,23 @@ func (b *Boolean) NotInList(values ...bool) *Boolean {
 
 	for _, v := range values {
 		if b.value == v {
+			valueList := make([]interface{}, 0, len(values))
+			for _, v := range values {
+				valueList = append(valueList, v)
+			}
+
 			opChain.fail(AssertionFailure{
 				Type:     AssertNotBelongs,
 				Actual:   &AssertionValue{b.value},
-				Expected: &AssertionValue{AssertionList(boolList(values))},
+				Expected: &AssertionValue{AssertionList(valueList)},
 				Errors: []error{
 					errors.New("expected: boolean is not equal to any of the values"),
 				},
 			})
+
 			return b
 		}
 	}
 
 	return b
-}
-
-func boolList(values []bool) []interface{} {
-	l := make([]interface{}, 0, len(values))
-	for _, v := range values {
-		l = append(l, v)
-	}
-
-	return l
 }

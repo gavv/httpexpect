@@ -342,10 +342,15 @@ func (s *String) InList(values ...string) *String {
 	}
 
 	if !isListed {
+		valueList := make([]interface{}, 0, len(values))
+		for _, v := range values {
+			valueList = append(valueList, v)
+		}
+
 		opChain.fail(AssertionFailure{
 			Type:     AssertBelongs,
 			Actual:   &AssertionValue{s.value},
-			Expected: &AssertionValue{AssertionList(stringList(values))},
+			Expected: &AssertionValue{AssertionList(valueList)},
 			Errors: []error{
 				errors.New("expected: string is equal to one of the values"),
 			},
@@ -382,14 +387,20 @@ func (s *String) NotInList(values ...string) *String {
 
 	for _, v := range values {
 		if s.value == v {
+			valueList := make([]interface{}, 0, len(values))
+			for _, v := range values {
+				valueList = append(valueList, v)
+			}
+
 			opChain.fail(AssertionFailure{
 				Type:     AssertNotBelongs,
 				Actual:   &AssertionValue{s.value},
-				Expected: &AssertionValue{AssertionList(stringList(values))},
+				Expected: &AssertionValue{AssertionList(valueList)},
 				Errors: []error{
 					errors.New("expected: string is not equal to any of the values"),
 				},
 			})
+
 			return s
 		}
 	}
@@ -1230,13 +1241,4 @@ func (s *String) Number() *Number {
 // Deprecated: use AsDateTime instead.
 func (s *String) DateTime(layout ...string) *DateTime {
 	return s.AsDateTime(layout...)
-}
-
-func stringList(values []string) []interface{} {
-	s := make([]interface{}, 0, len(values))
-	for _, v := range values {
-		s = append(s, v)
-	}
-
-	return s
 }
