@@ -6,35 +6,37 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestMatch_Failed(t *testing.T) {
+func TestMatch_FailedChain(t *testing.T) {
 	chain := newMockChain(t)
 	chain.setFailed()
 
 	value := newMatch(chain, nil, nil)
+	value.chain.assertFailed(t)
 
-	assert.NotNil(t, value.Length())
-	assert.NotNil(t, value.Index(0))
-	assert.NotNil(t, value.Name(""))
+	value.Alias("foo")
+
+	value.Length().chain.assertFailed(t)
+	value.Index(0).chain.assertFailed(t)
+	value.Name("").chain.assertFailed(t)
 
 	value.IsEmpty()
 	value.NotEmpty()
 	value.Values("")
 	value.NotValues("")
-	value.Alias("foo")
 }
 
 func TestMatch_Constructors(t *testing.T) {
 	matches := []string{"m0", "m1", "m2"}
 	names := []string{"", "n1", "n2"}
 
-	t.Run("Constructor without config", func(t *testing.T) {
+	t.Run("reporter", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewMatch(reporter, matches, names)
 		assert.Equal(t, matches, value.Raw())
 		value.chain.assertNotFailed(t)
 	})
 
-	t.Run("Constructor with config", func(t *testing.T) {
+	t.Run("config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewMatchC(Config{
 			Reporter: reporter,
@@ -43,7 +45,7 @@ func TestMatch_Constructors(t *testing.T) {
 		value.chain.assertNotFailed(t)
 	})
 
-	t.Run("chain Constructor", func(t *testing.T) {
+	t.Run("chain", func(t *testing.T) {
 		chain := newMockChain(t)
 		value := newMatch(chain, matches, names)
 		assert.NotSame(t, value.chain, chain)

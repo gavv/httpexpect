@@ -7,37 +7,38 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestDuration_Failed(t *testing.T) {
+func TestDuration_FailedChain(t *testing.T) {
 	chain := newMockChain(t)
 	chain.setFailed()
 
 	tm := time.Second
 	value := newDuration(chain, &tm)
+	value.chain.assertFailed(t)
 
+	value.Alias("foo")
 	value.IsEqual(tm)
 	value.NotEqual(tm)
+	value.InRange(tm, tm)
+	value.NotInRange(tm, tm)
 	value.InList(tm)
 	value.NotInList(tm)
 	value.Gt(tm)
 	value.Ge(tm)
 	value.Lt(tm)
 	value.Le(tm)
-	value.InRange(tm, tm)
-	value.NotInRange(tm, tm)
-	value.Alias("foo")
 }
 
 func TestDuration_Constructors(t *testing.T) {
 	tm := time.Second
 
-	t.Run("Constructor without config", func(t *testing.T) {
+	t.Run("reporter", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewDuration(reporter, tm)
 		value.IsEqual(tm)
 		value.chain.assertNotFailed(t)
 	})
 
-	t.Run("Constructor with config", func(t *testing.T) {
+	t.Run("config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewDurationC(Config{
 			Reporter: reporter,
@@ -46,7 +47,7 @@ func TestDuration_Constructors(t *testing.T) {
 		value.chain.assertNotFailed(t)
 	})
 
-	t.Run("chain Constructor", func(t *testing.T) {
+	t.Run("chain", func(t *testing.T) {
 		chain := newMockChain(t)
 		value := newDuration(chain, &tm)
 		assert.NotSame(t, value.chain, chain)

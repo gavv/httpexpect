@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCookie_Failed(t *testing.T) {
+func TestCookie_FailedChain(t *testing.T) {
 	check := func(value *Cookie, isNil bool) {
 		value.chain.assertFailed(t)
 
@@ -18,14 +18,15 @@ func TestCookie_Failed(t *testing.T) {
 		} else {
 			assert.NotNil(t, value.Raw())
 		}
-		assert.NotNil(t, value.Name())
-		assert.NotNil(t, value.Value())
-		assert.NotNil(t, value.Domain())
-		assert.NotNil(t, value.Path())
-		assert.NotNil(t, value.Expires())
-		assert.NotNil(t, value.MaxAge())
 
 		value.Alias("foo")
+
+		value.Name().chain.assertFailed(t)
+		value.Value().chain.assertFailed(t)
+		value.Domain().chain.assertFailed(t)
+		value.Path().chain.assertFailed(t)
+		value.Expires().chain.assertFailed(t)
+		value.MaxAge().chain.assertFailed(t)
 
 		value.HasMaxAge()
 		value.NotHasMaxAge()
@@ -68,7 +69,7 @@ func TestCookie_Constructors(t *testing.T) {
 		MaxAge:  123,
 	}
 
-	t.Run("Constructor without config", func(t *testing.T) {
+	t.Run("reporter", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewCookie(reporter, cookie)
 		value.Name().IsEqual("Test")
@@ -79,7 +80,7 @@ func TestCookie_Constructors(t *testing.T) {
 		value.chain.assertNotFailed(t)
 	})
 
-	t.Run("Constructor with config", func(t *testing.T) {
+	t.Run("config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewCookieC(Config{
 			Reporter: reporter,
@@ -92,7 +93,7 @@ func TestCookie_Constructors(t *testing.T) {
 		value.chain.assertNotFailed(t)
 	})
 
-	t.Run("chain Constructor", func(t *testing.T) {
+	t.Run("chain", func(t *testing.T) {
 		chain := newMockChain(t)
 		value := newCookie(chain, cookie)
 		assert.NotSame(t, value.chain, &chain)

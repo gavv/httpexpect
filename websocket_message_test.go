@@ -422,3 +422,17 @@ func TestWebsocketMessage_JSON(t *testing.T) {
 		msg.chain.assertFailed(t)
 	})
 }
+
+func TestWebsocketMessage_Codes(t *testing.T) {
+	t.Run("message_type", func(t *testing.T) {
+		for n := 0; n < 100; n++ {
+			assert.NotEmpty(t, wsMessageType(n).String())
+		}
+	})
+
+	t.Run("close_code", func(t *testing.T) {
+		for n := 0; n < 2000; n++ {
+			assert.NotEmpty(t, wsCloseCode(n).String())
+		}
+	})
+}

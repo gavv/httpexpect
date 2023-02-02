@@ -17,6 +17,7 @@ build:
 
 lint:
 	golangci-lint run .
+	cd _examples && golangci-lint run .
 
 test:
 ifneq ($(shell which gotest),)

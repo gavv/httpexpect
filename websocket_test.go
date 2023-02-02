@@ -11,7 +11,7 @@ import (
 
 func noWsPreSteps(ws *Websocket) {}
 
-func TestWebsocket_Failed(t *testing.T) {
+func TestWebsocket_FailedChain(t *testing.T) {
 	reporter := newMockReporter(t)
 	chain := newChainWithDefaults("test", reporter)
 	config := newMockConfig(reporter)

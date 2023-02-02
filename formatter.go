@@ -245,7 +245,7 @@ func (f *DefaultFormatter) fillErrors(
 	data *FormatData, ctx *AssertionContext, failure *AssertionFailure,
 ) {
 	for _, err := range failure.Errors {
-		if isNil(err) {
+		if refIsNil(err) {
 			continue
 		}
 		data.Errors = append(data.Errors, err.Error())
@@ -435,7 +435,7 @@ func (f *DefaultFormatter) formatValue(value interface{}) string {
 		return f.formatFloatValue(*flt, 64)
 	}
 
-	if !isNil(value) && !isHTTP(value) {
+	if !refIsNil(value) && !refIsHTTP(value) {
 		if s, _ := value.(fmt.Stringer); s != nil {
 			if ss := s.String(); strings.TrimSpace(ss) != "" {
 				return ss
@@ -473,7 +473,7 @@ func (f *DefaultFormatter) formatFloatValue(value float64, bits int) string {
 }
 
 func (f *DefaultFormatter) formatTypedValue(value interface{}) string {
-	if isNumber(value) {
+	if refIsNum(value) {
 		return fmt.Sprintf("%T(%v)", value, f.formatValue(value))
 	}
 
@@ -490,7 +490,7 @@ func (f *DefaultFormatter) formatMatchValue(value interface{}) string {
 
 func (f *DefaultFormatter) formatRangeValue(value interface{}) []string {
 	if rng := exctractRange(value); rng != nil {
-		if isNumber(rng.Min) && isNumber(rng.Max) {
+		if refIsNum(rng.Min) && refIsNum(rng.Max) {
 			return []string{
 				fmt.Sprintf("[%v; %v]", f.formatValue(rng.Min), f.formatValue(rng.Max)),
 			}

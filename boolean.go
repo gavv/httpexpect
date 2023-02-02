@@ -19,6 +19,7 @@ type Boolean struct {
 // Example:
 //
 //	boolean := NewBoolean(t, true)
+//	boolean.IsTrue()
 func NewBoolean(reporter Reporter, value bool) *Boolean {
 	return newBoolean(newChainWithDefaults("Boolean()", reporter), value)
 }
@@ -30,6 +31,7 @@ func NewBoolean(reporter Reporter, value bool) *Boolean {
 // Example:
 //
 //	boolean := NewBooleanC(config, true)
+//	boolean.IsTrue()
 func NewBooleanC(config Config, value bool) *Boolean {
 	return newBoolean(newChainWithConfig("Boolean()", config.withDefaults()), value)
 }
@@ -99,6 +101,72 @@ func (b *Boolean) Schema(schema interface{}) *Boolean {
 
 	jsonSchema(opChain, b.value, schema)
 	return b
+}
+
+// IsTrue succeeds if boolean is true.
+//
+// Example:
+//
+//	boolean := NewBoolean(t, true)
+//	boolean.IsTrue()
+func (b *Boolean) IsTrue() *Boolean {
+	opChain := b.chain.enter("IsTrue()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return b
+	}
+
+	if !(b.value == true) {
+		opChain.fail(AssertionFailure{
+			Type:     AssertEqual,
+			Actual:   &AssertionValue{b.value},
+			Expected: &AssertionValue{true},
+			Errors: []error{
+				errors.New("expected: boolean is true"),
+			},
+		})
+	}
+
+	return b
+}
+
+// IsFalse succeeds if boolean is false.
+//
+// Example:
+//
+//	boolean := NewBoolean(t, false)
+//	boolean.IsFalse()
+func (b *Boolean) IsFalse() *Boolean {
+	opChain := b.chain.enter("IsFalse()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return b
+	}
+
+	if !(b.value == false) {
+		opChain.fail(AssertionFailure{
+			Type:     AssertEqual,
+			Actual:   &AssertionValue{b.value},
+			Expected: &AssertionValue{false},
+			Errors: []error{
+				errors.New("expected: boolean is false"),
+			},
+		})
+	}
+
+	return b
+}
+
+// Deprecated: use IsTrue instead.
+func (b *Boolean) True() *Boolean {
+	return b.IsTrue()
+}
+
+// Deprecated: use IsFalse instead.
+func (b *Boolean) False() *Boolean {
+	return b.IsFalse()
 }
 
 // IsEqual succeeds if boolean is equal to given value.
@@ -196,10 +264,15 @@ func (b *Boolean) InList(values ...bool) *Boolean {
 	}
 
 	if !isListed {
+		valueList := make([]interface{}, 0, len(values))
+		for _, v := range values {
+			valueList = append(valueList, v)
+		}
+
 		opChain.fail(AssertionFailure{
 			Type:     AssertBelongs,
 			Actual:   &AssertionValue{b.value},
-			Expected: &AssertionValue{AssertionList(boolList(values))},
+			Expected: &AssertionValue{AssertionList(valueList)},
 			Errors: []error{
 				errors.New("expected: boolean is equal to one of the values"),
 			},
@@ -236,82 +309,23 @@ func (b *Boolean) NotInList(values ...bool) *Boolean {
 
 	for _, v := range values {
 		if b.value == v {
+			valueList := make([]interface{}, 0, len(values))
+			for _, v := range values {
+				valueList = append(valueList, v)
+			}
+
 			opChain.fail(AssertionFailure{
 				Type:     AssertNotBelongs,
 				Actual:   &AssertionValue{b.value},
-				Expected: &AssertionValue{AssertionList(boolList(values))},
+				Expected: &AssertionValue{AssertionList(valueList)},
 				Errors: []error{
 					errors.New("expected: boolean is not equal to any of the values"),
 				},
 			})
+
 			return b
 		}
 	}
 
 	return b
-}
-
-// True succeeds if boolean is true.
-//
-// Example:
-//
-//	boolean := NewBoolean(t, true)
-//	boolean.True()
-func (b *Boolean) True() *Boolean {
-	opChain := b.chain.enter("True()")
-	defer opChain.leave()
-
-	if opChain.failed() {
-		return b
-	}
-
-	if !(b.value == true) {
-		opChain.fail(AssertionFailure{
-			Type:     AssertEqual,
-			Actual:   &AssertionValue{b.value},
-			Expected: &AssertionValue{true},
-			Errors: []error{
-				errors.New("expected: boolean is true"),
-			},
-		})
-	}
-
-	return b
-}
-
-// False succeeds if boolean is false.
-//
-// Example:
-//
-//	boolean := NewBoolean(t, false)
-//	boolean.False()
-func (b *Boolean) False() *Boolean {
-	opChain := b.chain.enter("False()")
-	defer opChain.leave()
-
-	if opChain.failed() {
-		return b
-	}
-
-	if !(b.value == false) {
-		opChain.fail(AssertionFailure{
-			Type:     AssertEqual,
-			Actual:   &AssertionValue{b.value},
-			Expected: &AssertionValue{false},
-			Errors: []error{
-				errors.New("expected: boolean is false"),
-			},
-		})
-	}
-
-	return b
-}
-
-func boolList(values []bool) []interface{} {
-	l := make([]interface{}, 0, len(values))
-	for _, v := range values {
-		l = append(l, v)
-	}
-
-	return l
 }

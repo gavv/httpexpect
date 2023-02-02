@@ -10,26 +10,19 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestValue_Failed(t *testing.T) {
+func TestValue_FailedChain(t *testing.T) {
 	chain := newMockChain(t)
 	chain.setFailed()
 
 	value := newValue(chain, nil)
+	value.chain.assertFailed(t)
 
-	value.Path("$")
+	value.Path("$").chain.assertFailed(t)
 	value.Schema("")
 	value.Alias("foo")
 
-	assert.NotNil(t, value.Path("/"))
-
 	var target interface{}
 	value.Decode(target)
-
-	assert.NotNil(t, value.Object())
-	assert.NotNil(t, value.Array())
-	assert.NotNil(t, value.String())
-	assert.NotNil(t, value.Number())
-	assert.NotNil(t, value.Boolean())
 
 	value.Object().chain.assertFailed(t)
 	value.Array().chain.assertFailed(t)
@@ -37,30 +30,26 @@ func TestValue_Failed(t *testing.T) {
 	value.Number().chain.assertFailed(t)
 	value.Boolean().chain.assertFailed(t)
 
-	value.Null()
+	value.IsNull()
 	value.NotNull()
-
+	value.IsObject()
+	value.NotObject()
+	value.IsArray()
+	value.NotArray()
+	value.IsString()
+	value.NotString()
+	value.IsNumber()
+	value.NotNumber()
+	value.IsBoolean()
+	value.NotBoolean()
 	value.IsEqual(nil)
 	value.NotEqual(nil)
-
 	value.InList(nil)
 	value.NotInList(nil)
-
-	value.IsObject().chain.assertFailed(t)
-	value.IsArray().chain.assertFailed(t)
-	value.IsString().chain.assertFailed(t)
-	value.IsNumber().chain.assertFailed(t)
-	value.IsBoolean().chain.assertFailed(t)
-
-	value.NotObject().chain.assertFailed(t)
-	value.NotArray().chain.assertFailed(t)
-	value.NotString().chain.assertFailed(t)
-	value.NotNumber().chain.assertFailed(t)
-	value.NotBoolean().chain.assertFailed(t)
 }
 
 func TestValue_Constructors(t *testing.T) {
-	t.Run("Constructor without config", func(t *testing.T) {
+	t.Run("reporter", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewValue(reporter, "Test")
 		value.IsEqual("Test")
@@ -68,7 +57,7 @@ func TestValue_Constructors(t *testing.T) {
 		value.String().chain.assertNotFailed(t)
 	})
 
-	t.Run("Constructor with config", func(t *testing.T) {
+	t.Run("config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewValueC(Config{
 			Reporter: reporter,
@@ -78,7 +67,7 @@ func TestValue_Constructors(t *testing.T) {
 		value.String().chain.assertNotFailed(t)
 	})
 
-	t.Run("chain Constructor", func(t *testing.T) {
+	t.Run("chain", func(t *testing.T) {
 		chain := newMockChain(t)
 		value := newValue(chain, "Test")
 		assert.NotSame(t, value.chain, chain)
@@ -177,7 +166,7 @@ func TestValue_CastNull(t *testing.T) {
 	NewValue(reporter, data).Number().chain.assertFailed(t)
 	NewValue(reporter, data).Boolean().chain.assertFailed(t)
 	NewValue(reporter, data).NotNull().chain.assertFailed(t)
-	NewValue(reporter, data).Null().chain.assertNotFailed(t)
+	NewValue(reporter, data).IsNull().chain.assertNotFailed(t)
 }
 
 func TestValue_CastIndirectNull(t *testing.T) {
@@ -191,7 +180,7 @@ func TestValue_CastIndirectNull(t *testing.T) {
 	NewValue(reporter, data).Number().chain.assertFailed(t)
 	NewValue(reporter, data).Boolean().chain.assertFailed(t)
 	NewValue(reporter, data).NotNull().chain.assertFailed(t)
-	NewValue(reporter, data).Null().chain.assertNotFailed(t)
+	NewValue(reporter, data).IsNull().chain.assertNotFailed(t)
 }
 
 func TestValue_CastBad(t *testing.T) {
@@ -205,7 +194,7 @@ func TestValue_CastBad(t *testing.T) {
 	NewValue(reporter, data).Number().chain.assertFailed(t)
 	NewValue(reporter, data).Boolean().chain.assertFailed(t)
 	NewValue(reporter, data).NotNull().chain.assertFailed(t)
-	NewValue(reporter, data).Null().chain.assertFailed(t)
+	NewValue(reporter, data).IsNull().chain.assertFailed(t)
 }
 
 func TestValue_CastObject(t *testing.T) {
@@ -219,7 +208,7 @@ func TestValue_CastObject(t *testing.T) {
 	NewValue(reporter, data).Number().chain.assertFailed(t)
 	NewValue(reporter, data).Boolean().chain.assertFailed(t)
 	NewValue(reporter, data).NotNull().chain.assertNotFailed(t)
-	NewValue(reporter, data).Null().chain.assertFailed(t)
+	NewValue(reporter, data).IsNull().chain.assertFailed(t)
 }
 
 func TestValue_CastArray(t *testing.T) {
@@ -233,7 +222,7 @@ func TestValue_CastArray(t *testing.T) {
 	NewValue(reporter, data).Number().chain.assertFailed(t)
 	NewValue(reporter, data).Boolean().chain.assertFailed(t)
 	NewValue(reporter, data).NotNull().chain.assertNotFailed(t)
-	NewValue(reporter, data).Null().chain.assertFailed(t)
+	NewValue(reporter, data).IsNull().chain.assertFailed(t)
 }
 
 func TestValue_CastString(t *testing.T) {
@@ -247,7 +236,7 @@ func TestValue_CastString(t *testing.T) {
 	NewValue(reporter, data).Number().chain.assertFailed(t)
 	NewValue(reporter, data).Boolean().chain.assertFailed(t)
 	NewValue(reporter, data).NotNull().chain.assertNotFailed(t)
-	NewValue(reporter, data).Null().chain.assertFailed(t)
+	NewValue(reporter, data).IsNull().chain.assertFailed(t)
 }
 
 func TestValue_CastNumber(t *testing.T) {
@@ -261,7 +250,7 @@ func TestValue_CastNumber(t *testing.T) {
 	NewValue(reporter, data).Number().chain.assertNotFailed(t)
 	NewValue(reporter, data).Boolean().chain.assertFailed(t)
 	NewValue(reporter, data).NotNull().chain.assertNotFailed(t)
-	NewValue(reporter, data).Null().chain.assertFailed(t)
+	NewValue(reporter, data).IsNull().chain.assertFailed(t)
 }
 
 func TestValue_CastBoolean(t *testing.T) {
@@ -275,7 +264,7 @@ func TestValue_CastBoolean(t *testing.T) {
 	NewValue(reporter, data).Number().chain.assertFailed(t)
 	NewValue(reporter, data).Boolean().chain.assertNotFailed(t)
 	NewValue(reporter, data).NotNull().chain.assertNotFailed(t)
-	NewValue(reporter, data).Null().chain.assertFailed(t)
+	NewValue(reporter, data).IsNull().chain.assertFailed(t)
 }
 
 func TestValue_GetObject(t *testing.T) {
@@ -452,6 +441,12 @@ func TestValue_InList(t *testing.T) {
 
 	NewValue(reporter, data1).InList(func() {}).chain.assertFailed(t)
 	NewValue(reporter, data1).NotInList(func() {}).chain.assertFailed(t)
+
+	NewValue(reporter, data1).InList(data1, func() {}).chain.assertFailed(t)
+	NewValue(reporter, data1).NotInList(data1, func() {}).chain.assertFailed(t)
+
+	NewValue(reporter, data1).InList(data2, func() {}).chain.assertFailed(t)
+	NewValue(reporter, data1).NotInList(data2, func() {}).chain.assertFailed(t)
 }
 
 func TestValue_PathObject(t *testing.T) {

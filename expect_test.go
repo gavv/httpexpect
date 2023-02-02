@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestExpect_Methods(t *testing.T) {
+func TestExpect_Requests(t *testing.T) {
 	client := &mockClient{}
 
 	reporter := NewAssertReporter(t)
@@ -300,8 +300,8 @@ func TestExpect_Traverse(t *testing.T) {
 	m.Value("bbb").String().IsEqual("hello")
 	m.Value("ccc").Number().IsEqual(456)
 
-	m.Value("aaa").Array().Element(2).Boolean().False()
-	m.Value("aaa").Array().Element(3).Null()
+	m.Value("aaa").Array().Element(2).Boolean().IsFalse()
+	m.Value("aaa").Array().Element(3).IsNull()
 }
 
 func TestExpect_Branches(t *testing.T) {

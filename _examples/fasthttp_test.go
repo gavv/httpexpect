@@ -13,7 +13,7 @@ func fastHTTPTester(t *testing.T) *httpexpect.Expect {
 		// Pass requests directly to FastHTTPHandler.
 		Client: &http.Client{
 			Transport: httpexpect.NewFastBinder(FastHTTPHandler()),
-			Jar:       httpexpect.NewJar(),
+			Jar:       httpexpect.NewCookieJar(),
 		},
 		// Report errors using testify.
 		Reporter: httpexpect.NewAssertReporter(t),
@@ -25,5 +25,5 @@ func TestFastHTTP(t *testing.T) {
 
 	e.GET("/ping").Expect().
 		Status(200).
-		Text().Equal("pong")
+		Text().IsEqual("pong")
 }

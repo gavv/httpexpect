@@ -36,7 +36,7 @@ type Value struct {
 //	value.IsBoolean()
 //
 //	value := NewValue(t, nil)
-//	value.Null()
+//	value.IsNull()
 func NewValue(reporter Reporter, value interface{}) *Value {
 	return newValue(newChainWithDefaults("Value()", reporter), value)
 }
@@ -358,7 +358,7 @@ func (v *Value) Number() *Number {
 // Example:
 //
 //	value := NewValue(t, true)
-//	value.Boolean().True()
+//	value.Boolean().IsTrue()
 func (v *Value) Boolean() *Boolean {
 	opChain := v.chain.enter("Boolean()")
 	defer opChain.leave()
@@ -383,7 +383,7 @@ func (v *Value) Boolean() *Boolean {
 	return newBoolean(opChain, data)
 }
 
-// Null succeeds if value is nil.
+// IsNull succeeds if value is nil.
 //
 // Note that non-nil interface{} that points to nil value (e.g. nil slice or map)
 // is also treated as null value. Empty (non-nil) slice or map, empty string, and
@@ -392,12 +392,12 @@ func (v *Value) Boolean() *Boolean {
 // Example:
 //
 //	value := NewValue(t, nil)
-//	value.Null()
+//	value.IsNull()
 //
 //	value := NewValue(t, []interface{}(nil))
-//	value.Null()
-func (v *Value) Null() *Value {
-	opChain := v.chain.enter("Null()")
+//	value.IsNull()
+func (v *Value) IsNull() *Value {
+	opChain := v.chain.enter("IsNull()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -449,6 +449,11 @@ func (v *Value) NotNull() *Value {
 	}
 
 	return v
+}
+
+// Deprecated: use IsNull instead.
+func (v *Value) Null() *Value {
+	return v.IsNull()
 }
 
 // IsObject succeeds if the underlying value is an object.
@@ -817,8 +822,10 @@ func (v *Value) Equal(value interface{}) *Value {
 }
 
 // InList succeeds if whole value is equal to one of the values from given
-// list of values (e.g. map, slice, string, etc).
-// Before comparison, all values are converted to canonical form.
+// list of values (e.g. map, slice, string, etc). Before comparison, all
+// values are converted to canonical form.
+//
+// If at least one value has wrong type, failure is reported.
 //
 // Example:
 //
@@ -851,7 +858,7 @@ func (v *Value) InList(values ...interface{}) *Value {
 
 		if reflect.DeepEqual(expected, v.value) {
 			isListed = true
-			break
+			// continue loop to check that all values are correct
 		}
 	}
 
@@ -872,6 +879,8 @@ func (v *Value) InList(values ...interface{}) *Value {
 // NotInList succeeds if the whole value is not equal to any of the values from
 // given list of values (e.g. map, slice, string, etc).
 // Before comparison, all values are converted to canonical form.
+//
+// If at least one value has wrong type, failure is reported.
 //
 // Example:
 //

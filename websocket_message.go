@@ -3,6 +3,7 @@ package httpexpect
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/gorilla/websocket"
 )
@@ -162,11 +163,11 @@ func (wm *WebsocketMessage) NotTextMessage() *WebsocketMessage {
 //
 //	msg := conn.Expect()
 //	msg.Type(websocket.TextMessage, websocket.BinaryMessage)
-func (wm *WebsocketMessage) Type(typ ...int) *WebsocketMessage {
+func (wm *WebsocketMessage) Type(types ...int) *WebsocketMessage {
 	opChain := wm.chain.enter("Type()")
 	defer opChain.leave()
 
-	wm.checkType(opChain, typ...)
+	wm.checkType(opChain, types...)
 
 	return wm
 }
@@ -180,21 +181,21 @@ func (wm *WebsocketMessage) Type(typ ...int) *WebsocketMessage {
 //
 //	msg := conn.Expect()
 //	msg.NotType(websocket.CloseMessage, websocket.BinaryMessage)
-func (wm *WebsocketMessage) NotType(typ ...int) *WebsocketMessage {
+func (wm *WebsocketMessage) NotType(types ...int) *WebsocketMessage {
 	opChain := wm.chain.enter("NotType()")
 	defer opChain.leave()
 
-	wm.checkNotType(opChain, typ...)
+	wm.checkNotType(opChain, types...)
 
 	return wm
 }
 
-func (wm *WebsocketMessage) checkType(opChain *chain, typ ...int) {
+func (wm *WebsocketMessage) checkType(opChain *chain, types ...int) {
 	if opChain.failed() {
 		return
 	}
 
-	if len(typ) == 0 {
+	if len(types) == 0 {
 		opChain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
@@ -205,7 +206,7 @@ func (wm *WebsocketMessage) checkType(opChain *chain, typ ...int) {
 	}
 
 	found := false
-	for _, t := range typ {
+	for _, t := range types {
 		if t == wm.typ {
 			found = true
 			break
@@ -213,20 +214,25 @@ func (wm *WebsocketMessage) checkType(opChain *chain, typ ...int) {
 	}
 
 	if !found {
-		if len(typ) == 1 {
+		if len(types) == 1 {
 			opChain.fail(AssertionFailure{
 				Type:     AssertEqual,
 				Actual:   &AssertionValue{wsMessageType(wm.typ)},
-				Expected: &AssertionValue{wsMessageType(typ[0])},
+				Expected: &AssertionValue{wsMessageType(types[0])},
 				Errors: []error{
 					errors.New("expected: message types are equal"),
 				},
 			})
 		} else {
+			typeList := make([]interface{}, 0, len(types))
+			for _, t := range types {
+				typeList = append(typeList, wsMessageType(t))
+			}
+
 			opChain.fail(AssertionFailure{
 				Type:     AssertBelongs,
 				Actual:   &AssertionValue{wsMessageType(wm.typ)},
-				Expected: &AssertionValue{AssertionList(wsMessageTypes(typ))},
+				Expected: &AssertionValue{AssertionList(typeList)},
 				Errors: []error{
 					errors.New("expected: message type belongs to given list"),
 				},
@@ -235,12 +241,12 @@ func (wm *WebsocketMessage) checkType(opChain *chain, typ ...int) {
 	}
 }
 
-func (wm *WebsocketMessage) checkNotType(opChain *chain, typ ...int) {
+func (wm *WebsocketMessage) checkNotType(opChain *chain, types ...int) {
 	if opChain.failed() {
 		return
 	}
 
-	if len(typ) == 0 {
+	if len(types) == 0 {
 		opChain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
@@ -251,7 +257,7 @@ func (wm *WebsocketMessage) checkNotType(opChain *chain, typ ...int) {
 	}
 
 	found := false
-	for _, t := range typ {
+	for _, t := range types {
 		if t == wm.typ {
 			found = true
 			break
@@ -259,20 +265,25 @@ func (wm *WebsocketMessage) checkNotType(opChain *chain, typ ...int) {
 	}
 
 	if found {
-		if len(typ) == 1 {
+		if len(types) == 1 {
 			opChain.fail(AssertionFailure{
 				Type:     AssertNotEqual,
 				Actual:   &AssertionValue{wsMessageType(wm.typ)},
-				Expected: &AssertionValue{wsMessageType(typ[0])},
+				Expected: &AssertionValue{wsMessageType(types[0])},
 				Errors: []error{
 					errors.New("expected: message types are non-equal"),
 				},
 			})
 		} else {
+			typeList := make([]interface{}, 0, len(types))
+			for _, t := range types {
+				typeList = append(typeList, wsMessageType(t))
+			}
+
 			opChain.fail(AssertionFailure{
 				Type:     AssertNotBelongs,
 				Actual:   &AssertionValue{wsMessageType(wm.typ)},
-				Expected: &AssertionValue{AssertionList(wsMessageTypes(typ))},
+				Expected: &AssertionValue{AssertionList(typeList)},
 				Errors: []error{
 					errors.New("expected: message type does not belong to given list"),
 				},
@@ -292,65 +303,11 @@ func (wm *WebsocketMessage) checkNotType(opChain *chain, typ ...int) {
 //
 //	msg := conn.Expect().Closed()
 //	msg.Code(websocket.CloseNormalClosure, websocket.CloseGoingAway)
-func (wm *WebsocketMessage) Code(code ...int) *WebsocketMessage {
+func (wm *WebsocketMessage) Code(codes ...int) *WebsocketMessage {
 	opChain := wm.chain.enter("Code()")
 	defer opChain.leave()
 
-	if opChain.failed() {
-		return wm
-	}
-
-	if len(code) == 0 {
-		opChain.fail(AssertionFailure{
-			Type: AssertUsage,
-			Errors: []error{
-				errors.New("missing code argument"),
-			},
-		})
-		return wm
-	}
-
-	if wm.typ != websocket.CloseMessage {
-		opChain.fail(AssertionFailure{
-			Type:     AssertEqual,
-			Actual:   &AssertionValue{wsMessageType(wm.typ)},
-			Expected: &AssertionValue{wsMessageType(websocket.CloseMessage)},
-			Errors: []error{
-				errors.New("expected: close message"),
-			},
-		})
-		return wm
-	}
-
-	found := false
-	for _, c := range code {
-		if c == wm.closeCode {
-			found = true
-			break
-		}
-	}
-
-	if !found {
-		if len(code) == 1 {
-			opChain.fail(AssertionFailure{
-				Type:     AssertEqual,
-				Actual:   &AssertionValue{wsCloseCode(wm.closeCode)},
-				Expected: &AssertionValue{wsCloseCode(code[0])},
-				Errors: []error{
-					errors.New("expected: close codes are equal"),
-				},
-			})
-		} else {
-			opChain.fail(AssertionFailure{
-				Type:     AssertBelongs,
-				Actual:   &AssertionValue{wsCloseCode(wm.closeCode)},
-				Expected: &AssertionValue{AssertionList(wsCloseCodes(code))},
-				Errors: []error{
-					errors.New("expected: close code belongs to given list"),
-				},
-			})
-		}
-	}
+	wm.checkCode(opChain, codes...)
 
 	return wm
 }
@@ -366,22 +323,28 @@ func (wm *WebsocketMessage) Code(code ...int) *WebsocketMessage {
 //
 //	msg := conn.Expect().Closed()
 //	msg.NotCode(websocket.CloseAbnormalClosure, websocket.CloseNoStatusReceived)
-func (wm *WebsocketMessage) NotCode(code ...int) *WebsocketMessage {
+func (wm *WebsocketMessage) NotCode(codes ...int) *WebsocketMessage {
 	opChain := wm.chain.enter("NotCode()")
 	defer opChain.leave()
 
+	wm.checkNotCode(opChain, codes...)
+
+	return wm
+}
+
+func (wm *WebsocketMessage) checkCode(opChain *chain, codes ...int) {
 	if opChain.failed() {
-		return wm
+		return
 	}
 
-	if len(code) == 0 {
+	if len(codes) == 0 {
 		opChain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
 				errors.New("missing code argument"),
 			},
 		})
-		return wm
+		return
 	}
 
 	if wm.typ != websocket.CloseMessage {
@@ -393,11 +356,74 @@ func (wm *WebsocketMessage) NotCode(code ...int) *WebsocketMessage {
 				errors.New("expected: close message"),
 			},
 		})
-		return wm
+		return
 	}
 
 	found := false
-	for _, c := range code {
+	for _, c := range codes {
+		if c == wm.closeCode {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		if len(codes) == 1 {
+			opChain.fail(AssertionFailure{
+				Type:     AssertEqual,
+				Actual:   &AssertionValue{wsCloseCode(wm.closeCode)},
+				Expected: &AssertionValue{wsCloseCode(codes[0])},
+				Errors: []error{
+					errors.New("expected: close codes are equal"),
+				},
+			})
+		} else {
+			codeList := make([]interface{}, 0, len(codes))
+			for _, c := range codes {
+				codeList = append(codeList, wsCloseCode(c))
+			}
+
+			opChain.fail(AssertionFailure{
+				Type:     AssertBelongs,
+				Actual:   &AssertionValue{wsCloseCode(wm.closeCode)},
+				Expected: &AssertionValue{AssertionList(codeList)},
+				Errors: []error{
+					errors.New("expected: close code belongs to given list"),
+				},
+			})
+		}
+	}
+}
+
+func (wm *WebsocketMessage) checkNotCode(opChain *chain, codes ...int) {
+	if opChain.failed() {
+		return
+	}
+
+	if len(codes) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("missing code argument"),
+			},
+		})
+		return
+	}
+
+	if wm.typ != websocket.CloseMessage {
+		opChain.fail(AssertionFailure{
+			Type:     AssertEqual,
+			Actual:   &AssertionValue{wsMessageType(wm.typ)},
+			Expected: &AssertionValue{wsMessageType(websocket.CloseMessage)},
+			Errors: []error{
+				errors.New("expected: close message"),
+			},
+		})
+		return
+	}
+
+	found := false
+	for _, c := range codes {
 		if c == wm.closeCode {
 			found = true
 			break
@@ -405,28 +431,31 @@ func (wm *WebsocketMessage) NotCode(code ...int) *WebsocketMessage {
 	}
 
 	if found {
-		if len(code) == 1 {
+		if len(codes) == 1 {
 			opChain.fail(AssertionFailure{
 				Type:     AssertNotEqual,
 				Actual:   &AssertionValue{wsCloseCode(wm.closeCode)},
-				Expected: &AssertionValue{wsCloseCode(code[0])},
+				Expected: &AssertionValue{wsCloseCode(codes[0])},
 				Errors: []error{
 					errors.New("expected: close codes are non-equal"),
 				},
 			})
 		} else {
+			codeList := make([]interface{}, 0, len(codes))
+			for _, c := range codes {
+				codeList = append(codeList, wsCloseCode(c))
+			}
+
 			opChain.fail(AssertionFailure{
 				Type:     AssertNotBelongs,
 				Actual:   &AssertionValue{wsCloseCode(wm.closeCode)},
-				Expected: &AssertionValue{AssertionList(wsCloseCodes(code))},
+				Expected: &AssertionValue{AssertionList(codeList)},
 				Errors: []error{
 					errors.New("expected: close code dose not belong to given list"),
 				},
 			})
 		}
 	}
-
-	return wm
 }
 
 // Body returns a new String instance with WebSocket message content.
@@ -511,4 +540,69 @@ func (wm *WebsocketMessage) JSON() *Value {
 	}
 
 	return newValue(opChain, value)
+}
+
+type wsMessageType int
+
+func (wmt wsMessageType) String() string {
+	s := "unknown"
+
+	switch wmt {
+	case websocket.TextMessage:
+		s = "text"
+	case websocket.BinaryMessage:
+		s = "binary"
+	case websocket.CloseMessage:
+		s = "close"
+	case websocket.PingMessage:
+		s = "ping"
+	case websocket.PongMessage:
+		s = "pong"
+	}
+
+	return fmt.Sprintf("%s(%d)", s, wmt)
+}
+
+type wsCloseCode int
+
+// https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent/code
+func (wcc wsCloseCode) String() string {
+	s := "Unknown"
+
+	switch wcc {
+	case 1000:
+		s = "NormalClosure"
+	case 1001:
+		s = "GoingAway"
+	case 1002:
+		s = "ProtocolError"
+	case 1003:
+		s = "UnsupportedData"
+	case 1004:
+		s = "Reserved"
+	case 1005:
+		s = "NoStatusReceived"
+	case 1006:
+		s = "AbnormalClosure"
+	case 1007:
+		s = "InvalidFramePayloadData"
+	case 1008:
+		s = "PolicyViolation"
+	case 1009:
+		s = "MessageTooBig"
+	case 1010:
+		s = "MandatoryExtension"
+	case 1011:
+		s = "InternalServerError"
+	case 1012:
+		s = "ServiceRestart"
+	case 1013:
+		s = "TryAgainLater"
+	case 1014:
+		s = "BadGateway"
+	case 1015:
+		s = "TLSHandshake"
+	}
+
+	return fmt.Sprintf("%s(%d)", s, wcc)
 }

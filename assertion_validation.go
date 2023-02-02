@@ -13,7 +13,7 @@ func validateAssertion(failure *AssertionFailure) error {
 	for _, err := range failure.Errors {
 		if err == nil {
 			return errors.New("AssertionFailure should not have nil in Errors")
-		} else if isNil(err) {
+		} else if refIsNil(err) {
 			return errors.New("AssertionFailure should not have typed-nil in Errors")
 		}
 	}

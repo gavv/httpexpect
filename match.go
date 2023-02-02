@@ -168,18 +168,20 @@ func (m *Match) Name(name string) *String {
 
 	index, ok := m.names[name]
 	if !ok {
-		names := make([]interface{}, 0, len(m.names))
+		nameList := make([]interface{}, 0, len(m.names))
 		for n := range m.names {
-			names = append(names, n)
+			nameList = append(nameList, n)
 		}
+
 		opChain.fail(AssertionFailure{
 			Type:     AssertBelongs,
 			Actual:   &AssertionValue{name},
-			Expected: &AssertionValue{AssertionList(names)},
+			Expected: &AssertionValue{AssertionList(nameList)},
 			Errors: []error{
 				errors.New("expected: existing sub-match name"),
 			},
 		})
+
 		return newString(opChain, "")
 	}
 

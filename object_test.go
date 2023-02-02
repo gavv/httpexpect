@@ -6,21 +6,20 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestObject_Failed(t *testing.T) {
+func TestObject_FailedChain(t *testing.T) {
 	check := func(value *Object) {
 		value.chain.assertFailed(t)
 
-		value.Path("$")
+		value.Path("$").chain.assertFailed(t)
 		value.Schema("")
 		value.Alias("foo")
 
-		assert.NotNil(t, value.Keys())
-		assert.NotNil(t, value.Values())
-		assert.NotNil(t, value.Value("foo"))
-		assert.NotNil(t, value.Iter())
-
 		var target interface{}
 		value.Decode(&target)
+
+		value.Keys().chain.assertFailed(t)
+		value.Values().chain.assertFailed(t)
+		value.Value("foo").chain.assertFailed(t)
 
 		value.IsEmpty()
 		value.NotEmpty()
@@ -36,6 +35,10 @@ func TestObject_Failed(t *testing.T) {
 		value.NotContainsSubset(nil)
 		value.ValueEqual("foo", nil)
 		value.NotValueEqual("foo", nil)
+
+		assert.NotNil(t, value.Iter())
+		assert.Equal(t, 0, len(value.Iter()))
+
 		value.Every(func(_ string, value *Value) {
 			value.String().NotEmpty()
 		})
@@ -92,14 +95,14 @@ func TestObject_Constructors(t *testing.T) {
 		"foo": 100.0,
 	}
 
-	t.Run("Constructor without config", func(t *testing.T) {
+	t.Run("reporter", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewObject(reporter, test)
 		value.IsEqual(test)
 		value.chain.assertNotFailed(t)
 	})
 
-	t.Run("Constructor with config", func(t *testing.T) {
+	t.Run("config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewObjectC(Config{
 			Reporter: reporter,
@@ -108,7 +111,7 @@ func TestObject_Constructors(t *testing.T) {
 		value.chain.assertNotFailed(t)
 	})
 
-	t.Run("chain Constructor", func(t *testing.T) {
+	t.Run("chain", func(t *testing.T) {
 		chain := newMockChain(t)
 		value := newObject(chain, test)
 		assert.NotSame(t, value.chain, chain)
@@ -423,6 +426,51 @@ func TestObject_Equal(t *testing.T) {
 	value.chain.clearFailed()
 }
 
+func TestObject_EqualStruct(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewObject(reporter, map[string]interface{}{
+		"foo": 123,
+		"bar": map[string]interface{}{
+			"baz": []interface{}{true, false},
+		},
+	})
+
+	type (
+		Bar struct {
+			Baz []bool `json:"baz"`
+		}
+
+		S struct {
+			Foo int `json:"foo"`
+			Bar Bar `json:"bar"`
+		}
+	)
+
+	s := S{
+		Foo: 123,
+		Bar: Bar{
+			Baz: []bool{true, false},
+		},
+	}
+
+	value.IsEqual(s)
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.NotEqual(s)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.IsEqual(S{})
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotEqual(S{})
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+}
+
 func TestObject_InList(t *testing.T) {
 	reporter := newMockReporter(t)
 
@@ -500,57 +548,20 @@ func TestObject_InList(t *testing.T) {
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.InList(nil)
+	value.InList(map[string]interface{}{"bar": 123.0}, "NOT OBJECT")
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.NotInList(nil)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-}
-
-func TestObject_EqualStruct(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	value := NewObject(reporter, map[string]interface{}{
-		"foo": 123,
-		"bar": map[string]interface{}{
-			"baz": []interface{}{true, false},
-		},
-	})
-
-	type (
-		Bar struct {
-			Baz []bool `json:"baz"`
-		}
-
-		S struct {
-			Foo int `json:"foo"`
-			Bar Bar `json:"bar"`
-		}
-	)
-
-	s := S{
-		Foo: 123,
-		Bar: Bar{
-			Baz: []bool{true, false},
-		},
-	}
-
-	value.IsEqual(s)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotEqual(s)
+	value.NotInList(map[string]interface{}{"bar": 123.0}, "NOT OBJECT")
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.IsEqual(S{})
+	value.InList(map[string]interface{}{"foo": 123.0}, "NOT OBJECT")
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.NotEqual(S{})
-	value.chain.assertNotFailed(t)
+	value.NotInList(map[string]interface{}{"foo": 123.0}, "NOT OBJECT")
+	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 }
 

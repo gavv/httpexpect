@@ -3,7 +3,6 @@ package examples
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/kataras/iris/v12"
@@ -88,7 +87,7 @@ func IrisHandler() http.Handler {
 	})
 
 	app.Post("/stream", func(ctx iris.Context) {
-		body, err := ioutil.ReadAll(ctx.Request().Body)
+		body, err := io.ReadAll(ctx.Request().Body)
 		if err != nil {
 			app.Logger().Error(err)
 			ctx.StatusCode(iris.StatusBadRequest)

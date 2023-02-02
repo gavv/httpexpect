@@ -20,7 +20,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestRequest_Failed(t *testing.T) {
+func TestRequest_FailedChain(t *testing.T) {
 	reporter := newMockReporter(t)
 	chain := newChainWithDefaults("test", reporter)
 	config := newMockConfig(reporter)
@@ -28,6 +28,7 @@ func TestRequest_Failed(t *testing.T) {
 	chain.setFailed()
 
 	req := newRequest(chain, config, "GET", "")
+	req.chain.assertFailed(t)
 
 	req.Alias("foo")
 	req.WithMatcher(func(resp *Response) {
@@ -71,23 +72,18 @@ func TestRequest_Failed(t *testing.T) {
 	req.WithMultipart()
 
 	resp := req.Expect()
-	if resp == nil {
-		panic("Expect returned nil")
-	}
-
-	req.chain.assertFailed(t)
 	resp.chain.assertFailed(t)
 }
 
 func TestRequest_Constructors(t *testing.T) {
-	t.Run("Constructor with config", func(t *testing.T) {
+	t.Run("config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		config := newMockConfig(reporter)
 		req := NewRequestC(config, "GET", "")
 		req.chain.assertNotFailed(t)
 	})
 
-	t.Run("chain Constructor", func(t *testing.T) {
+	t.Run("chain", func(t *testing.T) {
 		chain := newMockChain(t)
 		reporter := newMockReporter(t)
 		config := newMockConfig(reporter)
@@ -203,7 +199,7 @@ func TestRequest_Transformers(t *testing.T) {
 		Reporter:       reporter,
 	}
 
-	t.Run("save-ptr", func(t *testing.T) {
+	t.Run("save_ptr", func(t *testing.T) {
 		var savedReq *http.Request
 		transform := func(r *http.Request) {
 			savedReq = r
@@ -216,7 +212,7 @@ func TestRequest_Transformers(t *testing.T) {
 		assert.NotNil(t, savedReq)
 	})
 
-	t.Run("append-header", func(t *testing.T) {
+	t.Run("append_header", func(t *testing.T) {
 		req := NewRequestC(config, "METHOD", "/")
 
 		req.WithTransformer(func(r *http.Request) {
@@ -233,7 +229,7 @@ func TestRequest_Transformers(t *testing.T) {
 		assert.Equal(t, []string{"22"}, client.req.Header["Bar"])
 	})
 
-	t.Run("append-url", func(t *testing.T) {
+	t.Run("append_url", func(t *testing.T) {
 		req := NewRequestC(config, "METHOD", "/{arg1}/{arg2}")
 
 		req.WithPath("arg1", "11")
@@ -252,7 +248,7 @@ func TestRequest_Transformers(t *testing.T) {
 		assert.Equal(t, "/11/22/33/44", client.req.URL.Path)
 	})
 
-	t.Run("nil-func", func(t *testing.T) {
+	t.Run("nil_func", func(t *testing.T) {
 		req := NewRequestC(config, "METHOD", "/")
 		req.WithTransformer(nil)
 		req.chain.assertFailed(t)
@@ -2055,7 +2051,7 @@ func TestRequest_Panics(t *testing.T) {
 	})
 }
 
-func TestRequest_Redirect(t *testing.T) {
+func TestRequest_Redirects(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	t.Run("dont follow redirects policy", func(t *testing.T) {
@@ -2580,7 +2576,7 @@ func TestRequest_Redirect(t *testing.T) {
 	})
 }
 
-func TestRequest_Retry(t *testing.T) {
+func TestRequest_Retries(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	newNoErrClient := func(cb func(req *http.Request)) *mockClient {

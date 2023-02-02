@@ -216,7 +216,7 @@ repos.Schema(schema)
 
 // run JSONPath query and iterate results
 for _, private := range repos.Path("$..private").Array().Iter() {
-	private.Boolean().False()
+	private.Boolean().IsFalse()
 }
 ```
 

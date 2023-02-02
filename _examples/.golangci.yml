@@ -1,0 +1,16 @@
+linters:
+  enable:
+    - govet
+    - revive
+    - staticcheck
+    - lll
+    - misspell
+    - dupword
+  disable:
+    - gosimple
+    - unused
+    - errcheck
+
+linters-settings:
+  lll:
+    line-length: 90
