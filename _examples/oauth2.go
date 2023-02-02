@@ -332,7 +332,7 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 func authHandler(w http.ResponseWriter, r *http.Request) {
 	_ = dumpRequest(os.Stdout, "auth", r)
 
-	st, err := session.Start(nil, w, r)
+	st, err := session.Start(r.Context(), w, r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
