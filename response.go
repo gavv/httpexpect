@@ -130,9 +130,15 @@ func newResponse(opts responseOpts) *Response {
 	return r
 }
 
-func getResponseContent(opChain *chain, resp *http.Response) []byte {
+func (r *Response) getContent(opChain *chain) ([]byte, bool) {
+	if r.contentReceived {
+		return r.content, true
+	}
+
+	resp := r.httpResp
+
 	if resp.Body == nil {
-		return []byte{}
+		return []byte{}, true
 	}
 
 	if bw, ok := resp.Body.(*bodyWrapper); ok {
@@ -154,18 +160,12 @@ func getResponseContent(opChain *chain, resp *http.Response) []byte {
 				err,
 			},
 		})
-		return nil
+		return nil, false
 	}
 
-	return content
-}
-
-func (r *Response) getContent(opChain *chain) []byte {
-	if !r.contentReceived {
-		r.content = getResponseContent(opChain, r.httpResp)
-		r.contentReceived = true
-	}
-	return r.content
+	r.content = content
+	r.contentReceived = true
+	return r.content, true
 }
 
 // Raw returns underlying http.Response object.
@@ -541,7 +541,12 @@ func (r *Response) Body() *String {
 		return newString(opChain, "")
 	}
 
-	return newString(opChain, string(r.getContent(opChain)))
+	content, ok := r.getContent(opChain)
+	if !ok {
+		return newString(opChain, "")
+	}
+
+	return newString(opChain, string(content))
 }
 
 // NoContent succeeds if response contains empty Content-Type header and
@@ -555,9 +560,13 @@ func (r *Response) NoContent() *Response {
 	}
 
 	contentType := r.httpResp.Header.Get("Content-Type")
+	content, ok := r.getContent(opChain)
+	if !ok {
+		return r
+	}
 
 	r.checkEqual(opChain, `"Content-Type" header`, "", contentType)
-	r.checkEqual(opChain, "body", "", string(r.getContent(opChain)))
+	r.checkEqual(opChain, "body", "", string(content))
 
 	return r
 }
@@ -669,9 +678,12 @@ func (r *Response) Text(options ...ContentOpts) *String {
 		return newString(opChain, "")
 	}
 
-	content := string(r.getContent(opChain))
+	content, ok := r.getContent(opChain)
+	if !ok {
+		return newString(opChain, "")
+	}
 
-	return newString(opChain, content)
+	return newString(opChain, string(content))
 }
 
 // Form returns a new Object instance with form decoded from response body.
@@ -717,7 +729,12 @@ func (r *Response) getForm(
 		return nil
 	}
 
-	decoder := form.NewDecoder(bytes.NewReader(r.getContent(opChain)))
+	content, ok := r.getContent(opChain)
+	if !ok {
+		return nil
+	}
+
+	decoder := form.NewDecoder(bytes.NewReader(content))
 
 	var object map[string]interface{}
 
@@ -725,7 +742,7 @@ func (r *Response) getForm(
 		opChain.fail(AssertionFailure{
 			Type: AssertValid,
 			Actual: &AssertionValue{
-				string(r.getContent(opChain)),
+				string(content),
 			},
 			Errors: []error{
 				errors.New("failed to decode form"),
@@ -779,12 +796,16 @@ func (r *Response) getJSON(opChain *chain, options ...ContentOpts) interface{} {
 	}
 
 	var value interface{}
+	content, ok := r.getContent(opChain)
+	if !ok {
+		return nil
+	}
 
-	if err := json.Unmarshal(r.getContent(opChain), &value); err != nil {
+	if err := json.Unmarshal(content, &value); err != nil {
 		opChain.fail(AssertionFailure{
 			Type: AssertValid,
 			Actual: &AssertionValue{
-				string(r.getContent(opChain)),
+				string(content),
 			},
 			Errors: []error{
 				errors.New("failed to decode json"),
@@ -851,13 +872,18 @@ func (r *Response) getJSONP(
 		return nil
 	}
 
-	m := jsonp.FindSubmatch(r.getContent(opChain))
+	content, ok := r.getContent(opChain)
+	if !ok {
+		return nil
+	}
+
+	m := jsonp.FindSubmatch(content)
 
 	if len(m) != 3 || string(m[1]) != callback {
 		opChain.fail(AssertionFailure{
 			Type: AssertValid,
 			Actual: &AssertionValue{
-				string(r.getContent(opChain)),
+				string(content),
 			},
 			Errors: []error{
 				fmt.Errorf(`expected: JSONP body in form of "%s(<valid json>)"`,
@@ -873,7 +899,7 @@ func (r *Response) getJSONP(
 		opChain.fail(AssertionFailure{
 			Type: AssertValid,
 			Actual: &AssertionValue{
-				string(r.getContent(opChain)),
+				string(content),
 			},
 			Errors: []error{
 				errors.New("failed to decode json"),
