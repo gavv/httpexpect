@@ -1555,6 +1555,16 @@ func TestArray_IsOrdered(t *testing.T) {
 			wantOK: false,
 		},
 		{
+			name: "invalid - nil less function",
+			args: args{
+				values: []interface{}{1, 2, 3},
+				less: []func(x, y *Value) bool{
+					nil,
+				},
+			},
+			wantOK: false,
+		},
+		{
 			name: "invalid - data type not allowed",
 			args: args{
 				values: []interface{}{[]int{1, 2}, []int{3, 4}, []int{5, 6}},
@@ -1581,6 +1591,30 @@ func TestArray_IsOrdered(t *testing.T) {
 			name: "one element",
 			args: args{
 				values: []interface{}{1},
+			},
+			wantOK: true,
+		},
+		{
+			name: "empty array - custom func",
+			args: args{
+				values: []interface{}{},
+				less: []func(x, y *Value) bool{
+					func(x, y *Value) bool {
+						panic("test")
+					},
+				},
+			},
+			wantOK: true,
+		},
+		{
+			name: "one element - custom func",
+			args: args{
+				values: []interface{}{1},
+				less: []func(x, y *Value) bool{
+					func(x, y *Value) bool {
+						panic("test")
+					},
+				},
 			},
 			wantOK: true,
 		},
@@ -1697,6 +1731,16 @@ func TestArray_NotOrdered(t *testing.T) {
 			wantOK: false,
 		},
 		{
+			name: "invalid - nil less function",
+			args: args{
+				values: []interface{}{1, 2, 3},
+				less: []func(x, y *Value) bool{
+					nil,
+				},
+			},
+			wantOK: false,
+		},
+		{
 			name: "invalid - data type not allowed",
 			args: args{
 				values: []interface{}{[]int{1, 2}, []int{3, 4}, []int{5, 6}},
@@ -1727,6 +1771,30 @@ func TestArray_NotOrdered(t *testing.T) {
 			wantOK: true,
 		},
 		{
+			name: "empty array - custom func",
+			args: args{
+				values: []interface{}{},
+				less: []func(x, y *Value) bool{
+					func(x, y *Value) bool {
+						panic("test")
+					},
+				},
+			},
+			wantOK: true,
+		},
+		{
+			name: "one element - custom func",
+			args: args{
+				values: []interface{}{1},
+				less: []func(x, y *Value) bool{
+					func(x, y *Value) bool {
+						panic("test")
+					},
+				},
+			},
+			wantOK: true,
+		},
+		{
 			name: "chain has failed before",
 			args: args{
 				chainFailed: true,
@@ -1747,4 +1815,59 @@ func TestArray_NotOrdered(t *testing.T) {
 			a.chain.clearFailed()
 		})
 	}
+}
+
+func TestArray_ComparatorErrors(t *testing.T) {
+	t.Run("nil_slice", func(t *testing.T) {
+		chain := newMockChain(t).enter("test")
+
+		fn := builtinComparator(chain, nil)
+
+		assert.Nil(t, fn)
+		chain.assertNotFailed(t)
+	})
+
+	t.Run("0_elements", func(t *testing.T) {
+		chain := newMockChain(t).enter("test")
+
+		fn := builtinComparator(chain, []interface{}{})
+
+		assert.Nil(t, fn)
+		chain.assertNotFailed(t)
+	})
+
+	t.Run("1_element", func(t *testing.T) {
+		chain := newMockChain(t).enter("test")
+
+		fn := builtinComparator(chain, []interface{}{
+			"test",
+		})
+
+		assert.Nil(t, fn)
+		chain.assertNotFailed(t)
+	})
+
+	t.Run("2_elements_bad_type", func(t *testing.T) {
+		chain := newMockChain(t).enter("test")
+
+		fn := builtinComparator(chain, []interface{}{
+			"test",
+			make(chan int), // bad type
+		})
+
+		assert.Nil(t, fn)
+		chain.assertFailed(t)
+	})
+
+	t.Run("2_elements_good_types", func(t *testing.T) {
+		chain := newMockChain(t).enter("test")
+
+		fn := builtinComparator(chain, []interface{}{
+			"test",
+			"test",
+		})
+
+		assert.NotNil(t, fn)
+		chain.assertNotFailed(t)
+	})
 }
