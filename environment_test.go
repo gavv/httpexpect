@@ -62,7 +62,7 @@ func TestEnvironment_Reentrant(t *testing.T) {
 		env.Put("good_key", 123)
 	}
 
-	env.Get("key")
+	env.Get("bad_key")
 	env.chain.assertFailed(t)
 }
 

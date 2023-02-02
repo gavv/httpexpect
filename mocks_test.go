@@ -191,11 +191,12 @@ func newMockReporter(t *testing.T) *mockReporter {
 }
 
 func (r *mockReporter) Errorf(message string, args ...interface{}) {
+	r.testing.Logf("Fail: "+message, args...)
+	r.reported = true
+
 	if r.reportCb != nil {
 		r.reportCb()
 	}
-	r.testing.Logf("Fail: "+message, args...)
-	r.reported = true
 }
 
 type mockFormatter struct {
