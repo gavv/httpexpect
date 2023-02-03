@@ -41,17 +41,7 @@ func OAuth2Handler() http.Handler {
 
 	srv := server.NewServer(server.NewConfig(), manager)
 
-	srv.SetPasswordAuthorizationHandler(
-		func(ctx context.Context,
-			clientID,
-			username,
-			password string) (userID string, err error) {
-			if username == usernameConfig && password == passwordConfig {
-				userID = userIDConfig
-			}
-			return
-		},
-	)
+	srv.SetPasswordAuthorizationHandler(setPasswordAuthHandler)
 
 	srv.SetUserAuthorizationHandler(userAuthorizeHandler)
 
@@ -120,6 +110,13 @@ func OAuth2Handler() http.Handler {
 	})
 
 	return mux
+}
+
+func setPasswordAuthHandler(_ context.Context, _, username, password string) (userID string, err error) {
+	if username == usernameConfig && password == passwordConfig {
+		userID = userIDConfig
+	}
+	return
 }
 
 func userAuthorizeHandler(
