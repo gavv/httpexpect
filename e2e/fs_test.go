@@ -1,4 +1,4 @@
-package httpexpect
+package e2e
 
 import (
 	"io/ioutil"
@@ -7,6 +7,7 @@ import (
 	"path"
 	"testing"
 
+	"github.com/gavv/httpexpect/v2"
 	"github.com/valyala/fasthttp"
 )
 
@@ -28,14 +29,14 @@ func TestE2EFs_FastBinder(t *testing.T) {
 
 	handler := fs.NewRequestHandler()
 
-	e := WithConfig(Config{
+	e := httpexpect.WithConfig(httpexpect.Config{
 		Client: &http.Client{
-			Transport: NewFastBinder(handler),
-			Jar:       NewCookieJar(),
+			Transport: httpexpect.NewFastBinder(handler),
+			Jar:       httpexpect.NewCookieJar(),
 		},
-		Reporter: NewAssertReporter(t),
-		Printers: []Printer{
-			NewDebugPrinter(t, true),
+		Reporter: httpexpect.NewAssertReporter(t),
+		Printers: []httpexpect.Printer{
+			httpexpect.NewDebugPrinter(t, true),
 		},
 	})
 

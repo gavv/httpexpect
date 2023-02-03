@@ -1,4 +1,4 @@
-package httpexpect
+package e2e
 
 import (
 	"net/http"
@@ -7,7 +7,9 @@ import (
 	"time"
 
 	fastwebsocket "github.com/fasthttp/websocket"
+	"github.com/gavv/httpexpect/v2"
 	"github.com/gorilla/websocket"
+	"github.com/stretchr/testify/assert"
 	"github.com/valyala/fasthttp"
 )
 
@@ -79,7 +81,7 @@ func websocketFastHandler(ctx *fasthttp.RequestCtx) {
 	}
 }
 
-func testWebsocketConn(e *Expect) {
+func testWebsocketConn(e *httpexpect.Expect) {
 	ws := e.GET("/test").WithWebsocketUpgrade().
 		Expect().
 		Status(http.StatusSwitchingProtocols).
@@ -89,13 +91,9 @@ func testWebsocketConn(e *Expect) {
 	if ws.Conn() == nil {
 		panic("Conn returned nil")
 	}
-
-	if ws.Raw() == nil {
-		panic("Raw returned nil")
-	}
 }
 
-func testWebsocketHeader(e *Expect) {
+func testWebsocketHeader(e *httpexpect.Expect) {
 	resp := e.GET("/test").WithWebsocketUpgrade().
 		Expect().
 		Status(http.StatusSwitchingProtocols)
@@ -107,7 +105,7 @@ func testWebsocketHeader(e *Expect) {
 	ws.Disconnect()
 }
 
-func testWebsocketSession(e *Expect) {
+func testWebsocketSession(e *httpexpect.Expect) {
 	ws := e.GET("/test").WithWebsocketUpgrade().
 		Expect().
 		Status(http.StatusSwitchingProtocols).
@@ -139,7 +137,7 @@ func testWebsocketSession(e *Expect) {
 		CloseMessage().NoContent()
 }
 
-func testWebsocketTypes(e *Expect) {
+func testWebsocketTypes(e *httpexpect.Expect) {
 	ws := e.GET("/test").WithWebsocketUpgrade().
 		Expect().
 		Status(http.StatusSwitchingProtocols).
@@ -159,7 +157,7 @@ func testWebsocketTypes(e *Expect) {
 		Type(websocket.CloseMessage).NoContent()
 }
 
-func testWebsocket(e *Expect) {
+func testWebsocket(e *httpexpect.Expect) {
 	testWebsocketConn(e)
 	testWebsocketHeader(e)
 	testWebsocketSession(e)
@@ -172,11 +170,11 @@ func TestE2EWebsocket_Live(t *testing.T) {
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
-	e := WithConfig(Config{
+	e := httpexpect.WithConfig(httpexpect.Config{
 		BaseURL:  server.URL,
-		Reporter: NewAssertReporter(t),
-		Printers: []Printer{
-			NewDebugPrinter(t, true),
+		Reporter: httpexpect.NewAssertReporter(t),
+		Printers: []httpexpect.Printer{
+			httpexpect.NewDebugPrinter(t, true),
 		},
 	})
 
@@ -187,11 +185,11 @@ func TestE2EWebsocket_HandlerStandard(t *testing.T) {
 	t.Run("dialer-config", func(t *testing.T) {
 		handler := createWebsocketHandler(wsHandlerOpts{})
 
-		e := WithConfig(Config{
-			Reporter:        NewAssertReporter(t),
-			WebsocketDialer: NewWebsocketDialer(handler),
-			Printers: []Printer{
-				NewDebugPrinter(t, true),
+		e := httpexpect.WithConfig(httpexpect.Config{
+			Reporter:        httpexpect.NewAssertReporter(t),
+			WebsocketDialer: httpexpect.NewWebsocketDialer(handler),
+			Printers: []httpexpect.Printer{
+				httpexpect.NewDebugPrinter(t, true),
 			},
 		})
 
@@ -201,26 +199,26 @@ func TestE2EWebsocket_HandlerStandard(t *testing.T) {
 	t.Run("dialer-method", func(t *testing.T) {
 		handler := createWebsocketHandler(wsHandlerOpts{})
 
-		e := WithConfig(Config{
-			Reporter: NewAssertReporter(t),
-			Printers: []Printer{
-				NewDebugPrinter(t, true),
+		e := httpexpect.WithConfig(httpexpect.Config{
+			Reporter: httpexpect.NewAssertReporter(t),
+			Printers: []httpexpect.Printer{
+				httpexpect.NewDebugPrinter(t, true),
 			},
 		})
 
-		testWebsocket(e.Builder(func(req *Request) {
-			req.WithWebsocketDialer(NewWebsocketDialer(handler))
+		testWebsocket(e.Builder(func(req *httpexpect.Request) {
+			req.WithWebsocketDialer(httpexpect.NewWebsocketDialer(handler))
 		}))
 	})
 }
 
 func TestE2EWebsocket_HandlerFast(t *testing.T) {
 	t.Run("dialer-config", func(t *testing.T) {
-		e := WithConfig(Config{
-			Reporter:        NewAssertReporter(t),
-			WebsocketDialer: NewFastWebsocketDialer(websocketFastHandler),
-			Printers: []Printer{
-				NewDebugPrinter(t, true),
+		e := httpexpect.WithConfig(httpexpect.Config{
+			Reporter:        httpexpect.NewAssertReporter(t),
+			WebsocketDialer: httpexpect.NewFastWebsocketDialer(websocketFastHandler),
+			Printers: []httpexpect.Printer{
+				httpexpect.NewDebugPrinter(t, true),
 			},
 		})
 
@@ -228,15 +226,15 @@ func TestE2EWebsocket_HandlerFast(t *testing.T) {
 	})
 
 	t.Run("dialer-method", func(t *testing.T) {
-		e := WithConfig(Config{
-			Reporter: NewAssertReporter(t),
-			Printers: []Printer{
-				NewDebugPrinter(t, true),
+		e := httpexpect.WithConfig(httpexpect.Config{
+			Reporter: httpexpect.NewAssertReporter(t),
+			Printers: []httpexpect.Printer{
+				httpexpect.NewDebugPrinter(t, true),
 			},
 		})
 
-		testWebsocket(e.Builder(func(req *Request) {
-			req.WithWebsocketDialer(NewFastWebsocketDialer(websocketFastHandler))
+		testWebsocket(e.Builder(func(req *httpexpect.Request) {
+			req.WithWebsocketDialer(httpexpect.NewFastWebsocketDialer(websocketFastHandler))
 		}))
 	})
 }
@@ -246,14 +244,16 @@ func testWebsocketTimeout(
 	handler http.Handler,
 	blockCh chan struct{},
 	timeout bool,
-	setupFn func(*Websocket),
+	setupFn func(*httpexpect.Websocket),
 ) {
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
-	e := WithConfig(Config{
+	reporter := &mockReporter{}
+
+	e := httpexpect.WithConfig(httpexpect.Config{
 		BaseURL:  server.URL,
-		Reporter: newMockReporter(t),
+		Reporter: reporter,
 	})
 
 	ws := e.GET("/test").WithWebsocketUpgrade().
@@ -267,7 +267,8 @@ func testWebsocketTimeout(
 	blockCh <- struct{}{}
 
 	ws.WriteText("test").Expect()
-	ws.chain.assert(t, success)
+
+	assert.False(t, reporter.failed)
 
 	go func() {
 		time.Sleep(time.Millisecond * 100)
@@ -276,9 +277,9 @@ func testWebsocketTimeout(
 
 	ws.WriteText("test").Expect()
 	if timeout {
-		ws.chain.assert(t, failure)
+		assert.True(t, reporter.failed)
 	} else {
-		ws.chain.assert(t, success)
+		assert.False(t, reporter.failed)
 	}
 }
 
@@ -296,7 +297,7 @@ func TestE2EWebsocket_Timeouts(t *testing.T) {
 			},
 		})
 
-		testWebsocketTimeout(t, handler, blockCh, true, func(ws *Websocket) {
+		testWebsocketTimeout(t, handler, blockCh, true, func(ws *httpexpect.Websocket) {
 			ws.WithReadTimeout(time.Millisecond * 10)
 		})
 	})
@@ -310,7 +311,7 @@ func TestE2EWebsocket_Timeouts(t *testing.T) {
 			},
 		})
 
-		testWebsocketTimeout(t, handler, blockCh, false, func(ws *Websocket) {
+		testWebsocketTimeout(t, handler, blockCh, false, func(ws *httpexpect.Websocket) {
 			ws.WithoutReadTimeout()
 		})
 	})
@@ -324,7 +325,7 @@ func TestE2EWebsocket_Timeouts(t *testing.T) {
 			},
 		})
 
-		testWebsocketTimeout(t, handler, blockCh, false, func(ws *Websocket) {
+		testWebsocketTimeout(t, handler, blockCh, false, func(ws *httpexpect.Websocket) {
 			ws.WithoutWriteTimeout()
 		})
 	})
@@ -337,9 +338,11 @@ func TestE2EWebsocket_Closed(t *testing.T) {
 		server := httptest.NewServer(handler)
 		defer server.Close()
 
-		e := WithConfig(Config{
+		reporter := &mockReporter{}
+
+		e := httpexpect.WithConfig(httpexpect.Config{
 			BaseURL:  server.URL,
-			Reporter: newMockReporter(t),
+			Reporter: reporter,
 		})
 
 		ws := e.GET("/test").WithWebsocketUpgrade().
@@ -349,10 +352,10 @@ func TestE2EWebsocket_Closed(t *testing.T) {
 		defer ws.Disconnect()
 
 		ws.CloseWithText("bye")
-		ws.chain.assert(t, success)
+		assert.False(t, reporter.failed)
 
 		ws.WriteText("test")
-		ws.chain.assert(t, failure)
+		assert.True(t, reporter.failed)
 	})
 
 	t.Run("close-close", func(t *testing.T) {
@@ -361,9 +364,11 @@ func TestE2EWebsocket_Closed(t *testing.T) {
 		server := httptest.NewServer(handler)
 		defer server.Close()
 
-		e := WithConfig(Config{
+		reporter := &mockReporter{}
+
+		e := httpexpect.WithConfig(httpexpect.Config{
 			BaseURL:  server.URL,
-			Reporter: newMockReporter(t),
+			Reporter: reporter,
 		})
 
 		ws := e.GET("/test").WithWebsocketUpgrade().
@@ -373,10 +378,10 @@ func TestE2EWebsocket_Closed(t *testing.T) {
 		defer ws.Disconnect()
 
 		ws.CloseWithText("bye")
-		ws.chain.assert(t, success)
+		assert.False(t, reporter.failed)
 
 		ws.CloseWithText("bye")
-		ws.chain.assert(t, failure)
+		assert.True(t, reporter.failed)
 	})
 }
 
@@ -387,9 +392,11 @@ func TestE2EWebsocket_Disconnected(t *testing.T) {
 		server := httptest.NewServer(handler)
 		defer server.Close()
 
-		e := WithConfig(Config{
+		reporter := &mockReporter{}
+
+		e := httpexpect.WithConfig(httpexpect.Config{
 			BaseURL:  server.URL,
-			Reporter: newMockReporter(t),
+			Reporter: reporter,
 		})
 
 		ws := e.GET("/test").WithWebsocketUpgrade().
@@ -398,10 +405,10 @@ func TestE2EWebsocket_Disconnected(t *testing.T) {
 			Websocket()
 
 		ws.Disconnect()
-		ws.chain.assert(t, success)
+		assert.False(t, reporter.failed)
 
 		ws.WriteText("test")
-		ws.chain.assert(t, failure)
+		assert.True(t, reporter.failed)
 	})
 
 	t.Run("disconnect-close", func(t *testing.T) {
@@ -410,9 +417,11 @@ func TestE2EWebsocket_Disconnected(t *testing.T) {
 		server := httptest.NewServer(handler)
 		defer server.Close()
 
-		e := WithConfig(Config{
+		reporter := &mockReporter{}
+
+		e := httpexpect.WithConfig(httpexpect.Config{
 			BaseURL:  server.URL,
-			Reporter: newMockReporter(t),
+			Reporter: reporter,
 		})
 
 		ws := e.GET("/test").WithWebsocketUpgrade().
@@ -421,10 +430,10 @@ func TestE2EWebsocket_Disconnected(t *testing.T) {
 			Websocket()
 
 		ws.Disconnect()
-		ws.chain.assert(t, success)
+		assert.False(t, reporter.failed)
 
 		ws.CloseWithText("test")
-		ws.chain.assert(t, failure)
+		assert.True(t, reporter.failed)
 	})
 
 	t.Run("disconnect-disconnect", func(t *testing.T) {
@@ -433,9 +442,11 @@ func TestE2EWebsocket_Disconnected(t *testing.T) {
 		server := httptest.NewServer(handler)
 		defer server.Close()
 
-		e := WithConfig(Config{
+		reporter := &mockReporter{}
+
+		e := httpexpect.WithConfig(httpexpect.Config{
 			BaseURL:  server.URL,
-			Reporter: newMockReporter(t),
+			Reporter: reporter,
 		})
 
 		ws := e.GET("/test").WithWebsocketUpgrade().
@@ -444,10 +455,10 @@ func TestE2EWebsocket_Disconnected(t *testing.T) {
 			Websocket()
 
 		ws.Disconnect()
-		ws.chain.assert(t, success)
+		assert.False(t, reporter.failed)
 
 		ws.Disconnect()
-		ws.chain.assert(t, success)
+		assert.False(t, reporter.failed)
 	})
 }
 
@@ -457,10 +468,12 @@ func TestE2EWebsocket_Invalid(t *testing.T) {
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
+	reporter := &mockReporter{}
+
 	t.Run("no_upgrade_on_client", func(t *testing.T) {
-		e := WithConfig(Config{
+		e := httpexpect.WithConfig(httpexpect.Config{
 			BaseURL:  server.URL,
-			Reporter: newMockReporter(t),
+			Reporter: reporter,
 		})
 
 		// missing WithWebsocketUpgrade()
@@ -471,19 +484,20 @@ func TestE2EWebsocket_Invalid(t *testing.T) {
 		ws := resp.Websocket()
 		defer ws.Disconnect()
 
-		resp.chain.assert(t, failure)
-		ws.chain.assert(t, failure)
+		assert.True(t, reporter.failed)
 	})
 
 	t.Run("no_upgrade_on_server", func(t *testing.T) {
-		e := WithConfig(Config{
+		reporter := &mockReporter{}
+
+		e := httpexpect.WithConfig(httpexpect.Config{
 			BaseURL:  server.URL,
-			Reporter: newMockReporter(t),
+			Reporter: reporter,
 		})
 
-		resp := e.GET("/empty").WithWebsocketUpgrade().
+		e.GET("/empty").WithWebsocketUpgrade().
 			Expect()
 
-		resp.chain.assert(t, failure)
+		assert.True(t, reporter.failed)
 	})
 }

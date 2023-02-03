@@ -1,4 +1,4 @@
-package httpexpect
+package e2e
 
 import (
 	"crypto/tls"
@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/gavv/httpexpect/v2"
 	"github.com/valyala/fasthttp/fasthttpadaptor"
 )
 
@@ -57,7 +58,7 @@ func createBasicHandler() http.Handler {
 	return mux
 }
 
-func testBasicHandler(e *Expect) {
+func testBasicHandler(e *httpexpect.Expect) {
 	e.GET("/foo")
 	e.GET("/foo").Expect()
 	e.GET("/foo").Expect().Status(http.StatusOK)
@@ -81,7 +82,7 @@ func testBasicHandler(e *Expect) {
 		Expect().
 		Status(http.StatusOK).Body().IsEqual("ok")
 
-	auth := e.Builder(func(req *Request) {
+	auth := e.Builder(func(req *httpexpect.Request) {
 		req.WithBasicAuth("john", "secret")
 	})
 
@@ -97,7 +98,7 @@ func TestE2EBasic_LiveDefault(t *testing.T) {
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
-	testBasicHandler(Default(t, server.URL))
+	testBasicHandler(httpexpect.Default(t, server.URL))
 }
 
 func TestE2EBasic_LiveConfig(t *testing.T) {
@@ -106,12 +107,12 @@ func TestE2EBasic_LiveConfig(t *testing.T) {
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
-	testBasicHandler(WithConfig(Config{
+	testBasicHandler(httpexpect.WithConfig(httpexpect.Config{
 		BaseURL:  server.URL,
-		Reporter: NewAssertReporter(t),
-		Printers: []Printer{
-			NewCurlPrinter(t),
-			NewDebugPrinter(t, true),
+		Reporter: httpexpect.NewAssertReporter(t),
+		Printers: []httpexpect.Printer{
+			httpexpect.NewCurlPrinter(t),
+			httpexpect.NewDebugPrinter(t, true),
 		},
 	}))
 }
@@ -122,9 +123,9 @@ func TestE2EBasic_LiveTLS(t *testing.T) {
 	server := httptest.NewTLSServer(handler)
 	defer server.Close()
 
-	testBasicHandler(WithConfig(Config{
+	testBasicHandler(httpexpect.WithConfig(httpexpect.Config{
 		BaseURL:  server.URL,
-		Reporter: NewAssertReporter(t),
+		Reporter: httpexpect.NewAssertReporter(t),
 		Client: &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{
@@ -145,7 +146,7 @@ func TestE2EBasic_LiveLongRun(t *testing.T) {
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
-	e := Default(t, server.URL)
+	e := httpexpect.Default(t, server.URL)
 
 	for i := 0; i < 2; i++ {
 		testBasicHandler(e)
@@ -155,11 +156,11 @@ func TestE2EBasic_LiveLongRun(t *testing.T) {
 func TestE2EBasic_BinderStandard(t *testing.T) {
 	handler := createBasicHandler()
 
-	testBasicHandler(WithConfig(Config{
+	testBasicHandler(httpexpect.WithConfig(httpexpect.Config{
 		BaseURL:  "http://example.com",
-		Reporter: NewAssertReporter(t),
+		Reporter: httpexpect.NewAssertReporter(t),
 		Client: &http.Client{
-			Transport: NewBinder(handler),
+			Transport: httpexpect.NewBinder(handler),
 		},
 	}))
 }
@@ -167,11 +168,11 @@ func TestE2EBasic_BinderStandard(t *testing.T) {
 func TestE2EBasic_BinderFast(t *testing.T) {
 	handler := fasthttpadaptor.NewFastHTTPHandler(createBasicHandler())
 
-	testBasicHandler(WithConfig(Config{
+	testBasicHandler(httpexpect.WithConfig(httpexpect.Config{
 		BaseURL:  "http://example.com",
-		Reporter: NewAssertReporter(t),
+		Reporter: httpexpect.NewAssertReporter(t),
 		Client: &http.Client{
-			Transport: NewFastBinder(handler),
+			Transport: httpexpect.NewFastBinder(handler),
 		},
 	}))
 }
