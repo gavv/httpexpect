@@ -62,6 +62,9 @@ func TestOAuth2(t *testing.T) {
 	}).Expect()
 
 	rr.Status(http.StatusOK)
+	rr.JSON().Path("$.scope").String().IsEqual("all")
+	rr.JSON().Path("$.token_type").String().IsEqual("Bearer")
+	rr.JSON().Path("$.expires_in").Number().Gt(0)
 
 	accessToken := rr.JSON().Path("$.access_token").String().Raw()
 	if accessToken != token.AccessToken {
