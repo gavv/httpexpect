@@ -1,104 +1,72 @@
 package examples
 
 import (
-	"io"
+	"context"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
+	"time"
 
 	"github.com/gavv/httpexpect/v2"
 	"github.com/go-oauth2/oauth2/v4/models"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"golang.org/x/oauth2"
 )
-
-var (
-	cookieJar = httpexpect.NewCookieJar()
-)
-
-func withServerConfig(t *testing.T, serverURL string) *httpexpect.Expect {
-	return httpexpect.WithConfig(httpexpect.Config{
-		BaseURL: serverURL,
-		Client: &http.Client{
-			Jar: cookieJar,
-		},
-		Reporter: httpexpect.NewAssertReporter(t),
-		Printers: []httpexpect.Printer{
-			httpexpect.NewDebugPrinter(t, true),
-		},
-	})
-}
-
-func withClientConfig(t *testing.T, clientURL string) *httpexpect.Expect {
-	return httpexpect.WithConfig(httpexpect.Config{
-		BaseURL: clientURL,
-		Client: &http.Client{
-			Jar: cookieJar,
-		},
-		Reporter: httpexpect.NewAssertReporter(t),
-		Printers: []httpexpect.Printer{
-			httpexpect.NewDebugPrinter(t, true),
-		},
-	})
-}
 
 func TestOAuth2(t *testing.T) {
-	server := httptest.NewServer(AuthServerHandler())
+	server := httptest.NewServer(OAuth2Handler())
 	defer server.Close()
 
-	authServerURL = server.URL
+	clientID := uuid.New().String()[:8]
+	clientSecret := uuid.New().String()[:8]
 
-	client := httptest.NewServer(AuthClientHandler())
-	defer client.Close()
-
-	var (
-		clientID     = "CLIENT_ID"
-		clientSecret = "CLIENT_SECRET"
-	)
-
-	_ = clientStore.Set(clientID, &models.Client{
+	err := clientStore.Set(clientID, &models.Client{
 		ID:     clientID,
 		Secret: clientSecret,
-		Domain: client.URL,
+		Domain: server.URL,
+	})
+	assert.NoError(t, err)
+
+	config := oauth2.Config{
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
+		Endpoint: oauth2.Endpoint{
+			TokenURL: server.URL + "/token",
+		},
+	}
+
+	token := &oauth2.Token{
+		AccessToken:  uuid.New().String()[:8],
+		RefreshToken: uuid.New().String()[:8],
+		Expiry:       time.Now().Add(5 * time.Minute),
+	}
+	client := config.Client(context.Background(), token)
+
+	e := httpexpect.WithConfig(httpexpect.Config{
+		BaseURL:  server.URL,
+		Client:   client,
+		Reporter: httpexpect.NewAssertReporter(t),
+		Printers: []httpexpect.Printer{
+			httpexpect.NewDebugPrinter(t, true),
+		},
 	})
 
-	authConfig.ClientID = clientID
-	authConfig.ClientSecret = clientSecret
-	authConfig.Scopes = []string{"all"}
-	authConfig.RedirectURL = client.URL + "/oauth2"
-	authConfig.Endpoint.AuthURL = server.URL + "/oauth/authorize"
-	authConfig.Endpoint.TokenURL = server.URL + "/oauth/token"
+	e.GET("/protected").Expect().Status(http.StatusBadRequest)
 
-	withClientConfig(t, client.URL).GET("/").Expect().
-		Status(http.StatusOK).
-		Body().IsEqual(
-		func() string {
-			f, _ := os.Open("./static/login.html")
-			b, _ := io.ReadAll(f)
-			return string(b)
-		}())
+	rr := e.GET("/token").WithQueryObject(map[string]interface{}{
+		"grant_type":    "client_credentials",
+		"client_id":     clientID,
+		"client_secret": clientSecret,
+		"scope":         "all",
+	}).Expect()
 
-	withServerConfig(t, server.URL).POST("/login").
-		WithForm(map[string]string{
-			"username": usernameConfig,
-			"password": passwordConfig,
-		}).Expect().Status(http.StatusOK).
-		Body().IsEqual(
-		func() string {
-			f, _ := os.Open("./static/auth.html")
-			b, _ := io.ReadAll(f)
-			return string(b)
-		}())
+	rr.Status(http.StatusOK)
 
-	oauthResp := withServerConfig(t, server.URL).POST("/oauth/authorize").
-		Expect().Status(http.StatusOK).JSON()
-	oauthResp.Path("$.access_token").String().NotEmpty()
-	oauthResp.Path("$.token_type").String().IsEqual("Bearer")
-	oauthResp.Path("$.refresh_token").String().NotEmpty()
-	oauthResp.Path("$.expiry").String().NotEmpty()
+	accessToken := rr.JSON().Path("$.access_token").String().Raw()
+	if accessToken != token.AccessToken {
+		token.AccessToken = accessToken
+	}
 
-	tryResp := withClientConfig(t, client.URL).GET("/try").Expect().
-		Status(http.StatusOK).JSON()
-	tryResp.Path("$.client_id").IsEqual(clientID)
-	tryResp.Path("$.expires_in").IsNumber()
-	tryResp.Path("$.user_id").IsEqual(usernameConfig)
+	e.GET("/protected").Expect().Status(http.StatusOK)
 }
