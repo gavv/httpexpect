@@ -84,6 +84,14 @@ Community forum and Q&A board is right on GitHub in [discussions tab](https://gi
 
 For more interactive discussion, you can join [discord chat](https://discord.gg/5SCPCuCWA9).
 
+## Contributing
+
+Feel free to report bugs, suggest improvements, and send pull requests! Please add documentation and tests for new features.
+
+This project highly depends on contributors. Thank you all for your amazing work!
+
+If you would like to submit code, see [HACKING.md](HACKING.md).
+
 ## Examples
 
 See [`_examples`](_examples) directory for complete standalone examples.
@@ -831,54 +839,6 @@ e := httpexpect.WithConfig(httpexpect.Config{
 * [`httptesting`](https://github.com/dolab/httptesting)
 * [`http-test`](https://github.com/vsco/http-test)
 * [`go-json-rest`](https://github.com/ant0ine/go-json-rest)
-
-## Contributing
-
-Feel free to report bugs, suggest improvements, and send pull requests! Please add documentation and tests for new features.
-
-Install developer dependencies:
-
-* [golangci-lint](https://golangci-lint.run/usage/install/#local-installation)
-
-* [stringer](https://github.com/golang/tools)
-
-    `go install golang.org/x/tools/cmd/stringer@latest`
-
-Re-generate, build, lint, and test everything:
-
-```
-make
-```
-
-Run tests:
-
-```
-make test
-```
-
-Run only short tests:
-
-```
-make short
-```
-
-Run gofmt:
-
-```
-make fmt
-```
-
-Run go generate:
-
-```
-make gen
-```
-
-Run go mod tidy:
-
-```
-make tidy
-```
 
 ## License
 
