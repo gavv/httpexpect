@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"mime"
 	"net/http"
@@ -756,20 +757,28 @@ func (r *Response) getJSON(opChain *chain, options ...ContentOpts) interface{} {
 		return nil
 	}
 
+	reader := bytes.NewReader(r.content)
+	dec := json.NewDecoder(reader)
+	dec.UseNumber()
+
 	var value interface{}
 
-	if err := json.Unmarshal(r.content, &value); err != nil {
-		opChain.fail(AssertionFailure{
-			Type: AssertValid,
-			Actual: &AssertionValue{
-				string(r.content),
-			},
-			Errors: []error{
-				errors.New("failed to decode json"),
-				err,
-			},
-		})
-		return nil
+	for {
+		if err := dec.Decode(&value); err == io.EOF {
+			break
+		} else if err != nil {
+			opChain.fail(AssertionFailure{
+				Type: AssertValid,
+				Actual: &AssertionValue{
+					string(r.content),
+				},
+				Errors: []error{
+					errors.New("failed to decode json"),
+					err,
+				},
+			})
+			return nil
+		}
 	}
 
 	return value
@@ -818,9 +827,7 @@ func (r *Response) JSONP(callback string, options ...ContentOpts) *Value {
 	return newValue(opChain, value)
 }
 
-var (
-	jsonp = regexp.MustCompile(`^\s*([^\s(]+)\s*\((.*)\)\s*;*\s*$`)
-)
+var jsonp = regexp.MustCompile(`^\s*([^\s(]+)\s*\((.*)\)\s*;*\s*$`)
 
 func (r *Response) getJSONP(
 	opChain *chain, callback string, options ...ContentOpts,
@@ -845,20 +852,28 @@ func (r *Response) getJSONP(
 		return nil
 	}
 
+	reader := bytes.NewReader(m[2])
+	dec := json.NewDecoder(reader)
+	dec.UseNumber()
+
 	var value interface{}
 
-	if err := json.Unmarshal(m[2], &value); err != nil {
-		opChain.fail(AssertionFailure{
-			Type: AssertValid,
-			Actual: &AssertionValue{
-				string(r.content),
-			},
-			Errors: []error{
-				errors.New("failed to decode json"),
-				err,
-			},
-		})
-		return nil
+	for {
+		if err := dec.Decode(&value); err == io.EOF {
+			break
+		} else if err != nil {
+			opChain.fail(AssertionFailure{
+				Type: AssertValid,
+				Actual: &AssertionValue{
+					string(r.content),
+				},
+				Errors: []error{
+					errors.New("failed to decode json"),
+					err,
+				},
+			})
+			return nil
+		}
 	}
 
 	return value

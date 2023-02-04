@@ -1,9 +1,11 @@
 package httpexpect
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"math/big"
 	"reflect"
 )
@@ -124,17 +126,26 @@ func canonValue(opChain *chain, in interface{}) (interface{}, bool) {
 		return nil, false
 	}
 
+	reader := bytes.NewReader(b)
+	dec := json.NewDecoder(reader)
+	dec.UseNumber()
+
 	var out interface{}
-	if err := json.Unmarshal(b, &out); err != nil {
-		opChain.fail(AssertionFailure{
-			Type:   AssertValid,
-			Actual: &AssertionValue{in},
-			Errors: []error{
-				errors.New("expected: unmarshalable value"),
-				err,
-			},
-		})
-		return nil, false
+
+	for {
+		if err := dec.Decode(&out); err == io.EOF {
+			break
+		} else if err != nil {
+			opChain.fail(AssertionFailure{
+				Type:   AssertValid,
+				Actual: &AssertionValue{in},
+				Errors: []error{
+					errors.New("expected: unmarshalable value"),
+					err,
+				},
+			})
+			return nil, false
+		}
 	}
 
 	return out, true
@@ -163,14 +174,22 @@ func canonDecode(opChain *chain, value interface{}, target interface{}) {
 		return
 	}
 
-	if err := json.Unmarshal(b, target); err != nil {
-		opChain.fail(AssertionFailure{
-			Type:   AssertValid,
-			Actual: &AssertionValue{target},
-			Errors: []error{
-				errors.New("expected: value can be unmarshaled into target argument"),
-			},
-		})
-		return
+	reader := bytes.NewReader(b)
+	dec := json.NewDecoder(reader)
+	dec.UseNumber()
+
+	for {
+		if err := dec.Decode(&target); err == io.EOF {
+			break
+		} else if err != nil {
+			opChain.fail(AssertionFailure{
+				Type:   AssertValid,
+				Actual: &AssertionValue{target},
+				Errors: []error{
+					errors.New("expected: value can be decoded into target argument"),
+				},
+			})
+			return
+		}
 	}
 }
