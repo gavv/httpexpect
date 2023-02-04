@@ -78,6 +78,7 @@ type chain struct {
 	context  AssertionContext
 	handler  AssertionHandler
 	severity AssertionSeverity
+	failure  AssertionFailure
 }
 
 // If enabled, chain will panic if used incorrectly or gets illformed AssertionFailure.
@@ -340,6 +341,7 @@ func (c *chain) replace(name string, args ...interface{}) *chain {
 // Must be called after enter().
 // Chain can't be used after this call.
 func (c *chain) leave() {
+	println("leaving now")
 	var (
 		context       AssertionContext
 		handler       AssertionHandler
@@ -373,6 +375,9 @@ func (c *chain) leave() {
 
 	if reportFailure {
 		parent.mu.Lock()
+		context = c.context
+		handler = c.handler
+		handler.Failure(&context, &c.failure)
 		parent.flags |= flagFailed
 		p := parent.parent
 		parent.mu.Unlock()
@@ -389,10 +394,8 @@ func (c *chain) leave() {
 
 // Report assertion failure and mark chain as failed.
 // Must be called between enter() and leave().
-func (c *chain) fail(failure AssertionFailure) {
+func (c *chain) fail(AssertFailure AssertionFailure) {
 	var (
-		context       AssertionContext
-		handler       AssertionHandler
 		reportFailure bool
 	)
 
@@ -409,21 +412,19 @@ func (c *chain) fail(failure AssertionFailure) {
 		}
 		c.flags |= flagFailed
 
-		failure.Severity = c.severity
+		AssertFailure.Severity = c.severity
 		if c.severity == SeverityError {
-			failure.IsFatal = true
+			AssertFailure.IsFatal = true
 		}
 
-		context = c.context
-		handler = c.handler
 		reportFailure = true
 	}()
 
 	if reportFailure {
-		handler.Failure(&context, &failure)
+		c.failure = AssertFailure
 
 		if chainValidation {
-			if err := validateAssertion(&failure); err != nil {
+			if err := validateAssertion(&AssertFailure); err != nil {
 				panic(err)
 			}
 		}
