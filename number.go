@@ -57,8 +57,8 @@ func (n *Number) Raw() float64 {
 // Decode unmarshals the underlying value attached to the Number to a target variable.
 // target should be one of these:
 //
-// - pointer to an empty interface
-// - pointer to any integer or floating type
+//   - pointer to an empty interface
+//   - pointer to any integer or floating type
 //
 // Example:
 //
@@ -80,6 +80,15 @@ func (n *Number) Decode(target interface{}) *Number {
 	return n
 }
 
+// Alias is similar to Value.Alias.
+func (n *Number) Alias(name string) *Number {
+	opChain := n.chain.enter("Alias(%q)", name)
+	defer opChain.leave()
+
+	n.chain.setAlias(name)
+	return n
+}
+
 // Path is similar to Value.Path.
 func (n *Number) Path(path string) *Value {
 	opChain := n.chain.enter("Path(%q)", path)
@@ -97,7 +106,7 @@ func (n *Number) Schema(schema interface{}) *Number {
 	return n
 }
 
-// Equal succeeds if number is equal to given value.
+// IsEqual succeeds if number is equal to given value.
 //
 // value should have numeric type convertible to float64. Before comparison,
 // it is converted to float64.
@@ -105,10 +114,10 @@ func (n *Number) Schema(schema interface{}) *Number {
 // Example:
 //
 //	number := NewNumber(t, 123)
-//	number.Equal(float64(123))
-//	number.Equal(int32(123))
-func (n *Number) Equal(value interface{}) *Number {
-	opChain := n.chain.enter("Equal()")
+//	number.IsEqual(float64(123))
+//	number.IsEqual(int32(123))
+func (n *Number) IsEqual(value interface{}) *Number {
+	opChain := n.chain.enter("IsEqual()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -169,6 +178,11 @@ func (n *Number) NotEqual(value interface{}) *Number {
 	}
 
 	return n
+}
+
+// Deprecated: use IsEqual instead.
+func (n *Number) Equal(value interface{}) *Number {
+	return n.IsEqual(value)
 }
 
 // InDelta succeeds if two numerals are within delta of each other.
@@ -356,6 +370,111 @@ func (n *Number) NotInRange(min, max interface{}) *Number {
 				errors.New("expected: number is not within given range"),
 			},
 		})
+	}
+
+	return n
+}
+
+// InList succeeds if the number is equal to one of the values from given list
+// of numbers. Before comparison, each value is converted to canonical form.
+//
+// Each value should be numeric type convertible to float64. If at least one
+// value has wrong type, failure is reported.
+//
+// Example:
+//
+//	number := NewNumber(t, 123)
+//	number.InList(float64(123), int32(123))
+func (n *Number) InList(values ...interface{}) *Number {
+	opChain := n.chain.enter("IsList()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return n
+	}
+
+	if len(values) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty list argument"),
+			},
+		})
+		return n
+	}
+
+	var isListed bool
+	for _, v := range values {
+		num, ok := canonNumber(opChain, v)
+		if !ok {
+			return n
+		}
+
+		if n.value == num {
+			isListed = true
+			// continue loop to check that all values are correct
+		}
+	}
+
+	if !isListed {
+		opChain.fail(AssertionFailure{
+			Type:     AssertBelongs,
+			Actual:   &AssertionValue{n.value},
+			Expected: &AssertionValue{AssertionList(values)},
+			Errors: []error{
+				errors.New("expected: number is equal to one of the values"),
+			},
+		})
+	}
+
+	return n
+}
+
+// NotInList succeeds if the number is not equal to any of the values from given
+// list of numbers. Before comparison, each value is converted to canonical form.
+//
+// Each value should be numeric type convertible to float64. If at least one
+// value has wrong type, failure is reported.
+//
+// Example:
+//
+//	number := NewNumber(t, 123)
+//	number.NotInList(float64(456), int32(456))
+func (n *Number) NotInList(values ...interface{}) *Number {
+	opChain := n.chain.enter("NotInList()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return n
+	}
+
+	if len(values) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty list argument"),
+			},
+		})
+		return n
+	}
+
+	for _, v := range values {
+		num, ok := canonNumber(opChain, v)
+		if !ok {
+			return n
+		}
+
+		if n.value == num {
+			opChain.fail(AssertionFailure{
+				Type:     AssertNotBelongs,
+				Actual:   &AssertionValue{n.value},
+				Expected: &AssertionValue{AssertionList(values)},
+				Errors: []error{
+					errors.New("expected: number is not equal to any of the values"),
+				},
+			})
+			return n
+		}
 	}
 
 	return n

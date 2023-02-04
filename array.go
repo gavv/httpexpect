@@ -73,8 +73,8 @@ func (a *Array) Raw() []interface{} {
 // Decode unmarshals the underlying value attached to the Array to a target variable.
 // target should be one of these:
 //
-// - pointer to an empty interface
-// - pointer to a slice of any type
+//   - pointer to an empty interface
+//   - pointer to a slice of any type
 //
 // Example:
 //
@@ -107,6 +107,15 @@ func (a *Array) Decode(target interface{}) *Array {
 	return a
 }
 
+// Alias is similar to Value.Alias.
+func (a *Array) Alias(name string) *Array {
+	opChain := a.chain.enter("Alias(%q)", name)
+	defer opChain.leave()
+
+	a.chain.setAlias(name)
+	return a
+}
+
 // Path is similar to Value.Path.
 func (a *Array) Path(path string) *Value {
 	opChain := a.chain.enter("Path(%q)", path)
@@ -129,7 +138,7 @@ func (a *Array) Schema(schema interface{}) *Array {
 // Example:
 //
 //	array := NewArray(t, []interface{}{1, 2, 3})
-//	array.Length().Equal(3)
+//	array.Length().IsEqual(3)
 func (a *Array) Length() *Number {
 	opChain := a.chain.enter("Length()")
 	defer opChain.leave()
@@ -149,8 +158,8 @@ func (a *Array) Length() *Number {
 // Example:
 //
 //	array := NewArray(t, []interface{}{"foo", 123})
-//	array.Element(0).String().Equal("foo")
-//	array.Element(1).Number().Equal(123)
+//	array.Element(0).String().IsEqual("foo")
+//	array.Element(1).Number().IsEqual(123)
 func (a *Array) Element(index int) *Value {
 	opChain := a.chain.enter("Element(%d)", index)
 	defer opChain.leave()
@@ -185,7 +194,7 @@ func (a *Array) Element(index int) *Value {
 // Example:
 //
 //	array := NewArray(t, []interface{}{"foo", 123})
-//	array.First().String().Equal("foo")
+//	array.First().String().IsEqual("foo")
 func (a *Array) First() *Value {
 	opChain := a.chain.enter("First()")
 	defer opChain.leave()
@@ -216,7 +225,7 @@ func (a *Array) First() *Value {
 // Example:
 //
 //	array := NewArray(t, []interface{}{"foo", 123})
-//	array.Last().Number().Equal(123)
+//	array.Last().Number().IsEqual(123)
 func (a *Array) Last() *Value {
 	opChain := a.chain.enter("Last()")
 	defer opChain.leave()
@@ -247,7 +256,7 @@ func (a *Array) Last() *Value {
 //	array := NewArray(t, strings)
 //
 //	for index, value := range array.Iter() {
-//	    value.String().Equal(strings[index])
+//	    value.String().IsEqual(strings[index])
 //	}
 func (a *Array) Iter() []Value {
 	opChain := a.chain.enter("Iter()")
@@ -271,7 +280,7 @@ func (a *Array) Iter() []Value {
 	return ret
 }
 
-// Every runs the passed function on all the Elements in the array.
+// Every runs the passed function on all the elements in the array.
 //
 // If assertion inside function fails, the original Array is marked failed.
 //
@@ -332,7 +341,7 @@ func (a *Array) Every(fn func(index int, value *Value)) *Array {
 //		value.String().NotEmpty()		//fails on 1 and 2
 //		return value.Raw() != "bar"		//fails on "bar"
 //	})
-//	filteredArray.Equal([]interface{}{"foo"})	//succeeds
+//	filteredArray.IsEqual([]interface{}{"foo"})	//succeeds
 func (a *Array) Filter(fn func(index int, value *Value) bool) *Array {
 	opChain := a.chain.enter("Filter()")
 	defer opChain.leave()
@@ -370,7 +379,7 @@ func (a *Array) Filter(fn func(index int, value *Value) bool) *Array {
 	return newArray(opChain, filteredArray)
 }
 
-// Transform runs the passed function on all the Elements in the array
+// Transform runs the passed function on all the elements in the array
 // and returns a new array without effeecting original array.
 //
 // Example:
@@ -380,7 +389,7 @@ func (a *Array) Filter(fn func(index int, value *Value) bool) *Array {
 //		func(index int, value interface{}) interface{} {
 //			return strings.ToUpper(value.(string))
 //		})
-//	transformedArray.Equals([]interface{}{"FOO", "BAR"})
+//	transformedArray.IsEqual([]interface{}{"FOO", "BAR"})
 func (a *Array) Transform(fn func(index int, value interface{}) interface{}) *Array {
 	opChain := a.chain.enter("Transform()")
 	defer opChain.leave()
@@ -423,7 +432,7 @@ func (a *Array) Transform(fn func(index int, value interface{}) interface{}) *Ar
 //		num := value.Number()    // skip if element is not a number
 //		return num.Raw() > 100   // check element value
 //	})
-//	foundValue.Equal(101) // succeeds
+//	foundValue.IsEqual(101) // succeeds
 func (a *Array) Find(fn func(index int, value *Value) bool) *Value {
 	opChain := a.chain.enter("Find()")
 	defer opChain.leave()
@@ -490,8 +499,8 @@ func (a *Array) Find(fn func(index int, value *Value) bool) *Value {
 //	})
 //
 //	assert.Equal(t, len(foundValues), 2)
-//	foundValues[0].Equal(101)
-//	foundValues[1].Equal(201)
+//	foundValues[0].IsEqual(101)
+//	foundValues[1].IsEqual(201)
 func (a *Array) FindAll(fn func(index int, value *Value) bool) []*Value {
 	opChain := a.chain.enter("FindAll()")
 	defer opChain.leave()
@@ -595,14 +604,14 @@ func (a *Array) NotFind(fn func(index int, value *Value) bool) *Array {
 	return a
 }
 
-// Empty succeeds if array is empty.
+// IsEmpty succeeds if array is empty.
 //
 // Example:
 //
 //	array := NewArray(t, []interface{}{})
-//	array.Empty()
-func (a *Array) Empty() *Array {
-	opChain := a.chain.enter("Empty()")
+//	array.IsEmpty()
+func (a *Array) IsEmpty() *Array {
+	opChain := a.chain.enter("IsEmpty()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -649,7 +658,12 @@ func (a *Array) NotEmpty() *Array {
 	return a
 }
 
-// Equal succeeds if array is equal to given value.
+// Deprecated: use IsEmpty instead.
+func (a *Array) Empty() *Array {
+	return a.IsEmpty()
+}
+
+// IsEqual succeeds if array is equal to given value.
 // Before comparison, both array and value are converted to canonical form.
 //
 // value should be a slice of any type.
@@ -657,15 +671,15 @@ func (a *Array) NotEmpty() *Array {
 // Example:
 //
 //	array := NewArray(t, []interface{}{"foo", 123})
-//	array.Equal([]interface{}{"foo", 123})
+//	array.IsEqual([]interface{}{"foo", 123})
 //
 //	array := NewArray(t, []interface{}{"foo", "bar"})
-//	array.Equal([]string{}{"foo", "bar"})
+//	array.IsEqual([]string{}{"foo", "bar"})
 //
 //	array := NewArray(t, []interface{}{123, 456})
-//	array.Equal([]int{}{123, 456})
-func (a *Array) Equal(value interface{}) *Array {
-	opChain := a.chain.enter("Equal()")
+//	array.IsEqual([]int{}{123, 456})
+func (a *Array) IsEqual(value interface{}) *Array {
+	opChain := a.chain.enter("IsEqual()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -727,15 +741,20 @@ func (a *Array) NotEqual(value interface{}) *Array {
 	return a
 }
 
-// EqualUnordered succeeds if array is equal to another array, ignoring element
+// Deprecated: use IsEqual instead.
+func (a *Array) Equal(value interface{}) *Array {
+	return a.IsEqual(value)
+}
+
+// IsEqualUnordered succeeds if array is equal to another array, ignoring element
 // order. Before comparison, both arrays are converted to canonical form.
 //
 // Example:
 //
 //	array := NewArray(t, []interface{}{"foo", 123})
-//	array.EqualUnordered([]interface{}{123, "foo"})
-func (a *Array) EqualUnordered(value interface{}) *Array {
-	opChain := a.chain.enter("EqualUnordered()")
+//	array.IsEqualUnordered([]interface{}{123, "foo"})
+func (a *Array) IsEqualUnordered(value interface{}) *Array {
+	opChain := a.chain.enter("IsEqualUnordered()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -876,20 +895,132 @@ func (a *Array) NotEqualUnordered(value interface{}) *Array {
 	return a
 }
 
-// Elements succeeds if array contains all given elements, in given order, and only
+// Deprecated: use IsEqualUnordered instead.
+func (a *Array) EqualUnordered(value interface{}) *Array {
+	return a.IsEqualUnordered(value)
+}
+
+// InList succeeds if the whole array is equal to one of the values from given
+// list of arrays. Before comparison, both array and each value are converted
+// to canonical form.
+//
+// Each value should be a slice of any type. If at least one value has wrong
+// type, failure is reported.
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{"foo", 123})
+//	array.InList([]interface{}{"foo", 123}, []interface{}{"bar", "456"})
+func (a *Array) InList(values ...interface{}) *Array {
+	opChain := a.chain.enter("InList()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return a
+	}
+
+	if len(values) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty list argument"),
+			},
+		})
+		return a
+	}
+
+	var isListed bool
+	for _, v := range values {
+		expected, ok := canonArray(opChain, v)
+		if !ok {
+			return a
+		}
+
+		if reflect.DeepEqual(expected, a.value) {
+			isListed = true
+			// continue loop to check that all values are correct
+		}
+	}
+
+	if !isListed {
+		opChain.fail(AssertionFailure{
+			Type:     AssertBelongs,
+			Actual:   &AssertionValue{a.value},
+			Expected: &AssertionValue{AssertionList(values)},
+			Errors: []error{
+				errors.New("expected: array is equal to one of the values"),
+			},
+		})
+	}
+
+	return a
+}
+
+// NotInList succeeds if the whole array is not equal to any of the values from
+// given list of arrays. Before comparison, both array and each value are
+// converted to canonical form.
+//
+// Each value should be a slice of any type. If at least one value has wrong
+// type, failure is reported.
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{"foo", 123})
+//	array.NotInList([]interface{}{"bar", 456}, []interface{}{"baz", "foo"})
+func (a *Array) NotInList(values ...interface{}) *Array {
+	opChain := a.chain.enter("NotInList()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return a
+	}
+
+	if len(values) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty list argument"),
+			},
+		})
+		return a
+	}
+
+	for _, v := range values {
+		expected, ok := canonArray(opChain, v)
+		if !ok {
+			return a
+		}
+
+		if reflect.DeepEqual(expected, a.value) {
+			opChain.fail(AssertionFailure{
+				Type:     AssertNotBelongs,
+				Actual:   &AssertionValue{a.value},
+				Expected: &AssertionValue{AssertionList(values)},
+				Errors: []error{
+					errors.New("expected: array is not equal to any of the values"),
+				},
+			})
+			return a
+		}
+	}
+
+	return a
+}
+
+// ConsistsOf succeeds if array contains all given elements, in given order, and only
 // them. Before comparison, array and all elements are converted to canonical form.
 //
 // Example:
 //
 //	array := NewArray(t, []interface{}{"foo", 123})
-//	array.Elements("foo", 123)
+//	array.ConsistsOf("foo", 123)
 //
 // These calls are equivalent:
 //
-//	array.Elements("a", "b")
-//	array.Equal([]interface{}{"a", "b"})
-func (a *Array) Elements(values ...interface{}) *Array {
-	opChain := a.chain.enter("Elements()")
+//	array.ConsistsOf("a", "b")
+//	array.IsEqual([]interface{}{"a", "b"})
+func (a *Array) ConsistsOf(values ...interface{}) *Array {
+	opChain := a.chain.enter("ConsistsOf()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -907,7 +1038,7 @@ func (a *Array) Elements(values ...interface{}) *Array {
 			Actual:   &AssertionValue{a.value},
 			Expected: &AssertionValue{expected},
 			Errors: []error{
-				errors.New("expected: arrays are equal"),
+				errors.New("expected: array consists of given elements"),
 			},
 		})
 	}
@@ -915,21 +1046,21 @@ func (a *Array) Elements(values ...interface{}) *Array {
 	return a
 }
 
-// NotElements is opposite to Elements.
+// NotConsistsOf is opposite to ConsistsOf.
 //
 // Example:
 //
 //	array := NewArray(t, []interface{}{"foo", 123})
-//	array.NotElements("foo")
-//	array.NotElements("foo", 123, 456)
-//	array.NotElements(123, "foo")
+//	array.NotConsistsOf("foo")
+//	array.NotConsistsOf("foo", 123, 456)
+//	array.NotConsistsOf(123, "foo")
 //
 // These calls are equivalent:
 //
-//	array.NotElements("a", "b")
+//	array.NotConsistsOf("a", "b")
 //	array.NotEqual([]interface{}{"a", "b"})
-func (a *Array) NotElements(values ...interface{}) *Array {
-	opChain := a.chain.enter("Elements()")
+func (a *Array) NotConsistsOf(values ...interface{}) *Array {
+	opChain := a.chain.enter("NotConsistsOf()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -947,7 +1078,7 @@ func (a *Array) NotElements(values ...interface{}) *Array {
 			Actual:   &AssertionValue{a.value},
 			Expected: &AssertionValue{expected},
 			Errors: []error{
-				errors.New("expected: arrays are non-equal"),
+				errors.New("expected: arrays does not consist of given elements"),
 			},
 		})
 	}
@@ -955,13 +1086,17 @@ func (a *Array) NotElements(values ...interface{}) *Array {
 	return a
 }
 
-// Contains succeeds if array contains all given elements (in any order).
-// Before comparison, array and all elements are converted to canonical form.
-//
-// Example:
-//
-//	array := NewArray(t, []interface{}{"foo", 123})
-//	array.Contains(123, "foo")
+// Deprecated: use ConsistsOf instead.
+func (a *Array) Elements(values ...interface{}) *Array {
+	return a.ConsistsOf(values...)
+}
+
+// Deprecated: use NotConsistsOf instead.
+func (a *Array) NotElements(values ...interface{}) *Array {
+	return a.NotConsistsOf(values...)
+}
+
+// Deprecated: use ContainsAll or ContainsAny instead.
 func (a *Array) Contains(values ...interface{}) *Array {
 	opChain := a.chain.enter("Contains()")
 	defer opChain.leave()
@@ -993,14 +1128,7 @@ func (a *Array) Contains(values ...interface{}) *Array {
 	return a
 }
 
-// NotContains succeeds if array contains none of given elements.
-// Before comparison, array and all elements are converted to canonical form.
-//
-// Example:
-//
-//	array := NewArray(t, []interface{}{"foo", 123})
-//	array.NotContains("bar")         // success
-//	array.NotContains("bar", "foo")  // failure (array contains "foo")
+// Deprecated: use NotContainsAll or NotContainsAny instead.
 func (a *Array) NotContains(values ...interface{}) *Array {
 	opChain := a.chain.enter("NotContains()")
 	defer opChain.leave()
@@ -1027,6 +1155,174 @@ func (a *Array) NotContains(values ...interface{}) *Array {
 				},
 			})
 			break
+		}
+	}
+
+	return a
+}
+
+// ContainsAll succeeds if array contains all given elements (in any order).
+// Before comparison, array and all elements are converted to canonical form.
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{"foo", 123})
+//	array.ContainsAll(123, "foo")
+func (a *Array) ContainsAll(values ...interface{}) *Array {
+	opChain := a.chain.enter("ContainsAll()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return a
+	}
+
+	elements, ok := canonArray(opChain, values)
+	if !ok {
+		return a
+	}
+
+	for _, expected := range elements {
+		if countElement(a.value, expected) == 0 {
+			opChain.fail(AssertionFailure{
+				Type:      AssertContainsElement,
+				Actual:    &AssertionValue{a.value},
+				Expected:  &AssertionValue{expected},
+				Reference: &AssertionValue{values},
+				Errors: []error{
+					errors.New("expected: array contains element from reference array"),
+				},
+			})
+			break
+		}
+	}
+
+	return a
+}
+
+// NotContainsAll succeeds if array does not contain at least one of the elements.
+// Before comparison, array and all elements are converted to canonical form.
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{"foo", 123})
+//	array.NotContainsAll("bar")         // success
+//	array.NotContainsAll(123, "foo")    // failure
+func (a *Array) NotContainsAll(values ...interface{}) *Array {
+	opChain := a.chain.enter("NotContainsAll()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return a
+	}
+
+	elements, ok := canonArray(opChain, values)
+	if !ok {
+		return a
+	}
+
+	haveMissing := false
+
+	for _, expected := range elements {
+		if countElement(a.value, expected) == 0 {
+			haveMissing = true
+			break
+		}
+	}
+
+	if !haveMissing {
+		opChain.fail(AssertionFailure{
+			Type:      AssertNotContainsElement,
+			Actual:    &AssertionValue{a.value},
+			Reference: &AssertionValue{values},
+			Errors: []error{
+				errors.New("expected:" +
+					" array does not contain at least one element from reference array"),
+			},
+		})
+	}
+
+	return a
+}
+
+// ContainsAny succeeds if array contains at least one element from the given elements.
+// Before comparison, array and all elements are converted to canonical form.
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{"foo", 123, 123})
+//	array.ContainsAny(123, "foo", "FOO") // success
+//	array.ContainsAny("FOO") // failure
+func (a *Array) ContainsAny(values ...interface{}) *Array {
+	opChain := a.chain.enter("ContainsAny()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return a
+	}
+
+	elements, ok := canonArray(opChain, values)
+	if !ok {
+		return a
+	}
+
+	foundAny := false
+
+	for _, expected := range elements {
+		if countElement(a.value, expected) != 0 {
+			foundAny = true
+			break
+		}
+	}
+
+	if !foundAny {
+		opChain.fail(AssertionFailure{
+			Type:      AssertContainsElement,
+			Actual:    &AssertionValue{a.value},
+			Reference: &AssertionValue{values},
+			Errors: []error{
+				errors.New("expected:" +
+					" array contains at least one element from reference array"),
+			},
+		})
+	}
+
+	return a
+}
+
+// NotContainsAny succeeds if none of the given elements are in the array.
+// Before comparison, array and all elements are converted to canonical form.
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{"foo", 123})
+//	array.NotContainsAny("bar", 124) // success
+//	array.NotContainsAny(123) // failure
+func (a *Array) NotContainsAny(values ...interface{}) *Array {
+	opChain := a.chain.enter("NotContainsAny()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return a
+	}
+
+	elements, ok := canonArray(opChain, values)
+	if !ok {
+		return a
+	}
+
+	for _, expected := range elements {
+		if countElement(a.value, expected) != 0 {
+			opChain.fail(AssertionFailure{
+				Type:      AssertNotContainsElement,
+				Actual:    &AssertionValue{a.value},
+				Expected:  &AssertionValue{expected},
+				Reference: &AssertionValue{values},
+				Errors: []error{
+					errors.New("expected:" +
+						" array does not contain any elements from reference array"),
+				},
+			})
+			return a
 		}
 	}
 
@@ -1151,91 +1447,6 @@ func (a *Array) NotContainsOnly(values ...interface{}) *Array {
 	return a
 }
 
-// ContainsAny succeeds if array contains at least one element from the given elements.
-// Before comparison, array and all elements are converted
-// to canonical form.
-//
-// Example:
-//
-//	array := NewArray(t, []interface{}{"foo", 123, 123})
-//	array.ContainsAny(123, "foo", "FOO") // success
-//	array.ContainsAny("FOO") // failure
-func (a *Array) ContainsAny(values ...interface{}) *Array {
-	opChain := a.chain.enter("ContainsAny()")
-	defer opChain.leave()
-
-	if opChain.failed() {
-		return a
-	}
-
-	elements, ok := canonArray(opChain, values)
-	if !ok {
-		return a
-	}
-
-	foundAny := false
-
-	for _, expected := range elements {
-		if countElement(a.value, expected) != 0 {
-			foundAny = true
-			break
-		}
-	}
-
-	if !foundAny {
-		opChain.fail(AssertionFailure{
-			Type:      AssertContainsElement,
-			Actual:    &AssertionValue{a.value},
-			Reference: &AssertionValue{values},
-			Errors: []error{
-				errors.New("expected:" +
-					" array contains at least one element from reference array"),
-			},
-		})
-	}
-
-	return a
-}
-
-// NotContainsAny succeeds if none of the given elements are in the array.
-//
-// Example:
-//
-//	array := NewArray(t, []interface{}{"foo", 123})
-//	array.NotContainsAny("bar", 124) // success
-//	array.NotContainsAny(123) // failure
-func (a *Array) NotContainsAny(values ...interface{}) *Array {
-	opChain := a.chain.enter("NotContainsAny()")
-	defer opChain.leave()
-
-	if opChain.failed() {
-		return a
-	}
-
-	elements, ok := canonArray(opChain, values)
-	if !ok {
-		return a
-	}
-
-	for _, expected := range elements {
-		if countElement(a.value, expected) != 0 {
-			opChain.fail(AssertionFailure{
-				Type:      AssertNotContainsElement,
-				Actual:    &AssertionValue{a.value},
-				Expected:  &AssertionValue{expected},
-				Reference: &AssertionValue{values},
-				Errors: []error{
-					errors.New("expected:" +
-						" array does not contain any elements from reference array"),
-				},
-			})
-			return a
-		}
-	}
-
-	return a
-}
-
 // IsOrdered succeeds if every element is not less than the previous element
 // as defined on the given `less` comparator function.
 // For default, it will use built-in comparator function for each data type.
@@ -1267,18 +1478,27 @@ func (a *Array) IsOrdered(less ...func(x, y *Value) bool) *Array {
 		return a
 	}
 
-	if len(a.value) <= 1 {
-		return a
-	}
-
 	var lessFn func(x, y *Value) bool
 	if len(less) == 1 {
 		lessFn = less[0]
+		if lessFn == nil {
+			opChain.fail(AssertionFailure{
+				Type: AssertUsage,
+				Errors: []error{
+					errors.New("unexpected nil less argument"),
+				},
+			})
+			return a
+		}
 	} else {
-		lessFn = arrayComparator(opChain, a.value)
+		lessFn = builtinComparator(opChain, a.value)
 		if lessFn == nil {
 			return a
 		}
+	}
+
+	if len(a.value) <= 1 {
+		return a
 	}
 
 	for i := 0; i < len(a.value)-1; i++ {
@@ -1351,18 +1571,27 @@ func (a *Array) NotOrdered(less ...func(x, y *Value) bool) *Array {
 		return a
 	}
 
-	if len(a.value) <= 1 {
-		return a
-	}
-
 	var lessFn func(x, y *Value) bool
 	if len(less) == 1 {
 		lessFn = less[0]
+		if lessFn == nil {
+			opChain.fail(AssertionFailure{
+				Type: AssertUsage,
+				Errors: []error{
+					errors.New("unexpected nil less argument"),
+				},
+			})
+			return a
+		}
 	} else {
-		lessFn = arrayComparator(opChain, a.value)
+		lessFn = builtinComparator(opChain, a.value)
 		if lessFn == nil {
 			return a
 		}
+	}
+
+	if len(a.value) <= 1 {
+		return a
 	}
 
 	ordered := true
@@ -1413,4 +1642,97 @@ func countElement(array []interface{}, element interface{}) int {
 		}
 	}
 	return count
+}
+
+func builtinComparator(opChain *chain, array []interface{}) func(x, y *Value) bool {
+	var prev interface{}
+	for index, curr := range array {
+		switch curr.(type) {
+		case bool, float64, string, nil:
+			// ok, do nothing
+
+		default:
+			opChain.fail(AssertionFailure{
+				Type: AssertBelongs,
+				Actual: &AssertionValue{
+					unquotedType(fmt.Sprintf("%T", curr)),
+				},
+				Expected: &AssertionValue{AssertionList{
+					unquotedType("Boolean (bool)"),
+					unquotedType("Number (int*, uint*, float*)"),
+					unquotedType("String (string)"),
+					unquotedType("Null (nil)"),
+				}},
+				Reference: &AssertionValue{
+					array,
+				},
+				Errors: []error{
+					errors.New("expected: type of each element of reference array" +
+						" belongs to allowed list"),
+					fmt.Errorf("element %v has disallowed type %T", index, curr),
+				},
+			})
+			return nil
+		}
+
+		if index > 0 && fmt.Sprintf("%T", curr) != fmt.Sprintf("%T", prev) {
+			opChain.fail(AssertionFailure{
+				Type: AssertEqual,
+				Actual: &AssertionValue{
+					unquotedType(fmt.Sprintf("%T (type of element %v)", curr, index)),
+				},
+				Expected: &AssertionValue{
+					unquotedType(fmt.Sprintf("%T (type of element %v)", prev, index-1)),
+				},
+				Reference: &AssertionValue{
+					array,
+				},
+				Errors: []error{
+					errors.New("expected:" +
+						" types of all elements of reference array are the same"),
+					fmt.Errorf("element %v has type %T, but element %v has type %T",
+						index-1, prev, index, curr),
+				},
+			})
+			return nil
+		}
+
+		prev = curr
+	}
+
+	if len(array) > 1 {
+		switch array[0].(type) {
+		case bool:
+			return func(x, y *Value) bool {
+				xVal := x.Raw().(bool)
+				yVal := y.Raw().(bool)
+				return (!xVal && yVal)
+			}
+		case float64:
+			return func(x, y *Value) bool {
+				xVal := x.Raw().(float64)
+				yVal := y.Raw().(float64)
+				return xVal < yVal
+			}
+		case string:
+			return func(x, y *Value) bool {
+				xVal := x.Raw().(string)
+				yVal := y.Raw().(string)
+				return xVal < yVal
+			}
+		case nil:
+			return func(x, y *Value) bool {
+				// `nil` is never less than `nil`
+				return false
+			}
+		}
+	}
+
+	return nil
+}
+
+type unquotedType string
+
+func (t unquotedType) String() string {
+	return string(t)
 }

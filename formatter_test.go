@@ -7,96 +7,16 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-var mockDefaultFormatter = &DefaultFormatter{}
+type typedStingerNil int
 
-type typedNil int
-
-func (*typedNil) String() string {
+func (*typedStingerNil) String() string {
 	return ""
 }
 
-func TestFormat_Values(t *testing.T) {
-	checkAll := func(t *testing.T, fn func(interface{}) string) {
-		var tnil *typedNil
-		var tnilPtr fmt.Stringer = tnil
-
-		assert.Nil(t, tnilPtr)
-		assert.NotEqual(t, nil, tnilPtr)
-
-		check := func(s string) {
-			t.Logf("\n%s", s)
-			assert.NotEmpty(t, s)
-		}
-
-		check(fn(nil))
-		check(fn(tnil))
-		check(fn(tnilPtr))
-		check(fn(123))
-		check(fn("hello"))
-		check(fn(time.Second))
-		check(fn(time.Unix(0, 0)))
-		check(fn([]interface{}{1, 2}))
-		check(fn(map[string]string{"a": "b"}))
-		check(fn(make(chan int)))
-		check(fn(AssertionRange{1, 2}))
-		check(fn(&AssertionRange{1, 2}))
-		check(fn(AssertionRange{"a", "b"}))
-		check(fn(AssertionList([]interface{}{1, 2})))
-	}
-
-	t.Run("formatTypes", func(t *testing.T) {
-		checkAll(t, mockDefaultFormatter.formatTyped)
-	})
-
-	t.Run("formatValue", func(t *testing.T) {
-		checkAll(t, mockDefaultFormatter.formatValue)
-	})
-
-	t.Run("formatBareString", func(t *testing.T) {
-		checkAll(t, mockDefaultFormatter.formatBareString)
-	})
-
-	t.Run("formatRange", func(t *testing.T) {
-		checkAll(t, func(v interface{}) string {
-			return strings.Join(mockDefaultFormatter.formatRange(v), "")
-		})
-	})
-
-	t.Run("formatList", func(t *testing.T) {
-		checkAll(t, func(v interface{}) string {
-			return strings.Join(mockDefaultFormatter.formatList(v), "")
-		})
-	})
-}
-
-func TestFormat_Diff(t *testing.T) {
-	checkOK := func(a, b interface{}) {
-		s, ok := mockDefaultFormatter.formatDiff(a, b)
-		assert.True(t, ok)
-		assert.NotEqual(t, "", s)
-	}
-
-	checkNotOK := func(a, b interface{}) {
-		s, ok := mockDefaultFormatter.formatDiff(a, b)
-		assert.False(t, ok)
-		assert.Equal(t, "", s)
-	}
-
-	checkNotOK(map[string]interface{}{}, []interface{}{})
-	checkNotOK([]interface{}{}, map[string]interface{}{})
-	checkNotOK("foo", "bar")
-	checkNotOK(func() {}, func() {})
-
-	checkNotOK(map[string]interface{}{}, map[string]interface{}{})
-	checkNotOK([]interface{}{}, []interface{}{})
-
-	checkOK(map[string]interface{}{"a": 1}, map[string]interface{}{})
-	checkOK([]interface{}{"a"}, []interface{}{})
-}
-
-func TestFormat_FailureActual(t *testing.T) {
+func TestFormatter_FailureActual(t *testing.T) {
 	tests := []struct {
 		name           string
 		assertionType  AssertionType
@@ -124,14 +44,14 @@ func TestFormat_FailureActual(t *testing.T) {
 			assertionType:  AssertType,
 			assertionValue: float32(1_000_000),
 			wantHaveActual: true,
-			wantActual:     "float32(1e+06)",
+			wantActual:     "float32(1000000)",
 		},
 		{
 			name:           "AssertType float64",
 			assertionType:  AssertType,
 			assertionValue: float64(1_000_000),
 			wantHaveActual: true,
-			wantActual:     "float64(1e+06)",
+			wantActual:     "float64(1000000)",
 		},
 		{
 			name:           "AssertType string",
@@ -168,14 +88,14 @@ func TestFormat_FailureActual(t *testing.T) {
 			assertionType:  AssertValid,
 			assertionValue: float32(1_000_000),
 			wantHaveActual: true,
-			wantActual:     "1e+06",
+			wantActual:     "1000000",
 		},
 		{
 			name:           "AssertValid float64",
 			assertionType:  AssertValid,
 			assertionValue: float64(1_000_000),
 			wantHaveActual: true,
-			wantActual:     "1e+06",
+			wantActual:     "1000000",
 		},
 		{
 			name:           "AssertValid string",
@@ -211,11 +131,12 @@ func TestFormat_FailureActual(t *testing.T) {
 	}
 }
 
-func TestFormat_FailureExpected(t *testing.T) {
+func TestFormatter_FailureExpected(t *testing.T) {
 	tests := []struct {
 		name             string
 		assertionType    AssertionType
 		assertionValue   interface{}
+		formatter        DefaultFormatter
 		wantHaveExpected bool
 		wantExpectedKind string
 		wantExpected     []string
@@ -252,7 +173,7 @@ func TestFormat_FailureExpected(t *testing.T) {
 			},
 			wantHaveExpected: true,
 			wantExpectedKind: kindRange,
-			wantExpected:     []string{"[1e+06; 2e+06]"},
+			wantExpected:     []string{"[1000000; 2000000]"},
 		},
 		{
 			name:          "AssertInRange float64",
@@ -263,7 +184,7 @@ func TestFormat_FailureExpected(t *testing.T) {
 			},
 			wantHaveExpected: true,
 			wantExpectedKind: kindRange,
-			wantExpected:     []string{"[1e+06; 2e+06]"},
+			wantExpected:     []string{"[1000000; 2000000]"},
 		},
 		{
 			name:          "AssertInRange string",
@@ -311,7 +232,7 @@ func TestFormat_FailureExpected(t *testing.T) {
 			assertionValue:   float32(1_000_000),
 			wantHaveExpected: true,
 			wantExpectedKind: kindPath,
-			wantExpected:     []string{"1e+06"},
+			wantExpected:     []string{"1000000"},
 		},
 		{
 			name:             "AssertMatchPath float64",
@@ -319,7 +240,7 @@ func TestFormat_FailureExpected(t *testing.T) {
 			assertionValue:   float64(1_000_000),
 			wantHaveExpected: true,
 			wantExpectedKind: kindPath,
-			wantExpected:     []string{"1e+06"},
+			wantExpected:     []string{"1000000"},
 		},
 		{
 			name:             "AssertMatchPath string",
@@ -370,7 +291,7 @@ func TestFormat_FailureExpected(t *testing.T) {
 			},
 			wantHaveExpected: true,
 			wantExpectedKind: kindFormatList,
-			wantExpected:     []string{"1e+06", "2e+06"},
+			wantExpected:     []string{"1000000", "2000000"},
 		},
 		{
 			name:          "AssertMatchFormat float64",
@@ -381,7 +302,7 @@ func TestFormat_FailureExpected(t *testing.T) {
 			},
 			wantHaveExpected: true,
 			wantExpectedKind: kindFormatList,
-			wantExpected:     []string{"1e+06", "2e+06"},
+			wantExpected:     []string{"1000000", "2000000"},
 		},
 		{
 			name:          "AssertMatchFormat string",
@@ -409,7 +330,6 @@ func TestFormat_FailureExpected(t *testing.T) {
 		},
 	}
 
-	df := &DefaultFormatter{}
 	ctx := &AssertionContext{}
 
 	for _, tc := range tests {
@@ -420,7 +340,7 @@ func TestFormat_FailureExpected(t *testing.T) {
 					Value: tc.assertionValue,
 				},
 			}
-			fd := df.buildFormatData(ctx, fl)
+			fd := tc.formatter.buildFormatData(ctx, fl)
 			assert.Equal(t, tc.wantHaveExpected, fd.HaveExpected)
 			assert.Equal(t, tc.wantExpectedKind, fd.ExpectedKind)
 			assert.Equal(t, tc.wantExpected, fd.Expected)
@@ -428,7 +348,7 @@ func TestFormat_FailureExpected(t *testing.T) {
 	}
 }
 
-func TestFormat_FailureReference(t *testing.T) {
+func TestFormatter_FailureReference(t *testing.T) {
 	tests := []struct {
 		name              string
 		assertionValue    interface{}
@@ -451,13 +371,13 @@ func TestFormat_FailureReference(t *testing.T) {
 			name:              "float32",
 			assertionValue:    float32(1_000_000),
 			wantHaveReference: true,
-			wantReference:     "1e+06",
+			wantReference:     "1000000",
 		},
 		{
 			name:              "float64",
 			assertionValue:    float64(1_000_000),
 			wantHaveReference: true,
-			wantReference:     "1e+06",
+			wantReference:     "1000000",
 		},
 		{
 			name:              "string",
@@ -490,7 +410,7 @@ func TestFormat_FailureReference(t *testing.T) {
 	}
 }
 
-func TestFormat_FailureDelta(t *testing.T) {
+func TestFormatter_FailureDelta(t *testing.T) {
 	tests := []struct {
 		name           string
 		assertionValue interface{}
@@ -513,13 +433,13 @@ func TestFormat_FailureDelta(t *testing.T) {
 			name:           "float32",
 			assertionValue: float32(1_000_000),
 			wantHaveDelta:  true,
-			wantDelta:      "1e+06",
+			wantDelta:      "1000000",
 		},
 		{
 			name:           "float64",
 			assertionValue: float64(1_000_000),
 			wantHaveDelta:  true,
-			wantDelta:      "1e+06",
+			wantDelta:      "1000000",
 		},
 		{
 			name:           "string",
@@ -550,4 +470,321 @@ func TestFormat_FailureDelta(t *testing.T) {
 			assert.Equal(t, tc.wantDelta, fd.Delta)
 		})
 	}
+}
+
+func TestFormatter_FloatFormat(t *testing.T) {
+	type testCase struct {
+		name     string
+		format   FloatFormat
+		value    interface{}
+		wantText string
+	}
+
+	testCases := []testCase{
+		// float32
+		{
+			name:     "float32 auto small exponent",
+			format:   FloatFormatAuto,
+			value:    float32(1.2345678),
+			wantText: "1.2345678",
+		},
+		{
+			name:     "float32 auto large exponent",
+			format:   FloatFormatAuto,
+			value:    float32(1234567.8),
+			wantText: "1.2345678e+06",
+		},
+		{
+			name:     "float32 decimal",
+			format:   FloatFormatDecimal,
+			value:    float32(1234567.8),
+			wantText: "1234567.8",
+		},
+		{
+			name:     "float32 scientific",
+			format:   FloatFormatScientific,
+			value:    float32(1.2345678),
+			wantText: "1.2345678e+00",
+		},
+		// float64
+		{
+			name:     "float64 auto small exponent",
+			format:   FloatFormatAuto,
+			value:    float64(1.23456789),
+			wantText: "1.23456789",
+		},
+		{
+			name:     "float64 auto large exponent",
+			format:   FloatFormatAuto,
+			value:    float64(12345678.9),
+			wantText: "1.23456789e+07",
+		},
+		{
+			name:     "float64 decimal",
+			format:   FloatFormatDecimal,
+			value:    float64(12345678.9),
+			wantText: "12345678.9",
+		},
+		{
+			name:     "float64 scientific",
+			format:   FloatFormatScientific,
+			value:    float64(1.23456789),
+			wantText: "1.23456789e+00",
+		},
+		// no fractional part
+		{
+			name:     "nofrac auto",
+			format:   FloatFormatAuto,
+			value:    float32(12345678),
+			wantText: "12345678",
+		},
+		{
+			name:     "nofrac decimal",
+			format:   FloatFormatDecimal,
+			value:    float32(12345678),
+			wantText: "12345678",
+		},
+		{
+			name:     "nofrac scientific",
+			format:   FloatFormatScientific,
+			value:    float32(12345678),
+			wantText: "1.2345678e+07",
+		},
+		// integer
+		{
+			name:     "integer auto",
+			format:   FloatFormatAuto,
+			value:    int(12345678),
+			wantText: "12345678",
+		},
+		{
+			name:     "integer decimal",
+			format:   FloatFormatDecimal,
+			value:    int(12345678),
+			wantText: "12345678",
+		},
+		{
+			name:     "integer scientific",
+			format:   FloatFormatScientific,
+			value:    int(12345678),
+			wantText: "12345678",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			formatter := DefaultFormatter{
+				FloatFormat: tc.format,
+			}
+			formatData := formatter.buildFormatData(
+				&AssertionContext{},
+				&AssertionFailure{
+					Type:   AssertValid,
+					Actual: &AssertionValue{tc.value},
+				})
+			assert.Equal(t, tc.wantText, formatData.Actual)
+		})
+	}
+}
+
+func TestFormatter_FloatFields(t *testing.T) {
+	type testCase struct {
+		name     string
+		format   FloatFormat
+		value    float64
+		wantText string
+	}
+
+	testCases := []testCase{
+		{
+			name:     "auto",
+			format:   FloatFormatAuto,
+			value:    1.2345678,
+			wantText: "1.2345678",
+		},
+		{
+			name:     "decimal",
+			format:   FloatFormatDecimal,
+			value:    1.2345678,
+			wantText: "1.2345678",
+		},
+		{
+			name:     "scientific",
+			format:   FloatFormatScientific,
+			value:    1.2345678,
+			wantText: "1.2345678e+00",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			formatter := DefaultFormatter{
+				FloatFormat: tc.format,
+			}
+
+			t.Run("actual", func(t *testing.T) {
+				formatData := formatter.buildFormatData(
+					&AssertionContext{},
+					&AssertionFailure{
+						Type:   AssertValid,
+						Actual: &AssertionValue{tc.value},
+					})
+				assert.Equal(t, tc.wantText, formatData.Actual)
+			})
+
+			t.Run("expected", func(t *testing.T) {
+				formatData := formatter.buildFormatData(
+					&AssertionContext{},
+					&AssertionFailure{
+						Type:     AssertEqual,
+						Actual:   &AssertionValue{},
+						Expected: &AssertionValue{tc.value},
+					})
+				require.Equal(t, 1, len(formatData.Expected))
+				assert.Equal(t, tc.wantText, formatData.Expected[0])
+			})
+
+			t.Run("reference", func(t *testing.T) {
+				formatData := formatter.buildFormatData(
+					&AssertionContext{},
+					&AssertionFailure{
+						Type:      AssertEqual,
+						Actual:    &AssertionValue{},
+						Expected:  &AssertionValue{},
+						Reference: &AssertionValue{tc.value},
+					})
+				assert.Equal(t, tc.wantText, formatData.Reference)
+			})
+
+			t.Run("delta", func(t *testing.T) {
+				formatData := formatter.buildFormatData(
+					&AssertionContext{},
+					&AssertionFailure{
+						Type:     AssertEqual,
+						Actual:   &AssertionValue{},
+						Expected: &AssertionValue{},
+						Delta:    &AssertionValue{tc.value},
+					})
+				assert.Equal(t, tc.wantText, formatData.Delta)
+			})
+
+			t.Run("range", func(t *testing.T) {
+				formatData := formatter.buildFormatData(
+					&AssertionContext{},
+					&AssertionFailure{
+						Type:   AssertInRange,
+						Actual: &AssertionValue{},
+						Expected: &AssertionValue{AssertionRange{
+							Min: tc.value,
+							Max: tc.value,
+						}},
+					})
+				require.Equal(t, 1, len(formatData.Expected))
+				assert.Equal(t,
+					fmt.Sprintf("[%s; %s]", tc.wantText, tc.wantText),
+					formatData.Expected[0])
+			})
+
+			t.Run("list", func(t *testing.T) {
+				formatData := formatter.buildFormatData(
+					&AssertionContext{},
+					&AssertionFailure{
+						Type:   AssertBelongs,
+						Actual: &AssertionValue{},
+						Expected: &AssertionValue{AssertionList{
+							tc.value,
+							tc.value,
+						}},
+					})
+				require.Equal(t, 2, len(formatData.Expected))
+				assert.Equal(t, tc.wantText, formatData.Expected[0])
+				assert.Equal(t, tc.wantText, formatData.Expected[1])
+			})
+		})
+	}
+}
+
+func TestFormatter_FormatValue(t *testing.T) {
+	var formatter = &DefaultFormatter{}
+
+	checkAll := func(t *testing.T, fn func(interface{}) string) {
+		var tnil *typedStingerNil
+		var tnilPtr fmt.Stringer = tnil
+
+		assert.Nil(t, tnilPtr)
+		assert.NotEqual(t, nil, tnilPtr)
+
+		check := func(s string) {
+			t.Logf("\n%s", s)
+			assert.NotEmpty(t, s)
+		}
+
+		check(fn(nil))
+		check(fn(tnil))
+		check(fn(tnilPtr))
+		check(fn(123))
+		check(fn(float32(123)))
+		check(fn(float64(123)))
+		check(fn("hello"))
+		check(fn(time.Second))
+		check(fn(time.Unix(0, 0)))
+		check(fn([]interface{}{1, 2}))
+		check(fn(map[string]string{"a": "b"}))
+		check(fn(make(chan int)))
+		check(fn(AssertionRange{1, 2}))
+		check(fn(&AssertionRange{1, 2}))
+		check(fn(AssertionRange{"a", "b"}))
+		check(fn(AssertionList([]interface{}{1, 2})))
+	}
+
+	t.Run("formatValue", func(t *testing.T) {
+		checkAll(t, formatter.formatValue)
+	})
+
+	t.Run("formatTypedValue", func(t *testing.T) {
+		checkAll(t, formatter.formatTypedValue)
+	})
+
+	t.Run("formatMatchValue", func(t *testing.T) {
+		checkAll(t, formatter.formatMatchValue)
+	})
+
+	t.Run("formatRangeValue", func(t *testing.T) {
+		checkAll(t, func(v interface{}) string {
+			return strings.Join(formatter.formatRangeValue(v), "")
+		})
+	})
+
+	t.Run("formatListValue", func(t *testing.T) {
+		checkAll(t, func(v interface{}) string {
+			return strings.Join(formatter.formatListValue(v), "")
+		})
+	})
+}
+
+func TestFormatter_FormatDiff(t *testing.T) {
+	var formatter = &DefaultFormatter{}
+
+	checkOK := func(a, b interface{}) {
+		s, ok := formatter.formatDiff(a, b)
+		assert.True(t, ok)
+		assert.NotEqual(t, "", s)
+	}
+
+	checkNotOK := func(a, b interface{}) {
+		s, ok := formatter.formatDiff(a, b)
+		assert.False(t, ok)
+		assert.Equal(t, "", s)
+	}
+
+	checkNotOK(map[string]interface{}{}, []interface{}{})
+	checkNotOK([]interface{}{}, map[string]interface{}{})
+	checkNotOK("foo", "bar")
+	checkNotOK(func() {}, func() {})
+
+	checkNotOK(map[string]interface{}{}, map[string]interface{}{})
+	checkNotOK([]interface{}{}, []interface{}{})
+
+	checkOK(map[string]interface{}{"a": 1}, map[string]interface{}{})
+	checkOK([]interface{}{"a"}, []interface{}{})
 }

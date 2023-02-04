@@ -26,6 +26,7 @@ func TestWebsocketMessage_Failed(t *testing.T) {
 	msg.Code(0)
 	msg.NotCode(0)
 	msg.NoContent()
+	msg.Alias("foo")
 
 	msg.Body().chain.assertFailed(t)
 	msg.JSON().chain.assertFailed(t)
@@ -56,7 +57,24 @@ func TestWebsocketMessage_Constructors(t *testing.T) {
 	})
 }
 
-func TestWebsocketMessage_BadUsage(t *testing.T) {
+func TestWebsocketMessage_Alias(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value1 := NewWebsocketMessage(reporter, websocket.CloseMessage, nil)
+	assert.Equal(t, []string{"WebsocketMessage()"}, value1.chain.context.Path)
+	assert.Equal(t, []string{"WebsocketMessage()"}, value1.chain.context.AliasedPath)
+
+	value2 := value1.Alias("foo")
+	assert.Equal(t, []string{"WebsocketMessage()"}, value2.chain.context.Path)
+	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
+
+	value3 := value2.Body()
+	assert.Equal(t, []string{"WebsocketMessage()", "Body()"},
+		value3.chain.context.Path)
+	assert.Equal(t, []string{"foo", "Body()"}, value3.chain.context.AliasedPath)
+}
+
+func TestWebsocketMessage_UsageChecks(t *testing.T) {
 	chain := newMockChain(t)
 
 	msg := newEmptyWebsocketMessage(chain)
@@ -402,5 +420,19 @@ func TestWebsocketMessage_JSON(t *testing.T) {
 		j.chain.assertFailed(t)
 
 		msg.chain.assertFailed(t)
+	})
+}
+
+func TestWebsocketMessage_Codes(t *testing.T) {
+	t.Run("message_type", func(t *testing.T) {
+		for n := 0; n < 100; n++ {
+			assert.NotEmpty(t, wsMessageType(n).String())
+		}
+	})
+
+	t.Run("close_code", func(t *testing.T) {
+		for n := 0; n < 2000; n++ {
+			assert.NotEmpty(t, wsCloseCode(n).String())
+		}
 	})
 }

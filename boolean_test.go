@@ -6,42 +6,46 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestBoolean_Failed(t *testing.T) {
+func TestBoolean_FailedChain(t *testing.T) {
 	chain := newMockChain(t)
 	chain.setFailed()
 
 	value := newBoolean(chain, false)
+	value.chain.assertFailed(t)
 
-	value.Path("$")
+	value.Path("$").chain.assertFailed(t)
 	value.Schema("")
+	value.Alias("foo")
 
 	var target interface{}
 	value.Decode(&target)
 
-	value.Equal(false)
+	value.IsTrue()
+	value.IsFalse()
+	value.IsEqual(false)
 	value.NotEqual(false)
-	value.True()
-	value.False()
+	value.InList(false)
+	value.NotInList(false)
 }
 
 func TestBoolean_Constructors(t *testing.T) {
-	t.Run("Constructor without config", func(t *testing.T) {
+	t.Run("reporter", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewBoolean(reporter, true)
-		value.Equal(true)
+		value.IsEqual(true)
 		value.chain.assertNotFailed(t)
 	})
 
-	t.Run("Constructor with config", func(t *testing.T) {
+	t.Run("config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewBooleanC(Config{
 			Reporter: reporter,
 		}, true)
-		value.Equal(true)
+		value.IsEqual(true)
 		value.chain.assertNotFailed(t)
 	})
 
-	t.Run("chain Constructor", func(t *testing.T) {
+	t.Run("chain", func(t *testing.T) {
 		chain := newMockChain(t)
 		value := newBoolean(chain, true)
 		assert.NotSame(t, value.chain, &chain)
@@ -95,6 +99,18 @@ func TestBoolean_Decode(t *testing.T) {
 	})
 }
 
+func TestBoolean_Alias(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value1 := NewBoolean(reporter, true)
+	assert.Equal(t, []string{"Boolean()"}, value1.chain.context.Path)
+	assert.Equal(t, []string{"Boolean()"}, value1.chain.context.AliasedPath)
+
+	value2 := value1.Alias("foo")
+	assert.Equal(t, []string{"Boolean()"}, value2.chain.context.Path)
+	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
+}
+
 func TestBoolean_Getters(t *testing.T) {
 	reporter := newMockReporter(t)
 
@@ -124,11 +140,11 @@ func TestBoolean_True(t *testing.T) {
 
 	assert.Equal(t, true, value.Raw())
 
-	value.Equal(true)
+	value.IsEqual(true)
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.Equal(false)
+	value.IsEqual(false)
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
@@ -140,11 +156,19 @@ func TestBoolean_True(t *testing.T) {
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.True()
+	value.IsTrue()
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.False()
+	value.IsFalse()
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.InList(true, true)
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList(true, false)
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 }
@@ -156,11 +180,11 @@ func TestBoolean_False(t *testing.T) {
 
 	assert.Equal(t, false, value.Raw())
 
-	value.Equal(true)
+	value.IsEqual(true)
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.Equal(false)
+	value.IsEqual(false)
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
@@ -172,11 +196,33 @@ func TestBoolean_False(t *testing.T) {
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.True()
+	value.IsTrue()
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.False()
+	value.IsFalse()
 	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.InList(true, true)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList(true, true)
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+}
+
+func TestBoolean_UsageChecks(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewBoolean(reporter, true)
+
+	value.InList()
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList()
+	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 }

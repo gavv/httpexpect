@@ -3,12 +3,19 @@ package httpexpect
 import (
 	"errors"
 	"fmt"
-	"reflect"
 )
 
 func validateAssertion(failure *AssertionFailure) error {
 	if len(failure.Errors) == 0 {
 		return errors.New("AssertionFailure should have non-empty Errors list")
+	}
+
+	for _, err := range failure.Errors {
+		if err == nil {
+			return errors.New("AssertionFailure should not have nil in Errors")
+		} else if refIsNil(err) {
+			return errors.New("AssertionFailure should not have typed-nil in Errors")
+		}
 	}
 
 	if err := validateType(failure); err != nil {
@@ -181,12 +188,6 @@ func validateTraits(failure *AssertionFailure, traits fieldTraits) error {
 			if lst, ok := failure.Expected.Value.(AssertionList); ok {
 				if len(lst) == 0 {
 					return errors.New("AssertionList should be non-empty")
-				}
-
-				if len(lst) == 1 && reflect.ValueOf(lst[0]).Kind() == reflect.Slice {
-					return errors.New(
-						"AssertionList should contain a list of values," +
-							" but it contains a single element which itself is a list")
 				}
 			}
 		}

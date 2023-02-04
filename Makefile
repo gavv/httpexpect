@@ -17,6 +17,7 @@ build:
 
 lint:
 	golangci-lint run .
+	cd _examples && golangci-lint run .
 
 test:
 ifneq ($(shell which gotest),)
@@ -39,3 +40,6 @@ ifneq ($(shell which mdspell),)
 	mdspell -a README.md
 	sort .spelling -o .spelling
 endif
+
+toc:
+	markdown-toc --maxdepth 3 -i HACKING.md

@@ -25,14 +25,14 @@ type Match struct {
 //	m := NewMatch(t, r.FindStringSubmatch(s), r.SubexpNames())
 //
 //	m.NotEmpty()
-//	m.Length().Equal(3)
+//	m.Length().IsEqual(3)
 //
-//	m.Index(0).Equal("http://example.com/users/john")
-//	m.Index(1).Equal("example.com")
-//	m.Index(2).Equal("john")
+//	m.Index(0).IsEqual("http://example.com/users/john")
+//	m.Index(1).IsEqual("example.com")
+//	m.Index(2).IsEqual("john")
 //
-//	m.Name("host").Equal("example.com")
-//	m.Name("user").Equal("john")
+//	m.Name("host").IsEqual("example.com")
+//	m.Name("user").IsEqual("john")
 func NewMatch(reporter Reporter, submatches []string, names []string) *Match {
 	return newMatch(newChainWithDefaults("Match()", reporter), submatches, names)
 }
@@ -77,12 +77,21 @@ func (m *Match) Raw() []string {
 	return m.submatches
 }
 
+// Alias is similar to Value.Alias.
+func (m *Match) Alias(name string) *Match {
+	opChain := m.chain.enter("Alias(%q)", name)
+	defer opChain.leave()
+
+	m.chain.setAlias(name)
+	return m
+}
+
 // Length returns a new Number instance with number of submatches.
 //
 // Example:
 //
 //	m := NewMatch(t, submatches, names)
-//	m.Length().Equal(len(submatches))
+//	m.Length().IsEqual(len(submatches))
 func (m *Match) Length() *Number {
 	opChain := m.chain.enter("Length()")
 	defer opChain.leave()
@@ -106,9 +115,9 @@ func (m *Match) Length() *Number {
 //	r := regexp.MustCompile(`http://(.+)/users/(.+)`)
 //	m := NewMatch(t, r.FindStringSubmatch(s), nil)
 //
-//	m.Index(0).Equal("http://example.com/users/john")
-//	m.Index(1).Equal("example.com")
-//	m.Index(2).Equal("john")
+//	m.Index(0).IsEqual("http://example.com/users/john")
+//	m.Index(1).IsEqual("example.com")
+//	m.Index(2).IsEqual("john")
 func (m *Match) Index(index int) *String {
 	opChain := m.chain.enter("Index(%d)", index)
 	defer opChain.leave()
@@ -147,8 +156,8 @@ func (m *Match) Index(index int) *String {
 //	r := regexp.MustCompile(`http://(?P<host>.+)/users/(?P<user>.+)`)
 //	m := NewMatch(t, r.FindStringSubmatch(s), r.SubexpNames())
 //
-//	m.Name("host").Equal("example.com")
-//	m.Name("user").Equal("john")
+//	m.Name("host").IsEqual("example.com")
+//	m.Name("user").IsEqual("john")
 func (m *Match) Name(name string) *String {
 	opChain := m.chain.enter("Name(%q)", name)
 	defer opChain.leave()
@@ -159,32 +168,34 @@ func (m *Match) Name(name string) *String {
 
 	index, ok := m.names[name]
 	if !ok {
-		names := make([]interface{}, 0, len(m.names))
+		nameList := make([]interface{}, 0, len(m.names))
 		for n := range m.names {
-			names = append(names, n)
+			nameList = append(nameList, n)
 		}
+
 		opChain.fail(AssertionFailure{
 			Type:     AssertBelongs,
 			Actual:   &AssertionValue{name},
-			Expected: &AssertionValue{AssertionList(names)},
+			Expected: &AssertionValue{AssertionList(nameList)},
 			Errors: []error{
 				errors.New("expected: existing sub-match name"),
 			},
 		})
+
 		return newString(opChain, "")
 	}
 
 	return newString(opChain, m.submatches[index])
 }
 
-// Empty succeeds if submatches array is empty.
+// IsEmpty succeeds if submatches array is empty.
 //
 // Example:
 //
 //	m := NewMatch(t, submatches, names)
-//	m.Empty()
-func (m *Match) Empty() *Match {
-	opChain := m.chain.enter("Empty()")
+//	m.IsEmpty()
+func (m *Match) IsEmpty() *Match {
+	opChain := m.chain.enter("IsEmpty()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -229,6 +240,11 @@ func (m *Match) NotEmpty() *Match {
 	}
 
 	return m
+}
+
+// Deprecated: use IsEmpty instead.
+func (m *Match) Empty() *Match {
+	return m.IsEmpty()
 }
 
 // Values succeeds if submatches array, starting from index 1, is equal to

@@ -7,48 +7,52 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNumber_Failed(t *testing.T) {
+func TestNumber_FailedChain(t *testing.T) {
 	chain := newMockChain(t)
 	chain.setFailed()
 
 	value := newNumber(chain, 0)
+	value.chain.assertFailed(t)
 
-	value.Path("$")
+	value.Path("$").chain.assertFailed(t)
 	value.Schema("")
+	value.Alias("foo")
 
 	var target interface{}
 	value.Decode(&target)
 
-	value.Equal(0)
+	value.IsEqual(0)
 	value.NotEqual(0)
 	value.InDelta(0, 0)
 	value.NotInDelta(0, 0)
+	value.InRange(0, 0)
+	value.NotInRange(0, 0)
+	value.InList(0)
+	value.NotInList(0)
 	value.Gt(0)
 	value.Ge(0)
 	value.Lt(0)
 	value.Le(0)
-	value.InRange(0, 0)
-	value.NotInRange(0, 0)
 }
 
 func TestNumber_Constructors(t *testing.T) {
-	t.Run("Constructor without config", func(t *testing.T) {
+	t.Run("reporter", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewNumber(reporter, 10.3)
-		value.Equal(10.3)
+		value.IsEqual(10.3)
 		value.chain.assertNotFailed(t)
 	})
 
-	t.Run("Constructor with config", func(t *testing.T) {
+	t.Run("config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewNumberC(Config{
 			Reporter: reporter,
 		}, 10.3)
-		value.Equal(10.3)
+		value.IsEqual(10.3)
 		value.chain.assertNotFailed(t)
 	})
 
-	t.Run("chain Constructor", func(t *testing.T) {
+	t.Run("chain", func(t *testing.T) {
 		chain := newMockChain(t)
 		value := newNumber(chain, 10.3)
 		assert.NotSame(t, value.chain, chain)
@@ -113,6 +117,19 @@ func TestNumber_Decode(t *testing.T) {
 		value.chain.assertFailed(t)
 	})
 }
+
+func TestNumber_Alias(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value1 := NewNumber(reporter, 123)
+	assert.Equal(t, []string{"Number()"}, value1.chain.context.Path)
+	assert.Equal(t, []string{"Number()"}, value1.chain.context.AliasedPath)
+
+	value2 := value1.Alias("foo")
+	assert.Equal(t, []string{"Number()"}, value2.chain.context.Path)
+	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
+}
+
 func TestNumber_Getters(t *testing.T) {
 	reporter := newMockReporter(t)
 
@@ -142,11 +159,11 @@ func TestNumber_Equal(t *testing.T) {
 
 	assert.Equal(t, 1234, int(value.Raw()))
 
-	value.Equal(1234)
+	value.IsEqual(1234)
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.Equal(4321)
+	value.IsEqual(4321)
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
@@ -163,11 +180,11 @@ func TestNumber_EqualNaN(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	v1 := NewNumber(reporter, math.NaN())
-	v1.Equal(1234.5)
+	v1.IsEqual(1234.5)
 	v1.chain.assertFailed(t)
 
 	v2 := NewNumber(reporter, 1234.5)
-	v2.Equal(math.NaN())
+	v2.IsEqual(math.NaN())
 	v2.chain.assertFailed(t)
 
 	v3 := NewNumber(reporter, math.NaN())
@@ -286,11 +303,57 @@ func TestNumber_InRange(t *testing.T) {
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.NotInRange(1234+1, "1234+2")
+	value.NotInRange(1234+1, "NOT NUMBER")
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.NotInRange("1234+1", 1234+2)
+	value.NotInRange("NOT NUMBER", 1234+2)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+}
+
+func TestNumber_InList(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewNumber(reporter, 1234)
+
+	value.InList()
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList()
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.InList(1234, 4567)
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList(1234, 4567)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.InList(1234.00, 4567.00)
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList(1234.00, 4567.00)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.InList(4567.00, 1234.01)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList(4567.00, 1234.01)
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.InList(1234+1, "NOT NUMBER")
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList("NOT NUMBER", 1234+2)
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 }
@@ -352,15 +415,15 @@ func TestNumber_ConvertEqual(t *testing.T) {
 
 	value := NewNumber(reporter, 1234)
 
-	value.Equal(int64(1234))
+	value.IsEqual(int64(1234))
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.Equal(float32(1234))
+	value.IsEqual(float32(1234))
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.Equal("1234")
+	value.IsEqual("NOT NUMBER")
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
@@ -372,7 +435,7 @@ func TestNumber_ConvertEqual(t *testing.T) {
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.NotEqual("4321")
+	value.NotEqual("NOT NUMBER")
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 }
@@ -386,11 +449,78 @@ func TestNumber_ConvertInRange(t *testing.T) {
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.InRange(int64(1233), "1235")
+	value.NotInRange(int64(1233), float32(1235))
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.InRange(nil, 1235)
+	value.InRange(1235, 1236)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInRange(1235, 1236)
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.InRange(int64(1233), "NOT NUMBER")
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInRange(int64(1233), "NOT NUMBER")
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.InRange("NOT NUMBER", float32(1235))
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInRange("NOT NUMBER", float32(1235))
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+}
+
+func TestNumber_ConvertInList(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewNumber(reporter, 111)
+
+	value.InList(int64(111), float32(222))
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList(int64(111), float32(222))
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.InList(float32(111), int64(222))
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList(float32(111), int64(222))
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.InList(222, 333)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList(222, 333)
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.InList(222, "NOT NUMBER")
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList(222, "NOT NUMBER")
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.InList(111, "NOT NUMBER")
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInList(111, "NOT NUMBER")
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 }
@@ -408,7 +538,7 @@ func TestNumber_ConvertGreater(t *testing.T) {
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.Gt("1233")
+	value.Gt("NOT NUMBER")
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
@@ -420,7 +550,7 @@ func TestNumber_ConvertGreater(t *testing.T) {
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.Ge("1233")
+	value.Ge("NOT NUMBER")
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 }
@@ -438,7 +568,7 @@ func TestNumber_ConvertLesser(t *testing.T) {
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.Lt("1235")
+	value.Lt("NOT NUMBER")
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
@@ -450,7 +580,7 @@ func TestNumber_ConvertLesser(t *testing.T) {
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	value.Le("1235")
+	value.Le("NOT NUMBER")
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 }

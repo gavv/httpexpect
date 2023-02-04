@@ -54,9 +54,18 @@ func (d *Duration) Raw() time.Duration {
 	return *d.value
 }
 
+// Alias is similar to Value.Alias.
+func (d *Duration) Alias(name string) *Duration {
+	opChain := d.chain.enter("Alias(%q)", name)
+	defer opChain.leave()
+
+	d.chain.setAlias(name)
+	return d
+}
+
 // Deprecated: support for unset durations will be removed. The only method that
 // can create unset duration is Cookie.MaxAge. Instead of Cookie.MaxAge().IsSet(),
-// please use Cookie.HaveMaxAge().
+// please use Cookie.HasMaxAge().
 func (d *Duration) IsSet() *Duration {
 	opChain := d.chain.enter("IsSet()")
 	defer opChain.leave()
@@ -80,7 +89,7 @@ func (d *Duration) IsSet() *Duration {
 
 // Deprecated: support for unset durations will be removed. The only method that
 // can create unset duration is Cookie.MaxAge. Instead of Cookie.MaxAge().NotSet(),
-// please use Cookie.NotHaveMaxAge().
+// please use Cookie.NotHasMaxAge().
 func (d *Duration) NotSet() *Duration {
 	opChain := d.chain.enter("NotSet()")
 	defer opChain.leave()
@@ -102,14 +111,14 @@ func (d *Duration) NotSet() *Duration {
 	return d
 }
 
-// Equal succeeds if Duration is equal to given value.
+// IsEqual succeeds if Duration is equal to given value.
 //
 // Example:
 //
 //	d := NewDuration(t, time.Second)
-//	d.Equal(time.Second)
-func (d *Duration) Equal(value time.Duration) *Duration {
-	opChain := d.chain.enter("Equal()")
+//	d.IsEqual(time.Second)
+func (d *Duration) IsEqual(value time.Duration) *Duration {
+	opChain := d.chain.enter("IsEqual()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -178,6 +187,11 @@ func (d *Duration) NotEqual(value time.Duration) *Duration {
 	}
 
 	return d
+}
+
+// Deprecated: use IsEqual instead.
+func (d *Duration) Equal(value time.Duration) *Duration {
+	return d.IsEqual(value)
 }
 
 // Gt succeeds if Duration is greater than given value.
@@ -411,6 +425,128 @@ func (d *Duration) NotInRange(min, max time.Duration) *Duration {
 				errors.New("expected: duration is not within given range"),
 			},
 		})
+	}
+
+	return d
+}
+
+// InList succeeds if Duration is equal to one of the values from given
+// list of time.Duration.
+//
+// Example:
+//
+//	d := NewDuration(t, time.Minute)
+//	d.InList(time.Minute, time.Hour)
+func (d *Duration) InList(values ...time.Duration) *Duration {
+	opChain := d.chain.enter("InList()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return d
+	}
+
+	if len(values) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty list argument"),
+			},
+		})
+		return d
+	}
+
+	if d.value == nil {
+		opChain.fail(AssertionFailure{
+			Type:   AssertNotNil,
+			Actual: &AssertionValue{d.value},
+			Errors: []error{
+				errors.New("expected: duration is present"),
+			},
+		})
+		return d
+	}
+
+	var isListed bool
+	for _, v := range values {
+		if *d.value == v {
+			isListed = true
+			break
+		}
+	}
+
+	if !isListed {
+		valueList := make([]interface{}, 0, len(values))
+		for _, v := range values {
+			valueList = append(valueList, v)
+		}
+
+		opChain.fail(AssertionFailure{
+			Type:     AssertBelongs,
+			Actual:   &AssertionValue{d.value},
+			Expected: &AssertionValue{AssertionList(valueList)},
+			Errors: []error{
+				errors.New("expected: duration is equal to one of the values"),
+			},
+		})
+	}
+
+	return d
+}
+
+// NotInList succeeds if Duration is not equal to any of the values from
+// given list of time.Duration.
+//
+// Example:
+//
+//	d := NewDuration(t, time.Minute)
+//	d.NotInList(time.Second, time.Hour)
+func (d *Duration) NotInList(values ...time.Duration) *Duration {
+	opChain := d.chain.enter("NotInList()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return d
+	}
+
+	if len(values) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty list argument"),
+			},
+		})
+		return d
+	}
+
+	if d.value == nil {
+		opChain.fail(AssertionFailure{
+			Type:   AssertNotNil,
+			Actual: &AssertionValue{d.value},
+			Errors: []error{
+				errors.New("expected: duration is present"),
+			},
+		})
+		return d
+	}
+
+	for _, v := range values {
+		if *d.value == v {
+			valueList := make([]interface{}, 0, len(values))
+			for _, v := range values {
+				valueList = append(valueList, v)
+			}
+
+			opChain.fail(AssertionFailure{
+				Type:     AssertNotBelongs,
+				Actual:   &AssertionValue{d.value},
+				Expected: &AssertionValue{AssertionList(valueList)},
+				Errors: []error{
+					errors.New("expected: duration is not equal to any of the values"),
+				},
+			})
+
+			return d
+		}
 	}
 
 	return d

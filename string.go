@@ -59,8 +59,8 @@ func (s *String) Raw() string {
 // Decode unmarshals the underlying value attached to the String to a target variable.
 // target should be one of these:
 //
-// - pointer to an empty interface
-// - pointer to a string
+//   - pointer to an empty interface
+//   - pointer to a string
 //
 // Example:
 //
@@ -79,6 +79,15 @@ func (s *String) Decode(target interface{}) *String {
 	}
 
 	canonDecode(opChain, s.value, target)
+	return s
+}
+
+// Alias is similar to Value.Alias.
+func (s *String) Alias(name string) *String {
+	opChain := s.chain.enter("Alias(%q)", name)
+	defer opChain.leave()
+
+	s.chain.setAlias(name)
 	return s
 }
 
@@ -104,7 +113,7 @@ func (s *String) Schema(schema interface{}) *String {
 // Example:
 //
 //	str := NewString(t, "Hello")
-//	str.Length().Equal(5)
+//	str.Length().IsEqual(5)
 func (s *String) Length() *Number {
 	opChain := s.chain.enter("Length()")
 	defer opChain.leave()
@@ -116,14 +125,14 @@ func (s *String) Length() *Number {
 	return newNumber(opChain, float64(len(s.value)))
 }
 
-// Empty succeeds if string is empty.
+// IsEmpty succeeds if string is empty.
 //
 // Example:
 //
 //	str := NewString(t, "")
-//	str.Empty()
-func (s *String) Empty() *String {
-	opChain := s.chain.enter("Empty()")
+//	str.IsEmpty()
+func (s *String) IsEmpty() *String {
+	opChain := s.chain.enter("IsEmpty()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -170,14 +179,19 @@ func (s *String) NotEmpty() *String {
 	return s
 }
 
-// Equal succeeds if string is equal to given Go string.
+// Deprecated: use IsEmpty instead.
+func (s *String) Empty() *String {
+	return s.IsEmpty()
+}
+
+// IsEqual succeeds if string is equal to given Go string.
 //
 // Example:
 //
 //	str := NewString(t, "Hello")
-//	str.Equal("Hello")
-func (s *String) Equal(value string) *String {
-	opChain := s.chain.enter("Equal()")
+//	str.IsEqual("Hello")
+func (s *String) IsEqual(value string) *String {
+	opChain := s.chain.enter("IsEqual()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -226,15 +240,20 @@ func (s *String) NotEqual(value string) *String {
 	return s
 }
 
-// EqualFold succeeds if string is equal to given Go string after applying Unicode
+// Deprecated: use IsEqual instead.
+func (s *String) Equal(value string) *String {
+	return s.IsEqual(value)
+}
+
+// IsEqualFold succeeds if string is equal to given Go string after applying Unicode
 // case-folding (so it's a case-insensitive match).
 //
 // Example:
 //
 //	str := NewString(t, "Hello")
-//	str.EqualFold("hELLo")
-func (s *String) EqualFold(value string) *String {
-	opChain := s.chain.enter("EqualFold()")
+//	str.IsEqualFold("hELLo")
+func (s *String) IsEqualFold(value string) *String {
+	opChain := s.chain.enter("IsEqualFold()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -279,6 +298,111 @@ func (s *String) NotEqualFold(value string) *String {
 				errors.New("expected: strings are non-equal (if folded)"),
 			},
 		})
+	}
+
+	return s
+}
+
+// Deprecated: use IsEqualFold instead.
+func (s *String) EqualFold(value string) *String {
+	return s.IsEqualFold(value)
+}
+
+// InList succeeds if the string is equal to one of the values from given
+// list of strings.
+//
+// Example:
+//
+//	str := NewString(t, "Hello")
+//	str.InList("Hello", "Goodbye")
+func (s *String) InList(values ...string) *String {
+	opChain := s.chain.enter("InList()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return s
+	}
+
+	if len(values) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty list argument"),
+			},
+		})
+		return s
+	}
+
+	var isListed bool
+	for _, v := range values {
+		if s.value == v {
+			isListed = true
+			break
+		}
+	}
+
+	if !isListed {
+		valueList := make([]interface{}, 0, len(values))
+		for _, v := range values {
+			valueList = append(valueList, v)
+		}
+
+		opChain.fail(AssertionFailure{
+			Type:     AssertBelongs,
+			Actual:   &AssertionValue{s.value},
+			Expected: &AssertionValue{AssertionList(valueList)},
+			Errors: []error{
+				errors.New("expected: string is equal to one of the values"),
+			},
+		})
+	}
+
+	return s
+}
+
+// NotInList succeeds if the string is not equal to any of the values from
+// given list of strings.
+//
+// Example:
+//
+//	str := NewString(t, "Hello")
+//	str.NotInList("Sayonara", "Goodbye")
+func (s *String) NotInList(values ...string) *String {
+	opChain := s.chain.enter("NotInList()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return s
+	}
+
+	if len(values) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty list argument"),
+			},
+		})
+		return s
+	}
+
+	for _, v := range values {
+		if s.value == v {
+			valueList := make([]interface{}, 0, len(values))
+			for _, v := range values {
+				valueList = append(valueList, v)
+			}
+
+			opChain.fail(AssertionFailure{
+				Type:     AssertNotBelongs,
+				Actual:   &AssertionValue{s.value},
+				Expected: &AssertionValue{AssertionList(valueList)},
+				Errors: []error{
+					errors.New("expected: string is not equal to any of the values"),
+				},
+			})
+
+			return s
+		}
 	}
 
 	return s
@@ -639,14 +763,14 @@ func (s *String) NotHasSuffixFold(value string) *String {
 //	m := s.Match(`http://(?P<host>.+)/users/(?P<user>.+)`)
 //
 //	m.NotEmpty()
-//	m.Length().Equal(3)
+//	m.Length().IsEqual(3)
 //
-//	m.Index(0).Equal("http://example.com/users/john")
-//	m.Index(1).Equal("example.com")
-//	m.Index(2).Equal("john")
+//	m.Index(0).IsEqual("http://example.com/users/john")
+//	m.Index(1).IsEqual("example.com")
+//	m.Index(2).IsEqual("john")
 //
-//	m.Name("host").Equal("example.com")
-//	m.Name("user").Equal("john")
+//	m.Name("host").IsEqual("example.com")
+//	m.Name("user").IsEqual("john")
 func (s *String) Match(re string) *Match {
 	opChain := s.chain.enter("Match()")
 	defer opChain.leave()
@@ -739,8 +863,8 @@ func (s *String) NotMatch(re string) *String {
 //
 //	m := s.MatchAll(`http://(?P<host>\S+)/users/(?P<user>\S+)`)
 //
-//	m[0].Name("user").Equal("john")
-//	m[1].Name("user").Equal("bob")
+//	m[0].Name("user").IsEqual("john")
+//	m[1].Name("user").IsEqual("bob")
 func (s *String) MatchAll(re string) []Match {
 	opChain := s.chain.enter("MatchAll()")
 	defer opChain.leave()
@@ -870,12 +994,12 @@ func (s *String) NotIsASCII() *String {
 // Example:
 //
 //	str := NewString(t, "100")
-//	str.AsNumber().Equal(100)
+//	str.AsNumber().IsEqual(100)
 //
 // Specifying base:
 //
-//	str.AsNumber(10).Equal(100)
-//	str.AsNumber(16).Equal(256)
+//	str.AsNumber(10).IsEqual(100)
+//	str.AsNumber(16).IsEqual(256)
 func (s *String) AsNumber(base ...int) *Number {
 	opChain := s.chain.enter("AsNumber()")
 	defer opChain.leave()
@@ -976,7 +1100,7 @@ func (s *String) AsNumber(base ...int) *Number {
 // Example:
 //
 //	str := NewString(t, "true")
-//	str.AsBoolean().True()
+//	str.AsBoolean().IsTrue()
 func (s *String) AsBoolean() *Boolean {
 	opChain := s.chain.enter("AsBoolean()")
 	defer opChain.leave()

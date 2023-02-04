@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"net/http"
-	"reflect"
+	"math"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -39,8 +39,15 @@ type DefaultFormatter struct {
 	// Exclude assertion path from failure report.
 	DisablePaths bool
 
+	// Exclude aliased assertion path from failure report.
+	DisableAliases bool
+
 	// Exclude diff from failure report.
 	DisableDiffs bool
+
+	// Float printing format.
+	// Default is FloatFormatAuto.
+	FloatFormat FloatFormat
 
 	// Wrap text to keep lines below given width.
 	// Use zero for default width, and negative value to disable wrapping.
@@ -83,6 +90,27 @@ func (f *DefaultFormatter) FormatFailure(
 			defaultFailureTemplate, defaultTemplateFuncs, ctx, failure)
 	}
 }
+
+// FloatFormat defines the format in which all floats are printed.
+type FloatFormat int
+
+const (
+	// Print floats in scientific notation for large exponents,
+	// otherwise print in decimal notation.
+	// Precision is the smallest needed to identify the value uniquely.
+	// Similar to %g format.
+	FloatFormatAuto FloatFormat = iota
+
+	// Always print floats in decimal notation.
+	// Precision is the smallest needed to identify the value uniquely.
+	// Similar to %f format.
+	FloatFormatDecimal
+
+	// Always print floats in scientific notation.
+	// Precision is the smallest needed to identify the value uniquely.
+	// Similar to %e format.
+	FloatFormatScientific
+)
 
 // FormatData defines data passed to template engine when DefaultFormatter
 // formats assertion. You can use these fields in your custom templates.
@@ -199,7 +227,11 @@ func (f *DefaultFormatter) fillDescription(
 	}
 
 	if !f.DisablePaths {
-		data.AssertPath = ctx.Path
+		if !f.DisableAliases {
+			data.AssertPath = ctx.AliasedPath
+		} else {
+			data.AssertPath = ctx.Path
+		}
 	}
 
 	if f.LineWidth != 0 {
@@ -213,7 +245,7 @@ func (f *DefaultFormatter) fillErrors(
 	data *FormatData, ctx *AssertionContext, failure *AssertionFailure,
 ) {
 	for _, err := range failure.Errors {
-		if err == nil {
+		if refIsNil(err) {
 			continue
 		}
 		data.Errors = append(data.Errors, err.Error())
@@ -229,7 +261,7 @@ func (f *DefaultFormatter) fillActual(
 
 	case AssertType, AssertNotType:
 		data.HaveActual = true
-		data.Actual = f.formatTyped(failure.Actual.Value)
+		data.Actual = f.formatTypedValue(failure.Actual.Value)
 
 	default:
 		data.HaveActual = true
@@ -271,27 +303,27 @@ func (f *DefaultFormatter) fillExpected(
 	case AssertInRange, AssertNotInRange:
 		data.HaveExpected = true
 		data.ExpectedKind = kindRange
-		data.Expected = f.formatRange(failure.Expected.Value)
+		data.Expected = f.formatRangeValue(failure.Expected.Value)
 
 	case AssertMatchSchema, AssertNotMatchSchema:
 		data.HaveExpected = true
 		data.ExpectedKind = kindSchema
 		data.Expected = []string{
-			f.formatBareString(failure.Expected.Value),
+			f.formatMatchValue(failure.Expected.Value),
 		}
 
 	case AssertMatchPath, AssertNotMatchPath:
 		data.HaveExpected = true
 		data.ExpectedKind = kindPath
 		data.Expected = []string{
-			f.formatBareString(failure.Expected.Value),
+			f.formatMatchValue(failure.Expected.Value),
 		}
 
 	case AssertMatchRegexp, AssertNotMatchRegexp:
 		data.HaveExpected = true
 		data.ExpectedKind = kindRegexp
 		data.Expected = []string{
-			f.formatBareString(failure.Expected.Value),
+			f.formatMatchValue(failure.Expected.Value),
 		}
 
 	case AssertMatchFormat, AssertNotMatchFormat:
@@ -301,7 +333,7 @@ func (f *DefaultFormatter) fillExpected(
 		} else {
 			data.ExpectedKind = kindFormat
 		}
-		data.Expected = f.formatList(failure.Expected.Value)
+		data.Expected = f.formatListValue(failure.Expected.Value)
 
 	case AssertContainsKey, AssertNotContainsKey:
 		data.HaveExpected = true
@@ -327,7 +359,7 @@ func (f *DefaultFormatter) fillExpected(
 	case AssertBelongs, AssertNotBelongs:
 		data.HaveExpected = true
 		data.ExpectedKind = kindValueList
-		data.Expected = f.formatList(failure.Expected.Value)
+		data.Expected = f.formatListValue(failure.Expected.Value)
 	}
 }
 
@@ -394,20 +426,16 @@ func (f *DefaultFormatter) fillDelta(
 	data.Delta = f.formatValue(failure.Delta.Value)
 }
 
-func (f *DefaultFormatter) formatTyped(value interface{}) string {
-	if isNumber(value) {
-		return fmt.Sprintf("%T(%v)", value, f.formatValue(value))
-	}
-
-	return fmt.Sprintf("%T(%#v)", value, value)
-}
-
 func (f *DefaultFormatter) formatValue(value interface{}) string {
-	if isNumber(value) {
-		return fmt.Sprintf("%v", value)
+	if flt := extractFloat32(value); flt != nil {
+		return f.formatFloatValue(*flt, 32)
 	}
 
-	if !isNil(value) && !isHTTP(value) {
+	if flt := extractFloat64(value); flt != nil {
+		return f.formatFloatValue(*flt, 64)
+	}
+
+	if !refIsNil(value) && !refIsHTTP(value) {
 		if s, _ := value.(fmt.Stringer); s != nil {
 			if ss := s.String(); strings.TrimSpace(ss) != "" {
 				return ss
@@ -421,22 +449,48 @@ func (f *DefaultFormatter) formatValue(value interface{}) string {
 	sq := litter.Options{
 		Separator: defaultIndent,
 	}
-
 	return sq.Sdump(value)
 }
 
-func (f *DefaultFormatter) formatBareString(value interface{}) string {
-	switch v := value.(type) {
-	case string:
-		return v
+func (f *DefaultFormatter) formatFloatValue(value float64, bits int) string {
+	switch f.FloatFormat {
+	case FloatFormatAuto:
+		if _, frac := math.Modf(value); frac != 0 {
+			return strconv.FormatFloat(value, 'g', -1, bits)
+		} else {
+			return strconv.FormatFloat(value, 'f', -1, bits)
+		}
+
+	case FloatFormatDecimal:
+		return strconv.FormatFloat(value, 'f', -1, bits)
+
+	case FloatFormatScientific:
+		return strconv.FormatFloat(value, 'e', -1, bits)
+
+	default:
+		return fmt.Sprintf("%v", value)
+	}
+}
+
+func (f *DefaultFormatter) formatTypedValue(value interface{}) string {
+	if refIsNum(value) {
+		return fmt.Sprintf("%T(%v)", value, f.formatValue(value))
+	}
+
+	return fmt.Sprintf("%T(%#v)", value, value)
+}
+
+func (f *DefaultFormatter) formatMatchValue(value interface{}) string {
+	if str := extractString(value); str != nil {
+		return *str
 	}
 
 	return f.formatValue(value)
 }
 
-func (f *DefaultFormatter) formatRange(value interface{}) []string {
+func (f *DefaultFormatter) formatRangeValue(value interface{}) []string {
 	if rng := exctractRange(value); rng != nil {
-		if isNumber(rng.Min) && isNumber(rng.Max) {
+		if refIsNum(rng.Min) && refIsNum(rng.Max) {
 			return []string{
 				fmt.Sprintf("[%v; %v]", f.formatValue(rng.Min), f.formatValue(rng.Max)),
 			}
@@ -453,7 +507,7 @@ func (f *DefaultFormatter) formatRange(value interface{}) []string {
 	}
 }
 
-func (f *DefaultFormatter) formatList(value interface{}) []string {
+func (f *DefaultFormatter) formatListValue(value interface{}) []string {
 	if lst := extractList(value); lst != nil {
 		s := make([]string, 0, len(*lst))
 		for _, e := range *lst {
@@ -507,6 +561,34 @@ func (f *DefaultFormatter) formatDiff(expected, actual interface{}) (string, boo
 	return diffText, true
 }
 
+func extractString(value interface{}) *string {
+	switch s := value.(type) {
+	case string:
+		return &s
+	default:
+		return nil
+	}
+}
+
+func extractFloat32(value interface{}) *float64 {
+	switch f := value.(type) {
+	case float32:
+		ff := float64(f)
+		return &ff
+	default:
+		return nil
+	}
+}
+
+func extractFloat64(value interface{}) *float64 {
+	switch f := value.(type) {
+	case float64:
+		return &f
+	default:
+		return nil
+	}
+}
+
 func exctractRange(value interface{}) *AssertionRange {
 	switch rng := value.(type) {
 	case AssertionRange:
@@ -526,35 +608,6 @@ func extractList(value interface{}) *AssertionList {
 		return lst
 	default:
 		return nil
-	}
-}
-
-func isNil(value interface{}) bool {
-	defer func() {
-		_ = recover()
-	}()
-	return value == nil || reflect.ValueOf(value).IsNil()
-}
-
-func isNumber(value interface{}) bool {
-	defer func() {
-		_ = recover()
-	}()
-	reflect.ValueOf(value).Convert(reflect.TypeOf(float64(0))).Float()
-	return true
-}
-
-func isHTTP(value interface{}) bool {
-	switch value.(type) {
-	case *http.Client, http.Client,
-		*http.Transport, http.Transport,
-		*http.Request, http.Request,
-		*http.Response, http.Response,
-		*http.Header, http.Header,
-		*http.Cookie, http.Cookie:
-		return true
-	default:
-		return false
 	}
 }
 

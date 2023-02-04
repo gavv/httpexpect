@@ -8,10 +8,10 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func wsHttpHandlerTester(t *testing.T) *httpexpect.Expect {
+func wsHandlerTester(t *testing.T) *httpexpect.Expect {
 	return httpexpect.WithConfig(httpexpect.Config{
 		BaseURL:         "ws://example.com",
-		WebsocketDialer: httpexpect.NewWebsocketDialer(http.HandlerFunc(WsHttpHandler)),
+		WebsocketDialer: httpexpect.NewWebsocketDialer(http.HandlerFunc(WsHTTPHandler)),
 		Reporter:        httpexpect.NewAssertReporter(t),
 		Printers: []httpexpect.Printer{
 			httpexpect.NewDebugPrinter(t, true),
@@ -19,8 +19,8 @@ func wsHttpHandlerTester(t *testing.T) *httpexpect.Expect {
 	})
 }
 
-func TestWsHttpHandlerText(t *testing.T) {
-	e := wsHttpHandlerTester(t)
+func TestWsHandlerText(t *testing.T) {
+	e := wsHandlerTester(t)
 
 	ws := e.GET("/path").WithWebsocketUpgrade().
 		Expect().
@@ -30,11 +30,11 @@ func TestWsHttpHandlerText(t *testing.T) {
 
 	ws.WriteText("hi").
 		Expect().
-		TextMessage().Body().Equal("hi")
+		TextMessage().Body().IsEqual("hi")
 }
 
-func TestWsHttpHandlerJSON(t *testing.T) {
-	e := wsHttpHandlerTester(t)
+func TestWsHandlerJSON(t *testing.T) {
+	e := wsHandlerTester(t)
 
 	ws := e.GET("/path").WithWebsocketUpgrade().
 		Expect().
@@ -49,8 +49,8 @@ func TestWsHttpHandlerJSON(t *testing.T) {
 		TextMessage().JSON().Object().ValueEqual("message", "hi")
 }
 
-func TestWsHttpHandlerClose(t *testing.T) {
-	e := wsHttpHandlerTester(t)
+func TestWsHandlerClose(t *testing.T) {
+	e := wsHandlerTester(t)
 
 	ws := e.GET("/path").WithWebsocketUpgrade().
 		Expect().
@@ -66,7 +66,7 @@ func TestWsHttpHandlerClose(t *testing.T) {
 func wsFastHandlerTester(t *testing.T) *httpexpect.Expect {
 	return httpexpect.WithConfig(httpexpect.Config{
 		BaseURL:         "http://example.com",
-		WebsocketDialer: httpexpect.NewFastWebsocketDialer(WsFastHandler),
+		WebsocketDialer: httpexpect.NewFastWebsocketDialer(WsFastHTTPHandler),
 		Reporter:        httpexpect.NewAssertReporter(t),
 		Printers: []httpexpect.Printer{
 			httpexpect.NewDebugPrinter(t, true),
@@ -85,7 +85,7 @@ func TestWsFastHandlerText(t *testing.T) {
 
 	ws.WriteText("hi").
 		Expect().
-		TextMessage().Body().Equal("hi")
+		TextMessage().Body().IsEqual("hi")
 }
 
 func TestWsFastHandlerJSON(t *testing.T) {

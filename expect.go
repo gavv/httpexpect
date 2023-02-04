@@ -62,8 +62,8 @@
 //	s0 := e0.String()  // success
 //	s1 := e1.String()  // failure; e1 and s1 are marked as failed, e0 and s0 are not
 //
-//	s0.Equal("foo")    // success
-//	s1.Equal("bar")    // this check is ignored because s1 is marked as failed
+//	s0.IsEqual("foo")    // success
+//	s1.IsEqual("bar")    // this check is ignored because s1 is marked as failed
 //
 // # Assertion handling
 //
@@ -105,7 +105,7 @@ type Config struct {
 	TestName string
 
 	// BaseURL is a URL to prepended to all requests.
-	// My be empty.
+	// May be empty.
 	//
 	// If non-empty, trailing slash is allowed (but not required) and is appended
 	// automatically.
@@ -157,8 +157,12 @@ type Config struct {
 	// Config.Reporter is used by DefaultAssertionHandler, which is automatically
 	// constructed when AssertionHandler is nil.
 	//
-	// You can use AssertReporter, RequireReporter (they use testify),
-	// or *testing.T, or provide custom implementation.
+	// You can use:
+	//  - AssertReporter / RequireReporter
+	//    (non-fatal / fatal failures using testify package)
+	//  - testing.T / FatalReporter
+	//    (non-fatal / fatal failures using standard testing package)
+	//  - custom implementation
 	Reporter Reporter
 
 	// Formatter is used to format success and failure messages.
@@ -178,16 +182,16 @@ type Config struct {
 	//
 	// Every time an assertion is made, AssertionHandler is invoked with detailed
 	// info about the assertion. On failure, AssertionHandler is responsible to
-	// format error and report it to test suite.
+	// format error and report it to the test suite.
 	//
 	// If AssertionHandler is nil, DefaultAssertionHandler is constructed, with
 	// Formatter set to Config.Formatter, Reporter set to Config.Reporter, and
-	// Logger set to nil. DefaultAssertionHandler will just delegates formatting
+	// Logger set to nil. DefaultAssertionHandler will just delegate formatting
 	// and reporting to Formatter and Reporter.
 	//
 	// If you're happy with DefaultAssertionHandler, but want to enable logging
 	// of successful assertions and non-fatal failures, you can manually construct
-	// DefaultAssertionHandler and set its Logger field to non-nil value.
+	// DefaultAssertionHandler and set its Logger field to a non-nil value.
 	//
 	// Usually you don't need custom AssertionHandler and it's enough just to
 	// set Reporter. Use AssertionHandler for more precise control of reports.
@@ -197,7 +201,7 @@ type Config struct {
 	// May be nil.
 	//
 	// If printer implements WebsocketPrinter interface, it will be also used
-	// to print WebSocket messages.
+	// to print Websocket messages.
 	//
 	// You can use CompactPrinter, DebugPrinter, CurlPrinter, or provide
 	// custom implementation.
@@ -243,8 +247,8 @@ func (config Config) withDefaults() Config {
 		}
 
 		config.AssertionHandler = &DefaultAssertionHandler{
-			Reporter:  config.Reporter,
 			Formatter: config.Formatter,
+			Reporter:  config.Reporter,
 		}
 	}
 
@@ -262,6 +266,16 @@ func (config *Config) validate() {
 
 	if config.AssertionHandler == nil {
 		panic("Config.AssertionHandler is nil")
+	}
+
+	if handler, ok := config.AssertionHandler.(*DefaultAssertionHandler); ok {
+		if handler.Formatter == nil {
+			panic("DefaultAssertionHandler.Formatter is nil")
+		}
+
+		if handler.Reporter == nil {
+			panic("DefaultAssertionHandler.Reporter is nil")
+		}
 	}
 }
 
@@ -303,13 +317,13 @@ type Client interface {
 //	  WebsocketDialer: httpexpect.NewWebsocketDialer(myHandler),
 //	})
 type WebsocketDialer interface {
-	// Dial establishes new WebSocket connection and returns response
+	// Dial establishes new Websocket connection and returns response
 	// of handshake result.
 	Dial(url string, reqH http.Header) (*websocket.Conn, *http.Response, error)
 }
 
 // Reporter is used to report failures.
-// *testing.T, AssertReporter, and RequireReporter implement this interface.
+// *testing.T, FatalReporter, AssertReporter, RequireReporter implement it.
 type Reporter interface {
 	// Errorf reports failure.
 	// Allowed to return normally or terminate test using t.FailNow().
@@ -352,7 +366,7 @@ func New(t LoggerReporter, baseURL string) *Expect {
 //
 // t is usually *testing.T, but can be any matching implementation.
 //
-// baseURL specifies URL to be prepended to all requests. My be empty. If non-empty,
+// baseURL specifies URL to be prepended to all requests. May be empty. If non-empty,
 // trailing slash is allowed (but not required) and is appended automatically.
 //
 // Default is a shorthand for WithConfig. It uses:

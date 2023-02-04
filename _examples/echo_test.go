@@ -41,7 +41,7 @@ func testEcho(e *httpexpect.Expect) {
 
 	e.GET("/restricted/hello").WithHeader("Authorization", "Bearer "+token).
 		Expect().
-		Status(http.StatusOK).Body().Equal("hello, world!")
+		Status(http.StatusOK).Body().IsEqual("hello, world!")
 
 	auth := e.Builder(func(req *httpexpect.Request) {
 		req.WithHeader("Authorization", "Bearer "+token)
@@ -49,7 +49,7 @@ func testEcho(e *httpexpect.Expect) {
 
 	auth.GET("/restricted/hello").
 		Expect().
-		Status(http.StatusOK).Body().Equal("hello, world!")
+		Status(http.StatusOK).Body().IsEqual("hello, world!")
 }
 
 func TestEchoClient(t *testing.T) {
@@ -75,7 +75,7 @@ func TestEchoHandler(t *testing.T) {
 	e := httpexpect.WithConfig(httpexpect.Config{
 		Client: &http.Client{
 			Transport: httpexpect.NewBinder(handler),
-			Jar:       httpexpect.NewJar(),
+			Jar:       httpexpect.NewCookieJar(),
 		},
 		Reporter: httpexpect.NewAssertReporter(t),
 		Printers: []httpexpect.Printer{

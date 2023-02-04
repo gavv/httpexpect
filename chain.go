@@ -29,7 +29,7 @@ import (
 // Chains are linked into a tree. Child chain corresponds to nested matchers
 // and assertions. For example, when the user invokes:
 //
-//	e.GET("/test").Expect().JSON().Equal(...)
+//	e.GET("/test").Expect().JSON().IsEqual(...)
 //
 // each nested call (GET, Expect, JSON, Equal) will create a child chain.
 //
@@ -113,8 +113,10 @@ func newChainWithConfig(name string, config Config) *chain {
 
 	if name != "" {
 		c.context.Path = []string{name}
+		c.context.AliasedPath = []string{name}
 	} else {
 		c.context.Path = []string{}
+		c.context.AliasedPath = []string{}
 	}
 
 	if config.Environment != nil {
@@ -143,8 +145,10 @@ func newChainWithDefaults(name string, reporter Reporter) *chain {
 
 	if name != "" {
 		c.context.Path = []string{name}
+		c.context.AliasedPath = []string{name}
 	} else {
 		c.context.Path = []string{}
+		c.context.AliasedPath = []string{}
 	}
 
 	c.context.Environment = newEnvironment(c)
@@ -187,6 +191,22 @@ func (c *chain) setSeverity(severity AssertionSeverity) {
 	}
 
 	c.severity = severity
+}
+
+// Reset aliased path to given string.
+func (c *chain) setAlias(name string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if chainValidation && c.state == stateLeaved {
+		panic("can't use chain after leave")
+	}
+
+	if name != "" {
+		c.context.AliasedPath = []string{name}
+	} else {
+		c.context.AliasedPath = []string{}
+	}
 }
 
 // Store request name in AssertionContext.
@@ -248,6 +268,7 @@ func (c *chain) clone() *chain {
 
 	contextCopy := c.context
 	contextCopy.Path = append(([]string)(nil), contextCopy.Path...)
+	contextCopy.AliasedPath = append(([]string)(nil), c.context.AliasedPath...)
 
 	return &chain{
 		parent: c,
@@ -270,6 +291,8 @@ func (c *chain) enter(name string, args ...interface{}) *chain {
 	chainCopy.state = stateEntered
 	if name != "" {
 		chainCopy.context.Path = append(chainCopy.context.Path, fmt.Sprintf(name, args...))
+		chainCopy.context.AliasedPath =
+			append(c.context.AliasedPath, fmt.Sprintf(name, args...))
 	}
 
 	return chainCopy
@@ -289,6 +312,9 @@ func (c *chain) replace(name string, args ...interface{}) *chain {
 			if len(c.context.Path) == 0 {
 				panic("replace allowed only if path is non-empty")
 			}
+			if len(c.context.AliasedPath) == 0 {
+				panic("replace allowed only if aliased path is non-empty")
+			}
 		}()
 	}
 
@@ -296,7 +322,12 @@ func (c *chain) replace(name string, args ...interface{}) *chain {
 
 	chainCopy.state = stateEntered
 	if len(chainCopy.context.Path) != 0 {
-		chainCopy.context.Path[len(chainCopy.context.Path)-1] = fmt.Sprintf(name, args...)
+		last := len(chainCopy.context.Path) - 1
+		chainCopy.context.Path[last] = fmt.Sprintf(name, args...)
+	}
+	if len(chainCopy.context.AliasedPath) != 0 {
+		last := len(chainCopy.context.AliasedPath) - 1
+		chainCopy.context.AliasedPath[last] = fmt.Sprintf(name, args...)
 	}
 
 	return chainCopy

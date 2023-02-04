@@ -51,15 +51,24 @@ func (dt *DateTime) Raw() time.Time {
 	return dt.value
 }
 
-// GetZone returns a new String instance with datetime zone.
+// Alias is similar to Value.Alias.
+func (dt *DateTime) Alias(name string) *DateTime {
+	opChain := dt.chain.enter("Alias(%q)", name)
+	defer opChain.leave()
+
+	dt.chain.setAlias(name)
+	return dt
+}
+
+// Zone returns a new String instance with datetime zone.
 //
 // Example:
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.GetZone().Equal("IST")
-func (dt *DateTime) GetZone() *String {
-	opChain := dt.chain.enter("GetZone()")
+//	dt.Zone().IsEqual("IST")
+func (dt *DateTime) Zone() *String {
+	opChain := dt.chain.enter("Zone()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -70,16 +79,16 @@ func (dt *DateTime) GetZone() *String {
 	return newString(opChain, zone)
 }
 
-// GetYear returns the year in which datetime occurs,
+// Year returns the year in which datetime occurs,
 // in the range [0, 9999]
 //
 // Example:
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.GetYear().Equal(2022)
-func (dt *DateTime) GetYear() *Number {
-	opChain := dt.chain.enter("GetYear()")
+//	dt.Year().IsEqual(2022)
+func (dt *DateTime) Year() *Number {
+	opChain := dt.chain.enter("Year()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -89,16 +98,16 @@ func (dt *DateTime) GetYear() *Number {
 	return newNumber(opChain, float64(dt.value.Year()))
 }
 
-// GetMonth returns the month of the year specified by datetime,
+// Month returns the month of the year specified by datetime,
 // in the range [1,12].
 //
 // Example:
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.GetMonth().Equal(12)
-func (dt *DateTime) GetMonth() *Number {
-	opChain := dt.chain.enter("GetMonth()")
+//	dt.Month().IsEqual(12)
+func (dt *DateTime) Month() *Number {
+	opChain := dt.chain.enter("Month()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -108,16 +117,16 @@ func (dt *DateTime) GetMonth() *Number {
 	return newNumber(opChain, float64(dt.value.Month()))
 }
 
-// GetDay returns the day of the month specified datetime,
+// Day returns the day of the month specified datetime,
 // in the range [1,31].
 //
 // Example:
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.GetDay().Equal(30)
-func (dt *DateTime) GetDay() *Number {
-	opChain := dt.chain.enter("GetDay()")
+//	dt.Day().IsEqual(30)
+func (dt *DateTime) Day() *Number {
+	opChain := dt.chain.enter("Day()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -134,9 +143,9 @@ func (dt *DateTime) GetDay() *Number {
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.GetWeekDay().Equal(time.Friday)
-func (dt *DateTime) GetWeekDay() *Number {
-	opChain := dt.chain.enter("GetWeekDay()")
+//	dt.WeekDay().IsEqual(time.Friday)
+func (dt *DateTime) WeekDay() *Number {
+	opChain := dt.chain.enter("WeekDay()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -146,7 +155,7 @@ func (dt *DateTime) GetWeekDay() *Number {
 	return newNumber(opChain, float64(dt.value.Weekday()))
 }
 
-// GetYearDay returns the day of the year specified by datetime,
+// YearDay returns the day of the year specified by datetime,
 // in the range [1,365] for non-leap years,
 // and [1,366] in leap years.
 //
@@ -154,9 +163,9 @@ func (dt *DateTime) GetWeekDay() *Number {
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.GetYearDay().Equal(364)
-func (dt *DateTime) GetYearDay() *Number {
-	opChain := dt.chain.enter("GetYearDay()")
+//	dt.YearDay().IsEqual(364)
+func (dt *DateTime) YearDay() *Number {
+	opChain := dt.chain.enter("YearDay()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -166,16 +175,16 @@ func (dt *DateTime) GetYearDay() *Number {
 	return newNumber(opChain, float64(dt.value.YearDay()))
 }
 
-// GetHour returns the hour within the day specified by datetime,
+// Hour returns the hour within the day specified by datetime,
 // in the range [0, 23].
 //
 // Example:
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.GetHour().Equal(15)
-func (dt *DateTime) GetHour() *Number {
-	opChain := dt.chain.enter("GetHour()")
+//	dt.Hour().IsEqual(15)
+func (dt *DateTime) Hour() *Number {
+	opChain := dt.chain.enter("Hour()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -185,16 +194,16 @@ func (dt *DateTime) GetHour() *Number {
 	return newNumber(opChain, float64(dt.value.Hour()))
 }
 
-// GetMinute returns the minute offset within the hour specified by datetime,
+// Minute returns the minute offset within the hour specified by datetime,
 // in the range [0, 59].
 //
 // Example:
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.GetMinute().Equal(4)
-func (dt *DateTime) GetMinute() *Number {
-	opChain := dt.chain.enter("GetMinute()")
+//	dt.Minute().IsEqual(4)
+func (dt *DateTime) Minute() *Number {
+	opChain := dt.chain.enter("Minute()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -204,16 +213,16 @@ func (dt *DateTime) GetMinute() *Number {
 	return newNumber(opChain, float64(dt.value.Minute()))
 }
 
-// GetSecond returns the second offset within the minute specified by datetime,
+// Second returns the second offset within the minute specified by datetime,
 // in the range [0, 59].
 //
 // Example:
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.GetSecond().Equal(5)
-func (dt *DateTime) GetSecond() *Number {
-	opChain := dt.chain.enter("GetSecond()")
+//	dt.Second().IsEqual(5)
+func (dt *DateTime) Second() *Number {
+	opChain := dt.chain.enter("Second()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -223,16 +232,16 @@ func (dt *DateTime) GetSecond() *Number {
 	return newNumber(opChain, float64(dt.value.Second()))
 }
 
-// GetNanosecond returns the nanosecond offset within the second specified by datetime,
+// Nanosecond returns the nanosecond offset within the second specified by datetime,
 // in the range [0, 999999999].
 //
 // Example:
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.GetNanosecond().Equal(0)
-func (dt *DateTime) GetNanosecond() *Number {
-	opChain := dt.chain.enter("GetNanosecond()")
+//	dt.Nanosecond().IsEqual(0)
+func (dt *DateTime) Nanosecond() *Number {
+	opChain := dt.chain.enter("Nanosecond()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -242,14 +251,64 @@ func (dt *DateTime) GetNanosecond() *Number {
 	return newNumber(opChain, float64(dt.value.Nanosecond()))
 }
 
-// Equal succeeds if DateTime is equal to given value.
+// Deprecated: use Zone instead.
+func (dt *DateTime) GetZone() *String {
+	return dt.Zone()
+}
+
+// Deprecated: use Year instead.
+func (dt *DateTime) GetYear() *Number {
+	return dt.Year()
+}
+
+// Deprecated: use Month instead.
+func (dt *DateTime) GetMonth() *Number {
+	return dt.Month()
+}
+
+// Deprecated: use Day instead.
+func (dt *DateTime) GetDay() *Number {
+	return dt.Day()
+}
+
+// Deprecated: use WeekDay instead.
+func (dt *DateTime) GetWeekDay() *Number {
+	return dt.WeekDay()
+}
+
+// Deprecated: use YearDay instead.
+func (dt *DateTime) GetYearDay() *Number {
+	return dt.YearDay()
+}
+
+// Deprecated: use Hour instead.
+func (dt *DateTime) GetHour() *Number {
+	return dt.Hour()
+}
+
+// Deprecated: use Minute instead.
+func (dt *DateTime) GetMinute() *Number {
+	return dt.Minute()
+}
+
+// Deprecated: use Second instead.
+func (dt *DateTime) GetSecond() *Number {
+	return dt.Second()
+}
+
+// Deprecated: use Nanosecond instead.
+func (dt *DateTime) GetNanosecond() *Number {
+	return dt.Nanosecond()
+}
+
+// IsEqual succeeds if DateTime is equal to given value.
 //
 // Example:
 //
 //	dt := NewDateTime(t, time.Unix(0, 1))
-//	dt.Equal(time.Unix(0, 1))
-func (dt *DateTime) Equal(value time.Time) *DateTime {
-	opChain := dt.chain.enter("Equal()")
+//	dt.IsEqual(time.Unix(0, 1))
+func (dt *DateTime) IsEqual(value time.Time) *DateTime {
+	opChain := dt.chain.enter("IsEqual()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -296,6 +355,11 @@ func (dt *DateTime) NotEqual(value time.Time) *DateTime {
 	}
 
 	return dt
+}
+
+// Deprecated: use IsEqual instead.
+func (dt *DateTime) Equal(value time.Time) *DateTime {
+	return dt.IsEqual(value)
 }
 
 // InRange succeeds if DateTime is within given range [min; max].
@@ -353,6 +417,106 @@ func (dt *DateTime) NotInRange(min, max time.Time) *DateTime {
 				errors.New("expected: time point is not within given range"),
 			},
 		})
+	}
+
+	return dt
+}
+
+// InList succeeds if DateTime is equal to one of the values from given
+// list of time.Time.
+//
+// Example:
+//
+//	dt := NewDateTime(t, time.Unix(0, 2))
+//	dt.InRange(time.Unix(0, 1), time.Unix(0, 2))
+func (dt *DateTime) InList(values ...time.Time) *DateTime {
+	opChain := dt.chain.enter("InList()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return dt
+	}
+
+	if len(values) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty list argument"),
+			},
+		})
+		return dt
+	}
+
+	var isListed bool
+	for _, v := range values {
+		if dt.value.Equal(v) {
+			isListed = true
+			break
+		}
+	}
+
+	if !isListed {
+		valueList := make([]interface{}, 0, len(values))
+		for _, v := range values {
+			valueList = append(valueList, v)
+		}
+
+		opChain.fail(AssertionFailure{
+			Type:     AssertBelongs,
+			Actual:   &AssertionValue{dt.value},
+			Expected: &AssertionValue{AssertionList(valueList)},
+			Errors: []error{
+				errors.New("expected: time point is equal to one of the values"),
+			},
+		})
+	}
+
+	return dt
+}
+
+// NotInList succeeds if DateTime is not equal to any of the values from
+// given list of time.Time.
+//
+// Example:
+//
+//	dt := NewDateTime(t, time.Unix(0, 2))
+//	dt.InRange(time.Unix(0, 1), time.Unix(0, 3))
+func (dt *DateTime) NotInList(values ...time.Time) *DateTime {
+	opChain := dt.chain.enter("NotInList()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return dt
+	}
+
+	if len(values) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty list argument"),
+			},
+		})
+		return dt
+	}
+
+	for _, v := range values {
+		if dt.value.Equal(v) {
+			valueList := make([]interface{}, 0, len(values))
+			for _, v := range values {
+				valueList = append(valueList, v)
+			}
+
+			opChain.fail(AssertionFailure{
+				Type:     AssertNotBelongs,
+				Actual:   &AssertionValue{dt.value},
+				Expected: &AssertionValue{AssertionList(valueList)},
+				Errors: []error{
+					errors.New("expected: time point is not equal to any of the values"),
+				},
+			})
+
+			return dt
+		}
 	}
 
 	return dt
@@ -476,7 +640,7 @@ func (dt *DateTime) Le(value time.Time) *DateTime {
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.AsUTC().Zone().Equal("UTC")
+//	dt.AsUTC().Zone().IsEqual("UTC")
 func (dt *DateTime) AsUTC() *DateTime {
 	opChain := dt.chain.enter("AsUTC()")
 	defer opChain.leave()
@@ -494,7 +658,7 @@ func (dt *DateTime) AsUTC() *DateTime {
 //
 //	tm, _ := time.Parse(time.UnixDate, "Fri Dec 30 15:04:05 IST 2022")
 //	dt := NewDateTime(t, tm)
-//	dt.AsLocal().Zone().Equal("IST")
+//	dt.AsLocal().Zone().IsEqual("IST")
 func (dt *DateTime) AsLocal() *DateTime {
 	opChain := dt.chain.enter("AsLocal()")
 	defer opChain.leave()

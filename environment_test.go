@@ -10,13 +10,13 @@ import (
 )
 
 func TestEnvironment_Constructors(t *testing.T) {
-	t.Run("Constructor without config", func(t *testing.T) {
+	t.Run("reporter", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		env := NewEnvironment(reporter)
 		env.chain.assertNotFailed(t)
 	})
 
-	t.Run("Constructor with config", func(t *testing.T) {
+	t.Run("config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		env := NewEnvironmentC(Config{
 			Reporter: reporter,
@@ -24,7 +24,7 @@ func TestEnvironment_Constructors(t *testing.T) {
 		env.chain.assertNotFailed(t)
 	})
 
-	t.Run("chain Constructor", func(t *testing.T) {
+	t.Run("chain", func(t *testing.T) {
 		chain := newMockChain(t)
 		value := newEnvironment(chain)
 		assert.NotSame(t, value.chain, chain)
@@ -32,7 +32,7 @@ func TestEnvironment_Constructors(t *testing.T) {
 	})
 }
 
-func TestEnvironment_Generic(t *testing.T) {
+func TestEnvironment_Basic(t *testing.T) {
 	env := newEnvironment(newMockChain(t))
 
 	assert.False(t, env.Has("good_key"))
@@ -51,6 +51,26 @@ func TestEnvironment_Generic(t *testing.T) {
 
 	assert.Nil(t, env.Get("bad_key"))
 	env.chain.assertFailed(t)
+}
+
+func TestEnvironment_Delete(t *testing.T) {
+	env := newEnvironment(newMockChain(t))
+
+	env.Put("good_key", 123)
+	env.chain.assertNotFailed(t)
+
+	assert.True(t, env.Has("good_key"))
+	assert.NotNil(t, env.Get("good_key"))
+	assert.Equal(t, 123, env.Get("good_key").(int))
+	env.chain.assertNotFailed(t)
+
+	env.Delete("good_key")
+	env.chain.assertNotFailed(t)
+
+	assert.False(t, env.Has("good_key"))
+	assert.Nil(t, env.Get("good_key"))
+	env.chain.assertFailed(t)
+	env.chain.clearFailed()
 }
 
 func TestEnvironment_NotFound(t *testing.T) {

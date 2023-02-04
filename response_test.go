@@ -12,23 +12,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestResponse_Failed(t *testing.T) {
+func TestResponse_FailedChain(t *testing.T) {
 	check := func(resp *Response) {
 		resp.chain.assertFailed(t)
 
-		assert.NotNil(t, resp.RoundTripTime())
-		assert.NotNil(t, resp.Duration())
-		assert.NotNil(t, resp.Headers())
-		assert.NotNil(t, resp.Header("foo"))
-		assert.NotNil(t, resp.Cookies())
-		assert.NotNil(t, resp.Cookie("foo"))
-		assert.NotNil(t, resp.Body())
-		assert.NotNil(t, resp.Text())
-		assert.NotNil(t, resp.Form())
-		assert.NotNil(t, resp.JSON())
-		assert.NotNil(t, resp.JSONP(""))
-		assert.NotNil(t, resp.Websocket())
+		resp.Alias("foo")
 
+		resp.RoundTripTime().chain.assertFailed(t)
+		resp.Duration().chain.assertFailed(t)
 		resp.Headers().chain.assertFailed(t)
 		resp.Header("foo").chain.assertFailed(t)
 		resp.Cookies().chain.assertFailed(t)
@@ -97,13 +88,13 @@ func TestResponse_Failed(t *testing.T) {
 }
 
 func TestResponse_Constructors(t *testing.T) {
-	t.Run("Constructor without config", func(t *testing.T) {
+	t.Run("reporter", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		resp := NewResponse(reporter, &http.Response{})
 		resp.chain.assertNotFailed(t)
 	})
 
-	t.Run("Constructor with config", func(t *testing.T) {
+	t.Run("config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		resp := NewResponseC(Config{
 			Reporter: reporter,
@@ -111,7 +102,7 @@ func TestResponse_Constructors(t *testing.T) {
 		resp.chain.assertNotFailed(t)
 	})
 
-	t.Run("chain Constructor", func(t *testing.T) {
+	t.Run("chain", func(t *testing.T) {
 		chain := newMockChain(t)
 		reporter := newMockReporter(t)
 		config := newMockConfig(reporter)
@@ -123,6 +114,19 @@ func TestResponse_Constructors(t *testing.T) {
 		assert.NotSame(t, value.chain, chain)
 		assert.Equal(t, value.chain.context.Path, chain.context.Path)
 	})
+}
+
+func TestResponse_Alias(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	duration := time.Second
+	value1 := NewResponse(reporter, &http.Response{}, duration)
+	assert.Equal(t, []string{"Response()"}, value1.chain.context.Path)
+	assert.Equal(t, []string{"Response()"}, value1.chain.context.AliasedPath)
+
+	value2 := value1.Alias("foo")
+	assert.Equal(t, []string{"Response()"}, value2.chain.context.Path)
+	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
 }
 
 func TestResponse_RoundTripTime(t *testing.T) {
@@ -140,7 +144,7 @@ func TestResponse_RoundTripTime(t *testing.T) {
 		assert.Equal(t, time.Second, rt.Raw())
 
 		rt.IsSet()
-		rt.Equal(time.Second)
+		rt.IsEqual(time.Second)
 		rt.chain.assertNotFailed(t)
 	})
 
@@ -308,15 +312,15 @@ func TestResponse_Headers(t *testing.T) {
 	resp.chain.assertFailed(t)
 	resp.chain.clearFailed()
 
-	resp.Headers().Equal(headers).chain.assertNotFailed(t)
+	resp.Headers().IsEqual(headers).chain.assertNotFailed(t)
 
 	for k, v := range headers {
 		for _, h := range []string{k, strings.ToLower(k), strings.ToUpper(k)} {
-			resp.Header(h).Equal(v[0]).chain.assertNotFailed(t)
+			resp.Header(h).IsEqual(v[0]).chain.assertNotFailed(t)
 		}
 	}
 
-	resp.Header("Bad-Header").Empty().chain.assertNotFailed(t)
+	resp.Header("Bad-Header").IsEmpty().chain.assertNotFailed(t)
 }
 
 func TestResponse_Cookies(t *testing.T) {
@@ -546,7 +550,7 @@ func TestResponse_NoContentNil(t *testing.T) {
 	resp.chain.clearFailed()
 }
 
-func TestResponse_NoContentFailed(t *testing.T) {
+func TestResponse_NoContentFailure(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	headers := map[string][]string{

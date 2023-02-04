@@ -1,6 +1,6 @@
 ![](_images/logo.png)
 
-# httpexpect [![GoDev](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white)](https://pkg.go.dev/github.com/gavv/httpexpect/v2) [![Build](https://github.com/gavv/httpexpect/workflows/build/badge.svg)](https://github.com/gavv/httpexpect/actions) [![Coveralls](https://coveralls.io/repos/github/gavv/httpexpect/badge.svg?branch=master)](https://coveralls.io/github/gavv/httpexpect?branch=master) [![GitHub release](https://img.shields.io/github/tag/gavv/httpexpect.svg)](https://github.com/gavv/httpexpect/tags) [![Discord](https://img.shields.io/discord/1047473005900615780?logo=discord&label=discord&color=blueviolet&logoColor=white)](https://discord.gg/5SCPCuCWA9)
+# httpexpect [![GoDev](https://img.shields.io/badge/go.dev-reference-007d9c?logo=go&logoColor=white)](https://pkg.go.dev/github.com/gavv/httpexpect/v2) [![Build](https://github.com/gavv/httpexpect/workflows/build/badge.svg)](https://github.com/gavv/httpexpect/actions) [![Coveralls](https://coveralls.io/repos/github/gavv/httpexpect/badge.svg?branch=master)](https://coveralls.io/github/gavv/httpexpect?branch=master) [![GitHub release](https://img.shields.io/github/tag/gavv/httpexpect.svg)](https://github.com/gavv/httpexpect/releases) [![Discord](https://img.shields.io/discord/1047473005900615780?logo=discord&label=discord&color=blueviolet&logoColor=white)](https://discord.gg/5SCPCuCWA9)
 
 Concise, declarative, and easy to use end-to-end HTTP and REST API testing for Go (golang).
 
@@ -84,6 +84,14 @@ Community forum and Q&A board is right on GitHub in [discussions tab](https://gi
 
 For more interactive discussion, you can join [discord chat](https://discord.gg/5SCPCuCWA9).
 
+## Contributing
+
+Feel free to report bugs, suggest improvements, and send pull requests! Please add documentation and tests for new features.
+
+This project highly depends on contributors. Thank you all for your amazing work!
+
+If you would like to submit code, see [HACKING.md](HACKING.md).
+
 ## Examples
 
 See [`_examples`](_examples) directory for complete standalone examples.
@@ -112,9 +120,17 @@ See [`_examples`](_examples) directory for complete standalone examples.
 
     Testing a WebSocket server based on [`gorilla/websocket`](https://github.com/gorilla/websocket). Tests invoke the `http.Handler` or `fasthttp.RequestHandler` directly.
 
+* [`oauth2_test.go`](_examples/oauth2_test.go)
+
+  Testing a OAuth2 server with [`oauth2`](https://github.com/go-oauth2/oauth2/).
+
 * [`gae_test.go`](_examples/gae_test.go)
 
     Testing a server running under the [Google App Engine](https://en.wikipedia.org/wiki/Google_App_Engine).
+
+* [`formatter_test.go`](_examples/formatter_test.go)
+
+    Testing with custom formatter for assertion messages.
 
 ## Quick start
 
@@ -145,7 +161,7 @@ func TestFruits(t *testing.T) {
 	// is it working?
 	e.GET("/fruits").
 		Expect().
-		Status(http.StatusOK).JSON().Array().Empty()
+		Status(http.StatusOK).JSON().Array().IsEmpty()
 }
 ```
 
@@ -180,11 +196,11 @@ obj := e.GET("/fruits/apple").
 
 obj.Keys().ContainsOnly("colors", "weight")
 
-obj.Value("colors").Array().Elements("green", "red")
-obj.Value("colors").Array().Element(0).String().Equal("green")
-obj.Value("colors").Array().Element(1).String().Equal("red")
-obj.Value("colors").Array().First().String().Equal("green")
-obj.Value("colors").Array().Last().String().Equal("red")
+obj.Value("colors").Array().ConsistsOf("green", "red")
+obj.Value("colors").Array().Element(0).String().IsEqual("green")
+obj.Value("colors").Array().Element(1).String().IsEqual("red")
+obj.Value("colors").Array().First().String().IsEqual("green")
+obj.Value("colors").Array().Last().String().IsEqual("red")
 ```
 
 ##### JSON Schema and JSON Path
@@ -212,7 +228,28 @@ repos.Schema(schema)
 
 // run JSONPath query and iterate results
 for _, private := range repos.Path("$..private").Array().Iter() {
-	private.Boolean().False()
+	private.Boolean().IsFalse()
+}
+```
+
+##### JSON decoding
+
+```go
+type User struct {
+	Name   string `json:"name"`
+	Age    int    `json:"age"`
+	Gender string `json:"gender"`
+}
+
+var user User
+e.GET("/user").
+	Expect().
+	Status(http.StatusOK).
+	JSON().
+	Decode(&user)
+	
+if user.Name != "octocat" {
+	t.Fail()
 }
 ```
 
@@ -292,9 +329,9 @@ c := e.GET("/users/john").
 	Expect().
 	Status(http.StatusOK).Cookie("session")
 
-c.Value().Equal(sessionID)
-c.Domain().Equal("example.com")
-c.Path().Equal("/")
+c.Value().IsEqual(sessionID)
+c.Domain().IsEqual("example.com")
+c.Path().IsEqual("/")
 c.Expires().InRange(t, t.Add(time.Hour * 24))
 ```
 
@@ -312,12 +349,12 @@ m := e.GET("/users/john").
 	Expect().
 	Header("Location").Match("http://(?P<host>.+)/users/(?P<user>.+)")
 
-m.Index(0).Equal("http://example.com/users/john")
-m.Index(1).Equal("example.com")
-m.Index(2).Equal("john")
+m.Index(0).IsEqual("http://example.com/users/john")
+m.Index(1).IsEqual("example.com")
+m.Index(2).IsEqual("john")
 
-m.Name("host").Equal("example.com")
-m.Name("user").Equal("john")
+m.Name("host").IsEqual("example.com")
+m.Name("user").IsEqual("john")
 ```
 
 ##### Redirection support
@@ -382,7 +419,7 @@ defer ws.Disconnect()
 
 ws.WriteText("some request").
 	Expect().
-	TextMessage().Body().Equal("some response")
+	TextMessage().Body().IsEqual("some response")
 
 ws.CloseWithText("bye").
 	Expect().
@@ -695,6 +732,26 @@ e.POST("/fruits").
 	Status(http.StatusOK)
 ```
 
+##### Support for aliases in failure messages
+
+```go
+// when the tests fails, assertion path in the failure message is:
+//   Request("GET").Expect().JSON().Array().IsEmpty()
+e.GET("/fruits").
+	Expect().
+	Status(http.StatusOK).JSON().Array().IsEmpty()
+
+
+// assign alias "fruits" to the Array variable
+fruits := e.GET("/fruits").
+	Expect().
+	Status(http.StatusOK).JSON().Array().Alias("fruits")
+
+// assertion path in the failure message is now:
+//   fruits.IsEmpty()
+fruits.IsEmpty()
+```
+
 ##### Printing requests and responses
 
 ```go
@@ -786,54 +843,6 @@ e := httpexpect.WithConfig(httpexpect.Config{
 * [`httptesting`](https://github.com/dolab/httptesting)
 * [`http-test`](https://github.com/vsco/http-test)
 * [`go-json-rest`](https://github.com/ant0ine/go-json-rest)
-
-## Contributing
-
-Feel free to report bugs, suggest improvements, and send pull requests! Please add documentation and tests for new features.
-
-Install developer dependencies:
-
-* [golangci-lint](https://golangci-lint.run/usage/install/#local-installation)
-
-* [stringer](https://github.com/golang/tools)
-
-    `go install golang.org/x/tools/cmd/stringer@latest`
-
-Re-generate, build, lint, and test everything:
-
-```
-make
-```
-
-Run tests:
-
-```
-make test
-```
-
-Run only short tests:
-
-```
-make short
-```
-
-Run gofmt:
-
-```
-make fmt
-```
-
-Run go generate:
-
-```
-make gen
-```
-
-Run go mod tidy:
-
-```
-make tidy
-```
 
 ## License
 

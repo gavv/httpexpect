@@ -74,9 +74,9 @@ func (o *Object) Raw() map[string]interface{} {
 // Decode unmarshals the underlying value attached to the Object to a target variable
 // target should be one of this:
 //
-// - pointer to an empty interface
-// - pointer to a map
-// - pointer to a struct
+//   - pointer to an empty interface
+//   - pointer to a map
+//   - pointer to a struct
 //
 // Example:
 //
@@ -84,7 +84,7 @@ func (o *Object) Raw() map[string]interface{} {
 //		Foo int                    `json:"foo"`
 //		Bar []interface{}          `json:"bar"`
 //		Baz map[string]interface{} `json:"baz"`
-//		Bat struct{ a int }        `json:"bat"`
+//		Bat struct{ A int }        `json:"bat"`
 //	}
 //
 //	m := map[string]interface{}{
@@ -93,7 +93,7 @@ func (o *Object) Raw() map[string]interface{} {
 //		"baz": map[string]interface{}{
 //			"a": "b",
 //		},
-//		"bat": struct{ a int }{0},
+//		"bat": struct{ A int }{123},
 //	}
 //
 //	value := NewObject(t, value)
@@ -102,7 +102,7 @@ func (o *Object) Raw() map[string]interface{} {
 //	value.Decode(&target)
 //
 //	assert.Equal(t, S{123,[]interface{}{"123", 234.0},
-//		map[string]interface{}{"a": "b"}, struct{ a int }{0},
+//		map[string]interface{}{"a": "b"}, struct{ A int }{123},
 //	}, target)
 func (o *Object) Decode(target interface{}) *Object {
 	opChain := o.chain.enter("Decode()")
@@ -113,6 +113,15 @@ func (o *Object) Decode(target interface{}) *Object {
 	}
 
 	canonDecode(opChain, o.value, target)
+	return o
+}
+
+// Alias is similar to Value.Alias.
+func (o *Object) Alias(name string) *Object {
+	opChain := o.chain.enter("Alias(%q)", name)
+	defer opChain.leave()
+
+	o.chain.setAlias(name)
 	return o
 }
 
@@ -184,7 +193,7 @@ func (o *Object) Values() *Array {
 // Example:
 //
 //	object := NewObject(t, map[string]interface{}{"foo": 123})
-//	object.Value("foo").Number().Equal(123)
+//	object.Value("foo").Number().IsEqual(123)
 func (o *Object) Value(key string) *Value {
 	opChain := o.chain.enter("Value(%q)", key)
 	defer opChain.leave()
@@ -218,7 +227,7 @@ func (o *Object) Value(key string) *Value {
 //	object := NewObject(t, numbers)
 //
 //	for key, value := range object.Iter() {
-//	    value.Number().Equal(numbers[key])
+//	    value.Number().IsEqual(numbers[key])
 //	}
 func (o *Object) Iter() map[string]Value {
 	opChain := o.chain.enter("Iter()")
@@ -311,7 +320,7 @@ func (o *Object) Every(fn func(key string, value *Value)) *Object {
 //		value.String().NotEmpty()		//fails on 6
 //		return value.Raw() != "bar"		//fails on "bar"
 //	})
-//	filteredObject.Equal(map[string]interface{}{"qux":"quux"})	//succeeds
+//	filteredObject.IsEqual(map[string]interface{}{"qux":"quux"})	//succeeds
 func (o *Object) Filter(fn func(key string, value *Value) bool) *Object {
 	opChain := o.chain.enter("Filter()")
 	defer opChain.leave()
@@ -349,7 +358,7 @@ func (o *Object) Filter(fn func(key string, value *Value) bool) *Object {
 	return newObject(opChain, filteredObject)
 }
 
-// Transform runs the passed function on all the Elements in the Object
+// Transform runs the passed function on all the elements in the Object
 // and returns a new object without effecting original object.
 //
 // The function is invoked for key value pairs sorted by keys in ascending order.
@@ -361,7 +370,7 @@ func (o *Object) Filter(fn func(key string, value *Value) bool) *Object {
 //		func(key string, value interface{}) interface{} {
 //			return strings.ToUpper(value.(string))
 //		})
-//	transformedObject.Equals([]interface{}{"x": "FOO", "y": "BAR"})
+//	transformedObject.IsEqual([]interface{}{"x": "FOO", "y": "BAR"})
 func (o *Object) Transform(fn func(key string, value interface{}) interface{}) *Object {
 	opChain := o.chain.enter("Transform()")
 	defer opChain.leave()
@@ -412,7 +421,7 @@ func (o *Object) Transform(fn func(key string, value interface{}) interface{}) *
 //		num := value.Number()      // skip if element is not a string
 //		return num.Raw() > 100     // check element value
 //	})
-//	foundValue.Equal(101) // succeeds
+//	foundValue.IsEqual(101) // succeeds
 func (o *Object) Find(fn func(key string, value *Value) bool) *Value {
 	opChain := o.chain.enter("Find()")
 	defer opChain.leave()
@@ -487,8 +496,8 @@ func (o *Object) Find(fn func(key string, value *Value) bool) *Value {
 //	})
 //
 //	assert.Equal(t, len(foundValues), 2)
-//	foundValues[0].Equal(101)
-//	foundValues[1].Equal(201)
+//	foundValues[0].IsEqual(101)
+//	foundValues[1].IsEqual(201)
 func (o *Object) FindAll(fn func(key string, value *Value) bool) []*Value {
 	opChain := o.chain.enter("FindAll()")
 	defer opChain.leave()
@@ -599,14 +608,14 @@ func (o *Object) NotFind(fn func(key string, value *Value) bool) *Object {
 	return o
 }
 
-// Empty succeeds if object is empty.
+// IsEmpty succeeds if object is empty.
 //
 // Example:
 //
 //	object := NewObject(t, map[string]interface{}{})
-//	object.Empty()
-func (o *Object) Empty() *Object {
-	opChain := o.chain.enter("Empty()")
+//	object.IsEmpty()
+func (o *Object) IsEmpty() *Object {
+	opChain := o.chain.enter("IsEmpty()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -653,7 +662,12 @@ func (o *Object) NotEmpty() *Object {
 	return o
 }
 
-// Equal succeeds if object is equal to given value.
+// Deprecated: use IsEmpty instead.
+func (o *Object) Empty() *Object {
+	return o.IsEmpty()
+}
+
+// IsEqual succeeds if object is equal to given value.
 // Before comparison, both object and value are converted to canonical form.
 //
 // value should be map[string]interface{} or struct.
@@ -661,9 +675,9 @@ func (o *Object) NotEmpty() *Object {
 // Example:
 //
 //	object := NewObject(t, map[string]interface{}{"foo": 123})
-//	object.Equal(map[string]interface{}{"foo": 123})
-func (o *Object) Equal(value interface{}) *Object {
-	opChain := o.chain.enter("Equal()")
+//	object.IsEqual(map[string]interface{}{"foo": 123})
+func (o *Object) IsEqual(value interface{}) *Object {
+	opChain := o.chain.enter("IsEqual()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -697,7 +711,7 @@ func (o *Object) Equal(value interface{}) *Object {
 // Example:
 //
 //	object := NewObject(t, map[string]interface{}{"foo": 123})
-//	object.Equal(map[string]interface{}{"bar": 123})
+//	object.IsEqual(map[string]interface{}{"bar": 123})
 func (o *Object) NotEqual(value interface{}) *Object {
 	opChain := o.chain.enter("NotEqual()")
 	defer opChain.leave()
@@ -720,6 +734,124 @@ func (o *Object) NotEqual(value interface{}) *Object {
 				errors.New("expected: maps are non-equal"),
 			},
 		})
+	}
+
+	return o
+}
+
+// Deprecated: use IsEqual instead.
+func (o *Object) Equal(value interface{}) *Object {
+	return o.IsEqual(value)
+}
+
+// InList succeeds if whole object is equal to one of the values from given list
+// of objects. Before comparison, each value is converted to canonical form.
+//
+// Each value should be map[string]interface{} or struct. If at least one value
+// has wrong type, failure is reported.
+//
+// Example:
+//
+//	object := NewObject(t, map[string]interface{}{"foo": 123})
+//	object.InList(
+//		map[string]interface{}{"foo": 123},
+//		map[string]interface{}{"bar": 456},
+//	)
+func (o *Object) InList(values ...interface{}) *Object {
+	opChain := o.chain.enter("InList()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return o
+	}
+
+	if len(values) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty list argument"),
+			},
+		})
+		return o
+	}
+
+	var isListed bool
+	for _, v := range values {
+		expected, ok := canonMap(opChain, v)
+		if !ok {
+			return o
+		}
+
+		if reflect.DeepEqual(expected, o.value) {
+			isListed = true
+			// continue loop to check that all values are correct
+		}
+	}
+
+	if !isListed {
+		opChain.fail(AssertionFailure{
+			Type:     AssertBelongs,
+			Actual:   &AssertionValue{o.value},
+			Expected: &AssertionValue{AssertionList(values)},
+			Errors: []error{
+				errors.New("expected: map is equal to one of the values"),
+			},
+		})
+		return o
+	}
+
+	return o
+}
+
+// NotInList succeeds if the whole object is not equal to any of the values
+// from given list of objects. Before comparison, each value is converted to
+// canonical form.
+//
+// Each value should be map[string]interface{} or struct. If at least one value
+// has wrong type, failure is reported.
+//
+// Example:
+//
+//	object := NewObject(t, map[string]interface{}{"foo": 123})
+//	object.NotInList(
+//		map[string]interface{}{"bar": 456},
+//		map[string]interface{}{"baz": 789},
+//	)
+func (o *Object) NotInList(values ...interface{}) *Object {
+	opChain := o.chain.enter("NotInList()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return o
+	}
+
+	if len(values) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty list argument"),
+			},
+		})
+		return o
+	}
+
+	for _, v := range values {
+		expected, ok := canonMap(opChain, v)
+		if !ok {
+			return o
+		}
+
+		if reflect.DeepEqual(expected, o.value) {
+			opChain.fail(AssertionFailure{
+				Type:     AssertNotBelongs,
+				Actual:   &AssertionValue{o.value},
+				Expected: &AssertionValue{AssertionList(values)},
+				Errors: []error{
+					errors.New("expected: map is not equal to any of the values"),
+				},
+			})
+			return o
+		}
 	}
 
 	return o

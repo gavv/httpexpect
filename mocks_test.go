@@ -7,8 +7,11 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type mockClient struct {
@@ -31,6 +34,94 @@ func (c *mockClient) Do(req *http.Request) (*http.Response, error) {
 		return &c.resp, nil
 	}
 	return nil, c.err
+}
+
+// mockTransportRedirect mocks a transport that implements RoundTripper
+//
+// When tripCount < maxRedirect,
+// mockTransportRedirect responses with redirectHTTPStatusCode
+//
+// When tripCount = maxRedirect,
+// mockTransportRedirect responses with HTTP 200 OK
+type mockTransportRedirect struct {
+	t *testing.T
+
+	// assertFn asserts the HTTP request
+	assertFn func(*http.Request) bool
+
+	// redirectHTTPStatusCode indicates the HTTP status code of redirection response
+	redirectHTTPStatusCode int
+
+	// tripCount tracks the number of trip that has been done
+	tripCount int
+
+	// maxRedirect indicates the number of trip that can be done for redirection.
+	// -1 means always redirect.
+	maxRedirect int
+}
+
+func newMockTransportRedirect(
+	t *testing.T,
+) *mockTransportRedirect {
+	return &mockTransportRedirect{
+		t:                      t,
+		assertFn:               nil,
+		redirectHTTPStatusCode: http.StatusPermanentRedirect,
+		maxRedirect:            -1,
+	}
+}
+
+func (mt *mockTransportRedirect) RoundTrip(origReq *http.Request) (
+	*http.Response, error,
+) {
+	mt.tripCount++
+
+	if mt.assertFn != nil {
+		assert.True(mt.t, mt.assertFn(origReq))
+	}
+
+	res := httptest.NewRecorder()
+
+	if mt.maxRedirect == -1 || mt.tripCount <= mt.maxRedirect {
+		res.Result().StatusCode = mt.redirectHTTPStatusCode
+		res.Result().Header.Set("Location", "/redirect")
+	} else {
+		res.Result().StatusCode = http.StatusOK
+	}
+
+	return res.Result(), nil
+}
+
+func (mt *mockTransportRedirect) WithAssertFn(
+	fn func(*http.Request) bool,
+) *mockTransportRedirect {
+	mt.assertFn = fn
+
+	return mt
+}
+
+func (mt *mockTransportRedirect) WithRedirectHTTPStatusCode(
+	statusCode int,
+) *mockTransportRedirect {
+	if !(statusCode >= 300 && statusCode < 400) {
+		mt.t.Fatal("invalid redirect status code")
+	}
+
+	mt.redirectHTTPStatusCode = statusCode
+
+	return mt
+}
+
+func (mt *mockTransportRedirect) WithMaxRedirect(
+	maxRedirect int,
+) *mockTransportRedirect {
+	if maxRedirect != -1 && maxRedirect < 0 {
+		mt.t.Fatal("max redirect less than 0")
+	}
+
+	mt.maxRedirect = maxRedirect
+
+	return mt
 }
 
 type mockBody struct {

@@ -14,7 +14,7 @@ func irisTester(t *testing.T) *httpexpect.Expect {
 	return httpexpect.WithConfig(httpexpect.Config{
 		Client: &http.Client{
 			Transport: httpexpect.NewBinder(handler),
-			Jar:       httpexpect.NewJar(),
+			Jar:       httpexpect.NewCookieJar(),
 		},
 		Reporter: httpexpect.NewAssertReporter(t),
 		Printers: []httpexpect.Printer{
@@ -46,13 +46,13 @@ func TestIrisThings(t *testing.T) {
 
 	names := things.Path("$[*].name").Array()
 
-	names.Elements("foo", "bar")
+	names.ConsistsOf("foo", "bar")
 
 	for n, desc := range things.Path("$..description").Array().Iter() {
 		m := desc.String().Match("(.+) (.+)")
 
-		m.Index(1).Equal(names.Element(n).String().Raw())
-		m.Index(2).Equal("thing")
+		m.Index(1).IsEqual(names.Element(n).String().Raw())
+		m.Index(2).IsEqual("thing")
 	}
 }
 
@@ -63,7 +63,7 @@ func TestIrisRedirect(t *testing.T) {
 		Expect().
 		Status(http.StatusOK).JSON().Array()
 
-	things.Length().Equal(2)
+	things.Length().IsEqual(2)
 
 	things.Element(0).Object().ValueEqual("name", "foo")
 	things.Element(1).Object().ValueEqual("name", "bar")
@@ -86,9 +86,9 @@ func TestIrisParams(t *testing.T) {
 		Expect().
 		Status(http.StatusOK).JSON().Object()
 
-	r.Value("x").Equal("xxx")
-	r.Value("y").Equal("yyy")
-	r.Value("q").Equal("qqq")
+	r.Value("x").IsEqual("xxx")
+	r.Value("y").IsEqual("yyy")
+	r.Value("q").IsEqual("qqq")
 
 	r.ValueEqual("p1", "P1")
 	r.ValueEqual("p2", "P2")
@@ -107,7 +107,7 @@ func TestIrisAuth(t *testing.T) {
 
 	e.GET("/auth").WithBasicAuth("ford", "betelgeuse7").
 		Expect().
-		Status(http.StatusOK).Body().Equal("authenticated!")
+		Status(http.StatusOK).Body().IsEqual("authenticated!")
 }
 
 func TestIrisSession(t *testing.T) {
@@ -125,7 +125,7 @@ func TestIrisSession(t *testing.T) {
 		Expect().
 		Status(http.StatusOK).JSON().Object()
 
-	r.Equal(map[string]string{
+	r.IsEqual(map[string]string{
 		"name": "test",
 	})
 }
@@ -137,12 +137,12 @@ func TestIrisStream(t *testing.T) {
 		Expect().
 		Status(http.StatusOK).
 		TransferEncoding("chunked"). // ensure server sent chunks
-		Body().Equal("0123456789")
+		Body().IsEqual("0123456789")
 
 	// send chunks to server
 	e.POST("/stream").WithChunked(strings.NewReader("<long text>")).
 		Expect().
-		Status(http.StatusOK).Body().Equal("<long text>")
+		Status(http.StatusOK).Body().IsEqual("<long text>")
 }
 
 func TestIrisSubdomain(t *testing.T) {
@@ -159,5 +159,5 @@ func TestIrisSubdomain(t *testing.T) {
 	sub.GET("/get").
 		Expect().
 		Status(http.StatusOK).
-		Body().Equal("hello from subdomain")
+		Body().IsEqual("hello from subdomain")
 }

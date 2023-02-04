@@ -70,12 +70,12 @@ func testRedirects(t *testing.T, createFn func(Reporter) *Expect) {
 		e.GET("/redirect301").
 			WithRedirectPolicy(FollowAllRedirects).
 			Expect().
-			Status(http.StatusOK).Body().Equal(`default_response`)
+			Status(http.StatusOK).Body().IsEqual(`default_response`)
 
 		e.GET("/redirect301").
 			WithRedirectPolicy(FollowRedirectsWithoutBody).
 			Expect().
-			Status(http.StatusOK).Body().Equal(`default_response`)
+			Status(http.StatusOK).Body().IsEqual(`default_response`)
 	})
 
 	t.Run("post301", func(t *testing.T) {
@@ -91,13 +91,13 @@ func testRedirects(t *testing.T, createFn func(Reporter) *Expect) {
 			WithText(`custom_response`).
 			WithRedirectPolicy(FollowAllRedirects).
 			Expect().
-			Status(http.StatusOK).Body().Equal(`default_response`)
+			Status(http.StatusOK).Body().IsEqual(`default_response`)
 
 		e.POST("/redirect301").
 			WithText(`custom_response`).
 			WithRedirectPolicy(FollowRedirectsWithoutBody).
 			Expect().
-			Status(http.StatusOK).Body().Equal(`default_response`)
+			Status(http.StatusOK).Body().IsEqual(`default_response`)
 	})
 
 	t.Run("get308", func(t *testing.T) {
@@ -111,12 +111,12 @@ func testRedirects(t *testing.T, createFn func(Reporter) *Expect) {
 		e.GET("/redirect308").
 			WithRedirectPolicy(FollowAllRedirects).
 			Expect().
-			Status(http.StatusOK).Body().Equal(`default_response`)
+			Status(http.StatusOK).Body().IsEqual(`default_response`)
 
 		e.GET("/redirect308").
 			WithRedirectPolicy(FollowRedirectsWithoutBody).
 			Expect().
-			Status(http.StatusOK).Body().Equal(`default_response`)
+			Status(http.StatusOK).Body().IsEqual(`default_response`)
 	})
 
 	t.Run("post308", func(t *testing.T) {
@@ -132,7 +132,7 @@ func testRedirects(t *testing.T, createFn func(Reporter) *Expect) {
 			WithText(`custom_response`).
 			WithRedirectPolicy(FollowAllRedirects).
 			Expect().
-			Status(http.StatusOK).Body().Equal(`custom_response`)
+			Status(http.StatusOK).Body().IsEqual(`custom_response`)
 
 		e.POST("/redirect308").
 			WithText(`custom_response`).
