@@ -120,6 +120,10 @@ See [`_examples`](_examples) directory for complete standalone examples.
 
     Testing a WebSocket server based on [`gorilla/websocket`](https://github.com/gorilla/websocket). Tests invoke the `http.Handler` or `fasthttp.RequestHandler` directly.
 
+* [`oauth2_test.go`](_examples/oauth2_test.go)
+
+  Testing a OAuth2 server with [`oauth2`](https://github.com/go-oauth2/oauth2/). Tests use either HTTP client or invoke the `http.Handler` directly.
+
 * [`gae_test.go`](_examples/gae_test.go)
 
     Testing a server running under the [Google App Engine](https://en.wikipedia.org/wiki/Google_App_Engine).
