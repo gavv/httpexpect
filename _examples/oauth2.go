@@ -4,36 +4,56 @@ import (
 	"net/http"
 
 	"github.com/go-oauth2/oauth2/v4/manage"
+	"github.com/go-oauth2/oauth2/v4/models"
 	"github.com/go-oauth2/oauth2/v4/server"
 	"github.com/go-oauth2/oauth2/v4/store"
 )
 
 var (
-	clientStore = store.NewClientStore()
+	ClientID     = "aaa"
+	ClientSecret = "bbb"
 )
 
-// OAuth2Handler is a simple http.Handler that implements go-oauth2 server.
 func OAuth2Handler() http.Handler {
-	manager := manage.NewDefaultManager()
-	manager.SetAuthorizeCodeTokenCfg(manage.DefaultAuthorizeCodeTokenCfg)
+	tokenStore, err := store.NewMemoryTokenStore()
+	if err != nil {
+		panic(err)
+	}
 
-	manager.MustTokenStorage(store.NewMemoryTokenStore())
+	clientStore := store.NewClientStore()
 
-	manager.MapClientStorage(clientStore)
+	err = clientStore.Set(ClientID, &models.Client{
+		ID:     ClientID,
+		Secret: ClientSecret,
+	})
+	if err != nil {
+		panic(err)
+	}
 
-	srv := server.NewDefaultServer(manager)
+	mng := manage.NewDefaultManager()
+
+	mng.SetAuthorizeCodeTokenCfg(manage.DefaultAuthorizeCodeTokenCfg)
+	mng.SetRefreshTokenCfg(manage.DefaultRefreshTokenCfg)
+
+	mng.MapTokenStorage(tokenStore)
+	mng.MapClientStorage(clientStore)
+
+	srv := server.NewDefaultServer(mng)
+
 	srv.SetAllowGetAccessRequest(true)
 	srv.SetClientInfoHandler(server.ClientFormHandler)
-	manager.SetRefreshTokenCfg(manage.DefaultRefreshTokenCfg)
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/token", func(w http.ResponseWriter, r *http.Request) {
-		_ = srv.HandleTokenRequest(w, r)
-	})
 
-	mux.HandleFunc("/protected", validateToken(func(w http.ResponseWriter, r *http.Request) {
-		_, _ = w.Write([]byte("Protected!!!"))
-	}, srv))
+	mux.HandleFunc("/token",
+		func(w http.ResponseWriter, r *http.Request) {
+			_ = srv.HandleTokenRequest(w, r)
+		})
+
+	mux.HandleFunc("/protected",
+		validateToken(func(w http.ResponseWriter, r *http.Request) {
+			_, _ = w.Write([]byte("protected_content"))
+		}, srv))
 
 	return mux
 }

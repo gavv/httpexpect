@@ -8,39 +8,32 @@ import (
 	"time"
 
 	"github.com/gavv/httpexpect/v2"
-	"github.com/go-oauth2/oauth2/v4/models"
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/assert"
 	"golang.org/x/oauth2"
+)
+
+var (
+	AccessToken  = "xxx"
+	RefreshToken = "yyy"
 )
 
 func TestOAuth2(t *testing.T) {
 	server := httptest.NewServer(OAuth2Handler())
 	defer server.Close()
 
-	clientID := uuid.New().String()[:8]
-	clientSecret := uuid.New().String()[:8]
-
-	err := clientStore.Set(clientID, &models.Client{
-		ID:     clientID,
-		Secret: clientSecret,
-		Domain: server.URL,
-	})
-	assert.NoError(t, err)
-
 	config := oauth2.Config{
-		ClientID:     clientID,
-		ClientSecret: clientSecret,
+		ClientID:     ClientID,
+		ClientSecret: ClientSecret,
 		Endpoint: oauth2.Endpoint{
 			TokenURL: server.URL + "/token",
 		},
 	}
 
 	token := &oauth2.Token{
-		AccessToken:  uuid.New().String()[:8],
-		RefreshToken: uuid.New().String()[:8],
+		AccessToken:  AccessToken,
+		RefreshToken: RefreshToken,
 		Expiry:       time.Now().Add(5 * time.Minute),
 	}
+
 	client := config.Client(context.Background(), token)
 
 	e := httpexpect.WithConfig(httpexpect.Config{
@@ -52,24 +45,32 @@ func TestOAuth2(t *testing.T) {
 		},
 	})
 
-	e.GET("/protected").Expect().Status(http.StatusBadRequest)
+	e.GET("/protected").
+		Expect().
+		Status(http.StatusBadRequest)
 
-	rr := e.GET("/token").WithQueryObject(map[string]interface{}{
-		"grant_type":    "client_credentials",
-		"client_id":     clientID,
-		"client_secret": clientSecret,
-		"scope":         "all",
-	}).Expect()
+	tokenResp := e.GET("/token").
+		WithQueryObject(map[string]interface{}{
+			"grant_type":    "client_credentials",
+			"client_id":     ClientID,
+			"client_secret": ClientSecret,
+			"scope":         "all",
+		}).
+		Expect()
 
-	rr.Status(http.StatusOK)
-	rr.JSON().Path("$.scope").String().IsEqual("all")
-	rr.JSON().Path("$.token_type").String().IsEqual("Bearer")
-	rr.JSON().Path("$.expires_in").Number().Gt(0)
+	tokenResp.Status(http.StatusOK)
+	tokenResp.JSON().Path("$.scope").String().IsEqual("all")
+	tokenResp.JSON().Path("$.token_type").String().IsEqual("Bearer")
+	tokenResp.JSON().Path("$.expires_in").Number().Gt(0)
 
-	accessToken := rr.JSON().Path("$.access_token").String().Raw()
-	if accessToken != token.AccessToken {
+	accessToken := tokenResp.JSON().Path("$.access_token").String().Raw()
+	if token.AccessToken != accessToken {
 		token.AccessToken = accessToken
 	}
 
-	e.GET("/protected").Expect().Status(http.StatusOK)
+	e.GET("/protected").
+		Expect().
+		Status(http.StatusOK).
+		Body().
+		IsEqual("protected_content")
 }

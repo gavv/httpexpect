@@ -8,7 +8,6 @@ require (
 	github.com/gavv/httpexpect/v2 v2.11.0
 	github.com/gin-gonic/gin v1.8.1
 	github.com/go-oauth2/oauth2/v4 v4.5.1
-	github.com/go-session/session v3.1.2+incompatible
 	github.com/gorilla/websocket v1.5.0
 	github.com/kataras/iris/v12 v12.1.8
 	github.com/labstack/echo/v4 v4.10.0

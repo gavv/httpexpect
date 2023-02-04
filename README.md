@@ -122,7 +122,7 @@ See [`_examples`](_examples) directory for complete standalone examples.
 
 * [`oauth2_test.go`](_examples/oauth2_test.go)
 
-  Testing a OAuth2 server with [`oauth2`](https://github.com/go-oauth2/oauth2/). Tests use either HTTP client or invoke the `http.Handler` directly.
+  Testing a OAuth2 server with [`oauth2`](https://github.com/go-oauth2/oauth2/).
 
 * [`gae_test.go`](_examples/gae_test.go)
 
