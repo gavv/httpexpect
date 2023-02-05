@@ -200,19 +200,19 @@ func TestArray_Decode(t *testing.T) {
 func TestArray_Alias(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	value1 := NewArray(reporter, []interface{}{1, 2})
-	assert.Equal(t, []string{"Array()"}, value1.chain.context.Path)
-	assert.Equal(t, []string{"Array()"}, value1.chain.context.AliasedPath)
+	value := NewArray(reporter, []interface{}{1, 2})
+	assert.Equal(t, []string{"Array()"}, value.chain.context.Path)
+	assert.Equal(t, []string{"Array()"}, value.chain.context.AliasedPath)
 
-	value2 := value1.Alias("foo")
-	assert.Equal(t, []string{"Array()"}, value2.chain.context.Path)
-	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
+	value.Alias("foo")
+	assert.Equal(t, []string{"Array()"}, value.chain.context.Path)
+	assert.Equal(t, []string{"foo"}, value.chain.context.AliasedPath)
 
-	value3 := value2.Filter(func(index int, value *Value) bool {
+	childValue := value.Filter(func(index int, value *Value) bool {
 		return value.Number().Raw() > 1
 	})
-	assert.Equal(t, []string{"Array()", "Filter()"}, value3.chain.context.Path)
-	assert.Equal(t, []string{"foo", "Filter()"}, value3.chain.context.AliasedPath)
+	assert.Equal(t, []string{"Array()", "Filter()"}, childValue.chain.context.Path)
+	assert.Equal(t, []string{"foo", "Filter()"}, childValue.chain.context.AliasedPath)
 }
 
 func TestArray_Getters(t *testing.T) {

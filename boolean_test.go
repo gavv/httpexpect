@@ -102,13 +102,13 @@ func TestBoolean_Decode(t *testing.T) {
 func TestBoolean_Alias(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	value1 := NewBoolean(reporter, true)
-	assert.Equal(t, []string{"Boolean()"}, value1.chain.context.Path)
-	assert.Equal(t, []string{"Boolean()"}, value1.chain.context.AliasedPath)
+	value := NewBoolean(reporter, true)
+	assert.Equal(t, []string{"Boolean()"}, value.chain.context.Path)
+	assert.Equal(t, []string{"Boolean()"}, value.chain.context.AliasedPath)
 
-	value2 := value1.Alias("foo")
-	assert.Equal(t, []string{"Boolean()"}, value2.chain.context.Path)
-	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
+	value.Alias("foo")
+	assert.Equal(t, []string{"Boolean()"}, value.chain.context.Path)
+	assert.Equal(t, []string{"foo"}, value.chain.context.AliasedPath)
 }
 
 func TestBoolean_Getters(t *testing.T) {

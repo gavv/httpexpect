@@ -119,14 +119,13 @@ func TestResponse_Constructors(t *testing.T) {
 func TestResponse_Alias(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	duration := time.Second
-	value1 := NewResponse(reporter, &http.Response{}, duration)
-	assert.Equal(t, []string{"Response()"}, value1.chain.context.Path)
-	assert.Equal(t, []string{"Response()"}, value1.chain.context.AliasedPath)
+	value := NewResponse(reporter, &http.Response{}, time.Second)
+	assert.Equal(t, []string{"Response()"}, value.chain.context.Path)
+	assert.Equal(t, []string{"Response()"}, value.chain.context.AliasedPath)
 
-	value2 := value1.Alias("foo")
-	assert.Equal(t, []string{"Response()"}, value2.chain.context.Path)
-	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
+	value.Alias("foo")
+	assert.Equal(t, []string{"Response()"}, value.chain.context.Path)
+	assert.Equal(t, []string{"foo"}, value.chain.context.AliasedPath)
 }
 
 func TestResponse_RoundTripTime(t *testing.T) {

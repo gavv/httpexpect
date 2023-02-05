@@ -59,13 +59,13 @@ func TestDuration_Constructors(t *testing.T) {
 func TestDuration_Alias(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	value1 := NewDuration(reporter, time.Second)
-	assert.Equal(t, []string{"Duration()"}, value1.chain.context.Path)
-	assert.Equal(t, []string{"Duration()"}, value1.chain.context.AliasedPath)
+	value := NewDuration(reporter, time.Second)
+	assert.Equal(t, []string{"Duration()"}, value.chain.context.Path)
+	assert.Equal(t, []string{"Duration()"}, value.chain.context.AliasedPath)
 
-	value2 := value1.Alias("foo")
-	assert.Equal(t, []string{"Duration()"}, value2.chain.context.Path)
-	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
+	value.Alias("foo")
+	assert.Equal(t, []string{"Duration()"}, value.chain.context.Path)
+	assert.Equal(t, []string{"foo"}, value.chain.context.AliasedPath)
 }
 
 func TestDuration_Set(t *testing.T) {

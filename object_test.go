@@ -235,20 +235,19 @@ func TestObject_Decode(t *testing.T) {
 func TestObject_Alias(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	value1 := NewObject(reporter, map[string]interface{}{
+	value := NewObject(reporter, map[string]interface{}{
 		"foo": 100.0,
 	})
-	assert.Equal(t, []string{"Object()"}, value1.chain.context.Path)
-	assert.Equal(t, []string{"Object()"}, value1.chain.context.AliasedPath)
+	assert.Equal(t, []string{"Object()"}, value.chain.context.Path)
+	assert.Equal(t, []string{"Object()"}, value.chain.context.AliasedPath)
 
-	value2 := value1.Alias("bar")
-	assert.Equal(t, []string{"Object()"}, value2.chain.context.Path)
-	assert.Equal(t, []string{"bar"}, value2.chain.context.AliasedPath)
+	value.Alias("bar")
+	assert.Equal(t, []string{"Object()"}, value.chain.context.Path)
+	assert.Equal(t, []string{"bar"}, value.chain.context.AliasedPath)
 
-	value3 := value2.Values()
-	assert.Equal(t, []string{"Object()", "Values()"},
-		value3.chain.context.Path)
-	assert.Equal(t, []string{"bar", "Values()"}, value3.chain.context.AliasedPath)
+	childValue := value.Values()
+	assert.Equal(t, []string{"Object()", "Values()"}, childValue.chain.context.Path)
+	assert.Equal(t, []string{"bar", "Values()"}, childValue.chain.context.AliasedPath)
 }
 
 func TestObject_Getters(t *testing.T) {

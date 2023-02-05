@@ -104,20 +104,19 @@ func TestCookie_Constructors(t *testing.T) {
 func TestCookie_Alias(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	value1 := NewCookie(reporter, &http.Cookie{
+	value := NewCookie(reporter, &http.Cookie{
 		MaxAge: 0,
 	})
-	assert.Equal(t, []string{"Cookie()"}, value1.chain.context.Path)
-	assert.Equal(t, []string{"Cookie()"}, value1.chain.context.AliasedPath)
+	assert.Equal(t, []string{"Cookie()"}, value.chain.context.Path)
+	assert.Equal(t, []string{"Cookie()"}, value.chain.context.AliasedPath)
 
-	value2 := value1.Alias("foo")
-	assert.Equal(t, []string{"Cookie()"}, value2.chain.context.Path)
-	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
+	value.Alias("foo")
+	assert.Equal(t, []string{"Cookie()"}, value.chain.context.Path)
+	assert.Equal(t, []string{"foo"}, value.chain.context.AliasedPath)
 
-	value3 := value2.Domain()
-	assert.Equal(t, []string{"Cookie()", "Domain()"},
-		value3.chain.context.Path)
-	assert.Equal(t, []string{"foo", "Domain()"}, value3.chain.context.AliasedPath)
+	childValue := value.Domain()
+	assert.Equal(t, []string{"Cookie()", "Domain()"}, childValue.chain.context.Path)
+	assert.Equal(t, []string{"foo", "Domain()"}, childValue.chain.context.AliasedPath)
 }
 
 func TestCookie_Getters(t *testing.T) {

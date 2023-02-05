@@ -106,13 +106,13 @@ func TestRequest_Alias(t *testing.T) {
 		Reporter:       reporter,
 	}
 
-	value1 := NewRequestC(config, "GET", "")
-	assert.Equal(t, []string{`Request("GET")`}, value1.chain.context.Path)
-	assert.Equal(t, []string{`Request("GET")`}, value1.chain.context.AliasedPath)
+	value := NewRequestC(config, "GET", "")
+	assert.Equal(t, []string{`Request("GET")`}, value.chain.context.Path)
+	assert.Equal(t, []string{`Request("GET")`}, value.chain.context.AliasedPath)
 
-	value2 := value1.Alias("foo")
-	assert.Equal(t, []string{`Request("GET")`}, value2.chain.context.Path)
-	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
+	value.Alias("foo")
+	assert.Equal(t, []string{`Request("GET")`}, value.chain.context.Path)
+	assert.Equal(t, []string{"foo"}, value.chain.context.AliasedPath)
 }
 
 func TestRequest_Empty(t *testing.T) {
