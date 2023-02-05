@@ -118,7 +118,7 @@ func newRequest(
 		redirectPolicy: defaultRedirectPolicy,
 		maxRedirects:   -1,
 
-		retryPolicy:   RetryTemporaryNetworkAndServerErrors,
+		retryPolicy:   RetryTimeoutAndServerErrors,
 		maxRetries:    0,
 		minRetryDelay: time.Millisecond * 50,
 		maxRetryDelay: time.Second * 5,
@@ -578,14 +578,27 @@ const (
 	// DontRetry disables retrying at all.
 	DontRetry RetryPolicy = iota
 
+	// Deprecated: use RetryTimeoutErrors instead.
+	//
 	// RetryTemporaryNetworkErrors enables retrying only temporary network errors.
 	// Retry happens if Client returns net.Error and its Temporary() method
 	// returns true.
 	RetryTemporaryNetworkErrors
 
+	// Deprecated: use RetryTimeoutAndServerErrors instead.
+	//
 	// RetryTemporaryNetworkAndServerErrors enables retrying of temporary network
 	// errors, as well as 5xx status codes.
 	RetryTemporaryNetworkAndServerErrors
+
+	// RetryTimeoutErrors enables retrying of timeout errors.
+	// Retry happens if Client returns net.Error and its Timeout() method
+	// returns true.
+	RetryTimeoutErrors
+
+	// RetryTimeoutAndServerErrors enables retrying of network timeout errors,
+	// as well as 5xx status codes.
+	RetryTimeoutAndServerErrors
 
 	// RetryAllErrors enables retrying of any error or 4xx/5xx status code.
 	RetryAllErrors
@@ -599,7 +612,7 @@ const (
 // How much retry attempts happens is defined by WithMaxRetries().
 // How much to wait between attempts is defined by WithRetryDelay().
 //
-// Default retry policy is RetryTemporaryNetworkAndServerErrors, but
+// Default retry policy is RetryTimeoutAndServerErrors, but
 // default maximum number of retries is zero, so no retries happen
 // unless WithMaxRetries() is called.
 //
@@ -2128,18 +2141,20 @@ func (r *Request) retryRequest(reqFunc func() (*http.Response, error)) (
 
 func (r *Request) shouldRetry(resp *http.Response, err error) bool {
 	var (
-		isTemporaryNetworkError bool
-		isTemporaryServerError  bool
+		isTemporaryNetworkError bool // Deprecated
+		isTimeoutError          bool
+		isServerError           bool
 		isHTTPError             bool
 	)
 
 	if netErr, ok := err.(net.Error); ok {
 		//nolint
 		isTemporaryNetworkError = netErr.Temporary()
+		isTimeoutError = netErr.Timeout()
 	}
 
 	if resp != nil {
-		isTemporaryServerError = resp.StatusCode >= 500 && resp.StatusCode <= 599
+		isServerError = resp.StatusCode >= 500 && resp.StatusCode <= 599
 		isHTTPError = resp.StatusCode >= 400 && resp.StatusCode <= 599
 	}
 
@@ -2151,7 +2166,13 @@ func (r *Request) shouldRetry(resp *http.Response, err error) bool {
 		return isTemporaryNetworkError
 
 	case RetryTemporaryNetworkAndServerErrors:
-		return isTemporaryNetworkError || isTemporaryServerError
+		return isTemporaryNetworkError || isServerError
+
+	case RetryTimeoutErrors:
+		return isTimeoutError
+
+	case RetryTimeoutAndServerErrors:
+		return isTimeoutError || isServerError
 
 	case RetryAllErrors:
 		return err != nil || isHTTPError
