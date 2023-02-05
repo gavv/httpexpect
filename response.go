@@ -825,7 +825,7 @@ func (r *Response) getJSON(opChain *chain, options ...ContentOpts) interface{} {
 	return value
 }
 
-// JSON returns a new Value instance with JSONP decoded from response body.
+// JSONP returns a new Value instance with JSONP decoded from response body.
 //
 // JSONP succeeds if response contains "application/javascript" Content-Type
 // header with empty or "utf-8" charset and response body of the following form:
