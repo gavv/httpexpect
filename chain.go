@@ -78,7 +78,7 @@ type chain struct {
 	context  AssertionContext
 	handler  AssertionHandler
 	severity AssertionSeverity
-	failure  AssertionFailure
+	failure  *AssertionFailure
 }
 
 // If enabled, chain will panic if used incorrectly or gets illformed AssertionFailure.
@@ -348,6 +348,8 @@ func (c *chain) leave() {
 		parent        *chain
 		reportSuccess bool
 		reportFailure bool
+		failure       *AssertionFailure
+		flags         chainFlags
 	)
 
 	func() {
@@ -368,16 +370,18 @@ func (c *chain) leave() {
 			reportFailure = true
 		}
 	}()
-
+	context = c.context
+	handler = c.handler
+	failure = c.failure
+	flags = c.flags
 	if reportSuccess {
 		handler.Success(&context)
 	}
-
+	if flags&flagFailed == 1 && failure != nil {
+		handler.Failure(&context, failure)
+	}
 	if reportFailure {
 		parent.mu.Lock()
-		context = c.context
-		handler = c.handler
-		handler.Failure(&context, &c.failure)
 		parent.flags |= flagFailed
 		p := parent.parent
 		parent.mu.Unlock()
@@ -421,7 +425,7 @@ func (c *chain) fail(AssertFailure AssertionFailure) {
 	}()
 
 	if reportFailure {
-		c.failure = AssertFailure
+		c.failure = &AssertFailure
 
 		if chainValidation {
 			if err := validateAssertion(&AssertFailure); err != nil {
