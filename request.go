@@ -51,6 +51,8 @@ type Request struct {
 	formbuf   *bytes.Buffer
 	multipart *multipart.Writer
 
+	assertionHandler AssertionHandler
+
 	bodySetter   string
 	typeSetter   string
 	forceType    bool
@@ -1807,6 +1809,41 @@ func (r *Request) WithMultipart() *Request {
 		r.setBody(opChain, "WithMultipart()", r.formbuf, 0, false)
 	}
 
+	return r
+}
+
+// WithReporter is a method on the Request struct that sets a Reporter
+// as the reporter field of the Request struct.
+//
+//	req := NewRequestC(config, "PUT", "http://example.com/path")
+//	req.WithReporter(Reporter{})
+func (r *Request) WithReporter(reporter Reporter) *Request {
+	opChain := r.chain.enter("WithReporter()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return r
+	}
+
+	handler := &DefaultAssertionHandler{Reporter: reporter, Formatter: r.config.Formatter}
+
+	return r.WithAssertionHandler(handler)
+}
+
+// WithAssertionHandler sets the assertion handler to be used by the Request
+// and its associated Response to report failures.
+//
+//	req := NewRequestC(config, "PUT", "http://example.com/path")
+//	req.WithAssertionHandler(AssertionHandler{})
+func (r *Request) WithAssertionHandler(assertionHandler AssertionHandler) *Request {
+	opChain := r.chain.enter("WithAssertionHandler()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return r
+	}
+
+	r.chain.setHandler(assertionHandler)
 	return r
 }
 

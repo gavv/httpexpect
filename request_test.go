@@ -3265,3 +3265,42 @@ func TestRequest_Retry(t *testing.T) {
 		assert.Equal(t, 1, callCount)
 	})
 }
+
+func TestWithReporter(t *testing.T) {
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		Reporter: reporter,
+	}
+
+	req := NewRequest(config, "GET", "/").
+			WithReporter(reporter).
+			WithURL("http://example.com")
+
+	req.Expect().Status(http.StatusOK)
+
+	if !reporter.Failed() {
+		t.Errorf("Expected reporter to be in failed state")
+	}
+}
+
+func TestWithAssertionHandler(t *testing.T) {
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		Reporter: reporter,
+	}
+
+	handler := &DefaultAssertionHandler{Reporter: reporter}
+	req := NewRequest(config, "GET", "/").
+			WithAssertionHandler(handler).
+			WithURL("http://example.com")
+
+	req.Expect().Status(http.StatusOK)
+
+	if !reporter.Failed() {
+		t.Errorf("Expected reporter to be in failed state")
+	}
+}

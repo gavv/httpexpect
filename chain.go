@@ -256,6 +256,18 @@ func (c *chain) setResponse(resp *Response) {
 	c.context.Response = resp
 }
 
+// Store handler in AssertionHandler.
+func (c *chain) setHandler(handler AssertionHandler) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if chainValidation && c.state == stateLeaved {
+		panic("can't use chain after leave")
+	}
+
+	c.handler = handler
+}
+
 // Create chain clone.
 // Typically is called between enter() and leave().
 func (c *chain) clone() *chain {
