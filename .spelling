@@ -8,10 +8,12 @@ golang
 golangci-lint
 go.mod
 gopkg.in
+HACKING.md
 httpexpect
 jsonpath
 linters
 multipart
+oauth2
 pkg.go.dev
 standalone
 tyranron

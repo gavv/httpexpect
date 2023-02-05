@@ -247,8 +247,8 @@ func (config Config) withDefaults() Config {
 		}
 
 		config.AssertionHandler = &DefaultAssertionHandler{
-			Reporter:  config.Reporter,
 			Formatter: config.Formatter,
+			Reporter:  config.Reporter,
 		}
 	}
 
@@ -266,6 +266,16 @@ func (config *Config) validate() {
 
 	if config.AssertionHandler == nil {
 		panic("Config.AssertionHandler is nil")
+	}
+
+	if handler, ok := config.AssertionHandler.(*DefaultAssertionHandler); ok {
+		if handler.Formatter == nil {
+			panic("DefaultAssertionHandler.Formatter is nil")
+		}
+
+		if handler.Reporter == nil {
+			panic("DefaultAssertionHandler.Reporter is nil")
+		}
 	}
 }
 
