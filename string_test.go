@@ -618,23 +618,25 @@ func TestString_AsBoolean(t *testing.T) {
 func TestString_AsDateTime(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	value1 := NewString(reporter, "Tue, 15 Nov 1994 08:12:31 GMT")
-	dt1 := value1.AsDateTime()
-	value1.chain.assertNotFailed(t)
-	dt1.chain.assertNotFailed(t)
-	assert.True(t, time.Date(1994, 11, 15, 8, 12, 31, 0, time.UTC).Equal(dt1.Raw()))
+	t.Run("basic", func(t *testing.T) {
+		value1 := NewString(reporter, "Tue, 15 Nov 1994 08:12:31 GMT")
+		dt1 := value1.AsDateTime()
+		value1.chain.assertNotFailed(t)
+		dt1.chain.assertNotFailed(t)
+		assert.True(t, time.Date(1994, 11, 15, 8, 12, 31, 0, time.UTC).Equal(dt1.Raw()))
 
-	value2 := NewString(reporter, "15 Nov 94 08:12 GMT")
-	dt2 := value2.AsDateTime(time.RFC822)
-	value2.chain.assertNotFailed(t)
-	dt2.chain.assertNotFailed(t)
-	assert.True(t, time.Date(1994, 11, 15, 8, 12, 0, 0, time.UTC).Equal(dt2.Raw()))
+		value2 := NewString(reporter, "15 Nov 94 08:12 GMT")
+		dt2 := value2.AsDateTime(time.RFC822)
+		value2.chain.assertNotFailed(t)
+		dt2.chain.assertNotFailed(t)
+		assert.True(t, time.Date(1994, 11, 15, 8, 12, 0, 0, time.UTC).Equal(dt2.Raw()))
 
-	value3 := NewString(reporter, "bad")
-	dt3 := value3.AsDateTime()
-	value3.chain.assertFailed(t)
-	dt3.chain.assertFailed(t)
-	assert.True(t, time.Unix(0, 0).Equal(dt3.Raw()))
+		value3 := NewString(reporter, "bad")
+		dt3 := value3.AsDateTime()
+		value3.chain.assertFailed(t)
+		dt3.chain.assertFailed(t)
+		assert.True(t, time.Unix(0, 0).Equal(dt3.Raw()))
+	})
 
 	formats := []string{
 		http.TimeFormat,
@@ -651,25 +653,27 @@ func TestString_AsDateTime(t *testing.T) {
 	}
 
 	for n, f := range formats {
-		str := time.Now().Format(f)
+		t.Run(f, func(t *testing.T) {
+			str := time.Now().Format(f)
 
-		value1 := NewString(reporter, str)
-		dt1 := value1.AsDateTime()
-		dt1.chain.assertNotFailed(t)
+			value1 := NewString(reporter, str)
+			dt1 := value1.AsDateTime()
+			dt1.chain.assertNotFailed(t)
 
-		value2 := NewString(reporter, str)
-		dt2 := value2.AsDateTime(formats...)
-		dt2.chain.assertNotFailed(t)
+			value2 := NewString(reporter, str)
+			dt2 := value2.AsDateTime(formats...)
+			dt2.chain.assertNotFailed(t)
 
-		value3 := NewString(reporter, str)
-		dt3 := value3.AsDateTime(f)
-		dt3.chain.assertNotFailed(t)
+			value3 := NewString(reporter, str)
+			dt3 := value3.AsDateTime(f)
+			dt3.chain.assertNotFailed(t)
 
-		if n != 0 {
-			value4 := NewString(reporter, str)
-			dt4 := value4.AsDateTime(formats[0])
-			dt4.chain.assertFailed(t)
-		}
+			if n != 0 {
+				value4 := NewString(reporter, str)
+				dt4 := value4.AsDateTime(formats[0])
+				dt4.chain.assertFailed(t)
+			}
+		})
 	}
 }
 
