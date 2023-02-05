@@ -141,6 +141,13 @@ func (r *Response) getContent(opChain *chain) ([]byte, bool) {
 		return []byte{}, true
 	}
 
+	if resp.Body != http.NoBody {
+		if _, ok := resp.Body.(*bodyWrapper); !ok {
+			r.httpResp.Body = newBodyWrapper(resp.Body, nil)
+			resp = r.httpResp
+		}
+	}
+
 	if bw, ok := resp.Body.(*bodyWrapper); ok {
 		bw.Rewind()
 	}
