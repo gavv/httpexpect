@@ -846,11 +846,16 @@ func TestResponse_Text(t *testing.T) {
 func TestResponse_TextFailure(t *testing.T) {
 	reporter := newMockReporter(t)
 
+	headers := map[string][]string{
+		"Content-Type": {"text/plain; charset=utf-8"},
+	}
+
 	body := newMockBody(`hello, world!`)
 	body.readErr = errors.New("read error")
 
 	httpResp := &http.Response{
 		StatusCode: http.StatusOK,
+		Header:     http.Header(headers),
 		Body:       body,
 	}
 
