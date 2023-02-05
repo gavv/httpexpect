@@ -244,7 +244,7 @@ It can be implemented by user if the user needs very precise control on assertio
 * when reporting failed assertion, pass formatted message to `Reporter`
 * when reporting succeeded assertion, pass formatted message to `Logger`
 
-`Formatter`, `Reporter`, and `Logger` are also interfaces also can be implemented by user. Again, in most cases user can use default implemention for them:
+`Formatter`, `Reporter`, and `Logger` are also interfaces that can be implemented by user. Again, in most cases user can use one of the available implementations:
 
 * `DefaultFormatter` for `Formatter`
 * `testing.T`, `FatalReporter`, `AssertReporter`, or `RequireReporter` for `Reporter`
@@ -252,6 +252,6 @@ It can be implemented by user if the user needs very precise control on assertio
 
 In most cases, all the user needs to do is to select which reporter to use: `testing.T` or `FatalReporter` for non-fatal and fatal failure reports using standard `testing` package, and `AssertReporter` or `RequireReporter` for non-fatal and fatal failure reports using `testify` package (which adds nice backtrace and indentation).
 
-For everything else, we will automatically employ default implementations (`DefaultFormatter`, `DefaultAssertionHandler`).
+For the rest, we will automatically employ default implementations (`DefaultFormatter`, `DefaultAssertionHandler`).
 
 Note that `Formatter`, `Reporter`, and `Logger` are used only by `DefaultAssertionHandler`. If the user provides custom `AssertionHandler`, that implementation is free to ignore these three interfaces and can do whatever it wants.
