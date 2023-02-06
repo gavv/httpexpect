@@ -53,21 +53,21 @@ func (tc *transportController) RoundTrip(req *http.Request) (*http.Response, err
 
 	if tc.countback != 0 {
 		tc.countback--
-		return nil, temporaryNetworkErr{}
+		return nil, timeoutNetworkErr{}
 	}
 
 	return tc.RoundTripper.RoundTrip(req)
 }
 
-type temporaryNetworkErr struct {
+type timeoutNetworkErr struct {
 	error
 }
 
-func (temporaryNetworkErr) Timeout() bool {
-	return false
+func (timeoutNetworkErr) Timeout() bool {
+	return true
 }
 
-func (temporaryNetworkErr) Temporary() bool {
+func (timeoutNetworkErr) Temporary() bool {
 	return true
 }
 
@@ -155,52 +155,52 @@ func testRetries(
 			Expect().chain.assertFailed(t)
 	})
 
-	t.Run("RetryTemporaryNetworkErrors", func(t *testing.T) {
+	t.Run("RetryTimeoutErrors", func(t *testing.T) {
 		e := createFn(newMockReporter(t))
 
 		rc.Reset(1, http.StatusInternalServerError)
 		tc.Reset(0)
 		e.POST("/test").
-			WithMaxRetries(1).WithRetryPolicy(RetryTemporaryNetworkErrors).
+			WithMaxRetries(1).WithRetryPolicy(RetryTimeoutErrors).
 			Expect().
 			Status(http.StatusInternalServerError).chain.assertNotFailed(t)
 
 		rc.Reset(1, http.StatusBadRequest)
 		tc.Reset(0)
 		e.POST("/test").
-			WithMaxRetries(1).WithRetryPolicy(RetryTemporaryNetworkErrors).
+			WithMaxRetries(1).WithRetryPolicy(RetryTimeoutErrors).
 			Expect().
 			Status(http.StatusBadRequest).chain.assertNotFailed(t)
 
 		rc.Reset(0, http.StatusOK)
 		tc.Reset(1)
 		e.POST("/test").
-			WithMaxRetries(1).WithRetryPolicy(RetryTemporaryNetworkErrors).
+			WithMaxRetries(1).WithRetryPolicy(RetryTimeoutErrors).
 			Expect().
 			Status(http.StatusOK).chain.assertNotFailed(t)
 	})
 
-	t.Run("RetryTemporaryNetworkAndServerErrors", func(t *testing.T) {
+	t.Run("RetryTimeoutAndServerErrors", func(t *testing.T) {
 		e := createFn(newMockReporter(t))
 
 		rc.Reset(1, http.StatusInternalServerError)
 		tc.Reset(0)
 		e.POST("/test").
-			WithMaxRetries(1).WithRetryPolicy(RetryTemporaryNetworkAndServerErrors).
+			WithMaxRetries(1).WithRetryPolicy(RetryTimeoutAndServerErrors).
 			Expect().
 			Status(http.StatusOK).chain.assertNotFailed(t)
 
 		rc.Reset(1, http.StatusBadRequest)
 		tc.Reset(0)
 		e.POST("/test").
-			WithMaxRetries(1).WithRetryPolicy(RetryTemporaryNetworkAndServerErrors).
+			WithMaxRetries(1).WithRetryPolicy(RetryTimeoutAndServerErrors).
 			Expect().
 			Status(http.StatusBadRequest).chain.assertNotFailed(t)
 
 		rc.Reset(0, http.StatusOK)
 		tc.Reset(1)
 		e.POST("/test").
-			WithMaxRetries(1).WithRetryPolicy(RetryTemporaryNetworkAndServerErrors).
+			WithMaxRetries(1).WithRetryPolicy(RetryTimeoutAndServerErrors).
 			Expect().
 			Status(http.StatusOK).chain.assertNotFailed(t)
 	})
