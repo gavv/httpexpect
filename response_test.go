@@ -389,7 +389,7 @@ func TestResponse_Cookies(t *testing.T) {
 	c3 := resp.Cookie("baz")
 	resp.chain.assertFailed(t)
 	c3.chain.assertFailed(t)
-	assert.True(t, c3.Raw() == nil)
+	assert.Nil(t, c3.Raw())
 }
 
 func TestResponse_NoCookies(t *testing.T) {
@@ -411,7 +411,7 @@ func TestResponse_NoCookies(t *testing.T) {
 	c := resp.Cookie("foo")
 	resp.chain.assertFailed(t)
 	c.chain.assertFailed(t)
-	assert.True(t, c.Raw() == nil)
+	assert.Nil(t, c.Raw())
 }
 
 func TestResponse_Body(t *testing.T) {
@@ -903,7 +903,7 @@ func TestResponse_FormBadBody(t *testing.T) {
 	resp.chain.assertFailed(t)
 	resp.chain.clearFailed()
 
-	assert.True(t, resp.Form().Raw() == nil)
+	assert.Nil(t, resp.Form().Raw())
 }
 
 func TestResponse_FormBadType(t *testing.T) {
@@ -927,7 +927,7 @@ func TestResponse_FormBadType(t *testing.T) {
 	resp.chain.assertFailed(t)
 	resp.chain.clearFailed()
 
-	assert.True(t, resp.Form().Raw() == nil)
+	assert.Nil(t, resp.Form().Raw())
 }
 
 func TestResponse_FormBodyReadFailure(t *testing.T) {
@@ -949,7 +949,7 @@ func TestResponse_FormBodyReadFailure(t *testing.T) {
 	resp := NewResponse(reporter, httpResp)
 
 	respForm := resp.Form()
-	assert.True(t, respForm.Raw() == nil)
+	assert.Nil(t, respForm.Raw())
 
 	respForm.chain.assertFailed(t)
 	resp.chain.assertFailed(t)
@@ -1018,7 +1018,7 @@ func TestResponse_JSONBadBody(t *testing.T) {
 	resp.chain.assertFailed(t)
 	resp.chain.clearFailed()
 
-	assert.True(t, resp.JSON().Raw() == nil)
+	assert.Nil(t, resp.JSON().Raw())
 }
 
 func TestResponse_JSONCharsetEmpty(t *testing.T) {
@@ -1089,7 +1089,7 @@ func TestResponse_JSONReaderFailure(t *testing.T) {
 	resp := NewResponse(reporter, httpResp)
 
 	respJSON := resp.JSON()
-	assert.True(t, respJSON.Raw() == nil)
+	assert.Nil(t, respJSON.Raw())
 	respJSON.chain.assertFailed(t)
 	resp.chain.assertFailed(t)
 	resp.chain.clearFailed()
@@ -1173,7 +1173,7 @@ func TestResponse_JSONPBadBody(t *testing.T) {
 		resp.chain.assertFailed(t)
 		resp.chain.clearFailed()
 
-		assert.True(t, resp.JSONP("foo").Raw() == nil)
+		assert.Nil(t, resp.JSONP("foo").Raw())
 	}
 }
 
