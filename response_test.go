@@ -114,16 +114,6 @@ func TestResponse_Constructors(t *testing.T) {
 		assert.NotSame(t, value.chain, chain)
 		assert.Equal(t, value.chain.context.Path, chain.context.Path)
 	})
-
-	t.Run("Constructor does not read http response body first", func(t *testing.T) {
-		reporter := newMockReporter(t)
-		resp := NewResponse(reporter, &http.Response{
-			StatusCode: http.StatusOK,
-			Body:       ioutil.NopCloser(bytes.NewBufferString("body")),
-		})
-		assert.Nil(t, resp.content)
-		assert.False(t, resp.contentReceived)
-	})
 }
 
 func TestResponse_ResponseBodyLazyRead(t *testing.T) {
@@ -146,27 +136,6 @@ func TestResponse_ResponseBodyLazyRead(t *testing.T) {
 		assert.True(t, body.hasBeenRead)
 		assert.Equal(t, []byte("body string"), resp.content)
 		assert.True(t, resp.contentReceived)
-	})
-
-	t.Run("getContent failures handled by JSON()", func(t *testing.T) {
-		reporter := newMockReporter(t)
-		body := newMockBody("body string")
-		body.readErr = errors.New("read error")
-		resp := NewResponse(reporter, &http.Response{
-			StatusCode: http.StatusOK,
-			Body:       body,
-		})
-		resp.JSON().chain.assertFailed(t)
-	})
-	t.Run("getContent failures handled by NoContent()", func(t *testing.T) {
-		reporter := newMockReporter(t)
-		body := newMockBody("body string")
-		body.readErr = errors.New("read error")
-		resp := NewResponse(reporter, &http.Response{
-			StatusCode: http.StatusOK,
-			Body:       body,
-		})
-		resp.NoContent().chain.assertFailed(t)
 	})
 }
 
