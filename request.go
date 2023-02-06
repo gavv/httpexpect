@@ -579,16 +579,9 @@ const (
 	DontRetry RetryPolicy = iota
 
 	// Deprecated: use RetryTimeoutErrors instead.
-	//
-	// RetryTemporaryNetworkErrors enables retrying only temporary network errors.
-	// Retry happens if Client returns net.Error and its Temporary() method
-	// returns true.
 	RetryTemporaryNetworkErrors
 
 	// Deprecated: use RetryTimeoutAndServerErrors instead.
-	//
-	// RetryTemporaryNetworkAndServerErrors enables retrying of temporary network
-	// errors, as well as 5xx status codes.
 	RetryTemporaryNetworkAndServerErrors
 
 	// RetryTimeoutErrors enables retrying of timeout errors.
