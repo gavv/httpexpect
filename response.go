@@ -116,6 +116,12 @@ func newResponse(opts responseOpts) *Response {
 	}
 
 	r.httpResp = opts.httpResp
+	if r.httpResp.Body != nil && r.httpResp.Body != http.NoBody {
+		if _, ok := r.httpResp.Body.(*bodyWrapper); !ok {
+			r.httpResp.Body = newBodyWrapper(r.httpResp.Body, nil)
+		}
+	}
+
 	r.websocket = opts.websocket
 
 	r.cookies = r.httpResp.Cookies()
@@ -139,13 +145,6 @@ func (r *Response) getContent(opChain *chain) ([]byte, bool) {
 
 	if resp.Body == nil {
 		return []byte{}, true
-	}
-
-	if resp.Body != http.NoBody {
-		if _, ok := resp.Body.(*bodyWrapper); !ok {
-			r.httpResp.Body = newBodyWrapper(resp.Body, nil)
-			resp = r.httpResp
-		}
 	}
 
 	if bw, ok := resp.Body.(*bodyWrapper); ok {
