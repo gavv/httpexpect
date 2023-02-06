@@ -618,8 +618,7 @@ func TestResponse_NoContentFailure(t *testing.T) {
 
 		resp := NewResponse(reporter, httpResp)
 
-		respNoContent := resp.NoContent()
-		respNoContent.chain.assertFailed(t)
+		resp.NoContent()
 		resp.chain.assertFailed(t)
 	})
 }
