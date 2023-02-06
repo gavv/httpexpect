@@ -78,6 +78,7 @@ type chain struct {
 	context  AssertionContext
 	handler  AssertionHandler
 	severity AssertionSeverity
+	failure  *AssertionFailure
 }
 
 // If enabled, chain will panic if used incorrectly or gets illformed AssertionFailure.
@@ -341,13 +342,12 @@ func (c *chain) replace(name string, args ...interface{}) *chain {
 // Chain can't be used after this call.
 func (c *chain) leave() {
 	var (
-		context       AssertionContext
-		handler       AssertionHandler
-		parent        *chain
-		reportSuccess bool
-		reportFailure bool
+		context AssertionContext
+		handler AssertionHandler
+		parent  *chain
+		failure *AssertionFailure
+		flags   chainFlags
 	)
-
 	func() {
 		c.mu.Lock()
 		defer c.mu.Unlock()
@@ -356,22 +356,22 @@ func (c *chain) leave() {
 			panic("unpaired enter/leave")
 		}
 		c.state = stateLeaved
+		context = c.context
+		handler = c.handler
+		failure = c.failure
+		flags = c.flags
+		parent = c.parent
 
-		if c.flags&(flagFailed|flagFailedChildren) == 0 {
-			context = c.context
-			handler = c.handler
-			reportSuccess = true
-		} else if c.parent != nil {
-			parent = c.parent
-			reportFailure = true
-		}
 	}()
+	if flags&(flagFailed) != 0 && failure != nil {
+		handler.Failure(&context, failure)
+	}
 
-	if reportSuccess {
+	if flags&(flagFailed|flagFailedChildren) == 0 {
 		handler.Success(&context)
 	}
 
-	if reportFailure {
+	if flags&(flagFailed|flagFailedChildren) != 0 && parent != nil {
 		parent.mu.Lock()
 		parent.flags |= flagFailed
 		p := parent.parent
@@ -390,11 +390,6 @@ func (c *chain) leave() {
 // Report assertion failure and mark chain as failed.
 // Must be called between enter() and leave().
 func (c *chain) fail(failure AssertionFailure) {
-	var (
-		context       AssertionContext
-		handler       AssertionHandler
-		reportFailure bool
-	)
 
 	func() {
 		c.mu.Lock()
@@ -413,19 +408,12 @@ func (c *chain) fail(failure AssertionFailure) {
 		if c.severity == SeverityError {
 			failure.IsFatal = true
 		}
-
-		context = c.context
-		handler = c.handler
-		reportFailure = true
+		c.failure = &failure
 	}()
 
-	if reportFailure {
-		handler.Failure(&context, &failure)
-
-		if chainValidation {
-			if err := validateAssertion(&failure); err != nil {
-				panic(err)
-			}
+	if chainValidation {
+		if err := validateAssertion(&failure); err != nil {
+			panic(err)
 		}
 	}
 }
