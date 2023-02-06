@@ -408,6 +408,106 @@ func (s *String) NotInList(values ...string) *String {
 	return s
 }
 
+// InListFold succeeds if the string is equal to one of the values from given
+// list of strings after applying Unicode case-folding (so it's a case-insensitive match).
+//
+// Example:
+//
+//	str := NewString(t, "Hello")
+//	str.InListFold("hEllo", "Goodbye")
+func (s *String) InListFold(values ...string) *String {
+	opChain := s.chain.enter("InListFold()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return s
+	}
+
+	if len(values) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty list argument"),
+			},
+		})
+		return s
+	}
+
+	var isListed bool
+	for _, v := range values {
+		if strings.EqualFold(s.value, v) {
+			isListed = true
+			break
+		}
+	}
+
+	if !isListed {
+		valueList := make([]interface{}, 0, len(values))
+		for _, v := range values {
+			valueList = append(valueList, v)
+		}
+
+		opChain.fail(AssertionFailure{
+			Type:     AssertBelongs,
+			Actual:   &AssertionValue{s.value},
+			Expected: &AssertionValue{AssertionList(valueList)},
+			Errors: []error{
+				errors.New("expected: string is equal to one of the values (if folded)"),
+			},
+		})
+	}
+
+	return s
+}
+
+// NotInListFold succeeds if the string is not equal to any of the values from given
+// list of strings after applying Unicode case-folding (so it's a case-insensitive match).
+//
+// Example:
+//
+//	str := NewString(t, "Hello")
+//	str.NotInListFold("Bye", "Goodbye")
+func (s *String) NotInListFold(values ...string) *String {
+	opChain := s.chain.enter("NotInListFold()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return s
+	}
+
+	if len(values) == 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected empty list argument"),
+			},
+		})
+		return s
+	}
+
+	for _, v := range values {
+		if strings.EqualFold(s.value, v) {
+			valueList := make([]interface{}, 0, len(values))
+			for _, v := range values {
+				valueList = append(valueList, v)
+			}
+
+			opChain.fail(AssertionFailure{
+				Type:     AssertNotBelongs,
+				Actual:   &AssertionValue{s.value},
+				Expected: &AssertionValue{AssertionList(valueList)},
+				Errors: []error{
+					errors.New("expected: string is not equal to any of the values (if folded)"),
+				},
+			})
+
+			return s
+		}
+	}
+
+	return s
+}
+
 // Contains succeeds if string contains given Go string as a substring.
 //
 // Example:

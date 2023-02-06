@@ -32,6 +32,8 @@ func TestString_FailedChain(t *testing.T) {
 	value.NotEqualFold("")
 	value.InList("")
 	value.NotInList("")
+	value.InListFold("")
+	value.NotInListFold("")
 	value.Contains("")
 	value.NotContains("")
 	value.ContainsFold("")
@@ -284,6 +286,46 @@ func TestString_InList(t *testing.T) {
 
 	value.NotInList("foo", "BAR")
 	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+}
+
+func TestString_InListFold(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewString(reporter, "Foo")
+
+	assert.Equal(t, "Foo", value.Raw())
+
+	value.InListFold()
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInListFold()
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.InListFold("foo", "bar")
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.InListFold("FOO", "BAR")
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.InListFold("BAR", "BAZ")
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInListFold("foo", "bar")
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInListFold("FOO", "BAR")
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInListFold("BAR", "BAZ")
+	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 }
 
