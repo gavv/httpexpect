@@ -73,13 +73,13 @@ func TestDateTime_Constructors(t *testing.T) {
 func TestDateTime_Alias(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	value1 := NewDateTime(reporter, time.Unix(0, 1234))
-	assert.Equal(t, []string{"DateTime()"}, value1.chain.context.Path)
-	assert.Equal(t, []string{"DateTime()"}, value1.chain.context.AliasedPath)
+	value := NewDateTime(reporter, time.Unix(0, 1234))
+	assert.Equal(t, []string{"DateTime()"}, value.chain.context.Path)
+	assert.Equal(t, []string{"DateTime()"}, value.chain.context.AliasedPath)
 
-	value2 := value1.Alias("foo")
-	assert.Equal(t, []string{"DateTime()"}, value2.chain.context.Path)
-	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
+	value.Alias("foo")
+	assert.Equal(t, []string{"DateTime()"}, value.chain.context.Path)
+	assert.Equal(t, []string{"foo"}, value.chain.context.AliasedPath)
 }
 
 func TestDateTime_Getters(t *testing.T) {

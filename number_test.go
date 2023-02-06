@@ -121,13 +121,13 @@ func TestNumber_Decode(t *testing.T) {
 func TestNumber_Alias(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	value1 := NewNumber(reporter, 123)
-	assert.Equal(t, []string{"Number()"}, value1.chain.context.Path)
-	assert.Equal(t, []string{"Number()"}, value1.chain.context.AliasedPath)
+	value := NewNumber(reporter, 123)
+	assert.Equal(t, []string{"Number()"}, value.chain.context.Path)
+	assert.Equal(t, []string{"Number()"}, value.chain.context.AliasedPath)
 
-	value2 := value1.Alias("foo")
-	assert.Equal(t, []string{"Number()"}, value2.chain.context.Path)
-	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
+	value.Alias("foo")
+	assert.Equal(t, []string{"Number()"}, value.chain.context.Path)
+	assert.Equal(t, []string{"foo"}, value.chain.context.AliasedPath)
 }
 
 func TestNumber_Getters(t *testing.T) {

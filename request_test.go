@@ -106,13 +106,13 @@ func TestRequest_Alias(t *testing.T) {
 		Reporter:       reporter,
 	}
 
-	value1 := NewRequestC(config, "GET", "")
-	assert.Equal(t, []string{`Request("GET")`}, value1.chain.context.Path)
-	assert.Equal(t, []string{`Request("GET")`}, value1.chain.context.AliasedPath)
+	value := NewRequestC(config, "GET", "")
+	assert.Equal(t, []string{`Request("GET")`}, value.chain.context.Path)
+	assert.Equal(t, []string{`Request("GET")`}, value.chain.context.AliasedPath)
 
-	value2 := value1.Alias("foo")
-	assert.Equal(t, []string{`Request("GET")`}, value2.chain.context.Path)
-	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
+	value.Alias("foo")
+	assert.Equal(t, []string{`Request("GET")`}, value.chain.context.Path)
+	assert.Equal(t, []string{"foo"}, value.chain.context.AliasedPath)
 }
 
 func TestRequest_Empty(t *testing.T) {
@@ -2588,16 +2588,16 @@ func TestRequest_Retries(t *testing.T) {
 		}
 	}
 
-	newTempNetErrClient := func(cb func(req *http.Request)) *mockClient {
+	newTimeoutErrClient := func(cb func(req *http.Request)) *mockClient {
 		return &mockClient{
 			err: &mockNetError{
-				isTemporary: true,
+				isTimeout: true,
 			},
 			cb: cb,
 		}
 	}
 
-	newTempServerErrClient := func(cb func(req *http.Request)) *mockClient {
+	newServerErrClient := func(cb func(req *http.Request)) *mockClient {
 		return &mockClient{
 			resp: http.Response{
 				StatusCode: http.StatusInternalServerError,
@@ -2649,10 +2649,10 @@ func TestRequest_Retries(t *testing.T) {
 			assert.Equal(t, 1, callCount)
 		})
 
-		t.Run("temporary network error", func(t *testing.T) {
+		t.Run("timeout error", func(t *testing.T) {
 			callCount := 0
 
-			client := newTempNetErrClient(func(req *http.Request) {
+			client := newTimeoutErrClient(func(req *http.Request) {
 				callCount++
 
 				b, err := ioutil.ReadAll(req.Body)
@@ -2679,10 +2679,10 @@ func TestRequest_Retries(t *testing.T) {
 			assert.Equal(t, 1, callCount)
 		})
 
-		t.Run("temporary server error", func(t *testing.T) {
+		t.Run("server error", func(t *testing.T) {
 			callCount := 0
 
-			client := newTempServerErrClient(func(req *http.Request) {
+			client := newServerErrClient(func(req *http.Request) {
 				callCount++
 
 				b, err := ioutil.ReadAll(req.Body)
@@ -2743,7 +2743,7 @@ func TestRequest_Retries(t *testing.T) {
 
 	})
 
-	t.Run("retry temporary network errors policy", func(t *testing.T) {
+	t.Run("retry timeout errors policy", func(t *testing.T) {
 		t.Run("no error", func(t *testing.T) {
 			callCount := 0
 
@@ -2762,7 +2762,7 @@ func TestRequest_Retries(t *testing.T) {
 
 			req := NewRequestC(config, http.MethodPost, "/url").
 				WithText("test body").
-				WithRetryPolicy(RetryTemporaryNetworkErrors)
+				WithRetryPolicy(RetryTimeoutErrors)
 			req.sleepFn = noopSleepFn
 			req.chain.assertNotFailed(t)
 
@@ -2773,10 +2773,10 @@ func TestRequest_Retries(t *testing.T) {
 			assert.Equal(t, 1, callCount)
 		})
 
-		t.Run("temporary network error", func(t *testing.T) {
+		t.Run("timeout error", func(t *testing.T) {
 			callCount := 0
 
-			client := newTempNetErrClient(func(req *http.Request) {
+			client := newTimeoutErrClient(func(req *http.Request) {
 				callCount++
 
 				b, err := ioutil.ReadAll(req.Body)
@@ -2791,7 +2791,7 @@ func TestRequest_Retries(t *testing.T) {
 
 			req := NewRequestC(config, http.MethodPost, "/url").
 				WithText("test body").
-				WithRetryPolicy(RetryTemporaryNetworkErrors).
+				WithRetryPolicy(RetryTimeoutErrors).
 				WithMaxRetries(1).
 				WithRetryDelay(0, 0)
 			req.sleepFn = noopSleepFn
@@ -2804,10 +2804,10 @@ func TestRequest_Retries(t *testing.T) {
 			assert.Equal(t, 2, callCount)
 		})
 
-		t.Run("temporary server error", func(t *testing.T) {
+		t.Run("server error", func(t *testing.T) {
 			callCount := 0
 
-			client := newTempServerErrClient(func(req *http.Request) {
+			client := newServerErrClient(func(req *http.Request) {
 				callCount++
 
 				b, err := ioutil.ReadAll(req.Body)
@@ -2822,7 +2822,7 @@ func TestRequest_Retries(t *testing.T) {
 
 			req := NewRequestC(config, http.MethodPost, "/url").
 				WithText("test body").
-				WithRetryPolicy(RetryTemporaryNetworkErrors).
+				WithRetryPolicy(RetryTimeoutErrors).
 				WithMaxRetries(1)
 			req.sleepFn = noopSleepFn
 			req.chain.assertNotFailed(t)
@@ -2853,7 +2853,7 @@ func TestRequest_Retries(t *testing.T) {
 
 			req := NewRequestC(config, http.MethodPost, "/url").
 				WithText("test body").
-				WithRetryPolicy(RetryTemporaryNetworkErrors).
+				WithRetryPolicy(RetryTimeoutErrors).
 				WithMaxRetries(1)
 			req.sleepFn = noopSleepFn
 			req.chain.assertNotFailed(t)
@@ -2867,7 +2867,7 @@ func TestRequest_Retries(t *testing.T) {
 		})
 	})
 
-	t.Run("retry temporary network and server errors policy", func(t *testing.T) {
+	t.Run("retry timeout and server errors policy", func(t *testing.T) {
 		t.Run("no error", func(t *testing.T) {
 			callCount := 0
 
@@ -2886,7 +2886,7 @@ func TestRequest_Retries(t *testing.T) {
 
 			req := NewRequestC(config, http.MethodPost, "/url").
 				WithText("test body").
-				WithRetryPolicy(RetryTemporaryNetworkAndServerErrors)
+				WithRetryPolicy(RetryTimeoutAndServerErrors)
 			req.sleepFn = noopSleepFn
 			req.chain.assertNotFailed(t)
 
@@ -2897,10 +2897,10 @@ func TestRequest_Retries(t *testing.T) {
 			assert.Equal(t, 1, callCount)
 		})
 
-		t.Run("temporary network error", func(t *testing.T) {
+		t.Run("timeout error", func(t *testing.T) {
 			callCount := 0
 
-			client := newTempNetErrClient(func(req *http.Request) {
+			client := newTimeoutErrClient(func(req *http.Request) {
 				callCount++
 
 				b, err := ioutil.ReadAll(req.Body)
@@ -2915,7 +2915,7 @@ func TestRequest_Retries(t *testing.T) {
 
 			req := NewRequestC(config, http.MethodPost, "/url").
 				WithText("test body").
-				WithRetryPolicy(RetryTemporaryNetworkAndServerErrors).
+				WithRetryPolicy(RetryTimeoutAndServerErrors).
 				WithMaxRetries(1).
 				WithRetryDelay(0, 0)
 			req.sleepFn = noopSleepFn
@@ -2928,10 +2928,10 @@ func TestRequest_Retries(t *testing.T) {
 			assert.Equal(t, 2, callCount)
 		})
 
-		t.Run("temporary server error", func(t *testing.T) {
+		t.Run("server error", func(t *testing.T) {
 			callCount := 0
 
-			client := newTempServerErrClient(func(req *http.Request) {
+			client := newServerErrClient(func(req *http.Request) {
 				callCount++
 
 				b, err := ioutil.ReadAll(req.Body)
@@ -2946,7 +2946,7 @@ func TestRequest_Retries(t *testing.T) {
 
 			req := NewRequestC(config, http.MethodPost, "/url").
 				WithText("test body").
-				WithRetryPolicy(RetryTemporaryNetworkAndServerErrors).
+				WithRetryPolicy(RetryTimeoutAndServerErrors).
 				WithMaxRetries(1).
 				WithRetryDelay(0, 0)
 			req.sleepFn = noopSleepFn
@@ -2978,7 +2978,7 @@ func TestRequest_Retries(t *testing.T) {
 
 			req := NewRequestC(config, http.MethodPost, "/url").
 				WithText("test body").
-				WithRetryPolicy(RetryTemporaryNetworkAndServerErrors).
+				WithRetryPolicy(RetryTimeoutAndServerErrors).
 				WithMaxRetries(1)
 			req.sleepFn = noopSleepFn
 			req.chain.assertNotFailed(t)
@@ -3022,10 +3022,10 @@ func TestRequest_Retries(t *testing.T) {
 			assert.Equal(t, 1, callCount)
 		})
 
-		t.Run("temporary network error", func(t *testing.T) {
+		t.Run("timeout error", func(t *testing.T) {
 			callCount := 0
 
-			client := newTempNetErrClient(func(req *http.Request) {
+			client := newTimeoutErrClient(func(req *http.Request) {
 				callCount++
 
 				b, err := ioutil.ReadAll(req.Body)
@@ -3053,10 +3053,10 @@ func TestRequest_Retries(t *testing.T) {
 			assert.Equal(t, 2, callCount)
 		})
 
-		t.Run("temporary server error", func(t *testing.T) {
+		t.Run("server error", func(t *testing.T) {
 			callCount := 0
 
-			client := newTempServerErrClient(func(req *http.Request) {
+			client := newServerErrClient(func(req *http.Request) {
 				callCount++
 
 				b, err := ioutil.ReadAll(req.Body)

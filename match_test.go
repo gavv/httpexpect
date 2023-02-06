@@ -59,17 +59,17 @@ func TestMatch_Alias(t *testing.T) {
 	matches := []string{"m0", "m1", "m2"}
 	names := []string{"", "n1", "n2"}
 
-	value1 := NewMatch(reporter, matches, names)
-	assert.Equal(t, []string{"Match()"}, value1.chain.context.Path)
-	assert.Equal(t, []string{"Match()"}, value1.chain.context.AliasedPath)
+	value := NewMatch(reporter, matches, names)
+	assert.Equal(t, []string{"Match()"}, value.chain.context.Path)
+	assert.Equal(t, []string{"Match()"}, value.chain.context.AliasedPath)
 
-	value2 := value1.Alias("foo")
-	assert.Equal(t, []string{"Match()"}, value2.chain.context.Path)
-	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
+	value.Alias("foo")
+	assert.Equal(t, []string{"Match()"}, value.chain.context.Path)
+	assert.Equal(t, []string{"foo"}, value.chain.context.AliasedPath)
 
-	value3 := value2.Index(0)
-	assert.Equal(t, []string{"Match()", "Index(0)"}, value3.chain.context.Path)
-	assert.Equal(t, []string{"foo", "Index(0)"}, value3.chain.context.AliasedPath)
+	childValue := value.Index(0)
+	assert.Equal(t, []string{"Match()", "Index(0)"}, childValue.chain.context.Path)
+	assert.Equal(t, []string{"foo", "Index(0)"}, childValue.chain.context.AliasedPath)
 }
 
 func TestMatch_Getters(t *testing.T) {
