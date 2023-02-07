@@ -580,6 +580,37 @@ func TestChain_AliasedPath(t *testing.T) {
 		assert.Equal(t, "", aliasedPath(rootChain))
 	})
 }
+func TestChain_FailureReporter(t *testing.T) {
+	t.Run("Check if failure is repoted in fail()", func(t *testing.T) {
+		handler := &mockAssertionHandler{}
+
+		chain := newChainWithConfig("test", Config{
+			AssertionHandler: handler,
+		}.withDefaults())
+
+		opChain := chain.enter("test")
+		opChain.fail(mockFailure())
+
+		assert.Nil(t, handler.ctx)
+		assert.Nil(t, handler.failure)
+	})
+
+	t.Run("Check if failure is reported in leave()", func(t *testing.T) {
+		handler := &mockAssertionHandler{}
+
+		chain := newChainWithConfig("test", Config{
+			AssertionHandler: handler,
+		}.withDefaults())
+
+		opChain := chain.enter("test")
+		opChain.fail(mockFailure())
+		opChain.leave()
+
+		assert.NotNil(t, handler.ctx)
+		assert.NotNil(t, handler.failure)
+	})
+
+}
 
 func TestChain_Handler(t *testing.T) {
 	t.Run("success", func(t *testing.T) {

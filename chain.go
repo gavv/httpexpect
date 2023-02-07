@@ -365,6 +365,11 @@ func (c *chain) leave() {
 	}()
 	if flags&(flagFailed) != 0 && failure != nil {
 		handler.Failure(&context, failure)
+		if chainValidation {
+			if err := validateAssertion(failure); err != nil {
+				panic(err)
+			}
+		}
 	}
 
 	if flags&(flagFailed|flagFailedChildren) == 0 {
@@ -410,12 +415,6 @@ func (c *chain) fail(failure AssertionFailure) {
 		}
 		c.failure = &failure
 	}()
-
-	if chainValidation {
-		if err := validateAssertion(&failure); err != nil {
-			panic(err)
-		}
-	}
 }
 
 // Check if chain failed.
