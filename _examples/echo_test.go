@@ -33,7 +33,7 @@ func testEcho(e *httpexpect.Expect) {
 
 	e.GET("/restricted/hello").
 		Expect().
-		Status(http.StatusBadRequest)
+		Status(http.StatusUnauthorized)
 
 	e.GET("/restricted/hello").WithHeader("Authorization", "Bearer <bad token>").
 		Expect().

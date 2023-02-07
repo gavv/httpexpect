@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/labstack/echo-jwt"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 )
 
 // EchoHandler creates http.Handler using echo framework.
@@ -40,7 +40,9 @@ func EchoHandler() http.Handler {
 
 	r := e.Group("/restricted")
 
-	r.Use(middleware.JWT([]byte("secret"))) //nolint
+	r.Use(echojwt.WithConfig(echojwt.Config{
+		SigningKey: []byte("secret"),
+	}))
 
 	r.GET("/hello", func(ctx echo.Context) error {
 		return ctx.String(http.StatusOK, "hello, world!")
