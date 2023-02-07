@@ -33,6 +33,8 @@ func TestNumber_FailedChain(t *testing.T) {
 	value.Ge(0)
 	value.Lt(0)
 	value.Le(0)
+	value.IsInt(0)
+	value.NotInt(0)
 }
 
 func TestNumber_Constructors(t *testing.T) {
@@ -583,4 +585,50 @@ func TestNumber_ConvertLesser(t *testing.T) {
 	value.Le("NOT NUMBER")
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
+}
+
+func TestNumber_IsInt(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	NewNumber(reporter, 1234).IsInt(0, 1, 2, 3).
+		chain.assertFailed(t)
+
+	NewNumber(reporter, -1234).IsInt().
+		chain.assertNotFailed(t)
+
+	NewNumber(reporter, 1234.00001).IsInt().
+		chain.assertFailed(t)
+
+	NewNumber(reporter, -math.MaxInt8).IsInt(32).
+		chain.assertNotFailed(t)
+
+	NewNumber(reporter, math.MaxInt64).IsInt(32).
+		chain.assertFailed(t)
+
+	NewNumber(reporter, math.Inf(1)).IsInt().
+		chain.assertFailed(t)
+
+	NewNumber(reporter, math.NaN()).IsInt().
+		chain.assertFailed(t)
+
+	NewNumber(reporter, 1234.0001).NotInt(0, 1, 2, 3).
+		chain.assertFailed(t)
+
+	NewNumber(reporter, 1234).NotInt().
+		chain.assertFailed(t)
+
+	NewNumber(reporter, 1234.00001).NotInt().
+		chain.assertNotFailed(t)
+
+	NewNumber(reporter, math.MaxInt8).NotInt(32).
+		chain.assertFailed(t)
+
+	NewNumber(reporter, math.MaxInt64).NotInt(32).
+		chain.assertNotFailed(t)
+
+	NewNumber(reporter, math.Inf(-1)).NotInt().
+		chain.assertNotFailed(t)
+
+	NewNumber(reporter, math.NaN()).NotInt().
+		chain.assertNotFailed(t)
 }

@@ -2,7 +2,9 @@ package httpexpect
 
 import (
 	"errors"
+	"fmt"
 	"math"
+	"strconv"
 )
 
 // Number provides methods to inspect attached float64 value
@@ -617,4 +619,125 @@ func (n *Number) Le(value interface{}) *Number {
 	}
 
 	return n
+}
+
+// IsInt succeeds if number is integer.
+//
+// If bit is omitted, uses 64 bit as default. Otherwise, uses given bit.
+// Bit defines maximum allowed bitness for the given number.
+//
+// value should have numeric type convertible to float64. Before comparison,
+// it is converted to float64.
+//
+// Example:
+//
+//	number := NewNumber(t, 123)
+//	number.IsInt(32)
+//	number.IsInt(64)
+//	number.IsInt()
+func (n *Number) IsInt(bits ...int) *Number {
+	opChain := n.chain.enter("IsInt()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return n
+	}
+
+	if len(bits) > 1 {
+		opChain.fail(failedBitsArguments())
+		return n
+	}
+
+	b := 64
+	if len(bits) != 0 {
+		b = bits[0]
+	}
+
+	val := fmt.Sprintf("%+v", n.value)
+	_, err := strconv.ParseInt(val, 10, b)
+	if err != nil {
+		if b == 64 {
+			opChain.fail(failedNumberAsType(
+				n.value,
+				errors.New("expected: number can be represented as integer"),
+				err,
+			))
+		} else {
+			opChain.fail(failedNumberAsType(
+				n.value,
+				fmt.Errorf("expected: number can be parsed to integer with bit %d", b),
+				err,
+			))
+		}
+	}
+
+	return n
+}
+
+// NotInt succeeds if number is not integer.
+//
+// If bit is omitted, uses 64 bit as default. Otherwise, uses given bit.
+// Bit defines maximum allowed bitness for the given number.
+//
+// value should have numeric type convertible to float64. Before comparison,
+// it is converted to float64.
+//
+// Example:
+//
+//	number := NewNumber(t, 123.0123)
+//	number.NotInt(32)
+//	number.NotInt(64)
+//	number.NotInt()
+func (n *Number) NotInt(bits ...int) *Number {
+	opChain := n.chain.enter("NotInt()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return n
+	}
+
+	if len(bits) > 1 {
+		opChain.fail(failedBitsArguments())
+		return n
+	}
+
+	b := 64
+	if len(bits) != 0 {
+		b = bits[0]
+	}
+
+	val := fmt.Sprintf("%+v", n.value)
+	_, err := strconv.ParseInt(val, 10, b)
+	if err == nil {
+		if b == 64 {
+			opChain.fail(failedNumberAsType(
+				n.value,
+				errors.New("expected: number can't be represented as integer"),
+			))
+		} else {
+			opChain.fail(failedNumberAsType(
+				n.value,
+				fmt.Errorf("expected: number can't be parsed to integer with bit %d", b),
+			))
+		}
+	}
+
+	return n
+}
+
+func failedBitsArguments() AssertionFailure {
+	return AssertionFailure{
+		Type: AssertUsage,
+		Errors: []error{
+			errors.New("unexpected multiple bits arguments"),
+		},
+	}
+}
+
+func failedNumberAsType(value float64, errs ...error) AssertionFailure {
+	return AssertionFailure{
+		Type:   AssertType,
+		Actual: &AssertionValue{value},
+		Errors: errs,
+	}
 }
