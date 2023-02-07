@@ -431,6 +431,7 @@ func TestChain_Panics(t *testing.T) {
 			opChain.fail(AssertionFailure{
 				Type: AssertionType(9999),
 			})
+			opChain.leave()
 		})
 	})
 }
