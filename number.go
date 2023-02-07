@@ -410,7 +410,7 @@ func (n *Number) InList(values ...interface{}) *Number {
 			return n
 		}
 
-		if n.value == num {
+		if n.value.Cmp(&num) == 0 {
 			isListed = true
 			// continue loop to check that all values are correct
 		}
@@ -464,7 +464,7 @@ func (n *Number) NotInList(values ...interface{}) *Number {
 			return n
 		}
 
-		if n.value == num {
+		if n.value.Cmp(&num) == 0 {
 			opChain.fail(AssertionFailure{
 				Type:     AssertNotBelongs,
 				Actual:   &AssertionValue{n.value},
