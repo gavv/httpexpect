@@ -725,6 +725,110 @@ func (n *Number) NotInt(bits ...int) *Number {
 	return n
 }
 
+// IsUint succeeds if number is unsigned integer.
+//
+// If bit is omitted, uses 64 bit as default. Otherwise, uses given bit.
+// Bit defines maximum allowed bitness for the given number.
+//
+// value should have numeric type convertible to float64. Before comparison,
+// it is converted to float64.
+//
+// Example:
+//
+//	number := NewNumber(t, 123)
+//	number.IsUint(32)
+//	number.IsUint(64)
+//	number.IsUint()
+func (n *Number) IsUint(bits ...int) *Number {
+	opChain := n.chain.enter("IsUint()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return n
+	}
+
+	if len(bits) > 1 {
+		opChain.fail(failedBitsArguments())
+		return n
+	}
+
+	b := 64
+	if len(bits) != 0 {
+		b = bits[0]
+	}
+
+	val := fmt.Sprintf("%+v", n.value)
+	_, err := strconv.ParseUint(val, 10, b)
+	if err != nil {
+		if b == 64 {
+			opChain.fail(failedNumberAsType(
+				n.value,
+				errors.New("expected: number can be represented as unsigned integer"),
+				err,
+			))
+		} else {
+			opChain.fail(failedNumberAsType(
+				n.value,
+				fmt.Errorf("expected: number can be parsed to unsigned integer with bit %d", b),
+				err,
+			))
+		}
+	}
+
+	return n
+}
+
+// NotUint succeeds if number is not unsigned integer.
+//
+// If bit is omitted, uses 64 bit as default. Otherwise, uses given bit.
+// Bit defines maximum allowed bitness for the given number.
+//
+// value should have numeric type convertible to float64. Before comparison,
+// it is converted to float64.
+//
+// Example:
+//
+//	number := NewNumber(t, -123.0123)
+//	number.NotUint(32)
+//	number.NotUint(64)
+//	number.NotUint()
+func (n *Number) NotUint(bits ...int) *Number {
+	opChain := n.chain.enter("NotUint()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return n
+	}
+
+	if len(bits) > 1 {
+		opChain.fail(failedBitsArguments())
+		return n
+	}
+
+	b := 64
+	if len(bits) != 0 {
+		b = bits[0]
+	}
+
+	val := fmt.Sprintf("%+v", n.value)
+	_, err := strconv.ParseUint(val, 10, b)
+	if err == nil {
+		if b == 64 {
+			opChain.fail(failedNumberAsType(
+				n.value,
+				errors.New("expected: number can't be represented as unsigned integer"),
+			))
+		} else {
+			opChain.fail(failedNumberAsType(
+				n.value,
+				fmt.Errorf("expected: number can't be parsed to unsigned integer with bit %d", b),
+			))
+		}
+	}
+
+	return n
+}
+
 func failedBitsArguments() AssertionFailure {
 	return AssertionFailure{
 		Type: AssertUsage,
