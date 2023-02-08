@@ -197,8 +197,8 @@ obj := e.GET("/fruits/apple").
 obj.Keys().ContainsOnly("colors", "weight")
 
 obj.Value("colors").Array().ConsistsOf("green", "red")
-obj.Value("colors").Array().Element(0).String().IsEqual("green")
-obj.Value("colors").Array().Element(1).String().IsEqual("red")
+obj.Value("colors").Array().Value(0).String().IsEqual("green")
+obj.Value("colors").Array().Value(1).String().IsEqual("red")
 obj.Value("colors").Array().First().String().IsEqual("green")
 obj.Value("colors").Array().Last().String().IsEqual("red")
 ```

@@ -150,18 +150,18 @@ func (a *Array) Length() *Number {
 	return newNumber(opChain, float64(len(a.value)))
 }
 
-// Element returns a new Value instance with array element for given index.
+// Value returns a new Value instance with array element for given index.
 //
-// If index is out of array bounds, Element reports failure and returns empty
+// If index is out of array bounds, Value reports failure and returns empty
 // (but non-nil) instance.
 //
 // Example:
 //
 //	array := NewArray(t, []interface{}{"foo", 123})
-//	array.Element(0).String().IsEqual("foo")
-//	array.Element(1).Number().IsEqual(123)
-func (a *Array) Element(index int) *Value {
-	opChain := a.chain.enter("Element(%d)", index)
+//	array.Value(0).String().IsEqual("foo")
+//	array.Value(1).Number().IsEqual(123)
+func (a *Array) Value(index int) *Value {
+	opChain := a.chain.enter("Value(%d)", index)
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -184,6 +184,11 @@ func (a *Array) Element(index int) *Value {
 	}
 
 	return newValue(opChain, a.value[index])
+}
+
+// Deprecated: use Value instead.
+func (a *Array) Element(index int) *Value {
+	return a.Value(index)
 }
 
 // First returns a new Value instance for the first element of array.

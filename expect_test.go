@@ -300,8 +300,8 @@ func TestExpect_Traverse(t *testing.T) {
 	m.Value("bbb").String().IsEqual("hello")
 	m.Value("ccc").Number().IsEqual(456)
 
-	m.Value("aaa").Array().Element(2).Boolean().IsFalse()
-	m.Value("aaa").Array().Element(3).IsNull()
+	m.Value("aaa").Array().Value(2).Boolean().IsFalse()
+	m.Value("aaa").Array().Value(3).IsNull()
 }
 
 func TestExpect_Branches(t *testing.T) {
@@ -326,11 +326,11 @@ func TestExpect_Branches(t *testing.T) {
 	m2 := resp.JSON().Object() // ok
 	m3 := resp.JSON().Object() // ok
 
-	e1 := m2.Value("foo").Object()                      // fail
-	e2 := m2.Value("foo").Array().Element(999).String() // fail
-	e3 := m2.Value("foo").Array().Element(0).Number()   // fail
-	e4 := m2.Value("foo").Array().Element(0).String()   // ok
-	e5 := m2.Value("foo").Array().Element(0).String()   // ok
+	e1 := m2.Value("foo").Object()                    // fail
+	e2 := m2.Value("foo").Array().Value(999).String() // fail
+	e3 := m2.Value("foo").Array().Value(0).Number()   // fail
+	e4 := m2.Value("foo").Array().Value(0).String()   // ok
+	e5 := m2.Value("foo").Array().Value(0).String()   // ok
 
 	e4.IsEqual("qux") // fail
 	e5.IsEqual("bar") // ok
