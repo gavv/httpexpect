@@ -28,11 +28,19 @@ type Response struct {
 	websocket *websocket.Conn
 	rtt       *time.Duration
 
-	content []byte
-	cookies []*http.Cookie
+	content      []byte
+	contentState contentState
 
-	contentReceived bool
+	cookies []*http.Cookie
 }
+
+type contentState int
+
+const (
+	contentPending contentState = iota
+	contentRetreived
+	contentFailed
+)
 
 // NewResponse returns a new Response instance.
 //
@@ -87,12 +95,28 @@ func newResponse(opts responseOpts) *Response {
 	opts.config.validate()
 
 	r := &Response{
-		config: opts.config,
-		chain:  opts.chain.clone(),
+		config:       opts.config,
+		chain:        opts.chain.clone(),
+		contentState: contentPending,
 	}
 
 	opChain := r.chain.enter("")
 	defer opChain.leave()
+
+	if len(opts.rtt) > 1 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected multiple rtt arguments"),
+			},
+		})
+		return r
+	}
+
+	if len(opts.rtt) > 0 {
+		rttCopy := opts.rtt[0]
+		r.rtt = &rttCopy
+	}
 
 	if opts.httpResp == nil {
 		opChain.fail(AssertionFailure{
@@ -105,31 +129,18 @@ func newResponse(opts responseOpts) *Response {
 		return r
 	}
 
-	if len(opts.rtt) > 1 {
-		opChain.fail(AssertionFailure{
-			Type: AssertUsage,
-			Errors: []error{
-				errors.New("unexpected multiple rtt arguments"),
-			},
-		})
-		return r
-	}
-
 	r.httpResp = opts.httpResp
+
 	if r.httpResp.Body != nil && r.httpResp.Body != http.NoBody {
 		if _, ok := r.httpResp.Body.(*bodyWrapper); !ok {
+			respCopy := *r.httpResp
+			r.httpResp = &respCopy
 			r.httpResp.Body = newBodyWrapper(r.httpResp.Body, nil)
 		}
 	}
 
 	r.websocket = opts.websocket
-
 	r.cookies = r.httpResp.Cookies()
-
-	if len(opts.rtt) > 0 {
-		rtt := opts.rtt[0]
-		r.rtt = &rtt
-	}
 
 	r.chain.setResponse(r)
 
@@ -137,13 +148,20 @@ func newResponse(opts responseOpts) *Response {
 }
 
 func (r *Response) getContent(opChain *chain) ([]byte, bool) {
-	if r.contentReceived {
+	switch r.contentState {
+	case contentRetreived:
 		return r.content, true
+
+	case contentFailed:
+		return nil, false
+
+	case contentPending:
+		break
 	}
 
 	resp := r.httpResp
 
-	if resp.Body == nil {
+	if resp.Body == nil || resp.Body == http.NoBody {
 		return []byte{}, true
 	}
 
@@ -166,11 +184,16 @@ func (r *Response) getContent(opChain *chain) ([]byte, bool) {
 				err,
 			},
 		})
+
+		r.content = nil
+		r.contentState = contentFailed
+
 		return nil, false
 	}
 
 	r.content = content
-	r.contentReceived = true
+	r.contentState = contentRetreived
+
 	return r.content, true
 }
 
@@ -566,13 +589,17 @@ func (r *Response) NoContent() *Response {
 	}
 
 	contentType := r.httpResp.Header.Get("Content-Type")
+	if !r.checkEqual(opChain, `"Content-Type" header`, "", contentType) {
+		return r
+	}
+
 	content, ok := r.getContent(opChain)
 	if !ok {
 		return r
 	}
-
-	r.checkEqual(opChain, `"Content-Type" header`, "", contentType)
-	r.checkEqual(opChain, "body", "", string(content))
+	if !r.checkEqual(opChain, "body", "", string(content)) {
+		return r
+	}
 
 	return r
 }
@@ -801,11 +828,12 @@ func (r *Response) getJSON(opChain *chain, options ...ContentOpts) interface{} {
 		return nil
 	}
 
-	var value interface{}
 	content, ok := r.getContent(opChain)
 	if !ok {
 		return nil
 	}
+
+	var value interface{}
 
 	if err := json.Unmarshal(content, &value); err != nil {
 		opChain.fail(AssertionFailure{
@@ -999,7 +1027,9 @@ func (r *Response) checkContentType(
 	return true
 }
 
-func (r *Response) checkEqual(opChain *chain, what string, expected, actual interface{}) {
+func (r *Response) checkEqual(
+	opChain *chain, what string, expected, actual interface{},
+) bool {
 	if !reflect.DeepEqual(expected, actual) {
 		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
@@ -1009,5 +1039,8 @@ func (r *Response) checkEqual(opChain *chain, what string, expected, actual inte
 				fmt.Errorf("unexpected %s value", what),
 			},
 		})
+		return false
 	}
+
+	return true
 }

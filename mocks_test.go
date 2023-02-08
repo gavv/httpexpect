@@ -125,11 +125,13 @@ func (mt *mockTransportRedirect) WithMaxRedirect(
 }
 
 type mockBody struct {
-	reader      io.Reader
-	closed      bool
-	readErr     error
-	closeErr    error
-	hasBeenRead bool
+	reader io.Reader
+
+	readCount int
+	readErr   error
+
+	closeCount int
+	closeErr   error
 }
 
 func newMockBody(body string) *mockBody {
@@ -139,15 +141,15 @@ func newMockBody(body string) *mockBody {
 }
 
 func (b *mockBody) Read(p []byte) (int, error) {
+	b.readCount++
 	if b.readErr != nil {
 		return 0, b.readErr
 	}
-	b.hasBeenRead = true
 	return b.reader.Read(p)
 }
 
 func (b *mockBody) Close() error {
-	b.closed = true
+	b.closeCount++
 	if b.closeErr != nil {
 		return b.closeErr
 	}

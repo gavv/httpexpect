@@ -11,9 +11,9 @@ import (
 func TestBodyWrapper_Rewind(t *testing.T) {
 	body := newMockBody("test_body")
 
-	cancelled := false
+	cancelCount := 0
 	cancelFn := func() {
-		cancelled = true
+		cancelCount++
 	}
 
 	wrp := newBodyWrapper(body, cancelFn)
@@ -22,8 +22,9 @@ func TestBodyWrapper_Rewind(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "test_body", string(b))
 
-	assert.True(t, body.closed)
-	assert.True(t, cancelled)
+	assert.NotEqual(t, 0, body.readCount)
+	assert.Equal(t, 1, body.closeCount)
+	assert.Equal(t, 1, cancelCount)
 
 	err = wrp.Close()
 	assert.NoError(t, err)
@@ -33,6 +34,10 @@ func TestBodyWrapper_Rewind(t *testing.T) {
 	b, err = ioutil.ReadAll(wrp)
 	assert.NoError(t, err)
 	assert.Equal(t, "test_body", string(b))
+
+	assert.NotEqual(t, 0, body.readCount)
+	assert.Equal(t, 1, body.closeCount)
+	assert.Equal(t, 1, cancelCount)
 }
 
 func TestBodyWrapper_GetBody(t *testing.T) {
@@ -53,14 +58,17 @@ func TestBodyWrapper_GetBody(t *testing.T) {
 	b, err = ioutil.ReadAll(rd2)
 	assert.NoError(t, err)
 	assert.Equal(t, "test_body", string(b))
+
+	assert.NotEqual(t, 0, body.readCount)
+	assert.Equal(t, 1, body.closeCount)
 }
 
 func TestBodyWrapper_Close(t *testing.T) {
 	body := newMockBody("test_body")
 
-	cancelled := false
+	cancelCount := 0
 	cancelFn := func() {
-		cancelled = true
+		cancelCount++
 	}
 
 	wrp := newBodyWrapper(body, cancelFn)
@@ -68,8 +76,9 @@ func TestBodyWrapper_Close(t *testing.T) {
 	err := wrp.Close()
 	assert.NoError(t, err)
 
-	assert.True(t, body.closed)
-	assert.True(t, cancelled)
+	assert.NotEqual(t, 0, body.readCount)
+	assert.Equal(t, 1, body.closeCount)
+	assert.Equal(t, 1, cancelCount)
 }
 
 func TestBodyWrapper_OneError(t *testing.T) {
