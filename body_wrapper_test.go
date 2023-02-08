@@ -22,6 +22,7 @@ func TestBodyWrapper_Rewind(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "test_body", string(b))
 
+	readCount := body.readCount
 	assert.NotEqual(t, 0, body.readCount)
 	assert.Equal(t, 1, body.closeCount)
 	assert.Equal(t, 1, cancelCount)
@@ -35,7 +36,7 @@ func TestBodyWrapper_Rewind(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "test_body", string(b))
 
-	assert.NotEqual(t, 0, body.readCount)
+	assert.Equal(t, readCount, body.readCount)
 	assert.Equal(t, 1, body.closeCount)
 	assert.Equal(t, 1, cancelCount)
 }

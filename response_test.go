@@ -150,6 +150,7 @@ func TestResponse_ResponseBodyLazyRead(t *testing.T) {
 		resp.Body()
 		resp.chain.assertNotFailed(t)
 
+		readCount := body.readCount
 		assert.NotEqual(t, 0, body.readCount)
 		assert.Equal(t, 1, body.closeCount)
 		assert.Equal(t, []byte("body string"), resp.content)
@@ -159,7 +160,7 @@ func TestResponse_ResponseBodyLazyRead(t *testing.T) {
 		resp.Body()
 		resp.chain.assertNotFailed(t)
 
-		assert.NotEqual(t, 0, body.readCount)
+		assert.Equal(t, readCount, body.readCount)
 		assert.Equal(t, 1, body.closeCount)
 		assert.Equal(t, []byte("body string"), resp.content)
 		assert.Equal(t, contentRetreived, resp.contentState)
@@ -185,6 +186,7 @@ func TestResponse_ResponseBodyLazyRead(t *testing.T) {
 		resp.Body()
 		resp.chain.assertFailed(t)
 
+		readCount := body.readCount
 		assert.NotEqual(t, 0, body.readCount)
 		assert.Equal(t, 1, body.closeCount)
 		assert.Nil(t, resp.content)
@@ -194,7 +196,7 @@ func TestResponse_ResponseBodyLazyRead(t *testing.T) {
 		resp.Body()
 		resp.chain.assertFailed(t)
 
-		assert.NotEqual(t, 0, body.readCount)
+		assert.Equal(t, readCount, body.readCount)
 		assert.Equal(t, 1, body.closeCount)
 		assert.Nil(t, resp.content)
 		assert.Equal(t, contentFailed, resp.contentState)
@@ -220,6 +222,7 @@ func TestResponse_ResponseBodyLazyRead(t *testing.T) {
 		resp.Body()
 		resp.chain.assertFailed(t)
 
+		readCount := body.readCount
 		assert.NotEqual(t, 0, body.readCount)
 		assert.Equal(t, 1, body.closeCount)
 		assert.Nil(t, resp.content)
@@ -229,7 +232,7 @@ func TestResponse_ResponseBodyLazyRead(t *testing.T) {
 		resp.Body()
 		resp.chain.assertFailed(t)
 
-		assert.NotEqual(t, 0, body.readCount)
+		assert.Equal(t, readCount, body.readCount)
 		assert.Equal(t, 1, body.closeCount)
 		assert.Nil(t, resp.content)
 		assert.Equal(t, contentFailed, resp.contentState)
