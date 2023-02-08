@@ -78,6 +78,7 @@ type chain struct {
 	context  AssertionContext
 	handler  AssertionHandler
 	severity AssertionSeverity
+	failure  *AssertionFailure
 }
 
 // If enabled, chain will panic if used incorrectly or gets illformed AssertionFailure.
@@ -273,12 +274,15 @@ func (c *chain) clone() *chain {
 	return &chain{
 		parent: c,
 		state:  stateCloned,
-		// since the new clone doesn't have children yet, flagFailedChildren
-		// is not inherited
+		// flagFailedChildren is not inherited because the newly created clone
+		// doesn't have children
 		flags:    (c.flags & ^flagFailedChildren),
 		context:  contextCopy,
 		handler:  c.handler,
 		severity: c.severity,
+		// failure is not inherited because it should be reported only once
+		// by the chain where it happened
+		failure: nil,
 	}
 }
 
@@ -334,20 +338,19 @@ func (c *chain) replace(name string, args ...interface{}) *chain {
 }
 
 // Finalize assertion.
-// If there were no failures, report succeeded assertion to AssertionHandler.
-// Otherwise, mark parent as failed and notify grandparents that they
-// have faield children.
+// Report success of failure to AssertionHandler.
+// In case of failure, also recursively notify parents and grandparents
+// that they have faield children.
 // Must be called after enter().
 // Chain can't be used after this call.
 func (c *chain) leave() {
 	var (
-		context       AssertionContext
-		handler       AssertionHandler
-		parent        *chain
-		reportSuccess bool
-		reportFailure bool
+		parent  *chain
+		flags   chainFlags
+		context AssertionContext
+		handler AssertionHandler
+		failure *AssertionFailure
 	)
-
 	func() {
 		c.mu.Lock()
 		defer c.mu.Unlock()
@@ -357,21 +360,30 @@ func (c *chain) leave() {
 		}
 		c.state = stateLeaved
 
-		if c.flags&(flagFailed|flagFailedChildren) == 0 {
-			context = c.context
-			handler = c.handler
-			reportSuccess = true
-		} else if c.parent != nil {
-			parent = c.parent
-			reportFailure = true
-		}
+		parent = c.parent
+		flags = c.flags
+
+		context = c.context
+		handler = c.handler
+		failure = c.failure
+
 	}()
 
-	if reportSuccess {
+	if flags&(flagFailed|flagFailedChildren) == 0 {
 		handler.Success(&context)
 	}
 
-	if reportFailure {
+	if flags&(flagFailed) != 0 && failure != nil {
+		handler.Failure(&context, failure)
+
+		if chainValidation {
+			if err := validateAssertion(failure); err != nil {
+				panic(err)
+			}
+		}
+	}
+
+	if flags&(flagFailed|flagFailedChildren) != 0 && parent != nil {
 		parent.mu.Lock()
 		parent.flags |= flagFailed
 		p := parent.parent
@@ -387,47 +399,28 @@ func (c *chain) leave() {
 	}
 }
 
-// Report assertion failure and mark chain as failed.
+// Mark chain as failed.
+// Remember failure inside chain. It will be reported in leave().
+// Subsequent fail() call will be ignored.
 // Must be called between enter() and leave().
 func (c *chain) fail(failure AssertionFailure) {
-	var (
-		context       AssertionContext
-		handler       AssertionHandler
-		reportFailure bool
-	)
+	c.mu.Lock()
+	defer c.mu.Unlock()
 
-	func() {
-		c.mu.Lock()
-		defer c.mu.Unlock()
-
-		if chainValidation && c.state != stateEntered {
-			panic("fail allowed only between enter/leave")
-		}
-
-		if c.flags&flagFailed != 0 {
-			return
-		}
-		c.flags |= flagFailed
-
-		failure.Severity = c.severity
-		if c.severity == SeverityError {
-			failure.IsFatal = true
-		}
-
-		context = c.context
-		handler = c.handler
-		reportFailure = true
-	}()
-
-	if reportFailure {
-		handler.Failure(&context, &failure)
-
-		if chainValidation {
-			if err := validateAssertion(&failure); err != nil {
-				panic(err)
-			}
-		}
+	if chainValidation && c.state != stateEntered {
+		panic("fail allowed only between enter/leave")
 	}
+
+	if c.flags&flagFailed != 0 {
+		return
+	}
+	c.flags |= flagFailed
+
+	failure.Severity = c.severity
+	if c.severity == SeverityError {
+		failure.IsFatal = true
+	}
+	c.failure = &failure
 }
 
 // Check if chain failed.

@@ -1,6 +1,7 @@
 package httpexpect
 
 import (
+	"errors"
 	"strings"
 	"testing"
 
@@ -403,10 +404,10 @@ func TestChain_Panics(t *testing.T) {
 				chain.setRequestName("")
 			},
 			func(chain *chain) {
-				chain.setRequest(nil)
+				chain.setRequest(&Request{})
 			},
 			func(chain *chain) {
-				chain.setResponse(nil)
+				chain.setResponse(&Response{})
 			},
 		}
 
@@ -431,6 +432,7 @@ func TestChain_Panics(t *testing.T) {
 			opChain.fail(AssertionFailure{
 				Type: AssertionType(9999),
 			})
+			opChain.leave()
 		})
 	})
 }
@@ -661,4 +663,41 @@ func TestChain_Severity(t *testing.T) {
 		assert.NotNil(t, handler.failure)
 		assert.Equal(t, SeverityLog, handler.failure.Severity)
 	})
+}
+
+func TestChain_Reporting(t *testing.T) {
+	handler := &mockAssertionHandler{}
+
+	failure := AssertionFailure{
+		IsFatal: true,
+		Errors: []error{
+			errors.New("test_error"),
+		},
+	}
+
+	chain := newChainWithConfig("test", Config{
+		AssertionHandler: handler,
+	}.withDefaults())
+
+	opChain := chain.enter("test")
+
+	assert.False(t, opChain.failed()) // no failure flag
+	assert.False(t, chain.failed())   // not reported to parent
+	assert.Nil(t, handler.ctx)        // not reported to handler
+	assert.Nil(t, handler.failure)
+
+	opChain.fail(failure)
+
+	assert.True(t, opChain.failed()) // has failure flag
+	assert.False(t, chain.failed())  // not reported to parent
+	assert.Nil(t, handler.ctx)       // not reported to handler
+	assert.Nil(t, handler.failure)
+
+	opChain.leave()
+
+	assert.True(t, opChain.failed()) // has failure flag
+	assert.True(t, chain.failed())   // reported to parent
+	assert.NotNil(t, handler.ctx)    // reported to handler
+	assert.NotNil(t, handler.failure)
+	assert.Equal(t, failure, *handler.failure)
 }
