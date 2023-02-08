@@ -234,6 +234,7 @@ func (h *mockAssertionHandler) Failure(
 
 func mockFailure() AssertionFailure {
 	return AssertionFailure{
+		Type: AssertOperation,
 		Errors: []error{
 			errors.New("test_error"),
 		},
