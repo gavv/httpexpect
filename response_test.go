@@ -116,6 +116,129 @@ func TestResponse_Constructors(t *testing.T) {
 	})
 }
 
+func TestResponse_ResponseBodyLazyRead(t *testing.T) {
+	t.Run("constructor does not read content", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		body := newMockBody("body string")
+		resp := NewResponse(reporter, &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       body,
+		})
+
+		assert.Equal(t, 0, body.readCount)
+		assert.Equal(t, 0, body.closeCount)
+		assert.Nil(t, resp.content)
+		assert.Equal(t, contentPending, resp.contentState)
+	})
+
+	t.Run("content is remembered", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		body := newMockBody("body string")
+		resp := NewResponse(reporter, &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       body,
+		})
+
+		assert.Equal(t, 0, body.readCount)
+		assert.Equal(t, 0, body.closeCount)
+		assert.Nil(t, resp.content)
+		assert.Equal(t, contentPending, resp.contentState)
+
+		// Read body
+		resp.Body()
+		resp.chain.assertNotFailed(t)
+
+		readCount := body.readCount
+		assert.NotEqual(t, 0, body.readCount)
+		assert.Equal(t, 1, body.closeCount)
+		assert.Equal(t, []byte("body string"), resp.content)
+		assert.Equal(t, contentRetreived, resp.contentState)
+
+		// Second call should be no-op
+		resp.Body()
+		resp.chain.assertNotFailed(t)
+
+		assert.Equal(t, readCount, body.readCount)
+		assert.Equal(t, 1, body.closeCount)
+		assert.Equal(t, []byte("body string"), resp.content)
+		assert.Equal(t, contentRetreived, resp.contentState)
+	})
+
+	t.Run("read error is remembered", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		body := newMockBody("body string")
+		body.readErr = errors.New("test error")
+
+		resp := NewResponse(reporter, &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       body,
+		})
+
+		assert.Equal(t, 0, body.readCount)
+		assert.Equal(t, 0, body.closeCount)
+		assert.Nil(t, resp.content)
+		assert.Equal(t, contentPending, resp.contentState)
+
+		// Read body
+		resp.Body()
+		resp.chain.assertFailed(t)
+
+		readCount := body.readCount
+		assert.NotEqual(t, 0, body.readCount)
+		assert.Equal(t, 1, body.closeCount)
+		assert.Nil(t, resp.content)
+		assert.Equal(t, contentFailed, resp.contentState)
+
+		// Second call should be no-op
+		resp.Body()
+		resp.chain.assertFailed(t)
+
+		assert.Equal(t, readCount, body.readCount)
+		assert.Equal(t, 1, body.closeCount)
+		assert.Nil(t, resp.content)
+		assert.Equal(t, contentFailed, resp.contentState)
+	})
+
+	t.Run("close error is remembered", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		body := newMockBody("body string")
+		body.closeErr = errors.New("test error")
+
+		resp := NewResponse(reporter, &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       body,
+		})
+
+		assert.Equal(t, 0, body.readCount)
+		assert.Equal(t, 0, body.closeCount)
+		assert.Nil(t, resp.content)
+		assert.Equal(t, contentPending, resp.contentState)
+
+		// Read body
+		resp.Body()
+		resp.chain.assertFailed(t)
+
+		readCount := body.readCount
+		assert.NotEqual(t, 0, body.readCount)
+		assert.Equal(t, 1, body.closeCount)
+		assert.Nil(t, resp.content)
+		assert.Equal(t, contentFailed, resp.contentState)
+
+		// Second call should be no-op
+		resp.Body()
+		resp.chain.assertFailed(t)
+
+		assert.Equal(t, readCount, body.readCount)
+		assert.Equal(t, 1, body.closeCount)
+		assert.Nil(t, resp.content)
+		assert.Equal(t, contentFailed, resp.contentState)
+	})
+}
+
 func TestResponse_Alias(t *testing.T) {
 	reporter := newMockReporter(t)
 
@@ -365,7 +488,7 @@ func TestResponse_Cookies(t *testing.T) {
 	c3 := resp.Cookie("baz")
 	resp.chain.assertFailed(t)
 	c3.chain.assertFailed(t)
-	assert.True(t, c3.Raw() == nil)
+	assert.Nil(t, c3.Raw())
 }
 
 func TestResponse_NoCookies(t *testing.T) {
@@ -387,7 +510,7 @@ func TestResponse_NoCookies(t *testing.T) {
 	c := resp.Cookie("foo")
 	resp.chain.assertFailed(t)
 	c.chain.assertFailed(t)
-	assert.True(t, c.Raw() == nil)
+	assert.Nil(t, c.Raw())
 }
 
 func TestResponse_Body(t *testing.T) {
@@ -418,7 +541,8 @@ func TestResponse_BodyClose(t *testing.T) {
 	resp := NewResponse(reporter, httpResp)
 
 	assert.Equal(t, "test_body", resp.Body().Raw())
-	assert.True(t, body.closed)
+	assert.NotEqual(t, 0, body.readCount)
+	assert.Equal(t, 1, body.closeCount)
 
 	resp.chain.assertNotFailed(t)
 }
@@ -436,10 +560,13 @@ func TestResponse_BodyError(t *testing.T) {
 		}
 
 		resp := NewResponse(reporter, httpResp)
+		respBody := resp.Body()
 
-		assert.Equal(t, "", resp.Body().Raw())
-		assert.True(t, body.closed)
+		assert.Equal(t, "", respBody.Raw())
+		assert.NotEqual(t, 0, body.readCount)
+		assert.Equal(t, 1, body.closeCount)
 
+		respBody.chain.assertFailed(t)
 		resp.chain.assertFailed(t)
 	})
 
@@ -455,7 +582,8 @@ func TestResponse_BodyError(t *testing.T) {
 		resp := NewResponse(reporter, httpResp)
 
 		assert.Equal(t, "", resp.Body().Raw())
-		assert.True(t, body.closed)
+		assert.NotEqual(t, 0, body.readCount)
+		assert.Equal(t, 1, body.closeCount)
 
 		resp.chain.assertFailed(t)
 	})
@@ -552,27 +680,49 @@ func TestResponse_NoContentNil(t *testing.T) {
 func TestResponse_NoContentFailure(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	headers := map[string][]string{
-		"Content-Type": {"text/plain; charset=utf-8"},
-	}
+	t.Run("Content-Type not empty", func(t *testing.T) {
+		headers := map[string][]string{
+			"Content-Type": {"text/plain; charset=utf-8"},
+		}
 
-	body := ``
+		body := ``
 
-	httpResp := &http.Response{
-		StatusCode: http.StatusOK,
-		Header:     http.Header(headers),
-		Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
-	}
+		httpResp := &http.Response{
+			StatusCode: http.StatusOK,
+			Header:     http.Header(headers),
+			Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+		}
 
-	resp := NewResponse(reporter, httpResp)
+		resp := NewResponse(reporter, httpResp)
 
-	assert.Equal(t, body, resp.Body().Raw())
-	resp.chain.assertNotFailed(t)
-	resp.chain.clearFailed()
+		assert.Equal(t, body, resp.Body().Raw())
+		resp.chain.assertNotFailed(t)
+		resp.chain.clearFailed()
 
-	resp.NoContent()
-	resp.chain.assertFailed(t)
-	resp.chain.clearFailed()
+		resp.NoContent()
+		resp.chain.assertFailed(t)
+		resp.chain.clearFailed()
+	})
+
+	t.Run("Read failure", func(t *testing.T) {
+		headers := map[string][]string{
+			"Content-Type": {""},
+		}
+
+		body := newMockBody("")
+		body.readErr = errors.New("test_error")
+
+		httpResp := &http.Response{
+			StatusCode: http.StatusOK,
+			Header:     http.Header(headers),
+			Body:       body,
+		}
+
+		resp := NewResponse(reporter, httpResp)
+
+		resp.NoContent()
+		resp.chain.assertFailed(t)
+	})
 }
 
 func TestResponse_ContentType(t *testing.T) {
@@ -763,6 +913,31 @@ func TestResponse_Text(t *testing.T) {
 	assert.Equal(t, "hello, world!", resp.Text().Raw())
 }
 
+func TestResponse_TextFailure(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	headers := map[string][]string{
+		"Content-Type": {"text/plain; charset=utf-8"},
+	}
+
+	body := newMockBody(`hello, world!`)
+	body.readErr = errors.New("read error")
+
+	httpResp := &http.Response{
+		StatusCode: http.StatusOK,
+		Header:     http.Header(headers),
+		Body:       body,
+	}
+
+	resp := NewResponse(reporter, httpResp)
+
+	respText := resp.Text()
+
+	assert.Equal(t, "", respText.Raw())
+	respText.chain.assertFailed(t)
+	resp.chain.assertFailed(t)
+}
+
 func TestResponse_Form(t *testing.T) {
 	reporter := newMockReporter(t)
 
@@ -829,7 +1004,7 @@ func TestResponse_FormBadBody(t *testing.T) {
 	resp.chain.assertFailed(t)
 	resp.chain.clearFailed()
 
-	assert.True(t, resp.Form().Raw() == nil)
+	assert.Nil(t, resp.Form().Raw())
 }
 
 func TestResponse_FormBadType(t *testing.T) {
@@ -853,7 +1028,33 @@ func TestResponse_FormBadType(t *testing.T) {
 	resp.chain.assertFailed(t)
 	resp.chain.clearFailed()
 
-	assert.True(t, resp.Form().Raw() == nil)
+	assert.Nil(t, resp.Form().Raw())
+}
+
+func TestResponse_FormBodyReadFailure(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	headers := map[string][]string{
+		"Content-Type": {"application/x-www-form-urlencoded"},
+	}
+
+	body := newMockBody("foo=bar")
+	body.readErr = errors.New("read error")
+
+	httpResp := &http.Response{
+		StatusCode: http.StatusOK,
+		Header:     http.Header(headers),
+		Body:       body,
+	}
+
+	resp := NewResponse(reporter, httpResp)
+
+	respForm := resp.Form()
+	assert.Nil(t, respForm.Raw())
+
+	respForm.chain.assertFailed(t)
+	resp.chain.assertFailed(t)
+	resp.chain.clearFailed()
 }
 
 func TestResponse_JSON(t *testing.T) {
@@ -918,7 +1119,7 @@ func TestResponse_JSONBadBody(t *testing.T) {
 	resp.chain.assertFailed(t)
 	resp.chain.clearFailed()
 
-	assert.True(t, resp.JSON().Raw() == nil)
+	assert.Nil(t, resp.JSON().Raw())
 }
 
 func TestResponse_JSONCharsetEmpty(t *testing.T) {
@@ -968,6 +1169,31 @@ func TestResponse_JSONCharsetBad(t *testing.T) {
 	resp.chain.clearFailed()
 
 	assert.Equal(t, nil, resp.JSON().Raw())
+}
+
+func TestResponse_JSONReaderFailure(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	headers := map[string][]string{
+		"Content-Type": {"application/json; charset=utf-8"},
+	}
+
+	body := newMockBody(`{"key": "value"}`)
+	body.readErr = errors.New("read error")
+
+	httpResp := &http.Response{
+		StatusCode: http.StatusOK,
+		Header:     http.Header(headers),
+		Body:       body,
+	}
+
+	resp := NewResponse(reporter, httpResp)
+
+	respJSON := resp.JSON()
+	assert.Nil(t, respJSON.Raw())
+	respJSON.chain.assertFailed(t)
+	resp.chain.assertFailed(t)
+	resp.chain.clearFailed()
 }
 
 func TestResponse_JSONP(t *testing.T) {
@@ -1048,7 +1274,7 @@ func TestResponse_JSONPBadBody(t *testing.T) {
 		resp.chain.assertFailed(t)
 		resp.chain.clearFailed()
 
-		assert.True(t, resp.JSONP("foo").Raw() == nil)
+		assert.Nil(t, resp.JSONP("foo").Raw())
 	}
 }
 
@@ -1099,6 +1325,31 @@ func TestResponse_JSONPCharsetBad(t *testing.T) {
 	resp.chain.clearFailed()
 
 	assert.Nil(t, resp.JSONP("foo").Raw())
+}
+
+func TestResponse_JSONPBodyReadFailure(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	headers := map[string][]string{
+		"Content-Type": {"application/javascript; charset=utf-8"},
+	}
+
+	body := newMockBody(`foo({"key": "value"})`)
+	body.readErr = errors.New("read error")
+
+	httpResp := &http.Response{
+		StatusCode: http.StatusOK,
+		Header:     http.Header(headers),
+		Body:       body,
+	}
+
+	resp := NewResponse(reporter, httpResp)
+
+	respJSONP := resp.JSONP("foo")
+	assert.Nil(t, respJSONP.Raw())
+	respJSONP.chain.assertFailed(t)
+	resp.chain.assertFailed(t)
+	resp.chain.clearFailed()
 }
 
 func TestResponse_ContentOpts(t *testing.T) {
