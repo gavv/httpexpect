@@ -1066,7 +1066,7 @@ func (o *Object) NotContainsMap(value interface{}) *Object {
 	return o.NotContainsSubset(value)
 }
 
-// ValueEqual succeeds if object's value for given key is equal to given value.
+// IsValueEqual succeeds if object's value for given key is equal to given value.
 // Before comparison, both values are converted to canonical form.
 //
 // value should be map[string]interface{} or struct.
@@ -1074,9 +1074,9 @@ func (o *Object) NotContainsMap(value interface{}) *Object {
 // Example:
 //
 //	object := NewObject(t, map[string]interface{}{"foo": 123})
-//	object.ValueEqual("foo", 123)
-func (o *Object) ValueEqual(key string, value interface{}) *Object {
-	opChain := o.chain.enter("ValueEqual(%q)", key)
+//	object.IsValueEqual("foo", 123)
+func (o *Object) IsValueEqual(key string, value interface{}) *Object {
+	opChain := o.chain.enter("IsValueEqual(%q)", key)
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -1169,6 +1169,11 @@ func (o *Object) NotValueEqual(key string, value interface{}) *Object {
 	}
 
 	return o
+}
+
+// Deprecated: use IsValueEqual instead.
+func (o *Object) ValueEqual(key string, value interface{}) *Object {
+	return o.IsValueEqual(key, value)
 }
 
 // Deprecated: use NotValueEqual instead.
