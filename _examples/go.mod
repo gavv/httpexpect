@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/fasthttp/websocket v1.5.0
-	github.com/gavv/httpexpect/v2 v2.11.0
+	github.com/gavv/httpexpect/v2 v2.12.0
 	github.com/gin-gonic/gin v1.8.1
 	github.com/go-oauth2/oauth2/v4 v4.5.1
 	github.com/gorilla/websocket v1.5.0

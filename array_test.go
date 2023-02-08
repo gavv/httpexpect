@@ -18,7 +18,7 @@ func TestArray_FailedChain(t *testing.T) {
 		value.Decode(&target)
 
 		value.Length().chain.assertFailed(t)
-		value.Element(0).chain.assertFailed(t)
+		value.Value(0).chain.assertFailed(t)
 		value.First().chain.assertFailed(t)
 		value.Last().chain.assertFailed(t)
 
@@ -240,12 +240,12 @@ func TestArray_Getters(t *testing.T) {
 
 	assert.Equal(t, 2.0, value.Length().Raw())
 
-	assert.Equal(t, "foo", value.Element(0).Raw())
-	assert.Equal(t, 123.0, value.Element(1).Raw())
+	assert.Equal(t, "foo", value.Value(0).Raw())
+	assert.Equal(t, 123.0, value.Value(1).Raw())
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	assert.Equal(t, nil, value.Element(2).Raw())
+	assert.Equal(t, nil, value.Value(2).Raw())
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
@@ -297,7 +297,7 @@ func TestArray_EmptyGetters(t *testing.T) {
 
 	value := NewArray(reporter, []interface{}{})
 
-	assert.NotNil(t, value.Element(0))
+	assert.NotNil(t, value.Value(0))
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 

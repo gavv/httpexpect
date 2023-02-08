@@ -179,7 +179,7 @@ func (ws *Websocket) Subprotocol() *String {
 // Example:
 //
 //	msg := conn.Expect()
-//	msg.JSON().Object().ValueEqual("message", "hi")
+//	msg.JSON().Object().IsValueEqual("message", "hi")
 func (ws *Websocket) Expect() *WebsocketMessage {
 	opChain := ws.chain.enter("Expect()")
 	defer opChain.leave()

@@ -2,6 +2,7 @@ package httpexpect
 
 import (
 	"errors"
+	"sync"
 	"time"
 )
 
@@ -13,9 +14,9 @@ import (
 //	env.Put("key", "value")
 //	value := env.GetString("key")
 type Environment struct {
-	noCopy noCopy
-	chain  *chain
-	data   map[string]interface{}
+	mu    sync.RWMutex
+	chain *chain
+	data  map[string]interface{}
 }
 
 // NewEnvironment returns a new Environment.
@@ -58,6 +59,9 @@ func (e *Environment) Put(key string, value interface{}) {
 	opChain := e.chain.enter("Put(%q)", key)
 	defer opChain.leave()
 
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
 	e.data[key] = value
 }
 
@@ -72,6 +76,9 @@ func (e *Environment) Delete(key string) {
 	opChain := e.chain.enter("Delete(%q)", key)
 	defer opChain.leave()
 
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
 	delete(e.data, key)
 }
 
@@ -85,6 +92,9 @@ func (e *Environment) Delete(key string) {
 func (e *Environment) Has(key string) bool {
 	opChain := e.chain.enter("Has(%q)", key)
 	defer opChain.leave()
+
+	e.mu.RLock()
+	defer e.mu.RUnlock()
 
 	_, ok := e.data[key]
 	return ok
@@ -102,6 +112,9 @@ func (e *Environment) Get(key string) interface{} {
 	opChain := e.chain.enter("Get(%q)", key)
 	defer opChain.leave()
 
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+
 	value, _ := envValue(opChain, e.data, key)
 
 	return value
@@ -117,6 +130,9 @@ func (e *Environment) Get(key string) interface{} {
 func (e *Environment) GetBool(key string) bool {
 	opChain := e.chain.enter("GetBool(%q)", key)
 	defer opChain.leave()
+
+	e.mu.RLock()
+	defer e.mu.RUnlock()
 
 	value, ok := envValue(opChain, e.data, key)
 	if !ok {
@@ -149,6 +165,9 @@ func (e *Environment) GetBool(key string) bool {
 func (e *Environment) GetInt(key string) int {
 	opChain := e.chain.enter("GetInt(%q)", key)
 	defer opChain.leave()
+
+	e.mu.RLock()
+	defer e.mu.RUnlock()
 
 	value, ok := envValue(opChain, e.data, key)
 	if !ok {
@@ -235,6 +254,9 @@ func (e *Environment) GetFloat(key string) float64 {
 	opChain := e.chain.enter("GetFloat(%q)", key)
 	defer opChain.leave()
 
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+
 	value, ok := envValue(opChain, e.data, key)
 	if !ok {
 		return 0
@@ -275,6 +297,9 @@ func (e *Environment) GetString(key string) string {
 	opChain := e.chain.enter("GetString(%q)", key)
 	defer opChain.leave()
 
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+
 	value, ok := envValue(opChain, e.data, key)
 	if !ok {
 		return ""
@@ -305,6 +330,9 @@ func (e *Environment) GetString(key string) string {
 func (e *Environment) GetBytes(key string) []byte {
 	opChain := e.chain.enter("GetBytes(%q)", key)
 	defer opChain.leave()
+
+	e.mu.RLock()
+	defer e.mu.RUnlock()
 
 	value, ok := envValue(opChain, e.data, key)
 	if !ok {
@@ -338,6 +366,9 @@ func (e *Environment) GetDuration(key string) time.Duration {
 	opChain := e.chain.enter("GetDuration(%q)", key)
 	defer opChain.leave()
 
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+
 	value, ok := envValue(opChain, e.data, key)
 	if !ok {
 		return time.Duration(0)
@@ -369,6 +400,9 @@ func (e *Environment) GetDuration(key string) time.Duration {
 func (e *Environment) GetTime(key string) time.Time {
 	opChain := e.chain.enter("GetTime(%q)", key)
 	defer opChain.leave()
+
+	e.mu.RLock()
+	defer e.mu.RUnlock()
 
 	value, ok := envValue(opChain, e.data, key)
 	if !ok {

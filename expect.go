@@ -56,8 +56,8 @@
 //
 //	array := NewArray(NewAssertReporter(t), []interface{}{"foo", 123})
 //
-//	e0 := array.Element(0)  // success
-//	e1 := array.Element(1)  // success
+//	e0 := array.Value(0)  // success
+//	e1 := array.Value(1)  // success
 //
 //	s0 := e0.String()  // success
 //	s1 := e1.String()  // failure; e1 and s1 are marked as failed, e0 and s0 are not

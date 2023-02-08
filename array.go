@@ -150,18 +150,18 @@ func (a *Array) Length() *Number {
 	return newNumber(opChain, float64(len(a.value)))
 }
 
-// Element returns a new Value instance with array element for given index.
+// Value returns a new Value instance with array element for given index.
 //
-// If index is out of array bounds, Element reports failure and returns empty
+// If index is out of array bounds, Value reports failure and returns empty
 // (but non-nil) instance.
 //
 // Example:
 //
 //	array := NewArray(t, []interface{}{"foo", 123})
-//	array.Element(0).String().IsEqual("foo")
-//	array.Element(1).Number().IsEqual(123)
-func (a *Array) Element(index int) *Value {
-	opChain := a.chain.enter("Element(%d)", index)
+//	array.Value(0).String().IsEqual("foo")
+//	array.Value(1).Number().IsEqual(123)
+func (a *Array) Value(index int) *Value {
+	opChain := a.chain.enter("Value(%d)", index)
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -184,6 +184,11 @@ func (a *Array) Element(index int) *Value {
 	}
 
 	return newValue(opChain, a.value[index])
+}
+
+// Deprecated: use Value instead.
+func (a *Array) Element(index int) *Value {
+	return a.Value(index)
 }
 
 // First returns a new Value instance for the first element of array.
@@ -270,7 +275,7 @@ func (a *Array) Iter() []Value {
 
 	for index, element := range a.value {
 		func() {
-			valueChain := opChain.replace("Iter[%v]", index)
+			valueChain := opChain.replace("Iter[%d]", index)
 			defer valueChain.leave()
 
 			ret = append(ret, *newValue(valueChain, element))
@@ -314,7 +319,7 @@ func (a *Array) Every(fn func(index int, value *Value)) *Array {
 
 	for index, element := range a.value {
 		func() {
-			valueChain := opChain.replace("Every[%v]", index)
+			valueChain := opChain.replace("Every[%d]", index)
 			defer valueChain.leave()
 
 			fn(index, newValue(valueChain, element))
@@ -364,7 +369,7 @@ func (a *Array) Filter(fn func(index int, value *Value) bool) *Array {
 
 	for index, element := range a.value {
 		func() {
-			valueChain := opChain.replace("Filter[%v]", index)
+			valueChain := opChain.replace("Filter[%d]", index)
 			defer valueChain.leave()
 
 			valueChain.setRoot()
@@ -455,7 +460,7 @@ func (a *Array) Find(fn func(index int, value *Value) bool) *Value {
 		found := false
 
 		func() {
-			valueChain := opChain.replace("Find[%v]", index)
+			valueChain := opChain.replace("Find[%d]", index)
 			defer valueChain.leave()
 
 			valueChain.setRoot()
@@ -523,7 +528,7 @@ func (a *Array) FindAll(fn func(index int, value *Value) bool) []*Value {
 
 	for index, element := range a.value {
 		func() {
-			valueChain := opChain.replace("FindAll[%v]", index)
+			valueChain := opChain.replace("FindAll[%d]", index)
 			defer valueChain.leave()
 
 			valueChain.setRoot()
@@ -576,7 +581,7 @@ func (a *Array) NotFind(fn func(index int, value *Value) bool) *Array {
 		found := false
 
 		func() {
-			valueChain := opChain.replace("NotFind[%v]", index)
+			valueChain := opChain.replace("NotFind[%d]", index)
 			defer valueChain.leave()
 
 			valueChain.setRoot()
