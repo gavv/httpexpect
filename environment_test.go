@@ -32,6 +32,23 @@ func TestEnvironment_Constructors(t *testing.T) {
 	})
 }
 
+func TestEnvironment_Reentrant(t *testing.T) {
+	reportCalled := false
+
+	reporter := newMockReporter(t)
+	reporter.reportCb = func() {
+		env.Put("good_key", 123)
+		reportCalled = true
+	}
+
+	env := NewEnvironment(reporter)
+
+	env.Get("bad_key")
+	env.chain.assertFailed(t)
+
+	assert.True(t, reportCalled)
+}
+
 func TestEnvironment_Basic(t *testing.T) {
 	env := newEnvironment(newMockChain(t))
 
@@ -50,19 +67,6 @@ func TestEnvironment_Basic(t *testing.T) {
 	env.chain.assertNotFailed(t)
 
 	assert.Nil(t, env.Get("bad_key"))
-	env.chain.assertFailed(t)
-}
-
-func TestEnvironment_Reentrant(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	env := NewEnvironment(reporter)
-
-	reporter.reportCb = func() {
-		env.Put("good_key", 123)
-	}
-
-	env.Get("bad_key")
 	env.chain.assertFailed(t)
 }
 
