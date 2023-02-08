@@ -808,6 +808,34 @@ func (n *Number) NotUint(bits ...int) *Number {
 	return n
 }
 
+// IsNaN succeeds if number is NaN.
+//
+// value should have numeric type convertible to float64. Before comparison,
+// it is converted to float64.
+//
+// Example:
+//
+//	number := NewNumber(t, math.IsNaN())
+//	number.IsNaN()
+func (n *Number) IsNaN() *Number {
+	opChain := n.chain.enter("IsNaN()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return n
+	}
+
+	if !math.IsNaN(n.value) {
+		opChain.fail(failedNumberAsType(
+			n.value,
+			errors.New("expected: number is NaN"),
+		))
+		return n
+	}
+
+	return n
+}
+
 func failedBitsArguments() AssertionFailure {
 	return AssertionFailure{
 		Type: AssertUsage,

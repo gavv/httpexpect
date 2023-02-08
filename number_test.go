@@ -708,3 +708,13 @@ func TestNumber_IsUint(t *testing.T) {
 			chain.assertNotFailed(t)
 	})
 }
+
+func TestNumber_IsNaN(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	NewNumber(reporter, 1234).IsNaN().
+		chain.assertFailed(t)
+
+	NewNumber(reporter, math.NaN()).IsNaN().
+		chain.assertNotFailed(t)
+}
