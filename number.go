@@ -648,27 +648,21 @@ func (n *Number) IsInt(bits ...int) *Number {
 		return n
 	}
 
-	b := 64
-	if len(bits) != 0 {
-		b = bits[0]
+	bitSize := 64
+	if len(bits) > 0 {
+		bitSize = bits[0]
 	}
 
-	val := fmt.Sprintf("%+v", n.value)
-	_, err := strconv.ParseInt(val, 10, b)
-	if err != nil {
-		if b == 64 {
-			opChain.fail(failedNumberAsType(
-				n.value,
-				errors.New("expected: number can be represented as integer"),
-				err,
-			))
-		} else {
-			opChain.fail(failedNumberAsType(
-				n.value,
-				fmt.Errorf("expected: number can be parsed to integer with bit %d", b),
-				err,
-			))
-		}
+	i, f := math.Modf(n.value)
+	max := math.Pow(2, float64(bitSize))/2 - 1
+	min := math.Pow(2, float64(bitSize)) / -2
+
+	if f != 0 || i < min || i > max {
+		opChain.fail(failedNumberAsType(
+			n.value,
+			fmt.Errorf("expected: number can be parsed to integer with bit %d", bitSize),
+		))
+		return n
 	}
 
 	return n
@@ -701,25 +695,21 @@ func (n *Number) NotInt(bits ...int) *Number {
 		return n
 	}
 
-	b := 64
+	bitSize := 64
 	if len(bits) != 0 {
-		b = bits[0]
+		bitSize = bits[0]
 	}
 
-	val := fmt.Sprintf("%+v", n.value)
-	_, err := strconv.ParseInt(val, 10, b)
-	if err == nil {
-		if b == 64 {
-			opChain.fail(failedNumberAsType(
-				n.value,
-				errors.New("expected: number can't be represented as integer"),
-			))
-		} else {
-			opChain.fail(failedNumberAsType(
-				n.value,
-				fmt.Errorf("expected: number can't be parsed to integer with bit %d", b),
-			))
-		}
+	i, f := math.Modf(n.value)
+	max := math.Pow(2, float64(bitSize))/2 - 1
+	min := math.Pow(2, float64(bitSize)) / -2
+
+	if f == 0 && i >= min && i <= max {
+		opChain.fail(failedNumberAsType(
+			n.value,
+			fmt.Errorf("expected: number can't be parsed to integer with bit %d", bitSize),
+		))
+		return n
 	}
 
 	return n
