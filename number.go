@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"strconv"
 )
 
 // Number provides methods to inspect attached float64 value
@@ -742,27 +741,21 @@ func (n *Number) IsUint(bits ...int) *Number {
 		return n
 	}
 
-	b := 64
+	bitSize := 64
 	if len(bits) != 0 {
-		b = bits[0]
+		bitSize = bits[0]
 	}
 
-	val := fmt.Sprintf("%+v", n.value)
-	_, err := strconv.ParseUint(val, 10, b)
-	if err != nil {
-		if b == 64 {
-			opChain.fail(failedNumberAsType(
-				n.value,
-				errors.New("expected: number can be represented as unsigned integer"),
-				err,
-			))
-		} else {
-			opChain.fail(failedNumberAsType(
-				n.value,
-				fmt.Errorf("expected: number can be parsed to unsigned integer with bit %d", b),
-				err,
-			))
-		}
+	i, f := math.Modf(n.value)
+	max := math.Pow(2, float64(bitSize))
+	min := float64(0)
+
+	if f != 0 || i < min || i > max {
+		opChain.fail(failedNumberAsType(
+			n.value,
+			fmt.Errorf("expected: number can be parsed to unsigned integer with bit %d", bitSize),
+		))
+		return n
 	}
 
 	return n
@@ -795,25 +788,21 @@ func (n *Number) NotUint(bits ...int) *Number {
 		return n
 	}
 
-	b := 64
+	bitSize := 64
 	if len(bits) != 0 {
-		b = bits[0]
+		bitSize = bits[0]
 	}
 
-	val := fmt.Sprintf("%+v", n.value)
-	_, err := strconv.ParseUint(val, 10, b)
-	if err == nil {
-		if b == 64 {
-			opChain.fail(failedNumberAsType(
-				n.value,
-				errors.New("expected: number can't be represented as unsigned integer"),
-			))
-		} else {
-			opChain.fail(failedNumberAsType(
-				n.value,
-				fmt.Errorf("expected: number can't be parsed to unsigned integer with bit %d", b),
-			))
-		}
+	i, f := math.Modf(n.value)
+	max := math.Pow(2, float64(bitSize))
+	min := float64(0)
+
+	if f == 0 && i >= min && i <= max {
+		opChain.fail(failedNumberAsType(
+			n.value,
+			fmt.Errorf("expected: number can't be parsed to unsigned integer with bit %d", bitSize),
+		))
+		return n
 	}
 
 	return n
