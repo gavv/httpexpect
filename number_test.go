@@ -37,6 +37,7 @@ func TestNumber_FailedChain(t *testing.T) {
 	value.NotInt(0)
 	value.IsUint(0)
 	value.NotUint(0)
+	value.IsNaN()
 }
 
 func TestNumber_Constructors(t *testing.T) {
