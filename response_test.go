@@ -1218,7 +1218,7 @@ func TestResponse_JSONP(t *testing.T) {
 		body3 := ` foo ( {"key": "value"} ) ; `
 
 		for n, body := range []string{body1, body2, body3} {
-			t.Run(fmt.Sprintf("body%d", n),
+			t.Run(fmt.Sprintf("body%d", n+1),
 				func(t *testing.T) {
 					httpResp := &http.Response{
 						StatusCode: http.StatusOK,
@@ -1275,20 +1275,23 @@ func TestResponse_JSONP(t *testing.T) {
 		body3 := `foo(`
 		body4 := `foo({);`
 
-		for _, body := range []string{body1, body2, body3, body4} {
-			httpResp := &http.Response{
-				StatusCode: http.StatusOK,
-				Header:     http.Header(headers),
-				Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
-			}
+		for n, body := range []string{body1, body2, body3, body4} {
+			t.Run(fmt.Sprintf("body%d", n+1),
+				func(t *testing.T) {
+					httpResp := &http.Response{
+						StatusCode: http.StatusOK,
+						Header:     http.Header(headers),
+						Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+					}
 
-			resp := NewResponse(reporter, httpResp)
+					resp := NewResponse(reporter, httpResp)
 
-			resp.JSONP("foo")
-			resp.chain.assertFailed(t)
-			resp.chain.clearFailed()
+					resp.JSONP("foo")
+					resp.chain.assertFailed(t)
+					resp.chain.clearFailed()
 
-			assert.Nil(t, resp.JSONP("foo").Raw())
+					assert.Nil(t, resp.JSONP("foo").Raw())
+				})
 		}
 	})
 

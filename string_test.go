@@ -632,28 +632,34 @@ func TestString_AsBoolean(t *testing.T) {
 	badValues := []string{"TRUE", "FALSE", "t", "f", "1", "0", "bad"}
 
 	for _, str := range trueValues {
-		value := NewString(reporter, str)
+		t.Run(str, func(t *testing.T) {
+			value := NewString(reporter, str)
 
-		b := value.AsBoolean()
-		b.chain.assertNotFailed(t)
+			b := value.AsBoolean()
+			b.chain.assertNotFailed(t)
 
-		assert.True(t, b.Raw())
+			assert.True(t, b.Raw())
+		})
 	}
 
 	for _, str := range falseValues {
-		value := NewString(reporter, str)
+		t.Run(str, func(t *testing.T) {
+			value := NewString(reporter, str)
 
-		b := value.AsBoolean()
-		b.chain.assertNotFailed(t)
+			b := value.AsBoolean()
+			b.chain.assertNotFailed(t)
 
-		assert.False(t, b.Raw())
+			assert.False(t, b.Raw())
+		})
 	}
 
 	for _, str := range badValues {
-		value := NewString(reporter, str)
+		t.Run(str, func(t *testing.T) {
+			value := NewString(reporter, str)
 
-		b := value.AsBoolean()
-		b.chain.assertFailed(t)
+			b := value.AsBoolean()
+			b.chain.assertFailed(t)
+		})
 	}
 }
 
