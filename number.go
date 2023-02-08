@@ -659,7 +659,7 @@ func (n *Number) IsInt(bits ...int) *Number {
 	if f != 0 || i < min || i > max {
 		opChain.fail(failedNumberAsType(
 			n.value,
-			fmt.Errorf("expected: number can be parsed to integer with bit %d", bitSize),
+			fmt.Errorf("expected: number is %d-bit integer", bitSize),
 		))
 		return n
 	}
@@ -706,7 +706,7 @@ func (n *Number) NotInt(bits ...int) *Number {
 	if f == 0 && i >= min && i <= max {
 		opChain.fail(failedNumberAsType(
 			n.value,
-			fmt.Errorf("expected: number can't be parsed to integer with bit %d", bitSize),
+			fmt.Errorf("expected: number is not %d-bit integer", bitSize),
 		))
 		return n
 	}
@@ -753,7 +753,7 @@ func (n *Number) IsUint(bits ...int) *Number {
 	if f != 0 || i < min || i > max {
 		opChain.fail(failedNumberAsType(
 			n.value,
-			fmt.Errorf("expected: number can be parsed to unsigned integer with bit %d", bitSize),
+			fmt.Errorf("expected: number is %d-bit unsigned integer", bitSize),
 		))
 		return n
 	}
@@ -800,7 +800,7 @@ func (n *Number) NotUint(bits ...int) *Number {
 	if f == 0 && i >= min && i <= max {
 		opChain.fail(failedNumberAsType(
 			n.value,
-			fmt.Errorf("expected: number can't be parsed to unsigned integer with bit %d", bitSize),
+			fmt.Errorf("expected: number is not %d-bit unsigned integer", bitSize),
 		))
 		return n
 	}
