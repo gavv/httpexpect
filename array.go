@@ -275,7 +275,7 @@ func (a *Array) Iter() []Value {
 
 	for index, element := range a.value {
 		func() {
-			valueChain := opChain.replace("Iter[%v]", index)
+			valueChain := opChain.replace("Iter[%d]", index)
 			defer valueChain.leave()
 
 			ret = append(ret, *newValue(valueChain, element))
@@ -319,7 +319,7 @@ func (a *Array) Every(fn func(index int, value *Value)) *Array {
 
 	for index, element := range a.value {
 		func() {
-			valueChain := opChain.replace("Every[%v]", index)
+			valueChain := opChain.replace("Every[%d]", index)
 			defer valueChain.leave()
 
 			fn(index, newValue(valueChain, element))
@@ -369,7 +369,7 @@ func (a *Array) Filter(fn func(index int, value *Value) bool) *Array {
 
 	for index, element := range a.value {
 		func() {
-			valueChain := opChain.replace("Filter[%v]", index)
+			valueChain := opChain.replace("Filter[%d]", index)
 			defer valueChain.leave()
 
 			valueChain.setRoot()
@@ -460,7 +460,7 @@ func (a *Array) Find(fn func(index int, value *Value) bool) *Value {
 		found := false
 
 		func() {
-			valueChain := opChain.replace("Find[%v]", index)
+			valueChain := opChain.replace("Find[%d]", index)
 			defer valueChain.leave()
 
 			valueChain.setRoot()
@@ -528,7 +528,7 @@ func (a *Array) FindAll(fn func(index int, value *Value) bool) []*Value {
 
 	for index, element := range a.value {
 		func() {
-			valueChain := opChain.replace("FindAll[%v]", index)
+			valueChain := opChain.replace("FindAll[%d]", index)
 			defer valueChain.leave()
 
 			valueChain.setRoot()
@@ -581,7 +581,7 @@ func (a *Array) NotFind(fn func(index int, value *Value) bool) *Array {
 		found := false
 
 		func() {
-			valueChain := opChain.replace("NotFind[%v]", index)
+			valueChain := opChain.replace("NotFind[%d]", index)
 			defer valueChain.leave()
 
 			valueChain.setRoot()
