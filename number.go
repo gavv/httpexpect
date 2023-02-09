@@ -620,10 +620,12 @@ func (n *Number) Le(value interface{}) *Number {
 	return n
 }
 
-// IsInt succeeds if number is integer.
+// IsInt succeeds if number is a signed integer of the specified bit width
+// within range of [1;64].
 //
-// If bit is omitted, uses 64 bit as default. Otherwise, uses given bit.
-// Bit defines maximum allowed bitness for the given number.
+// If bit is omitted, uses 64 bit as default. Otherwise, uses given bits
+// argument.
+// Bits argument defines maximum allowed bitness for the given number.
 //
 // value should have numeric type convertible to float64. Before comparison,
 // it is converted to float64.
@@ -675,10 +677,12 @@ func (n *Number) IsInt(bits ...int) *Number {
 	return n
 }
 
-// NotInt succeeds if number is not integer.
+// NotInt succeeds if number is not a signed integer of the specified bit
+// width within range of [1;64].
 //
-// If bit is omitted, uses 64 bit as default. Otherwise, uses given bit.
-// Bit defines maximum allowed bitness for the given number.
+// If bit is omitted, uses 64 bit as default. Otherwise, uses given bits
+// argument.
+// Bits argument defines maximum allowed bitness for the given number.
 //
 // value should have numeric type convertible to float64. Before comparison,
 // it is converted to float64.
@@ -730,10 +734,12 @@ func (n *Number) NotInt(bits ...int) *Number {
 	return n
 }
 
-// IsUint succeeds if number is unsigned integer.
+// IsUint succeeds if number is an unsigned integer of the specified bit
+// width within range of [1;64].
 //
-// If bit is omitted, uses 64 bit as default. Otherwise, uses given bit.
-// Bit defines maximum allowed bitness for the given number.
+// If bit is omitted, uses 64 bit as default. Otherwise, uses given bits
+// argument.
+// Bits argument defines maximum allowed bitness for the given number.
 //
 // value should have numeric type convertible to float64. Before comparison,
 // it is converted to float64.
@@ -785,10 +791,12 @@ func (n *Number) IsUint(bits ...int) *Number {
 	return n
 }
 
-// NotUint succeeds if number is not unsigned integer.
+// NotUint succeeds if number is not an unsigned integer of the specified bit
+// width within range of [1;64].
 //
-// If bit is omitted, uses 64 bit as default. Otherwise, uses given bit.
-// Bit defines maximum allowed bitness for the given number.
+// If bit is omitted, uses 64 bit as default. Otherwise, uses given bits
+// argument.
+// Bits argument defines maximum allowed bitness for the given number.
 //
 // value should have numeric type convertible to float64. Before comparison,
 // it is converted to float64.
