@@ -659,6 +659,16 @@ func (n *Number) IsInt(bits ...int) *Number {
 		bitSize = bits[0]
 	}
 
+	if bitSize < 1 || bitSize > 64 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				fmt.Errorf("unexpected bit size outside range [1;64]: %d", bitSize),
+			},
+		})
+		return n
+	}
+
 	i, f := math.Modf(n.value)
 	max := math.Pow(2, float64(bitSize))/2 - 1
 	min := math.Pow(2, float64(bitSize)) / -2
@@ -714,6 +724,16 @@ func (n *Number) NotInt(bits ...int) *Number {
 	bitSize := 64
 	if len(bits) != 0 {
 		bitSize = bits[0]
+	}
+
+	if bitSize < 1 || bitSize > 64 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				fmt.Errorf("unexpected bit size outside range [1;64]: %d", bitSize),
+			},
+		})
+		return n
 	}
 
 	i, f := math.Modf(n.value)
@@ -773,6 +793,16 @@ func (n *Number) IsUint(bits ...int) *Number {
 		bitSize = bits[0]
 	}
 
+	if bitSize < 1 || bitSize > 64 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				fmt.Errorf("unexpected bit size outside range [1;64]: %d", bitSize),
+			},
+		})
+		return n
+	}
+
 	i, f := math.Modf(n.value)
 	max := math.Pow(2, float64(bitSize))
 	min := float64(0)
@@ -828,6 +858,16 @@ func (n *Number) NotUint(bits ...int) *Number {
 	bitSize := 64
 	if len(bits) != 0 {
 		bitSize = bits[0]
+	}
+
+	if bitSize < 1 || bitSize > 64 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				fmt.Errorf("unexpected bit size outside range [1;64]: %d", bitSize),
+			},
+		})
+		return n
 	}
 
 	i, f := math.Modf(n.value)
