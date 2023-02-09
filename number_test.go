@@ -661,6 +661,16 @@ func TestNumber_IsInt(t *testing.T) {
 		NewNumber(reporter, math.NaN()).NotInt().
 			chain.assertNotFailed(t)
 	})
+
+	t.Run("big integer cases", func(t *testing.T) {
+		t.Skip("skipped until migration to big Float is done")
+
+		NewNumber(reporter, math.MaxInt64).IsInt().
+			chain.assertNotFailed(t)
+
+		NewNumber(reporter, math.MaxInt64).NotInt(64).
+			chain.assertFailed(t)
+	})
 }
 
 func TestNumber_IsUint(t *testing.T) {
@@ -732,6 +742,16 @@ func TestNumber_IsUint(t *testing.T) {
 
 		NewNumber(reporter, math.NaN()).NotUint().
 			chain.assertNotFailed(t)
+	})
+
+	t.Run("big integer cases", func(t *testing.T) {
+		t.Skip("skipped until migration to big Float is done")
+
+		NewNumber(reporter, math.MaxUint64).IsUint().
+			chain.assertNotFailed(t)
+
+		NewNumber(reporter, math.MaxUint64).NotUint(64).
+			chain.assertFailed(t)
 	})
 }
 
