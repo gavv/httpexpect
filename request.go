@@ -16,6 +16,7 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ajg/form"
@@ -28,9 +29,9 @@ import (
 // Request provides methods to incrementally build http.Request object,
 // send it, and receive response.
 type Request struct {
-	noCopy noCopy
 	config Config
 	chain  *chain
+	mu     sync.RWMutex
 
 	redirectPolicy RedirectPolicy
 	maxRedirects   int
@@ -198,6 +199,9 @@ func (r *Request) Alias(name string) *Request {
 	opChain := r.chain.enter("Alias(%q)", name)
 	defer opChain.leave()
 
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	r.chain.setAlias(name)
 	return r
 }
@@ -213,6 +217,9 @@ func (r *Request) Alias(name string) *Request {
 func (r *Request) WithName(name string) *Request {
 	opChain := r.chain.enter("WithName()")
 	defer opChain.leave()
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	if opChain.failed() {
 		return r
@@ -240,6 +247,9 @@ func (r *Request) WithName(name string) *Request {
 func (r *Request) WithMatcher(matcher func(*Response)) *Request {
 	opChain := r.chain.enter("WithMatcher()")
 	defer opChain.leave()
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	if opChain.failed() {
 		return r
@@ -274,6 +284,9 @@ func (r *Request) WithMatcher(matcher func(*Response)) *Request {
 func (r *Request) WithTransformer(transform func(*http.Request)) *Request {
 	opChain := r.chain.enter("WithTransformer()")
 	defer opChain.leave()
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	if opChain.failed() {
 		return r
@@ -315,6 +328,9 @@ func (r *Request) WithClient(client Client) *Request {
 	opChain := r.chain.enter("WithClient()")
 	defer opChain.leave()
 
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	if opChain.failed() {
 		return r
 	}
@@ -351,6 +367,9 @@ func (r *Request) WithClient(client Client) *Request {
 func (r *Request) WithHandler(handler http.Handler) *Request {
 	opChain := r.chain.enter("WithHandler()")
 	defer opChain.leave()
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	if opChain.failed() {
 		return r
@@ -401,6 +420,9 @@ func (r *Request) WithContext(ctx context.Context) *Request {
 	opChain := r.chain.enter("WithContext()")
 	defer opChain.leave()
 
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	if opChain.failed() {
 		return r
 	}
@@ -442,6 +464,9 @@ func (r *Request) WithContext(ctx context.Context) *Request {
 func (r *Request) WithTimeout(timeout time.Duration) *Request {
 	opChain := r.chain.enter("WithTimeout()")
 	defer opChain.leave()
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	if opChain.failed() {
 		return r
@@ -512,6 +537,9 @@ func (r *Request) WithRedirectPolicy(policy RedirectPolicy) *Request {
 	opChain := r.chain.enter("WithRedirectPolicy()")
 	defer opChain.leave()
 
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	if opChain.failed() {
 		return r
 	}
@@ -543,6 +571,9 @@ func (r *Request) WithRedirectPolicy(policy RedirectPolicy) *Request {
 func (r *Request) WithMaxRedirects(maxRedirects int) *Request {
 	opChain := r.chain.enter("WithMaxRedirects()")
 	defer opChain.leave()
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	if opChain.failed() {
 		return r
@@ -618,6 +649,9 @@ func (r *Request) WithRetryPolicy(policy RetryPolicy) *Request {
 	opChain := r.chain.enter("WithRetryPolicy()")
 	defer opChain.leave()
 
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	if opChain.failed() {
 		return r
 	}
@@ -649,6 +683,9 @@ func (r *Request) WithRetryPolicy(policy RetryPolicy) *Request {
 func (r *Request) WithMaxRetries(maxRetries int) *Request {
 	opChain := r.chain.enter("WithMaxRetries()")
 	defer opChain.leave()
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	if opChain.failed() {
 		return r
@@ -689,6 +726,9 @@ func (r *Request) WithMaxRetries(maxRetries int) *Request {
 func (r *Request) WithRetryDelay(minDelay, maxDelay time.Duration) *Request {
 	opChain := r.chain.enter("WithRetryDelay()")
 	defer opChain.leave()
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	if opChain.failed() {
 		return r
@@ -741,6 +781,9 @@ func (r *Request) WithWebsocketUpgrade() *Request {
 	opChain := r.chain.enter("WithWebsocketUpgrade()")
 	defer opChain.leave()
 
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	if opChain.failed() {
 		return r
 	}
@@ -771,6 +814,9 @@ func (r *Request) WithWebsocketUpgrade() *Request {
 func (r *Request) WithWebsocketDialer(dialer WebsocketDialer) *Request {
 	opChain := r.chain.enter("WithWebsocketDialer()")
 	defer opChain.leave()
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	if opChain.failed() {
 		return r
@@ -811,6 +857,9 @@ func (r *Request) WithWebsocketDialer(dialer WebsocketDialer) *Request {
 func (r *Request) WithPath(key string, value interface{}) *Request {
 	opChain := r.chain.enter("WithPath()")
 	defer opChain.leave()
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	if opChain.failed() {
 		return r
@@ -864,6 +913,9 @@ func (r *Request) WithPath(key string, value interface{}) *Request {
 func (r *Request) WithPathObject(object interface{}) *Request {
 	opChain := r.chain.enter("WithPathObject()")
 	defer opChain.leave()
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	if opChain.failed() {
 		return r
@@ -962,6 +1014,9 @@ func (r *Request) WithQuery(key string, value interface{}) *Request {
 	opChain := r.chain.enter("WithQuery()")
 	defer opChain.leave()
 
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	if opChain.failed() {
 		return r
 	}
@@ -1013,6 +1068,9 @@ func (r *Request) WithQuery(key string, value interface{}) *Request {
 func (r *Request) WithQueryObject(object interface{}) *Request {
 	opChain := r.chain.enter("WithQueryObject()")
 	defer opChain.leave()
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	if opChain.failed() {
 		return r
@@ -1080,6 +1138,9 @@ func (r *Request) WithQueryString(query string) *Request {
 	opChain := r.chain.enter("WithQueryString()")
 	defer opChain.leave()
 
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	if opChain.failed() {
 		return r
 	}
@@ -1126,6 +1187,9 @@ func (r *Request) WithURL(urlStr string) *Request {
 	opChain := r.chain.enter("WithURL()")
 	defer opChain.leave()
 
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	if opChain.failed() {
 		return r
 	}
@@ -1164,6 +1228,9 @@ func (r *Request) WithHeaders(headers map[string]string) *Request {
 	opChain := r.chain.enter("WithHeaders()")
 	defer opChain.leave()
 
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	if opChain.failed() {
 		return r
 	}
@@ -1188,6 +1255,9 @@ func (r *Request) WithHeaders(headers map[string]string) *Request {
 func (r *Request) WithHeader(k, v string) *Request {
 	opChain := r.chain.enter("WithHeader()")
 	defer opChain.leave()
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	if opChain.failed() {
 		return r
@@ -1233,6 +1303,9 @@ func (r *Request) WithCookies(cookies map[string]string) *Request {
 	opChain := r.chain.enter("WithCookies()")
 	defer opChain.leave()
 
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	if opChain.failed() {
 		return r
 	}
@@ -1260,6 +1333,9 @@ func (r *Request) WithCookies(cookies map[string]string) *Request {
 func (r *Request) WithCookie(k, v string) *Request {
 	opChain := r.chain.enter("WithCookie()")
 	defer opChain.leave()
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	if opChain.failed() {
 		return r
@@ -1291,6 +1367,9 @@ func (r *Request) WithBasicAuth(username, password string) *Request {
 	opChain := r.chain.enter("WithBasicAuth()")
 	defer opChain.leave()
 
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	if opChain.failed() {
 		return r
 	}
@@ -1313,6 +1392,9 @@ func (r *Request) WithBasicAuth(username, password string) *Request {
 func (r *Request) WithHost(host string) *Request {
 	opChain := r.chain.enter("WithHost()")
 	defer opChain.leave()
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	if opChain.failed() {
 		return r
@@ -1338,6 +1420,9 @@ func (r *Request) WithHost(host string) *Request {
 func (r *Request) WithProto(proto string) *Request {
 	opChain := r.chain.enter("WithProto()")
 	defer opChain.leave()
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	if opChain.failed() {
 		return r
@@ -1386,6 +1471,9 @@ func (r *Request) WithChunked(reader io.Reader) *Request {
 	opChain := r.chain.enter("WithChunked()")
 	defer opChain.leave()
 
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	if opChain.failed() {
 		return r
 	}
@@ -1422,6 +1510,9 @@ func (r *Request) WithBytes(b []byte) *Request {
 	opChain := r.chain.enter("WithBytes()")
 	defer opChain.leave()
 
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	if opChain.failed() {
 		return r
 	}
@@ -1449,6 +1540,9 @@ func (r *Request) WithBytes(b []byte) *Request {
 func (r *Request) WithText(s string) *Request {
 	opChain := r.chain.enter("WithText()")
 	defer opChain.leave()
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	if opChain.failed() {
 		return r
@@ -1481,6 +1575,9 @@ func (r *Request) WithText(s string) *Request {
 func (r *Request) WithJSON(object interface{}) *Request {
 	opChain := r.chain.enter("WithJSON()")
 	defer opChain.leave()
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	if opChain.failed() {
 		return r
@@ -1535,6 +1632,9 @@ func (r *Request) WithJSON(object interface{}) *Request {
 func (r *Request) WithForm(object interface{}) *Request {
 	opChain := r.chain.enter("WithForm()")
 	defer opChain.leave()
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	if opChain.failed() {
 		return r
@@ -1609,6 +1709,9 @@ func (r *Request) WithFormField(key string, value interface{}) *Request {
 	opChain := r.chain.enter("WithFormField()")
 	defer opChain.leave()
 
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	if opChain.failed() {
 		return r
 	}
@@ -1667,6 +1770,9 @@ func (r *Request) WithFile(key, path string, reader ...io.Reader) *Request {
 	opChain := r.chain.enter("WithFile()")
 	defer opChain.leave()
 
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	if opChain.failed() {
 		return r
 	}
@@ -1704,6 +1810,9 @@ func (r *Request) WithFile(key, path string, reader ...io.Reader) *Request {
 func (r *Request) WithFileBytes(key, path string, data []byte) *Request {
 	opChain := r.chain.enter("WithFileBytes()")
 	defer opChain.leave()
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	if opChain.failed() {
 		return r
@@ -1797,6 +1906,9 @@ func (r *Request) WithMultipart() *Request {
 	opChain := r.chain.enter("WithMultipart()")
 	defer opChain.leave()
 
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	if opChain.failed() {
 		return r
 	}
@@ -1834,6 +1946,9 @@ func (r *Request) WithMultipart() *Request {
 func (r *Request) Expect() *Response {
 	opChain := r.chain.enter("Expect()")
 	defer opChain.leave()
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	resp := r.expect(opChain)
 

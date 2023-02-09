@@ -93,6 +93,35 @@ func TestRequest_Constructors(t *testing.T) {
 	})
 }
 
+func TestRequest_Reentrant(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
+	client := &mockClient{}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
+	}
+
+	req := NewRequestC(config, "GET", "")
+
+	reportCalled := false
+	reporter.reportCb = func() {
+		req.WithTransformer(func(r *http.Request) {
+			r.Header.Add("foo", "11")
+		})
+		reportCalled = true
+	}
+
+	req.WithTransformer(nil)
+	req.chain.assertFailed(t)
+
+	assert.True(t, reportCalled)
+}
+
 func TestRequest_Alias(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
