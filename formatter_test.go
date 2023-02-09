@@ -651,6 +651,56 @@ func TestFormatter_FloatFormat(t *testing.T) {
 	}
 }
 
+func TestFormatter_DigitSeparator(t *testing.T) {
+	type testCase struct {
+		name      string
+		separator DigitSeparator
+		format    FloatFormat
+		value     interface{}
+		wantText  string
+	}
+
+	testCases := []testCase{
+		{
+			name:      "float",
+			separator: DigitSeparatorUnderscore,
+			format:    FloatFormatDecimal,
+			value:     float32(12345678),
+			wantText:  "12_345_678",
+		},
+		{
+			name:      "float64 auto small exponent",
+			separator: DigitSeparatorUnderscore,
+			format:    FloatFormatAuto,
+			value:     float64(1.23456789),
+			wantText:  "1.234_567_89",
+		},
+		{
+			name:      "nofrac scientific",
+			separator: DigitSeparatorUnderscore,
+			format:    FloatFormatScientific,
+			value:     float32(12345678),
+			wantText:  "1.234_567_8e+07",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			formatter := DefaultFormatter{
+				DigitSeparator: tc.separator,
+				FloatFormat:    tc.format,
+			}
+			formatData := formatter.buildFormatData(
+				&AssertionContext{},
+				&AssertionFailure{
+					Type:   AssertValid,
+					Actual: &AssertionValue{tc.value},
+				})
+			assert.Equal(t, tc.wantText, formatData.Actual)
+		})
+	}
+}
+
 func TestFormatter_FloatFields(t *testing.T) {
 	type testCase struct {
 		name     string
