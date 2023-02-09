@@ -38,6 +38,7 @@ func TestNumber_FailedChain(t *testing.T) {
 	value.IsUint(0)
 	value.NotUint(0)
 	value.IsNaN()
+	value.NotNaN()
 }
 
 func TestNumber_Constructors(t *testing.T) {
@@ -718,4 +719,10 @@ func TestNumber_IsNaN(t *testing.T) {
 
 	NewNumber(reporter, math.NaN()).IsNaN().
 		chain.assertNotFailed(t)
+
+	NewNumber(reporter, 1234).NotNaN().
+		chain.assertNotFailed(t)
+
+	NewNumber(reporter, math.NaN()).NotNaN().
+		chain.assertFailed(t)
 }

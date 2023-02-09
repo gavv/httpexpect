@@ -878,3 +878,34 @@ func (n *Number) IsNaN() *Number {
 
 	return n
 }
+
+// NotNaN succeeds if number is not NaN.
+//
+// value should have numeric type convertible to float64. Before comparison,
+// it is converted to float64.
+//
+// Example:
+//
+//	number := NewNumber(t, 1234)
+//	number.NotNaN()
+func (n *Number) NotNaN() *Number {
+	opChain := n.chain.enter("NotNaN()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return n
+	}
+
+	if math.IsNaN(n.value) {
+		opChain.fail(AssertionFailure{
+			Type:   AssertType,
+			Actual: &AssertionValue{n.value},
+			Errors: []error{
+				errors.New("expected: number is NaN"),
+			},
+		})
+		return n
+	}
+
+	return n
+}
