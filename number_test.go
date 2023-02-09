@@ -704,13 +704,13 @@ func TestNumber_IsUint(t *testing.T) {
 		NewNumber(reporter, -math.MaxUint8).IsUint(32).
 			chain.assertFailed(t)
 
-		NewNumber(reporter, math.MaxUint64).IsUint(64).
+		NewNumber(reporter, math.MaxUint8).IsUint(64).
 			chain.assertNotFailed(t)
 
 		NewNumber(reporter, math.MaxUint8).NotUint(32).
 			chain.assertFailed(t)
 
-		NewNumber(reporter, math.MaxUint64).NotUint(64).
+		NewNumber(reporter, math.MaxUint8).NotUint(64).
 			chain.assertFailed(t)
 	})
 

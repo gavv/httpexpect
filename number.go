@@ -830,16 +830,52 @@ func (n *Number) IsUint(bits ...int) *Number {
 		return n
 	}
 
-	i, f := math.Modf(n.value)
-	max := math.Pow(2, float64(bitSize))
-	min := float64(0)
-
-	if f != 0 || i < min || i > max {
+	if math.IsNaN(n.value) {
 		opChain.fail(AssertionFailure{
 			Type:   AssertType,
 			Actual: &AssertionValue{n.value},
 			Errors: []error{
-				fmt.Errorf("expected: number is %d-bit unsigned integer", bitSize),
+				fmt.Errorf("expected: number is unsigned %d-bit integer", bitSize),
+			},
+		})
+		return n
+	}
+
+	// big.Accuracy for big.Uint64 could not catch fractal.
+	_, fractal := math.Modf(n.value)
+	if fractal != 0 {
+		opChain.fail(AssertionFailure{
+			Type:   AssertType,
+			Actual: &AssertionValue{n.value},
+			Errors: []error{
+				fmt.Errorf("expected: number is unsigned %d-bit integer", bitSize),
+			},
+		})
+		return n
+	}
+
+	fnum := big.NewFloat(n.value)
+	inum, acc := fnum.Uint64()
+	if acc != big.Exact {
+		opChain.fail(AssertionFailure{
+			Type:   AssertType,
+			Actual: &AssertionValue{n.value},
+			Errors: []error{
+				fmt.Errorf("expected: number is unsigned %d-bit integer", bitSize),
+			},
+		})
+		return n
+	}
+
+	imax := (uint64(1) << (bitSize)) - 1
+	imin := uint64(0)
+	if inum < imin || inum > imax {
+		opChain.fail(AssertionFailure{
+			Type:     AssertInRange,
+			Actual:   &AssertionValue{n.value},
+			Expected: &AssertionValue{AssertionRange{1, 64}},
+			Errors: []error{
+				fmt.Errorf("expected: number is in range of [%d;%d]", imin, imax),
 			},
 		})
 		return n
@@ -896,20 +932,25 @@ func (n *Number) NotUint(bits ...int) *Number {
 		})
 		return n
 	}
-
-	i, f := math.Modf(n.value)
-	max := math.Pow(2, float64(bitSize))
-	min := float64(0)
-
-	if f == 0 && i >= min && i <= max {
-		opChain.fail(AssertionFailure{
-			Type:   AssertType,
-			Actual: &AssertionValue{n.value},
-			Errors: []error{
-				fmt.Errorf("expected: number is not %d-bit unsigned integer", bitSize),
-			},
-		})
-		return n
+	// big.Accuracy for big.Uint64 could not catch fractal.
+	_, fractal := math.Modf(n.value)
+	if !math.IsNaN(n.value) && fractal == 0 {
+		inum, acc := big.NewFloat(n.value).Uint64()
+		if acc == big.Exact {
+			imax := (uint64(1) << (bitSize)) - 1
+			imin := uint64(0)
+			if !(inum < imin || inum > imax) {
+				opChain.fail(AssertionFailure{
+					Type:     AssertInRange,
+					Actual:   &AssertionValue{n.value},
+					Expected: &AssertionValue{AssertionRange{1, 64}},
+					Errors: []error{
+						fmt.Errorf("expected: number is outside range of [%d;%d]", imin, imax),
+					},
+				})
+				return n
+			}
+		}
 	}
 
 	return n
