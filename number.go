@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"math/big"
 )
 
 // Number provides methods to inspect attached float64 value
@@ -669,16 +670,38 @@ func (n *Number) IsInt(bits ...int) *Number {
 		return n
 	}
 
-	i, f := math.Modf(n.value)
-	max := math.Pow(2, float64(bitSize))/2 - 1
-	min := math.Pow(2, float64(bitSize)) / -2
-
-	if f != 0 || i < min || i > max {
+	if math.IsNaN(n.value) {
 		opChain.fail(AssertionFailure{
 			Type:   AssertType,
 			Actual: &AssertionValue{n.value},
 			Errors: []error{
 				fmt.Errorf("expected: number is %d-bit integer", bitSize),
+			},
+		})
+		return n
+	}
+
+	inum, acc := big.NewFloat(n.value).Int64()
+	if acc != big.Exact {
+		opChain.fail(AssertionFailure{
+			Type:   AssertType,
+			Actual: &AssertionValue{n.value},
+			Errors: []error{
+				fmt.Errorf("expected: number is %d-bit integer", bitSize),
+			},
+		})
+		return n
+	}
+
+	imax := int64((uint64(1) << (bitSize - 1)) - 1)
+	imin := -imax - 1
+	if inum < imin || inum > imax {
+		opChain.fail(AssertionFailure{
+			Type:     AssertInRange,
+			Actual:   &AssertionValue{n.value},
+			Expected: &AssertionValue{AssertionRange{1, 64}},
+			Errors: []error{
+				fmt.Errorf("expected: number is in range of [%d;%d]", imin, imax),
 			},
 		})
 		return n
@@ -736,19 +759,23 @@ func (n *Number) NotInt(bits ...int) *Number {
 		return n
 	}
 
-	i, f := math.Modf(n.value)
-	max := math.Pow(2, float64(bitSize))/2 - 1
-	min := math.Pow(2, float64(bitSize)) / -2
-
-	if f == 0 && i >= min && i <= max {
-		opChain.fail(AssertionFailure{
-			Type:   AssertType,
-			Actual: &AssertionValue{n.value},
-			Errors: []error{
-				fmt.Errorf("expected: number is not %d-bit integer", bitSize),
-			},
-		})
-		return n
+	if !math.IsNaN(n.value) {
+		inum, acc := big.NewFloat(n.value).Int64()
+		if acc == big.Exact {
+			imax := int64((uint64(1) << (bitSize - 1)) - 1)
+			imin := -imax - 1
+			if !(inum < imin || inum > imax) {
+				opChain.fail(AssertionFailure{
+					Type:     AssertInRange,
+					Actual:   &AssertionValue{n.value},
+					Expected: &AssertionValue{AssertionRange{1, 64}},
+					Errors: []error{
+						fmt.Errorf("expected: number is outside range of [%d;%d]", imin, imax),
+					},
+				})
+				return n
+			}
+		}
 	}
 
 	return n
