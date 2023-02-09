@@ -92,6 +92,15 @@ This project highly depends on contributors. Thank you all for your amazing work
 
 If you would like to submit code, see [HACKING.md](HACKING.md).
 
+## Donating
+
+If you would like to support my open-source work, you can do it here:
+
+* [Liberapay](https://liberapay.com/gavv)
+* [PayPal](https://www.paypal.com/paypalme/victorgaydov)
+
+Thanks!
+
 ## Examples
 
 See [`_examples`](_examples) directory for complete standalone examples.
