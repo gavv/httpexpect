@@ -1732,7 +1732,7 @@ func (a *Array) NotValueEqual(index int, value interface{}) *Array {
 
 	if reflect.DeepEqual(expected, a.value[index]) {
 		opChain.fail(AssertionFailure{
-			Type:     AssertEqual,
+			Type:     AssertNotEqual,
 			Actual:   &AssertionValue{a.value[index]},
 			Expected: &AssertionValue{value},
 			Errors: []error{
