@@ -79,6 +79,10 @@ type DefaultFormatter struct {
 	// defines the function map passed to template engine.
 	// May be nil.
 	TemplateFuncs template.FuncMap
+
+	// Digit separator
+	// Default is DigitSeparatorUnderscore
+	DigitSeparator DigitSeparator
 }
 
 // FormatSuccess implements Formatter.FormatSuccess.
@@ -104,6 +108,23 @@ func (f *DefaultFormatter) FormatFailure(
 			defaultFailureTemplate, defaultTemplateFuncs, ctx, failure)
 	}
 }
+
+// DigitSeparator defines the separator used to format integers and float
+type DigitSeparator int
+
+const (
+	// Separate using underscore
+	DigitSeparatorUnderscore DigitSeparator = iota
+
+	// Separate using comma
+	DigitSeparatorComma
+
+	// Separate using apostrophe
+	DigitSeparatorApostrophe
+
+	// Do not separate
+	DigitSeparatorNone
+)
 
 // FloatFormat defines the format in which all floats are printed.
 type FloatFormat int
@@ -482,11 +503,11 @@ func (f *DefaultFormatter) fillDelta(
 
 func (f *DefaultFormatter) formatValue(value interface{}) string {
 	if flt := extractFloat32(value); flt != nil {
-		return f.formatFloatValue(*flt, 32)
+		return f.addDigitGrouping(f.formatFloatValue(*flt, 32))
 	}
 
 	if flt := extractFloat64(value); flt != nil {
-		return f.formatFloatValue(*flt, 64)
+		return f.addDigitGrouping(f.formatFloatValue(*flt, 64))
 	}
 
 	if !refIsNil(value) && !refIsHTTP(value) {
@@ -524,6 +545,68 @@ func (f *DefaultFormatter) formatFloatValue(value float64, bits int) string {
 	default:
 		return fmt.Sprintf("%v", value)
 	}
+}
+
+func (f *DefaultFormatter) addDigitGrouping(numStr string) string {
+	var sign string
+	if numStr[0] == '-' || numStr[0] == '+' {
+		sign = string(numStr[0])
+		numStr = numStr[1:]
+	}
+
+	parts := strings.SplitN(numStr, ".", 2)
+	intPart := f.groupDigitsInString(parts[0])
+
+	var fracPart string
+	var expPart string
+	if len(parts) == 2 {
+		parts = strings.SplitN(parts[1], "e", 2)
+		// using Reverse(parts[0]) because digit grouping in fractional part is required from Most Significant Bit
+		fracPart = "." + f.groupDigitsInString(Reverse(parts[0]))
+		if len(parts) == 2 {
+			expPart = "e" + parts[1]
+		}
+	}
+
+	return sign + Reverse(intPart) + fracPart + expPart
+}
+
+// Performs digit grouping on a string starting from Least Significant Bit
+// in groups of thousands
+func (f *DefaultFormatter) groupDigitsInString(numStr string) string {
+	var separator string
+	switch f.DigitSeparator {
+	case DigitSeparatorUnderscore:
+		separator = "_"
+		break
+	case DigitSeparatorApostrophe:
+		separator = "'"
+		break
+	case DigitSeparatorComma:
+		separator = ","
+		break
+	case DigitSeparatorNone:
+		separator = ""
+		break
+	default:
+		separator = "_"
+	}
+	var groupedPart string
+	for i, r := range numStr {
+		groupedPart = string(r) + groupedPart
+		if (len(numStr)-i-1)%3 == 0 && i != len(numStr)-1 {
+			groupedPart = separator + groupedPart
+		}
+	}
+	return groupedPart
+}
+
+func Reverse(s string) string {
+	runes := []rune(s)
+	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
+		runes[i], runes[j] = runes[j], runes[i]
+	}
+	return string(runes)
 }
 
 func (f *DefaultFormatter) formatTypedValue(value interface{}) string {
