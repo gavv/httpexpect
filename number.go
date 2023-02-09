@@ -701,7 +701,7 @@ func (n *Number) IsInt(bits ...int) *Number {
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{AssertionRange{1, 64}},
 			Errors: []error{
-				fmt.Errorf("expected: number is in range of [%d;%d]", imin, imax),
+				fmt.Errorf("expected: number fits %d-bit integer", bitSize),
 			},
 		})
 		return n
@@ -770,7 +770,7 @@ func (n *Number) NotInt(bits ...int) *Number {
 					Actual:   &AssertionValue{n.value},
 					Expected: &AssertionValue{AssertionRange{1, 64}},
 					Errors: []error{
-						fmt.Errorf("expected: number is outside range of [%d;%d]", imin, imax),
+						fmt.Errorf("expected: number doesn't fit %d-bit integer", bitSize),
 					},
 				})
 				return n
@@ -875,7 +875,7 @@ func (n *Number) IsUint(bits ...int) *Number {
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{AssertionRange{1, 64}},
 			Errors: []error{
-				fmt.Errorf("expected: number is in range of [%d;%d]", imin, imax),
+				fmt.Errorf("expected: number fits %d-bit unsigned integer", bitSize),
 			},
 		})
 		return n
@@ -945,7 +945,7 @@ func (n *Number) NotUint(bits ...int) *Number {
 					Actual:   &AssertionValue{n.value},
 					Expected: &AssertionValue{AssertionRange{1, 64}},
 					Errors: []error{
-						fmt.Errorf("expected: number is outside range of [%d;%d]", imin, imax),
+						fmt.Errorf("expected: number doesn't fit %d-bit unsigned integer", bitSize),
 					},
 				})
 				return n
@@ -1032,7 +1032,7 @@ func (n *Number) IsFloat(bits ...int) *Number {
 					-math.MaxFloat32, math.MaxFloat32},
 				},
 				Errors: []error{
-					fmt.Errorf("expected: number is %d-bit float", bitSize),
+					fmt.Errorf("expected: number fits %d-bit float", bitSize),
 				},
 			})
 			return n
@@ -1047,7 +1047,7 @@ func (n *Number) IsFloat(bits ...int) *Number {
 					-math.MaxFloat64, math.MaxFloat64},
 				},
 				Errors: []error{
-					fmt.Errorf("expected: number is %d-bit float", bitSize),
+					fmt.Errorf("expected: number fits %d-bit float", bitSize),
 				},
 			})
 			return n
@@ -1129,7 +1129,7 @@ func (n *Number) NotFloat(bits ...int) *Number {
 						-math.MaxFloat32, math.MaxFloat32},
 					},
 					Errors: []error{
-						fmt.Errorf("expected: number is %d-bit float", bitSize),
+						fmt.Errorf("expected: number doesn't fit %d-bit float", bitSize),
 					},
 				})
 				return n
@@ -1144,7 +1144,7 @@ func (n *Number) NotFloat(bits ...int) *Number {
 						-math.MaxFloat64, math.MaxFloat64},
 					},
 					Errors: []error{
-						fmt.Errorf("expected: number is %d-bit float", bitSize),
+						fmt.Errorf("expected: number doesn't fit %d-bit float", bitSize),
 					},
 				})
 				return n
