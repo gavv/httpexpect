@@ -643,7 +643,12 @@ func (n *Number) IsInt(bits ...int) *Number {
 	}
 
 	if len(bits) > 1 {
-		opChain.fail(failedBitsArguments())
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected multiple bits arguments"),
+			},
+		})
 		return n
 	}
 
@@ -657,10 +662,13 @@ func (n *Number) IsInt(bits ...int) *Number {
 	min := math.Pow(2, float64(bitSize)) / -2
 
 	if f != 0 || i < min || i > max {
-		opChain.fail(failedNumberAsType(
-			n.value,
-			fmt.Errorf("expected: number is %d-bit integer", bitSize),
-		))
+		opChain.fail(AssertionFailure{
+			Type:   AssertType,
+			Actual: &AssertionValue{n.value},
+			Errors: []error{
+				fmt.Errorf("expected: number is %d-bit integer", bitSize),
+			},
+		})
 		return n
 	}
 
@@ -690,7 +698,12 @@ func (n *Number) NotInt(bits ...int) *Number {
 	}
 
 	if len(bits) > 1 {
-		opChain.fail(failedBitsArguments())
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected multiple bits arguments"),
+			},
+		})
 		return n
 	}
 
@@ -704,10 +717,13 @@ func (n *Number) NotInt(bits ...int) *Number {
 	min := math.Pow(2, float64(bitSize)) / -2
 
 	if f == 0 && i >= min && i <= max {
-		opChain.fail(failedNumberAsType(
-			n.value,
-			fmt.Errorf("expected: number is not %d-bit integer", bitSize),
-		))
+		opChain.fail(AssertionFailure{
+			Type:   AssertType,
+			Actual: &AssertionValue{n.value},
+			Errors: []error{
+				fmt.Errorf("expected: number is not %d-bit integer", bitSize),
+			},
+		})
 		return n
 	}
 
@@ -737,7 +753,12 @@ func (n *Number) IsUint(bits ...int) *Number {
 	}
 
 	if len(bits) > 1 {
-		opChain.fail(failedBitsArguments())
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected multiple bits arguments"),
+			},
+		})
 		return n
 	}
 
@@ -751,10 +772,13 @@ func (n *Number) IsUint(bits ...int) *Number {
 	min := float64(0)
 
 	if f != 0 || i < min || i > max {
-		opChain.fail(failedNumberAsType(
-			n.value,
-			fmt.Errorf("expected: number is %d-bit unsigned integer", bitSize),
-		))
+		opChain.fail(AssertionFailure{
+			Type:   AssertType,
+			Actual: &AssertionValue{n.value},
+			Errors: []error{
+				fmt.Errorf("expected: number is %d-bit unsigned integer", bitSize),
+			},
+		})
 		return n
 	}
 
@@ -784,7 +808,12 @@ func (n *Number) NotUint(bits ...int) *Number {
 	}
 
 	if len(bits) > 1 {
-		opChain.fail(failedBitsArguments())
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected multiple bits arguments"),
+			},
+		})
 		return n
 	}
 
@@ -798,10 +827,13 @@ func (n *Number) NotUint(bits ...int) *Number {
 	min := float64(0)
 
 	if f == 0 && i >= min && i <= max {
-		opChain.fail(failedNumberAsType(
-			n.value,
-			fmt.Errorf("expected: number is not %d-bit unsigned integer", bitSize),
-		))
+		opChain.fail(AssertionFailure{
+			Type:   AssertType,
+			Actual: &AssertionValue{n.value},
+			Errors: []error{
+				fmt.Errorf("expected: number is not %d-bit unsigned integer", bitSize),
+			},
+		})
 		return n
 	}
 
@@ -826,29 +858,15 @@ func (n *Number) IsNaN() *Number {
 	}
 
 	if !math.IsNaN(n.value) {
-		opChain.fail(failedNumberAsType(
-			n.value,
-			errors.New("expected: number is NaN"),
-		))
+		opChain.fail(AssertionFailure{
+			Type:   AssertType,
+			Actual: &AssertionValue{n.value},
+			Errors: []error{
+				errors.New("expected: number is NaN"),
+			},
+		})
 		return n
 	}
 
 	return n
-}
-
-func failedBitsArguments() AssertionFailure {
-	return AssertionFailure{
-		Type: AssertUsage,
-		Errors: []error{
-			errors.New("unexpected multiple bits arguments"),
-		},
-	}
-}
-
-func failedNumberAsType(value float64, errs ...error) AssertionFailure {
-	return AssertionFailure{
-		Type:   AssertType,
-		Actual: &AssertionValue{value},
-		Errors: errs,
-	}
 }
