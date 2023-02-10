@@ -681,7 +681,7 @@ func (n *Number) IsInt(bits ...int) *Number {
 		return n
 	}
 
-	inum, acc := big.NewFloat(n.value).Int64()
+	inum, acc := big.NewFloat(n.value).Int(nil)
 	if acc != big.Exact {
 		opChain.fail(AssertionFailure{
 			Type:   AssertType,
@@ -693,9 +693,13 @@ func (n *Number) IsInt(bits ...int) *Number {
 		return n
 	}
 
-	imax := int64((uint64(1) << (bitSize - 1)) - 1)
-	imin := -imax - 1
-	if inum < imin || inum > imax {
+	imax := new(big.Int)
+	imax.Lsh(big.NewInt(1), uint(bitSize-1))
+	imax.Sub(imax, big.NewInt(1))
+	imin := new(big.Int)
+	imin.Neg(imax)
+	imin.Sub(imin, big.NewInt(1))
+	if inum.Cmp(imin) < 0 || inum.Cmp(imax) > 0 {
 		opChain.fail(AssertionFailure{
 			Type:     AssertInRange,
 			Actual:   &AssertionValue{n.value},
@@ -760,11 +764,15 @@ func (n *Number) NotInt(bits ...int) *Number {
 	}
 
 	if !math.IsNaN(n.value) {
-		inum, acc := big.NewFloat(n.value).Int64()
+		inum, acc := big.NewFloat(n.value).Int(nil)
 		if acc == big.Exact {
-			imax := int64((uint64(1) << (bitSize - 1)) - 1)
-			imin := -imax - 1
-			if !(inum < imin || inum > imax) {
+			imax := new(big.Int)
+			imax.Lsh(big.NewInt(1), uint(bitSize-1))
+			imax.Sub(imax, big.NewInt(1))
+			imin := new(big.Int)
+			imin.Neg(imax)
+			imin.Sub(imin, big.NewInt(1))
+			if !(inum.Cmp(imin) < 0 || inum.Cmp(imax) > 0) {
 				opChain.fail(AssertionFailure{
 					Type:     AssertInRange,
 					Actual:   &AssertionValue{n.value},
@@ -855,8 +863,7 @@ func (n *Number) IsUint(bits ...int) *Number {
 	}
 
 	fnum := big.NewFloat(n.value)
-	inum, acc := fnum.Uint64()
-	if acc != big.Exact {
+	if _, acc := fnum.Uint64(); acc != big.Exact {
 		opChain.fail(AssertionFailure{
 			Type:   AssertType,
 			Actual: &AssertionValue{n.value},
@@ -867,9 +874,12 @@ func (n *Number) IsUint(bits ...int) *Number {
 		return n
 	}
 
-	imax := (uint64(1) << (bitSize)) - 1
-	imin := uint64(0)
-	if inum < imin || inum > imax {
+	inum, _ := big.NewFloat(n.value).Int(nil)
+	imax := new(big.Int)
+	imax.Lsh(big.NewInt(1), uint(bitSize))
+	imax.Sub(imax, big.NewInt(1))
+	imin := big.NewInt(0)
+	if inum.Cmp(imin) < 0 || inum.Cmp(imax) > 0 {
 		opChain.fail(AssertionFailure{
 			Type:     AssertInRange,
 			Actual:   &AssertionValue{n.value},
@@ -935,11 +945,13 @@ func (n *Number) NotUint(bits ...int) *Number {
 	// big.Accuracy for big.Uint64 could not catch fractal.
 	_, fractal := math.Modf(n.value)
 	if !math.IsNaN(n.value) && fractal == 0 {
-		inum, acc := big.NewFloat(n.value).Uint64()
-		if acc == big.Exact {
-			imax := (uint64(1) << (bitSize)) - 1
-			imin := uint64(0)
-			if !(inum < imin || inum > imax) {
+		if _, acc := big.NewFloat(n.value).Uint64(); acc == big.Exact {
+			inum, _ := big.NewFloat(n.value).Int(nil)
+			imax := new(big.Int)
+			imax.Lsh(big.NewInt(1), uint(bitSize))
+			imax.Sub(imax, big.NewInt(1))
+			imin := big.NewInt(0)
+			if !(inum.Cmp(imin) < 0 || inum.Cmp(imax) > 0) {
 				opChain.fail(AssertionFailure{
 					Type:     AssertInRange,
 					Actual:   &AssertionValue{n.value},
