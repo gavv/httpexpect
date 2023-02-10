@@ -43,6 +43,8 @@ func TestNumber_FailedChain(t *testing.T) {
 	value.NotNaN()
 	value.IsInf()
 	value.NotInf()
+	value.IsFinite()
+	value.NotFinite()
 }
 
 func TestNumber_Constructors(t *testing.T) {
@@ -908,5 +910,27 @@ func TestNumber_IsInf(t *testing.T) {
 		chain.assertFailed(t)
 
 	NewNumber(reporter, math.Inf(-1)).NotInf().
+		chain.assertFailed(t)
+}
+
+func TestNumber_IsFinite(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	NewNumber(reporter, 1234).IsFinite().
+		chain.assertFailed(t)
+
+	NewNumber(reporter, math.Inf(0)).IsFinite().
+		chain.assertNotFailed(t)
+
+	NewNumber(reporter, math.NaN()).IsFinite().
+		chain.assertNotFailed(t)
+
+	NewNumber(reporter, 1234).NotFinite().
+		chain.assertNotFailed(t)
+
+	NewNumber(reporter, math.Inf(0)).NotFinite().
+		chain.assertFailed(t)
+
+	NewNumber(reporter, math.NaN()).NotFinite().
 		chain.assertFailed(t)
 }

@@ -1291,6 +1291,68 @@ func (n *Number) NotInf() *Number {
 	return n
 }
 
+// IsFinite succeeds if number is neither ±Inf nor NaN.
+//
+// value should have numeric type convertible to float64. Before comparison,
+// it is converted to float64.
+//
+// Example:
+//
+//	number := NewNumber(t, 1234.4321)
+//	number.IsFinite()
+func (n *Number) IsFinite() *Number {
+	opChain := n.chain.enter("IsFinite()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return n
+	}
+
+	if !(math.IsInf(n.value, 0) || math.IsNaN(n.value)) {
+		opChain.fail(AssertionFailure{
+			Type:   AssertType,
+			Actual: &AssertionValue{n.value},
+			Errors: []error{
+				errors.New("expected: number is neither ±Inf nor NaN"),
+			},
+		})
+		return n
+	}
+
+	return n
+}
+
+// NotFinite succeeds if number is either ±Inf or NaN.
+//
+// value should have numeric type convertible to float64. Before comparison,
+// it is converted to float64.
+//
+// Example:
+//
+//	number := NewNumber(t, math.Inf(1))
+//	number.NotFinite()
+func (n *Number) NotFinite() *Number {
+	opChain := n.chain.enter("NotFinite()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return n
+	}
+
+	if math.IsInf(n.value, 0) || math.IsNaN(n.value) {
+		opChain.fail(AssertionFailure{
+			Type:   AssertType,
+			Actual: &AssertionValue{n.value},
+			Errors: []error{
+				errors.New("expected: number is either ±Inf or NaN"),
+			},
+		})
+		return n
+	}
+
+	return n
+}
+
 func isMaximumFloatValue(val float64) bool {
 	return math.Abs(val) == math.MaxFloat32 || math.Abs(val) == math.MaxFloat64
 }
