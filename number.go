@@ -701,9 +701,12 @@ func (n *Number) IsInt(bits ...int) *Number {
 	imin.Sub(imin, big.NewInt(1))
 	if inum.Cmp(imin) < 0 || inum.Cmp(imax) > 0 {
 		opChain.fail(AssertionFailure{
-			Type:     AssertInRange,
-			Actual:   &AssertionValue{n.value},
-			Expected: &AssertionValue{AssertionRange{1, 64}},
+			Type:   AssertInRange,
+			Actual: &AssertionValue{n.value},
+			Expected: &AssertionValue{AssertionRange{
+				fmt.Sprintf("-2^%d", bitSize-1),
+				fmt.Sprintf("2^%d", bitSize-1),
+			}},
 			Errors: []error{
 				fmt.Errorf("expected: number fits %d-bit integer", bitSize),
 			},
@@ -774,9 +777,12 @@ func (n *Number) NotInt(bits ...int) *Number {
 			imin.Sub(imin, big.NewInt(1))
 			if !(inum.Cmp(imin) < 0 || inum.Cmp(imax) > 0) {
 				opChain.fail(AssertionFailure{
-					Type:     AssertInRange,
-					Actual:   &AssertionValue{n.value},
-					Expected: &AssertionValue{AssertionRange{1, 64}},
+					Type:   AssertNotInRange,
+					Actual: &AssertionValue{n.value},
+					Expected: &AssertionValue{AssertionRange{
+						fmt.Sprintf("-2^%d", bitSize-1),
+						fmt.Sprintf("2^%d", bitSize-1),
+					}},
 					Errors: []error{
 						fmt.Errorf("expected: number doesn't fit %d-bit integer", bitSize),
 					},
@@ -881,9 +887,12 @@ func (n *Number) IsUint(bits ...int) *Number {
 	imin := big.NewInt(0)
 	if inum.Cmp(imin) < 0 || inum.Cmp(imax) > 0 {
 		opChain.fail(AssertionFailure{
-			Type:     AssertInRange,
-			Actual:   &AssertionValue{n.value},
-			Expected: &AssertionValue{AssertionRange{1, 64}},
+			Type:   AssertInRange,
+			Actual: &AssertionValue{n.value},
+			Expected: &AssertionValue{AssertionRange{
+				"0",
+				fmt.Sprintf("2^%d", bitSize),
+			}},
 			Errors: []error{
 				fmt.Errorf("expected: number fits %d-bit unsigned integer", bitSize),
 			},
@@ -953,9 +962,12 @@ func (n *Number) NotUint(bits ...int) *Number {
 			imin := big.NewInt(0)
 			if !(inum.Cmp(imin) < 0 || inum.Cmp(imax) > 0) {
 				opChain.fail(AssertionFailure{
-					Type:     AssertInRange,
-					Actual:   &AssertionValue{n.value},
-					Expected: &AssertionValue{AssertionRange{1, 64}},
+					Type:   AssertNotInRange,
+					Actual: &AssertionValue{n.value},
+					Expected: &AssertionValue{AssertionRange{
+						"0",
+						fmt.Sprintf("2^%d", bitSize),
+					}},
 					Errors: []error{
 						fmt.Errorf("expected: number doesn't fit %d-bit unsigned integer", bitSize),
 					},
@@ -1041,8 +1053,9 @@ func (n *Number) IsFloat(bits ...int) *Number {
 				Type:   AssertInRange,
 				Actual: &AssertionValue{n.value},
 				Expected: &AssertionValue{AssertionRange{
-					-math.MaxFloat32, math.MaxFloat32},
-				},
+					"-math.MaxFloat32",
+					"math.MaxFloat32",
+				}},
 				Errors: []error{
 					fmt.Errorf("expected: number fits %d-bit float", bitSize),
 				},
@@ -1056,8 +1069,9 @@ func (n *Number) IsFloat(bits ...int) *Number {
 				Type:   AssertInRange,
 				Actual: &AssertionValue{n.value},
 				Expected: &AssertionValue{AssertionRange{
-					-math.MaxFloat64, math.MaxFloat64},
-				},
+					"-math.MaxFloat64",
+					"math.MaxFloat64",
+				}},
 				Errors: []error{
 					fmt.Errorf("expected: number fits %d-bit float", bitSize),
 				},
@@ -1135,11 +1149,12 @@ func (n *Number) NotFloat(bits ...int) *Number {
 			fval, acc := fnum.Float32()
 			if acc == big.Exact && fval != 0 {
 				opChain.fail(AssertionFailure{
-					Type:   AssertInRange,
+					Type:   AssertNotInRange,
 					Actual: &AssertionValue{n.value},
 					Expected: &AssertionValue{AssertionRange{
-						-math.MaxFloat32, math.MaxFloat32},
-					},
+						"-math.MaxFloat32",
+						"math.MaxFloat32",
+					}},
 					Errors: []error{
 						fmt.Errorf("expected: number doesn't fit %d-bit float", bitSize),
 					},
@@ -1153,8 +1168,9 @@ func (n *Number) NotFloat(bits ...int) *Number {
 					Type:   AssertInRange,
 					Actual: &AssertionValue{n.value},
 					Expected: &AssertionValue{AssertionRange{
-						-math.MaxFloat64, math.MaxFloat64},
-					},
+						"-math.MaxFloat64",
+						"math.MaxFloat64",
+					}},
 					Errors: []error{
 						fmt.Errorf("expected: number doesn't fit %d-bit float", bitSize),
 					},
