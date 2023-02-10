@@ -41,6 +41,8 @@ func TestNumber_FailedChain(t *testing.T) {
 	value.NotFloat(0)
 	value.IsNaN()
 	value.NotNaN()
+	value.IsInf()
+	value.NotInf()
 }
 
 func TestNumber_Constructors(t *testing.T) {
@@ -878,5 +880,33 @@ func TestNumber_IsNaN(t *testing.T) {
 		chain.assertNotFailed(t)
 
 	NewNumber(reporter, math.NaN()).NotNaN().
+		chain.assertFailed(t)
+}
+
+func TestNumber_IsInf(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	NewNumber(reporter, 1234).IsInf().
+		chain.assertFailed(t)
+
+	NewNumber(reporter, math.Inf(0)).IsInf().
+		chain.assertNotFailed(t)
+
+	NewNumber(reporter, math.Inf(1)).IsInf().
+		chain.assertNotFailed(t)
+
+	NewNumber(reporter, math.Inf(-1)).IsInf().
+		chain.assertNotFailed(t)
+
+	NewNumber(reporter, 1234).NotInf().
+		chain.assertNotFailed(t)
+
+	NewNumber(reporter, math.Inf(0)).NotInf().
+		chain.assertFailed(t)
+
+	NewNumber(reporter, math.Inf(1)).NotInf().
+		chain.assertFailed(t)
+
+	NewNumber(reporter, math.Inf(-1)).NotInf().
 		chain.assertFailed(t)
 }
