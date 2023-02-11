@@ -510,6 +510,10 @@ func (f *DefaultFormatter) formatValue(value interface{}) string {
 		return f.addDigitGrouping(f.formatFloatValue(*flt, 64))
 	}
 
+	if intg := extractInt(value); intg != nil {
+		return f.addDigitGrouping(strconv.Itoa(*intg))
+	}
+
 	if !refIsNil(value) && !refIsHTTP(value) {
 		if s, _ := value.(fmt.Stringer); s != nil {
 			if ss := s.String(); strings.TrimSpace(ss) != "" {
@@ -562,19 +566,20 @@ func (f *DefaultFormatter) addDigitGrouping(numStr string) string {
 	if len(parts) == 2 {
 		parts = strings.SplitN(parts[1], "e", 2)
 		// using Reverse(parts[0]) because digit grouping in fractional part is required from Most Significant Bit
-		fracPart = "." + f.groupDigitsInString(Reverse(parts[0]))
+		fracPart = "." + Reverse(f.groupDigitsInString(Reverse(parts[0])))
 		if len(parts) == 2 {
 			expPart = "e" + parts[1]
 		}
 	}
 
-	return sign + Reverse(intPart) + fracPart + expPart
+	return sign + intPart + fracPart + expPart
 }
 
 // Performs digit grouping on a string starting from Least Significant Bit
 // in groups of thousands
 func (f *DefaultFormatter) groupDigitsInString(numStr string) string {
 	var separator string
+	fmt.Println("Separator: ", f.DigitSeparator)
 	switch f.DigitSeparator {
 	case DigitSeparatorUnderscore:
 		separator = "_"
@@ -586,10 +591,10 @@ func (f *DefaultFormatter) groupDigitsInString(numStr string) string {
 		separator = ","
 		break
 	case DigitSeparatorNone:
-		separator = ""
-		break
+		return numStr
 	default:
-		separator = "_"
+		// separator = "_"
+		return numStr
 	}
 	var groupedPart string
 	for i, r := range numStr {
@@ -598,7 +603,8 @@ func (f *DefaultFormatter) groupDigitsInString(numStr string) string {
 			groupedPart = separator + groupedPart
 		}
 	}
-	return groupedPart
+	fmt.Println(Reverse(groupedPart))
+	return Reverse(groupedPart)
 }
 
 func Reverse(s string) string {
@@ -712,6 +718,15 @@ func extractFloat32(value interface{}) *float64 {
 	case float32:
 		ff := float64(f)
 		return &ff
+	default:
+		return nil
+	}
+}
+
+func extractInt(value interface{}) *int {
+	switch i := value.(type) {
+	case int:
+		return &i
 	default:
 		return nil
 	}

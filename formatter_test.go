@@ -662,7 +662,7 @@ func TestFormatter_DigitSeparator(t *testing.T) {
 
 	testCases := []testCase{
 		{
-			name:      "float",
+			name:      "float no decimal",
 			separator: DigitSeparatorUnderscore,
 			format:    FloatFormatDecimal,
 			value:     float32(12345678),
@@ -681,6 +681,70 @@ func TestFormatter_DigitSeparator(t *testing.T) {
 			format:    FloatFormatScientific,
 			value:     float32(12345678),
 			wantText:  "1.234_567_8e+07",
+		},
+		{
+			name:      "integer",
+			separator: DigitSeparatorUnderscore,
+			format:    FloatFormatAuto,
+			value:     int(12345678),
+			wantText:  "12_345_678",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			formatter := DefaultFormatter{
+				DigitSeparator: tc.separator,
+				FloatFormat:    tc.format,
+			}
+			formatData := formatter.buildFormatData(
+				&AssertionContext{},
+				&AssertionFailure{
+					Type:   AssertValid,
+					Actual: &AssertionValue{tc.value},
+				})
+			assert.Equal(t, tc.wantText, formatData.Actual)
+		})
+	}
+}
+
+func TestFormatter_DigitSeparatorType(t *testing.T) {
+	type testCase struct {
+		name      string
+		separator DigitSeparator
+		format    FloatFormat
+		value     interface{}
+		wantText  string
+	}
+
+	testCases := []testCase{
+		{
+			name:      "Underscore",
+			separator: DigitSeparatorUnderscore,
+			format:    FloatFormatDecimal,
+			value:     float32(12345678),
+			wantText:  "12_345_678",
+		},
+		{
+			name:      "Comma",
+			separator: DigitSeparatorComma,
+			format:    FloatFormatDecimal,
+			value:     float32(12345678),
+			wantText:  "12,345,678",
+		},
+		{
+			name:      "Apostrophe",
+			separator: DigitSeparatorApostrophe,
+			format:    FloatFormatDecimal,
+			value:     float32(12345678),
+			wantText:  "12'345'678",
+		},
+		{
+			name:      "None",
+			separator: DigitSeparatorNone,
+			format:    FloatFormatDecimal,
+			value:     float32(12345678),
+			wantText:  "12345678",
 		},
 	}
 
