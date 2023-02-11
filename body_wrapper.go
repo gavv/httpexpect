@@ -3,6 +3,7 @@ package httpexpect
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"io/ioutil"
 	"runtime"
@@ -24,7 +25,8 @@ type bodyWrapper struct {
 
 	cancelFunc context.CancelFunc
 
-	isFullyRead bool
+	isFullyRead            bool
+	isStoringInMemDisabled bool
 
 	mu sync.Mutex
 }
@@ -53,7 +55,7 @@ func (bw *bodyWrapper) Read(p []byte) (n int, err error) {
 	}
 
 	// Cache bytes in memory
-	if !bw.isFullyRead {
+	if !bw.isFullyRead && !bw.isStoringInMemDisabled {
 		n, err = bw.origReader.Read(p)
 		bw.origBytes = append(bw.origBytes, p[:n]...)
 	} else {
@@ -83,7 +85,7 @@ func (bw *bodyWrapper) Close() error {
 
 	// Rewind or GetBody may be called later, so be sure to
 	// read body into memory before closing
-	if !bw.isFullyRead {
+	if !bw.isFullyRead && !bw.isStoringInMemDisabled {
 		if readFullErr := bw.readFull(); readFullErr != nil {
 			err = readFullErr
 		}
@@ -99,9 +101,13 @@ func (bw *bodyWrapper) Close() error {
 }
 
 // Rewind reading to the beginning
-func (bw *bodyWrapper) Rewind() {
+func (bw *bodyWrapper) Rewind() error {
 	bw.mu.Lock()
 	defer bw.mu.Unlock()
+
+	if bw.isStoringInMemDisabled {
+		return errors.New("body caching is disabled, cannot rewind")
+	}
 
 	// Until first read, rewind is no-op
 	if !bw.isFullyRead {
@@ -110,6 +116,8 @@ func (bw *bodyWrapper) Rewind() {
 
 	// Reset reader
 	bw.currReader = bytes.NewReader(bw.origBytes)
+
+	return nil
 }
 
 // Create new reader to retrieve body contents
@@ -124,6 +132,10 @@ func (bw *bodyWrapper) GetBody() (io.ReadCloser, error) {
 		return nil, bw.readErr
 	}
 
+	if bw.isStoringInMemDisabled {
+		return nil, errors.New("body caching is disabled, cannot get body contents")
+	}
+
 	if !bw.isFullyRead {
 		if err := bw.readFull(); err != nil {
 			return nil, err
@@ -131,6 +143,17 @@ func (bw *bodyWrapper) GetBody() (io.ReadCloser, error) {
 	}
 
 	return ioutil.NopCloser(bytes.NewReader(bw.origBytes)), nil
+}
+
+// Disables storing body contents in memory and clears the cache
+func (bw *bodyWrapper) DisableBodyCaching() error {
+	bw.mu.Lock()
+	defer bw.mu.Unlock()
+
+	bw.isStoringInMemDisabled = true
+	bw.origBytes = nil
+
+	return nil
 }
 
 // Reads the body fully, then cancels and closes the reader
