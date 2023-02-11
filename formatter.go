@@ -565,7 +565,8 @@ func (f *DefaultFormatter) addDigitGrouping(numStr string) string {
 	var expPart string
 	if len(parts) == 2 {
 		parts = strings.SplitN(parts[1], "e", 2)
-		// using Reverse(parts[0]) because digit grouping in fractional part is required from Most Significant Bit
+		// using Reverse(parts[0]) because digit grouping in
+		// fractional part is required from Most Significant Bit
 		fracPart = "." + Reverse(f.groupDigitsInString(Reverse(parts[0])))
 		if len(parts) == 2 {
 			expPart = "e" + parts[1]
