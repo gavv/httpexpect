@@ -52,22 +52,25 @@ func (bw *bodyWrapper) Read(p []byte) (n int, err error) {
 		return 0, bw.readErr
 	}
 
-	n, err = bw.currReader.Read(p)
-
 	// Cache bytes in memory
 	if !bw.isFullyRead {
+		n, err = bw.origReader.Read(p)
 		bw.origBytes = append(bw.origBytes, p[:n]...)
+	} else {
+		n, err = bw.currReader.Read(p)
 	}
 
-	if err == io.EOF {
-		bw.isFullyRead = true
-		bw.currReader = bytes.NewReader(bw.origBytes)
-		bw.closeAndCancel()
-	} else if err != nil {
-		bw.readErr = err
-		bw.isFullyRead = true // Prevent further reads
-		bw.closeAndCancel()
+	if err != nil || n < len(p) {
+		bw.isFullyRead = true // prevent further reads
+		if err != nil && err != io.EOF {
+			bw.readErr = err
+		}
+		if closeErr := bw.closeAndCancel(); closeErr != nil && (err == nil || err == io.EOF) {
+			err = closeErr
+			n = 0
+		}
 	}
+
 	return
 }
 
@@ -130,16 +133,18 @@ func (bw *bodyWrapper) GetBody() (io.ReadCloser, error) {
 	return ioutil.NopCloser(bytes.NewReader(bw.origBytes)), nil
 }
 
+// Reads the body fully, then cancels and closes the reader
 func (bw *bodyWrapper) readFull() error {
-	defer bw.closeAndCancel()
 	remainingBytes, err := ioutil.ReadAll(bw.currReader)
 	if err != nil {
 		bw.readErr = err
+		bw.isFullyRead = true // Prevent further reads
+		bw.closeAndCancel()
 		return err
 	}
 	bw.origBytes = append(bw.origBytes, remainingBytes...)
 	bw.isFullyRead = true
-	return nil
+	return bw.closeAndCancel()
 }
 
 func (bw *bodyWrapper) closeAndCancel() error {
