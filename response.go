@@ -29,9 +29,19 @@ type Response struct {
 	websocket *websocket.Conn
 	rtt       *time.Duration
 
-	content []byte
+	content      []byte
+	contentState contentState
+
 	cookies []*http.Cookie
 }
+
+type contentState int
+
+const (
+	contentPending contentState = iota
+	contentRetreived
+	contentFailed
+)
 
 // NewResponse returns a new Response instance.
 //
@@ -86,12 +96,28 @@ func newResponse(opts responseOpts) *Response {
 	opts.config.validate()
 
 	r := &Response{
-		config: opts.config,
-		chain:  opts.chain.clone(),
+		config:       opts.config,
+		chain:        opts.chain.clone(),
+		contentState: contentPending,
 	}
 
 	opChain := r.chain.enter("")
 	defer opChain.leave()
+
+	if len(opts.rtt) > 1 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected multiple rtt arguments"),
+			},
+		})
+		return r
+	}
+
+	if len(opts.rtt) > 0 {
+		rttCopy := opts.rtt[0]
+		r.rtt = &rttCopy
+	}
 
 	if opts.httpResp == nil {
 		opChain.fail(AssertionFailure{
@@ -104,35 +130,40 @@ func newResponse(opts responseOpts) *Response {
 		return r
 	}
 
-	if len(opts.rtt) > 1 {
-		opChain.fail(AssertionFailure{
-			Type: AssertUsage,
-			Errors: []error{
-				errors.New("unexpected multiple rtt arguments"),
-			},
-		})
-		return r
-	}
-
 	r.httpResp = opts.httpResp
-	r.websocket = opts.websocket
 
-	r.content = getResponseContent(opChain, r.httpResp)
-	r.cookies = r.httpResp.Cookies()
-
-	if len(opts.rtt) > 0 {
-		rtt := opts.rtt[0]
-		r.rtt = &rtt
+	if r.httpResp.Body != nil && r.httpResp.Body != http.NoBody {
+		if _, ok := r.httpResp.Body.(*bodyWrapper); !ok {
+			respCopy := *r.httpResp
+			r.httpResp = &respCopy
+			r.httpResp.Body = newBodyWrapper(r.httpResp.Body, nil)
+		}
 	}
+
+	r.websocket = opts.websocket
+	r.cookies = r.httpResp.Cookies()
 
 	r.chain.setResponse(r)
 
 	return r
 }
 
-func getResponseContent(opChain *chain, resp *http.Response) []byte {
-	if resp.Body == nil {
-		return []byte{}
+func (r *Response) getContent(opChain *chain) ([]byte, bool) {
+	switch r.contentState {
+	case contentRetreived:
+		return r.content, true
+
+	case contentFailed:
+		return nil, false
+
+	case contentPending:
+		break
+	}
+
+	resp := r.httpResp
+
+	if resp.Body == nil || resp.Body == http.NoBody {
+		return []byte{}, true
 	}
 
 	if bw, ok := resp.Body.(*bodyWrapper); ok {
@@ -154,10 +185,17 @@ func getResponseContent(opChain *chain, resp *http.Response) []byte {
 				err,
 			},
 		})
-		return nil
+
+		r.content = nil
+		r.contentState = contentFailed
+
+		return nil, false
 	}
 
-	return content
+	r.content = content
+	r.contentState = contentRetreived
+
+	return r.content, true
 }
 
 // Raw returns underlying http.Response object.
@@ -529,7 +567,16 @@ func (r *Response) Body() *String {
 	opChain := r.chain.enter("Body()")
 	defer opChain.leave()
 
-	return newString(opChain, string(r.content))
+	if opChain.failed() {
+		return newString(opChain, "")
+	}
+
+	content, ok := r.getContent(opChain)
+	if !ok {
+		return newString(opChain, "")
+	}
+
+	return newString(opChain, string(content))
 }
 
 // NoContent succeeds if response contains empty Content-Type header and
@@ -543,9 +590,17 @@ func (r *Response) NoContent() *Response {
 	}
 
 	contentType := r.httpResp.Header.Get("Content-Type")
+	if !r.checkEqual(opChain, `"Content-Type" header`, "", contentType) {
+		return r
+	}
 
-	r.checkEqual(opChain, `"Content-Type" header`, "", contentType)
-	r.checkEqual(opChain, "body", "", string(r.content))
+	content, ok := r.getContent(opChain)
+	if !ok {
+		return r
+	}
+	if !r.checkEqual(opChain, "body", "", string(content)) {
+		return r
+	}
 
 	return r
 }
@@ -657,9 +712,12 @@ func (r *Response) Text(options ...ContentOpts) *String {
 		return newString(opChain, "")
 	}
 
-	content := string(r.content)
+	content, ok := r.getContent(opChain)
+	if !ok {
+		return newString(opChain, "")
+	}
 
-	return newString(opChain, content)
+	return newString(opChain, string(content))
 }
 
 // Form returns a new Object instance with form decoded from response body.
@@ -705,7 +763,12 @@ func (r *Response) getForm(
 		return nil
 	}
 
-	decoder := form.NewDecoder(bytes.NewReader(r.content))
+	content, ok := r.getContent(opChain)
+	if !ok {
+		return nil
+	}
+
+	decoder := form.NewDecoder(bytes.NewReader(content))
 
 	var object map[string]interface{}
 
@@ -713,7 +776,7 @@ func (r *Response) getForm(
 		opChain.fail(AssertionFailure{
 			Type: AssertValid,
 			Actual: &AssertionValue{
-				string(r.content),
+				string(content),
 			},
 			Errors: []error{
 				errors.New("failed to decode form"),
@@ -766,7 +829,12 @@ func (r *Response) getJSON(opChain *chain, options ...ContentOpts) interface{} {
 		return nil
 	}
 
-	reader := bytes.NewReader(r.content)
+	content, ok := r.getContent(opChain)
+	if !ok {
+		return nil
+	}
+
+	reader := bytes.NewReader(content)
 	dec := json.NewDecoder(reader)
 	dec.UseNumber()
 
@@ -793,7 +861,7 @@ func (r *Response) getJSON(opChain *chain, options ...ContentOpts) interface{} {
 	return value
 }
 
-// JSON returns a new Value instance with JSONP decoded from response body.
+// JSONP returns a new Value instance with JSONP decoded from response body.
 //
 // JSONP succeeds if response contains "application/javascript" Content-Type
 // header with empty or "utf-8" charset and response body of the following form:
@@ -845,13 +913,18 @@ func (r *Response) getJSONP(
 		return nil
 	}
 
-	m := jsonp.FindSubmatch(r.content)
+	content, ok := r.getContent(opChain)
+	if !ok {
+		return nil
+	}
+
+	m := jsonp.FindSubmatch(content)
 
 	if len(m) != 3 || string(m[1]) != callback {
 		opChain.fail(AssertionFailure{
 			Type: AssertValid,
 			Actual: &AssertionValue{
-				string(r.content),
+				string(content),
 			},
 			Errors: []error{
 				fmt.Errorf(`expected: JSONP body in form of "%s(<valid json>)"`,
@@ -969,7 +1042,9 @@ func (r *Response) checkContentType(
 	return true
 }
 
-func (r *Response) checkEqual(opChain *chain, what string, expected, actual interface{}) {
+func (r *Response) checkEqual(
+	opChain *chain, what string, expected, actual interface{},
+) bool {
 	if !reflect.DeepEqual(expected, actual) {
 		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
@@ -979,5 +1054,8 @@ func (r *Response) checkEqual(opChain *chain, what string, expected, actual inte
 				fmt.Errorf("unexpected %s value", what),
 			},
 		})
+		return false
 	}
+
+	return true
 }

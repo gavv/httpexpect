@@ -151,18 +151,18 @@ func (a *Array) Length() *Number {
 	return newNumber(opChain, float64(len(a.value)))
 }
 
-// Element returns a new Value instance with array element for given index.
+// Value returns a new Value instance with array element for given index.
 //
-// If index is out of array bounds, Element reports failure and returns empty
+// If index is out of array bounds, Value reports failure and returns empty
 // (but non-nil) instance.
 //
 // Example:
 //
 //	array := NewArray(t, []interface{}{"foo", 123})
-//	array.Element(0).String().IsEqual("foo")
-//	array.Element(1).Number().IsEqual(123)
-func (a *Array) Element(index int) *Value {
-	opChain := a.chain.enter("Element(%d)", index)
+//	array.Value(0).String().IsEqual("foo")
+//	array.Value(1).Number().IsEqual(123)
+func (a *Array) Value(index int) *Value {
+	opChain := a.chain.enter("Value(%d)", index)
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -185,6 +185,11 @@ func (a *Array) Element(index int) *Value {
 	}
 
 	return newValue(opChain, a.value[index])
+}
+
+// Deprecated: use Value instead.
+func (a *Array) Element(index int) *Value {
+	return a.Value(index)
 }
 
 // First returns a new Value instance for the first element of array.
@@ -271,7 +276,7 @@ func (a *Array) Iter() []Value {
 
 	for index, element := range a.value {
 		func() {
-			valueChain := opChain.replace("Iter[%v]", index)
+			valueChain := opChain.replace("Iter[%d]", index)
 			defer valueChain.leave()
 
 			ret = append(ret, *newValue(valueChain, element))
@@ -315,7 +320,7 @@ func (a *Array) Every(fn func(index int, value *Value)) *Array {
 
 	for index, element := range a.value {
 		func() {
-			valueChain := opChain.replace("Every[%v]", index)
+			valueChain := opChain.replace("Every[%d]", index)
 			defer valueChain.leave()
 
 			fn(index, newValue(valueChain, element))
@@ -365,7 +370,7 @@ func (a *Array) Filter(fn func(index int, value *Value) bool) *Array {
 
 	for index, element := range a.value {
 		func() {
-			valueChain := opChain.replace("Filter[%v]", index)
+			valueChain := opChain.replace("Filter[%d]", index)
 			defer valueChain.leave()
 
 			valueChain.setRoot()
@@ -456,7 +461,7 @@ func (a *Array) Find(fn func(index int, value *Value) bool) *Value {
 		found := false
 
 		func() {
-			valueChain := opChain.replace("Find[%v]", index)
+			valueChain := opChain.replace("Find[%d]", index)
 			defer valueChain.leave()
 
 			valueChain.setRoot()
@@ -524,7 +529,7 @@ func (a *Array) FindAll(fn func(index int, value *Value) bool) []*Value {
 
 	for index, element := range a.value {
 		func() {
-			valueChain := opChain.replace("FindAll[%v]", index)
+			valueChain := opChain.replace("FindAll[%d]", index)
 			defer valueChain.leave()
 
 			valueChain.setRoot()
@@ -577,7 +582,7 @@ func (a *Array) NotFind(fn func(index int, value *Value) bool) *Array {
 		found := false
 
 		func() {
-			valueChain := opChain.replace("NotFind[%v]", index)
+			valueChain := opChain.replace("NotFind[%d]", index)
 			defer valueChain.leave()
 
 			valueChain.setRoot()
@@ -1443,6 +1448,114 @@ func (a *Array) NotContainsOnly(values ...interface{}) *Array {
 					" (at least one distinguishing element needed)"),
 			},
 		})
+	}
+
+	return a
+}
+
+// IsValueEqual succeeds if array's value at the given index is equal to given value.
+//
+// Before comparison, both values are converted to canonical form. value should be
+// map[string]interface{} or struct.
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{"foo", "123"})
+//	array.IsValueEqual(1, 123)
+func (a *Array) IsValueEqual(index int, value interface{}) *Array {
+	opChain := a.chain.enter("IsValueEqual(%d)", index)
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return a
+	}
+
+	if index < 0 || index >= len(a.value) {
+		opChain.fail(AssertionFailure{
+			Type:   AssertInRange,
+			Actual: &AssertionValue{index},
+			Expected: &AssertionValue{AssertionRange{
+				Min: 0,
+				Max: len(a.value) - 1,
+			}},
+			Errors: []error{
+				errors.New("expected: valid element index"),
+			},
+		})
+		return a
+	}
+
+	expected, ok := canonValue(opChain, value)
+	if !ok {
+		return a
+	}
+
+	if !reflect.DeepEqual(expected, a.value[index]) {
+		opChain.fail(AssertionFailure{
+			Type:     AssertEqual,
+			Actual:   &AssertionValue{a.value[index]},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				fmt.Errorf(
+					"expected: array value at index %d is equal to given value",
+					index),
+			},
+		})
+		return a
+	}
+
+	return a
+}
+
+// NotValueEqual succeeds if array's value at the given index is not equal to given value.
+//
+// Before comparison, both values are converted to canonical form. value should be
+// map[string]interface{} or struct.
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{"foo", "123"})
+//	array.NotValueEqual(1, 234)
+func (a *Array) NotValueEqual(index int, value interface{}) *Array {
+	opChain := a.chain.enter("NotValueEqual(%d)", index)
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return a
+	}
+
+	if index < 0 || index >= len(a.value) {
+		opChain.fail(AssertionFailure{
+			Type:   AssertInRange,
+			Actual: &AssertionValue{index},
+			Expected: &AssertionValue{AssertionRange{
+				Min: 0,
+				Max: len(a.value) - 1,
+			}},
+			Errors: []error{
+				errors.New("expected: valid element index"),
+			},
+		})
+		return a
+	}
+
+	expected, ok := canonValue(opChain, value)
+	if !ok {
+		return a
+	}
+
+	if reflect.DeepEqual(expected, a.value[index]) {
+		opChain.fail(AssertionFailure{
+			Type:     AssertNotEqual,
+			Actual:   &AssertionValue{a.value[index]},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				fmt.Errorf(
+					"expected: array value at index %d is not equal to given value",
+					index),
+			},
+		})
+		return a
 	}
 
 	return a

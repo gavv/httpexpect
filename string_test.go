@@ -32,6 +32,8 @@ func TestString_FailedChain(t *testing.T) {
 	value.NotEqualFold("")
 	value.InList("")
 	value.NotInList("")
+	value.InListFold("")
+	value.NotInListFold("")
 	value.Contains("")
 	value.NotContains("")
 	value.ContainsFold("")
@@ -130,18 +132,18 @@ func TestString_Decode(t *testing.T) {
 
 func TestString_Alias(t *testing.T) {
 	reporter := newMockReporter(t)
-	value1 := NewString(reporter, "123")
-	assert.Equal(t, []string{"String()"}, value1.chain.context.Path)
-	assert.Equal(t, []string{"String()"}, value1.chain.context.AliasedPath)
 
-	value2 := value1.Alias("foo")
-	assert.Equal(t, []string{"String()"}, value2.chain.context.Path)
-	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
+	value := NewString(reporter, "123")
+	assert.Equal(t, []string{"String()"}, value.chain.context.Path)
+	assert.Equal(t, []string{"String()"}, value.chain.context.AliasedPath)
 
-	value3 := value2.AsNumber(10)
-	assert.Equal(t, []string{"String()", "AsNumber()"},
-		value3.chain.context.Path)
-	assert.Equal(t, []string{"foo", "AsNumber()"}, value3.chain.context.AliasedPath)
+	value.Alias("foo")
+	assert.Equal(t, []string{"String()"}, value.chain.context.Path)
+	assert.Equal(t, []string{"foo"}, value.chain.context.AliasedPath)
+
+	childValue := value.AsNumber()
+	assert.Equal(t, []string{"String()", "AsNumber()"}, childValue.chain.context.Path)
+	assert.Equal(t, []string{"foo", "AsNumber()"}, childValue.chain.context.AliasedPath)
 }
 
 func TestString_Getters(t *testing.T) {
@@ -284,6 +286,46 @@ func TestString_InList(t *testing.T) {
 
 	value.NotInList("foo", "BAR")
 	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+}
+
+func TestString_InListFold(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewString(reporter, "Foo")
+
+	assert.Equal(t, "Foo", value.Raw())
+
+	value.InListFold()
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInListFold()
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.InListFold("foo", "bar")
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.InListFold("FOO", "BAR")
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.InListFold("BAR", "BAZ")
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInListFold("foo", "bar")
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInListFold("FOO", "BAR")
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInListFold("BAR", "BAZ")
+	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 }
 
@@ -590,51 +632,59 @@ func TestString_AsBoolean(t *testing.T) {
 	badValues := []string{"TRUE", "FALSE", "t", "f", "1", "0", "bad"}
 
 	for _, str := range trueValues {
-		value := NewString(reporter, str)
+		t.Run(str, func(t *testing.T) {
+			value := NewString(reporter, str)
 
-		b := value.AsBoolean()
-		b.chain.assertNotFailed(t)
+			b := value.AsBoolean()
+			b.chain.assertNotFailed(t)
 
-		assert.True(t, b.Raw())
+			assert.True(t, b.Raw())
+		})
 	}
 
 	for _, str := range falseValues {
-		value := NewString(reporter, str)
+		t.Run(str, func(t *testing.T) {
+			value := NewString(reporter, str)
 
-		b := value.AsBoolean()
-		b.chain.assertNotFailed(t)
+			b := value.AsBoolean()
+			b.chain.assertNotFailed(t)
 
-		assert.False(t, b.Raw())
+			assert.False(t, b.Raw())
+		})
 	}
 
 	for _, str := range badValues {
-		value := NewString(reporter, str)
+		t.Run(str, func(t *testing.T) {
+			value := NewString(reporter, str)
 
-		b := value.AsBoolean()
-		b.chain.assertFailed(t)
+			b := value.AsBoolean()
+			b.chain.assertFailed(t)
+		})
 	}
 }
 
 func TestString_AsDateTime(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	value1 := NewString(reporter, "Tue, 15 Nov 1994 08:12:31 GMT")
-	dt1 := value1.AsDateTime()
-	value1.chain.assertNotFailed(t)
-	dt1.chain.assertNotFailed(t)
-	assert.True(t, time.Date(1994, 11, 15, 8, 12, 31, 0, time.UTC).Equal(dt1.Raw()))
+	t.Run("basic", func(t *testing.T) {
+		value1 := NewString(reporter, "Tue, 15 Nov 1994 08:12:31 GMT")
+		dt1 := value1.AsDateTime()
+		value1.chain.assertNotFailed(t)
+		dt1.chain.assertNotFailed(t)
+		assert.True(t, time.Date(1994, 11, 15, 8, 12, 31, 0, time.UTC).Equal(dt1.Raw()))
 
-	value2 := NewString(reporter, "15 Nov 94 08:12 GMT")
-	dt2 := value2.AsDateTime(time.RFC822)
-	value2.chain.assertNotFailed(t)
-	dt2.chain.assertNotFailed(t)
-	assert.True(t, time.Date(1994, 11, 15, 8, 12, 0, 0, time.UTC).Equal(dt2.Raw()))
+		value2 := NewString(reporter, "15 Nov 94 08:12 GMT")
+		dt2 := value2.AsDateTime(time.RFC822)
+		value2.chain.assertNotFailed(t)
+		dt2.chain.assertNotFailed(t)
+		assert.True(t, time.Date(1994, 11, 15, 8, 12, 0, 0, time.UTC).Equal(dt2.Raw()))
 
-	value3 := NewString(reporter, "bad")
-	dt3 := value3.AsDateTime()
-	value3.chain.assertFailed(t)
-	dt3.chain.assertFailed(t)
-	assert.True(t, time.Unix(0, 0).Equal(dt3.Raw()))
+		value3 := NewString(reporter, "bad")
+		dt3 := value3.AsDateTime()
+		value3.chain.assertFailed(t)
+		dt3.chain.assertFailed(t)
+		assert.True(t, time.Unix(0, 0).Equal(dt3.Raw()))
+	})
 
 	formats := []string{
 		http.TimeFormat,
@@ -651,25 +701,27 @@ func TestString_AsDateTime(t *testing.T) {
 	}
 
 	for n, f := range formats {
-		str := time.Now().Format(f)
+		t.Run(f, func(t *testing.T) {
+			str := time.Now().Format(f)
 
-		value1 := NewString(reporter, str)
-		dt1 := value1.AsDateTime()
-		dt1.chain.assertNotFailed(t)
+			value1 := NewString(reporter, str)
+			dt1 := value1.AsDateTime()
+			dt1.chain.assertNotFailed(t)
 
-		value2 := NewString(reporter, str)
-		dt2 := value2.AsDateTime(formats...)
-		dt2.chain.assertNotFailed(t)
+			value2 := NewString(reporter, str)
+			dt2 := value2.AsDateTime(formats...)
+			dt2.chain.assertNotFailed(t)
 
-		value3 := NewString(reporter, str)
-		dt3 := value3.AsDateTime(f)
-		dt3.chain.assertNotFailed(t)
+			value3 := NewString(reporter, str)
+			dt3 := value3.AsDateTime(f)
+			dt3.chain.assertNotFailed(t)
 
-		if n != 0 {
-			value4 := NewString(reporter, str)
-			dt4 := value4.AsDateTime(formats[0])
-			dt4.chain.assertFailed(t)
-		}
+			if n != 0 {
+				value4 := NewString(reporter, str)
+				dt4 := value4.AsDateTime(formats[0])
+				dt4.chain.assertFailed(t)
+			}
+		})
 	}
 }
 

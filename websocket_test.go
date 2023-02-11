@@ -49,13 +49,13 @@ func TestWebsocket_FailedChain(t *testing.T) {
 func TestWebsocket_Alias(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	value1 := NewWebsocketC(Config{Reporter: reporter}, newMockWebsocketConn())
-	assert.Equal(t, []string{"Websocket()"}, value1.chain.context.Path)
-	assert.Equal(t, []string{"Websocket()"}, value1.chain.context.AliasedPath)
+	value := NewWebsocketC(Config{Reporter: reporter}, newMockWebsocketConn())
+	assert.Equal(t, []string{"Websocket()"}, value.chain.context.Path)
+	assert.Equal(t, []string{"Websocket()"}, value.chain.context.AliasedPath)
 
-	value2 := value1.Alias("foo")
-	assert.Equal(t, []string{"Websocket()"}, value2.chain.context.Path)
-	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
+	value.Alias("foo")
+	assert.Equal(t, []string{"Websocket()"}, value.chain.context.Path)
+	assert.Equal(t, []string{"foo"}, value.chain.context.AliasedPath)
 }
 
 func TestWebsocket_NilConn(t *testing.T) {

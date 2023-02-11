@@ -289,9 +289,9 @@ func TestExpect_Traverse(t *testing.T) {
 	m.ContainsKey("bbb")
 	m.ContainsKey("aaa")
 
-	m.ValueEqual("aaa", data["aaa"])
-	m.ValueEqual("bbb", data["bbb"])
-	m.ValueEqual("ccc", data["ccc"])
+	m.IsValueEqual("aaa", data["aaa"])
+	m.IsValueEqual("bbb", data["bbb"])
+	m.IsValueEqual("ccc", data["ccc"])
 
 	m.Keys().ConsistsOf("aaa", "bbb", "ccc")
 	m.Values().ConsistsOf(data["aaa"], data["bbb"], data["ccc"])
@@ -300,8 +300,8 @@ func TestExpect_Traverse(t *testing.T) {
 	m.Value("bbb").String().IsEqual("hello")
 	m.Value("ccc").Number().IsEqual(456)
 
-	m.Value("aaa").Array().Element(2).Boolean().IsFalse()
-	m.Value("aaa").Array().Element(3).IsNull()
+	m.Value("aaa").Array().Value(2).Boolean().IsFalse()
+	m.Value("aaa").Array().Value(3).IsNull()
 }
 
 func TestExpect_Branches(t *testing.T) {
@@ -326,11 +326,11 @@ func TestExpect_Branches(t *testing.T) {
 	m2 := resp.JSON().Object() // ok
 	m3 := resp.JSON().Object() // ok
 
-	e1 := m2.Value("foo").Object()                      // fail
-	e2 := m2.Value("foo").Array().Element(999).String() // fail
-	e3 := m2.Value("foo").Array().Element(0).Number()   // fail
-	e4 := m2.Value("foo").Array().Element(0).String()   // ok
-	e5 := m2.Value("foo").Array().Element(0).String()   // ok
+	e1 := m2.Value("foo").Object()                    // fail
+	e2 := m2.Value("foo").Array().Value(999).String() // fail
+	e3 := m2.Value("foo").Array().Value(0).Number()   // fail
+	e4 := m2.Value("foo").Array().Value(0).String()   // ok
+	e5 := m2.Value("foo").Array().Value(0).String()   // ok
 
 	e4.IsEqual("qux") // fail
 	e5.IsEqual("bar") // ok
@@ -370,36 +370,50 @@ func (f *testRequestFactory) NewRequest(
 }
 
 func TestExpect_RequestFactory(t *testing.T) {
-	e1 := WithConfig(Config{
-		BaseURL:  "http://example.com",
-		Reporter: NewAssertReporter(t),
-	})
-	r1 := e1.Request("GET", "/")
-	r1.chain.assertNotFailed(t)
-	assert.NotNil(t, r1.httpReq)
+	t.Run("default factory", func(t *testing.T) {
+		e := WithConfig(Config{
+			BaseURL:  "http://example.com",
+			Reporter: NewAssertReporter(t),
+		})
 
-	f2 := &testRequestFactory{}
-	e2 := WithConfig(Config{
-		BaseURL:        "http://example.com",
-		Reporter:       NewAssertReporter(t),
-		RequestFactory: f2,
-	})
-	r2 := e2.Request("GET", "/")
-	r2.chain.assertNotFailed(t)
-	assert.NotNil(t, f2.lastreq)
-	assert.True(t, f2.lastreq == r2.httpReq)
+		req := e.Request("GET", "/")
+		req.chain.assertNotFailed(t)
 
-	f3 := &testRequestFactory{
-		fail: true,
-	}
-	e3 := WithConfig(Config{
-		BaseURL:        "http://example.com",
-		Reporter:       newMockReporter(t),
-		RequestFactory: f3,
+		assert.NotNil(t, req.httpReq)
 	})
-	r3 := e3.Request("GET", "/")
-	r3.chain.assertFailed(t)
-	assert.Nil(t, f3.lastreq)
+
+	t.Run("custom factory", func(t *testing.T) {
+		factory := &testRequestFactory{}
+
+		e := WithConfig(Config{
+			BaseURL:        "http://example.com",
+			Reporter:       NewAssertReporter(t),
+			RequestFactory: factory,
+		})
+
+		req := e.Request("GET", "/")
+		req.chain.assertNotFailed(t)
+
+		assert.NotNil(t, factory.lastreq)
+		assert.Same(t, req.httpReq, factory.lastreq)
+	})
+
+	t.Run("factory failure", func(t *testing.T) {
+		factory := &testRequestFactory{
+			fail: true,
+		}
+
+		e := WithConfig(Config{
+			BaseURL:        "http://example.com",
+			Reporter:       newMockReporter(t),
+			RequestFactory: factory,
+		})
+
+		req := e.Request("GET", "/")
+		req.chain.assertFailed(t)
+
+		assert.Nil(t, factory.lastreq)
+	})
 }
 
 func TestExpect_Panics(t *testing.T) {

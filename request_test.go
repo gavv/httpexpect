@@ -106,13 +106,13 @@ func TestRequest_Alias(t *testing.T) {
 		Reporter:       reporter,
 	}
 
-	value1 := NewRequestC(config, "GET", "")
-	assert.Equal(t, []string{`Request("GET")`}, value1.chain.context.Path)
-	assert.Equal(t, []string{`Request("GET")`}, value1.chain.context.AliasedPath)
+	value := NewRequestC(config, "GET", "")
+	assert.Equal(t, []string{`Request("GET")`}, value.chain.context.Path)
+	assert.Equal(t, []string{`Request("GET")`}, value.chain.context.AliasedPath)
 
-	value2 := value1.Alias("foo")
-	assert.Equal(t, []string{`Request("GET")`}, value2.chain.context.Path)
-	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
+	value.Alias("foo")
+	assert.Equal(t, []string{`Request("GET")`}, value.chain.context.Path)
+	assert.Equal(t, []string{"foo"}, value.chain.context.AliasedPath)
 }
 
 func TestRequest_Empty(t *testing.T) {
@@ -284,103 +284,100 @@ func TestRequest_Client(t *testing.T) {
 }
 
 func TestRequest_Handler(t *testing.T) {
-	factory := DefaultRequestFactory{}
+	t.Run("basic", func(t *testing.T) {
+		reporter := newMockReporter(t)
 
-	var hr1 *http.Request
-	handler1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		hr1 = r
+		var hr1 *http.Request
+		handler1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			hr1 = r
+		})
+
+		var hr2 *http.Request
+		handler2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			hr2 = r
+		})
+
+		config := Config{
+			Reporter: reporter,
+			Client: &http.Client{
+				Transport: NewBinder(handler1),
+			},
+		}
+
+		req1 := NewRequestC(config, "METHOD", "/")
+		req1.Expect().chain.assertNotFailed(t)
+		assert.NotNil(t, hr1)
+
+		req2 := NewRequestC(config, "METHOD", "/")
+		req2.WithHandler(handler2)
+		req2.Expect().chain.assertNotFailed(t)
+		assert.NotNil(t, hr2)
 	})
 
-	var hr2 *http.Request
-	handler2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		hr2 = r
+	t.Run("nil", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		config := Config{
+			Reporter: reporter,
+		}
+
+		req := NewRequestC(config, "METHOD", "/")
+		req.WithHandler(nil)
+		req.chain.assertFailed(t)
 	})
 
-	reporter := newMockReporter(t)
+	t.Run("reset client", func(t *testing.T) {
+		reporter := newMockReporter(t)
 
-	config := Config{
-		RequestFactory: factory,
-		Reporter:       reporter,
-		Client: &http.Client{
+		var hr *http.Request
+		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			hr = r
+		})
+
+		client := &mockClient{}
+
+		config := Config{
+			Reporter: reporter,
+			Client:   client,
+		}
+
+		req := NewRequestC(config, "METHOD", "/")
+		req.WithHandler(handler)
+		req.Expect().chain.assertNotFailed(t)
+		assert.NotNil(t, hr)
+		assert.Nil(t, client.req)
+	})
+
+	t.Run("reuse client", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		handler1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+		handler2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+
+		client := &http.Client{
 			Transport: NewBinder(handler1),
-		},
-	}
+			Jar:       NewCookieJar(),
+		}
 
-	req1 := NewRequestC(config, "METHOD", "/")
-	req1.Expect().chain.assertNotFailed(t)
-	assert.NotNil(t, hr1)
+		config := Config{
+			Reporter: reporter,
+			Client:   client,
+		}
 
-	req2 := NewRequestC(config, "METHOD", "/")
-	req2.WithHandler(handler2)
-	req2.Expect().chain.assertNotFailed(t)
-	assert.NotNil(t, hr2)
-
-	req3 := NewRequestC(config, "METHOD", "/")
-	req3.WithHandler(nil)
-	req3.chain.assertFailed(t)
-}
-
-func TestRequest_HandlerResetClient(t *testing.T) {
-	factory := DefaultRequestFactory{}
-
-	var hr *http.Request
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		hr = r
+		req := NewRequestC(config, "METHOD", "/")
+		req.WithHandler(handler2)
+		assert.Same(t, client.Jar, req.config.Client.(*http.Client).Jar)
 	})
-
-	client := &mockClient{}
-
-	reporter := newMockReporter(t)
-
-	config := Config{
-		RequestFactory: factory,
-		Reporter:       reporter,
-		Client:         client,
-	}
-
-	req := NewRequestC(config, "METHOD", "/")
-	req.WithHandler(handler)
-	req.Expect().chain.assertNotFailed(t)
-	assert.NotNil(t, hr)
-	assert.Nil(t, client.req)
-}
-
-func TestRequest_HandlerResueClient(t *testing.T) {
-	factory := DefaultRequestFactory{}
-
-	handler1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-	handler2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-
-	client := &http.Client{
-		Transport: NewBinder(handler1),
-		Jar:       NewCookieJar(),
-	}
-
-	reporter := newMockReporter(t)
-
-	config := Config{
-		RequestFactory: factory,
-		Reporter:       reporter,
-		Client:         client,
-	}
-
-	req := NewRequestC(config, "METHOD", "/")
-	req.WithHandler(handler2)
-
-	assert.True(t, req.config.Client.(*http.Client).Jar == client.Jar)
 }
 
 func TestRequest_Proto(t *testing.T) {
-	factory := DefaultRequestFactory{}
-
 	client := &mockClient{}
 
 	reporter := newMockReporter(t)
 
 	config := Config{
-		RequestFactory: factory,
-		Client:         client,
-		Reporter:       reporter,
+		Client:   client,
+		Reporter: reporter,
 	}
 
 	req := NewRequestC(config, "METHOD", "/")
@@ -750,7 +747,7 @@ func TestRequest_BasicAuth(t *testing.T) {
 		req.httpReq.Header.Get("Authorization"))
 }
 
-func TestRequest_WithHost(t *testing.T) {
+func TestRequest_Host(t *testing.T) {
 	factory1 := DefaultRequestFactory{}
 	client1 := &mockClient{}
 	reporter1 := newMockReporter(t)
@@ -839,7 +836,7 @@ func TestRequest_BodyChunked(t *testing.T) {
 	assert.Equal(t, "METHOD", client.req.Method)
 	assert.Equal(t, "url", client.req.URL.String())
 	assert.Equal(t, make(http.Header), client.req.Header)
-	assert.Equal(t, "body", string(resp.content))
+	assert.Equal(t, "body", resp.Body().Raw())
 
 	assert.Same(t, &client.resp, resp.Raw())
 }
@@ -927,7 +924,7 @@ func TestRequest_BodyBytes(t *testing.T) {
 	assert.Equal(t, "METHOD", client.req.Method)
 	assert.Equal(t, "/path", client.req.URL.String())
 	assert.Equal(t, make(http.Header), client.req.Header)
-	assert.Equal(t, "body", string(resp.content))
+	assert.Equal(t, "body", resp.Body().Raw())
 
 	assert.Same(t, &client.resp, resp.Raw())
 }
@@ -988,7 +985,7 @@ func TestRequest_BodyText(t *testing.T) {
 	assert.Equal(t, "METHOD", client.req.Method)
 	assert.Equal(t, "url", client.req.URL.String())
 	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
-	assert.Equal(t, "some text", string(resp.content))
+	assert.Equal(t, "some text", resp.Body().Raw())
 
 	assert.Same(t, &client.resp, resp.Raw())
 }
@@ -1028,7 +1025,7 @@ func TestRequest_BodyForm(t *testing.T) {
 	assert.Equal(t, "METHOD", client.req.Method)
 	assert.Equal(t, "url", client.req.URL.String())
 	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
-	assert.Equal(t, `a=1&b=2`, string(resp.content))
+	assert.Equal(t, `a=1&b=2`, resp.Body().Raw())
 
 	assert.Same(t, &client.resp, resp.Raw())
 }
@@ -1066,7 +1063,7 @@ func TestRequest_BodyFormField(t *testing.T) {
 	assert.Equal(t, "METHOD", client.req.Method)
 	assert.Equal(t, "url", client.req.URL.String())
 	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
-	assert.Equal(t, `a=1&b=2`, string(resp.content))
+	assert.Equal(t, `a=1&b=2`, resp.Body().Raw())
 
 	assert.Same(t, &client.resp, resp.Raw())
 }
@@ -1104,7 +1101,7 @@ func TestRequest_BodyFormStruct(t *testing.T) {
 	assert.Equal(t, "METHOD", client.req.Method)
 	assert.Equal(t, "url", client.req.URL.String())
 	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
-	assert.Equal(t, `a=1&b=2`, string(resp.content))
+	assert.Equal(t, `a=1&b=2`, resp.Body().Raw())
 
 	assert.Same(t, &client.resp, resp.Raw())
 }
@@ -1142,7 +1139,7 @@ func TestRequest_BodyFormCombined(t *testing.T) {
 	assert.Equal(t, "METHOD", client.req.Method)
 	assert.Equal(t, "url", client.req.URL.String())
 	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
-	assert.Equal(t, `a=1&b=2&c=3`, string(resp.content))
+	assert.Equal(t, `a=1&b=2&c=3`, resp.Body().Raw())
 
 	assert.Same(t, &client.resp, resp.Raw())
 }
@@ -1178,7 +1175,8 @@ func TestRequest_BodyMultipart(t *testing.T) {
 	assert.Equal(t, "multipart/form-data", mediatype)
 	assert.True(t, params["boundary"] != "")
 
-	reader := multipart.NewReader(bytes.NewReader(resp.content), params["boundary"])
+	reader := multipart.NewReader(strings.NewReader(resp.Body().Raw()),
+		params["boundary"])
 
 	part1, _ := reader.NextPart()
 	assert.Equal(t, "b", part1.FormName())
@@ -1241,7 +1239,8 @@ func TestRequest_BodyMultipartFile(t *testing.T) {
 	assert.Equal(t, "multipart/form-data", mediatype)
 	assert.True(t, params["boundary"] != "")
 
-	reader := multipart.NewReader(bytes.NewReader(resp.content), params["boundary"])
+	reader := multipart.NewReader(strings.NewReader(resp.Body().Raw()),
+		params["boundary"])
 
 	part1, _ := reader.NextPart()
 	assert.Equal(t, "a", part1.FormName())
@@ -1303,7 +1302,7 @@ func TestRequest_BodyJSON(t *testing.T) {
 	assert.Equal(t, "METHOD", client.req.Method)
 	assert.Equal(t, "url", client.req.URL.String())
 	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
-	assert.Equal(t, `{"key":"value"}`, string(resp.content))
+	assert.Equal(t, `{"key":"value"}`, resp.Body().Raw())
 
 	assert.Same(t, &client.resp, resp.Raw())
 }
@@ -1743,7 +1742,6 @@ func TestRequest_UsageChecks(t *testing.T) {
 		req.Expect()
 		req.chain.assertFailed(t)
 	})
-
 }
 
 func TestRequest_OrderChecks(t *testing.T) {
@@ -2586,16 +2584,16 @@ func TestRequest_Retries(t *testing.T) {
 		}
 	}
 
-	newTempNetErrClient := func(cb func(req *http.Request)) *mockClient {
+	newTimeoutErrClient := func(cb func(req *http.Request)) *mockClient {
 		return &mockClient{
 			err: &mockNetError{
-				isTemporary: true,
+				isTimeout: true,
 			},
 			cb: cb,
 		}
 	}
 
-	newTempServerErrClient := func(cb func(req *http.Request)) *mockClient {
+	newServerErrClient := func(cb func(req *http.Request)) *mockClient {
 		return &mockClient{
 			resp: http.Response{
 				StatusCode: http.StatusInternalServerError,
@@ -2647,10 +2645,10 @@ func TestRequest_Retries(t *testing.T) {
 			assert.Equal(t, 1, callCount)
 		})
 
-		t.Run("temporary network error", func(t *testing.T) {
+		t.Run("timeout error", func(t *testing.T) {
 			callCount := 0
 
-			client := newTempNetErrClient(func(req *http.Request) {
+			client := newTimeoutErrClient(func(req *http.Request) {
 				callCount++
 
 				b, err := ioutil.ReadAll(req.Body)
@@ -2677,10 +2675,10 @@ func TestRequest_Retries(t *testing.T) {
 			assert.Equal(t, 1, callCount)
 		})
 
-		t.Run("temporary server error", func(t *testing.T) {
+		t.Run("server error", func(t *testing.T) {
 			callCount := 0
 
-			client := newTempServerErrClient(func(req *http.Request) {
+			client := newServerErrClient(func(req *http.Request) {
 				callCount++
 
 				b, err := ioutil.ReadAll(req.Body)
@@ -2741,7 +2739,7 @@ func TestRequest_Retries(t *testing.T) {
 
 	})
 
-	t.Run("retry temporary network errors policy", func(t *testing.T) {
+	t.Run("retry timeout errors policy", func(t *testing.T) {
 		t.Run("no error", func(t *testing.T) {
 			callCount := 0
 
@@ -2760,7 +2758,7 @@ func TestRequest_Retries(t *testing.T) {
 
 			req := NewRequestC(config, http.MethodPost, "/url").
 				WithText("test body").
-				WithRetryPolicy(RetryTemporaryNetworkErrors)
+				WithRetryPolicy(RetryTimeoutErrors)
 			req.sleepFn = noopSleepFn
 			req.chain.assertNotFailed(t)
 
@@ -2771,10 +2769,10 @@ func TestRequest_Retries(t *testing.T) {
 			assert.Equal(t, 1, callCount)
 		})
 
-		t.Run("temporary network error", func(t *testing.T) {
+		t.Run("timeout error", func(t *testing.T) {
 			callCount := 0
 
-			client := newTempNetErrClient(func(req *http.Request) {
+			client := newTimeoutErrClient(func(req *http.Request) {
 				callCount++
 
 				b, err := ioutil.ReadAll(req.Body)
@@ -2789,7 +2787,7 @@ func TestRequest_Retries(t *testing.T) {
 
 			req := NewRequestC(config, http.MethodPost, "/url").
 				WithText("test body").
-				WithRetryPolicy(RetryTemporaryNetworkErrors).
+				WithRetryPolicy(RetryTimeoutErrors).
 				WithMaxRetries(1).
 				WithRetryDelay(0, 0)
 			req.sleepFn = noopSleepFn
@@ -2802,10 +2800,10 @@ func TestRequest_Retries(t *testing.T) {
 			assert.Equal(t, 2, callCount)
 		})
 
-		t.Run("temporary server error", func(t *testing.T) {
+		t.Run("server error", func(t *testing.T) {
 			callCount := 0
 
-			client := newTempServerErrClient(func(req *http.Request) {
+			client := newServerErrClient(func(req *http.Request) {
 				callCount++
 
 				b, err := ioutil.ReadAll(req.Body)
@@ -2820,7 +2818,7 @@ func TestRequest_Retries(t *testing.T) {
 
 			req := NewRequestC(config, http.MethodPost, "/url").
 				WithText("test body").
-				WithRetryPolicy(RetryTemporaryNetworkErrors).
+				WithRetryPolicy(RetryTimeoutErrors).
 				WithMaxRetries(1)
 			req.sleepFn = noopSleepFn
 			req.chain.assertNotFailed(t)
@@ -2851,7 +2849,7 @@ func TestRequest_Retries(t *testing.T) {
 
 			req := NewRequestC(config, http.MethodPost, "/url").
 				WithText("test body").
-				WithRetryPolicy(RetryTemporaryNetworkErrors).
+				WithRetryPolicy(RetryTimeoutErrors).
 				WithMaxRetries(1)
 			req.sleepFn = noopSleepFn
 			req.chain.assertNotFailed(t)
@@ -2865,7 +2863,7 @@ func TestRequest_Retries(t *testing.T) {
 		})
 	})
 
-	t.Run("retry temporary network and server errors policy", func(t *testing.T) {
+	t.Run("retry timeout and server errors policy", func(t *testing.T) {
 		t.Run("no error", func(t *testing.T) {
 			callCount := 0
 
@@ -2884,7 +2882,7 @@ func TestRequest_Retries(t *testing.T) {
 
 			req := NewRequestC(config, http.MethodPost, "/url").
 				WithText("test body").
-				WithRetryPolicy(RetryTemporaryNetworkAndServerErrors)
+				WithRetryPolicy(RetryTimeoutAndServerErrors)
 			req.sleepFn = noopSleepFn
 			req.chain.assertNotFailed(t)
 
@@ -2895,10 +2893,10 @@ func TestRequest_Retries(t *testing.T) {
 			assert.Equal(t, 1, callCount)
 		})
 
-		t.Run("temporary network error", func(t *testing.T) {
+		t.Run("timeout error", func(t *testing.T) {
 			callCount := 0
 
-			client := newTempNetErrClient(func(req *http.Request) {
+			client := newTimeoutErrClient(func(req *http.Request) {
 				callCount++
 
 				b, err := ioutil.ReadAll(req.Body)
@@ -2913,7 +2911,7 @@ func TestRequest_Retries(t *testing.T) {
 
 			req := NewRequestC(config, http.MethodPost, "/url").
 				WithText("test body").
-				WithRetryPolicy(RetryTemporaryNetworkAndServerErrors).
+				WithRetryPolicy(RetryTimeoutAndServerErrors).
 				WithMaxRetries(1).
 				WithRetryDelay(0, 0)
 			req.sleepFn = noopSleepFn
@@ -2926,10 +2924,10 @@ func TestRequest_Retries(t *testing.T) {
 			assert.Equal(t, 2, callCount)
 		})
 
-		t.Run("temporary server error", func(t *testing.T) {
+		t.Run("server error", func(t *testing.T) {
 			callCount := 0
 
-			client := newTempServerErrClient(func(req *http.Request) {
+			client := newServerErrClient(func(req *http.Request) {
 				callCount++
 
 				b, err := ioutil.ReadAll(req.Body)
@@ -2944,7 +2942,7 @@ func TestRequest_Retries(t *testing.T) {
 
 			req := NewRequestC(config, http.MethodPost, "/url").
 				WithText("test body").
-				WithRetryPolicy(RetryTemporaryNetworkAndServerErrors).
+				WithRetryPolicy(RetryTimeoutAndServerErrors).
 				WithMaxRetries(1).
 				WithRetryDelay(0, 0)
 			req.sleepFn = noopSleepFn
@@ -2976,7 +2974,7 @@ func TestRequest_Retries(t *testing.T) {
 
 			req := NewRequestC(config, http.MethodPost, "/url").
 				WithText("test body").
-				WithRetryPolicy(RetryTemporaryNetworkAndServerErrors).
+				WithRetryPolicy(RetryTimeoutAndServerErrors).
 				WithMaxRetries(1)
 			req.sleepFn = noopSleepFn
 			req.chain.assertNotFailed(t)
@@ -3020,10 +3018,10 @@ func TestRequest_Retries(t *testing.T) {
 			assert.Equal(t, 1, callCount)
 		})
 
-		t.Run("temporary network error", func(t *testing.T) {
+		t.Run("timeout error", func(t *testing.T) {
 			callCount := 0
 
-			client := newTempNetErrClient(func(req *http.Request) {
+			client := newTimeoutErrClient(func(req *http.Request) {
 				callCount++
 
 				b, err := ioutil.ReadAll(req.Body)
@@ -3051,10 +3049,10 @@ func TestRequest_Retries(t *testing.T) {
 			assert.Equal(t, 2, callCount)
 		})
 
-		t.Run("temporary server error", func(t *testing.T) {
+		t.Run("server error", func(t *testing.T) {
 			callCount := 0
 
-			client := newTempServerErrClient(func(req *http.Request) {
+			client := newServerErrClient(func(req *http.Request) {
 				callCount++
 
 				b, err := ioutil.ReadAll(req.Body)

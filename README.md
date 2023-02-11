@@ -92,6 +92,15 @@ This project highly depends on contributors. Thank you all for your amazing work
 
 If you would like to submit code, see [HACKING.md](HACKING.md).
 
+## Donating
+
+If you would like to support my open-source work, you can do it here:
+
+* [Liberapay](https://liberapay.com/gavv)
+* [PayPal](https://www.paypal.com/paypalme/victorgaydov)
+
+Thanks!
+
 ## Examples
 
 See [`_examples`](_examples) directory for complete standalone examples.
@@ -179,7 +188,7 @@ e.PUT("/fruits/orange").WithJSON(orange).
 e.GET("/fruits/orange").
 	Expect().
 	Status(http.StatusOK).
-	JSON().Object().ContainsKey("weight").ValueEqual("weight", 100)
+	JSON().Object().ContainsKey("weight").IsValueEqual("weight", 100)
 
 apple := map[string]interface{}{
 	"colors": []interface{}{"green", "red"},
@@ -197,8 +206,8 @@ obj := e.GET("/fruits/apple").
 obj.Keys().ContainsOnly("colors", "weight")
 
 obj.Value("colors").Array().ConsistsOf("green", "red")
-obj.Value("colors").Array().Element(0).String().IsEqual("green")
-obj.Value("colors").Array().Element(1).String().IsEqual("red")
+obj.Value("colors").Array().Value(0).String().IsEqual("green")
+obj.Value("colors").Array().Value(1).String().IsEqual("red")
 obj.Value("colors").Array().First().String().IsEqual("green")
 obj.Value("colors").Array().Last().String().IsEqual("red")
 ```

@@ -142,17 +142,17 @@ func TestValue_Decode(t *testing.T) {
 func TestValue_Alias(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	value1 := NewValue(reporter, 123)
-	assert.Equal(t, []string{"Value()"}, value1.chain.context.Path)
-	assert.Equal(t, []string{"Value()"}, value1.chain.context.AliasedPath)
+	value := NewValue(reporter, 123)
+	assert.Equal(t, []string{"Value()"}, value.chain.context.Path)
+	assert.Equal(t, []string{"Value()"}, value.chain.context.AliasedPath)
 
-	value2 := value1.Alias("foo")
-	assert.Equal(t, []string{"Value()"}, value2.chain.context.Path)
-	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
+	value.Alias("foo")
+	assert.Equal(t, []string{"Value()"}, value.chain.context.Path)
+	assert.Equal(t, []string{"foo"}, value.chain.context.AliasedPath)
 
-	value3 := value2.Number()
-	assert.Equal(t, []string{"Value()", "Number()"}, value3.chain.context.Path)
-	assert.Equal(t, []string{"foo", "Number()"}, value3.chain.context.AliasedPath)
+	childValue := value.Number()
+	assert.Equal(t, []string{"Value()", "Number()"}, childValue.chain.context.Path)
+	assert.Equal(t, []string{"foo", "Number()"}, childValue.chain.context.AliasedPath)
 }
 
 func TestValue_CastNull(t *testing.T) {

@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/fasthttp/websocket v1.5.0
-	github.com/gavv/httpexpect/v2 v2.11.0
+	github.com/gavv/httpexpect/v2 v2.12.0
 	github.com/gin-gonic/gin v1.8.1
 	github.com/go-oauth2/oauth2/v4 v4.5.1
 	github.com/gorilla/websocket v1.5.0
@@ -85,9 +85,9 @@ require (
 	github.com/yudai/gojsondiff v1.0.0 // indirect
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
 	golang.org/x/crypto v0.3.0 // indirect
-	golang.org/x/net v0.5.0 // indirect
-	golang.org/x/sys v0.4.0 // indirect
-	golang.org/x/text v0.6.0 // indirect
+	golang.org/x/net v0.6.0 // indirect
+	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/text v0.7.0 // indirect
 	golang.org/x/time v0.2.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
