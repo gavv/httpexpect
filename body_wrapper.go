@@ -24,7 +24,7 @@ type bodyWrapper struct {
 
 	cancelFunc context.CancelFunc
 
-	isInitialized bool
+	isFullyRead bool
 
 	mu sync.Mutex
 }
@@ -32,6 +32,7 @@ type bodyWrapper struct {
 func newBodyWrapper(reader io.ReadCloser, cancelFunc context.CancelFunc) *bodyWrapper {
 	bw := &bodyWrapper{
 		origReader: reader,
+		currReader: reader,
 		cancelFunc: cancelFunc,
 	}
 
@@ -51,17 +52,23 @@ func (bw *bodyWrapper) Read(p []byte) (n int, err error) {
 		return 0, bw.readErr
 	}
 
-	// Lazy initialization
-	if !bw.isInitialized {
-		if initErr := bw.initialize(); initErr != nil {
-			return 0, initErr
-		}
+	n, err = bw.currReader.Read(p)
+
+	// Cache bytes in memory
+	if !bw.isFullyRead {
+		bw.origBytes = append(bw.origBytes, p[:n]...)
 	}
 
-	if bw.currReader == nil {
+	if err == io.EOF {
+		bw.isFullyRead = true
 		bw.currReader = bytes.NewReader(bw.origBytes)
+		bw.closeAndCancel()
+	} else if err != nil {
+		bw.readErr = err
+		bw.isFullyRead = true // Prevent further reads
+		bw.closeAndCancel()
 	}
-	return bw.currReader.Read(p)
+	return
 }
 
 // Close body
@@ -73,10 +80,9 @@ func (bw *bodyWrapper) Close() error {
 
 	// Rewind or GetBody may be called later, so be sure to
 	// read body into memory before closing
-	if !bw.isInitialized {
-		initErr := bw.initialize()
-		if initErr != nil {
-			err = initErr
+	if !bw.isFullyRead {
+		if readFullErr := bw.readFull(); readFullErr != nil {
+			err = readFullErr
 		}
 	}
 
@@ -95,8 +101,8 @@ func (bw *bodyWrapper) Rewind() {
 	defer bw.mu.Unlock()
 
 	// Until first read, rewind is no-op
-	if !bw.isInitialized {
-		return
+	if !bw.isFullyRead {
+		_ = bw.readFull()
 	}
 
 	// Reset reader
@@ -115,28 +121,25 @@ func (bw *bodyWrapper) GetBody() (io.ReadCloser, error) {
 		return nil, bw.readErr
 	}
 
-	// Lazy initialization
-	if !bw.isInitialized {
-		if initErr := bw.initialize(); initErr != nil {
-			return nil, initErr
+	if !bw.isFullyRead {
+		if err := bw.readFull(); err != nil {
+			return nil, err
 		}
 	}
 
 	return ioutil.NopCloser(bytes.NewReader(bw.origBytes)), nil
 }
 
-func (bw *bodyWrapper) initialize() error {
-	if !bw.isInitialized {
-		bw.isInitialized = true
-
-		if bw.origReader != nil {
-			bw.origBytes, bw.readErr = ioutil.ReadAll(bw.origReader)
-
-			_ = bw.closeAndCancel()
-		}
+func (bw *bodyWrapper) readFull() error {
+	defer bw.closeAndCancel()
+	remainingBytes, err := ioutil.ReadAll(bw.currReader)
+	if err != nil {
+		bw.readErr = err
+		return err
 	}
-
-	return bw.readErr
+	bw.origBytes = append(bw.origBytes, remainingBytes...)
+	bw.isFullyRead = true
+	return nil
 }
 
 func (bw *bodyWrapper) closeAndCancel() error {
