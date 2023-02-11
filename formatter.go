@@ -579,7 +579,6 @@ func (f *DefaultFormatter) addDigitGrouping(numStr string) string {
 // in groups of thousands
 func (f *DefaultFormatter) groupDigitsInString(numStr string) string {
 	var separator string
-	fmt.Println("Separator: ", f.DigitSeparator)
 	switch f.DigitSeparator {
 	case DigitSeparatorUnderscore:
 		separator = "_"
@@ -593,8 +592,7 @@ func (f *DefaultFormatter) groupDigitsInString(numStr string) string {
 	case DigitSeparatorNone:
 		return numStr
 	default:
-		// separator = "_"
-		return numStr
+		separator = "_"
 	}
 	var groupedPart string
 	for i, r := range numStr {
@@ -603,7 +601,6 @@ func (f *DefaultFormatter) groupDigitsInString(numStr string) string {
 			groupedPart = separator + groupedPart
 		}
 	}
-	fmt.Println(Reverse(groupedPart))
 	return Reverse(groupedPart)
 }
 
