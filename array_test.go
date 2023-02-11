@@ -179,11 +179,10 @@ func TestArray_Decode(t *testing.T) {
 	t.Run("Target is unmarshable", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
-		testValue := []interface{}{"Foo", 123.0}
+		testValue := []interface{}{"Foo", 123}
 		arr := NewArray(reporter, testValue)
 
-		arr.Decode(123)
-
+		arr.Decode(456)
 		arr.chain.assertFailed(t)
 	})
 
@@ -1184,10 +1183,17 @@ func TestArray_Find(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1, 2, 3, 4, 5, 6})
 		foundValue := array.Find(func(index int, value *Value) bool {
-			return value.Raw() == 2.0
+			return value.Raw() == json.Number("2")
 		})
-		assert.Equal(t, 2.0, foundValue.Raw())
-		assert.Equal(t, array.Raw(), []interface{}{1.0, 2.0, 3.0, 4.0, 5.0, 6.0})
+		assert.Equal(t, json.Number("2"), foundValue.Raw())
+		assert.Equal(t, []interface{}{
+			json.Number("1"),
+			json.Number("2"),
+			json.Number("3"),
+			json.Number("4"),
+			json.Number("5"),
+			json.Number("6"),
+		}, array.Raw())
 
 		array.chain.assertNotFailed(t)
 		foundValue.chain.assertNotFailed(t)
@@ -1201,7 +1207,7 @@ func TestArray_Find(t *testing.T) {
 			return stringifiedValue == "bar"
 		})
 		assert.Equal(t, "bar", foundValue.Raw())
-		assert.Equal(t, array.Raw(), []interface{}{1.0, "foo", true, "bar"})
+		assert.Equal(t, array.Raw(), []interface{}{json.Number("1"), "foo", true, "bar"})
 
 		array.chain.assertNotFailed(t)
 		foundValue.chain.assertNotFailed(t)
@@ -1215,7 +1221,7 @@ func TestArray_Find(t *testing.T) {
 			return stringifiedValue != ""
 		})
 		assert.Equal(t, "foo", foundValue.Raw())
-		assert.Equal(t, array.Raw(), []interface{}{1.0, "foo", true, "bar"})
+		assert.Equal(t, []interface{}{json.Number("1"), "foo", true, "bar"}, array.Raw())
 
 		array.chain.assertNotFailed(t)
 		foundValue.chain.assertNotFailed(t)
@@ -1225,10 +1231,10 @@ func TestArray_Find(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1, "foo", true, "bar"})
 		foundValue := array.Find(func(index int, value *Value) bool {
-			return value.Raw() == 2.0
+			return value.Raw() == json.Number("2")
 		})
 		assert.Equal(t, nil, foundValue.Raw())
-		assert.Equal(t, array.Raw(), []interface{}{1.0, "foo", true, "bar"})
+		assert.Equal(t, []interface{}{json.Number("1"), "foo", true, "bar"}, array.Raw())
 
 		array.chain.assertFailed(t)
 		foundValue.chain.assertFailed(t)
@@ -1238,10 +1244,10 @@ func TestArray_Find(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{})
 		foundValue := array.Find(func(index int, value *Value) bool {
-			return value.Raw() == 2.0
+			return value.Raw() == json.Number("2")
 		})
 		assert.Equal(t, nil, foundValue.Raw())
-		assert.Equal(t, array.Raw(), []interface{}{})
+		assert.Equal(t, []interface{}{}, array.Raw())
 
 		array.chain.assertFailed(t)
 		foundValue.chain.assertFailed(t)
@@ -1256,7 +1262,7 @@ func TestArray_Find(t *testing.T) {
 				return true
 			})
 			assert.Equal(t, nil, foundValue.Raw())
-			assert.Equal(t, array.Raw(), []interface{}{1.0, 2.0})
+			assert.Equal(t, []interface{}{json.Number("1"), json.Number("2")}, array.Raw())
 
 			array.chain.assertFailed(t)
 			foundValue.chain.assertFailed(t)
@@ -1271,7 +1277,7 @@ func TestArray_Find(t *testing.T) {
 				return true
 			})
 			assert.Equal(t, "str", foundValue.Raw())
-			assert.Equal(t, array.Raw(), []interface{}{1.0, 2.0, "str"})
+			assert.Equal(t, []interface{}{json.Number("1"), json.Number("2"), "str"}, array.Raw())
 
 			array.chain.assertNotFailed(t)
 			foundValue.chain.assertNotFailed(t)
@@ -1282,7 +1288,7 @@ func TestArray_Find(t *testing.T) {
 		array := NewArray(reporter, []interface{}{1, 2})
 		foundValue := array.Find(nil)
 		assert.Equal(t, nil, foundValue.Raw())
-		assert.Equal(t, array.Raw(), []interface{}{1.0, 2.0})
+		assert.Equal(t, []interface{}{json.Number("1"), json.Number("2")}, array.Raw())
 
 		array.chain.assertFailed(t)
 		foundValue.chain.assertFailed(t)
@@ -1294,7 +1300,7 @@ func TestArray_FindAll(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1, 2, 3, 4, 5, 6})
 		foundValues := array.FindAll(func(index int, value *Value) bool {
-			return value.Raw() == 2.0 || value.Raw() == 5.0
+			return value.Raw() == json.Number("2") || value.Raw() == json.Number("5")
 		})
 
 		actual := []interface{}{}
@@ -1302,8 +1308,15 @@ func TestArray_FindAll(t *testing.T) {
 			actual = append(actual, value.Raw())
 		}
 
-		assert.Equal(t, []interface{}{2.0, 5.0}, actual)
-		assert.Equal(t, array.Raw(), []interface{}{1.0, 2.0, 3.0, 4.0, 5.0, 6.0})
+		assert.Equal(t, []interface{}{json.Number("2"), json.Number("5")}, actual)
+		assert.Equal(t, []interface{}{
+			json.Number("1"),
+			json.Number("2"),
+			json.Number("3"),
+			json.Number("4"),
+			json.Number("5"),
+			json.Number("6"),
+		}, array.Raw())
 
 		array.chain.assertNotFailed(t)
 		for _, value := range foundValues {
@@ -1324,7 +1337,7 @@ func TestArray_FindAll(t *testing.T) {
 			actual = append(actual, value.Raw())
 		}
 		assert.Equal(t, []interface{}{"foo", "bar"}, actual)
-		assert.Equal(t, array.Raw(), []interface{}{1.0, "foo", true, "bar"})
+		assert.Equal(t, []interface{}{json.Number("1"), "foo", true, "bar"}, array.Raw())
 
 		array.chain.assertNotFailed(t)
 		for _, value := range foundValues {
@@ -1336,7 +1349,7 @@ func TestArray_FindAll(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1.0, "foo", true, "bar"})
 		foundValues := array.FindAll(func(index int, value *Value) bool {
-			return value.Raw() == 2.0
+			return value.Raw() == json.Number("2")
 		})
 
 		actual := []interface{}{}
@@ -1344,7 +1357,7 @@ func TestArray_FindAll(t *testing.T) {
 			actual = append(actual, value.Raw())
 		}
 		assert.Equal(t, []interface{}{}, actual)
-		assert.Equal(t, array.Raw(), []interface{}{1.0, "foo", true, "bar"})
+		assert.Equal(t, []interface{}{json.Number("1"), "foo", true, "bar"}, array.Raw())
 
 		array.chain.assertNotFailed(t)
 		for _, value := range foundValues {
@@ -1356,7 +1369,7 @@ func TestArray_FindAll(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{})
 		foundValues := array.FindAll(func(index int, value *Value) bool {
-			return value.Raw() == 2.0
+			return value.Raw() == json.Number("2")
 		})
 
 		actual := []interface{}{}
@@ -1364,7 +1377,7 @@ func TestArray_FindAll(t *testing.T) {
 			actual = append(actual, value.Raw())
 		}
 		assert.Equal(t, []interface{}{}, actual)
-		assert.Equal(t, array.Raw(), []interface{}{})
+		assert.Equal(t, []interface{}{}, array.Raw())
 
 		array.chain.assertNotFailed(t)
 		for _, value := range foundValues {
@@ -1386,7 +1399,7 @@ func TestArray_FindAll(t *testing.T) {
 				actual = append(actual, value.Raw())
 			}
 			assert.Equal(t, []interface{}{}, actual)
-			assert.Equal(t, array.Raw(), []interface{}{1.0, 2.0})
+			assert.Equal(t, []interface{}{json.Number("1"), json.Number("2")}, array.Raw())
 
 			array.chain.assertNotFailed(t)
 			for _, value := range foundValues {
@@ -1407,7 +1420,7 @@ func TestArray_FindAll(t *testing.T) {
 			actual = append(actual, value.Raw())
 		}
 		assert.Equal(t, []interface{}{"foo", "bar"}, actual)
-		assert.Equal(t, array.Raw(), []interface{}{"foo", 1.0, 2.0, "bar"})
+		assert.Equal(t, []interface{}{"foo", json.Number("1"), json.Number("2"), "bar"}, array.Raw())
 
 		array.chain.assertNotFailed(t)
 		for _, value := range foundValues {
@@ -1425,7 +1438,7 @@ func TestArray_FindAll(t *testing.T) {
 			actual = append(actual, value.Raw())
 		}
 		assert.Equal(t, []interface{}{}, actual)
-		assert.Equal(t, array.Raw(), []interface{}{1.0, 2.0})
+		assert.Equal(t, []interface{}{json.Number("1"), json.Number("2")}, array.Raw())
 
 		array.chain.assertFailed(t)
 		for _, value := range foundValues {

@@ -1,6 +1,7 @@
 package httpexpect
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
@@ -1648,7 +1649,7 @@ func builtinComparator(opChain *chain, array []interface{}) func(x, y *Value) bo
 	var prev interface{}
 	for index, curr := range array {
 		switch curr.(type) {
-		case bool, float64, string, nil:
+		case bool, float64, string, nil, json.Number:
 			// ok, do nothing
 
 		default:
@@ -1718,6 +1719,12 @@ func builtinComparator(opChain *chain, array []interface{}) func(x, y *Value) bo
 			return func(x, y *Value) bool {
 				xVal := x.Raw().(string)
 				yVal := y.Raw().(string)
+				return xVal < yVal
+			}
+		case json.Number:
+			return func(x, y *Value) bool {
+				xVal := x.Raw().(json.Number)
+				yVal := y.Raw().(json.Number)
 				return xVal < yVal
 			}
 		case nil:

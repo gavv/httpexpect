@@ -1,6 +1,7 @@
 package httpexpect
 
 import (
+	"encoding/json"
 	"errors"
 	"reflect"
 )
@@ -334,7 +335,7 @@ func (v *Value) Number() *Number {
 		return newNumber(opChain, 0)
 	}
 
-	data, ok := v.value.(float64)
+	data, ok := v.value.(json.Number)
 
 	if !ok {
 		opChain.fail(AssertionFailure{

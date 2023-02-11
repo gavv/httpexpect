@@ -1,6 +1,8 @@
 package httpexpect
 
 import (
+	"encoding/json"
+	"math/big"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,19 +18,19 @@ func TestCanon_Number(t *testing.T) {
 
 	d1, ok := canonNumber(chain, 123)
 	assert.True(t, ok)
-	assert.Equal(t, 123.0, d1)
+	assert.Equal(t, *big.NewFloat(123), d1)
 	chain.assertNotFailed(t)
 	chain.clearFailed()
 
 	d2, ok := canonNumber(chain, 123.0)
 	assert.True(t, ok)
-	assert.Equal(t, 123.0, d2)
+	assert.Equal(t, *big.NewFloat(123), d2)
 	chain.assertNotFailed(t)
 	chain.clearFailed()
 
 	d3, ok := canonNumber(chain, myInt(123))
 	assert.True(t, ok)
-	assert.Equal(t, 123.0, d3)
+	assert.Equal(t, *big.NewFloat(123), d3)
 	chain.assertNotFailed(t)
 	chain.clearFailed()
 
@@ -54,13 +56,13 @@ func TestCanon_Array(t *testing.T) {
 
 	d1, ok := canonArray(chain, []interface{}{123.0, 456.0})
 	assert.True(t, ok)
-	assert.Equal(t, []interface{}{123.0, 456.0}, d1)
+	assert.Equal(t, []interface{}{json.Number("123"), json.Number("456")}, d1)
 	chain.assertNotFailed(t)
 	chain.clearFailed()
 
 	d2, ok := canonArray(chain, myArray{myInt(123), 456.0})
 	assert.True(t, ok)
-	assert.Equal(t, []interface{}{123.0, 456.0}, d2)
+	assert.Equal(t, []interface{}{json.Number("123"), json.Number("456")}, d2)
 	chain.assertNotFailed(t)
 	chain.clearFailed()
 
@@ -96,13 +98,13 @@ func TestCanon_Map(t *testing.T) {
 
 	d1, ok := canonMap(chain, map[string]interface{}{"foo": 123.0})
 	assert.True(t, ok)
-	assert.Equal(t, map[string]interface{}{"foo": 123.0}, d1)
+	assert.Equal(t, map[string]interface{}{"foo": json.Number("123")}, d1)
 	chain.assertNotFailed(t)
 	chain.clearFailed()
 
 	d2, ok := canonMap(chain, myMap{"foo": myInt(123)})
 	assert.True(t, ok)
-	assert.Equal(t, map[string]interface{}{"foo": 123.0}, d2)
+	assert.Equal(t, map[string]interface{}{"foo": json.Number("123")}, d2)
 	chain.assertNotFailed(t)
 	chain.clearFailed()
 

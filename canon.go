@@ -26,42 +26,22 @@ func canonNumber(opChain *chain, in interface{}) (out big.Float, ok bool) {
 		}
 	}()
 	out, ok = canonNumberConvert(in)
+	if !ok {
+		opChain.fail(AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{in},
+			Errors: []error{
+				errors.New("expected: valid number"),
+			},
+		})
+		ok = false
+	}
 	return
 }
 
 func canonNumberConvert(in interface{}) (out big.Float, ok bool) {
 	value := reflect.ValueOf(in)
 	switch in := in.(type) {
-	case float64:
-		float := value.Float()
-		return *big.NewFloat(float), true
-	case float32:
-		float := value.Float()
-		return *big.NewFloat(float), true
-	case int8:
-		int := value.Int()
-		return *big.NewFloat(0).SetInt64(int), true
-	case int16:
-		int := value.Int()
-		return *big.NewFloat(0).SetInt64(int), true
-	case int32:
-		int := value.Int()
-		return *big.NewFloat(0).SetInt64(int), true
-	case int64:
-		int := value.Int()
-		return *big.NewFloat(0).SetInt64(int), true
-	case uint8:
-		int := value.Uint()
-		return *big.NewFloat(0).SetUint64(int), true
-	case uint16:
-		int := value.Uint()
-		return *big.NewFloat(0).SetUint64(int), true
-	case uint32:
-		int := value.Uint()
-		return *big.NewFloat(0).SetUint64(int), true
-	case uint64:
-		int := value.Uint()
-		return *big.NewFloat(0).SetUint64(int), true
 	case big.Int:
 		val := in
 		return *big.NewFloat(0).SetInt(&val), true
@@ -71,6 +51,53 @@ func canonNumberConvert(in interface{}) (out big.Float, ok bool) {
 		data := in.String()
 		num, ok := big.NewFloat(0).SetString(data)
 		return *num, ok
+	default:
+		return canonConvertNumberNative(value, in)
+	}
+}
+
+func canonConvertNumberNative(
+	value reflect.Value,
+	in interface{},
+) (out big.Float, ok bool) {
+	t := reflect.TypeOf(in).Kind()
+	switch t {
+	case reflect.Float64:
+		float := value.Float()
+		return *big.NewFloat(float), true
+	case reflect.Float32:
+		float := value.Float()
+		return *big.NewFloat(float), true
+	case reflect.Int8:
+		int := value.Int()
+		return *big.NewFloat(0).SetInt64(int), true
+	case reflect.Int16:
+		int := value.Int()
+		return *big.NewFloat(0).SetInt64(int), true
+	case reflect.Int32:
+		int := value.Int()
+		return *big.NewFloat(0).SetInt64(int), true
+	case reflect.Int64:
+		int := value.Int()
+		return *big.NewFloat(0).SetInt64(int), true
+	case reflect.Int:
+		int := value.Int()
+		return *big.NewFloat(0).SetInt64(int), true
+	case reflect.Uint8:
+		int := value.Uint()
+		return *big.NewFloat(0).SetUint64(int), true
+	case reflect.Uint16:
+		int := value.Uint()
+		return *big.NewFloat(0).SetUint64(int), true
+	case reflect.Uint32:
+		int := value.Uint()
+		return *big.NewFloat(0).SetUint64(int), true
+	case reflect.Uint64:
+		int := value.Uint()
+		return *big.NewFloat(0).SetUint64(int), true
+	case reflect.Uint:
+		int := value.Uint()
+		return *big.NewFloat(0).SetUint64(int), true
 	default:
 		return *big.NewFloat(0), false
 	}
@@ -179,7 +206,7 @@ func canonDecode(opChain *chain, value interface{}, target interface{}) {
 	dec.UseNumber()
 
 	for {
-		if err := dec.Decode(&target); err == io.EOF {
+		if err := dec.Decode(target); err == io.EOF {
 			break
 		} else if err != nil {
 			opChain.fail(AssertionFailure{
