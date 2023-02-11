@@ -45,12 +45,12 @@ func TestFailureTemplate(t *testing.T) {
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
-	// customize error message with `FailureTemplate`
 	e := httpexpect.WithConfig(httpexpect.Config{
 		TestName: "Check Fruits List",
 		BaseURL:  server.URL,
 		Reporter: httpexpect.NewAssertReporter(t),
 		Formatter: &httpexpect.DefaultFormatter{
+			// customize error message with `FailureTemplate`
 			FailureTemplate: failureTemplate,
 			TemplateFuncs:   templateFuncs,
 		},
@@ -78,17 +78,17 @@ func TestSuccessTemplate(t *testing.T) {
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
-	// Customize success message with `SuccessTemplate`.
-	// To make it prints on success we need to set `AssertionHandler`
-	// with `t` as the `Logger`
 	e := httpexpect.WithConfig(httpexpect.Config{
 		TestName: "Check Fruits List",
 		BaseURL:  server.URL,
 		AssertionHandler: &httpexpect.DefaultAssertionHandler{
 			Formatter: &httpexpect.DefaultFormatter{
+				// customize success message with `SuccessTemplate`
 				SuccessTemplate: successTemplate,
 				TemplateFuncs:   templateFuncs,
 			},
+			Reporter: t,
+			// to enable printing of success messages, we need to set `Logger`
 			Logger: t,
 		},
 	})

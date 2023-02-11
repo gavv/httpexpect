@@ -33,7 +33,7 @@ func TestObject_FailedChain(t *testing.T) {
 		value.NotContainsValue("foo")
 		value.ContainsSubset(nil)
 		value.NotContainsSubset(nil)
-		value.ValueEqual("foo", nil)
+		value.IsValueEqual("foo", nil)
 		value.NotValueEqual("foo", nil)
 
 		assert.NotNil(t, value.Iter())
@@ -851,7 +851,7 @@ func TestObject_ValueEqual(t *testing.T) {
 		},
 	})
 
-	value.ValueEqual("foo", 123)
+	value.IsValueEqual("foo", 123)
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
@@ -859,7 +859,7 @@ func TestObject_ValueEqual(t *testing.T) {
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.ValueEqual("bar", []interface{}{"456", 789})
+	value.IsValueEqual("bar", []interface{}{"456", 789})
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
@@ -867,7 +867,7 @@ func TestObject_ValueEqual(t *testing.T) {
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.ValueEqual("baz", map[string]interface{}{"a": "b"})
+	value.IsValueEqual("baz", map[string]interface{}{"a": "b"})
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
@@ -875,7 +875,7 @@ func TestObject_ValueEqual(t *testing.T) {
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.ValueEqual("baz", func() {})
+	value.IsValueEqual("baz", func() {})
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
@@ -883,7 +883,7 @@ func TestObject_ValueEqual(t *testing.T) {
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.ValueEqual("BAZ", 777)
+	value.IsValueEqual("BAZ", 777)
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
@@ -924,7 +924,7 @@ func TestObject_ValueEqualStruct(t *testing.T) {
 		},
 	}
 
-	value.ValueEqual("baz", baz)
+	value.IsValueEqual("baz", baz)
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
@@ -932,7 +932,7 @@ func TestObject_ValueEqualStruct(t *testing.T) {
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.ValueEqual("baz", Baz{})
+	value.IsValueEqual("baz", Baz{})
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
@@ -1032,7 +1032,7 @@ func TestObject_ConvertValueEqual(t *testing.T) {
 		},
 	})
 
-	value.ValueEqual("bar", myArray{"456", myInt(789)})
+	value.IsValueEqual("bar", myArray{"456", myInt(789)})
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
@@ -1040,7 +1040,7 @@ func TestObject_ConvertValueEqual(t *testing.T) {
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	value.ValueEqual("baz", myMap{"a": "b"})
+	value.IsValueEqual("baz", myMap{"a": "b"})
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 

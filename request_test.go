@@ -284,103 +284,100 @@ func TestRequest_Client(t *testing.T) {
 }
 
 func TestRequest_Handler(t *testing.T) {
-	factory := DefaultRequestFactory{}
+	t.Run("basic", func(t *testing.T) {
+		reporter := newMockReporter(t)
 
-	var hr1 *http.Request
-	handler1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		hr1 = r
+		var hr1 *http.Request
+		handler1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			hr1 = r
+		})
+
+		var hr2 *http.Request
+		handler2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			hr2 = r
+		})
+
+		config := Config{
+			Reporter: reporter,
+			Client: &http.Client{
+				Transport: NewBinder(handler1),
+			},
+		}
+
+		req1 := NewRequestC(config, "METHOD", "/")
+		req1.Expect().chain.assertNotFailed(t)
+		assert.NotNil(t, hr1)
+
+		req2 := NewRequestC(config, "METHOD", "/")
+		req2.WithHandler(handler2)
+		req2.Expect().chain.assertNotFailed(t)
+		assert.NotNil(t, hr2)
 	})
 
-	var hr2 *http.Request
-	handler2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		hr2 = r
+	t.Run("nil", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		config := Config{
+			Reporter: reporter,
+		}
+
+		req := NewRequestC(config, "METHOD", "/")
+		req.WithHandler(nil)
+		req.chain.assertFailed(t)
 	})
 
-	reporter := newMockReporter(t)
+	t.Run("reset client", func(t *testing.T) {
+		reporter := newMockReporter(t)
 
-	config := Config{
-		RequestFactory: factory,
-		Reporter:       reporter,
-		Client: &http.Client{
+		var hr *http.Request
+		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			hr = r
+		})
+
+		client := &mockClient{}
+
+		config := Config{
+			Reporter: reporter,
+			Client:   client,
+		}
+
+		req := NewRequestC(config, "METHOD", "/")
+		req.WithHandler(handler)
+		req.Expect().chain.assertNotFailed(t)
+		assert.NotNil(t, hr)
+		assert.Nil(t, client.req)
+	})
+
+	t.Run("reuse client", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		handler1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+		handler2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
+
+		client := &http.Client{
 			Transport: NewBinder(handler1),
-		},
-	}
+			Jar:       NewCookieJar(),
+		}
 
-	req1 := NewRequestC(config, "METHOD", "/")
-	req1.Expect().chain.assertNotFailed(t)
-	assert.NotNil(t, hr1)
+		config := Config{
+			Reporter: reporter,
+			Client:   client,
+		}
 
-	req2 := NewRequestC(config, "METHOD", "/")
-	req2.WithHandler(handler2)
-	req2.Expect().chain.assertNotFailed(t)
-	assert.NotNil(t, hr2)
-
-	req3 := NewRequestC(config, "METHOD", "/")
-	req3.WithHandler(nil)
-	req3.chain.assertFailed(t)
-}
-
-func TestRequest_HandlerResetClient(t *testing.T) {
-	factory := DefaultRequestFactory{}
-
-	var hr *http.Request
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		hr = r
+		req := NewRequestC(config, "METHOD", "/")
+		req.WithHandler(handler2)
+		assert.Same(t, client.Jar, req.config.Client.(*http.Client).Jar)
 	})
-
-	client := &mockClient{}
-
-	reporter := newMockReporter(t)
-
-	config := Config{
-		RequestFactory: factory,
-		Reporter:       reporter,
-		Client:         client,
-	}
-
-	req := NewRequestC(config, "METHOD", "/")
-	req.WithHandler(handler)
-	req.Expect().chain.assertNotFailed(t)
-	assert.NotNil(t, hr)
-	assert.Nil(t, client.req)
-}
-
-func TestRequest_HandlerResueClient(t *testing.T) {
-	factory := DefaultRequestFactory{}
-
-	handler1 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-	handler2 := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
-
-	client := &http.Client{
-		Transport: NewBinder(handler1),
-		Jar:       NewCookieJar(),
-	}
-
-	reporter := newMockReporter(t)
-
-	config := Config{
-		RequestFactory: factory,
-		Reporter:       reporter,
-		Client:         client,
-	}
-
-	req := NewRequestC(config, "METHOD", "/")
-	req.WithHandler(handler2)
-
-	assert.True(t, req.config.Client.(*http.Client).Jar == client.Jar)
 }
 
 func TestRequest_Proto(t *testing.T) {
-	factory := DefaultRequestFactory{}
-
 	client := &mockClient{}
 
 	reporter := newMockReporter(t)
 
 	config := Config{
-		RequestFactory: factory,
-		Client:         client,
-		Reporter:       reporter,
+		Client:   client,
+		Reporter: reporter,
 	}
 
 	req := NewRequestC(config, "METHOD", "/")
@@ -750,7 +747,7 @@ func TestRequest_BasicAuth(t *testing.T) {
 		req.httpReq.Header.Get("Authorization"))
 }
 
-func TestRequest_WithHost(t *testing.T) {
+func TestRequest_Host(t *testing.T) {
 	factory1 := DefaultRequestFactory{}
 	client1 := &mockClient{}
 	reporter1 := newMockReporter(t)
@@ -839,7 +836,7 @@ func TestRequest_BodyChunked(t *testing.T) {
 	assert.Equal(t, "METHOD", client.req.Method)
 	assert.Equal(t, "url", client.req.URL.String())
 	assert.Equal(t, make(http.Header), client.req.Header)
-	assert.Equal(t, "body", string(resp.content))
+	assert.Equal(t, "body", resp.Body().Raw())
 
 	assert.Same(t, &client.resp, resp.Raw())
 }
@@ -927,7 +924,7 @@ func TestRequest_BodyBytes(t *testing.T) {
 	assert.Equal(t, "METHOD", client.req.Method)
 	assert.Equal(t, "/path", client.req.URL.String())
 	assert.Equal(t, make(http.Header), client.req.Header)
-	assert.Equal(t, "body", string(resp.content))
+	assert.Equal(t, "body", resp.Body().Raw())
 
 	assert.Same(t, &client.resp, resp.Raw())
 }
@@ -988,7 +985,7 @@ func TestRequest_BodyText(t *testing.T) {
 	assert.Equal(t, "METHOD", client.req.Method)
 	assert.Equal(t, "url", client.req.URL.String())
 	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
-	assert.Equal(t, "some text", string(resp.content))
+	assert.Equal(t, "some text", resp.Body().Raw())
 
 	assert.Same(t, &client.resp, resp.Raw())
 }
@@ -1028,7 +1025,7 @@ func TestRequest_BodyForm(t *testing.T) {
 	assert.Equal(t, "METHOD", client.req.Method)
 	assert.Equal(t, "url", client.req.URL.String())
 	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
-	assert.Equal(t, `a=1&b=2`, string(resp.content))
+	assert.Equal(t, `a=1&b=2`, resp.Body().Raw())
 
 	assert.Same(t, &client.resp, resp.Raw())
 }
@@ -1066,7 +1063,7 @@ func TestRequest_BodyFormField(t *testing.T) {
 	assert.Equal(t, "METHOD", client.req.Method)
 	assert.Equal(t, "url", client.req.URL.String())
 	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
-	assert.Equal(t, `a=1&b=2`, string(resp.content))
+	assert.Equal(t, `a=1&b=2`, resp.Body().Raw())
 
 	assert.Same(t, &client.resp, resp.Raw())
 }
@@ -1104,7 +1101,7 @@ func TestRequest_BodyFormStruct(t *testing.T) {
 	assert.Equal(t, "METHOD", client.req.Method)
 	assert.Equal(t, "url", client.req.URL.String())
 	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
-	assert.Equal(t, `a=1&b=2`, string(resp.content))
+	assert.Equal(t, `a=1&b=2`, resp.Body().Raw())
 
 	assert.Same(t, &client.resp, resp.Raw())
 }
@@ -1142,7 +1139,7 @@ func TestRequest_BodyFormCombined(t *testing.T) {
 	assert.Equal(t, "METHOD", client.req.Method)
 	assert.Equal(t, "url", client.req.URL.String())
 	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
-	assert.Equal(t, `a=1&b=2&c=3`, string(resp.content))
+	assert.Equal(t, `a=1&b=2&c=3`, resp.Body().Raw())
 
 	assert.Same(t, &client.resp, resp.Raw())
 }
@@ -1178,7 +1175,8 @@ func TestRequest_BodyMultipart(t *testing.T) {
 	assert.Equal(t, "multipart/form-data", mediatype)
 	assert.True(t, params["boundary"] != "")
 
-	reader := multipart.NewReader(bytes.NewReader(resp.content), params["boundary"])
+	reader := multipart.NewReader(strings.NewReader(resp.Body().Raw()),
+		params["boundary"])
 
 	part1, _ := reader.NextPart()
 	assert.Equal(t, "b", part1.FormName())
@@ -1241,7 +1239,8 @@ func TestRequest_BodyMultipartFile(t *testing.T) {
 	assert.Equal(t, "multipart/form-data", mediatype)
 	assert.True(t, params["boundary"] != "")
 
-	reader := multipart.NewReader(bytes.NewReader(resp.content), params["boundary"])
+	reader := multipart.NewReader(strings.NewReader(resp.Body().Raw()),
+		params["boundary"])
 
 	part1, _ := reader.NextPart()
 	assert.Equal(t, "a", part1.FormName())
@@ -1303,7 +1302,7 @@ func TestRequest_BodyJSON(t *testing.T) {
 	assert.Equal(t, "METHOD", client.req.Method)
 	assert.Equal(t, "url", client.req.URL.String())
 	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
-	assert.Equal(t, `{"key":"value"}`, string(resp.content))
+	assert.Equal(t, `{"key":"value"}`, resp.Body().Raw())
 
 	assert.Same(t, &client.resp, resp.Raw())
 }
@@ -1743,7 +1742,6 @@ func TestRequest_UsageChecks(t *testing.T) {
 		req.Expect()
 		req.chain.assertFailed(t)
 	})
-
 }
 
 func TestRequest_OrderChecks(t *testing.T) {
