@@ -791,11 +791,27 @@ func TestArray_InList(t *testing.T) {
 			map[string]interface{}{"a": "b"},
 		})
 
-		array.InList(myArray{myInt(123.0), myInt(456.0), myArray{myInt(789.0), myInt(567.0)}, myMap{"a": "b"}})
+		array.InList(myArray{
+			myInt(123.0), 
+			myInt(456.0), 
+			myArray{
+				myInt(789.0), 
+				myInt(567.0),
+			}, 
+			myMap{"a": "b"},
+		})
 		array.chain.assertNotFailed(t)
 		array.chain.clearFailed()
 
-		array.NotInList(myArray{myInt(123.0), myInt(456.0), myArray{myInt(789.0), myInt(567.0)}, myMap{"a": "b"}})
+		array.NotInList(myArray{
+			myInt(123.0), 
+			myInt(456.0), 
+			myArray{
+				myInt(789.0), 
+				myInt(567.0),
+			}, 
+			myMap{"a": "b"},
+		})
 		array.chain.assertFailed(t)
 		array.chain.clearFailed()
 
