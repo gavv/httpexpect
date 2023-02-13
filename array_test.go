@@ -1334,6 +1334,54 @@ func TestArray_ContainsOnly(t *testing.T) {
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 	})
+
+	t.Run("canonization", func(t *testing.T) {
+		type (
+			myInt int
+		)
+
+		value := NewArray(reporter, []interface{}{123, 456, 456})
+
+		value.ContainsOnly(456.0)
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.NotContainsOnly(456.0)
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
+
+		value.ContainsOnly(myInt(123), 456.0)
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
+
+		value.NotContainsOnly(myInt(123), 456.0)
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.ContainsOnly(123.0, 456.0, 456.0)
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
+
+		value.NotContainsOnly(123.0, 456.0, 456.0)
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.ContainsOnly(myInt(123), myInt(456), 456.0)
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
+
+		value.NotContainsOnly(myInt(123), 456.0, myInt(456))
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.ContainsOnly(myInt(123), "456", 456.0)
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.NotContainsOnly(myInt(123), 456.0, "456")
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
+	})
 }
 
 func TestArray_IsValueEqual(t *testing.T) {
