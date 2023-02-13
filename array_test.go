@@ -816,23 +816,19 @@ func TestArray_Contains(t *testing.T) {
 
 		assert.Equal(t, []interface{}{123.0, 456.0}, value.Raw())
 
-		value.Contains(myInt(123), 456.0)
+		value.Contains(myInt(123))
 		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
 
-		value.NotContains(myInt(123), 456.0)
+		value.NotContains(myInt(123))
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 
-		value.ContainsOnly(myInt(123), 456.0)
+		value.Contains(456.0)
 		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
 
-		value.ContainsAny(myInt(123), 456.0)
-		value.chain.assertNotFailed(t)
-		value.chain.clearFailed()
-
-		value.NotContainsAny(myInt(123), 456.0)
+		value.NotContains(456.0)
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 
@@ -844,35 +840,11 @@ func TestArray_Contains(t *testing.T) {
 		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
 
-		value.ContainsOnly("123.0", "456.0")
-		value.chain.assertFailed(t)
-		value.chain.clearFailed()
-
-		value.ContainsAny("123.0", "456.0")
-		value.chain.assertFailed(t)
-		value.chain.clearFailed()
-
-		value.NotContainsAny("123.0", "456.0")
-		value.chain.assertNotFailed(t)
-		value.chain.clearFailed()
-
 		value.Contains(func() {})
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 
 		value.NotContains(func() {})
-		value.chain.assertFailed(t)
-		value.chain.clearFailed()
-
-		value.ContainsOnly(func() {})
-		value.chain.assertFailed(t)
-		value.chain.clearFailed()
-
-		value.ContainsAny(func() {})
-		value.chain.assertFailed(t)
-		value.chain.clearFailed()
-
-		value.NotContainsAny(func() {})
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 	})
