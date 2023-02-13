@@ -609,6 +609,90 @@ func TestArray_IsEqualUnordered(t *testing.T) {
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 	})
+
+	t.Run("canonization", func(t *testing.T) {
+		type (
+			myArray []interface{}
+			myInt   int
+		)
+
+		value := NewArray(reporter, []interface{}{123, 456, "foo"})
+		duplicateValue := NewArray(reporter, []interface{}{123, 123, "foo"})
+
+		assert.Equal(t, []interface{}{123.0, 456.0, "foo"}, value.Raw())
+
+		value.IsEqualUnordered(myArray{myInt(456), 123.0, "foo"})
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
+
+		value.NotEqualUnordered(myArray{myInt(456), 123.0, "foo"})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.IsEqualUnordered(myArray{"foo"})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.NotEqualUnordered(myArray{"foo"})
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
+
+		value.IsEqualUnordered(myArray{myInt(123), myInt(456), "foo", "foo"})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.NotEqualUnordered(myArray{myInt(123), myInt(456), "foo", "foo"})
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
+
+		value.IsEqualUnordered(myArray{"foo", myInt(123), myInt(456), "foo"})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.NotEqualUnordered(myArray{"foo", myInt(123), myInt(456), "foo"})
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
+
+		value.IsEqualUnordered(myArray{"123", "456", "foo"})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.NotEqualUnordered(myArray{"123", "456", "foo"})
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
+
+		value.IsEqualUnordered(nil)
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.NotEqualUnordered(nil)
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		duplicateValue.IsEqualUnordered(myArray{myInt(123), "foo"})
+		duplicateValue.chain.assertFailed(t)
+		duplicateValue.chain.clearFailed()
+
+		duplicateValue.NotEqualUnordered(myArray{myInt(123), "foo"})
+		duplicateValue.chain.assertNotFailed(t)
+		duplicateValue.chain.clearFailed()
+
+		duplicateValue.IsEqualUnordered(myArray{myInt(123), "foo", "foo"})
+		duplicateValue.chain.assertFailed(t)
+		duplicateValue.chain.clearFailed()
+
+		duplicateValue.NotEqualUnordered(myArray{myInt(123), "foo", "foo"})
+		duplicateValue.chain.assertNotFailed(t)
+		duplicateValue.chain.clearFailed()
+
+		duplicateValue.IsEqualUnordered(myArray{myInt(123), "foo", myInt(123)})
+		duplicateValue.chain.assertNotFailed(t)
+		duplicateValue.chain.clearFailed()
+
+		duplicateValue.NotEqualUnordered(myArray{myInt(123), "foo", myInt(123)})
+		duplicateValue.chain.assertFailed(t)
+		duplicateValue.chain.clearFailed()
+	})
 }
 
 func TestArray_InList(t *testing.T) {
