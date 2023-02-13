@@ -1140,55 +1140,116 @@ func TestArray_ContainsAll(t *testing.T) {
 func TestArray_ContainsAny(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	value := NewArray(reporter, []interface{}{123, "foo"})
+	t.Run("basic", func(t *testing.T) {
+		value := NewArray(reporter, []interface{}{123, "foo"})
 
-	value.ContainsAny(123)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+		value.ContainsAny(123)
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
-	value.NotContainsAny(123)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+		value.NotContainsAny(123)
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
 
-	value.ContainsAny("foo", 123)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+		value.ContainsAny("foo", 123)
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
-	value.NotContainsAny("foo", 123)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+		value.NotContainsAny("foo", 123)
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
 
-	value.ContainsAny("foo", "foo")
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+		value.ContainsAny("foo", "foo")
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
-	value.NotContainsAny("foo", "foo")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+		value.NotContainsAny("foo", "foo")
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
 
-	value.ContainsAny(123, "foo", "FOO")
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+		value.ContainsAny(123, "foo", "FOO")
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
-	value.NotContainsAny(123, "foo", "FOO")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+		value.NotContainsAny(123, "foo", "FOO")
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
 
-	value.ContainsAny("FOO")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+		value.ContainsAny("FOO")
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
 
-	value.NotContainsAny("FOO")
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+		value.NotContainsAny("FOO")
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
-	value.ContainsAny([]interface{}{123, "foo"})
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+		value.ContainsAny([]interface{}{123, "foo"})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
 
-	value.NotContainsAny([]interface{}{123, "foo"})
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+		value.NotContainsAny([]interface{}{123, "foo"})
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
+	})
+
+	t.Run("canonization", func(t *testing.T) {
+		type (
+			myInt   int
+			myArray []interface{}
+		)
+
+		value := NewArray(reporter, []interface{}{123, 789, "foo", []interface{}{567, 456}})
+
+		value.ContainsAny(myInt(123), 789.0)
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
+
+		value.NotContainsAny(myInt(123), 789.0)
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.ContainsAny(789.0)
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
+
+		value.NotContainsAny(789.0)
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.ContainsAny(567.0)
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.NotContainsAny(567.0)
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
+
+		value.ContainsAny(myArray{567.0, 456.0})
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
+
+		value.NotContainsAny(myArray{567.0, 456.0})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.ContainsAny("789")
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.NotContainsAny("789")
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
+
+		value.ContainsAny(myArray{"567", 456.0})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.NotContainsAny(myArray{"567", 456.0})
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
+
+	})
+
 }
 
 func TestArray_ContainsOnly(t *testing.T) {
