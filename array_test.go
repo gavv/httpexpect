@@ -707,73 +707,131 @@ func TestArray_IsEqualUnordered(t *testing.T) {
 func TestArray_InList(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	value := NewArray(reporter, []interface{}{"foo", "bar"})
+	t.Run("basic", func(t *testing.T) {
+		value := NewArray(reporter, []interface{}{"foo", "bar"})
 
-	assert.Equal(t, []interface{}{"foo", "bar"}, value.Raw())
+		assert.Equal(t, []interface{}{"foo", "bar"}, value.Raw())
 
-	value.InList()
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+		value.InList()
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
 
-	value.NotInList()
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+		value.NotInList()
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
 
-	value.InList("foo", "bar")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+		value.InList("foo", "bar")
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
 
-	value.NotInList("foo", "bar")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+		value.NotInList("foo", "bar")
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
 
-	value.InList([]interface{}{})
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+		value.InList([]interface{}{})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
 
-	value.NotInList([]interface{}{})
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+		value.NotInList([]interface{}{})
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
-	value.InList([]interface{}{"bar", "foo"})
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+		value.InList([]interface{}{"bar", "foo"})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
 
-	value.NotInList([]interface{}{"bar", "foo"})
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+		value.NotInList([]interface{}{"bar", "foo"})
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
-	value.InList([]interface{}{"bar", "foo"}, []interface{}{"foo", "bar"})
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+		value.InList([]interface{}{"bar", "foo"}, []interface{}{"foo", "bar"})
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
-	value.NotInList([]interface{}{"bar", "foo"}, []interface{}{"foo", "bar"})
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+		value.NotInList([]interface{}{"bar", "foo"}, []interface{}{"foo", "bar"})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
 
-	value.InList([]interface{}{"bar", "foo"}, []interface{}{"FOO", "BAR"})
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+		value.InList([]interface{}{"bar", "foo"}, []interface{}{"FOO", "BAR"})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
 
-	value.NotInList([]interface{}{"bar", "foo"}, []interface{}{"FOO", "BAR"})
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+		value.NotInList([]interface{}{"bar", "foo"}, []interface{}{"FOO", "BAR"})
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
-	value.InList([]interface{}{"bar", "foo"}, "NOT ARRAY")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+		value.InList([]interface{}{"bar", "foo"}, "NOT ARRAY")
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
 
-	value.NotInList([]interface{}{"bar", "foo"}, "NOT ARRAY")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+		value.NotInList([]interface{}{"bar", "foo"}, "NOT ARRAY")
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
 
-	value.InList([]interface{}{"foo", "bar"}, "NOT ARRAY")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+		value.InList([]interface{}{"foo", "bar"}, "NOT ARRAY")
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
 
-	value.NotInList([]interface{}{"foo", "bar"}, "NOT ARRAY")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+		value.NotInList([]interface{}{"foo", "bar"}, "NOT ARRAY")
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+	})
+
+	t.Run("canonization", func(t *testing.T) {
+		type (
+			myArray []interface{}
+			myMap   map[string]interface{}
+			myInt   int
+		)
+
+		array := NewArray(reporter, []interface{}{
+			123,
+			456,
+			[]interface{}{789, 567},
+			map[string]interface{}{"a": "b"},
+		})
+
+		array.InList(myArray{myInt(123.0), myInt(456.0), myArray{myInt(789.0), myInt(567.0)}, myMap{"a": "b"}})
+		array.chain.assertNotFailed(t)
+		array.chain.clearFailed()
+
+		array.NotInList(myArray{myInt(123.0), myInt(456.0), myArray{myInt(789.0), myInt(567.0)}, myMap{"a": "b"}})
+		array.chain.assertFailed(t)
+		array.chain.clearFailed()
+
+		array.InList(myArray{123.0, 456.0, myArray{789.0, 567.0}, myMap{"a": "b"}})
+		array.chain.assertNotFailed(t)
+		array.chain.clearFailed()
+
+		array.NotInList(myArray{123.0, 456.0, myArray{789.0, 567.0}, myMap{"a": "b"}})
+		array.chain.assertFailed(t)
+		array.chain.clearFailed()
+
+		array.InList(myArray{myInt(123), 456.0, myArray{myInt(789), 567.0}, myMap{"a": "b"}})
+		array.chain.assertNotFailed(t)
+		array.chain.clearFailed()
+
+		array.NotInList(myArray{myInt(123), 456.0, myArray{myInt(789), 567.0}, myMap{"a": "b"}})
+		array.chain.assertFailed(t)
+		array.chain.clearFailed()
+
+		array.InList(myArray{"123.0", "456.0", myArray{"789.0", "567.0"}, myMap{"a": "b"}})
+		array.chain.assertFailed(t)
+		array.chain.clearFailed()
+
+		array.NotInList(myArray{"123.0", "456.0", myArray{"789.0", "567.0"}, myMap{"a": "b"}})
+		array.chain.assertNotFailed(t)
+		array.chain.clearFailed()
+
+		array.InList(func() {})
+		array.chain.assertFailed(t)
+		array.chain.clearFailed()
+
+		array.NotInList(func() {})
+		array.chain.assertFailed(t)
+		array.chain.clearFailed()
+	})
+
 }
 
 func TestArray_ConsistsOf(t *testing.T) {
