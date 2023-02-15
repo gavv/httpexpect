@@ -825,9 +825,8 @@ func (n *Number) IsUint(bits ...int) *Number {
 		return n
 	}
 
-	// big.Accuracy for big.Uint64 could not catch fractal.
-	_, fractal := math.Modf(n.value)
-	if fractal != 0 {
+	inum, acc := big.NewFloat(n.value).Int(nil)
+	if acc != big.Exact {
 		opChain.fail(AssertionFailure{
 			Type:   AssertType,
 			Actual: &AssertionValue{n.value},
@@ -838,19 +837,6 @@ func (n *Number) IsUint(bits ...int) *Number {
 		return n
 	}
 
-	fnum := big.NewFloat(n.value)
-	if _, acc := fnum.Uint64(); acc != big.Exact {
-		opChain.fail(AssertionFailure{
-			Type:   AssertType,
-			Actual: &AssertionValue{n.value},
-			Errors: []error{
-				fmt.Errorf("expected: number is unsigned %d-bit integer", bitSize),
-			},
-		})
-		return n
-	}
-
-	inum, _ := big.NewFloat(n.value).Int(nil)
 	imax := new(big.Int)
 	imax.Lsh(big.NewInt(1), uint(bitSize))
 	imax.Sub(imax, big.NewInt(1))
@@ -910,6 +896,30 @@ func (n *Number) NotUint(bits ...int) *Number {
 	bitSize := 64
 	if len(bits) != 0 {
 		bitSize = bits[0]
+	}
+
+	if !math.IsNaN(n.value) {
+		inum, acc := big.NewFloat(n.value).Int(nil)
+		if acc == big.Exact {
+			imax := new(big.Int)
+			imax.Lsh(big.NewInt(1), uint(bitSize))
+			imax.Sub(imax, big.NewInt(1))
+			imin := big.NewInt(0)
+			if !(inum.Cmp(imin) < 0 || inum.Cmp(imax) > 0) {
+				opChain.fail(AssertionFailure{
+					Type:   AssertNotInRange,
+					Actual: &AssertionValue{n.value},
+					Expected: &AssertionValue{AssertionRange{
+						"0",
+						fmt.Sprintf("2^%d", bitSize),
+					}},
+					Errors: []error{
+						fmt.Errorf("expected: number doesn't fit %d-bit unsigned integer", bitSize),
+					},
+				})
+				return n
+			}
+		}
 	}
 
 	// big.Accuracy for big.Uint64 could not catch fractal.
