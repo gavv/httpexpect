@@ -37,8 +37,6 @@ func TestNumber_FailedChain(t *testing.T) {
 	value.NotInt(0)
 	value.IsUint(0)
 	value.NotUint(0)
-	value.IsFloat(0)
-	value.NotFloat(0)
 	value.IsFinite()
 	value.NotFinite()
 }
@@ -741,114 +739,6 @@ func TestNumber_IsUint(t *testing.T) {
 			chain.assertNotFailed(t)
 
 		NewNumber(reporter, math.MaxUint64).NotUint(64).
-			chain.assertFailed(t)
-	})
-}
-
-func TestNumber_IsFloat(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	t.Run("check parameters", func(t *testing.T) {
-		NewNumber(reporter, 1234).IsFloat(0, 1, 2, 3).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, 1234).IsFloat(1).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, 1234).NotFloat(0, 1, 2, 3).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, 1234).NotFloat(1).
-			chain.assertFailed(t)
-	})
-
-	t.Run("without bit size", func(t *testing.T) {
-		NewNumber(reporter, 1234).IsFloat().
-			chain.assertFailed(t)
-
-		NewNumber(reporter, 1234.00001).IsFloat().
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, 1234).NotFloat().
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, 1234.00001).NotFloat().
-			chain.assertFailed(t)
-	})
-
-	t.Run("with bit size", func(t *testing.T) {
-		NewNumber(reporter, math.MaxFloat32).IsFloat(32).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, math.MaxFloat64).IsFloat(64).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, math.MaxFloat64).IsFloat(32).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, math.SmallestNonzeroFloat32).IsFloat(32).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, math.SmallestNonzeroFloat64).IsFloat(64).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, math.SmallestNonzeroFloat64).IsFloat(32).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, math.MaxFloat32).NotFloat(32).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, math.MaxFloat64).NotFloat(32).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, math.MaxFloat64).NotFloat(64).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, math.SmallestNonzeroFloat32).NotFloat(32).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, math.SmallestNonzeroFloat64).NotFloat(32).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, math.SmallestNonzeroFloat64).NotFloat(64).
-			chain.assertFailed(t)
-	})
-
-	t.Run("check edge cases", func(t *testing.T) {
-		NewNumber(reporter, math.NaN()).IsFloat().
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, math.Inf(1)).IsFloat().
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, -math.MaxFloat32).IsFloat(32).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, -math.MaxFloat64).IsFloat(64).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, -math.SmallestNonzeroFloat32).IsFloat(32).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, -math.SmallestNonzeroFloat64).IsFloat(64).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, math.NaN()).NotFloat().
-			chain.assertFailed(t)
-
-		NewNumber(reporter, math.Inf(1)).NotFloat().
-			chain.assertFailed(t)
-
-		NewNumber(reporter, -math.MaxFloat32).NotFloat(32).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, -math.MaxFloat64).NotFloat(64).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, -math.SmallestNonzeroFloat32).NotFloat(32).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, -math.SmallestNonzeroFloat64).NotFloat(64).
 			chain.assertFailed(t)
 	})
 }
