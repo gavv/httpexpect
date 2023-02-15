@@ -111,34 +111,42 @@ func TestBinder_TLS(t *testing.T) {
 		},
 	}
 
-	handler.https = false
-	req, _ := http.NewRequest("GET", "http://example.com/path", strings.NewReader("body"))
-	resp, err := httpClient.Do(req)
-	assert.Nil(t, err)
-	assert.NotNil(t, resp)
-	assert.Nil(t, resp.Request.TLS)
+	t.Run("handler=no url=no client=no", func(t *testing.T) {
+		handler.https = false
+		req, _ := http.NewRequest("GET", "http://example.com/path", strings.NewReader("body"))
+		resp, err := httpClient.Do(req)
+		assert.Nil(t, err)
+		assert.NotNil(t, resp)
+		assert.Nil(t, resp.Request.TLS)
+	})
 
-	handler.https = true
-	req, _ = http.NewRequest("GET", "https://example.com/path", strings.NewReader("body"))
-	resp, err = httpClient.Do(req)
-	assert.Nil(t, err)
-	assert.NotNil(t, resp)
-	assert.Nil(t, resp.Request.TLS)
+	t.Run("handler=yes url=yes client=no", func(t *testing.T) {
+		handler.https = true
+		req, _ := http.NewRequest("GET", "https://example.com/path", strings.NewReader("body"))
+		resp, err := httpClient.Do(req)
+		assert.Nil(t, err)
+		assert.NotNil(t, resp)
+		assert.Nil(t, resp.Request.TLS)
+	})
 
-	handler.https = false
-	req, _ = http.NewRequest("GET", "http://example.com/path", strings.NewReader("body"))
-	resp, err = httpsClient.Do(req)
-	assert.Nil(t, err)
-	assert.NotNil(t, resp)
-	assert.Nil(t, resp.Request.TLS)
+	t.Run("handler=no url=no client=yes", func(t *testing.T) {
+		handler.https = false
+		req, _ := http.NewRequest("GET", "http://example.com/path", strings.NewReader("body"))
+		resp, err := httpsClient.Do(req)
+		assert.Nil(t, err)
+		assert.NotNil(t, resp)
+		assert.Nil(t, resp.Request.TLS)
+	})
 
-	handler.https = true
-	req, _ = http.NewRequest("GET", "https://example.com/path", strings.NewReader("body"))
-	resp, err = httpsClient.Do(req)
-	assert.Nil(t, err)
-	assert.NotNil(t, resp)
-	assert.NotNil(t, resp.Request.TLS)
-	assert.Same(t, tlsState, resp.Request.TLS)
+	t.Run("handler=yes url=yes client=yes", func(t *testing.T) {
+		handler.https = true
+		req, _ := http.NewRequest("GET", "https://example.com/path", strings.NewReader("body"))
+		resp, err := httpsClient.Do(req)
+		assert.Nil(t, err)
+		assert.NotNil(t, resp)
+		assert.NotNil(t, resp.Request.TLS)
+		assert.Same(t, tlsState, resp.Request.TLS)
+	})
 }
 
 func TestBinder_Chunked(t *testing.T) {
@@ -312,14 +320,18 @@ func TestFastBinder_Protocol(t *testing.T) {
 		assert.Equal(t, `ok`, string(b))
 	}
 
-	test(func(req *http.Request) {
-		req.Proto = "HTTP/1.0"
+	t.Run("from string", func(t *testing.T) {
+		test(func(req *http.Request) {
+			req.Proto = "HTTP/1.0"
+		})
 	})
 
-	test(func(req *http.Request) {
-		req.Proto = ""
-		req.ProtoMajor = 1
-		req.ProtoMinor = 0
+	t.Run("from components", func(t *testing.T) {
+		test(func(req *http.Request) {
+			req.Proto = ""
+			req.ProtoMajor = 1
+			req.ProtoMinor = 0
+		})
 	})
 }
 
@@ -352,33 +364,41 @@ func TestFastBinder_TLS(t *testing.T) {
 		},
 	}
 
-	req, _ := http.NewRequest("GET", "http://example.com/path", strings.NewReader("body"))
-	resp, err := httpClient.Do(req)
-	assert.Nil(t, err)
-	assert.NotNil(t, resp)
-	assert.False(t, isHTTPS)
-	assert.False(t, isTLS)
+	t.Run("url=no client=no", func(t *testing.T) {
+		req, _ := http.NewRequest("GET", "http://example.com/path", strings.NewReader("body"))
+		resp, err := httpClient.Do(req)
+		assert.Nil(t, err)
+		assert.NotNil(t, resp)
+		assert.False(t, isHTTPS)
+		assert.False(t, isTLS)
+	})
 
-	req, _ = http.NewRequest("GET", "https://example.com/path", strings.NewReader("body"))
-	resp, err = httpClient.Do(req)
-	assert.Nil(t, err)
-	assert.NotNil(t, resp)
-	assert.True(t, isHTTPS)
-	assert.False(t, isTLS)
+	t.Run("url=yes client=no", func(t *testing.T) {
+		req, _ := http.NewRequest("GET", "https://example.com/path", strings.NewReader("body"))
+		resp, err := httpClient.Do(req)
+		assert.Nil(t, err)
+		assert.NotNil(t, resp)
+		assert.True(t, isHTTPS)
+		assert.False(t, isTLS)
+	})
 
-	req, _ = http.NewRequest("GET", "http://example.com/path", strings.NewReader("body"))
-	resp, err = httpsClient.Do(req)
-	assert.Nil(t, err)
-	assert.NotNil(t, resp)
-	assert.False(t, isHTTPS)
-	assert.False(t, isTLS)
+	t.Run("url=no client=yes", func(t *testing.T) {
+		req, _ := http.NewRequest("GET", "http://example.com/path", strings.NewReader("body"))
+		resp, err := httpsClient.Do(req)
+		assert.Nil(t, err)
+		assert.NotNil(t, resp)
+		assert.False(t, isHTTPS)
+		assert.False(t, isTLS)
+	})
 
-	req, _ = http.NewRequest("GET", "https://example.com/path", strings.NewReader("body"))
-	resp, err = httpsClient.Do(req)
-	assert.Nil(t, err)
-	assert.NotNil(t, resp)
-	assert.True(t, isHTTPS)
-	assert.True(t, isTLS)
+	t.Run("url=yes client=yes", func(t *testing.T) {
+		req, _ := http.NewRequest("GET", "https://example.com/path", strings.NewReader("body"))
+		resp, err := httpsClient.Do(req)
+		assert.Nil(t, err)
+		assert.NotNil(t, resp)
+		assert.True(t, isHTTPS)
+		assert.True(t, isTLS)
+	})
 }
 
 func TestFastBinder_Chunked(t *testing.T) {
