@@ -186,6 +186,25 @@ func TestRequest_Matchers(t *testing.T) {
 	assert.Same(t, resp, resps[0])
 }
 
+func TestRequest_Reentrant(t *testing.T) {
+	factory := DefaultRequestFactory{}
+
+	client := &mockClient{}
+
+	reporter := newMockReporter(t)
+
+	config := Config{
+		RequestFactory: factory,
+		Client:         client,
+		Reporter:       reporter,
+	}
+	req := NewRequestC(config, "METHOD", "/")
+	req.WithTransformer(func(r *http.Request) {
+		req.WithQuery("a", 123)
+	})
+	req.Expect().chain.assertNotFailed(t)
+}
+
 func TestRequest_Transformers(t *testing.T) {
 	factory := DefaultRequestFactory{}
 
@@ -204,7 +223,6 @@ func TestRequest_Transformers(t *testing.T) {
 		transform := func(r *http.Request) {
 			savedReq = r
 		}
-
 		req := NewRequestC(config, "METHOD", "/")
 		req.WithTransformer(transform)
 		req.Expect().chain.assertNotFailed(t)
