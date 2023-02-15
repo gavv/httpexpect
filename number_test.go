@@ -39,10 +39,6 @@ func TestNumber_FailedChain(t *testing.T) {
 	value.NotUint(0)
 	value.IsFloat(0)
 	value.NotFloat(0)
-	value.IsNaN()
-	value.NotNaN()
-	value.IsInf()
-	value.NotInf()
 	value.IsFinite()
 	value.NotFinite()
 }
@@ -867,50 +863,6 @@ func TestNumber_IsFloat(t *testing.T) {
 		NewNumber(reporter, -math.SmallestNonzeroFloat64).NotFloat(64).
 			chain.assertFailed(t)
 	})
-}
-
-func TestNumber_IsNaN(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	NewNumber(reporter, 1234).IsNaN().
-		chain.assertFailed(t)
-
-	NewNumber(reporter, math.NaN()).IsNaN().
-		chain.assertNotFailed(t)
-
-	NewNumber(reporter, 1234).NotNaN().
-		chain.assertNotFailed(t)
-
-	NewNumber(reporter, math.NaN()).NotNaN().
-		chain.assertFailed(t)
-}
-
-func TestNumber_IsInf(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	NewNumber(reporter, 1234).IsInf().
-		chain.assertFailed(t)
-
-	NewNumber(reporter, math.Inf(0)).IsInf().
-		chain.assertNotFailed(t)
-
-	NewNumber(reporter, math.Inf(1)).IsInf().
-		chain.assertNotFailed(t)
-
-	NewNumber(reporter, math.Inf(-1)).IsInf().
-		chain.assertNotFailed(t)
-
-	NewNumber(reporter, 1234).NotInf().
-		chain.assertNotFailed(t)
-
-	NewNumber(reporter, math.Inf(0)).NotInf().
-		chain.assertFailed(t)
-
-	NewNumber(reporter, math.Inf(1)).NotInf().
-		chain.assertFailed(t)
-
-	NewNumber(reporter, math.Inf(-1)).NotInf().
-		chain.assertFailed(t)
 }
 
 func TestNumber_IsFinite(t *testing.T) {
