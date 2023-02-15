@@ -660,16 +660,6 @@ func (n *Number) IsInt(bits ...int) *Number {
 		bitSize = bits[0]
 	}
 
-	if bitSize < 1 || bitSize > 64 {
-		opChain.fail(AssertionFailure{
-			Type: AssertUsage,
-			Errors: []error{
-				fmt.Errorf("unexpected bit size outside range [1;64]: %d", bitSize),
-			},
-		})
-		return n
-	}
-
 	if math.IsNaN(n.value) {
 		opChain.fail(AssertionFailure{
 			Type:   AssertType,
@@ -756,16 +746,6 @@ func (n *Number) NotInt(bits ...int) *Number {
 		bitSize = bits[0]
 	}
 
-	if bitSize < 1 || bitSize > 64 {
-		opChain.fail(AssertionFailure{
-			Type: AssertUsage,
-			Errors: []error{
-				fmt.Errorf("unexpected bit size outside range [1;64]: %d", bitSize),
-			},
-		})
-		return n
-	}
-
 	if !math.IsNaN(n.value) {
 		inum, acc := big.NewFloat(n.value).Int(nil)
 		if acc == big.Exact {
@@ -832,16 +812,6 @@ func (n *Number) IsUint(bits ...int) *Number {
 	bitSize := 64
 	if len(bits) != 0 {
 		bitSize = bits[0]
-	}
-
-	if bitSize < 1 || bitSize > 64 {
-		opChain.fail(AssertionFailure{
-			Type: AssertUsage,
-			Errors: []error{
-				fmt.Errorf("unexpected bit size outside range [1;64]: %d", bitSize),
-			},
-		})
-		return n
 	}
 
 	if math.IsNaN(n.value) {
@@ -942,15 +912,6 @@ func (n *Number) NotUint(bits ...int) *Number {
 		bitSize = bits[0]
 	}
 
-	if bitSize < 1 || bitSize > 64 {
-		opChain.fail(AssertionFailure{
-			Type: AssertUsage,
-			Errors: []error{
-				fmt.Errorf("unexpected bit size outside range [1;64]: %d", bitSize),
-			},
-		})
-		return n
-	}
 	// big.Accuracy for big.Uint64 could not catch fractal.
 	_, fractal := math.Modf(n.value)
 	if !math.IsNaN(n.value) && fractal == 0 {

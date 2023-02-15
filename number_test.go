@@ -600,20 +600,14 @@ func TestNumber_IsInt(t *testing.T) {
 		NewNumber(reporter, 1234).IsInt(0, 1, 2, 3).
 			chain.assertFailed(t)
 
-		NewNumber(reporter, 1234).NotInt(0, 1, 2, 3).
+		NewNumber(reporter, 1234).IsInt().
+			chain.assertNotFailed(t)
+
+		NewNumber(reporter, 1234.0001).NotInt(0, 1, 2, 3).
 			chain.assertFailed(t)
 
-		NewNumber(reporter, 1234).IsInt(0).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, 1234).IsInt(128).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, 1234).NotInt(0).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, 1234).NotInt(128).
-			chain.assertFailed(t)
+		NewNumber(reporter, 1234.0001).NotInt().
+			chain.assertNotFailed(t)
 	})
 
 	t.Run("without bit size", func(t *testing.T) {
@@ -682,20 +676,14 @@ func TestNumber_IsUint(t *testing.T) {
 		NewNumber(reporter, 1234).IsUint(0, 1, 2, 3).
 			chain.assertFailed(t)
 
-		NewNumber(reporter, 1234).NotUint(0, 1, 2, 3).
+		NewNumber(reporter, 1234).IsUint().
+			chain.assertNotFailed(t)
+
+		NewNumber(reporter, 1234.0001).NotUint(0, 1, 2, 3).
 			chain.assertFailed(t)
 
-		NewNumber(reporter, 1234).IsUint(0).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, 1234).IsUint(128).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, 1234).NotUint(0).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, 1234).NotUint(128).
-			chain.assertFailed(t)
+		NewNumber(reporter, 1234.0001).NotUint().
+			chain.assertNotFailed(t)
 	})
 
 	t.Run("without bit size", func(t *testing.T) {
