@@ -102,25 +102,40 @@ func TestArray_Constructors(t *testing.T) {
 
 	t.Run("reporter", func(t *testing.T) {
 		reporter := newMockReporter(t)
+
 		value := NewArray(reporter, testValue)
+
 		value.IsEqual(testValue)
 		value.chain.assertNotFailed(t)
 	})
 
 	t.Run("config", func(t *testing.T) {
 		reporter := newMockReporter(t)
+
 		value := NewArrayC(Config{
 			Reporter: reporter,
 		}, testValue)
+
 		value.IsEqual(testValue)
 		value.chain.assertNotFailed(t)
 	})
 
 	t.Run("chain", func(t *testing.T) {
 		chain := newMockChain(t)
+
 		value := newArray(chain, testValue)
+
 		assert.NotSame(t, value.chain, chain)
 		assert.Equal(t, value.chain.context.Path, chain.context.Path)
+	})
+
+	t.Run("invalid value", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewArray(reporter, nil)
+
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
 	})
 }
 
@@ -313,17 +328,7 @@ func TestArray_Getters(t *testing.T) {
 }
 
 func TestArray_IsEmpty(t *testing.T) {
-	t.Run("nil", func(t *testing.T) {
-		reporter := newMockReporter(t)
-
-		value := NewArray(reporter, nil)
-
-		_ = value
-		value.chain.assertFailed(t)
-		value.chain.clearFailed()
-	})
-
-	t.Run("empty", func(t *testing.T) {
+	t.Run("empty slice", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		value := NewArray(reporter, []interface{}{})
@@ -816,23 +821,19 @@ func TestArray_Contains(t *testing.T) {
 
 		assert.Equal(t, []interface{}{123.0, 456.0}, value.Raw())
 
-		value.Contains(myInt(123), 456.0)
+		value.Contains(myInt(123))
 		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
 
-		value.NotContains(myInt(123), 456.0)
+		value.NotContains(myInt(123))
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 
-		value.ContainsOnly(myInt(123), 456.0)
+		value.Contains(456.0)
 		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
 
-		value.ContainsAny(myInt(123), 456.0)
-		value.chain.assertNotFailed(t)
-		value.chain.clearFailed()
-
-		value.NotContainsAny(myInt(123), 456.0)
+		value.NotContains(456.0)
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 
@@ -844,35 +845,11 @@ func TestArray_Contains(t *testing.T) {
 		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
 
-		value.ContainsOnly("123.0", "456.0")
-		value.chain.assertFailed(t)
-		value.chain.clearFailed()
-
-		value.ContainsAny("123.0", "456.0")
-		value.chain.assertFailed(t)
-		value.chain.clearFailed()
-
-		value.NotContainsAny("123.0", "456.0")
-		value.chain.assertNotFailed(t)
-		value.chain.clearFailed()
-
 		value.Contains(func() {})
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 
 		value.NotContains(func() {})
-		value.chain.assertFailed(t)
-		value.chain.clearFailed()
-
-		value.ContainsOnly(func() {})
-		value.chain.assertFailed(t)
-		value.chain.clearFailed()
-
-		value.ContainsAny(func() {})
-		value.chain.assertFailed(t)
-		value.chain.clearFailed()
-
-		value.NotContainsAny(func() {})
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 	})
@@ -1295,7 +1272,7 @@ func TestArray_Transform(t *testing.T) {
 }
 
 func TestArray_Filter(t *testing.T) {
-	t.Run("elements of the same type", func(ts *testing.T) {
+	t.Run("elements of same type", func(ts *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1, 2, 3, 4, 5, 6})
 
@@ -1373,7 +1350,7 @@ func TestArray_Filter(t *testing.T) {
 }
 
 func TestArray_Find(t *testing.T) {
-	t.Run("elements of the same type", func(ts *testing.T) {
+	t.Run("elements of same type", func(ts *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1, 2, 3, 4, 5, 6})
 
@@ -1497,7 +1474,7 @@ func TestArray_Find(t *testing.T) {
 }
 
 func TestArray_FindAll(t *testing.T) {
-	t.Run("elements of the same type", func(ts *testing.T) {
+	t.Run("elements of same type", func(ts *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1, 2, 3, 4, 5, 6})
 

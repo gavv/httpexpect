@@ -56,7 +56,7 @@ func TestAssertion_Handler(t *testing.T) {
 		assert.False(t, test.reporter.reported)
 	})
 
-	t.Run("success_no_logger", func(t *testing.T) {
+	t.Run("success, no logger", func(t *testing.T) {
 		test := createTest(t, false)
 
 		test.handler.Success(&AssertionContext{
@@ -70,7 +70,7 @@ func TestAssertion_Handler(t *testing.T) {
 		assert.False(t, test.reporter.reported)
 	})
 
-	t.Run("failure_severity_info", func(t *testing.T) {
+	t.Run("failure, severity info", func(t *testing.T) {
 		test := createTest(t, true)
 
 		test.handler.Failure(
@@ -89,7 +89,7 @@ func TestAssertion_Handler(t *testing.T) {
 		assert.False(t, test.reporter.reported)
 	})
 
-	t.Run("failure_severity_info_no_logger", func(t *testing.T) {
+	t.Run("failure, severity info, no logger", func(t *testing.T) {
 		test := createTest(t, false)
 
 		test.handler.Failure(
@@ -108,7 +108,7 @@ func TestAssertion_Handler(t *testing.T) {
 		assert.False(t, test.reporter.reported)
 	})
 
-	t.Run("failure_severity_error", func(t *testing.T) {
+	t.Run("failure, severity error", func(t *testing.T) {
 		test := createTest(t, true)
 
 		test.handler.Failure(
@@ -127,7 +127,7 @@ func TestAssertion_Handler(t *testing.T) {
 		assert.True(t, test.reporter.reported)
 	})
 
-	t.Run("failure_severity_error_no_logger", func(t *testing.T) {
+	t.Run("failure, severity error, no logger", func(t *testing.T) {
 		test := createTest(t, false)
 
 		test.handler.Failure(
@@ -148,7 +148,7 @@ func TestAssertion_Handler(t *testing.T) {
 }
 
 func TestAssertion_HandlerPanics(t *testing.T) {
-	t.Run("success_nil_Formatter", func(t *testing.T) {
+	t.Run("success, nil Formatter", func(t *testing.T) {
 		handler := &DefaultAssertionHandler{
 			Formatter: nil,
 			Reporter:  newMockReporter(t),
@@ -162,7 +162,7 @@ func TestAssertion_HandlerPanics(t *testing.T) {
 		})
 	})
 
-	t.Run("failure_nil_Formatter", func(t *testing.T) {
+	t.Run("failure, nil Formatter", func(t *testing.T) {
 		handler := &DefaultAssertionHandler{
 			Formatter: nil,
 			Reporter:  newMockReporter(t),
@@ -181,7 +181,7 @@ func TestAssertion_HandlerPanics(t *testing.T) {
 		})
 	})
 
-	t.Run("failure_nil_Reporter", func(t *testing.T) {
+	t.Run("failure, nil Reporter", func(t *testing.T) {
 		handler := &DefaultAssertionHandler{
 			Formatter: newMockFormatter(t),
 			Reporter:  nil,

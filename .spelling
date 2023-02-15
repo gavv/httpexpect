@@ -11,6 +11,7 @@ gopkg.in
 HACKING.md
 httpexpect
 jsonpath
+liberapay
 linters
 multipart
 oauth2
