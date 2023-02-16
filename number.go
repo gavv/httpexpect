@@ -922,32 +922,6 @@ func (n *Number) NotUint(bits ...int) *Number {
 		}
 	}
 
-	// big.Accuracy for big.Uint64 could not catch fractal.
-	_, fractal := math.Modf(n.value)
-	if !math.IsNaN(n.value) && fractal == 0 {
-		if _, acc := big.NewFloat(n.value).Uint64(); acc == big.Exact {
-			inum, _ := big.NewFloat(n.value).Int(nil)
-			imax := new(big.Int)
-			imax.Lsh(big.NewInt(1), uint(bitSize))
-			imax.Sub(imax, big.NewInt(1))
-			imin := big.NewInt(0)
-			if !(inum.Cmp(imin) < 0 || inum.Cmp(imax) > 0) {
-				opChain.fail(AssertionFailure{
-					Type:   AssertNotInRange,
-					Actual: &AssertionValue{n.value},
-					Expected: &AssertionValue{AssertionRange{
-						"0",
-						fmt.Sprintf("2^%d", bitSize),
-					}},
-					Errors: []error{
-						fmt.Errorf("expected: number doesn't fit %d-bit unsigned integer", bitSize),
-					},
-				})
-				return n
-			}
-		}
-	}
-
 	return n
 }
 
