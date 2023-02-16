@@ -182,25 +182,25 @@ func TestString_Length(t *testing.T) {
 func TestString_Empty(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	value1 := NewString(reporter, "")
+	value := NewString(reporter, "")
 
-	value1.IsEmpty()
-	value1.chain.assertNotFailed(t)
-	value1.chain.clearFailed()
+	value.IsEmpty()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
-	value1.NotEmpty()
-	value1.chain.assertFailed(t)
-	value1.chain.clearFailed()
+	value.NotEmpty()
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
 
-	value2 := NewString(reporter, "a")
+	value = NewString(reporter, "a")
 
-	value2.IsEmpty()
-	value2.chain.assertFailed(t)
-	value2.chain.clearFailed()
+	value.IsEmpty()
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
 
-	value2.NotEmpty()
-	value2.chain.assertNotFailed(t)
-	value2.chain.clearFailed()
+	value.NotEmpty()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 }
 
 func TestString_Equal(t *testing.T) {
@@ -477,150 +477,166 @@ func TestString_MatchInvalid(t *testing.T) {
 func TestString_IsAscii(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	value1 := NewString(reporter, "Ascii")
-	value1.IsASCII()
-	value1.chain.assertNotFailed(t)
-	value1.chain.clearFailed()
+	value := NewString(reporter, "Ascii")
+	value.IsASCII()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
-	value2 := NewString(reporter, "Ascii is アスキー")
-	value2.IsASCII()
-	value2.chain.assertFailed(t)
-	value2.chain.clearFailed()
+	value = NewString(reporter, "Ascii is アスキー")
+	value.IsASCII()
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
 
-	value3 := NewString(reporter, "アスキー")
-	value3.IsASCII()
-	value3.chain.assertFailed(t)
-	value3.chain.clearFailed()
+	value = NewString(reporter, "アスキー")
+	value.IsASCII()
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
 
-	value4 := NewString(reporter, string(rune(127)))
-	value4.IsASCII()
-	value4.chain.assertNotFailed(t)
-	value4.chain.clearFailed()
+	value = NewString(reporter, string(rune(127)))
+	value.IsASCII()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
-	value5 := NewString(reporter, string(rune(128)))
-	value5.IsASCII()
-	value5.chain.assertFailed(t)
-	value5.chain.clearFailed()
+	value = NewString(reporter, string(rune(128)))
+	value.IsASCII()
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
 }
 
 func TestString_NotAscii(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	value1 := NewString(reporter, "Ascii")
-	value1.NotASCII()
-	value1.chain.assertFailed(t)
-	value1.chain.clearFailed()
+	value := NewString(reporter, "Ascii")
+	value.NotASCII()
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
 
-	value2 := NewString(reporter, "Ascii is アスキー")
-	value2.NotASCII()
-	value2.chain.assertNotFailed(t)
-	value2.chain.clearFailed()
+	value = NewString(reporter, "Ascii is アスキー")
+	value.NotASCII()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
-	value3 := NewString(reporter, "アスキー")
-	value3.NotASCII()
-	value3.chain.assertNotFailed(t)
-	value3.chain.clearFailed()
+	value = NewString(reporter, "アスキー")
+	value.NotASCII()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 
-	value4 := NewString(reporter, string(rune(127)))
-	value4.NotASCII()
-	value4.chain.assertFailed(t)
-	value4.chain.clearFailed()
+	value = NewString(reporter, string(rune(127)))
+	value.NotASCII()
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
 
-	value5 := NewString(reporter, string(rune(128)))
-	value5.NotASCII()
-	value5.chain.assertNotFailed(t)
-	value5.chain.clearFailed()
+	value = NewString(reporter, string(rune(128)))
+	value.NotASCII()
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
 }
 
 func TestString_AsNumber(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	t.Run("default_base", func(t *testing.T) {
-		value1 := NewString(reporter, "1234567")
-		num1 := value1.AsNumber()
-		value1.chain.assertNotFailed(t)
-		num1.chain.assertNotFailed(t)
-		assert.Equal(t, float64(1234567), num1.Raw())
-
-		value2 := NewString(reporter, "11.22")
-		num2 := value2.AsNumber()
-		value2.chain.assertNotFailed(t)
-		num2.chain.assertNotFailed(t)
-		assert.Equal(t, float64(11.22), num2.Raw())
-
-		value3 := NewString(reporter, "a1")
-		num3 := value3.AsNumber()
-		value3.chain.assertFailed(t)
-		num3.chain.assertFailed(t)
-		assert.Equal(t, float64(0), num3.Raw())
+	t.Run("default_base_integer", func(t *testing.T) {
+		value := NewString(reporter, "1234567")
+		num := value.AsNumber()
+		value.chain.assertNotFailed(t)
+		num.chain.assertNotFailed(t)
+		assert.Equal(t, float64(1234567), num.Raw())
 	})
 
-	t.Run("base10", func(t *testing.T) {
-		value1 := NewString(reporter, "100")
-		num1 := value1.AsNumber(10)
-		value1.chain.assertNotFailed(t)
-		num1.chain.assertNotFailed(t)
-		assert.Equal(t, float64(100), num1.Raw())
-
-		value2 := NewString(reporter, "11.22")
-		num2 := value2.AsNumber(10)
-		value2.chain.assertNotFailed(t)
-		num2.chain.assertNotFailed(t)
-		assert.Equal(t, float64(11.22), num2.Raw())
+	t.Run("default_base_float", func(t *testing.T) {
+		value := NewString(reporter, "11.22")
+		num := value.AsNumber()
+		value.chain.assertNotFailed(t)
+		num.chain.assertNotFailed(t)
+		assert.Equal(t, float64(11.22), num.Raw())
 	})
 
-	t.Run("base16", func(t *testing.T) {
-		value1 := NewString(reporter, "100")
-		num1 := value1.AsNumber(16)
-		value1.chain.assertNotFailed(t)
-		num1.chain.assertNotFailed(t)
-		assert.Equal(t, float64(0x100), num1.Raw())
-
-		value2 := NewString(reporter, "11.22")
-		num2 := value2.AsNumber(16)
-		value2.chain.assertFailed(t)
-		num2.chain.assertFailed(t)
-		assert.Equal(t, float64(0), num2.Raw())
-
-		value3 := NewString(reporter, "4000000000000000")
-		num3 := value3.AsNumber(16)
-		value3.chain.assertNotFailed(t)
-		num3.chain.assertNotFailed(t)
-		assert.Equal(t, float64(0x4000000000000000), num3.Raw())
+	t.Run("default_base_bad", func(t *testing.T) {
+		value := NewString(reporter, "a1")
+		num := value.AsNumber()
+		value.chain.assertFailed(t)
+		num.chain.assertFailed(t)
+		assert.Equal(t, float64(0), num.Raw())
 	})
 
-	t.Run("float_precision", func(t *testing.T) {
-		value1 := NewString(reporter, "4611686018427387905")
-		num1 := value1.AsNumber()
-		value1.chain.assertFailed(t)
-		num1.chain.assertFailed(t)
-		assert.Equal(t, float64(0), num1.Raw())
+	t.Run("base10_integer", func(t *testing.T) {
+		value := NewString(reporter, "100")
+		num := value.AsNumber(10)
+		value.chain.assertNotFailed(t)
+		num.chain.assertNotFailed(t)
+		assert.Equal(t, float64(100), num.Raw())
+	})
 
-		value2 := NewString(reporter, "4611686018427387905")
-		num2 := value2.AsNumber(10)
-		value2.chain.assertFailed(t)
-		num2.chain.assertFailed(t)
-		assert.Equal(t, float64(0), num2.Raw())
+	t.Run("base10_float", func(t *testing.T) {
+		value := NewString(reporter, "11.22")
+		num := value.AsNumber(10)
+		value.chain.assertNotFailed(t)
+		num.chain.assertNotFailed(t)
+		assert.Equal(t, float64(11.22), num.Raw())
+	})
 
-		value3 := NewString(reporter, "8000000000000001")
-		num3 := value3.AsNumber(16)
-		value3.chain.assertFailed(t)
-		num3.chain.assertFailed(t)
-		assert.Equal(t, float64(0), num3.Raw())
+	t.Run("base16_integer", func(t *testing.T) {
+		value := NewString(reporter, "100")
+		num := value.AsNumber(16)
+		value.chain.assertNotFailed(t)
+		num.chain.assertNotFailed(t)
+		assert.Equal(t, float64(0x100), num.Raw())
+	})
 
-		value4 := NewString(reporter, "-4000000000000001")
-		num4 := value4.AsNumber(16)
-		value4.chain.assertFailed(t)
-		num4.chain.assertFailed(t)
-		assert.Equal(t, float64(0), num4.Raw())
+	t.Run("base16_float", func(t *testing.T) {
+		value := NewString(reporter, "11.22")
+		num := value.AsNumber(16)
+		value.chain.assertFailed(t)
+		num.chain.assertFailed(t)
+		assert.Equal(t, float64(0), num.Raw())
+	})
+
+	t.Run("base16_large_integer", func(t *testing.T) {
+		value := NewString(reporter, "4000000000000000")
+		num := value.AsNumber(16)
+		value.chain.assertNotFailed(t)
+		num.chain.assertNotFailed(t)
+		assert.Equal(t, float64(0x4000000000000000), num.Raw())
+	})
+
+	t.Run("default_base_float_precision", func(t *testing.T) {
+		value := NewString(reporter, "4611686018427387905")
+		num := value.AsNumber()
+		value.chain.assertFailed(t)
+		num.chain.assertFailed(t)
+		assert.Equal(t, float64(0), num.Raw())
+	})
+
+	t.Run("base10_float_precision", func(t *testing.T) {
+		value := NewString(reporter, "4611686018427387905")
+		num := value.AsNumber(10)
+		value.chain.assertFailed(t)
+		num.chain.assertFailed(t)
+		assert.Equal(t, float64(0), num.Raw())
+	})
+
+	t.Run("base16_float_precision_max", func(t *testing.T) {
+		value := NewString(reporter, "8000000000000001")
+		num := value.AsNumber(16)
+		value.chain.assertFailed(t)
+		num.chain.assertFailed(t)
+		assert.Equal(t, float64(0), num.Raw())
+	})
+
+	t.Run("base16_float_precision_min", func(t *testing.T) {
+		value := NewString(reporter, "-4000000000000001")
+		num := value.AsNumber(16)
+		value.chain.assertFailed(t)
+		num.chain.assertFailed(t)
+		assert.Equal(t, float64(0), num.Raw())
 	})
 
 	t.Run("multiple_base", func(t *testing.T) {
-		value1 := NewString(reporter, "100")
-		num1 := value1.AsNumber(10, 16)
-		value1.chain.assertFailed(t)
-		num1.chain.assertFailed(t)
-		assert.Equal(t, float64(0), num1.Raw())
+		value := NewString(reporter, "100")
+		num := value.AsNumber(10, 16)
+		value.chain.assertFailed(t)
+		num.chain.assertFailed(t)
+		assert.Equal(t, float64(0), num.Raw())
 	})
 }
 
@@ -666,24 +682,28 @@ func TestString_AsBoolean(t *testing.T) {
 func TestString_AsDateTime(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	t.Run("basic", func(t *testing.T) {
-		value1 := NewString(reporter, "Tue, 15 Nov 1994 08:12:31 GMT")
-		dt1 := value1.AsDateTime()
-		value1.chain.assertNotFailed(t)
-		dt1.chain.assertNotFailed(t)
-		assert.True(t, time.Date(1994, 11, 15, 8, 12, 31, 0, time.UTC).Equal(dt1.Raw()))
+	t.Run("default_formats_RFC1123+GMT", func(t *testing.T) {
+		value := NewString(reporter, "Tue, 15 Nov 1994 08:12:31 GMT")
+		dt := value.AsDateTime()
+		value.chain.assertNotFailed(t)
+		dt.chain.assertNotFailed(t)
+		assert.True(t, time.Date(1994, 11, 15, 8, 12, 31, 0, time.UTC).Equal(dt.Raw()))
+	})
 
-		value2 := NewString(reporter, "15 Nov 94 08:12 GMT")
-		dt2 := value2.AsDateTime(time.RFC822)
-		value2.chain.assertNotFailed(t)
-		dt2.chain.assertNotFailed(t)
-		assert.True(t, time.Date(1994, 11, 15, 8, 12, 0, 0, time.UTC).Equal(dt2.Raw()))
+	t.Run("RFC822", func(t *testing.T) {
+		value := NewString(reporter, "15 Nov 94 08:12 GMT")
+		dt := value.AsDateTime(time.RFC822)
+		value.chain.assertNotFailed(t)
+		dt.chain.assertNotFailed(t)
+		assert.True(t, time.Date(1994, 11, 15, 8, 12, 0, 0, time.UTC).Equal(dt.Raw()))
+	})
 
-		value3 := NewString(reporter, "bad")
-		dt3 := value3.AsDateTime()
-		value3.chain.assertFailed(t)
-		dt3.chain.assertFailed(t)
-		assert.True(t, time.Unix(0, 0).Equal(dt3.Raw()))
+	t.Run("bad_input", func(t *testing.T) {
+		value := NewString(reporter, "bad")
+		dt := value.AsDateTime()
+		value.chain.assertFailed(t)
+		dt.chain.assertFailed(t)
+		assert.True(t, time.Unix(0, 0).Equal(dt.Raw()))
 	})
 
 	formats := []string{
@@ -701,27 +721,39 @@ func TestString_AsDateTime(t *testing.T) {
 	}
 
 	for n, f := range formats {
-		t.Run(f, func(t *testing.T) {
+		t.Run("default_formats_"+f, func(t *testing.T) {
 			str := time.Now().Format(f)
 
-			value1 := NewString(reporter, str)
-			dt1 := value1.AsDateTime()
-			dt1.chain.assertNotFailed(t)
-
-			value2 := NewString(reporter, str)
-			dt2 := value2.AsDateTime(formats...)
-			dt2.chain.assertNotFailed(t)
-
-			value3 := NewString(reporter, str)
-			dt3 := value3.AsDateTime(f)
-			dt3.chain.assertNotFailed(t)
-
-			if n != 0 {
-				value4 := NewString(reporter, str)
-				dt4 := value4.AsDateTime(formats[0])
-				dt4.chain.assertFailed(t)
-			}
+			value := NewString(reporter, str)
+			dt := value.AsDateTime()
+			dt.chain.assertNotFailed(t)
 		})
+
+		t.Run("all_formats_"+f, func(t *testing.T) {
+			str := time.Now().Format(f)
+
+			value := NewString(reporter, str)
+			dt := value.AsDateTime(formats...)
+			dt.chain.assertNotFailed(t)
+		})
+
+		t.Run("same_format_"+f, func(t *testing.T) {
+			str := time.Now().Format(f)
+
+			value := NewString(reporter, str)
+			dt := value.AsDateTime(f)
+			dt.chain.assertNotFailed(t)
+		})
+
+		if n != 0 {
+			t.Run("different_format_"+f, func(t *testing.T) {
+				str := time.Now().Format(f)
+
+				value := NewString(reporter, str)
+				dt := value.AsDateTime(formats[0])
+				dt.chain.assertFailed(t)
+			})
+		}
 	}
 }
 
