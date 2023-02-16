@@ -622,11 +622,10 @@ func (n *Number) Le(value interface{}) *Number {
 }
 
 // IsInt succeeds if number is a signed integer of the specified bit width
-// within range of [1;64].
+// as an optional argument.
 //
-// If bit is omitted, uses 64 bit as default. Otherwise, uses given bits
-// argument.
 // Bits argument defines maximum allowed bitness for the given number.
+// If bits is omitted, boundary checks is omitted too.
 //
 // value should have numeric type convertible to float64. Before comparison,
 // it is converted to float64.
@@ -655,17 +654,12 @@ func (n *Number) IsInt(bits ...int) *Number {
 		return n
 	}
 
-	bitSize := 64
-	if len(bits) > 0 {
-		bitSize = bits[0]
-	}
-
 	if math.IsNaN(n.value) {
 		opChain.fail(AssertionFailure{
 			Type:   AssertType,
 			Actual: &AssertionValue{n.value},
 			Errors: []error{
-				fmt.Errorf("expected: number is %d-bit integer", bitSize),
+				errors.New("expected: number is integer"),
 			},
 		})
 		return n
@@ -677,42 +671,45 @@ func (n *Number) IsInt(bits ...int) *Number {
 			Type:   AssertType,
 			Actual: &AssertionValue{n.value},
 			Errors: []error{
-				fmt.Errorf("expected: number is %d-bit integer", bitSize),
+				errors.New("expected: number is integer"),
 			},
 		})
 		return n
 	}
 
-	imax := new(big.Int)
-	imax.Lsh(big.NewInt(1), uint(bitSize-1))
-	imax.Sub(imax, big.NewInt(1))
-	imin := new(big.Int)
-	imin.Neg(imax)
-	imin.Sub(imin, big.NewInt(1))
-	if inum.Cmp(imin) < 0 || inum.Cmp(imax) > 0 {
-		opChain.fail(AssertionFailure{
-			Type:   AssertInRange,
-			Actual: &AssertionValue{n.value},
-			Expected: &AssertionValue{AssertionRange{
-				fmt.Sprintf("-2^%d", bitSize-1),
-				fmt.Sprintf("2^%d", bitSize-1),
-			}},
-			Errors: []error{
-				fmt.Errorf("expected: number fits %d-bit integer", bitSize),
-			},
-		})
-		return n
+	if len(bits) > 0 {
+		bitSize := bits[0]
+
+		imax := new(big.Int)
+		imax.Lsh(big.NewInt(1), uint(bitSize-1))
+		imax.Sub(imax, big.NewInt(1))
+		imin := new(big.Int)
+		imin.Neg(imax)
+		imin.Sub(imin, big.NewInt(1))
+		if inum.Cmp(imin) < 0 || inum.Cmp(imax) > 0 {
+			opChain.fail(AssertionFailure{
+				Type:   AssertInRange,
+				Actual: &AssertionValue{n.value},
+				Expected: &AssertionValue{AssertionRange{
+					fmt.Sprintf("-2^%d", bitSize-1),
+					fmt.Sprintf("2^%d", bitSize-1),
+				}},
+				Errors: []error{
+					fmt.Errorf("expected: number is %d-bit integer", bitSize),
+				},
+			})
+			return n
+		}
 	}
 
 	return n
 }
 
 // NotInt succeeds if number is not a signed integer of the specified bit
-// width within range of [1;64].
+// width as an optional argument.
 //
-// If bit is omitted, uses 64 bit as default. Otherwise, uses given bits
-// argument.
 // Bits argument defines maximum allowed bitness for the given number.
+// If bits is omitted, boundary checks is omitted too.
 //
 // value should have numeric type convertible to float64. Before comparison,
 // it is converted to float64.
@@ -741,14 +738,21 @@ func (n *Number) NotInt(bits ...int) *Number {
 		return n
 	}
 
-	bitSize := 64
-	if len(bits) != 0 {
-		bitSize = bits[0]
-	}
-
 	if !math.IsNaN(n.value) {
 		inum, acc := big.NewFloat(n.value).Int(nil)
 		if acc == big.Exact {
+			if len(bits) == 0 {
+				opChain.fail(AssertionFailure{
+					Type:   AssertType,
+					Actual: &AssertionValue{n.value},
+					Errors: []error{
+						errors.New("expected: number is not integer"),
+					},
+				})
+				return n
+			}
+
+			bitSize := bits[0]
 			imax := new(big.Int)
 			imax.Lsh(big.NewInt(1), uint(bitSize-1))
 			imax.Sub(imax, big.NewInt(1))
