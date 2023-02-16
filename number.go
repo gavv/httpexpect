@@ -780,11 +780,10 @@ func (n *Number) NotInt(bits ...int) *Number {
 }
 
 // IsUint succeeds if number is an unsigned integer of the specified bit
-// width within range of [1;64].
+// width as an optional argument.
 //
-// If bit is omitted, uses 64 bit as default. Otherwise, uses given bits
-// argument.
 // Bits argument defines maximum allowed bitness for the given number.
+// If bits is omitted, boundary checks is omitted too.
 //
 // value should have numeric type convertible to float64. Before comparison,
 // it is converted to float64.
@@ -813,62 +812,59 @@ func (n *Number) IsUint(bits ...int) *Number {
 		return n
 	}
 
-	bitSize := 64
-	if len(bits) != 0 {
-		bitSize = bits[0]
-	}
-
 	if math.IsNaN(n.value) {
 		opChain.fail(AssertionFailure{
 			Type:   AssertType,
 			Actual: &AssertionValue{n.value},
 			Errors: []error{
-				fmt.Errorf("expected: number is unsigned %d-bit integer", bitSize),
+				errors.New("expected: number is unsigned integer"),
 			},
 		})
 		return n
 	}
 
 	inum, acc := big.NewFloat(n.value).Int(nil)
-	if acc != big.Exact {
+	if !(acc == big.Exact && inum.IsUint64()) {
 		opChain.fail(AssertionFailure{
 			Type:   AssertType,
 			Actual: &AssertionValue{n.value},
 			Errors: []error{
-				fmt.Errorf("expected: number is unsigned %d-bit integer", bitSize),
+				errors.New("expected: number is unsigned integer"),
 			},
 		})
 		return n
 	}
 
-	imax := new(big.Int)
-	imax.Lsh(big.NewInt(1), uint(bitSize))
-	imax.Sub(imax, big.NewInt(1))
-	imin := big.NewInt(0)
-	if inum.Cmp(imin) < 0 || inum.Cmp(imax) > 0 {
-		opChain.fail(AssertionFailure{
-			Type:   AssertInRange,
-			Actual: &AssertionValue{n.value},
-			Expected: &AssertionValue{AssertionRange{
-				"0",
-				fmt.Sprintf("2^%d", bitSize),
-			}},
-			Errors: []error{
-				fmt.Errorf("expected: number fits %d-bit unsigned integer", bitSize),
-			},
-		})
-		return n
+	if len(bits) > 0 {
+		bitSize := bits[0]
+		imax := new(big.Int)
+		imax.Lsh(big.NewInt(1), uint(bitSize))
+		imax.Sub(imax, big.NewInt(1))
+		imin := big.NewInt(0)
+		if inum.Cmp(imin) < 0 || inum.Cmp(imax) > 0 {
+			opChain.fail(AssertionFailure{
+				Type:   AssertInRange,
+				Actual: &AssertionValue{n.value},
+				Expected: &AssertionValue{AssertionRange{
+					"0",
+					fmt.Sprintf("2^%d", bitSize),
+				}},
+				Errors: []error{
+					fmt.Errorf("expected: number fits %d-bit unsigned integer", bitSize),
+				},
+			})
+			return n
+		}
 	}
 
 	return n
 }
 
 // NotUint succeeds if number is not an unsigned integer of the specified bit
-// width within range of [1;64].
+// width as an optional argument.
 //
-// If bit is omitted, uses 64 bit as default. Otherwise, uses given bits
-// argument.
 // Bits argument defines maximum allowed bitness for the given number.
+// If bits is omitted, boundary checks is omitted too.
 //
 // value should have numeric type convertible to float64. Before comparison,
 // it is converted to float64.
@@ -897,14 +893,21 @@ func (n *Number) NotUint(bits ...int) *Number {
 		return n
 	}
 
-	bitSize := 64
-	if len(bits) != 0 {
-		bitSize = bits[0]
-	}
-
 	if !math.IsNaN(n.value) {
 		inum, acc := big.NewFloat(n.value).Int(nil)
 		if acc == big.Exact {
+			if len(bits) == 0 && inum.IsUint64() {
+				opChain.fail(AssertionFailure{
+					Type:   AssertType,
+					Actual: &AssertionValue{n.value},
+					Errors: []error{
+						errors.New("expected: number is not unsigned integer"),
+					},
+				})
+				return n
+			}
+
+			bitSize := bits[0]
 			imax := new(big.Int)
 			imax.Lsh(big.NewInt(1), uint(bitSize))
 			imax.Sub(imax, big.NewInt(1))
