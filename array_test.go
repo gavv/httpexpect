@@ -358,9 +358,9 @@ func TestArray_IsEmpty(t *testing.T) {
 }
 
 func TestArray_IsEqual(t *testing.T) {
-	t.Run("empty", func(t *testing.T) {
-		reporter := newMockReporter(t)
+	reporter := newMockReporter(t)
 
+	t.Run("empty", func(t *testing.T) {
 		value := NewArray(reporter, []interface{}{})
 
 		assert.Equal(t, []interface{}{}, value.Raw())
@@ -383,8 +383,6 @@ func TestArray_IsEqual(t *testing.T) {
 	})
 
 	t.Run("not empty", func(t *testing.T) {
-		reporter := newMockReporter(t)
-
 		value := NewArray(reporter, []interface{}{"foo", "bar"})
 
 		assert.Equal(t, []interface{}{"foo", "bar"}, value.Raw())
@@ -423,8 +421,6 @@ func TestArray_IsEqual(t *testing.T) {
 	})
 
 	t.Run("types", func(t *testing.T) {
-		reporter := newMockReporter(t)
-
 		value1 := NewArray(reporter, []interface{}{"foo", "bar"})
 		value2 := NewArray(reporter, []interface{}{123, 456})
 		value3 := NewArray(reporter, []interface{}{
@@ -489,13 +485,23 @@ func TestArray_IsEqual(t *testing.T) {
 		value3.chain.clearFailed()
 	})
 
+	t.Run("nil check", func(t *testing.T) {
+		value := NewArray(reporter, []interface{}{123, 456})
+
+		value.IsEqual(nil)
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.NotEqual(nil)
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+	})
+
 	t.Run("canonization", func(t *testing.T) {
 		type (
 			myArray []interface{}
 			myInt   int
 		)
-
-		reporter := newMockReporter(t)
 
 		value := NewArray(reporter, []interface{}{123, 456})
 
@@ -517,13 +523,6 @@ func TestArray_IsEqual(t *testing.T) {
 		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
 
-		value.IsEqual(nil)
-		value.chain.assertFailed(t)
-		value.chain.clearFailed()
-
-		value.NotEqual(nil)
-		value.chain.assertFailed(t)
-		value.chain.clearFailed()
 	})
 }
 
@@ -612,6 +611,19 @@ func TestArray_IsEqualUnordered(t *testing.T) {
 		value.chain.clearFailed()
 	})
 
+	t.Run("nil check", func(t *testing.T) {
+
+		value := NewArray(reporter, []interface{}{123, 456, "foo"})
+
+		value.IsEqualUnordered(nil)
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.NotEqualUnordered(nil)
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+	})
+
 	t.Run("canonization", func(t *testing.T) {
 		type (
 			myArray []interface{}
@@ -646,14 +658,6 @@ func TestArray_IsEqualUnordered(t *testing.T) {
 
 		value.NotEqualUnordered(myArray{"123.0", "456.0", "foo"})
 		value.chain.assertNotFailed(t)
-		value.chain.clearFailed()
-
-		value.IsEqualUnordered(nil)
-		value.chain.assertFailed(t)
-		value.chain.clearFailed()
-
-		value.NotEqualUnordered(nil)
-		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 	})
 }
@@ -731,6 +735,22 @@ func TestArray_InList(t *testing.T) {
 		value.chain.clearFailed()
 	})
 
+	t.Run("invalid arguments", func(t *testing.T) {
+
+		array := NewArray(reporter, []interface{}{
+			123,
+			456,
+		})
+
+		array.InList(func() {})
+		array.chain.assertFailed(t)
+		array.chain.clearFailed()
+
+		array.NotInList(func() {})
+		array.chain.assertFailed(t)
+		array.chain.clearFailed()
+	})
+
 	t.Run("canonization", func(t *testing.T) {
 		type (
 			myArray []interface{}
@@ -795,20 +815,13 @@ func TestArray_InList(t *testing.T) {
 		array.chain.assertNotFailed(t)
 		array.chain.clearFailed()
 
-		array.InList(func() {})
-		array.chain.assertFailed(t)
-		array.chain.clearFailed()
-
-		array.NotInList(func() {})
-		array.chain.assertFailed(t)
-		array.chain.clearFailed()
 	})
 }
 
 func TestArray_ConsistsOf(t *testing.T) {
-	t.Run("basic", func(t *testing.T) {
-		reporter := newMockReporter(t)
+	reporter := newMockReporter(t)
 
+	t.Run("basic", func(t *testing.T) {
 		value := NewArray(reporter, []interface{}{123, "foo"})
 
 		value.ConsistsOf(123)
@@ -852,12 +865,22 @@ func TestArray_ConsistsOf(t *testing.T) {
 		value.chain.clearFailed()
 	})
 
+	t.Run("invalid arguments", func(t *testing.T) {
+		value := NewArray(reporter, []interface{}{123, 456})
+
+		value.ConsistsOf(func() {})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.NotConsistsOf(func() {})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+	})
+
 	t.Run("canonization", func(t *testing.T) {
 		type (
 			myInt int
 		)
-
-		reporter := newMockReporter(t)
 
 		value := NewArray(reporter, []interface{}{123, 456})
 
@@ -871,19 +894,13 @@ func TestArray_ConsistsOf(t *testing.T) {
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 
-		value.ConsistsOf(func() {})
-		value.chain.assertFailed(t)
-		value.chain.clearFailed()
-
-		value.NotConsistsOf(func() {})
-		value.chain.assertFailed(t)
-		value.chain.clearFailed()
 	})
 }
 
 func TestArray_Contains(t *testing.T) {
+	reporter := newMockReporter(t)
+
 	t.Run("basic", func(t *testing.T) {
-		reporter := newMockReporter(t)
 
 		value := NewArray(reporter, []interface{}{123, "foo"})
 
@@ -932,12 +949,34 @@ func TestArray_Contains(t *testing.T) {
 		value.chain.clearFailed()
 	})
 
+	t.Run("invalid arguments", func(t *testing.T) {
+		value := NewArray(reporter, []interface{}{123, 456})
+
+		value.Contains(func() {})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.NotContains(func() {})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.ContainsOnly(func() {})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.ContainsAny(func() {})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.NotContainsAny(func() {})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+	})
+
 	t.Run("canonization", func(t *testing.T) {
 		type (
 			myInt int
 		)
-
-		reporter := newMockReporter(t)
 
 		value := NewArray(reporter, []interface{}{123, 456})
 
@@ -1074,7 +1113,6 @@ func TestArray_ContainsAll(t *testing.T) {
 		value.NotContainsAll("123.0", "456.0")
 		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
-
 	})
 
 	t.Run("invalid argument", func(t *testing.T) {
@@ -1337,8 +1375,9 @@ func TestArray_ContainsOnly(t *testing.T) {
 }
 
 func TestArray_IsValueEqual(t *testing.T) {
+	reporter := newMockReporter(t)
+
 	t.Run("basic", func(t *testing.T) {
-		reporter := newMockReporter(t)
 
 		array := NewArray(reporter, []interface{}{
 			123,
@@ -1372,14 +1411,6 @@ func TestArray_IsValueEqual(t *testing.T) {
 		array.chain.assertFailed(t)
 		array.chain.clearFailed()
 
-		array.IsValueEqual(2, func() {})
-		array.chain.assertFailed(t)
-		array.chain.clearFailed()
-
-		array.NotValueEqual(2, func() {})
-		array.chain.assertFailed(t)
-		array.chain.clearFailed()
-
 		array.IsValueEqual(3, 777)
 		array.chain.assertFailed(t)
 		array.chain.clearFailed()
@@ -1389,8 +1420,22 @@ func TestArray_IsValueEqual(t *testing.T) {
 		array.chain.clearFailed()
 	})
 
+	t.Run("invalid arguments", func(t *testing.T) {
+		array := NewArray(reporter, []interface{}{
+			123,
+			[]interface{}{"456", 789},
+		})
+
+		array.IsValueEqual(1, func() {})
+		array.chain.assertFailed(t)
+		array.chain.clearFailed()
+
+		array.NotValueEqual(1, func() {})
+		array.chain.assertFailed(t)
+		array.chain.clearFailed()
+	})
+
 	t.Run("struct", func(t *testing.T) {
-		reporter := newMockReporter(t)
 
 		array := NewArray(reporter, []interface{}{
 			map[string]interface{}{
@@ -1443,8 +1488,6 @@ func TestArray_IsValueEqual(t *testing.T) {
 			myInt   int
 		)
 
-		reporter := newMockReporter(t)
-
 		array := NewArray(reporter, []interface{}{
 			123,
 			[]interface{}{"456", 789},
@@ -1471,7 +1514,6 @@ func TestArray_IsValueEqual(t *testing.T) {
 	})
 
 	t.Run("invalid index", func(t *testing.T) {
-		reporter := newMockReporter(t)
 
 		array := NewArray(reporter, []interface{}{1, 2, 3})
 
@@ -1612,7 +1654,6 @@ func TestArray_Transform(t *testing.T) {
 
 		newArray.chain.assertFailed(t)
 	})
-
 }
 
 func TestArray_Filter(t *testing.T) {
@@ -1803,7 +1844,7 @@ func TestArray_Find(t *testing.T) {
 		foundValue.chain.assertNotFailed(t)
 	})
 
-	t.Run("invalid argument", func(ts *testing.T) {
+	t.Run("invalid arguments", func(ts *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1, 2})
 
@@ -1953,7 +1994,7 @@ func TestArray_FindAll(t *testing.T) {
 		}
 	})
 
-	t.Run("invalid argument", func(ts *testing.T) {
+	t.Run("invalid arguments", func(ts *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1, 2})
 
@@ -2037,7 +2078,7 @@ func TestArray_NotFind(t *testing.T) {
 		array.chain.assertFailed(t)
 	})
 
-	t.Run("invalid argument", func(ts *testing.T) {
+	t.Run("invalid arguments", func(ts *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1, 2})
 
