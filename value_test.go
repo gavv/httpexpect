@@ -205,7 +205,7 @@ func TestValue_Casts(t *testing.T) {
 		NewValue(reporter, data).NotNull().chain.assertNotFailed(t)
 		NewValue(reporter, data).IsNull().chain.assertFailed(t)
 	})
-	
+
 	t.Run("cast array", func(t *testing.T) {
 		data := []interface{}{}
 
@@ -511,7 +511,7 @@ func TestValue_PathTypes(t *testing.T) {
 		assert.Equal(t, float64(data), value.Path("$").Raw())
 		value.chain.assertNotFailed(t)
 	})
-	
+
 	t.Run("path boolean", func(t *testing.T) {
 		data := true
 
@@ -520,14 +520,14 @@ func TestValue_PathTypes(t *testing.T) {
 		assert.Equal(t, data, value.Path("$").Raw())
 		value.chain.assertNotFailed(t)
 	})
-	
+
 	t.Run("path null", func(t *testing.T) {
 		value := NewValue(reporter, nil)
 
 		assert.Equal(t, nil, value.Path("$").Raw())
 		value.chain.assertNotFailed(t)
 	})
-	
+
 	t.Run("path error", func(t *testing.T) {
 		data := "foo"
 
@@ -540,7 +540,7 @@ func TestValue_PathTypes(t *testing.T) {
 			value.chain.assertFailed(t)
 		}
 	})
-	
+
 	// based on github.com/yalp/jsonpath
 	t.Run("path expressions", func(t *testing.T) {
 		data := map[string]interface{}{
@@ -719,7 +719,7 @@ func TestValue_PathTypes(t *testing.T) {
 			})
 		})
 	})
-	
+
 	t.Run("path int float", func(t *testing.T) {
 		data := map[string]interface{}{
 			"A": 123,

@@ -301,7 +301,7 @@ func TestResponse_Cookies(t *testing.T) {
 			"Set-Cookie": {
 				"foo=aaa",
 				"bar=bbb; expires=Fri, 31 Dec 2010 23:59:59 GMT; " +
-				"path=/xxx; domain=example.com",
+					"path=/xxx; domain=example.com",
 			},
 		}
 
@@ -339,7 +339,7 @@ func TestResponse_Cookies(t *testing.T) {
 		c3.chain.assertFailed(t)
 		assert.Nil(t, c3.Raw())
 	})
-		
+
 	t.Run("no cookies", func(t *testing.T) {
 		httpResp := &http.Response{
 			StatusCode: http.StatusOK,
