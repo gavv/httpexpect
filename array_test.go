@@ -358,9 +358,9 @@ func TestArray_IsEmpty(t *testing.T) {
 }
 
 func TestArray_IsEqual(t *testing.T) {
-	reporter := newMockReporter(t)
-
 	t.Run("empty", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
 		value := NewArray(reporter, []interface{}{})
 
 		assert.Equal(t, []interface{}{}, value.Raw())
@@ -383,6 +383,8 @@ func TestArray_IsEqual(t *testing.T) {
 	})
 
 	t.Run("not empty", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
 		value := NewArray(reporter, []interface{}{"foo", "bar"})
 
 		assert.Equal(t, []interface{}{"foo", "bar"}, value.Raw())
@@ -421,6 +423,8 @@ func TestArray_IsEqual(t *testing.T) {
 	})
 
 	t.Run("types", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
 		value1 := NewArray(reporter, []interface{}{"foo", "bar"})
 		value2 := NewArray(reporter, []interface{}{123, 456})
 		value3 := NewArray(reporter, []interface{}{
@@ -491,6 +495,8 @@ func TestArray_IsEqual(t *testing.T) {
 			myInt   int
 		)
 
+		reporter := newMockReporter(t)
+
 		value := NewArray(reporter, []interface{}{123, 456})
 
 		assert.Equal(t, []interface{}{123.0, 456.0}, value.Raw())
@@ -513,6 +519,8 @@ func TestArray_IsEqual(t *testing.T) {
 	})
 
 	t.Run("invalid argument", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
 		value := NewArray(reporter, []interface{}{})
 
 		value.IsEqual(nil)
