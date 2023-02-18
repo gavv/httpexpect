@@ -155,116 +155,104 @@ func TestValue_Alias(t *testing.T) {
 	assert.Equal(t, []string{"foo", "Number()"}, childValue.chain.context.AliasedPath)
 }
 
-func TestValue_CastNull(t *testing.T) {
+func TestValue_Casts(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	var data interface{}
+	t.Run("cast null", func(t *testing.T) {
+		var data interface{}
 
-	NewValue(reporter, data).Object().chain.assertFailed(t)
-	NewValue(reporter, data).Array().chain.assertFailed(t)
-	NewValue(reporter, data).String().chain.assertFailed(t)
-	NewValue(reporter, data).Number().chain.assertFailed(t)
-	NewValue(reporter, data).Boolean().chain.assertFailed(t)
-	NewValue(reporter, data).NotNull().chain.assertFailed(t)
-	NewValue(reporter, data).IsNull().chain.assertNotFailed(t)
-}
+		NewValue(reporter, data).Object().chain.assertFailed(t)
+		NewValue(reporter, data).Array().chain.assertFailed(t)
+		NewValue(reporter, data).String().chain.assertFailed(t)
+		NewValue(reporter, data).Number().chain.assertFailed(t)
+		NewValue(reporter, data).Boolean().chain.assertFailed(t)
+		NewValue(reporter, data).NotNull().chain.assertFailed(t)
+		NewValue(reporter, data).IsNull().chain.assertNotFailed(t)
+	})
 
-func TestValue_CastIndirectNull(t *testing.T) {
-	reporter := newMockReporter(t)
+	t.Run("cast indirect null", func(t *testing.T) {
+		var data []interface{}
 
-	var data []interface{}
+		NewValue(reporter, data).Object().chain.assertFailed(t)
+		NewValue(reporter, data).Array().chain.assertFailed(t)
+		NewValue(reporter, data).String().chain.assertFailed(t)
+		NewValue(reporter, data).Number().chain.assertFailed(t)
+		NewValue(reporter, data).Boolean().chain.assertFailed(t)
+		NewValue(reporter, data).NotNull().chain.assertFailed(t)
+		NewValue(reporter, data).IsNull().chain.assertNotFailed(t)
+	})
 
-	NewValue(reporter, data).Object().chain.assertFailed(t)
-	NewValue(reporter, data).Array().chain.assertFailed(t)
-	NewValue(reporter, data).String().chain.assertFailed(t)
-	NewValue(reporter, data).Number().chain.assertFailed(t)
-	NewValue(reporter, data).Boolean().chain.assertFailed(t)
-	NewValue(reporter, data).NotNull().chain.assertFailed(t)
-	NewValue(reporter, data).IsNull().chain.assertNotFailed(t)
-}
+	t.Run("cast bad", func(t *testing.T) {
+		data := func() {}
 
-func TestValue_CastBad(t *testing.T) {
-	reporter := newMockReporter(t)
+		NewValue(reporter, data).Object().chain.assertFailed(t)
+		NewValue(reporter, data).Array().chain.assertFailed(t)
+		NewValue(reporter, data).String().chain.assertFailed(t)
+		NewValue(reporter, data).Number().chain.assertFailed(t)
+		NewValue(reporter, data).Boolean().chain.assertFailed(t)
+		NewValue(reporter, data).NotNull().chain.assertFailed(t)
+		NewValue(reporter, data).IsNull().chain.assertFailed(t)
+	})
 
-	data := func() {}
+	t.Run("cast object", func(t *testing.T) {
+		data := map[string]interface{}{}
 
-	NewValue(reporter, data).Object().chain.assertFailed(t)
-	NewValue(reporter, data).Array().chain.assertFailed(t)
-	NewValue(reporter, data).String().chain.assertFailed(t)
-	NewValue(reporter, data).Number().chain.assertFailed(t)
-	NewValue(reporter, data).Boolean().chain.assertFailed(t)
-	NewValue(reporter, data).NotNull().chain.assertFailed(t)
-	NewValue(reporter, data).IsNull().chain.assertFailed(t)
-}
+		NewValue(reporter, data).Object().chain.assertNotFailed(t)
+		NewValue(reporter, data).Array().chain.assertFailed(t)
+		NewValue(reporter, data).String().chain.assertFailed(t)
+		NewValue(reporter, data).Number().chain.assertFailed(t)
+		NewValue(reporter, data).Boolean().chain.assertFailed(t)
+		NewValue(reporter, data).NotNull().chain.assertNotFailed(t)
+		NewValue(reporter, data).IsNull().chain.assertFailed(t)
+	})
+	
+	t.Run("cast array", func(t *testing.T) {
+		data := []interface{}{}
 
-func TestValue_CastObject(t *testing.T) {
-	reporter := newMockReporter(t)
+		NewValue(reporter, data).Object().chain.assertFailed(t)
+		NewValue(reporter, data).Array().chain.assertNotFailed(t)
+		NewValue(reporter, data).String().chain.assertFailed(t)
+		NewValue(reporter, data).Number().chain.assertFailed(t)
+		NewValue(reporter, data).Boolean().chain.assertFailed(t)
+		NewValue(reporter, data).NotNull().chain.assertNotFailed(t)
+		NewValue(reporter, data).IsNull().chain.assertFailed(t)
+	})
 
-	data := map[string]interface{}{}
+	t.Run("cast string", func(t *testing.T) {
+		data := ""
 
-	NewValue(reporter, data).Object().chain.assertNotFailed(t)
-	NewValue(reporter, data).Array().chain.assertFailed(t)
-	NewValue(reporter, data).String().chain.assertFailed(t)
-	NewValue(reporter, data).Number().chain.assertFailed(t)
-	NewValue(reporter, data).Boolean().chain.assertFailed(t)
-	NewValue(reporter, data).NotNull().chain.assertNotFailed(t)
-	NewValue(reporter, data).IsNull().chain.assertFailed(t)
-}
+		NewValue(reporter, data).Object().chain.assertFailed(t)
+		NewValue(reporter, data).Array().chain.assertFailed(t)
+		NewValue(reporter, data).String().chain.assertNotFailed(t)
+		NewValue(reporter, data).Number().chain.assertFailed(t)
+		NewValue(reporter, data).Boolean().chain.assertFailed(t)
+		NewValue(reporter, data).NotNull().chain.assertNotFailed(t)
+		NewValue(reporter, data).IsNull().chain.assertFailed(t)
+	})
 
-func TestValue_CastArray(t *testing.T) {
-	reporter := newMockReporter(t)
+	t.Run("cast number", func(t *testing.T) {
+		data := 0.0
 
-	data := []interface{}{}
+		NewValue(reporter, data).Object().chain.assertFailed(t)
+		NewValue(reporter, data).Array().chain.assertFailed(t)
+		NewValue(reporter, data).String().chain.assertFailed(t)
+		NewValue(reporter, data).Number().chain.assertNotFailed(t)
+		NewValue(reporter, data).Boolean().chain.assertFailed(t)
+		NewValue(reporter, data).NotNull().chain.assertNotFailed(t)
+		NewValue(reporter, data).IsNull().chain.assertFailed(t)
+	})
 
-	NewValue(reporter, data).Object().chain.assertFailed(t)
-	NewValue(reporter, data).Array().chain.assertNotFailed(t)
-	NewValue(reporter, data).String().chain.assertFailed(t)
-	NewValue(reporter, data).Number().chain.assertFailed(t)
-	NewValue(reporter, data).Boolean().chain.assertFailed(t)
-	NewValue(reporter, data).NotNull().chain.assertNotFailed(t)
-	NewValue(reporter, data).IsNull().chain.assertFailed(t)
-}
+	t.Run("cast boolean", func(t *testing.T) {
+		data := false
 
-func TestValue_CastString(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	data := ""
-
-	NewValue(reporter, data).Object().chain.assertFailed(t)
-	NewValue(reporter, data).Array().chain.assertFailed(t)
-	NewValue(reporter, data).String().chain.assertNotFailed(t)
-	NewValue(reporter, data).Number().chain.assertFailed(t)
-	NewValue(reporter, data).Boolean().chain.assertFailed(t)
-	NewValue(reporter, data).NotNull().chain.assertNotFailed(t)
-	NewValue(reporter, data).IsNull().chain.assertFailed(t)
-}
-
-func TestValue_CastNumber(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	data := 0.0
-
-	NewValue(reporter, data).Object().chain.assertFailed(t)
-	NewValue(reporter, data).Array().chain.assertFailed(t)
-	NewValue(reporter, data).String().chain.assertFailed(t)
-	NewValue(reporter, data).Number().chain.assertNotFailed(t)
-	NewValue(reporter, data).Boolean().chain.assertFailed(t)
-	NewValue(reporter, data).NotNull().chain.assertNotFailed(t)
-	NewValue(reporter, data).IsNull().chain.assertFailed(t)
-}
-
-func TestValue_CastBoolean(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	data := false
-
-	NewValue(reporter, data).Object().chain.assertFailed(t)
-	NewValue(reporter, data).Array().chain.assertFailed(t)
-	NewValue(reporter, data).String().chain.assertFailed(t)
-	NewValue(reporter, data).Number().chain.assertFailed(t)
-	NewValue(reporter, data).Boolean().chain.assertNotFailed(t)
-	NewValue(reporter, data).NotNull().chain.assertNotFailed(t)
-	NewValue(reporter, data).IsNull().chain.assertFailed(t)
+		NewValue(reporter, data).Object().chain.assertFailed(t)
+		NewValue(reporter, data).Array().chain.assertFailed(t)
+		NewValue(reporter, data).String().chain.assertFailed(t)
+		NewValue(reporter, data).Number().chain.assertFailed(t)
+		NewValue(reporter, data).Boolean().chain.assertNotFailed(t)
+		NewValue(reporter, data).NotNull().chain.assertNotFailed(t)
+		NewValue(reporter, data).IsNull().chain.assertFailed(t)
+	})
 }
 
 func TestValue_GetObject(t *testing.T) {
@@ -449,320 +437,306 @@ func TestValue_InList(t *testing.T) {
 	NewValue(reporter, data1).NotInList(data2, func() {}).chain.assertFailed(t)
 }
 
-func TestValue_PathObject(t *testing.T) {
+func TestValue_PathTypes(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	user0 := map[string]interface{}{"name": "john"}
-	user1 := map[string]interface{}{"name": "bob"}
+	t.Run("path object", func(t *testing.T) {
+		user0 := map[string]interface{}{"name": "john"}
+		user1 := map[string]interface{}{"name": "bob"}
 
-	data := map[string]interface{}{
-		"users": []interface{}{
+		data := map[string]interface{}{
+			"users": []interface{}{
+				user0,
+				user1,
+			},
+		}
+
+		value := NewValue(reporter, data)
+
+		assert.Equal(t, data, value.Path("$").Raw())
+		assert.Equal(t, data["users"], value.Path("$.users").Raw())
+		assert.Equal(t, user0, value.Path("$.users[0]").Raw())
+		assert.Equal(t, "john", value.Path("$.users[0].name").Raw())
+		assert.Equal(t, []interface{}{"john", "bob"}, value.Path("$.users[*].name").Raw())
+		assert.Equal(t, []interface{}{"john", "bob"}, value.Path("$..name").Raw())
+		value.chain.assertNotFailed(t)
+
+		names := value.Path("$..name").Array().Iter()
+		names[0].String().IsEqual("john").chain.assertNotFailed(t)
+		names[1].String().IsEqual("bob").chain.assertNotFailed(t)
+		value.chain.assertNotFailed(t)
+
+		for _, key := range []string{"$.bad", "!"} {
+			bad := value.Path(key)
+			assert.True(t, bad != nil)
+			assert.True(t, bad.Raw() == nil)
+			value.chain.assertFailed(t)
+			value.chain.clearFailed()
+		}
+	})
+
+	t.Run("path array", func(t *testing.T) {
+		user0 := map[string]interface{}{"name": "john"}
+		user1 := map[string]interface{}{"name": "bob"}
+
+		data := []interface{}{
 			user0,
 			user1,
-		},
-	}
+		}
 
-	value := NewValue(reporter, data)
+		value := NewValue(reporter, data)
 
-	assert.Equal(t, data, value.Path("$").Raw())
-	assert.Equal(t, data["users"], value.Path("$.users").Raw())
-	assert.Equal(t, user0, value.Path("$.users[0]").Raw())
-	assert.Equal(t, "john", value.Path("$.users[0].name").Raw())
-	assert.Equal(t, []interface{}{"john", "bob"}, value.Path("$.users[*].name").Raw())
-	assert.Equal(t, []interface{}{"john", "bob"}, value.Path("$..name").Raw())
-	value.chain.assertNotFailed(t)
+		assert.Equal(t, data, value.Path("$").Raw())
+		assert.Equal(t, user0, value.Path("$[0]").Raw())
+		assert.Equal(t, "john", value.Path("$[0].name").Raw())
+		assert.Equal(t, []interface{}{"john", "bob"}, value.Path("$[*].name").Raw())
+		assert.Equal(t, []interface{}{"john", "bob"}, value.Path("$..name").Raw())
+		value.chain.assertNotFailed(t)
+	})
 
-	names := value.Path("$..name").Array().Iter()
-	names[0].String().IsEqual("john").chain.assertNotFailed(t)
-	names[1].String().IsEqual("bob").chain.assertNotFailed(t)
-	value.chain.assertNotFailed(t)
+	t.Run("path string", func(t *testing.T) {
+		data := "foo"
 
-	for _, key := range []string{"$.bad", "!"} {
-		bad := value.Path(key)
-		assert.True(t, bad != nil)
-		assert.True(t, bad.Raw() == nil)
-		value.chain.assertFailed(t)
-		value.chain.clearFailed()
-	}
-}
+		value := NewValue(reporter, data)
 
-func TestValue_PathArray(t *testing.T) {
-	reporter := newMockReporter(t)
+		assert.Equal(t, data, value.Path("$").Raw())
+		value.chain.assertNotFailed(t)
+	})
 
-	user0 := map[string]interface{}{"name": "john"}
-	user1 := map[string]interface{}{"name": "bob"}
+	t.Run("path number", func(t *testing.T) {
+		data := 123
 
-	data := []interface{}{
-		user0,
-		user1,
-	}
+		value := NewValue(reporter, data)
 
-	value := NewValue(reporter, data)
+		assert.Equal(t, float64(data), value.Path("$").Raw())
+		value.chain.assertNotFailed(t)
+	})
+	
+	t.Run("path boolean", func(t *testing.T) {
+		data := true
 
-	assert.Equal(t, data, value.Path("$").Raw())
-	assert.Equal(t, user0, value.Path("$[0]").Raw())
-	assert.Equal(t, "john", value.Path("$[0].name").Raw())
-	assert.Equal(t, []interface{}{"john", "bob"}, value.Path("$[*].name").Raw())
-	assert.Equal(t, []interface{}{"john", "bob"}, value.Path("$..name").Raw())
-	value.chain.assertNotFailed(t)
-}
+		value := NewValue(reporter, data)
 
-func TestValue_PathString(t *testing.T) {
-	reporter := newMockReporter(t)
+		assert.Equal(t, data, value.Path("$").Raw())
+		value.chain.assertNotFailed(t)
+	})
+	
+	t.Run("path null", func(t *testing.T) {
+		value := NewValue(reporter, nil)
 
-	data := "foo"
+		assert.Equal(t, nil, value.Path("$").Raw())
+		value.chain.assertNotFailed(t)
+	})
+	
+	t.Run("path error", func(t *testing.T) {
+		data := "foo"
 
-	value := NewValue(reporter, data)
+		value := NewValue(reporter, data)
 
-	assert.Equal(t, data, value.Path("$").Raw())
-	value.chain.assertNotFailed(t)
-}
-
-func TestValue_PathNumber(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	data := 123
-
-	value := NewValue(reporter, data)
-
-	assert.Equal(t, float64(data), value.Path("$").Raw())
-	value.chain.assertNotFailed(t)
-}
-
-func TestValue_PathBoolean(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	data := true
-
-	value := NewValue(reporter, data)
-
-	assert.Equal(t, data, value.Path("$").Raw())
-	value.chain.assertNotFailed(t)
-}
-
-func TestValue_PathNull(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	value := NewValue(reporter, nil)
-
-	assert.Equal(t, nil, value.Path("$").Raw())
-	value.chain.assertNotFailed(t)
-}
-
-func TestValue_PathError(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	data := "foo"
-
-	value := NewValue(reporter, data)
-
-	for _, key := range []string{"$.bad", "!"} {
-		bad := value.Path(key)
-		assert.True(t, bad != nil)
-		assert.True(t, bad.Raw() == nil)
-		value.chain.assertFailed(t)
-	}
-}
-
-// based on github.com/yalp/jsonpath
-func TestValue_PathExpressions(t *testing.T) {
-	data := map[string]interface{}{
-		"A": []interface{}{
-			"string",
-			23.3,
-			3.0,
-			true,
-			false,
-			nil,
-		},
-		"B": "value",
-		"C": 3.14,
-		"D": map[string]interface{}{
-			"C": 3.1415,
-			"V": []interface{}{
-				"string2a",
-				"string2b",
-				map[string]interface{}{
-					"C": 3.141592,
-				},
+		for _, key := range []string{"$.bad", "!"} {
+			bad := value.Path(key)
+			assert.True(t, bad != nil)
+			assert.True(t, bad.Raw() == nil)
+			value.chain.assertFailed(t)
+		}
+	})
+	
+	// based on github.com/yalp/jsonpath
+	t.Run("path expressions", func(t *testing.T) {
+		data := map[string]interface{}{
+			"A": []interface{}{
+				"string",
+				23.3,
+				3.0,
+				true,
+				false,
+				nil,
 			},
-		},
-		"E": map[string]interface{}{
-			"A": []interface{}{"string3"},
+			"B": "value",
+			"C": 3.14,
 			"D": map[string]interface{}{
-				"V": map[string]interface{}{
-					"C": 3.14159265,
+				"C": 3.1415,
+				"V": []interface{}{
+					"string2a",
+					"string2b",
+					map[string]interface{}{
+						"C": 3.141592,
+					},
 				},
 			},
-		},
-		"F": map[string]interface{}{
-			"V": []interface{}{
-				"string4a",
-				"string4b",
-				map[string]interface{}{
-					"CC": 3.1415926535,
+			"E": map[string]interface{}{
+				"A": []interface{}{"string3"},
+				"D": map[string]interface{}{
+					"V": map[string]interface{}{
+						"C": 3.14159265,
+					},
 				},
-				map[string]interface{}{
-					"CC": "hello",
+			},
+			"F": map[string]interface{}{
+				"V": []interface{}{
+					"string4a",
+					"string4b",
+					map[string]interface{}{
+						"CC": 3.1415926535,
+					},
+					map[string]interface{}{
+						"CC": "hello",
+					},
+					[]interface{}{
+						"string5a",
+						"string5b",
+					},
+					[]interface{}{
+						"string6a",
+						"string6b",
+					},
 				},
-				[]interface{}{
+			},
+		}
+
+		runTests := func(tests map[string]interface{}) {
+			value := NewValue(reporter, data)
+			value.chain.assertNotFailed(t)
+
+			for path, expected := range tests {
+				actual := value.Path(path)
+				actual.chain.assertNotFailed(t)
+
+				assert.Equal(t, expected, actual.Raw())
+			}
+		}
+
+		t.Run("pick", func(t *testing.T) {
+			runTests(map[string]interface{}{
+				"$":         data,
+				"$.A[0]":    "string",
+				`$["A"][0]`: "string",
+				"$.A":       []interface{}{"string", 23.3, 3.0, true, false, nil},
+				"$.A[*]":    []interface{}{"string", 23.3, 3.0, true, false, nil},
+				"$.A.*":     []interface{}{"string", 23.3, 3.0, true, false, nil},
+				"$.A.*.a":   []interface{}{},
+			})
+		})
+
+		t.Run("slice", func(t *testing.T) {
+			runTests(map[string]interface{}{
+				"$.A[1,4,2]":      []interface{}{23.3, false, 3.0},
+				`$["B","C"]`:      []interface{}{"value", 3.14},
+				`$["C","B"]`:      []interface{}{3.14, "value"},
+				"$.A[1:4]":        []interface{}{23.3, 3.0, true},
+				"$.A[::2]":        []interface{}{"string", 3.0, false},
+				"$.A[-2:]":        []interface{}{false, nil},
+				"$.A[:-1]":        []interface{}{"string", 23.3, 3.0, true, false},
+				"$.A[::-1]":       []interface{}{nil, false, true, 3.0, 23.3, "string"},
+				"$.F.V[4:5][0,1]": []interface{}{"string5a", "string5b"},
+				"$.F.V[4:6][1]":   []interface{}{"string5b", "string6b"},
+				"$.F.V[4:6][0,1]": []interface{}{"string5a", "string5b", "string6a", "string6b"},
+				"$.F.V[4,5][0:2]": []interface{}{"string5a", "string5b", "string6a", "string6b"},
+				"$.F.V[4:6]": []interface{}{
+					[]interface{}{
+						"string5a",
+						"string5b",
+					},
+					[]interface{}{
+						"string6a",
+						"string6b",
+					},
+				},
+			})
+		})
+
+		t.Run("quote", func(t *testing.T) {
+			runTests(map[string]interface{}{
+				`$[A][0]`:    "string",
+				`$["A"][0]`:  "string",
+				`$[B,C]`:     []interface{}{"value", 3.14},
+				`$["B","C"]`: []interface{}{"value", 3.14},
+			})
+		})
+
+		t.Run("search", func(t *testing.T) {
+			runTests(map[string]interface{}{
+				"$..C":       []interface{}{3.14, 3.1415, 3.141592, 3.14159265},
+				`$..["C"]`:   []interface{}{3.14, 3.1415, 3.141592, 3.14159265},
+				"$.D.V..C":   []interface{}{3.141592},
+				"$.D.V.*.C":  []interface{}{3.141592},
+				"$.D.V..*.C": []interface{}{3.141592},
+				"$.D.*..C":   []interface{}{3.141592},
+				"$.*.V..C":   []interface{}{3.141592},
+				"$.*.D.V.C":  []interface{}{3.14159265},
+				"$.*.D..C":   []interface{}{3.14159265},
+				"$.*.D.V..*": []interface{}{3.14159265},
+				"$..D..V..C": []interface{}{3.141592, 3.14159265},
+				"$.*.*.*.C":  []interface{}{3.141592, 3.14159265},
+				"$..V..C":    []interface{}{3.141592, 3.14159265},
+				"$.D.V..*": []interface{}{
+					"string2a",
+					"string2b",
+					map[string]interface{}{
+						"C": 3.141592,
+					},
+					3.141592,
+				},
+				"$..A": []interface{}{
+					[]interface{}{"string", 23.3, 3.0, true, false, nil},
+					[]interface{}{"string3"},
+				},
+				"$..A..*":      []interface{}{"string", 23.3, 3.0, true, false, nil, "string3"},
+				"$.A..*":       []interface{}{"string", 23.3, 3.0, true, false, nil},
+				"$.A.*":        []interface{}{"string", 23.3, 3.0, true, false, nil},
+				"$..A[0,1]":    []interface{}{"string", 23.3},
+				"$..A[0]":      []interface{}{"string", "string3"},
+				"$.*.V[0]":     []interface{}{"string2a", "string4a"},
+				"$.*.V[1]":     []interface{}{"string2b", "string4b"},
+				"$.*.V[0,1]":   []interface{}{"string2a", "string2b", "string4a", "string4b"},
+				"$.*.V[0:2]":   []interface{}{"string2a", "string2b", "string4a", "string4b"},
+				"$.*.V[2].C":   []interface{}{3.141592},
+				"$..V[2].C":    []interface{}{3.141592},
+				"$..V[*].C":    []interface{}{3.141592},
+				"$.*.V[2].*":   []interface{}{3.141592, 3.1415926535},
+				"$.*.V[2:3].*": []interface{}{3.141592, 3.1415926535},
+				"$.*.V[2:4].*": []interface{}{3.141592, 3.1415926535, "hello"},
+				"$..V[2,3].CC": []interface{}{3.1415926535, "hello"},
+				"$..V[2:4].CC": []interface{}{3.1415926535, "hello"},
+				"$..V[*].*": []interface{}{
+					3.141592,
+					3.1415926535,
+					"hello",
 					"string5a",
 					"string5b",
-				},
-				[]interface{}{
 					"string6a",
 					"string6b",
 				},
-			},
-		},
-	}
+				"$..[0]": []interface{}{
+					"string",
+					"string2a",
+					"string3",
+					"string4a",
+					"string5a",
+					"string6a",
+				},
+				"$..ZZ": []interface{}{},
+			})
+		})
+	})
+	
+	t.Run("path int float", func(t *testing.T) {
+		data := map[string]interface{}{
+			"A": 123,
+			"B": 123.0,
+		}
 
-	reporter := newMockReporter(t)
-
-	runTests := func(tests map[string]interface{}) {
 		value := NewValue(reporter, data)
 		value.chain.assertNotFailed(t)
 
-		for path, expected := range tests {
-			actual := value.Path(path)
-			actual.chain.assertNotFailed(t)
+		a := value.Path(`$["A"]`)
+		a.chain.assertNotFailed(t)
+		assert.Equal(t, 123.0, a.Raw())
 
-			assert.Equal(t, expected, actual.Raw())
-		}
-	}
-
-	t.Run("pick", func(t *testing.T) {
-		runTests(map[string]interface{}{
-			"$":         data,
-			"$.A[0]":    "string",
-			`$["A"][0]`: "string",
-			"$.A":       []interface{}{"string", 23.3, 3.0, true, false, nil},
-			"$.A[*]":    []interface{}{"string", 23.3, 3.0, true, false, nil},
-			"$.A.*":     []interface{}{"string", 23.3, 3.0, true, false, nil},
-			"$.A.*.a":   []interface{}{},
-		})
+		b := value.Path(`$["B"]`)
+		b.chain.assertNotFailed(t)
+		assert.Equal(t, 123.0, b.Raw())
 	})
-
-	t.Run("slice", func(t *testing.T) {
-		runTests(map[string]interface{}{
-			"$.A[1,4,2]":      []interface{}{23.3, false, 3.0},
-			`$["B","C"]`:      []interface{}{"value", 3.14},
-			`$["C","B"]`:      []interface{}{3.14, "value"},
-			"$.A[1:4]":        []interface{}{23.3, 3.0, true},
-			"$.A[::2]":        []interface{}{"string", 3.0, false},
-			"$.A[-2:]":        []interface{}{false, nil},
-			"$.A[:-1]":        []interface{}{"string", 23.3, 3.0, true, false},
-			"$.A[::-1]":       []interface{}{nil, false, true, 3.0, 23.3, "string"},
-			"$.F.V[4:5][0,1]": []interface{}{"string5a", "string5b"},
-			"$.F.V[4:6][1]":   []interface{}{"string5b", "string6b"},
-			"$.F.V[4:6][0,1]": []interface{}{"string5a", "string5b", "string6a", "string6b"},
-			"$.F.V[4,5][0:2]": []interface{}{"string5a", "string5b", "string6a", "string6b"},
-			"$.F.V[4:6]": []interface{}{
-				[]interface{}{
-					"string5a",
-					"string5b",
-				},
-				[]interface{}{
-					"string6a",
-					"string6b",
-				},
-			},
-		})
-	})
-
-	t.Run("quote", func(t *testing.T) {
-		runTests(map[string]interface{}{
-			`$[A][0]`:    "string",
-			`$["A"][0]`:  "string",
-			`$[B,C]`:     []interface{}{"value", 3.14},
-			`$["B","C"]`: []interface{}{"value", 3.14},
-		})
-	})
-
-	t.Run("search", func(t *testing.T) {
-		runTests(map[string]interface{}{
-			"$..C":       []interface{}{3.14, 3.1415, 3.141592, 3.14159265},
-			`$..["C"]`:   []interface{}{3.14, 3.1415, 3.141592, 3.14159265},
-			"$.D.V..C":   []interface{}{3.141592},
-			"$.D.V.*.C":  []interface{}{3.141592},
-			"$.D.V..*.C": []interface{}{3.141592},
-			"$.D.*..C":   []interface{}{3.141592},
-			"$.*.V..C":   []interface{}{3.141592},
-			"$.*.D.V.C":  []interface{}{3.14159265},
-			"$.*.D..C":   []interface{}{3.14159265},
-			"$.*.D.V..*": []interface{}{3.14159265},
-			"$..D..V..C": []interface{}{3.141592, 3.14159265},
-			"$.*.*.*.C":  []interface{}{3.141592, 3.14159265},
-			"$..V..C":    []interface{}{3.141592, 3.14159265},
-			"$.D.V..*": []interface{}{
-				"string2a",
-				"string2b",
-				map[string]interface{}{
-					"C": 3.141592,
-				},
-				3.141592,
-			},
-			"$..A": []interface{}{
-				[]interface{}{"string", 23.3, 3.0, true, false, nil},
-				[]interface{}{"string3"},
-			},
-			"$..A..*":      []interface{}{"string", 23.3, 3.0, true, false, nil, "string3"},
-			"$.A..*":       []interface{}{"string", 23.3, 3.0, true, false, nil},
-			"$.A.*":        []interface{}{"string", 23.3, 3.0, true, false, nil},
-			"$..A[0,1]":    []interface{}{"string", 23.3},
-			"$..A[0]":      []interface{}{"string", "string3"},
-			"$.*.V[0]":     []interface{}{"string2a", "string4a"},
-			"$.*.V[1]":     []interface{}{"string2b", "string4b"},
-			"$.*.V[0,1]":   []interface{}{"string2a", "string2b", "string4a", "string4b"},
-			"$.*.V[0:2]":   []interface{}{"string2a", "string2b", "string4a", "string4b"},
-			"$.*.V[2].C":   []interface{}{3.141592},
-			"$..V[2].C":    []interface{}{3.141592},
-			"$..V[*].C":    []interface{}{3.141592},
-			"$.*.V[2].*":   []interface{}{3.141592, 3.1415926535},
-			"$.*.V[2:3].*": []interface{}{3.141592, 3.1415926535},
-			"$.*.V[2:4].*": []interface{}{3.141592, 3.1415926535, "hello"},
-			"$..V[2,3].CC": []interface{}{3.1415926535, "hello"},
-			"$..V[2:4].CC": []interface{}{3.1415926535, "hello"},
-			"$..V[*].*": []interface{}{
-				3.141592,
-				3.1415926535,
-				"hello",
-				"string5a",
-				"string5b",
-				"string6a",
-				"string6b",
-			},
-			"$..[0]": []interface{}{
-				"string",
-				"string2a",
-				"string3",
-				"string4a",
-				"string5a",
-				"string6a",
-			},
-			"$..ZZ": []interface{}{},
-		})
-	})
-}
-
-func TestValue_PathIntFloat(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	data := map[string]interface{}{
-		"A": 123,
-		"B": 123.0,
-	}
-
-	value := NewValue(reporter, data)
-	value.chain.assertNotFailed(t)
-
-	a := value.Path(`$["A"]`)
-	a.chain.assertNotFailed(t)
-	assert.Equal(t, 123.0, a.Raw())
-
-	b := value.Path(`$["B"]`)
-	b.chain.assertNotFailed(t)
-	assert.Equal(t, 123.0, b.Raw())
 }
 
 func TestValue_Schema(t *testing.T) {
