@@ -41,7 +41,7 @@ func TestResponse_FailedChain(t *testing.T) {
 		resp.TransferEncoding("")
 	}
 
-	t.Run("failed_chain", func(t *testing.T) {
+	t.Run("failed chain", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		chain := newChainWithDefaults("test", reporter)
 		config := newMockConfig(reporter)
@@ -57,7 +57,7 @@ func TestResponse_FailedChain(t *testing.T) {
 		check(resp)
 	})
 
-	t.Run("nil_value", func(t *testing.T) {
+	t.Run("nil value", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		chain := newChainWithDefaults("test", reporter)
 		config := newMockConfig(reporter)
@@ -71,7 +71,7 @@ func TestResponse_FailedChain(t *testing.T) {
 		check(resp)
 	})
 
-	t.Run("failed_chain_nil_value", func(t *testing.T) {
+	t.Run("failed chain, nil value", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		chain := newChainWithDefaults("test", reporter)
 		config := newMockConfig(reporter)
@@ -377,7 +377,7 @@ func TestResponse_BodyOperations(t *testing.T) {
 		resp.chain.clearFailed()
 	})
 
-	t.Run("read_and_close", func(t *testing.T) {
+	t.Run("read and close", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		body := newMockBody("test_body")
@@ -396,7 +396,7 @@ func TestResponse_BodyOperations(t *testing.T) {
 		resp.chain.assertNotFailed(t)
 	})
 
-	t.Run("read_err", func(t *testing.T) {
+	t.Run("read error", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		body := newMockBody("test_body")
@@ -418,7 +418,7 @@ func TestResponse_BodyOperations(t *testing.T) {
 		resp.chain.assertFailed(t)
 	})
 
-	t.Run("close_err", func(t *testing.T) {
+	t.Run("close error", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		body := newMockBody("test_body")

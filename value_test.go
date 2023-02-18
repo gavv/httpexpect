@@ -76,7 +76,7 @@ func TestValue_Constructors(t *testing.T) {
 }
 
 func TestValue_Decode(t *testing.T) {
-	t.Run("Decode into empty interface", func(t *testing.T) {
+	t.Run("target is empty interface", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		value := NewValue(reporter, 123.0)
@@ -88,7 +88,7 @@ func TestValue_Decode(t *testing.T) {
 		assert.Equal(t, 123.0, target)
 	})
 
-	t.Run("Decode into struct", func(t *testing.T) {
+	t.Run("target is struct", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		type S struct {
@@ -118,7 +118,7 @@ func TestValue_Decode(t *testing.T) {
 		assert.Equal(t, target, actualStruct)
 	})
 
-	t.Run("Target is nil", func(t *testing.T) {
+	t.Run("target is nil", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		value := NewValue(reporter, 123)
@@ -128,7 +128,7 @@ func TestValue_Decode(t *testing.T) {
 		value.chain.failed()
 	})
 
-	t.Run("Target is unmarshable", func(t *testing.T) {
+	t.Run("target is unmarshable", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		value := NewValue(reporter, 123)
@@ -158,7 +158,7 @@ func TestValue_Alias(t *testing.T) {
 func TestValue_Casts(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	t.Run("cast null", func(t *testing.T) {
+	t.Run("null", func(t *testing.T) {
 		var data interface{}
 
 		NewValue(reporter, data).Object().chain.assertFailed(t)
@@ -170,7 +170,7 @@ func TestValue_Casts(t *testing.T) {
 		NewValue(reporter, data).IsNull().chain.assertNotFailed(t)
 	})
 
-	t.Run("cast indirect null", func(t *testing.T) {
+	t.Run("indirect null", func(t *testing.T) {
 		var data []interface{}
 
 		NewValue(reporter, data).Object().chain.assertFailed(t)
@@ -182,7 +182,7 @@ func TestValue_Casts(t *testing.T) {
 		NewValue(reporter, data).IsNull().chain.assertNotFailed(t)
 	})
 
-	t.Run("cast bad", func(t *testing.T) {
+	t.Run("bad", func(t *testing.T) {
 		data := func() {}
 
 		NewValue(reporter, data).Object().chain.assertFailed(t)
@@ -194,7 +194,7 @@ func TestValue_Casts(t *testing.T) {
 		NewValue(reporter, data).IsNull().chain.assertFailed(t)
 	})
 
-	t.Run("cast object", func(t *testing.T) {
+	t.Run("object", func(t *testing.T) {
 		data := map[string]interface{}{}
 
 		NewValue(reporter, data).Object().chain.assertNotFailed(t)
@@ -206,7 +206,7 @@ func TestValue_Casts(t *testing.T) {
 		NewValue(reporter, data).IsNull().chain.assertFailed(t)
 	})
 
-	t.Run("cast array", func(t *testing.T) {
+	t.Run("array", func(t *testing.T) {
 		data := []interface{}{}
 
 		NewValue(reporter, data).Object().chain.assertFailed(t)
@@ -218,7 +218,7 @@ func TestValue_Casts(t *testing.T) {
 		NewValue(reporter, data).IsNull().chain.assertFailed(t)
 	})
 
-	t.Run("cast string", func(t *testing.T) {
+	t.Run("string", func(t *testing.T) {
 		data := ""
 
 		NewValue(reporter, data).Object().chain.assertFailed(t)
@@ -230,7 +230,7 @@ func TestValue_Casts(t *testing.T) {
 		NewValue(reporter, data).IsNull().chain.assertFailed(t)
 	})
 
-	t.Run("cast number", func(t *testing.T) {
+	t.Run("number", func(t *testing.T) {
 		data := 0.0
 
 		NewValue(reporter, data).Object().chain.assertFailed(t)
@@ -242,7 +242,7 @@ func TestValue_Casts(t *testing.T) {
 		NewValue(reporter, data).IsNull().chain.assertFailed(t)
 	})
 
-	t.Run("cast boolean", func(t *testing.T) {
+	t.Run("boolean", func(t *testing.T) {
 		data := false
 
 		NewValue(reporter, data).Object().chain.assertFailed(t)
@@ -371,7 +371,7 @@ func TestValue_GetBoolean(t *testing.T) {
 	assert.Equal(t, false, inner2.Raw())
 }
 
-func TestValue_Equal(t *testing.T) {
+func TestValue_IsEqual(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	data1 := map[string]interface{}{"foo": "bar"}

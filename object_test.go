@@ -135,7 +135,7 @@ func TestObject_Constructors(t *testing.T) {
 }
 
 func TestObject_Decode(t *testing.T) {
-	t.Run("empty interface", func(t *testing.T) {
+	t.Run("target is empty interface", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		m := map[string]interface{}{
@@ -155,7 +155,7 @@ func TestObject_Decode(t *testing.T) {
 		assert.Equal(t, target, m)
 	})
 
-	t.Run("map", func(t *testing.T) {
+	t.Run("target is map", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		m := map[string]interface{}{
@@ -175,7 +175,7 @@ func TestObject_Decode(t *testing.T) {
 		assert.Equal(t, target, m)
 	})
 
-	t.Run("struct", func(t *testing.T) {
+	t.Run("target is struct", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		type S struct {
@@ -210,24 +210,6 @@ func TestObject_Decode(t *testing.T) {
 		assert.Equal(t, target, actualStruct)
 	})
 
-	t.Run("target is unmarshable", func(t *testing.T) {
-		reporter := newMockReporter(t)
-
-		m := map[string]interface{}{
-			"foo": 123.0,
-			"bar": []interface{}{"123", 234.0},
-			"baz": map[string]interface{}{
-				"a": "b",
-			},
-		}
-
-		value := NewObject(reporter, m)
-
-		value.Decode(123)
-
-		value.chain.assertFailed(t)
-	})
-
 	t.Run("target is nil", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
@@ -242,6 +224,24 @@ func TestObject_Decode(t *testing.T) {
 		value := NewObject(reporter, m)
 
 		value.Decode(nil)
+
+		value.chain.assertFailed(t)
+	})
+
+	t.Run("target is unmarshable", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		m := map[string]interface{}{
+			"foo": 123.0,
+			"bar": []interface{}{"123", 234.0},
+			"baz": map[string]interface{}{
+				"a": "b",
+			},
+		}
+
+		value := NewObject(reporter, m)
+
+		value.Decode(123)
 
 		value.chain.assertFailed(t)
 	})
