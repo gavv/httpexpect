@@ -1572,40 +1572,40 @@ func TestArray_IsValueEqual(t *testing.T) {
 }
 
 func TestArray_Every(t *testing.T) {
-	t.Run("check value", func(ts *testing.T) {
-		reporter := newMockReporter(ts)
+	t.Run("check value", func(t *testing.T) {
+		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{2, 4, 6})
 
 		invoked := 0
 		array.Every(func(_ int, val *Value) {
 			if v, ok := val.Raw().(float64); ok {
 				invoked++
-				assert.Equal(ts, 0, int(v)%2)
+				assert.Equal(t, 0, int(v)%2)
 			}
 		})
 
 		assert.Equal(t, 3, invoked)
-		array.chain.assertNotFailed(ts)
+		array.chain.assertNotFailed(t)
 	})
 
-	t.Run("check index", func(ts *testing.T) {
-		reporter := newMockReporter(ts)
+	t.Run("check index", func(t *testing.T) {
+		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1, 2, 3})
 
 		invoked := 0
 		array.Every(func(idx int, val *Value) {
 			if v, ok := val.Raw().(float64); ok {
 				invoked++
-				assert.Equal(ts, idx, int(v)-1)
+				assert.Equal(t, idx, int(v)-1)
 			}
 		})
 
 		assert.Equal(t, 3, invoked)
-		array.chain.assertNotFailed(ts)
+		array.chain.assertNotFailed(t)
 	})
 
-	t.Run("empty array", func(ts *testing.T) {
-		reporter := newMockReporter(ts)
+	t.Run("empty array", func(t *testing.T) {
+		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{})
 
 		invoked := 0
@@ -1614,11 +1614,11 @@ func TestArray_Every(t *testing.T) {
 		})
 
 		assert.Equal(t, 0, invoked)
-		array.chain.assertNotFailed(ts)
+		array.chain.assertNotFailed(t)
 	})
 
-	t.Run("one assertion fails", func(ts *testing.T) {
-		reporter := newMockReporter(ts)
+	t.Run("one assertion fails", func(t *testing.T) {
+		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{"foo", "", "bar"})
 
 		invoked := 0
@@ -1628,11 +1628,11 @@ func TestArray_Every(t *testing.T) {
 		})
 
 		assert.Equal(t, 3, invoked)
-		array.chain.assertFailed(ts)
+		array.chain.assertFailed(t)
 	})
 
-	t.Run("all assertions fail", func(ts *testing.T) {
-		reporter := newMockReporter(ts)
+	t.Run("all assertions fail", func(t *testing.T) {
+		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{"", "", ""})
 
 		invoked := 0
@@ -1642,27 +1642,27 @@ func TestArray_Every(t *testing.T) {
 		})
 
 		assert.Equal(t, 3, invoked)
-		array.chain.assertFailed(ts)
+		array.chain.assertFailed(t)
 	})
 }
 
 func TestArray_Transform(t *testing.T) {
-	t.Run("check index", func(ts *testing.T) {
+	t.Run("check index", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1, 2, 3})
 
 		newArray := array.Transform(func(idx int, val interface{}) interface{} {
 			if v, ok := val.(float64); ok {
-				assert.Equal(ts, idx, int(v)-1)
+				assert.Equal(t, idx, int(v)-1)
 			}
 			return val
 		})
 
 		assert.Equal(t, []interface{}{float64(1), float64(2), float64(3)}, newArray.value)
-		newArray.chain.assertNotFailed(ts)
+		newArray.chain.assertNotFailed(t)
 	})
 
-	t.Run("transform value", func(ts *testing.T) {
+	t.Run("transform value", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{2, 4, 6})
 
@@ -1670,27 +1670,27 @@ func TestArray_Transform(t *testing.T) {
 			if v, ok := val.(float64); ok {
 				return int(v) * int(v)
 			}
-			ts.Errorf("failed transformation")
+			t.Errorf("failed transformation")
 			return nil
 		})
 
 		assert.Equal(t, []interface{}{float64(4), float64(16), float64(36)}, newArray.value)
-		newArray.chain.assertNotFailed(ts)
+		newArray.chain.assertNotFailed(t)
 	})
 
-	t.Run("empty array", func(ts *testing.T) {
+	t.Run("empty array", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{})
 
 		newArray := array.Transform(func(_ int, _ interface{}) interface{} {
-			ts.Errorf("failed transformation")
+			t.Errorf("failed transformation")
 			return nil
 		})
 
-		newArray.chain.assertNotFailed(ts)
+		newArray.chain.assertNotFailed(t)
 	})
 
-	t.Run("invalid argument", func(ts *testing.T) {
+	t.Run("invalid argument", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{2, 4, 6})
 
@@ -1701,7 +1701,7 @@ func TestArray_Transform(t *testing.T) {
 }
 
 func TestArray_Filter(t *testing.T) {
-	t.Run("elements of same type", func(ts *testing.T) {
+	t.Run("elements of same type", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1, 2, 3, 4, 5, 6})
 
@@ -1716,7 +1716,7 @@ func TestArray_Filter(t *testing.T) {
 		filteredArray.chain.assertNotFailed(t)
 	})
 
-	t.Run("elements of different types", func(ts *testing.T) {
+	t.Run("elements of different types", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{"foo", "bar", true, 1.0})
 
@@ -1731,7 +1731,7 @@ func TestArray_Filter(t *testing.T) {
 		filteredArray.chain.assertNotFailed(t)
 	})
 
-	t.Run("empty array", func(ts *testing.T) {
+	t.Run("empty array", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{})
 
@@ -1746,7 +1746,7 @@ func TestArray_Filter(t *testing.T) {
 		filteredArray.chain.assertNotFailed(t)
 	})
 
-	t.Run("no match", func(ts *testing.T) {
+	t.Run("no match", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{"foo", "bar", true, 1.0})
 
@@ -1761,7 +1761,7 @@ func TestArray_Filter(t *testing.T) {
 		filteredArray.chain.assertNotFailed(t)
 	})
 
-	t.Run("assertion fails", func(ts *testing.T) {
+	t.Run("assertion fails", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1.0, "foo", "bar", 4.0, "baz", 6.0})
 
@@ -1779,7 +1779,7 @@ func TestArray_Filter(t *testing.T) {
 }
 
 func TestArray_Find(t *testing.T) {
-	t.Run("elements of same type", func(ts *testing.T) {
+	t.Run("elements of same type", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1, 2, 3, 4, 5, 6})
 
@@ -1794,7 +1794,7 @@ func TestArray_Find(t *testing.T) {
 		foundValue.chain.assertNotFailed(t)
 	})
 
-	t.Run("elements of different types", func(ts *testing.T) {
+	t.Run("elements of different types", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1, "foo", true, "bar"})
 
@@ -1810,7 +1810,7 @@ func TestArray_Find(t *testing.T) {
 		foundValue.chain.assertNotFailed(t)
 	})
 
-	t.Run("first match", func(ts *testing.T) {
+	t.Run("first match", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1, "foo", true, "bar"})
 
@@ -1826,7 +1826,7 @@ func TestArray_Find(t *testing.T) {
 		foundValue.chain.assertNotFailed(t)
 	})
 
-	t.Run("no match", func(ts *testing.T) {
+	t.Run("no match", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1, "foo", true, "bar"})
 
@@ -1841,7 +1841,7 @@ func TestArray_Find(t *testing.T) {
 		foundValue.chain.assertFailed(t)
 	})
 
-	t.Run("empty array", func(ts *testing.T) {
+	t.Run("empty array", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{})
 
@@ -1856,7 +1856,7 @@ func TestArray_Find(t *testing.T) {
 		foundValue.chain.assertFailed(t)
 	})
 
-	t.Run("predicate returns true, assertion fails, no match", func(ts *testing.T) {
+	t.Run("predicate returns true, assertion fails, no match", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1, 2})
 
@@ -1872,7 +1872,7 @@ func TestArray_Find(t *testing.T) {
 		foundValue.chain.assertFailed(t)
 	})
 
-	t.Run("predicate returns true, assertion fails, have match", func(ts *testing.T) {
+	t.Run("predicate returns true, assertion fails, have match", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1, 2, "str"})
 
@@ -1888,7 +1888,7 @@ func TestArray_Find(t *testing.T) {
 		foundValue.chain.assertNotFailed(t)
 	})
 
-	t.Run("invalid argument", func(ts *testing.T) {
+	t.Run("invalid argument", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1, 2})
 
@@ -1903,7 +1903,7 @@ func TestArray_Find(t *testing.T) {
 }
 
 func TestArray_FindAll(t *testing.T) {
-	t.Run("elements of same type", func(ts *testing.T) {
+	t.Run("elements of same type", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1, 2, 3, 4, 5, 6})
 
@@ -1925,7 +1925,7 @@ func TestArray_FindAll(t *testing.T) {
 		}
 	})
 
-	t.Run("elements of different types", func(ts *testing.T) {
+	t.Run("elements of different types", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1.0, "foo", true, "bar"})
 
@@ -1948,7 +1948,7 @@ func TestArray_FindAll(t *testing.T) {
 		}
 	})
 
-	t.Run("no match", func(ts *testing.T) {
+	t.Run("no match", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1.0, "foo", true, "bar"})
 
@@ -1970,7 +1970,7 @@ func TestArray_FindAll(t *testing.T) {
 		}
 	})
 
-	t.Run("empty array", func(ts *testing.T) {
+	t.Run("empty array", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{})
 
@@ -1992,7 +1992,7 @@ func TestArray_FindAll(t *testing.T) {
 		}
 	})
 
-	t.Run("predicate returns true, assertion fails, no match", func(ts *testing.T) {
+	t.Run("predicate returns true, assertion fails, no match", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1, 2})
 
@@ -2015,7 +2015,7 @@ func TestArray_FindAll(t *testing.T) {
 		}
 	})
 
-	t.Run("predicate returns true, assertion fails, have matches", func(ts *testing.T) {
+	t.Run("predicate returns true, assertion fails, have matches", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{"foo", 1, 2, "bar"})
 
@@ -2038,7 +2038,7 @@ func TestArray_FindAll(t *testing.T) {
 		}
 	})
 
-	t.Run("invalid argument", func(ts *testing.T) {
+	t.Run("invalid argument", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1, 2})
 
@@ -2060,7 +2060,7 @@ func TestArray_FindAll(t *testing.T) {
 }
 
 func TestArray_NotFind(t *testing.T) {
-	t.Run("no match", func(ts *testing.T) {
+	t.Run("no match", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1, "foo", true, "bar"})
 
@@ -2072,7 +2072,7 @@ func TestArray_NotFind(t *testing.T) {
 		array.chain.assertNotFailed(t)
 	})
 
-	t.Run("have match", func(ts *testing.T) {
+	t.Run("have match", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1, "foo", true, "bar"})
 
@@ -2084,7 +2084,7 @@ func TestArray_NotFind(t *testing.T) {
 		array.chain.assertFailed(t)
 	})
 
-	t.Run("empty array", func(ts *testing.T) {
+	t.Run("empty array", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{})
 
@@ -2096,7 +2096,7 @@ func TestArray_NotFind(t *testing.T) {
 		array.chain.assertNotFailed(t)
 	})
 
-	t.Run("predicate returns true, assertion fails, no match", func(ts *testing.T) {
+	t.Run("predicate returns true, assertion fails, no match", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1, 2})
 
@@ -2109,7 +2109,7 @@ func TestArray_NotFind(t *testing.T) {
 		array.chain.assertNotFailed(t)
 	})
 
-	t.Run("predicate returns true, assertion fails, have match", func(ts *testing.T) {
+	t.Run("predicate returns true, assertion fails, have match", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1, 2, "str"})
 
@@ -2122,7 +2122,7 @@ func TestArray_NotFind(t *testing.T) {
 		array.chain.assertFailed(t)
 	})
 
-	t.Run("invalid argument", func(ts *testing.T) {
+	t.Run("invalid argument", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1, 2})
 
