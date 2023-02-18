@@ -684,8 +684,8 @@ func TestRequest_Host(t *testing.T) {
 	reporter1 := newMockReporter(t)
 
 	config1 := Config{
-		Client:         client1,
-		Reporter:       reporter1,
+		Client:   client1,
+		Reporter: reporter1,
 	}
 
 	req1 := NewRequestC(config1, "METHOD", "url")
@@ -705,8 +705,8 @@ func TestRequest_Host(t *testing.T) {
 	reporter2 := newMockReporter(t)
 
 	config2 := Config{
-		Client:         client2,
-		Reporter:       reporter2,
+		Client:   client2,
+		Reporter: reporter2,
 	}
 
 	req2 := NewRequestC(config2, "METHOD", "url")
@@ -722,8 +722,8 @@ func TestRequest_Host(t *testing.T) {
 	reporter3 := newMockReporter(t)
 
 	config3 := Config{
-		Client:         client3,
-		Reporter:       reporter3,
+		Client:   client3,
+		Reporter: reporter3,
 	}
 
 	req3 := NewRequestC(config3, "METHOD", "url")
