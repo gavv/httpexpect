@@ -822,7 +822,7 @@ func TestRequest_BodyChunked(t *testing.T) {
 		Client:         client,
 		Reporter:       reporter,
 	}
-	
+
 	t.Run("body", func(t *testing.T) {
 		req := NewRequestC(config, "METHOD", "url")
 
@@ -853,7 +853,7 @@ func TestRequest_BodyChunked(t *testing.T) {
 		assert.True(t, client.req.Body == http.NoBody)
 		assert.Equal(t, int64(0), client.req.ContentLength)
 	})
-	
+
 	t.Run("proto", func(t *testing.T) {
 		req1 := NewRequestC(config, "METHOD", "url")
 
@@ -888,7 +888,7 @@ func TestRequest_BodyBytes(t *testing.T) {
 		Client:         client,
 		Reporter:       reporter,
 	}
-	
+
 	t.Run("byte slice", func(t *testing.T) {
 		req := NewRequestC(config, "METHOD", "/path")
 
@@ -907,7 +907,7 @@ func TestRequest_BodyBytes(t *testing.T) {
 
 		assert.Same(t, &client.resp, resp.Raw())
 	})
-	
+
 	t.Run("nil", func(t *testing.T) {
 		req := NewRequestC(config, "METHOD", "url")
 
@@ -1023,7 +1023,7 @@ func TestRequest_BodyForm(t *testing.T) {
 		assert.Equal(t, `a=1&b=2`, resp.Body().Raw())
 
 		assert.Same(t, &client.resp, resp.Raw())
-	})	
+	})
 
 	t.Run("form struct", func(t *testing.T) {
 		expectedHeaders := map[string][]string{
