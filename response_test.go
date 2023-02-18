@@ -296,69 +296,69 @@ func TestResponse_Headers(t *testing.T) {
 func TestResponse_Cookies(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	headers := map[string][]string{
-		"Set-Cookie": {
-			"foo=aaa",
-			"bar=bbb; expires=Fri, 31 Dec 2010 23:59:59 GMT; " +
+	t.Run("cookies", func(t *testing.T) {
+		headers := map[string][]string{
+			"Set-Cookie": {
+				"foo=aaa",
+				"bar=bbb; expires=Fri, 31 Dec 2010 23:59:59 GMT; " +
 				"path=/xxx; domain=example.com",
-		},
-	}
+			},
+		}
 
-	httpResp := &http.Response{
-		StatusCode: http.StatusOK,
-		Header:     http.Header(headers),
-		Body:       nil,
-	}
+		httpResp := &http.Response{
+			StatusCode: http.StatusOK,
+			Header:     http.Header(headers),
+			Body:       nil,
+		}
 
-	resp := NewResponse(reporter, httpResp)
-	resp.chain.assertNotFailed(t)
-	resp.chain.clearFailed()
+		resp := NewResponse(reporter, httpResp)
+		resp.chain.assertNotFailed(t)
+		resp.chain.clearFailed()
 
-	assert.Equal(t, []interface{}{"foo", "bar"}, resp.Cookies().Raw())
-	resp.chain.assertNotFailed(t)
+		assert.Equal(t, []interface{}{"foo", "bar"}, resp.Cookies().Raw())
+		resp.chain.assertNotFailed(t)
 
-	c1 := resp.Cookie("foo")
-	resp.chain.assertNotFailed(t)
-	assert.Equal(t, "foo", c1.Raw().Name)
-	assert.Equal(t, "aaa", c1.Raw().Value)
-	assert.Equal(t, "", c1.Raw().Domain)
-	assert.Equal(t, "", c1.Raw().Path)
+		c1 := resp.Cookie("foo")
+		resp.chain.assertNotFailed(t)
+		assert.Equal(t, "foo", c1.Raw().Name)
+		assert.Equal(t, "aaa", c1.Raw().Value)
+		assert.Equal(t, "", c1.Raw().Domain)
+		assert.Equal(t, "", c1.Raw().Path)
 
-	c2 := resp.Cookie("bar")
-	resp.chain.assertNotFailed(t)
-	assert.Equal(t, "bar", c2.Raw().Name)
-	assert.Equal(t, "bbb", c2.Raw().Value)
-	assert.Equal(t, "example.com", c2.Raw().Domain)
-	assert.Equal(t, "/xxx", c2.Raw().Path)
-	assert.True(t, time.Date(2010, 12, 31, 23, 59, 59, 0, time.UTC).
-		Equal(c2.Raw().Expires))
+		c2 := resp.Cookie("bar")
+		resp.chain.assertNotFailed(t)
+		assert.Equal(t, "bar", c2.Raw().Name)
+		assert.Equal(t, "bbb", c2.Raw().Value)
+		assert.Equal(t, "example.com", c2.Raw().Domain)
+		assert.Equal(t, "/xxx", c2.Raw().Path)
+		assert.True(t, time.Date(2010, 12, 31, 23, 59, 59, 0, time.UTC).
+			Equal(c2.Raw().Expires))
 
-	c3 := resp.Cookie("baz")
-	resp.chain.assertFailed(t)
-	c3.chain.assertFailed(t)
-	assert.Nil(t, c3.Raw())
-}
+		c3 := resp.Cookie("baz")
+		resp.chain.assertFailed(t)
+		c3.chain.assertFailed(t)
+		assert.Nil(t, c3.Raw())
+	})
+		
+	t.Run("no cookies", func(t *testing.T) {
+		httpResp := &http.Response{
+			StatusCode: http.StatusOK,
+			Header:     nil,
+			Body:       nil,
+		}
 
-func TestResponse_NoCookies(t *testing.T) {
-	reporter := newMockReporter(t)
+		resp := NewResponse(reporter, httpResp)
+		resp.chain.assertNotFailed(t)
+		resp.chain.clearFailed()
 
-	httpResp := &http.Response{
-		StatusCode: http.StatusOK,
-		Header:     nil,
-		Body:       nil,
-	}
+		assert.Equal(t, []interface{}{}, resp.Cookies().Raw())
+		resp.chain.assertNotFailed(t)
 
-	resp := NewResponse(reporter, httpResp)
-	resp.chain.assertNotFailed(t)
-	resp.chain.clearFailed()
-
-	assert.Equal(t, []interface{}{}, resp.Cookies().Raw())
-	resp.chain.assertNotFailed(t)
-
-	c := resp.Cookie("foo")
-	resp.chain.assertFailed(t)
-	c.chain.assertFailed(t)
-	assert.Nil(t, c.Raw())
+		c := resp.Cookie("foo")
+		resp.chain.assertFailed(t)
+		c.chain.assertFailed(t)
+		assert.Nil(t, c.Raw())
+	})
 }
 
 func TestResponse_BodyOperations(t *testing.T) {
