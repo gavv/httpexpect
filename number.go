@@ -846,8 +846,8 @@ func (n *Number) IsUint(bits ...int) *Number {
 				Type:   AssertInRange,
 				Actual: &AssertionValue{n.value},
 				Expected: &AssertionValue{AssertionRange{
-					"0",
-					fmt.Sprintf("2^%d", bitSize),
+					Min: intBoundary{imin, -1, 0},
+					Max: intBoundary{imax, +1, bitSize},
 				}},
 				Errors: []error{
 					fmt.Errorf("expected: number fits %d-bit unsigned integer", bitSize),
@@ -917,8 +917,8 @@ func (n *Number) NotUint(bits ...int) *Number {
 					Type:   AssertNotInRange,
 					Actual: &AssertionValue{n.value},
 					Expected: &AssertionValue{AssertionRange{
-						"0",
-						fmt.Sprintf("2^%d", bitSize),
+						Min: intBoundary{imin, -1, 0},
+						Max: intBoundary{imax, +1, bitSize},
 					}},
 					Errors: []error{
 						fmt.Errorf("expected: number doesn't fit %d-bit unsigned integer", bitSize),
