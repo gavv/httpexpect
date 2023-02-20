@@ -659,7 +659,7 @@ func (n *Number) IsInt(bits ...int) *Number {
 			Type:   AssertType,
 			Actual: &AssertionValue{n.value},
 			Errors: []error{
-				errors.New("expected: number is integer"),
+				errors.New("expected: number is signed integer"),
 			},
 		})
 		return n
@@ -671,7 +671,7 @@ func (n *Number) IsInt(bits ...int) *Number {
 			Type:   AssertType,
 			Actual: &AssertionValue{n.value},
 			Errors: []error{
-				errors.New("expected: number is integer"),
+				errors.New("expected: number is signed integer"),
 			},
 		})
 		return n
@@ -695,7 +695,7 @@ func (n *Number) IsInt(bits ...int) *Number {
 					Max: intBoundary{imax, +1, bitSize - 1},
 				}},
 				Errors: []error{
-					fmt.Errorf("expected: number is %d-bit integer", bitSize),
+					fmt.Errorf("expected: number is %d-bit signed integer", bitSize),
 				},
 			})
 			return n
@@ -746,7 +746,7 @@ func (n *Number) NotInt(bits ...int) *Number {
 					Type:   AssertType,
 					Actual: &AssertionValue{n.value},
 					Errors: []error{
-						errors.New("expected: number is not integer"),
+						errors.New("expected: number is not signed integer"),
 					},
 				})
 				return n
@@ -768,7 +768,7 @@ func (n *Number) NotInt(bits ...int) *Number {
 						Max: intBoundary{imax, +1, bitSize - 1},
 					}},
 					Errors: []error{
-						fmt.Errorf("expected: number doesn't fit %d-bit integer", bitSize),
+						fmt.Errorf("expected: number doesn't fit %d-bit signed integer", bitSize),
 					},
 				})
 				return n
