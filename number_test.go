@@ -747,20 +747,20 @@ func TestNumber_IsFinite(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	NewNumber(reporter, 1234).IsFinite().
-		chain.assertFailed(t)
+		chain.assertNotFailed(t)
 
 	NewNumber(reporter, math.Inf(0)).IsFinite().
-		chain.assertNotFailed(t)
+		chain.assertFailed(t)
 
 	NewNumber(reporter, math.NaN()).IsFinite().
-		chain.assertNotFailed(t)
+		chain.assertFailed(t)
 
 	NewNumber(reporter, 1234).NotFinite().
-		chain.assertNotFailed(t)
+		chain.assertFailed(t)
 
 	NewNumber(reporter, math.Inf(0)).NotFinite().
-		chain.assertFailed(t)
+		chain.assertNotFailed(t)
 
 	NewNumber(reporter, math.NaN()).NotFinite().
-		chain.assertFailed(t)
+		chain.assertNotFailed(t)
 }

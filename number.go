@@ -962,7 +962,7 @@ func (n *Number) IsFinite() *Number {
 		return n
 	}
 
-	if !(math.IsInf(n.value, 0) || math.IsNaN(n.value)) {
+	if math.IsInf(n.value, 0) || math.IsNaN(n.value) {
 		opChain.fail(AssertionFailure{
 			Type:   AssertType,
 			Actual: &AssertionValue{n.value},
@@ -993,7 +993,7 @@ func (n *Number) NotFinite() *Number {
 		return n
 	}
 
-	if math.IsInf(n.value, 0) || math.IsNaN(n.value) {
+	if !(math.IsInf(n.value, 0) || math.IsNaN(n.value)) {
 		opChain.fail(AssertionFailure{
 			Type:   AssertType,
 			Actual: &AssertionValue{n.value},
