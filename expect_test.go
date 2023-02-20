@@ -417,7 +417,7 @@ func TestExpect_RequestFactory(t *testing.T) {
 }
 
 func TestExpect_Panics(t *testing.T) {
-	t.Run("nil_AssertionHandler_nonnil_Reporter", func(t *testing.T) {
+	t.Run("nil AssertionHandler, non-nil Reporter", func(t *testing.T) {
 		assert.NotPanics(t, func() {
 			WithConfig(Config{
 				Reporter:         newMockReporter(t),
@@ -426,7 +426,7 @@ func TestExpect_Panics(t *testing.T) {
 		})
 	})
 
-	t.Run("nonnil_AssertionHandler_nil_Reporter", func(t *testing.T) {
+	t.Run("non-nil AssertionHandler, nil Reporter", func(t *testing.T) {
 		assert.NotPanics(t, func() {
 			WithConfig(Config{
 				Reporter:         nil,
@@ -435,7 +435,7 @@ func TestExpect_Panics(t *testing.T) {
 		})
 	})
 
-	t.Run("nil_AssertionHandler_nil_Reporter", func(t *testing.T) {
+	t.Run("nil AssertionHandler, nil Reporter", func(t *testing.T) {
 		assert.Panics(t, func() {
 			WithConfig(Config{
 				Reporter:         nil,

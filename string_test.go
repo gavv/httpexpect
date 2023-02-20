@@ -85,7 +85,7 @@ func TestString_Constructors(t *testing.T) {
 }
 
 func TestString_Decode(t *testing.T) {
-	t.Run("Decode into empty interface", func(t *testing.T) {
+	t.Run("target is empty interface", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		value := NewString(reporter, "foo")
@@ -97,7 +97,7 @@ func TestString_Decode(t *testing.T) {
 		assert.Equal(t, "foo", target)
 	})
 
-	t.Run("Decode into string", func(t *testing.T) {
+	t.Run("target is string", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		value := NewString(reporter, "foo")
@@ -109,7 +109,7 @@ func TestString_Decode(t *testing.T) {
 		assert.Equal(t, "foo", target)
 	})
 
-	t.Run("Target is unmarshable", func(t *testing.T) {
+	t.Run("target is unmarshable", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		value := NewString(reporter, "foo")
@@ -119,7 +119,7 @@ func TestString_Decode(t *testing.T) {
 		value.chain.assertFailed(t)
 	})
 
-	t.Run("Target is nil", func(t *testing.T) {
+	t.Run("target is nil", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		value := NewString(reporter, "foo")
@@ -179,7 +179,7 @@ func TestString_Length(t *testing.T) {
 	assert.Equal(t, 7.0, num.Raw())
 }
 
-func TestString_Empty(t *testing.T) {
+func TestString_IsEmpty(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value1 := NewString(reporter, "")
@@ -203,7 +203,7 @@ func TestString_Empty(t *testing.T) {
 	value2.chain.clearFailed()
 }
 
-func TestString_Equal(t *testing.T) {
+func TestString_IsEqual(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewString(reporter, "foo")
@@ -227,7 +227,7 @@ func TestString_Equal(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestString_EqualFold(t *testing.T) {
+func TestString_IsEqualFold(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewString(reporter, "foo")
