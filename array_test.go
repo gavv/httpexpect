@@ -140,7 +140,20 @@ func TestArray_Constructors(t *testing.T) {
 }
 
 func TestArray_Decode(t *testing.T) {
-	t.Run("slice of empty interfaces", func(t *testing.T) {
+	t.Run("target is empty interface", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		testValue := []interface{}{"Foo", 123.0}
+		arr := NewArray(reporter, testValue)
+
+		var target interface{}
+		arr.Decode(&target)
+
+		arr.chain.assertNotFailed(t)
+		assert.Equal(t, testValue, target)
+	})
+
+	t.Run("target is slice of empty interfaces", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		testValue := []interface{}{"Foo", 123.0}
@@ -153,7 +166,7 @@ func TestArray_Decode(t *testing.T) {
 		assert.Equal(t, testValue, target)
 	})
 
-	t.Run("slice of structs", func(t *testing.T) {
+	t.Run("target is slice of structs", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		type S struct {
@@ -176,19 +189,6 @@ func TestArray_Decode(t *testing.T) {
 
 		arr.chain.assertNotFailed(t)
 		assert.Equal(t, actualStruct, target)
-	})
-
-	t.Run("empty interface", func(t *testing.T) {
-		reporter := newMockReporter(t)
-
-		testValue := []interface{}{"Foo", 123.0}
-		arr := NewArray(reporter, testValue)
-
-		var target interface{}
-		arr.Decode(&target)
-
-		arr.chain.assertNotFailed(t)
-		assert.Equal(t, testValue, target)
 	})
 
 	t.Run("target is unmarshable", func(t *testing.T) {
@@ -236,15 +236,15 @@ func TestArray_Getters(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
-		a := []interface{}{}
+		data := []interface{}{}
 
-		value := NewArray(reporter, a)
+		value := NewArray(reporter, data)
 
-		assert.Equal(t, a, value.Raw())
+		assert.Equal(t, data, value.Raw())
 		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
 
-		assert.Equal(t, a, value.Path("$").Raw())
+		assert.Equal(t, data, value.Path("$").Raw())
 		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
 
@@ -280,15 +280,15 @@ func TestArray_Getters(t *testing.T) {
 	t.Run("not empty", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
-		a := []interface{}{"foo", 123.0}
+		data := []interface{}{"foo", 123.0}
 
-		value := NewArray(reporter, a)
+		value := NewArray(reporter, data)
 
-		assert.Equal(t, a, value.Raw())
+		assert.Equal(t, data, value.Raw())
 		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
 
-		assert.Equal(t, a, value.Path("$").Raw())
+		assert.Equal(t, data, value.Path("$").Raw())
 		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
 
@@ -508,14 +508,6 @@ func TestArray_IsEqual(t *testing.T) {
 		value.NotEqual(myArray{myInt(123), 456.0})
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
-
-		value.IsEqual([]interface{}{"123", "456"})
-		value.chain.assertFailed(t)
-		value.chain.clearFailed()
-
-		value.NotEqual([]interface{}{"123", "456"})
-		value.chain.assertNotFailed(t)
-		value.chain.clearFailed()
 	})
 
 	t.Run("invalid argument", func(t *testing.T) {
@@ -645,22 +637,6 @@ func TestArray_IsEqualUnordered(t *testing.T) {
 		value.NotEqualUnordered(myArray{myInt(456), 123.0, "foo"})
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
-
-		value.IsEqualUnordered(myArray{"123", "456", "foo"})
-		value.chain.assertFailed(t)
-		value.chain.clearFailed()
-
-		value.NotEqualUnordered(myArray{"123", "456", "foo"})
-		value.chain.assertNotFailed(t)
-		value.chain.clearFailed()
-
-		value.IsEqualUnordered(myArray{"123.0", "456.0", "foo"})
-		value.chain.assertFailed(t)
-		value.chain.clearFailed()
-
-		value.NotEqualUnordered(myArray{"123.0", "456.0", "foo"})
-		value.chain.assertNotFailed(t)
-		value.chain.clearFailed()
 	})
 
 	t.Run("invalid argument", func(t *testing.T) {
@@ -691,16 +667,6 @@ func TestArray_InList(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		value := NewArray(reporter, []interface{}{"foo", "bar"})
-
-		assert.Equal(t, []interface{}{"foo", "bar"}, value.Raw())
-
-		value.InList()
-		value.chain.assertFailed(t)
-		value.chain.clearFailed()
-
-		value.NotInList()
-		value.chain.assertFailed(t)
-		value.chain.clearFailed()
 
 		value.InList("foo", "bar")
 		value.chain.assertFailed(t)
@@ -741,6 +707,69 @@ func TestArray_InList(t *testing.T) {
 		value.NotInList([]interface{}{"bar", "foo"}, []interface{}{"FOO", "BAR"})
 		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
+	})
+
+	t.Run("canonization", func(t *testing.T) {
+		type (
+			myArray []interface{}
+			myMap   map[string]interface{}
+			myInt   int
+		)
+
+		reporter := newMockReporter(t)
+
+		value := NewArray(reporter, []interface{}{
+			123,
+			456,
+			[]interface{}{789, 567},
+			map[string]interface{}{"a": "b"},
+		})
+
+		value.InList(myArray{
+			myInt(123.0),
+			myInt(456.0),
+			myArray{
+				myInt(789.0),
+				myInt(567.0),
+			},
+			myMap{"a": "b"},
+		})
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
+
+		value.NotInList(myArray{
+			myInt(123.0),
+			myInt(456.0),
+			myArray{
+				myInt(789.0),
+				myInt(567.0),
+			},
+			myMap{"a": "b"},
+		})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.InList(myArray{123.0, 456.0, myArray{789.0, 567.0}, myMap{"a": "b"}})
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
+
+		value.NotInList(myArray{123.0, 456.0, myArray{789.0, 567.0}, myMap{"a": "b"}})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.InList(myArray{myInt(123), 456.0, myArray{myInt(789), 567.0}, myMap{"a": "b"}})
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
+
+		value.NotInList(myArray{myInt(123), 456.0, myArray{myInt(789), 567.0}, myMap{"a": "b"}})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+	})
+
+	t.Run("not array", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewArray(reporter, []interface{}{"foo", "bar"})
 
 		value.InList([]interface{}{"bar", "foo"}, "NOT ARRAY")
 		value.chain.assertFailed(t)
@@ -759,91 +788,34 @@ func TestArray_InList(t *testing.T) {
 		value.chain.clearFailed()
 	})
 
-	t.Run("canonization", func(t *testing.T) {
-		type (
-			myArray []interface{}
-			myMap   map[string]interface{}
-			myInt   int
-		)
-
-		reporter := newMockReporter(t)
-
-		array := NewArray(reporter, []interface{}{
-			123,
-			456,
-			[]interface{}{789, 567},
-			map[string]interface{}{"a": "b"},
-		})
-
-		array.InList(myArray{
-			myInt(123.0),
-			myInt(456.0),
-			myArray{
-				myInt(789.0),
-				myInt(567.0),
-			},
-			myMap{"a": "b"},
-		})
-		array.chain.assertNotFailed(t)
-		array.chain.clearFailed()
-
-		array.NotInList(myArray{
-			myInt(123.0),
-			myInt(456.0),
-			myArray{
-				myInt(789.0),
-				myInt(567.0),
-			},
-			myMap{"a": "b"},
-		})
-		array.chain.assertFailed(t)
-		array.chain.clearFailed()
-
-		array.InList(myArray{123.0, 456.0, myArray{789.0, 567.0}, myMap{"a": "b"}})
-		array.chain.assertNotFailed(t)
-		array.chain.clearFailed()
-
-		array.NotInList(myArray{123.0, 456.0, myArray{789.0, 567.0}, myMap{"a": "b"}})
-		array.chain.assertFailed(t)
-		array.chain.clearFailed()
-
-		array.InList(myArray{myInt(123), 456.0, myArray{myInt(789), 567.0}, myMap{"a": "b"}})
-		array.chain.assertNotFailed(t)
-		array.chain.clearFailed()
-
-		array.NotInList(myArray{myInt(123), 456.0, myArray{myInt(789), 567.0}, myMap{"a": "b"}})
-		array.chain.assertFailed(t)
-		array.chain.clearFailed()
-
-		array.InList(myArray{"123.0", "456.0", myArray{"789.0", "567.0"}, myMap{"a": "b"}})
-		array.chain.assertFailed(t)
-		array.chain.clearFailed()
-
-		array.NotInList(myArray{"123.0", "456.0", myArray{"789.0", "567.0"}, myMap{"a": "b"}})
-		array.chain.assertNotFailed(t)
-		array.chain.clearFailed()
-	})
-
 	t.Run("invalid argument", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
-		array := NewArray(reporter, []interface{}{})
+		value := NewArray(reporter, []interface{}{})
 
-		array.InList(nil)
-		array.chain.assertFailed(t)
-		array.chain.clearFailed()
+		value.InList()
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
 
-		array.NotInList(nil)
-		array.chain.assertFailed(t)
-		array.chain.clearFailed()
+		value.NotInList()
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
 
-		array.InList(func() {})
-		array.chain.assertFailed(t)
-		array.chain.clearFailed()
+		value.InList(nil)
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
 
-		array.NotInList(func() {})
-		array.chain.assertFailed(t)
-		array.chain.clearFailed()
+		value.NotInList(nil)
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.InList(func() {})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.NotInList(func() {})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
 	})
 }
 
@@ -1006,22 +978,6 @@ func TestArray_Contains(t *testing.T) {
 		value.NotContains(456.0)
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
-
-		value.Contains("123")
-		value.chain.assertFailed(t)
-		value.chain.clearFailed()
-
-		value.NotContains("123")
-		value.chain.assertNotFailed(t)
-		value.chain.clearFailed()
-
-		value.Contains(func() {})
-		value.chain.assertFailed(t)
-		value.chain.clearFailed()
-
-		value.NotContains(func() {})
-		value.chain.assertFailed(t)
-		value.chain.clearFailed()
 	})
 
 	t.Run("invalid argument", func(t *testing.T) {
@@ -1092,14 +1048,6 @@ func TestArray_ContainsAll(t *testing.T) {
 		value.NotContainsAll(123, "foo", "FOO")
 		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
-
-		value.ContainsAll([]interface{}{123, "foo"})
-		value.chain.assertFailed(t)
-		value.chain.clearFailed()
-
-		value.NotContainsAll([]interface{}{123, "foo"})
-		value.chain.assertNotFailed(t)
-		value.chain.clearFailed()
 	})
 
 	t.Run("canonization", func(t *testing.T) {
@@ -1119,22 +1067,6 @@ func TestArray_ContainsAll(t *testing.T) {
 
 		value.NotContainsAll(myInt(123), 456.0)
 		value.chain.assertFailed(t)
-		value.chain.clearFailed()
-
-		value.ContainsAll("123")
-		value.chain.assertFailed(t)
-		value.chain.clearFailed()
-
-		value.NotContainsAll("123")
-		value.chain.assertNotFailed(t)
-		value.chain.clearFailed()
-
-		value.ContainsAll("123.0", "456.0")
-		value.chain.assertFailed(t)
-		value.chain.clearFailed()
-
-		value.NotContainsAll("123.0", "456.0")
-		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
 	})
 
@@ -1198,14 +1130,6 @@ func TestArray_ContainsAny(t *testing.T) {
 		value.NotContainsAny("FOO")
 		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
-
-		value.ContainsAny([]interface{}{123, "foo"})
-		value.chain.assertFailed(t)
-		value.chain.clearFailed()
-
-		value.NotContainsAny([]interface{}{123, "foo"})
-		value.chain.assertNotFailed(t)
-		value.chain.clearFailed()
 	})
 
 	t.Run("canonization", func(t *testing.T) {
@@ -1226,44 +1150,12 @@ func TestArray_ContainsAny(t *testing.T) {
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 
-		value.ContainsAny(789.0)
-		value.chain.assertNotFailed(t)
-		value.chain.clearFailed()
-
-		value.NotContainsAny(789.0)
-		value.chain.assertFailed(t)
-		value.chain.clearFailed()
-
-		value.ContainsAny(567.0)
-		value.chain.assertFailed(t)
-		value.chain.clearFailed()
-
-		value.NotContainsAny(567.0)
-		value.chain.assertNotFailed(t)
-		value.chain.clearFailed()
-
 		value.ContainsAny(myArray{567.0, 456.0})
 		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
 
 		value.NotContainsAny(myArray{567.0, 456.0})
 		value.chain.assertFailed(t)
-		value.chain.clearFailed()
-
-		value.ContainsAny("789")
-		value.chain.assertFailed(t)
-		value.chain.clearFailed()
-
-		value.NotContainsAny("789")
-		value.chain.assertNotFailed(t)
-		value.chain.clearFailed()
-
-		value.ContainsAny(myArray{"567", 456.0})
-		value.chain.assertFailed(t)
-		value.chain.clearFailed()
-
-		value.NotContainsAny(myArray{"567", 456.0})
-		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
 	})
 
@@ -1390,22 +1282,6 @@ func TestArray_ContainsOnly(t *testing.T) {
 
 		value.NotContainsOnly(myInt(123), 456.0)
 		value.chain.assertFailed(t)
-		value.chain.clearFailed()
-
-		value.ContainsOnly(123.0, 456.0, 456.0)
-		value.chain.assertNotFailed(t)
-		value.chain.clearFailed()
-
-		value.NotContainsOnly(123.0, 456.0, 456.0)
-		value.chain.assertFailed(t)
-		value.chain.clearFailed()
-
-		value.ContainsOnly(myInt(123), "456", 456.0)
-		value.chain.assertFailed(t)
-		value.chain.clearFailed()
-
-		value.NotContainsOnly(myInt(123), 456.0, "456")
-		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
 	})
 

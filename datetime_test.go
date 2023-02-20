@@ -106,6 +106,7 @@ func TestDateTime_Getters(t *testing.T) {
 
 	expectedTime := parsedTime
 	expectedZone, _ := expectedTime.Zone()
+
 	assert.Equal(t, expectedZone, value.Zone().Raw())
 	assert.Equal(t, float64(expectedTime.Year()), value.Year().Raw())
 	assert.Equal(t, float64(expectedTime.Month()), value.Month().Raw())
@@ -118,7 +119,7 @@ func TestDateTime_Getters(t *testing.T) {
 	assert.Equal(t, float64(expectedTime.Nanosecond()), value.Nanosecond().Raw())
 }
 
-func TestDateTime_Equal(t *testing.T) {
+func TestDateTime_IsEqual(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewDateTime(reporter, time.Unix(0, 1234))
@@ -142,7 +143,7 @@ func TestDateTime_Equal(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestDateTime_Greater(t *testing.T) {
+func TestDateTime_IsGreater(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewDateTime(reporter, time.Unix(0, 1234))
@@ -168,7 +169,7 @@ func TestDateTime_Greater(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestDateTime_Lesser(t *testing.T) {
+func TestDateTime_IsLesser(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewDateTime(reporter, time.Unix(0, 1234))
