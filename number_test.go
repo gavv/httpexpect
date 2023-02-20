@@ -750,14 +750,30 @@ func TestNumber_IsInt(t *testing.T) {
 			chain.assertNotFailed(t)
 	})
 
-	t.Run("big integer cases", func(t *testing.T) {
-		t.Skip("skipped until migration to big Float is done")
-
-		NewNumber(reporter, math.MaxInt64).IsInt().
+	t.Run("check bitness cases", func(t *testing.T) {
+		NewNumber(reporter, 0).IsInt(8).
 			chain.assertNotFailed(t)
 
-		NewNumber(reporter, math.MaxInt64).NotInt(64).
+		NewNumber(reporter, 0).NotInt(8).
 			chain.assertFailed(t)
+
+		NewNumber(reporter, 120).IsInt(8).
+			chain.assertNotFailed(t)
+
+		NewNumber(reporter, 120).NotInt(8).
+			chain.assertFailed(t)
+
+		NewNumber(reporter, 127).IsInt(8).
+			chain.assertNotFailed(t)
+
+		NewNumber(reporter, 127).NotInt(8).
+			chain.assertFailed(t)
+
+		NewNumber(reporter, 128).IsInt(8).
+			chain.assertFailed(t)
+
+		NewNumber(reporter, 128).NotInt(8).
+			chain.assertNotFailed(t)
 	})
 }
 
@@ -920,14 +936,30 @@ func TestNumber_IsUint(t *testing.T) {
 			chain.assertNotFailed(t)
 	})
 
-	t.Run("big integer cases", func(t *testing.T) {
-		t.Skip("skipped until migration to big Float is done")
-
-		NewNumber(reporter, math.MaxUint64).IsUint().
+	t.Run("check bitness cases", func(t *testing.T) {
+		NewNumber(reporter, 0).IsUint(8).
 			chain.assertNotFailed(t)
 
-		NewNumber(reporter, math.MaxUint64).NotUint(64).
+		NewNumber(reporter, 0).NotUint(8).
 			chain.assertFailed(t)
+
+		NewNumber(reporter, 250).IsUint(8).
+			chain.assertNotFailed(t)
+
+		NewNumber(reporter, 250).NotUint(8).
+			chain.assertFailed(t)
+
+		NewNumber(reporter, 255).IsUint(8).
+			chain.assertNotFailed(t)
+
+		NewNumber(reporter, 255).NotUint(8).
+			chain.assertFailed(t)
+
+		NewNumber(reporter, 256).IsUint(8).
+			chain.assertFailed(t)
+
+		NewNumber(reporter, 256).NotUint(8).
+			chain.assertNotFailed(t)
 	})
 }
 
