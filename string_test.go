@@ -182,25 +182,35 @@ func TestString_Length(t *testing.T) {
 func TestString_Empty(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	value := NewString(reporter, "")
+	cases := map[string]struct {
+		str       string
+		wantEmpty bool
+	}{
+		"empty_string":     {str: "", wantEmpty: true},
+		"populated_string": {str: "a", wantEmpty: false},
+	}
 
-	value.IsEmpty()
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+	for name, value := range cases {
+		t.Run(name, func(t *testing.T) {
+			childValue := NewString(reporter, value.str)
 
-	value.NotEmpty()
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+			if value.wantEmpty {
+				childValue.IsEmpty()
+				childValue.chain.assertNotFailed(t)
+				childValue.chain.clearFailed()
 
-	value = NewString(reporter, "a")
+				childValue.NotEmpty()
+				childValue.chain.assertFailed(t)
+			} else {
+				childValue.IsEmpty()
+				childValue.chain.assertFailed(t)
+				childValue.chain.clearFailed()
 
-	value.IsEmpty()
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotEmpty()
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+				childValue.NotEmpty()
+				childValue.chain.assertNotFailed(t)
+			}
+		})
+	}
 }
 
 func TestString_Equal(t *testing.T) {
@@ -474,170 +484,138 @@ func TestString_MatchInvalid(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestString_IsAscii(t *testing.T) {
+func TestString_Ascii(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	value := NewString(reporter, "Ascii")
-	value.IsASCII()
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+	cases := []struct {
+		str       string
+		wantASCII bool
+	}{
+		{"Ascii", true},
+		{string(rune(127)), true},
+		{"Ascii is アスキー", false},
+		{"アスキー", false},
+		{string(rune(128)), false},
+	}
 
-	value = NewString(reporter, "Ascii is アスキー")
-	value.IsASCII()
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+	for _, value := range cases {
+		t.Run(value.str, func(t *testing.T) {
+			childValue := NewString(reporter, value.str)
 
-	value = NewString(reporter, "アスキー")
-	value.IsASCII()
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+			if value.wantASCII {
+				childValue.IsASCII()
+				childValue.chain.assertNotFailed(t)
+				childValue.chain.clearFailed()
 
-	value = NewString(reporter, string(rune(127)))
-	value.IsASCII()
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+				childValue.NotASCII()
+				childValue.chain.assertFailed(t)
+			} else {
+				childValue.IsASCII()
+				childValue.chain.assertFailed(t)
+				childValue.chain.clearFailed()
 
-	value = NewString(reporter, string(rune(128)))
-	value.IsASCII()
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-}
-
-func TestString_NotAscii(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	value := NewString(reporter, "Ascii")
-	value.NotASCII()
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value = NewString(reporter, "Ascii is アスキー")
-	value.NotASCII()
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value = NewString(reporter, "アスキー")
-	value.NotASCII()
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value = NewString(reporter, string(rune(127)))
-	value.NotASCII()
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value = NewString(reporter, string(rune(128)))
-	value.NotASCII()
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+				childValue.NotASCII()
+				childValue.chain.assertNotFailed(t)
+			}
+		})
+	}
 }
 
 func TestString_AsNumber(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	t.Run("default_base_integer", func(t *testing.T) {
-		value := NewString(reporter, "1234567")
-		num := value.AsNumber()
-		value.chain.assertNotFailed(t)
-		num.chain.assertNotFailed(t)
-		assert.Equal(t, float64(1234567), num.Raw())
-	})
+	cases := map[string]struct {
+		str         string
+		base        []int
+		fail        bool
+		expectedNum float64
+	}{
+		"default_base_integer": {
+			str:         "1234567",
+			fail:        false,
+			expectedNum: float64(1234567),
+		},
+		"default_base_float": {
+			str:         "11.22",
+			fail:        false,
+			expectedNum: float64(11.22),
+		},
+		"default_base_bad": {
+			str:  "a1",
+			fail: true,
+		},
+		"base10_integer": {
+			str:         "100",
+			base:        []int{10},
+			fail:        false,
+			expectedNum: float64(100),
+		},
+		"base10_float": {
+			str:         "11.22",
+			base:        []int{10},
+			fail:        false,
+			expectedNum: float64(11.22),
+		},
+		"base16_integer": {
+			str:         "100",
+			base:        []int{16},
+			fail:        false,
+			expectedNum: float64(0x100),
+		},
+		"base16_float": {
+			str:  "11.22",
+			base: []int{16},
+			fail: true,
+		},
+		"base16_large_integer": {
+			str:         "4000000000000000",
+			base:        []int{16},
+			fail:        false,
+			expectedNum: float64(0x4000000000000000),
+		},
+		"default_float_percision_max": {
+			str:  "4611686018427387905",
+			fail: true,
+		},
+		"base10_float_percision_max": {
+			str:  "4611686018427387905",
+			base: []int{10},
+			fail: true,
+		},
+		"base16_float_percision_max": {
+			str:  "8000000000000001",
+			base: []int{16},
+			fail: true,
+		},
+		"base16_float_percision_min": {
+			str:  "-4000000000000001",
+			base: []int{16},
+			fail: true,
+		},
+		"multiple_base": {
+			str:  "100",
+			base: []int{10, 16},
+			fail: true,
+		},
+	}
 
-	t.Run("default_base_float", func(t *testing.T) {
-		value := NewString(reporter, "11.22")
-		num := value.AsNumber()
-		value.chain.assertNotFailed(t)
-		num.chain.assertNotFailed(t)
-		assert.Equal(t, float64(11.22), num.Raw())
-	})
+	for name, value := range cases {
+		t.Run(name, func(t *testing.T) {
+			childValue := NewString(reporter, value.str)
+			num := childValue.AsNumber(value.base...)
 
-	t.Run("default_base_bad", func(t *testing.T) {
-		value := NewString(reporter, "a1")
-		num := value.AsNumber()
-		value.chain.assertFailed(t)
-		num.chain.assertFailed(t)
-		assert.Equal(t, float64(0), num.Raw())
-	})
+			if value.fail {
+				childValue.chain.assertFailed(t)
+				num.chain.assertFailed(t)
+				assert.Equal(t, float64(0), num.Raw())
+			} else {
+				childValue.chain.assertNotFailed(t)
+				num.chain.assertNotFailed(t)
+				assert.Equal(t, value.expectedNum, num.Raw())
+			}
 
-	t.Run("base10_integer", func(t *testing.T) {
-		value := NewString(reporter, "100")
-		num := value.AsNumber(10)
-		value.chain.assertNotFailed(t)
-		num.chain.assertNotFailed(t)
-		assert.Equal(t, float64(100), num.Raw())
-	})
-
-	t.Run("base10_float", func(t *testing.T) {
-		value := NewString(reporter, "11.22")
-		num := value.AsNumber(10)
-		value.chain.assertNotFailed(t)
-		num.chain.assertNotFailed(t)
-		assert.Equal(t, float64(11.22), num.Raw())
-	})
-
-	t.Run("base16_integer", func(t *testing.T) {
-		value := NewString(reporter, "100")
-		num := value.AsNumber(16)
-		value.chain.assertNotFailed(t)
-		num.chain.assertNotFailed(t)
-		assert.Equal(t, float64(0x100), num.Raw())
-	})
-
-	t.Run("base16_float", func(t *testing.T) {
-		value := NewString(reporter, "11.22")
-		num := value.AsNumber(16)
-		value.chain.assertFailed(t)
-		num.chain.assertFailed(t)
-		assert.Equal(t, float64(0), num.Raw())
-	})
-
-	t.Run("base16_large_integer", func(t *testing.T) {
-		value := NewString(reporter, "4000000000000000")
-		num := value.AsNumber(16)
-		value.chain.assertNotFailed(t)
-		num.chain.assertNotFailed(t)
-		assert.Equal(t, float64(0x4000000000000000), num.Raw())
-	})
-
-	t.Run("default_base_float_precision", func(t *testing.T) {
-		value := NewString(reporter, "4611686018427387905")
-		num := value.AsNumber()
-		value.chain.assertFailed(t)
-		num.chain.assertFailed(t)
-		assert.Equal(t, float64(0), num.Raw())
-	})
-
-	t.Run("base10_float_precision", func(t *testing.T) {
-		value := NewString(reporter, "4611686018427387905")
-		num := value.AsNumber(10)
-		value.chain.assertFailed(t)
-		num.chain.assertFailed(t)
-		assert.Equal(t, float64(0), num.Raw())
-	})
-
-	t.Run("base16_float_precision_max", func(t *testing.T) {
-		value := NewString(reporter, "8000000000000001")
-		num := value.AsNumber(16)
-		value.chain.assertFailed(t)
-		num.chain.assertFailed(t)
-		assert.Equal(t, float64(0), num.Raw())
-	})
-
-	t.Run("base16_float_precision_min", func(t *testing.T) {
-		value := NewString(reporter, "-4000000000000001")
-		num := value.AsNumber(16)
-		value.chain.assertFailed(t)
-		num.chain.assertFailed(t)
-		assert.Equal(t, float64(0), num.Raw())
-	})
-
-	t.Run("multiple_base", func(t *testing.T) {
-		value := NewString(reporter, "100")
-		num := value.AsNumber(10, 16)
-		value.chain.assertFailed(t)
-		num.chain.assertFailed(t)
-		assert.Equal(t, float64(0), num.Raw())
-	})
+		})
+	}
 }
 
 func TestString_AsBoolean(t *testing.T) {
