@@ -824,7 +824,19 @@ func (n *Number) IsUint(bits ...int) *Number {
 	}
 
 	inum, acc := big.NewFloat(n.value).Int(nil)
-	if !(acc == big.Exact && inum.IsUint64()) {
+	if !(acc == big.Exact) {
+		opChain.fail(AssertionFailure{
+			Type:   AssertType,
+			Actual: &AssertionValue{n.value},
+			Errors: []error{
+				errors.New("expected: number is unsigned integer"),
+			},
+		})
+		return n
+	}
+
+	imin := big.NewInt(0)
+	if inum.Cmp(imin) < 0 {
 		opChain.fail(AssertionFailure{
 			Type:   AssertType,
 			Actual: &AssertionValue{n.value},
@@ -840,8 +852,7 @@ func (n *Number) IsUint(bits ...int) *Number {
 		imax := new(big.Int)
 		imax.Lsh(big.NewInt(1), uint(bitSize))
 		imax.Sub(imax, big.NewInt(1))
-		imin := big.NewInt(0)
-		if inum.Cmp(imin) < 0 || inum.Cmp(imax) > 0 {
+		if inum.Cmp(imax) > 0 {
 			opChain.fail(AssertionFailure{
 				Type:   AssertInRange,
 				Actual: &AssertionValue{n.value},
@@ -896,35 +907,37 @@ func (n *Number) NotUint(bits ...int) *Number {
 	if !math.IsNaN(n.value) {
 		inum, acc := big.NewFloat(n.value).Int(nil)
 		if acc == big.Exact {
-			if len(bits) == 0 && inum.IsUint64() {
-				opChain.fail(AssertionFailure{
-					Type:   AssertType,
-					Actual: &AssertionValue{n.value},
-					Errors: []error{
-						errors.New("expected: number is not unsigned integer"),
-					},
-				})
-				return n
-			}
-
-			bitSize := bits[0]
-			imax := new(big.Int)
-			imax.Lsh(big.NewInt(1), uint(bitSize))
-			imax.Sub(imax, big.NewInt(1))
 			imin := big.NewInt(0)
-			if !(inum.Cmp(imin) < 0 || inum.Cmp(imax) > 0) {
-				opChain.fail(AssertionFailure{
-					Type:   AssertNotInRange,
-					Actual: &AssertionValue{n.value},
-					Expected: &AssertionValue{AssertionRange{
-						Min: intBoundary{imin, -1, 0},
-						Max: intBoundary{imax, +1, bitSize},
-					}},
-					Errors: []error{
-						fmt.Errorf("expected: number doesn't fit %d-bit unsigned integer", bitSize),
-					},
-				})
-				return n
+			if inum.Cmp(imin) >= 0 {
+				if len(bits) == 0 {
+					opChain.fail(AssertionFailure{
+						Type:   AssertType,
+						Actual: &AssertionValue{n.value},
+						Errors: []error{
+							errors.New("expected: number is not unsigned integer"),
+						},
+					})
+					return n
+				}
+
+				bitSize := bits[0]
+				imax := new(big.Int)
+				imax.Lsh(big.NewInt(1), uint(bitSize))
+				imax.Sub(imax, big.NewInt(1))
+				if inum.Cmp(imax) <= 0 {
+					opChain.fail(AssertionFailure{
+						Type:   AssertNotInRange,
+						Actual: &AssertionValue{n.value},
+						Expected: &AssertionValue{AssertionRange{
+							Min: intBoundary{imin, -1, 0},
+							Max: intBoundary{imax, +1, bitSize},
+						}},
+						Errors: []error{
+							fmt.Errorf("expected: number doesn't fit %d-bit unsigned integer", bitSize),
+						},
+					})
+					return n
+				}
 			}
 		}
 	}
