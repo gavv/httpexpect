@@ -82,6 +82,27 @@ func (e *Environment) Delete(key string) {
 	delete(e.data, key)
 }
 
+// Clear will delete all key value pairs from the environment
+//
+// Example:
+//
+//	env := NewEnvironment(t)
+//	env.Put("key1", 123)
+//	env.Put("key2", 456)
+//	env.Clear()
+func (e *Environment) Clear() {
+	opChain := e.chain.enter("Clear Data")
+	defer opChain.leave()
+
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	for key := range e.data {
+		delete(e.data, key)
+	}
+
+}
+
 // Has returns true if value exists in the environment.
 //
 // Example:
