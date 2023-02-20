@@ -608,32 +608,120 @@ func TestNumber_IsInt(t *testing.T) {
 			chain.assertNotFailed(t)
 	})
 
-	t.Run("without bit size", func(t *testing.T) {
-		NewNumber(reporter, -1234).IsInt().
+	t.Run("check boundary sets", func(t *testing.T) {
+		NewNumber(reporter, 0).IsInt().
 			chain.assertNotFailed(t)
 
-		NewNumber(reporter, 1234.00001).IsInt().
+		NewNumber(reporter, 0).NotInt().
 			chain.assertFailed(t)
 
-		NewNumber(reporter, 1234).NotInt().
-			chain.assertFailed(t)
-
-		NewNumber(reporter, 1234.00001).NotInt().
-			chain.assertNotFailed(t)
-	})
-
-	t.Run("with bit size", func(t *testing.T) {
-		NewNumber(reporter, -math.MaxInt8).IsInt(32).
+		NewNumber(reporter, -math.MaxInt32-1).IsInt().
 			chain.assertNotFailed(t)
 
-		NewNumber(reporter, math.MaxInt64).IsInt(32).
+		NewNumber(reporter, -math.MaxInt32-1).NotInt().
 			chain.assertFailed(t)
 
-		NewNumber(reporter, math.MaxInt64).NotInt(32).
+		NewNumber(reporter, -math.MaxInt32).IsInt().
 			chain.assertNotFailed(t)
 
-		NewNumber(reporter, math.MaxInt8).NotInt(32).
+		NewNumber(reporter, -math.MaxInt32).NotInt().
 			chain.assertFailed(t)
+
+		NewNumber(reporter, -math.MaxInt32+1).IsInt().
+			chain.assertNotFailed(t)
+
+		NewNumber(reporter, -math.MaxInt32+1).NotInt().
+			chain.assertFailed(t)
+
+		NewNumber(reporter, math.MaxInt32-1).IsInt().
+			chain.assertNotFailed(t)
+
+		NewNumber(reporter, math.MaxInt32-1).NotInt().
+			chain.assertFailed(t)
+
+		NewNumber(reporter, math.MaxInt32).IsInt().
+			chain.assertNotFailed(t)
+
+		NewNumber(reporter, math.MaxInt32).NotInt().
+			chain.assertFailed(t)
+
+		NewNumber(reporter, math.MaxInt32+1).IsInt().
+			chain.assertNotFailed(t)
+
+		NewNumber(reporter, math.MaxInt32+1).NotInt().
+			chain.assertFailed(t)
+
+		NewNumber(reporter, -math.MaxInt32-1).IsInt(32).
+			chain.assertNotFailed(t)
+
+		NewNumber(reporter, -math.MaxInt32-1).NotInt(32).
+			chain.assertFailed(t)
+
+		NewNumber(reporter, -math.MaxInt32).IsInt(32).
+			chain.assertNotFailed(t)
+
+		NewNumber(reporter, -math.MaxInt32).NotInt(32).
+			chain.assertFailed(t)
+
+		NewNumber(reporter, -math.MaxInt32+1).IsInt(32).
+			chain.assertNotFailed(t)
+
+		NewNumber(reporter, -math.MaxInt32+1).NotInt(32).
+			chain.assertFailed(t)
+
+		NewNumber(reporter, math.MaxInt32-1).IsInt(32).
+			chain.assertNotFailed(t)
+
+		NewNumber(reporter, math.MaxInt32-1).NotInt(32).
+			chain.assertFailed(t)
+
+		NewNumber(reporter, math.MaxInt32).IsInt(32).
+			chain.assertNotFailed(t)
+
+		NewNumber(reporter, math.MaxInt32).NotInt(32).
+			chain.assertFailed(t)
+
+		NewNumber(reporter, math.MaxInt32+1).IsInt(32).
+			chain.assertFailed(t)
+
+		NewNumber(reporter, math.MaxInt32+1).NotInt(32).
+			chain.assertNotFailed(t)
+
+		NewNumber(reporter, -math.MaxInt16-1).IsInt(16).
+			chain.assertNotFailed(t)
+
+		NewNumber(reporter, -math.MaxInt16-1).NotInt(16).
+			chain.assertFailed(t)
+
+		NewNumber(reporter, -math.MaxInt16).IsInt(16).
+			chain.assertNotFailed(t)
+
+		NewNumber(reporter, -math.MaxInt16).NotInt(16).
+			chain.assertFailed(t)
+
+		NewNumber(reporter, -math.MaxInt16+1).IsInt(16).
+			chain.assertNotFailed(t)
+
+		NewNumber(reporter, -math.MaxInt16+1).NotInt(16).
+			chain.assertFailed(t)
+
+		NewNumber(reporter, math.MaxInt16-1).IsInt(16).
+			chain.assertNotFailed(t)
+
+		NewNumber(reporter, math.MaxInt16-1).NotInt(16).
+			chain.assertFailed(t)
+
+		NewNumber(reporter, math.MaxInt16).IsInt(16).
+			chain.assertNotFailed(t)
+
+		NewNumber(reporter, math.MaxInt16).NotInt(16).
+			chain.assertFailed(t)
+
+		NewNumber(reporter, math.MaxInt16+1).IsInt(16).
+			chain.assertFailed(t)
+
+		NewNumber(reporter, math.MaxInt16+1).NotInt(16).
+			chain.assertNotFailed(t)
 	})
 
 	t.Run("check edge cases", func(t *testing.T) {
