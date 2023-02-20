@@ -666,7 +666,7 @@ func (n *Number) IsInt(bits ...int) *Number {
 	}
 
 	inum, acc := big.NewFloat(n.value).Int(nil)
-	if acc != big.Exact {
+	if !(acc == big.Exact) {
 		opChain.fail(AssertionFailure{
 			Type:   AssertType,
 			Actual: &AssertionValue{n.value},
