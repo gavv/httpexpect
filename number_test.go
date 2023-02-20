@@ -972,6 +972,12 @@ func TestNumber_IsFinite(t *testing.T) {
 	NewNumber(reporter, 1234).NotFinite().
 		chain.assertFailed(t)
 
+	NewNumber(reporter, 1234.001234).IsFinite().
+		chain.assertNotFailed(t)
+
+	NewNumber(reporter, 1234.001234).NotFinite().
+		chain.assertFailed(t)
+
 	NewNumber(reporter, math.Inf(0)).IsFinite().
 		chain.assertFailed(t)
 
