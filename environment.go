@@ -2,8 +2,11 @@ package httpexpect
 
 import (
 	"errors"
+	"sort"
 	"sync"
 	"time"
+
+	"github.com/gobwas/glob"
 )
 
 // Environment provides a container for arbitrary data shared between tests.
@@ -422,6 +425,75 @@ func (e *Environment) GetTime(key string) time.Time {
 	}
 
 	return casted
+}
+
+// List returns a sorted slice of keys.
+//
+// Example:
+//
+//	env := NewEnvironment(t)
+//	env.Put("key1", "v1")
+//	env.Put("key2", "v2")
+//	keys := env.List()
+func (e *Environment) List() []string {
+	opChain := e.chain.enter("List()")
+	defer opChain.leave()
+
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+
+	keys := []string{}
+
+	for key := range e.data {
+		keys = append(keys, key)
+	}
+
+	sort.Slice(keys, func(i, j int) bool {
+		return keys[i] < keys[j]
+	})
+	return keys
+}
+
+// Match accepts a glob pattern and returns a sorted slice of
+// keys that match pattern.
+//
+// Example:
+//
+//	env := NewEnvironment(t)
+//	env.Put("key1", "v1")
+//	env.Put("key2", "v2")
+//	env.Put("abc", "v3")
+//	keys := env.Match("k*")
+func (e *Environment) Match(pattern string) []string {
+	opChain := e.chain.enter("Match(%q)", pattern)
+	defer opChain.leave()
+
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+
+	keys := []string{}
+	glb, err := glob.Compile(pattern)
+	if err != nil {
+		opChain.fail(AssertionFailure{
+			Type:   AssertType,
+			Actual: &AssertionValue{pattern},
+			Errors: []error{
+				errors.New("expected: valid glob pattern"),
+			},
+		})
+		return keys
+	}
+
+	for key := range e.data {
+		if glb.Match(key) {
+			keys = append(keys, key)
+		}
+	}
+
+	sort.Slice(keys, func(i, j int) bool {
+		return keys[i] < keys[j]
+	})
+	return keys
 }
 
 func envValue(chain *chain, env map[string]interface{}, key string) (interface{}, bool) {
