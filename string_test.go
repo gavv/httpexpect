@@ -573,21 +573,21 @@ func TestString_AsNumber(t *testing.T) {
 			fail:        false,
 			expectedNum: float64(0x4000000000000000),
 		},
-		"default_float_percision_max": {
+		"default_float_precision_max": {
 			str:  "4611686018427387905",
 			fail: true,
 		},
-		"base10_float_percision_max": {
+		"base10_float_precision_max": {
 			str:  "4611686018427387905",
 			base: []int{10},
 			fail: true,
 		},
-		"base16_float_percision_max": {
+		"base16_float_precision_max": {
 			str:  "8000000000000001",
 			base: []int{16},
 			fail: true,
 		},
-		"base16_float_percision_min": {
+		"base16_float_precision_min": {
 			str:  "-4000000000000001",
 			base: []int{16},
 			fail: true,
