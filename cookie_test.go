@@ -32,7 +32,7 @@ func TestCookie_FailedChain(t *testing.T) {
 		value.NotHasMaxAge()
 	}
 
-	t.Run("failed_chain", func(t *testing.T) {
+	t.Run("failed chain", func(t *testing.T) {
 		chain := newMockChain(t)
 		chain.setFailed()
 
@@ -41,7 +41,7 @@ func TestCookie_FailedChain(t *testing.T) {
 		check(value, false)
 	})
 
-	t.Run("nil_value", func(t *testing.T) {
+	t.Run("nil value", func(t *testing.T) {
 		chain := newMockChain(t)
 
 		value := newCookie(chain, nil)
@@ -49,7 +49,7 @@ func TestCookie_FailedChain(t *testing.T) {
 		check(value, true)
 	})
 
-	t.Run("failed_chain_nil_value", func(t *testing.T) {
+	t.Run("failed chain, nil value", func(t *testing.T) {
 		chain := newMockChain(t)
 		chain.setFailed()
 
