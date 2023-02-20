@@ -1706,6 +1706,37 @@ func TestArray_Transform(t *testing.T) {
 
 		newArray.chain.assertFailed(t)
 	})
+
+	t.Run("canonization", func(t *testing.T) {
+		type (
+			myInt   int
+			myFloat float64
+			myArray []interface{}
+		)
+
+		reporter := newMockReporter(t)
+		array := NewArray(reporter, []interface{}{2, 4, 6})
+
+		newArray := array.Transform(func(_ int, val interface{}) interface{} {
+			if val, ok := val.(float64); ok {
+				return myInt(val)
+			}
+			t.Errorf("failed transformation")
+			return nil
+		})
+
+		newArray.IsEqual([]interface{}{myFloat(2), myFloat(4), myFloat(6)})
+		newArray.chain.assertNotFailed(t)
+		newArray.chain.clearFailed()
+
+		newArray.IsEqual([]interface{}{"2.0", myFloat(4), myFloat(6)})
+		newArray.chain.assertFailed(t)
+		newArray.chain.clearFailed()
+
+		newArray.IsEqual([]interface{}{2.0, myFloat(4), 6.0})
+		newArray.chain.assertNotFailed(t)
+		newArray.chain.clearFailed()
+	})
 }
 
 func TestArray_Filter(t *testing.T) {
