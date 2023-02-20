@@ -691,8 +691,8 @@ func (n *Number) IsInt(bits ...int) *Number {
 				Type:   AssertInRange,
 				Actual: &AssertionValue{n.value},
 				Expected: &AssertionValue{AssertionRange{
-					fmt.Sprintf("-2^%d", bitSize-1),
-					fmt.Sprintf("2^%d", bitSize-1),
+					Min: intBoundary{imin, -1, bitSize - 1},
+					Max: intBoundary{imax, +1, bitSize - 1},
 				}},
 				Errors: []error{
 					fmt.Errorf("expected: number is %d-bit integer", bitSize),
@@ -764,8 +764,8 @@ func (n *Number) NotInt(bits ...int) *Number {
 					Type:   AssertNotInRange,
 					Actual: &AssertionValue{n.value},
 					Expected: &AssertionValue{AssertionRange{
-						fmt.Sprintf("-2^%d", bitSize-1),
-						fmt.Sprintf("2^%d", bitSize-1),
+						Min: intBoundary{imin, -1, bitSize - 1},
+						Max: intBoundary{imax, +1, bitSize - 1},
 					}},
 					Errors: []error{
 						fmt.Errorf("expected: number doesn't fit %d-bit integer", bitSize),
@@ -992,4 +992,18 @@ func (n *Number) NotFinite() *Number {
 	}
 
 	return n
+}
+
+type intBoundary struct {
+	val  *big.Int
+	sign int
+	bits int
+}
+
+func (b intBoundary) String() string {
+	if b.sign > 0 {
+		return fmt.Sprintf("2^%d-1 (%s)", b.bits, b.val)
+	} else {
+		return fmt.Sprintf("-2^%d (%s)", b.bits, b.val)
+	}
 }
