@@ -724,21 +724,27 @@ func TestNumber_IsInt(t *testing.T) {
 			chain.assertNotFailed(t)
 	})
 
-	t.Run("check edge cases", func(t *testing.T) {
-		NewNumber(reporter, 20).IsInt(3).
+	t.Run("check non-numbers", func(t *testing.T) {
+		NewNumber(reporter, math.Inf(0)).IsInt().
 			chain.assertFailed(t)
+
+		NewNumber(reporter, math.Inf(0)).NotInt().
+			chain.assertNotFailed(t)
 
 		NewNumber(reporter, math.Inf(1)).IsInt().
 			chain.assertFailed(t)
 
-		NewNumber(reporter, math.NaN()).IsInt().
-			chain.assertFailed(t)
-
-		NewNumber(reporter, 20).NotInt(3).
+		NewNumber(reporter, math.Inf(1)).NotInt().
 			chain.assertNotFailed(t)
+
+		NewNumber(reporter, math.Inf(-1)).IsInt().
+			chain.assertFailed(t)
 
 		NewNumber(reporter, math.Inf(-1)).NotInt().
 			chain.assertNotFailed(t)
+
+		NewNumber(reporter, math.NaN()).IsInt().
+			chain.assertFailed(t)
 
 		NewNumber(reporter, math.NaN()).NotInt().
 			chain.assertNotFailed(t)
@@ -888,21 +894,27 @@ func TestNumber_IsUint(t *testing.T) {
 			chain.assertNotFailed(t)
 	})
 
-	t.Run("check edge cases", func(t *testing.T) {
-		NewNumber(reporter, 20).IsUint(3).
+	t.Run("check non-numbers", func(t *testing.T) {
+		NewNumber(reporter, math.Inf(0)).IsUint().
 			chain.assertFailed(t)
+
+		NewNumber(reporter, math.Inf(0)).NotUint().
+			chain.assertNotFailed(t)
+
+		NewNumber(reporter, math.Inf(1)).IsUint().
+			chain.assertFailed(t)
+
+		NewNumber(reporter, math.Inf(1)).NotUint().
+			chain.assertNotFailed(t)
 
 		NewNumber(reporter, math.Inf(-1)).IsUint().
 			chain.assertFailed(t)
 
-		NewNumber(reporter, math.NaN()).IsUint().
-			chain.assertFailed(t)
-
-		NewNumber(reporter, 20).NotUint(3).
-			chain.assertNotFailed(t)
-
 		NewNumber(reporter, math.Inf(-1)).NotUint().
 			chain.assertNotFailed(t)
+
+		NewNumber(reporter, math.NaN()).IsUint().
+			chain.assertFailed(t)
 
 		NewNumber(reporter, math.NaN()).NotUint().
 			chain.assertNotFailed(t)
@@ -925,17 +937,29 @@ func TestNumber_IsFinite(t *testing.T) {
 	NewNumber(reporter, 1234).IsFinite().
 		chain.assertNotFailed(t)
 
-	NewNumber(reporter, math.Inf(0)).IsFinite().
-		chain.assertFailed(t)
-
-	NewNumber(reporter, math.NaN()).IsFinite().
-		chain.assertFailed(t)
-
 	NewNumber(reporter, 1234).NotFinite().
+		chain.assertFailed(t)
+
+	NewNumber(reporter, math.Inf(0)).IsFinite().
 		chain.assertFailed(t)
 
 	NewNumber(reporter, math.Inf(0)).NotFinite().
 		chain.assertNotFailed(t)
+
+	NewNumber(reporter, math.Inf(-1)).IsFinite().
+		chain.assertFailed(t)
+
+	NewNumber(reporter, math.Inf(-1)).NotFinite().
+		chain.assertNotFailed(t)
+
+	NewNumber(reporter, math.Inf(+1)).IsFinite().
+		chain.assertFailed(t)
+
+	NewNumber(reporter, math.Inf(+1)).NotFinite().
+		chain.assertNotFailed(t)
+
+	NewNumber(reporter, math.NaN()).IsFinite().
+		chain.assertFailed(t)
 
 	NewNumber(reporter, math.NaN()).NotFinite().
 		chain.assertNotFailed(t)
