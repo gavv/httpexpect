@@ -1,6 +1,7 @@
 package httpexpect
 
 import (
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -1298,6 +1299,44 @@ func TestObject_Transform(t *testing.T) {
 		newObject := object.Transform(nil)
 
 		newObject.chain.assertFailed(t)
+	})
+
+	t.Run("canonization", func(ts *testing.T) {
+		type (
+			myMap   map[string]interface{}
+			myInt   int
+			myFloat float64
+		)
+
+		reporter := newMockReporter(ts)
+
+		object := NewObject(reporter, map[string]interface{}{
+			"foo": "123",
+			"bar": "456",
+			"baz": "b",
+		})
+
+		newObject := object.Transform(func(_ string, val interface{}) interface{} {
+			if v, err := strconv.ParseFloat(val.(string), 64); err == nil {
+				return myInt(v)
+			} else {
+				return val
+			}
+		})
+
+		expectedMap := myMap{"foo": 123.0, "bar": myFloat(456), "baz": "b"}
+
+		newObject.IsEqual(expectedMap)
+		newObject.chain.assertNotFailed(ts)
+		newObject.chain.clearFailed()
+
+		newObject.IsValueEqual("foo", myFloat(123))
+		newObject.chain.assertNotFailed(ts)
+		newObject.chain.clearFailed()
+
+		newObject.IsValueEqual("bar", 456.0)
+		newObject.chain.assertNotFailed(ts)
+		newObject.chain.clearFailed()
 	})
 }
 
