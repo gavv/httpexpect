@@ -110,7 +110,7 @@ func TestMatch_Getters(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestMatch_Empty(t *testing.T) {
+func TestMatch_IsEmpty(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value1 := NewMatch(reporter, []string{"m"}, nil)
@@ -146,71 +146,73 @@ func TestMatch_Empty(t *testing.T) {
 }
 
 func TestMatch_Values(t *testing.T) {
-	reporter := newMockReporter(t)
+	t.Run("empty", func(t *testing.T) {
+		reporter := newMockReporter(t)
 
-	value := NewMatch(reporter, []string{"m0", "m1", "m2"}, nil)
+		value1 := NewMatch(reporter, nil, nil)
+		value2 := NewMatch(reporter, []string{}, nil)
+		value3 := NewMatch(reporter, []string{"m0"}, nil)
 
-	value.Values("m1", "m2")
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+		value1.Values()
+		value1.chain.assertNotFailed(t)
+		value1.chain.clearFailed()
 
-	value.Values("m2", "m1")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+		value1.Values("")
+		value1.chain.assertFailed(t)
+		value1.chain.clearFailed()
 
-	value.Values("m1")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+		value2.Values()
+		value2.chain.assertNotFailed(t)
+		value2.chain.clearFailed()
 
-	value.Values()
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+		value2.Values("")
+		value2.chain.assertFailed(t)
+		value2.chain.clearFailed()
 
-	value.NotValues("m1", "m2")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+		value3.Values()
+		value3.chain.assertNotFailed(t)
+		value3.chain.clearFailed()
 
-	value.NotValues("m2", "m1")
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+		value3.Values("m0")
+		value3.chain.assertFailed(t)
+		value3.chain.clearFailed()
+	})
 
-	value.NotValues("m1")
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+	t.Run("not empty", func(t *testing.T) {
+		reporter := newMockReporter(t)
 
-	value.NotValues()
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-}
+		value := NewMatch(reporter, []string{"m0", "m1", "m2"}, nil)
 
-func TestMatch_ValuesEmpty(t *testing.T) {
-	reporter := newMockReporter(t)
+		value.Values("m1", "m2")
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
-	value1 := NewMatch(reporter, nil, nil)
-	value2 := NewMatch(reporter, []string{}, nil)
-	value3 := NewMatch(reporter, []string{"m0"}, nil)
+		value.Values("m2", "m1")
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
 
-	value1.Values()
-	value1.chain.assertNotFailed(t)
-	value1.chain.clearFailed()
+		value.Values("m1")
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
 
-	value1.Values("")
-	value1.chain.assertFailed(t)
-	value1.chain.clearFailed()
+		value.Values()
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
 
-	value2.Values()
-	value2.chain.assertNotFailed(t)
-	value2.chain.clearFailed()
+		value.NotValues("m1", "m2")
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
 
-	value2.Values("")
-	value2.chain.assertFailed(t)
-	value2.chain.clearFailed()
+		value.NotValues("m2", "m1")
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
-	value3.Values()
-	value3.chain.assertNotFailed(t)
-	value3.chain.clearFailed()
+		value.NotValues("m1")
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
-	value3.Values("m0")
-	value3.chain.assertFailed(t)
-	value3.chain.clearFailed()
+		value.NotValues()
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
+	})
 }

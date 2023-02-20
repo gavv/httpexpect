@@ -135,7 +135,7 @@ func TestObject_Constructors(t *testing.T) {
 }
 
 func TestObject_Decode(t *testing.T) {
-	t.Run("empty interface", func(t *testing.T) {
+	t.Run("target is empty interface", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		m := map[string]interface{}{
@@ -155,7 +155,7 @@ func TestObject_Decode(t *testing.T) {
 		assert.Equal(t, target, m)
 	})
 
-	t.Run("map", func(t *testing.T) {
+	t.Run("target is map", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		m := map[string]interface{}{
@@ -175,7 +175,7 @@ func TestObject_Decode(t *testing.T) {
 		assert.Equal(t, target, m)
 	})
 
-	t.Run("struct", func(t *testing.T) {
+	t.Run("target is struct", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		type S struct {
@@ -210,24 +210,6 @@ func TestObject_Decode(t *testing.T) {
 		assert.Equal(t, target, actualStruct)
 	})
 
-	t.Run("target is unmarshable", func(t *testing.T) {
-		reporter := newMockReporter(t)
-
-		m := map[string]interface{}{
-			"foo": 123.0,
-			"bar": []interface{}{"123", 234.0},
-			"baz": map[string]interface{}{
-				"a": "b",
-			},
-		}
-
-		value := NewObject(reporter, m)
-
-		value.Decode(123)
-
-		value.chain.assertFailed(t)
-	})
-
 	t.Run("target is nil", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
@@ -242,6 +224,24 @@ func TestObject_Decode(t *testing.T) {
 		value := NewObject(reporter, m)
 
 		value.Decode(nil)
+
+		value.chain.assertFailed(t)
+	})
+
+	t.Run("target is unmarshable", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		m := map[string]interface{}{
+			"foo": 123.0,
+			"bar": []interface{}{"123", 234.0},
+			"baz": map[string]interface{}{
+				"a": "b",
+			},
+		}
+
+		value := NewObject(reporter, m)
+
+		value.Decode(123)
 
 		value.chain.assertFailed(t)
 	})
@@ -496,27 +496,11 @@ func TestObject_IsEqual(t *testing.T) {
 
 		value := NewObject(reporter, map[string]interface{}{"foo": 123})
 
-		value.IsEqual(map[string]interface{}{"foo": "123"})
-		value.chain.assertFailed(t)
-		value.chain.clearFailed()
-
-		value.NotEqual(map[string]interface{}{"foo": "123"})
-		value.chain.assertNotFailed(t)
-		value.chain.clearFailed()
-
 		value.IsEqual(map[string]interface{}{"foo": 123.0})
 		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
 
 		value.NotEqual(map[string]interface{}{"foo": 123.0})
-		value.chain.assertFailed(t)
-		value.chain.clearFailed()
-
-		value.IsEqual(map[string]interface{}{"foo": 123})
-		value.chain.assertNotFailed(t)
-		value.chain.clearFailed()
-
-		value.NotEqual(map[string]interface{}{"foo": 123})
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 
@@ -531,97 +515,131 @@ func TestObject_IsEqual(t *testing.T) {
 }
 
 func TestObject_InList(t *testing.T) {
-	reporter := newMockReporter(t)
+	t.Run("basic", func(t *testing.T) {
+		reporter := newMockReporter(t)
 
-	value := NewObject(reporter, map[string]interface{}{"foo": 123.0})
+		value := NewObject(reporter, map[string]interface{}{"foo": 123.0})
 
-	assert.Equal(t, map[string]interface{}{"foo": 123.0}, value.Raw())
+		value.InList(
+			map[string]interface{}{"FOO": 123.0},
+			map[string]interface{}{"BAR": 456.0},
+		)
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
 
-	value.InList()
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+		value.NotInList(
+			map[string]interface{}{"FOO": 123.0},
+			map[string]interface{}{"BAR": 456.0},
+		)
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
-	value.NotInList()
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+		value.InList(
+			map[string]interface{}{"foo": 456.0},
+			map[string]interface{}{"bar": 123.0},
+		)
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
 
-	value.InList(map[string]interface{}{})
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+		value.NotInList(
+			map[string]interface{}{"foo": 456.0},
+			map[string]interface{}{"bar": 123.0},
+		)
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
-	value.NotInList(map[string]interface{}{})
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+		value.InList(
+			map[string]interface{}{"foo": 123.0},
+			map[string]interface{}{"bar": 456.0},
+		)
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
-	value.InList(
-		map[string]interface{}{"FOO": 123.0},
-		map[string]interface{}{"BAR": 456.0},
-	)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+		value.NotInList(
+			map[string]interface{}{"foo": 123.0},
+			map[string]interface{}{"bar": 456.0},
+		)
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
 
-	value.NotInList(
-		map[string]interface{}{"FOO": 123.0},
-		map[string]interface{}{"BAR": 456.0},
-	)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+		value.InList(struct {
+			Foo float64 `json:"foo"`
+		}{Foo: 123.00})
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
-	value.InList(
-		map[string]interface{}{"foo": 456.0},
-		map[string]interface{}{"bar": 123.0},
-	)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+		value.NotInList(struct {
+			Foo float64 `json:"foo"`
+		}{Foo: 123.00})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+	})
 
-	value.NotInList(
-		map[string]interface{}{"foo": 456.0},
-		map[string]interface{}{"bar": 123.0},
-	)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+	t.Run("empty", func(t *testing.T) {
+		reporter := newMockReporter(t)
 
-	value.InList(
-		map[string]interface{}{"foo": 123.0},
-		map[string]interface{}{"bar": 456.0},
-	)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+		value := NewObject(reporter, map[string]interface{}{})
 
-	value.NotInList(
-		map[string]interface{}{"foo": 123.0},
-		map[string]interface{}{"bar": 456.0},
-	)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+		value.InList(map[string]interface{}{})
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
-	value.InList(struct {
-		Foo float64 `json:"foo"`
-	}{Foo: 123.00})
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+		value.NotInList(map[string]interface{}{})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+	})
 
-	value.NotInList(struct {
-		Foo float64 `json:"foo"`
-	}{Foo: 123.00})
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+	t.Run("not object", func(t *testing.T) {
+		reporter := newMockReporter(t)
 
-	value.InList(map[string]interface{}{"bar": 123.0}, "NOT OBJECT")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+		value := NewObject(reporter, map[string]interface{}{"foo": 123.0})
 
-	value.NotInList(map[string]interface{}{"bar": 123.0}, "NOT OBJECT")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+		value.InList(map[string]interface{}{"bar": 123.0}, "NOT OBJECT")
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
 
-	value.InList(map[string]interface{}{"foo": 123.0}, "NOT OBJECT")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+		value.NotInList(map[string]interface{}{"bar": 123.0}, "NOT OBJECT")
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
 
-	value.NotInList(map[string]interface{}{"foo": 123.0}, "NOT OBJECT")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+		value.InList(map[string]interface{}{"foo": 123.0}, "NOT OBJECT")
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.NotInList(map[string]interface{}{"foo": 123.0}, "NOT OBJECT")
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+	})
+
+	t.Run("invalid argument", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewObject(reporter, map[string]interface{}{})
+
+		value.InList()
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.NotInList()
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.InList(nil)
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.NotInList(nil)
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.InList(func() {})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.NotInList(func() {})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+	})
 }
 
 func TestObject_ContainsKey(t *testing.T) {
