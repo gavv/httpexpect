@@ -179,7 +179,7 @@ func TestString_Length(t *testing.T) {
 	assert.Equal(t, 7.0, num.Raw())
 }
 
-func TestString_IsEmpty(t *testing.T) {
+func TestString_Empty(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	cases := map[string]struct {
@@ -197,7 +197,6 @@ func TestString_IsEmpty(t *testing.T) {
 			if value.wantEmpty {
 				childValue.IsEmpty()
 				childValue.chain.assertNotFailed(t)
-				childValue.chain.clearFailed()
 
 				childValue.NotEmpty()
 				childValue.chain.assertFailed(t)
@@ -505,7 +504,6 @@ func TestString_Ascii(t *testing.T) {
 			if value.wantASCII {
 				childValue.IsASCII()
 				childValue.chain.assertNotFailed(t)
-				childValue.chain.clearFailed()
 
 				childValue.NotASCII()
 				childValue.chain.assertFailed(t)
