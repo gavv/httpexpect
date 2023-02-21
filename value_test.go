@@ -256,9 +256,9 @@ func TestValue_Casts(t *testing.T) {
 }
 
 func TestValue_GetObject(t *testing.T) {
-	reporter := newMockReporter(t)
-
 	type myMap map[string]interface{}
+
+	reporter := newMockReporter(t)
 
 	cases := map[string]struct {
 		data           interface{}
@@ -293,9 +293,9 @@ func TestValue_GetObject(t *testing.T) {
 }
 
 func TestValue_GetArray(t *testing.T) {
-	reporter := newMockReporter(t)
-
 	type myArray []interface{}
+
+	reporter := newMockReporter(t)
 
 	cases := map[string]struct {
 		data          interface{}
@@ -340,9 +340,9 @@ func TestValue_GetString(t *testing.T) {
 }
 
 func TestValue_GetNumber(t *testing.T) {
-	reporter := newMockReporter(t)
-
 	type myInt int
+
+	reporter := newMockReporter(t)
 
 	cases := map[string]struct {
 		data        interface{}
