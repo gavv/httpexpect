@@ -25,6 +25,12 @@ func canonNumber(opChain *chain, in interface{}) (out big.Float, ok bool) {
 			ok = false
 		}
 	}()
+
+	if in != in {
+		out, ok = *big.NewFloat(0), false
+		return
+	}
+
 	out, ok = canonNumberConvert(in)
 	if !ok {
 		opChain.fail(AssertionFailure{
@@ -201,6 +207,10 @@ func canonDecode(opChain *chain, value interface{}, target interface{}) {
 		return
 	}
 
+	jsonDecode(opChain, b, target)
+}
+
+func jsonDecode(opChain *chain, b []byte, target interface{}) {
 	reader := bytes.NewReader(b)
 	dec := json.NewDecoder(reader)
 	dec.UseNumber()
@@ -218,5 +228,61 @@ func canonDecode(opChain *chain, value interface{}, target interface{}) {
 			})
 			return
 		}
+	}
+}
+
+func canonNumberDecode(opChain *chain, value big.Float, target interface{}) {
+	if target == nil {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected nil target argument"),
+			},
+		})
+		return
+	}
+	t := reflect.Indirect(reflect.ValueOf(target)).Kind()
+	switch t {
+	case reflect.Float64:
+		f, _ := value.Float64()
+		canonDecode(opChain, f, target)
+	case reflect.Float32:
+		f, _ := value.Float32()
+		canonDecode(opChain, f, target)
+	case reflect.Int8:
+		i, _ := value.Int64()
+		canonDecode(opChain, i, target)
+	case reflect.Int16:
+		i, _ := value.Int64()
+		canonDecode(opChain, i, target)
+	case reflect.Int32:
+		i, _ := value.Int64()
+		canonDecode(opChain, i, target)
+	case reflect.Int64:
+		i, _ := value.Int64()
+		canonDecode(opChain, i, target)
+	case reflect.Int:
+		i, _ := value.Int64()
+		canonDecode(opChain, i, target)
+	case reflect.Uint8:
+		i, _ := value.Int64()
+		canonDecode(opChain, i, target)
+	case reflect.Uint16:
+		i, _ := value.Int64()
+		canonDecode(opChain, i, target)
+	case reflect.Uint32:
+		i, _ := value.Int64()
+		canonDecode(opChain, i, target)
+	case reflect.Uint64:
+		i, _ := value.Int64()
+		canonDecode(opChain, i, target)
+	case reflect.Uint:
+		i, _ := value.Int64()
+		canonDecode(opChain, i, target)
+	case reflect.Interface:
+		f, _ := value.Float64()
+		canonDecode(opChain, f, target)
+	default:
+		canonDecode(opChain, value, target)
 	}
 }

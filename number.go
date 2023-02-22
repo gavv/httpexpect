@@ -1,7 +1,9 @@
 package httpexpect
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"math/big"
 )
 
@@ -76,7 +78,7 @@ func (n *Number) Decode(target interface{}) *Number {
 		return n
 	}
 
-	canonDecode(opChain, n.value, target)
+	canonNumberDecode(opChain, n.value, target)
 	return n
 }
 
@@ -94,7 +96,7 @@ func (n *Number) Path(path string) *Value {
 	opChain := n.chain.enter("Path(%q)", path)
 	defer opChain.leave()
 
-	return jsonPath(opChain, n.value, path)
+	return jsonPath(opChain, json.Number(n.value.String()), path)
 }
 
 // Schema is similar to Value.Schema.
@@ -102,7 +104,7 @@ func (n *Number) Schema(schema interface{}) *Number {
 	opChain := n.chain.enter("Schema()")
 	defer opChain.leave()
 
-	jsonSchema(opChain, n.value, schema)
+	jsonSchema(opChain, json.Number(n.value.String()), schema)
 	return n
 }
 
@@ -126,6 +128,14 @@ func (n *Number) IsEqual(value interface{}) *Number {
 
 	num, ok := canonNumber(opChain, value)
 	if !ok {
+		opChain.fail(AssertionFailure{
+			Type:     AssertEqual,
+			Actual:   &AssertionValue{n.value},
+			Expected: &AssertionValue{num},
+			Errors: []error{
+				errors.New("expected: numbers are equal"),
+			},
+		})
 		return n
 	}
 
@@ -162,11 +172,8 @@ func (n *Number) NotEqual(value interface{}) *Number {
 	}
 
 	num, ok := canonNumber(opChain, value)
-	if !ok {
-		return n
-	}
 
-	if n.value.Cmp(&num) != 0 {
+	if n.value.Cmp(&num) == 0 || !ok {
 		opChain.fail(AssertionFailure{
 			Type:     AssertNotEqual,
 			Actual:   &AssertionValue{n.value},
@@ -202,7 +209,7 @@ func (n *Number) InDelta(value, delta interface{}) *Number {
 	num, ok := canonNumber(opChain, value)
 	del, okDel := canonNumber(opChain, delta)
 
-	if !ok || !okDel {
+	if !ok || !okDel || delta != delta || value != value {
 		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{n.value},
@@ -217,7 +224,7 @@ func (n *Number) InDelta(value, delta interface{}) *Number {
 
 	diff := big.NewFloat(0).Sub(&n.value, &num)
 
-	if diff.Cmp(big.NewFloat(0).Neg(&del)) < 0 || diff.Cmp(&del) > 0 {
+	if diff.Cmp(del.Neg(&del)) < 0 || diff.Cmp(&del) > 0 {
 		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{n.value},
@@ -239,7 +246,7 @@ func (n *Number) InDelta(value, delta interface{}) *Number {
 //
 //	number := NewNumber(t, 123.0)
 //	number.NotInDelta(123.2, 0.1)
-func (n *Number) NotInDelta(value, delta float64) *Number {
+func (n *Number) NotInDelta(value, delta interface{}) *Number {
 	opChain := n.chain.enter("NotInDelta()")
 	defer opChain.leave()
 
@@ -250,7 +257,7 @@ func (n *Number) NotInDelta(value, delta float64) *Number {
 	num, ok := canonNumber(opChain, value)
 	del, okDel := canonNumber(opChain, delta)
 
-	if !ok || !okDel {
+	if !ok || !okDel || delta != delta || value != value {
 		opChain.fail(AssertionFailure{
 			Type:     AssertNotEqual,
 			Actual:   &AssertionValue{n.value},
@@ -263,9 +270,11 @@ func (n *Number) NotInDelta(value, delta float64) *Number {
 		return n
 	}
 
-	diff := big.NewFloat(0).Sub(&n.value, &num)
+	diff := n.value.Sub(&n.value, &num)
+	fmt.Println(diff.Cmp(del.Neg(&del)) < 0, diff.Cmp(&del) > 0)
+	fmt.Println(diff, del.Neg(&del))
 
-	if !(diff.Cmp(big.NewFloat(0).Neg(&del)) < 0 || diff.Cmp(&del) > 0) {
+	if diff.Cmp(del.Neg(&del)) >= 0 && diff.Cmp(&del) <= 0 {
 		opChain.fail(AssertionFailure{
 			Type:     AssertNotEqual,
 			Actual:   &AssertionValue{n.value},
