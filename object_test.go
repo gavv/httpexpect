@@ -1092,8 +1092,8 @@ func TestObject_IsValueEqual(t *testing.T) {
 }
 
 func TestObject_Every(t *testing.T) {
-	t.Run("check value", func(ts *testing.T) {
-		reporter := newMockReporter(ts)
+	t.Run("check value", func(t *testing.T) {
+		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
 			"foo": "123",
 			"bar": "456",
@@ -1107,11 +1107,11 @@ func TestObject_Every(t *testing.T) {
 		})
 
 		assert.Equal(t, 3, invoked)
-		object.chain.assertNotFailed(ts)
+		object.chain.assertNotFailed(t)
 	})
 
-	t.Run("check key", func(ts *testing.T) {
-		reporter := newMockReporter(ts)
+	t.Run("check key", func(t *testing.T) {
+		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
 			"foo": "123",
 			"bar": "456",
@@ -1124,21 +1124,21 @@ func TestObject_Every(t *testing.T) {
 				invoked++
 				switch v {
 				case "123":
-					assert.Equal(ts, "foo", key)
+					assert.Equal(t, "foo", key)
 				case "456":
-					assert.Equal(ts, "bar", key)
+					assert.Equal(t, "bar", key)
 				case "baz":
-					assert.Equal(ts, "baz", key)
+					assert.Equal(t, "baz", key)
 				}
 			}
 		})
 
 		assert.Equal(t, 3, invoked)
-		object.chain.assertNotFailed(ts)
+		object.chain.assertNotFailed(t)
 	})
 
-	t.Run("empty object", func(ts *testing.T) {
-		reporter := newMockReporter(ts)
+	t.Run("empty object", func(t *testing.T) {
+		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{})
 
 		invoked := 0
@@ -1148,11 +1148,11 @@ func TestObject_Every(t *testing.T) {
 		})
 
 		assert.Equal(t, 0, invoked)
-		object.chain.assertNotFailed(ts)
+		object.chain.assertNotFailed(t)
 	})
 
-	t.Run("one assertion fails", func(ts *testing.T) {
-		reporter := newMockReporter(ts)
+	t.Run("one assertion fails", func(t *testing.T) {
+		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{"foo": "", "bar": "bar"})
 
 		invoked := 0
@@ -1162,11 +1162,11 @@ func TestObject_Every(t *testing.T) {
 		})
 
 		assert.Equal(t, 2, invoked)
-		object.chain.assertFailed(ts)
+		object.chain.assertFailed(t)
 	})
 
-	t.Run("all assertions fail", func(ts *testing.T) {
-		reporter := newMockReporter(ts)
+	t.Run("all assertions fail", func(t *testing.T) {
+		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{"foo": "", "bar": ""})
 
 		invoked := 0
@@ -1176,11 +1176,11 @@ func TestObject_Every(t *testing.T) {
 		})
 
 		assert.Equal(t, 2, invoked)
-		object.chain.assertFailed(ts)
+		object.chain.assertFailed(t)
 	})
 
-	t.Run("call order", func(ts *testing.T) {
-		reporter := newMockReporter(ts)
+	t.Run("call order", func(t *testing.T) {
+		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
 			"bar": "123",
 			"baz": "456",
@@ -1201,8 +1201,8 @@ func TestObject_Every(t *testing.T) {
 }
 
 func TestObject_Transform(t *testing.T) {
-	t.Run("check index", func(ts *testing.T) {
-		reporter := newMockReporter(ts)
+	t.Run("check index", func(t *testing.T) {
+		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
 			"foo": "123",
 			"bar": "456",
@@ -1213,21 +1213,21 @@ func TestObject_Transform(t *testing.T) {
 			if v, ok := value.(string); ok {
 				switch v {
 				case "123":
-					assert.Equal(ts, "foo", key)
+					assert.Equal(t, "foo", key)
 				case "456":
-					assert.Equal(ts, "bar", key)
+					assert.Equal(t, "bar", key)
 				case "baz":
-					assert.Equal(ts, "baz", key)
+					assert.Equal(t, "baz", key)
 				}
 			}
 			return value
 		})
 
-		newObject.chain.assertNotFailed(ts)
+		newObject.chain.assertNotFailed(t)
 	})
 
-	t.Run("transform value", func(ts *testing.T) {
-		reporter := newMockReporter(ts)
+	t.Run("transform value", func(t *testing.T) {
+		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
 			"foo": "123",
 			"bar": "456",
@@ -1251,8 +1251,8 @@ func TestObject_Transform(t *testing.T) {
 		)
 	})
 
-	t.Run("empty object", func(ts *testing.T) {
-		reporter := newMockReporter(ts)
+	t.Run("empty object", func(t *testing.T) {
+		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
 			"foo": "123",
 			"bar": "456",
@@ -1266,11 +1266,11 @@ func TestObject_Transform(t *testing.T) {
 			return nil
 		})
 
-		newObject.chain.assertNotFailed(ts)
+		newObject.chain.assertNotFailed(t)
 	})
 
-	t.Run("call order", func(ts *testing.T) {
-		reporter := newMockReporter(ts)
+	t.Run("call order", func(t *testing.T) {
+		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
 			"foo": "123",
 			"bar": "456",
@@ -1288,8 +1288,8 @@ func TestObject_Transform(t *testing.T) {
 		assert.Equal(t, expectedOrder, actualOrder)
 	})
 
-	t.Run("invalid argument", func(ts *testing.T) {
-		reporter := newMockReporter(ts)
+	t.Run("invalid argument", func(t *testing.T) {
+		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
 			"foo": "123",
 			"bar": "456",
@@ -1301,12 +1301,12 @@ func TestObject_Transform(t *testing.T) {
 		newObject.chain.assertFailed(t)
 	})
 
-	t.Run("canonization", func(ts *testing.T) {
+	t.Run("canonization", func(t *testing.T) {
 		type (
 			myInt int
 		)
 
-		reporter := newMockReporter(ts)
+		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
 			"foo": "123",
 			"bar": "456",
@@ -1328,12 +1328,12 @@ func TestObject_Transform(t *testing.T) {
 				"baz": "b",
 			},
 			newObject.Raw())
-		newObject.chain.assertNotFailed(ts)
+		newObject.chain.assertNotFailed(t)
 	})
 }
 
 func TestObject_Filter(t *testing.T) {
-	t.Run("elements of same type", func(ts *testing.T) {
+	t.Run("elements of same type", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
 			"foo": "bar",
@@ -1354,7 +1354,7 @@ func TestObject_Filter(t *testing.T) {
 		object.chain.assertNotFailed(t)
 	})
 
-	t.Run("elements of different types", func(ts *testing.T) {
+	t.Run("elements of different types", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
 			"foo": "bar",
@@ -1375,7 +1375,7 @@ func TestObject_Filter(t *testing.T) {
 		object.chain.assertNotFailed(t)
 	})
 
-	t.Run("empty object", func(ts *testing.T) {
+	t.Run("empty object", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{})
 
@@ -1388,7 +1388,7 @@ func TestObject_Filter(t *testing.T) {
 		object.chain.assertNotFailed(t)
 	})
 
-	t.Run("no match", func(ts *testing.T) {
+	t.Run("no match", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
 			"foo": "bar",
@@ -1409,7 +1409,7 @@ func TestObject_Filter(t *testing.T) {
 		object.chain.assertNotFailed(t)
 	})
 
-	t.Run("assertion fails", func(ts *testing.T) {
+	t.Run("assertion fails", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
 			"foo": "bar", "baz": 6.0,
@@ -1431,7 +1431,7 @@ func TestObject_Filter(t *testing.T) {
 		object.chain.assertNotFailed(t)
 	})
 
-	t.Run("call order", func(ts *testing.T) {
+	t.Run("call order", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
 			"foo":  "bar",
@@ -1453,7 +1453,7 @@ func TestObject_Filter(t *testing.T) {
 }
 
 func TestObject_Find(t *testing.T) {
-	t.Run("elements of same type", func(ts *testing.T) {
+	t.Run("elements of same type", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
 			"foo":  "bar",
@@ -1476,7 +1476,7 @@ func TestObject_Find(t *testing.T) {
 		object.chain.assertNotFailed(t)
 	})
 
-	t.Run("elements of different types", func(ts *testing.T) {
+	t.Run("elements of different types", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
 			"foo":  "bar",
@@ -1502,7 +1502,7 @@ func TestObject_Find(t *testing.T) {
 		object.chain.assertNotFailed(t)
 	})
 
-	t.Run("no match", func(ts *testing.T) {
+	t.Run("no match", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
 			"foo":  "bar",
@@ -1528,7 +1528,7 @@ func TestObject_Find(t *testing.T) {
 		object.chain.assertFailed(t)
 	})
 
-	t.Run("empty object", func(ts *testing.T) {
+	t.Run("empty object", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{})
 
@@ -1544,7 +1544,7 @@ func TestObject_Find(t *testing.T) {
 		object.chain.assertFailed(t)
 	})
 
-	t.Run("predicate returns true, assertion fails, no match", func(ts *testing.T) {
+	t.Run("predicate returns true, assertion fails, no match", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
 			"foo": 1,
@@ -1566,7 +1566,7 @@ func TestObject_Find(t *testing.T) {
 		object.chain.assertFailed(t)
 	})
 
-	t.Run("predicate returns true, assertion fails, have match", func(ts *testing.T) {
+	t.Run("predicate returns true, assertion fails, have match", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
 			"foo": 1,
@@ -1590,7 +1590,7 @@ func TestObject_Find(t *testing.T) {
 		object.chain.assertNotFailed(t)
 	})
 
-	t.Run("invalid argument", func(ts *testing.T) {
+	t.Run("invalid argument", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
 			"foo": 1,
@@ -1611,7 +1611,7 @@ func TestObject_Find(t *testing.T) {
 }
 
 func TestObject_FindAll(t *testing.T) {
-	t.Run("elements of same type", func(ts *testing.T) {
+	t.Run("elements of same type", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
 			"foo":  "bar",
@@ -1641,7 +1641,7 @@ func TestObject_FindAll(t *testing.T) {
 		object.chain.assertNotFailed(t)
 	})
 
-	t.Run("elements of different types", func(ts *testing.T) {
+	t.Run("elements of different types", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
 			"foo":   "bar",
@@ -1674,7 +1674,7 @@ func TestObject_FindAll(t *testing.T) {
 		object.chain.assertNotFailed(t)
 	})
 
-	t.Run("no match", func(ts *testing.T) {
+	t.Run("no match", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
 			"foo":  "bar",
@@ -1706,7 +1706,7 @@ func TestObject_FindAll(t *testing.T) {
 		object.chain.assertNotFailed(t)
 	})
 
-	t.Run("empty object", func(ts *testing.T) {
+	t.Run("empty object", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{})
 
@@ -1728,7 +1728,7 @@ func TestObject_FindAll(t *testing.T) {
 		object.chain.assertNotFailed(t)
 	})
 
-	t.Run("predicate returns true, assertion fails, no match", func(ts *testing.T) {
+	t.Run("predicate returns true, assertion fails, no match", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
 			"foo": 1,
@@ -1757,7 +1757,7 @@ func TestObject_FindAll(t *testing.T) {
 		object.chain.assertNotFailed(t)
 	})
 
-	t.Run("predicate returns true, assertion fails, have matches", func(ts *testing.T) {
+	t.Run("predicate returns true, assertion fails, have matches", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
 			"foo":  "bar",
@@ -1790,7 +1790,7 @@ func TestObject_FindAll(t *testing.T) {
 		object.chain.assertNotFailed(t)
 	})
 
-	t.Run("invalid argument", func(ts *testing.T) {
+	t.Run("invalid argument", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
 			"foo": 1,
@@ -1818,7 +1818,7 @@ func TestObject_FindAll(t *testing.T) {
 }
 
 func TestObject_NotFind(t *testing.T) {
-	t.Run("no match", func(ts *testing.T) {
+	t.Run("no match", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
 			"foo":  "bar",
@@ -1835,7 +1835,7 @@ func TestObject_NotFind(t *testing.T) {
 		object.chain.assertNotFailed(t)
 	})
 
-	t.Run("have match", func(ts *testing.T) {
+	t.Run("have match", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
 			"foo":  "bar",
@@ -1852,7 +1852,7 @@ func TestObject_NotFind(t *testing.T) {
 		object.chain.assertFailed(t)
 	})
 
-	t.Run("empty object", func(ts *testing.T) {
+	t.Run("empty object", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{})
 
@@ -1864,7 +1864,7 @@ func TestObject_NotFind(t *testing.T) {
 		object.chain.assertNotFailed(t)
 	})
 
-	t.Run("predicate returns true, assertion fails, no match", func(ts *testing.T) {
+	t.Run("predicate returns true, assertion fails, no match", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
 			"foo": 1,
@@ -1880,7 +1880,7 @@ func TestObject_NotFind(t *testing.T) {
 		object.chain.assertNotFailed(t)
 	})
 
-	t.Run("predicate returns true, assertion fails, have match", func(ts *testing.T) {
+	t.Run("predicate returns true, assertion fails, have match", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
 			"foo": 1,
@@ -1897,7 +1897,7 @@ func TestObject_NotFind(t *testing.T) {
 		object.chain.assertFailed(t)
 	})
 
-	t.Run("invalid argument", func(ts *testing.T) {
+	t.Run("invalid argument", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
 			"foo": 1,
