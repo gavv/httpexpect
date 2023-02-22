@@ -1585,9 +1585,7 @@ func TestArray_Transform(t *testing.T) {
 
 	t.Run("canonization", func(t *testing.T) {
 		type (
-			myInt   int
-			myFloat float64
-			myArray []interface{}
+			myInt int
 		)
 
 		reporter := newMockReporter(t)
