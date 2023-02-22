@@ -1601,15 +1601,15 @@ func TestArray_Transform(t *testing.T) {
 			return nil
 		})
 
-		newArray.IsEqual([]interface{}{myFloat(2), myFloat(4), myFloat(6)})
+		assert.Equal(t, []interface{}{float64(2), float64(4), float64(6)}, newArray.Raw())
 		newArray.chain.assertNotFailed(t)
 		newArray.chain.clearFailed()
 
-		newArray.IsEqual([]interface{}{"2.0", myFloat(4), myFloat(6)})
-		newArray.chain.assertFailed(t)
+		assert.NotEqual(t, []interface{}{"2.0", float64(4), float64(6)}, newArray.Raw())
+		newArray.chain.assertNotFailed(t)
 		newArray.chain.clearFailed()
 
-		newArray.IsEqual([]interface{}{2.0, myFloat(4), 6.0})
+		assert.Equal(t, []interface{}{2.0, float64(4), 6.0}, newArray.Raw())
 		newArray.chain.assertNotFailed(t)
 		newArray.chain.clearFailed()
 	})
