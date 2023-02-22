@@ -91,16 +91,13 @@ func (e *Environment) Delete(key string) {
 //	env.Put("key2", 456)
 //	env.Clear()
 func (e *Environment) Clear() {
-	opChain := e.chain.enter("Clear Data")
+	opChain := e.chain.enter("Clear()")
 	defer opChain.leave()
 
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
-	for key := range e.data {
-		delete(e.data, key)
-	}
-
+	e.data = make(map[string]interface{})
 }
 
 // Has returns true if value exists in the environment.
