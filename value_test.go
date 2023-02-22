@@ -155,7 +155,7 @@ func TestValue_Alias(t *testing.T) {
 	assert.Equal(t, []string{"foo", "Number()"}, childValue.chain.context.AliasedPath)
 }
 
-func TestValue_Casts(t *testing.T) {
+func TestValue_Getters(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	t.Run("null", func(t *testing.T) {
@@ -258,8 +258,6 @@ func TestValue_Casts(t *testing.T) {
 func TestValue_GetObject(t *testing.T) {
 	type myMap map[string]interface{}
 
-	reporter := newMockReporter(t)
-
 	cases := map[string]struct {
 		data           interface{}
 		fail           bool
@@ -279,6 +277,8 @@ func TestValue_GetObject(t *testing.T) {
 
 	for name, instance := range cases {
 		t.Run(name, func(t *testing.T) {
+			reporter := newMockReporter(t)
+
 			value := NewValue(reporter, instance.data)
 			inner := value.Object()
 
@@ -294,8 +294,6 @@ func TestValue_GetObject(t *testing.T) {
 
 func TestValue_GetArray(t *testing.T) {
 	type myArray []interface{}
-
-	reporter := newMockReporter(t)
 
 	cases := map[string]struct {
 		data          interface{}
@@ -316,6 +314,8 @@ func TestValue_GetArray(t *testing.T) {
 
 	for name, instance := range cases {
 		t.Run(name, func(t *testing.T) {
+			reporter := newMockReporter(t)
+
 			value := NewValue(reporter, instance.data)
 			inner := value.Array()
 
@@ -330,19 +330,44 @@ func TestValue_GetArray(t *testing.T) {
 }
 
 func TestValue_GetString(t *testing.T) {
-	reporter := newMockReporter(t)
+	type myString string
 
-	value := NewValue(reporter, "foo")
-	inner := value.String()
+	cases := map[string]struct {
+		data           interface{}
+		fail           bool
+		expectedString string
+	}{
+		"string": {
+			data:           "foo",
+			fail:           false,
+			expectedString: "foo",
+		},
+		"myString": {
+			data:           myString("foo"),
+			fail:           false,
+			expectedString: "foo",
+		},
+	}
 
-	inner.chain.assertNotFailed(t)
-	assert.Equal(t, "foo", inner.Raw())
+	for name, instance := range cases {
+		t.Run(name, func(t *testing.T) {
+			reporter := newMockReporter(t)
+
+			value := NewValue(reporter, instance.data)
+			inner := value.String()
+
+			if instance.fail {
+				inner.chain.assertFailed(t)
+			} else {
+				inner.chain.assertNotFailed(t)
+				assert.Equal(t, instance.expectedString, inner.Raw())
+			}
+		})
+	}
 }
 
 func TestValue_GetNumber(t *testing.T) {
 	type myInt int
-
-	reporter := newMockReporter(t)
 
 	cases := map[string]struct {
 		data        interface{}
@@ -356,6 +381,8 @@ func TestValue_GetNumber(t *testing.T) {
 
 	for name, instance := range cases {
 		t.Run(name, func(t *testing.T) {
+			reporter := newMockReporter(t)
+
 			value := NewValue(reporter, instance.data)
 			inner := value.Number()
 
@@ -370,20 +397,196 @@ func TestValue_GetNumber(t *testing.T) {
 }
 
 func TestValue_GetBoolean(t *testing.T) {
-	reporter := newMockReporter(t)
+	type myBool bool
 
-	cases := map[string]interface{}{
-		"true":  true,
-		"false": false,
+	cases := map[string]struct {
+		data         interface{}
+		fail         bool
+		expectedBool bool
+	}{
+		"false":  {data: false, fail: false, expectedBool: false},
+		"true":   {data: true, fail: false, expectedBool: true},
+		"myTrue": {data: myBool(true), fail: false, expectedBool: true},
 	}
 
-	for name, data := range cases {
+	for name, instance := range cases {
 		t.Run(name, func(t *testing.T) {
-			value := NewValue(reporter, data)
+			reporter := newMockReporter(t)
+
+			value := NewValue(reporter, instance.data)
 			inner := value.Boolean()
 
-			inner.chain.assertNotFailed(t)
-			assert.Equal(t, data, inner.Raw())
+			if instance.fail {
+				inner.chain.assertFailed(t)
+			} else {
+				inner.chain.assertNotFailed(t)
+				assert.Equal(t, instance.expectedBool, inner.Raw())
+			}
+		})
+	}
+}
+
+func TestValue_IsObject(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	cases := map[string]struct {
+		data       interface{}
+		wantObject bool
+	}{
+		"object": {data: map[string]interface{}{"foo": 123.0}, wantObject: true},
+		"string": {data: "foo", wantObject: false},
+	}
+
+	for name, instance := range cases {
+		t.Run(name, func(t *testing.T) {
+			value := NewValue(reporter, instance.data)
+
+			if instance.wantObject {
+				value.IsObject()
+				value.chain.assertNotFailed(t)
+
+				value.NotObject()
+				value.chain.assertFailed(t)
+			} else {
+				value.IsObject()
+				value.chain.assertFailed(t)
+				value.chain.clearFailed()
+
+				value.NotObject()
+				value.chain.assertNotFailed(t)
+			}
+		})
+	}
+}
+
+func TestValue_IsArray(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	cases := map[string]struct {
+		data      interface{}
+		wantArray bool
+	}{
+		"array":  {data: []interface{}{"foo", "123"}, wantArray: true},
+		"string": {data: "foo", wantArray: false},
+	}
+
+	for name, instance := range cases {
+		t.Run(name, func(t *testing.T) {
+			value := NewValue(reporter, instance.data)
+
+			if instance.wantArray {
+				value.IsArray()
+				value.chain.assertNotFailed(t)
+
+				value.NotArray()
+				value.chain.assertFailed(t)
+			} else {
+				value.IsArray()
+				value.chain.assertFailed(t)
+				value.chain.clearFailed()
+
+				value.NotArray()
+				value.chain.assertNotFailed(t)
+			}
+		})
+	}
+}
+
+func TestValue_IsString(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	cases := map[string]struct {
+		data       interface{}
+		wantString bool
+	}{
+		"string":  {data: "foo", wantString: true},
+		"integer": {data: 123, wantString: false},
+	}
+
+	for name, instance := range cases {
+		t.Run(name, func(t *testing.T) {
+			value := NewValue(reporter, instance.data)
+
+			if instance.wantString {
+				value.IsString()
+				value.chain.assertNotFailed(t)
+
+				value.NotString()
+				value.chain.assertFailed(t)
+			} else {
+				value.IsString()
+				value.chain.assertFailed(t)
+				value.chain.clearFailed()
+
+				value.NotString()
+				value.chain.assertNotFailed(t)
+			}
+		})
+	}
+}
+
+func TestValue_IsNumber(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	cases := map[string]struct {
+		data       interface{}
+		wantNumber bool
+	}{
+		"integer": {data: 123, wantNumber: true},
+		"string":  {data: "foo", wantNumber: false},
+	}
+
+	for name, instance := range cases {
+		t.Run(name, func(t *testing.T) {
+			value := NewValue(reporter, instance.data)
+
+			if instance.wantNumber {
+				value.IsNumber()
+				value.chain.assertNotFailed(t)
+
+				value.NotNumber()
+				value.chain.assertFailed(t)
+			} else {
+				value.IsNumber()
+				value.chain.assertFailed(t)
+				value.chain.clearFailed()
+
+				value.NotNumber()
+				value.chain.assertNotFailed(t)
+			}
+		})
+	}
+}
+
+func TestValue_IsBoolean(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	cases := map[string]struct {
+		data     interface{}
+		wantBool bool
+	}{
+		"bool":   {data: true, wantBool: true},
+		"string": {data: "foo", wantBool: false},
+	}
+
+	for name, instance := range cases {
+		t.Run(name, func(t *testing.T) {
+			value := NewValue(reporter, instance.data)
+
+			if instance.wantBool {
+				value.IsBoolean()
+				value.chain.assertNotFailed(t)
+
+				value.NotBoolean()
+				value.chain.assertFailed(t)
+			} else {
+				value.IsBoolean()
+				value.chain.assertFailed(t)
+				value.chain.clearFailed()
+
+				value.NotBoolean()
+				value.chain.assertNotFailed(t)
+			}
 		})
 	}
 }
@@ -813,169 +1016,4 @@ func TestValue_Schema(t *testing.T) {
 
 	NewValue(reporter, data1).Schema("file:///bad/path").chain.assertFailed(t)
 	NewValue(reporter, data1).Schema("{ bad json").chain.assertFailed(t)
-}
-
-func TestValue_IsObject(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	cases := map[string]struct {
-		data       interface{}
-		wantObject bool
-	}{
-		"Object": {data: map[string]interface{}{"foo": 123.0}, wantObject: true},
-		"String": {data: "foo", wantObject: false},
-	}
-
-	for name, instance := range cases {
-		t.Run(name, func(t *testing.T) {
-			value := NewValue(reporter, instance.data)
-
-			if instance.wantObject {
-				value.IsObject()
-				value.chain.assertNotFailed(t)
-
-				value.NotObject()
-				value.chain.assertFailed(t)
-			} else {
-				value.IsObject()
-				value.chain.assertFailed(t)
-				value.chain.clearFailed()
-
-				value.NotObject()
-				value.chain.assertNotFailed(t)
-			}
-		})
-	}
-}
-
-func TestValue_IsArray(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	cases := map[string]struct {
-		data      interface{}
-		wantArray bool
-	}{
-		"array":  {data: []interface{}{"foo", "123"}, wantArray: true},
-		"string": {data: "foo", wantArray: false},
-	}
-
-	for name, instance := range cases {
-		t.Run(name, func(t *testing.T) {
-			value := NewValue(reporter, instance.data)
-
-			if instance.wantArray {
-				value.IsArray()
-				value.chain.assertNotFailed(t)
-
-				value.NotArray()
-				value.chain.assertFailed(t)
-			} else {
-				value.IsArray()
-				value.chain.assertFailed(t)
-				value.chain.clearFailed()
-
-				value.NotArray()
-				value.chain.assertNotFailed(t)
-			}
-		})
-	}
-}
-
-func TestValue_IsString(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	cases := map[string]struct {
-		data       interface{}
-		wantString bool
-	}{
-		"string":  {data: "foo", wantString: true},
-		"integer": {data: 123, wantString: false},
-	}
-
-	for name, instance := range cases {
-		t.Run(name, func(t *testing.T) {
-			value := NewValue(reporter, instance.data)
-
-			if instance.wantString {
-				value.IsString()
-				value.chain.assertNotFailed(t)
-
-				value.NotString()
-				value.chain.assertFailed(t)
-			} else {
-				value.IsString()
-				value.chain.assertFailed(t)
-				value.chain.clearFailed()
-
-				value.NotString()
-				value.chain.assertNotFailed(t)
-			}
-		})
-	}
-}
-
-func TestValue_IsNumber(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	cases := map[string]struct {
-		data       interface{}
-		wantNumber bool
-	}{
-		"integer": {data: 123, wantNumber: true},
-		"string":  {data: "foo", wantNumber: false},
-	}
-
-	for name, instance := range cases {
-		t.Run(name, func(t *testing.T) {
-			value := NewValue(reporter, instance.data)
-
-			if instance.wantNumber {
-				value.IsNumber()
-				value.chain.assertNotFailed(t)
-
-				value.NotNumber()
-				value.chain.assertFailed(t)
-			} else {
-				value.IsNumber()
-				value.chain.assertFailed(t)
-				value.chain.clearFailed()
-
-				value.NotNumber()
-				value.chain.assertNotFailed(t)
-			}
-		})
-	}
-}
-
-func TestValue_IsBoolean(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	cases := map[string]struct {
-		data     interface{}
-		wantBool bool
-	}{
-		"bool":   {data: true, wantBool: true},
-		"string": {data: "foo", wantBool: false},
-	}
-
-	for name, instance := range cases {
-		t.Run(name, func(t *testing.T) {
-			value := NewValue(reporter, instance.data)
-
-			if instance.wantBool {
-				value.IsBoolean()
-				value.chain.assertNotFailed(t)
-
-				value.NotBoolean()
-				value.chain.assertFailed(t)
-			} else {
-				value.IsBoolean()
-				value.chain.assertFailed(t)
-				value.chain.clearFailed()
-
-				value.NotBoolean()
-				value.chain.assertNotFailed(t)
-			}
-		})
-	}
 }
