@@ -1,14 +1,24 @@
 package httpexpect
 
 import (
-	"errors"
-	"io"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestExpect_Constructors(t *testing.T) {
+	t.Run("testing.T", func(t *testing.T) {
+		_ = Default(&testing.T{}, "")
+	})
+
+	t.Run("testing.B", func(t *testing.T) {
+		_ = Default(&testing.B{}, "")
+	})
+
+	t.Run("testing.TB", func(t *testing.T) {
+		_ = Default(testing.TB(&testing.T{}), "")
+	})
+}
 
 func TestExpect_Requests(t *testing.T) {
 	client := &mockClient{}
@@ -45,221 +55,199 @@ func TestExpect_Requests(t *testing.T) {
 }
 
 func TestExpect_Builders(t *testing.T) {
-	client := &mockClient{}
+	t.Run("basic", func(t *testing.T) {
+		client := &mockClient{}
 
-	reporter := NewAssertReporter(t)
+		reporter := NewAssertReporter(t)
 
-	config := Config{
-		Client:   client,
-		Reporter: reporter,
-	}
+		config := Config{
+			Client:   client,
+			Reporter: reporter,
+		}
 
-	e := WithConfig(config)
+		e := WithConfig(config)
 
-	var reqs1 []*Request
+		var reqs1 []*Request
 
-	e1 := e.Builder(func(r *Request) {
-		reqs1 = append(reqs1, r)
+		e1 := e.Builder(func(r *Request) {
+			reqs1 = append(reqs1, r)
+		})
+
+		var reqs2 []*Request
+
+		e2 := e1.Builder(func(r *Request) {
+			reqs2 = append(reqs2, r)
+		})
+
+		e.Request("METHOD", "/url")
+
+		r1 := e1.Request("METHOD", "/url")
+		r2 := e2.Request("METHOD", "/url")
+
+		assert.Equal(t, 2, len(reqs1))
+		assert.Equal(t, 1, len(reqs2))
+
+		assert.Same(t, r1, reqs1[0])
+		assert.Same(t, r2, reqs1[1])
+		assert.Same(t, r2, reqs2[0])
 	})
 
-	var reqs2 []*Request
+	t.Run("copying", func(t *testing.T) {
+		client := &mockClient{}
 
-	e2 := e1.Builder(func(r *Request) {
-		reqs2 = append(reqs2, r)
+		reporter := NewAssertReporter(t)
+
+		config := Config{
+			Client:   client,
+			Reporter: reporter,
+		}
+
+		counter1 := 0
+		counter2a := 0
+		counter2b := 0
+
+		e0 := WithConfig(config)
+
+		// Simulate the case when many builders are added, and the builders slice
+		// have some additioonal capacity. We are going to check that the slice
+		// is cloned properly when a new builder is appended.
+		for i := 0; i < 10; i++ {
+			e0 = e0.Builder(func(r *Request) {})
+		}
+
+		e1 := e0.Builder(func(r *Request) {
+			counter1++
+		})
+
+		e2a := e1.Builder(func(r *Request) {
+			counter2a++
+		})
+
+		e2b := e1.Builder(func(r *Request) {
+			counter2b++
+		})
+
+		e0.Request("METHOD", "/url")
+		assert.Equal(t, 0, counter1)
+		assert.Equal(t, 0, counter2a)
+		assert.Equal(t, 0, counter2b)
+
+		e1.Request("METHOD", "/url")
+		assert.Equal(t, 1, counter1)
+		assert.Equal(t, 0, counter2a)
+		assert.Equal(t, 0, counter2b)
+
+		e2a.Request("METHOD", "/url")
+		assert.Equal(t, 2, counter1)
+		assert.Equal(t, 1, counter2a)
+		assert.Equal(t, 0, counter2b)
+
+		e2b.Request("METHOD", "/url")
+		assert.Equal(t, 3, counter1)
+		assert.Equal(t, 1, counter2a)
+		assert.Equal(t, 1, counter2b)
 	})
-
-	e.Request("METHOD", "/url")
-
-	r1 := e1.Request("METHOD", "/url")
-	r2 := e2.Request("METHOD", "/url")
-
-	assert.Equal(t, 2, len(reqs1))
-	assert.Equal(t, 1, len(reqs2))
-
-	assert.Same(t, r1, reqs1[0])
-	assert.Same(t, r2, reqs1[1])
-	assert.Same(t, r2, reqs2[0])
-}
-
-func TestExpect_BuildersCopying(t *testing.T) {
-	client := &mockClient{}
-
-	reporter := NewAssertReporter(t)
-
-	config := Config{
-		Client:   client,
-		Reporter: reporter,
-	}
-
-	counter1 := 0
-	counter2a := 0
-	counter2b := 0
-
-	e0 := WithConfig(config)
-
-	// Simulate the case when many builders are added, and the builders slice
-	// have some additioonal capacity. We are going to check that the slice
-	// is cloned properly when a new builder is appended.
-	for i := 0; i < 10; i++ {
-		e0 = e0.Builder(func(r *Request) {})
-	}
-
-	e1 := e0.Builder(func(r *Request) {
-		counter1++
-	})
-
-	e2a := e1.Builder(func(r *Request) {
-		counter2a++
-	})
-
-	e2b := e1.Builder(func(r *Request) {
-		counter2b++
-	})
-
-	e0.Request("METHOD", "/url")
-	assert.Equal(t, 0, counter1)
-	assert.Equal(t, 0, counter2a)
-	assert.Equal(t, 0, counter2b)
-
-	e1.Request("METHOD", "/url")
-	assert.Equal(t, 1, counter1)
-	assert.Equal(t, 0, counter2a)
-	assert.Equal(t, 0, counter2b)
-
-	e2a.Request("METHOD", "/url")
-	assert.Equal(t, 2, counter1)
-	assert.Equal(t, 1, counter2a)
-	assert.Equal(t, 0, counter2b)
-
-	e2b.Request("METHOD", "/url")
-	assert.Equal(t, 3, counter1)
-	assert.Equal(t, 1, counter2a)
-	assert.Equal(t, 1, counter2b)
 }
 
 func TestExpect_Matchers(t *testing.T) {
-	client := &mockClient{}
+	t.Run("basic", func(t *testing.T) {
+		client := &mockClient{}
 
-	reporter := NewAssertReporter(t)
+		reporter := NewAssertReporter(t)
 
-	config := Config{
-		Client:   client,
-		Reporter: reporter,
-	}
+		config := Config{
+			Client:   client,
+			Reporter: reporter,
+		}
 
-	e := WithConfig(config)
+		e := WithConfig(config)
 
-	var resps1 []*Response
+		var resps1 []*Response
 
-	e1 := e.Matcher(func(r *Response) {
-		resps1 = append(resps1, r)
+		e1 := e.Matcher(func(r *Response) {
+			resps1 = append(resps1, r)
+		})
+
+		var resps2 []*Response
+
+		e2 := e1.Matcher(func(r *Response) {
+			resps2 = append(resps2, r)
+		})
+
+		e.Request("METHOD", "/url")
+
+		req1 := e1.Request("METHOD", "/url")
+		req2 := e2.Request("METHOD", "/url")
+
+		assert.Equal(t, 0, len(resps1))
+		assert.Equal(t, 0, len(resps2))
+
+		resp1 := req1.Expect()
+		resp2 := req2.Expect()
+
+		assert.Equal(t, 2, len(resps1))
+		assert.Equal(t, 1, len(resps2))
+
+		assert.Same(t, resp1, resps1[0])
+		assert.Same(t, resp2, resps1[1])
+		assert.Same(t, resp2, resps2[0])
 	})
 
-	var resps2 []*Response
+	t.Run("copying", func(t *testing.T) {
+		client := &mockClient{}
 
-	e2 := e1.Matcher(func(r *Response) {
-		resps2 = append(resps2, r)
+		reporter := NewAssertReporter(t)
+
+		config := Config{
+			Client:   client,
+			Reporter: reporter,
+		}
+
+		counter1 := 0
+		counter2a := 0
+		counter2b := 0
+
+		e0 := WithConfig(config)
+
+		// Simulate the case when many builders are added, and the builders slice
+		// have some additioonal capacity. We are going to check that the slice
+		// is cloned properly when a new builder is appended.
+		for i := 0; i < 10; i++ {
+			e0 = e0.Matcher(func(r *Response) {})
+		}
+
+		e1 := e0.Matcher(func(r *Response) {
+			counter1++
+		})
+
+		e2a := e1.Matcher(func(r *Response) {
+			counter2a++
+		})
+
+		e2b := e1.Matcher(func(r *Response) {
+			counter2b++
+		})
+
+		e0.Request("METHOD", "/url").Expect()
+		assert.Equal(t, 0, counter1)
+		assert.Equal(t, 0, counter2a)
+		assert.Equal(t, 0, counter2b)
+
+		e1.Request("METHOD", "/url").Expect()
+		assert.Equal(t, 1, counter1)
+		assert.Equal(t, 0, counter2a)
+		assert.Equal(t, 0, counter2b)
+
+		e2a.Request("METHOD", "/url").Expect()
+		assert.Equal(t, 2, counter1)
+		assert.Equal(t, 1, counter2a)
+		assert.Equal(t, 0, counter2b)
+
+		e2b.Request("METHOD", "/url").Expect()
+		assert.Equal(t, 3, counter1)
+		assert.Equal(t, 1, counter2a)
+		assert.Equal(t, 1, counter2b)
 	})
-
-	e.Request("METHOD", "/url")
-
-	req1 := e1.Request("METHOD", "/url")
-	req2 := e2.Request("METHOD", "/url")
-
-	assert.Equal(t, 0, len(resps1))
-	assert.Equal(t, 0, len(resps2))
-
-	resp1 := req1.Expect()
-	resp2 := req2.Expect()
-
-	assert.Equal(t, 2, len(resps1))
-	assert.Equal(t, 1, len(resps2))
-
-	assert.Same(t, resp1, resps1[0])
-	assert.Same(t, resp2, resps1[1])
-	assert.Same(t, resp2, resps2[0])
-}
-
-func TestExpect_MatchersCopying(t *testing.T) {
-	client := &mockClient{}
-
-	reporter := NewAssertReporter(t)
-
-	config := Config{
-		Client:   client,
-		Reporter: reporter,
-	}
-
-	counter1 := 0
-	counter2a := 0
-	counter2b := 0
-
-	e0 := WithConfig(config)
-
-	// Simulate the case when many builders are added, and the builders slice
-	// have some additioonal capacity. We are going to check that the slice
-	// is cloned properly when a new builder is appended.
-	for i := 0; i < 10; i++ {
-		e0 = e0.Matcher(func(r *Response) {})
-	}
-
-	e1 := e0.Matcher(func(r *Response) {
-		counter1++
-	})
-
-	e2a := e1.Matcher(func(r *Response) {
-		counter2a++
-	})
-
-	e2b := e1.Matcher(func(r *Response) {
-		counter2b++
-	})
-
-	e0.Request("METHOD", "/url").Expect()
-	assert.Equal(t, 0, counter1)
-	assert.Equal(t, 0, counter2a)
-	assert.Equal(t, 0, counter2b)
-
-	e1.Request("METHOD", "/url").Expect()
-	assert.Equal(t, 1, counter1)
-	assert.Equal(t, 0, counter2a)
-	assert.Equal(t, 0, counter2b)
-
-	e2a.Request("METHOD", "/url").Expect()
-	assert.Equal(t, 2, counter1)
-	assert.Equal(t, 1, counter2a)
-	assert.Equal(t, 0, counter2b)
-
-	e2b.Request("METHOD", "/url").Expect()
-	assert.Equal(t, 3, counter1)
-	assert.Equal(t, 1, counter2a)
-	assert.Equal(t, 1, counter2b)
-}
-
-func TestExpect_Values(t *testing.T) {
-	client := &mockClient{}
-
-	r := NewAssertReporter(t)
-
-	config := Config{
-		Client:   client,
-		Reporter: r,
-	}
-
-	e := WithConfig(config)
-
-	m := map[string]interface{}{}
-	a := []interface{}{}
-	s := ""
-	n := 0.0
-	b := false
-
-	assert.NotNil(t, e.Value(m))
-	assert.NotNil(t, e.Object(m))
-	assert.NotNil(t, e.Array(a))
-	assert.NotNil(t, e.String(s))
-	assert.NotNil(t, e.Number(n))
-	assert.NotNil(t, e.Boolean(b))
 }
 
 func TestExpect_Traverse(t *testing.T) {
@@ -289,9 +277,9 @@ func TestExpect_Traverse(t *testing.T) {
 	m.ContainsKey("bbb")
 	m.ContainsKey("aaa")
 
-	m.IsValueEqual("aaa", data["aaa"])
-	m.IsValueEqual("bbb", data["bbb"])
-	m.IsValueEqual("ccc", data["ccc"])
+	m.HasValue("aaa", data["aaa"])
+	m.HasValue("bbb", data["bbb"])
+	m.HasValue("ccc", data["ccc"])
 
 	m.Keys().ConsistsOf("aaa", "bbb", "ccc")
 	m.Values().ConsistsOf(data["aaa"], data["bbb"], data["ccc"])
@@ -349,26 +337,6 @@ func TestExpect_Branches(t *testing.T) {
 	e5.chain.assertFlags(t, 0)
 }
 
-func TestExpect_StdCompat(_ *testing.T) {
-	Default(&testing.T{}, "")
-	Default(&testing.B{}, "")
-	Default(testing.TB(&testing.T{}), "")
-}
-
-type testRequestFactory struct {
-	lastreq *http.Request
-	fail    bool
-}
-
-func (f *testRequestFactory) NewRequest(
-	method, urlStr string, body io.Reader) (*http.Request, error) {
-	if f.fail {
-		return nil, errors.New("testRequestFactory")
-	}
-	f.lastreq = httptest.NewRequest(method, urlStr, body)
-	return f.lastreq, nil
-}
-
 func TestExpect_RequestFactory(t *testing.T) {
 	t.Run("default factory", func(t *testing.T) {
 		e := WithConfig(Config{
@@ -383,7 +351,7 @@ func TestExpect_RequestFactory(t *testing.T) {
 	})
 
 	t.Run("custom factory", func(t *testing.T) {
-		factory := &testRequestFactory{}
+		factory := &mockRequestFactory{}
 
 		e := WithConfig(Config{
 			BaseURL:        "http://example.com",
@@ -399,7 +367,7 @@ func TestExpect_RequestFactory(t *testing.T) {
 	})
 
 	t.Run("factory failure", func(t *testing.T) {
-		factory := &testRequestFactory{
+		factory := &mockRequestFactory{
 			fail: true,
 		}
 
@@ -441,6 +409,123 @@ func TestExpect_Panics(t *testing.T) {
 				Reporter:         nil,
 				AssertionHandler: nil,
 			})
+		})
+	})
+}
+
+func TestExpect_Config(t *testing.T) {
+	t.Run("defaults, non-nil Reporter", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+		}
+
+		config = config.withDefaults()
+
+		assert.NotNil(t, config.RequestFactory)
+		assert.NotNil(t, config.Client)
+		assert.NotNil(t, config.WebsocketDialer)
+		assert.NotNil(t, config.AssertionHandler)
+		assert.NotNil(t, config.Formatter)
+		assert.NotNil(t, config.Reporter)
+
+		assert.NotPanics(t, func() {
+			config.validate()
+		})
+	})
+
+	t.Run("defaults, non-nil AssertionHandler", func(t *testing.T) {
+		config := Config{
+			AssertionHandler: &mockAssertionHandler{},
+		}
+
+		config = config.withDefaults()
+
+		assert.NotNil(t, config.RequestFactory)
+		assert.NotNil(t, config.Client)
+		assert.NotNil(t, config.WebsocketDialer)
+		assert.NotNil(t, config.AssertionHandler)
+		assert.Nil(t, config.Formatter)
+		assert.Nil(t, config.Reporter)
+
+		assert.NotPanics(t, func() {
+			config.validate()
+		})
+	})
+
+	t.Run("defaults, nil Reporter and AssertionHandler", func(t *testing.T) {
+		config := Config{}
+
+		assert.Panics(t, func() {
+			config.withDefaults()
+		})
+
+		assert.Panics(t, func() {
+			config.validate()
+		})
+	})
+
+	t.Run("validate fields", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+		}
+
+		config = config.withDefaults()
+
+		assert.NotPanics(t, func() {
+			config.validate()
+		})
+
+		assert.Panics(t, func() {
+			badConfig := config
+			badConfig.RequestFactory = nil
+			badConfig.validate()
+		})
+
+		assert.Panics(t, func() {
+			badConfig := config
+			badConfig.Client = nil
+			badConfig.validate()
+		})
+
+		assert.Panics(t, func() {
+			badConfig := config
+			badConfig.AssertionHandler = nil
+			badConfig.validate()
+		})
+	})
+
+	t.Run("validate handler", func(t *testing.T) {
+		config := Config{
+			Reporter: newMockReporter(t),
+		}
+
+		config = config.withDefaults()
+
+		assert.NotPanics(t, func() {
+			badConfig := config
+			badConfig.AssertionHandler = &DefaultAssertionHandler{
+				Formatter: &DefaultFormatter{},
+				Reporter:  newMockReporter(t),
+			}
+			badConfig.validate()
+		})
+
+		assert.Panics(t, func() {
+			badConfig := config
+			badConfig.AssertionHandler = &DefaultAssertionHandler{
+				Formatter: &DefaultFormatter{},
+				Reporter:  nil,
+			}
+			badConfig.validate()
+		})
+
+		assert.Panics(t, func() {
+			badConfig := config
+			badConfig.AssertionHandler = &DefaultAssertionHandler{
+				Formatter: nil,
+				Reporter:  newMockReporter(t),
+			}
+			badConfig.validate()
 		})
 	})
 }

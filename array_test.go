@@ -1,6 +1,7 @@
 package httpexpect
 
 import (
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -40,8 +41,8 @@ func TestArray_FailedChain(t *testing.T) {
 		value.NotContainsAny("foo")
 		value.ContainsOnly("foo")
 		value.NotContainsOnly("foo")
-		value.IsValueEqual(0, nil)
-		value.NotValueEqual(0, nil)
+		value.HasValue(0, nil)
+		value.NotHasValue(0, nil)
 
 		assert.NotNil(t, value.Iter())
 		assert.Equal(t, 0, len(value.Iter()))
@@ -1300,7 +1301,7 @@ func TestArray_ContainsOnly(t *testing.T) {
 	})
 }
 
-func TestArray_IsValueEqual(t *testing.T) {
+func TestArray_HasValue(t *testing.T) {
 	t.Run("basic", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
@@ -1312,35 +1313,35 @@ func TestArray_IsValueEqual(t *testing.T) {
 			},
 		})
 
-		array.IsValueEqual(0, 123)
+		array.HasValue(0, 123)
 		array.chain.assertNotFailed(t)
 		array.chain.clearFailed()
 
-		array.NotValueEqual(0, 123)
+		array.NotHasValue(0, 123)
 		array.chain.assertFailed(t)
 		array.chain.clearFailed()
 
-		array.IsValueEqual(1, []interface{}{"456", 789})
+		array.HasValue(1, []interface{}{"456", 789})
 		array.chain.assertNotFailed(t)
 		array.chain.clearFailed()
 
-		array.NotValueEqual(1, []interface{}{"456", 789})
+		array.NotHasValue(1, []interface{}{"456", 789})
 		array.chain.assertFailed(t)
 		array.chain.clearFailed()
 
-		array.IsValueEqual(2, map[string]interface{}{"a": "b"})
+		array.HasValue(2, map[string]interface{}{"a": "b"})
 		array.chain.assertNotFailed(t)
 		array.chain.clearFailed()
 
-		array.NotValueEqual(2, map[string]interface{}{"a": "b"})
+		array.NotHasValue(2, map[string]interface{}{"a": "b"})
 		array.chain.assertFailed(t)
 		array.chain.clearFailed()
 
-		array.IsValueEqual(3, 777)
+		array.HasValue(3, 777)
 		array.chain.assertFailed(t)
 		array.chain.clearFailed()
 
-		array.NotValueEqual(3, 777)
+		array.NotHasValue(3, 777)
 		array.chain.assertFailed(t)
 		array.chain.clearFailed()
 	})
@@ -1375,19 +1376,19 @@ func TestArray_IsValueEqual(t *testing.T) {
 			},
 		}
 
-		array.IsValueEqual(0, baz)
+		array.HasValue(0, baz)
 		array.chain.assertNotFailed(t)
 		array.chain.clearFailed()
 
-		array.NotValueEqual(0, baz)
+		array.NotHasValue(0, baz)
 		array.chain.assertFailed(t)
 		array.chain.clearFailed()
 
-		array.IsValueEqual(0, Baz{})
+		array.HasValue(0, Baz{})
 		array.chain.assertFailed(t)
 		array.chain.clearFailed()
 
-		array.NotValueEqual(0, Baz{})
+		array.NotHasValue(0, Baz{})
 		array.chain.assertNotFailed(t)
 		array.chain.clearFailed()
 	})
@@ -1409,19 +1410,19 @@ func TestArray_IsValueEqual(t *testing.T) {
 			},
 		})
 
-		array.IsValueEqual(1, myArray{"456", myInt(789)})
+		array.HasValue(1, myArray{"456", myInt(789)})
 		array.chain.assertNotFailed(t)
 		array.chain.clearFailed()
 
-		array.NotValueEqual(1, myArray{"456", myInt(789)})
+		array.NotHasValue(1, myArray{"456", myInt(789)})
 		array.chain.assertFailed(t)
 		array.chain.clearFailed()
 
-		array.IsValueEqual(2, myMap{"a": "b"})
+		array.HasValue(2, myMap{"a": "b"})
 		array.chain.assertNotFailed(t)
 		array.chain.clearFailed()
 
-		array.NotValueEqual(2, myMap{"a": "b"})
+		array.NotHasValue(2, myMap{"a": "b"})
 		array.chain.assertFailed(t)
 		array.chain.clearFailed()
 	})
@@ -1431,11 +1432,11 @@ func TestArray_IsValueEqual(t *testing.T) {
 
 		array := NewArray(reporter, []interface{}{1, 2, 3})
 
-		array.IsValueEqual(-1, 999)
+		array.HasValue(-1, 999)
 		array.chain.assertFailed(t)
 		array.chain.clearFailed()
 
-		array.NotValueEqual(-1, 999)
+		array.NotHasValue(-1, 999)
 		array.chain.assertFailed(t)
 		array.chain.clearFailed()
 	})
@@ -1445,11 +1446,11 @@ func TestArray_IsValueEqual(t *testing.T) {
 
 		array := NewArray(reporter, []interface{}{1, 2, 3})
 
-		array.IsValueEqual(1, func() {})
+		array.HasValue(1, func() {})
 		array.chain.assertFailed(t)
 		array.chain.clearFailed()
 
-		array.NotValueEqual(1, func() {})
+		array.NotHasValue(1, func() {})
 		array.chain.assertFailed(t)
 		array.chain.clearFailed()
 	})
@@ -1581,6 +1582,26 @@ func TestArray_Transform(t *testing.T) {
 		newArray := array.Transform(nil)
 
 		newArray.chain.assertFailed(t)
+	})
+
+	t.Run("canonization", func(t *testing.T) {
+		type (
+			myInt int
+		)
+
+		reporter := newMockReporter(t)
+		array := NewArray(reporter, []interface{}{2, 4, 6})
+
+		newArray := array.Transform(func(_ int, val interface{}) interface{} {
+			if val, ok := val.(float64); ok {
+				return myInt(val)
+			}
+			t.Errorf("failed transformation")
+			return nil
+		})
+
+		assert.Equal(t, []interface{}{2.0, 4.0, 6.0}, newArray.Raw())
+		newArray.chain.assertNotFailed(t)
 	})
 }
 
@@ -2024,44 +2045,83 @@ func TestArray_IsOrdered(t *testing.T) {
 		chainFailed bool
 	}
 	tests := []struct {
-		name   string
-		args   args
-		wantOK bool
+		name        string
+		args        args
+		isInvalid   bool
+		isOrdered   bool
+		isUnordered bool
 	}{
 		{
-			name: "array boolean ordered",
+			name: "booleans ordered",
 			args: args{
 				values: []interface{}{false, false, true, true},
 			},
-			wantOK: true,
+			isInvalid:   false,
+			isOrdered:   true,
+			isUnordered: false,
 		},
 		{
-			name: "array number ordered",
+			name: "booleans unordered",
+			args: args{
+				values: []interface{}{true, false, true, false},
+			},
+			isInvalid:   false,
+			isOrdered:   false,
+			isUnordered: true,
+		},
+		{
+			name: "numbers ordered",
 			args: args{
 				values: []interface{}{1, 1, 2, 3},
 			},
-			wantOK: true,
+			isInvalid:   false,
+			isOrdered:   true,
+			isUnordered: false,
 		},
 		{
-			name: "array string ordered",
+			name: "numbers unordered",
+			args: args{
+				values: []interface{}{3, 1, 1, 2},
+			},
+			isInvalid:   false,
+			isOrdered:   false,
+			isUnordered: true,
+		},
+		{
+			name: "strings ordered",
 			args: args{
 				values: []interface{}{"", "a", "b", "ba"},
 			},
-			wantOK: true,
+			isInvalid:   false,
+			isOrdered:   true,
+			isUnordered: false,
 		},
 		{
-			name: "array of nil elements",
+			name: "strings unordered",
+			args: args{
+				values: []interface{}{"z", "y", "x", ""},
+			},
+			isInvalid:   false,
+			isOrdered:   false,
+			isUnordered: true,
+		},
+		{
+			name: "all nils",
 			args: args{
 				values: []interface{}{nil, nil, nil},
 			},
-			wantOK: true,
+			isInvalid:   false,
+			isOrdered:   true,
+			isUnordered: false,
 		},
 		{
-			name: "wrong order",
+			name: "reversed",
 			args: args{
 				values: []interface{}{3, 2, 1},
 			},
-			wantOK: false,
+			isInvalid:   false,
+			isOrdered:   false,
+			isUnordered: true,
 		},
 		{
 			name: "user-defined less function",
@@ -2075,172 +2135,12 @@ func TestArray_IsOrdered(t *testing.T) {
 					},
 				},
 			},
-			wantOK: true,
+			isInvalid:   false,
+			isOrdered:   true,
+			isUnordered: false,
 		},
 		{
-			name: "invalid - failed type assertion on less function",
-			args: args{
-				values: []interface{}{1, 2, 3},
-				less: []func(x, y *Value) bool{
-					func(x, y *Value) bool {
-						x.String()
-						y.String()
-						return false
-					},
-				},
-			},
-			wantOK: false,
-		},
-		{
-			name: "invalid - multiple less functions",
-			args: args{
-				values: []interface{}{1, 2, 3},
-				less: []func(x, y *Value) bool{
-					func(x, y *Value) bool {
-						return false
-					},
-					func(x, y *Value) bool {
-						return true
-					},
-				},
-			},
-			wantOK: false,
-		},
-		{
-			name: "invalid - nil less function",
-			args: args{
-				values: []interface{}{1, 2, 3},
-				less: []func(x, y *Value) bool{
-					nil,
-				},
-			},
-			wantOK: false,
-		},
-		{
-			name: "invalid - data type not allowed",
-			args: args{
-				values: []interface{}{[]int{1, 2}, []int{3, 4}, []int{5, 6}},
-				less:   []func(x, y *Value) bool{},
-			},
-			wantOK: false,
-		},
-		{
-			name: "invalid - multiple data types found",
-			args: args{
-				values: []interface{}{1, "abc", true},
-				less:   []func(x, y *Value) bool{},
-			},
-			wantOK: false,
-		},
-		{
-			name: "empty array",
-			args: args{
-				values: []interface{}{},
-			},
-			wantOK: true,
-		},
-		{
-			name: "one element",
-			args: args{
-				values: []interface{}{1},
-			},
-			wantOK: true,
-		},
-		{
-			name: "empty array - custom func",
-			args: args{
-				values: []interface{}{},
-				less: []func(x, y *Value) bool{
-					func(x, y *Value) bool {
-						panic("test")
-					},
-				},
-			},
-			wantOK: true,
-		},
-		{
-			name: "one element - custom func",
-			args: args{
-				values: []interface{}{1},
-				less: []func(x, y *Value) bool{
-					func(x, y *Value) bool {
-						panic("test")
-					},
-				},
-			},
-			wantOK: true,
-		},
-		{
-			name: "chain has failed before",
-			args: args{
-				chainFailed: true,
-			},
-			wantOK: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			reporter := newMockReporter(t)
-			a := NewArray(reporter, tt.args.values)
-			a.IsOrdered(tt.args.less...)
-			if tt.wantOK {
-				a.chain.assertNotFailed(t)
-			} else {
-				a.chain.assertFailed(t)
-			}
-			a.chain.clearFailed()
-		})
-	}
-}
-
-func TestArray_NotOrdered(t *testing.T) {
-	type args struct {
-		values      []interface{}
-		less        []func(x, y *Value) bool
-		chainFailed bool
-	}
-	tests := []struct {
-		name   string
-		args   args
-		wantOK bool
-	}{
-		{
-			name: "array boolean not ordered",
-			args: args{
-				values: []interface{}{true, true, false, false},
-			},
-			wantOK: true,
-		},
-		{
-			name: "array number not ordered",
-			args: args{
-				values: []interface{}{3, 1, 1, 2},
-			},
-			wantOK: true,
-		},
-		{
-			name: "array string not ordered",
-			args: args{
-				values: []interface{}{"z", "y", "x", ""},
-			},
-			wantOK: true,
-		},
-		{
-			name: "array of nil elements",
-			args: args{
-				values: []interface{}{nil, nil, nil},
-			},
-			wantOK: false,
-		},
-		{
-			name: "array ordered",
-			args: args{
-				values: []interface{}{1, 2, 3},
-			},
-			wantOK: false,
-		},
-		{
-			name: "user-defined less function",
+			name: "user-defined less function, negated",
 			args: args{
 				values: []interface{}{1, 2, 3},
 				less: []func(x, y *Value) bool{
@@ -2251,12 +2151,60 @@ func TestArray_NotOrdered(t *testing.T) {
 					},
 				},
 			},
-			wantOK: true,
+			isInvalid:   false,
+			isOrdered:   false,
+			isUnordered: true,
 		},
 		{
-			name: "invalid - failed type assertion on less function",
+			name: "empty array",
 			args: args{
-				values: []interface{}{1, 2},
+				values: []interface{}{},
+			},
+			isInvalid:   false,
+			isOrdered:   true,
+			isUnordered: true,
+		},
+		{
+			name: "one element",
+			args: args{
+				values: []interface{}{1},
+			},
+			isInvalid:   false,
+			isOrdered:   true,
+			isUnordered: true,
+		},
+		{
+			name: "empty array, custom func",
+			args: args{
+				values: []interface{}{},
+				less: []func(x, y *Value) bool{
+					func(x, y *Value) bool {
+						panic("test")
+					},
+				},
+			},
+			isInvalid:   false,
+			isOrdered:   true,
+			isUnordered: true,
+		},
+		{
+			name: "one element, custom func",
+			args: args{
+				values: []interface{}{1},
+				less: []func(x, y *Value) bool{
+					func(x, y *Value) bool {
+						panic("test")
+					},
+				},
+			},
+			isInvalid:   false,
+			isOrdered:   true,
+			isUnordered: true,
+		},
+		{
+			name: "invalid, assertion failed",
+			args: args{
+				values: []interface{}{1, 2, 3},
 				less: []func(x, y *Value) bool{
 					func(x, y *Value) bool {
 						x.String()
@@ -2265,10 +2213,10 @@ func TestArray_NotOrdered(t *testing.T) {
 					},
 				},
 			},
-			wantOK: false,
+			isInvalid: true,
 		},
 		{
-			name: "invalid - multiple less functions",
+			name: "invalid, multiple arguments",
 			args: args{
 				values: []interface{}{1, 2, 3},
 				less: []func(x, y *Value) bool{
@@ -2280,91 +2228,88 @@ func TestArray_NotOrdered(t *testing.T) {
 					},
 				},
 			},
-			wantOK: false,
+			isInvalid: true,
 		},
 		{
-			name: "invalid - nil less function",
+			name: "invalid, nil argument",
 			args: args{
 				values: []interface{}{1, 2, 3},
 				less: []func(x, y *Value) bool{
 					nil,
 				},
 			},
-			wantOK: false,
+			isInvalid: true,
 		},
 		{
-			name: "invalid - data type not allowed",
+			name: "invalid, unsupported type",
 			args: args{
 				values: []interface{}{[]int{1, 2}, []int{3, 4}, []int{5, 6}},
 				less:   []func(x, y *Value) bool{},
 			},
-			wantOK: false,
+			isInvalid: true,
 		},
 		{
-			name: "invalid - multiple data types found",
+			name: "invalid, multiple types",
 			args: args{
 				values: []interface{}{1, "abc", true},
 				less:   []func(x, y *Value) bool{},
 			},
-			wantOK: false,
+			isInvalid: true,
 		},
 		{
-			name: "empty array",
-			args: args{
-				values: []interface{}{},
-			},
-			wantOK: true,
-		},
-		{
-			name: "one element",
-			args: args{
-				values: []interface{}{1},
-			},
-			wantOK: true,
-		},
-		{
-			name: "empty array - custom func",
-			args: args{
-				values: []interface{}{},
-				less: []func(x, y *Value) bool{
-					func(x, y *Value) bool {
-						panic("test")
-					},
-				},
-			},
-			wantOK: true,
-		},
-		{
-			name: "one element - custom func",
-			args: args{
-				values: []interface{}{1},
-				less: []func(x, y *Value) bool{
-					func(x, y *Value) bool {
-						panic("test")
-					},
-				},
-			},
-			wantOK: true,
-		},
-		{
-			name: "chain has failed before",
+			name: "invalid, failed chain",
 			args: args{
 				chainFailed: true,
 			},
-			wantOK: false,
+			isInvalid: true,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
-			a := NewArray(reporter, tt.args.values)
-			a.NotOrdered(tt.args.less...)
-			if tt.wantOK {
-				a.chain.assertNotFailed(t)
+
+			if tt.isInvalid {
+				t.Run("normal", func(t *testing.T) {
+					NewArray(reporter, tt.args.values).IsOrdered(tt.args.less...).
+						chain.assertFailed(t)
+
+					NewArray(reporter, tt.args.values).NotOrdered(tt.args.less...).
+						chain.assertFailed(t)
+				})
+
+				t.Run("reversed", func(t *testing.T) {
+					// reverse slice
+					sort.SliceStable(tt.args.values, func(i, j int) bool {
+						return i > j
+					})
+
+					NewArray(reporter, tt.args.values).IsOrdered(tt.args.less...).
+						chain.assertFailed(t)
+
+					NewArray(reporter, tt.args.values).NotOrdered(tt.args.less...).
+						chain.assertFailed(t)
+				})
 			} else {
-				a.chain.assertFailed(t)
+				t.Run("is ordered", func(t *testing.T) {
+					if tt.isOrdered {
+						NewArray(reporter, tt.args.values).IsOrdered(tt.args.less...).
+							chain.assertNotFailed(t)
+					} else {
+						NewArray(reporter, tt.args.values).IsOrdered(tt.args.less...).
+							chain.assertFailed(t)
+					}
+				})
+
+				t.Run("not ordered", func(t *testing.T) {
+					if tt.isUnordered {
+						NewArray(reporter, tt.args.values).NotOrdered(tt.args.less...).
+							chain.assertNotFailed(t)
+					} else {
+						NewArray(reporter, tt.args.values).NotOrdered(tt.args.less...).
+							chain.assertFailed(t)
+					}
+				})
 			}
-			a.chain.clearFailed()
 		})
 	}
 }

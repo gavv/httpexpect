@@ -188,7 +188,7 @@ e.PUT("/fruits/orange").WithJSON(orange).
 e.GET("/fruits/orange").
 	Expect().
 	Status(http.StatusOK).
-	JSON().Object().ContainsKey("weight").IsValueEqual("weight", 100)
+	JSON().Object().ContainsKey("weight").HasValue("weight", 100)
 
 apple := map[string]interface{}{
 	"colors": []interface{}{"green", "red"},
