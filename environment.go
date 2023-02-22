@@ -432,9 +432,10 @@ func (e *Environment) GetTime(key string) time.Time {
 // Example:
 //
 //	env := NewEnvironment(t)
-//	env.Put("key1", "v1")
-//	env.Put("key2", "v2")
-//	keys := env.List()
+//
+//	for _, key := range env.List() {
+//		...
+//	}
 func (e *Environment) List() []string {
 	opChain := e.chain.enter("List()")
 	defer opChain.leave()
@@ -463,10 +464,10 @@ func (e *Environment) List() []string {
 // Example:
 //
 //	env := NewEnvironment(t)
-//	env.Put("key1", "v1")
-//	env.Put("key2", "v2")
-//	env.Put("abc", "v3")
-//	keys := env.Glob("k*")
+//
+//	for _, key := range env.Glob("foo.*") {
+//		...
+//	}
 func (e *Environment) Glob(pattern string) []string {
 	opChain := e.chain.enter("Glob(%q)", pattern)
 	defer opChain.leave()
@@ -474,7 +475,6 @@ func (e *Environment) Glob(pattern string) []string {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
 
-	keys := []string{}
 	glb, err := glob.Compile(pattern)
 	if err != nil {
 		opChain.fail(AssertionFailure{
@@ -483,9 +483,10 @@ func (e *Environment) Glob(pattern string) []string {
 				errors.New("unexpected invalid glob pattern"),
 			},
 		})
-		return keys
+		return []string{}
 	}
 
+	keys := []string{}
 	for key := range e.data {
 		if glb.Match(key) {
 			keys = append(keys, key)
