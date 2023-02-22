@@ -92,8 +92,8 @@ func TestEnvironment_Delete(t *testing.T) {
 
 func TestEnvironment_Clear(t *testing.T) {
 	env := newEnvironment(newMockChain(t))
-
-	for i := 1; i < 100; i++ {
+	
+	for i := 1; i < 11; i++ {
 		key := fmt.Sprint("key", i)
 		env.Put(key, i)
 		env.chain.assertNotFailed(t)
@@ -105,6 +105,14 @@ func TestEnvironment_Clear(t *testing.T) {
 
 	env.Clear()
 	env.chain.assertNotFailed(t)
+
+	for i := 1; i < 11; i++ {
+		key := fmt.Sprint("key", i)
+		assert.False(t, env.Has(key))
+		assert.Nil(t, env.Get(key))
+		env.chain.assertFailed(t)
+		env.chain.clearFailed()
+	}
 
 	assert.Zero(t, len(env.data))
 	env.chain.assertNotFailed(t)
