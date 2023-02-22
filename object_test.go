@@ -34,8 +34,8 @@ func TestObject_FailedChain(t *testing.T) {
 		value.NotContainsValue("foo")
 		value.ContainsSubset(nil)
 		value.NotContainsSubset(nil)
-		value.IsValueEqual("foo", nil)
-		value.NotValueEqual("foo", nil)
+		value.HasValue("foo", nil)
+		value.NotHasValue("foo", nil)
 
 		assert.NotNil(t, value.Iter())
 		assert.Equal(t, 0, len(value.Iter()))
@@ -954,7 +954,7 @@ func TestObject_ContainsSubset(t *testing.T) {
 	})
 }
 
-func TestObject_IsValueEqual(t *testing.T) {
+func TestObject_HasValue(t *testing.T) {
 	t.Run("basic", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
@@ -966,43 +966,43 @@ func TestObject_IsValueEqual(t *testing.T) {
 			},
 		})
 
-		value.IsValueEqual("foo", 123)
+		value.HasValue("foo", 123)
 		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
 
-		value.NotValueEqual("foo", 123)
+		value.NotHasValue("foo", 123)
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 
-		value.IsValueEqual("bar", []interface{}{"456", 789})
+		value.HasValue("bar", []interface{}{"456", 789})
 		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
 
-		value.NotValueEqual("bar", []interface{}{"456", 789})
+		value.NotHasValue("bar", []interface{}{"456", 789})
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 
-		value.IsValueEqual("baz", map[string]interface{}{"a": "b"})
+		value.HasValue("baz", map[string]interface{}{"a": "b"})
 		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
 
-		value.NotValueEqual("baz", map[string]interface{}{"a": "b"})
+		value.NotHasValue("baz", map[string]interface{}{"a": "b"})
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 
-		value.IsValueEqual("baz", func() {})
+		value.HasValue("baz", func() {})
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 
-		value.NotValueEqual("baz", func() {})
+		value.NotHasValue("baz", func() {})
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 
-		value.IsValueEqual("BAZ", 777)
+		value.HasValue("BAZ", 777)
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 
-		value.NotValueEqual("BAZ", 777)
+		value.NotHasValue("BAZ", 777)
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 	})
@@ -1039,19 +1039,19 @@ func TestObject_IsValueEqual(t *testing.T) {
 			},
 		}
 
-		value.IsValueEqual("baz", baz)
+		value.HasValue("baz", baz)
 		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
 
-		value.NotValueEqual("baz", baz)
+		value.NotHasValue("baz", baz)
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 
-		value.IsValueEqual("baz", Baz{})
+		value.HasValue("baz", Baz{})
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 
-		value.NotValueEqual("baz", Baz{})
+		value.NotHasValue("baz", Baz{})
 		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
 	})
@@ -1073,19 +1073,19 @@ func TestObject_IsValueEqual(t *testing.T) {
 			},
 		})
 
-		value.IsValueEqual("bar", myArray{"456", myInt(789)})
+		value.HasValue("bar", myArray{"456", myInt(789)})
 		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
 
-		value.NotValueEqual("bar", myArray{"456", myInt(789)})
+		value.NotHasValue("bar", myArray{"456", myInt(789)})
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 
-		value.IsValueEqual("baz", myMap{"a": "b"})
+		value.HasValue("baz", myMap{"a": "b"})
 		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
 
-		value.NotValueEqual("baz", myMap{"a": "b"})
+		value.NotHasValue("baz", myMap{"a": "b"})
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 	})

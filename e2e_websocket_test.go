@@ -132,7 +132,7 @@ func testWebsocketSession(e *Expect) {
 		Message string `json:"message"`
 	}{"my json"}).
 		Expect().
-		TextMessage().JSON().Object().IsValueEqual("message", "my json")
+		TextMessage().JSON().Object().HasValue("message", "my json")
 
 	ws.CloseWithText("my close message").
 		Expect().

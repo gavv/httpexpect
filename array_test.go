@@ -41,8 +41,8 @@ func TestArray_FailedChain(t *testing.T) {
 		value.NotContainsAny("foo")
 		value.ContainsOnly("foo")
 		value.NotContainsOnly("foo")
-		value.IsValueEqual(0, nil)
-		value.NotValueEqual(0, nil)
+		value.HasValue(0, nil)
+		value.NotHasValue(0, nil)
 
 		assert.NotNil(t, value.Iter())
 		assert.Equal(t, 0, len(value.Iter()))
@@ -1301,7 +1301,7 @@ func TestArray_ContainsOnly(t *testing.T) {
 	})
 }
 
-func TestArray_IsValueEqual(t *testing.T) {
+func TestArray_HasValue(t *testing.T) {
 	t.Run("basic", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
@@ -1313,35 +1313,35 @@ func TestArray_IsValueEqual(t *testing.T) {
 			},
 		})
 
-		array.IsValueEqual(0, 123)
+		array.HasValue(0, 123)
 		array.chain.assertNotFailed(t)
 		array.chain.clearFailed()
 
-		array.NotValueEqual(0, 123)
+		array.NotHasValue(0, 123)
 		array.chain.assertFailed(t)
 		array.chain.clearFailed()
 
-		array.IsValueEqual(1, []interface{}{"456", 789})
+		array.HasValue(1, []interface{}{"456", 789})
 		array.chain.assertNotFailed(t)
 		array.chain.clearFailed()
 
-		array.NotValueEqual(1, []interface{}{"456", 789})
+		array.NotHasValue(1, []interface{}{"456", 789})
 		array.chain.assertFailed(t)
 		array.chain.clearFailed()
 
-		array.IsValueEqual(2, map[string]interface{}{"a": "b"})
+		array.HasValue(2, map[string]interface{}{"a": "b"})
 		array.chain.assertNotFailed(t)
 		array.chain.clearFailed()
 
-		array.NotValueEqual(2, map[string]interface{}{"a": "b"})
+		array.NotHasValue(2, map[string]interface{}{"a": "b"})
 		array.chain.assertFailed(t)
 		array.chain.clearFailed()
 
-		array.IsValueEqual(3, 777)
+		array.HasValue(3, 777)
 		array.chain.assertFailed(t)
 		array.chain.clearFailed()
 
-		array.NotValueEqual(3, 777)
+		array.NotHasValue(3, 777)
 		array.chain.assertFailed(t)
 		array.chain.clearFailed()
 	})
@@ -1376,19 +1376,19 @@ func TestArray_IsValueEqual(t *testing.T) {
 			},
 		}
 
-		array.IsValueEqual(0, baz)
+		array.HasValue(0, baz)
 		array.chain.assertNotFailed(t)
 		array.chain.clearFailed()
 
-		array.NotValueEqual(0, baz)
+		array.NotHasValue(0, baz)
 		array.chain.assertFailed(t)
 		array.chain.clearFailed()
 
-		array.IsValueEqual(0, Baz{})
+		array.HasValue(0, Baz{})
 		array.chain.assertFailed(t)
 		array.chain.clearFailed()
 
-		array.NotValueEqual(0, Baz{})
+		array.NotHasValue(0, Baz{})
 		array.chain.assertNotFailed(t)
 		array.chain.clearFailed()
 	})
@@ -1410,19 +1410,19 @@ func TestArray_IsValueEqual(t *testing.T) {
 			},
 		})
 
-		array.IsValueEqual(1, myArray{"456", myInt(789)})
+		array.HasValue(1, myArray{"456", myInt(789)})
 		array.chain.assertNotFailed(t)
 		array.chain.clearFailed()
 
-		array.NotValueEqual(1, myArray{"456", myInt(789)})
+		array.NotHasValue(1, myArray{"456", myInt(789)})
 		array.chain.assertFailed(t)
 		array.chain.clearFailed()
 
-		array.IsValueEqual(2, myMap{"a": "b"})
+		array.HasValue(2, myMap{"a": "b"})
 		array.chain.assertNotFailed(t)
 		array.chain.clearFailed()
 
-		array.NotValueEqual(2, myMap{"a": "b"})
+		array.NotHasValue(2, myMap{"a": "b"})
 		array.chain.assertFailed(t)
 		array.chain.clearFailed()
 	})
@@ -1432,11 +1432,11 @@ func TestArray_IsValueEqual(t *testing.T) {
 
 		array := NewArray(reporter, []interface{}{1, 2, 3})
 
-		array.IsValueEqual(-1, 999)
+		array.HasValue(-1, 999)
 		array.chain.assertFailed(t)
 		array.chain.clearFailed()
 
-		array.NotValueEqual(-1, 999)
+		array.NotHasValue(-1, 999)
 		array.chain.assertFailed(t)
 		array.chain.clearFailed()
 	})
@@ -1446,11 +1446,11 @@ func TestArray_IsValueEqual(t *testing.T) {
 
 		array := NewArray(reporter, []interface{}{1, 2, 3})
 
-		array.IsValueEqual(1, func() {})
+		array.HasValue(1, func() {})
 		array.chain.assertFailed(t)
 		array.chain.clearFailed()
 
-		array.NotValueEqual(1, func() {})
+		array.NotHasValue(1, func() {})
 		array.chain.assertFailed(t)
 		array.chain.clearFailed()
 	})
