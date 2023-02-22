@@ -33,10 +33,10 @@ func TestNumber_FailedChain(t *testing.T) {
 	value.Ge(0)
 	value.Lt(0)
 	value.Le(0)
-	value.IsInt(0)
-	value.NotInt(0)
-	value.IsUint(0)
-	value.NotUint(0)
+	value.IsInt()
+	value.NotInt()
+	value.IsUint()
+	value.NotUint()
 	value.IsFinite()
 	value.NotFinite()
 }
@@ -592,413 +592,364 @@ func TestNumber_ConvertLesser(t *testing.T) {
 }
 
 func TestNumber_IsInt(t *testing.T) {
-	reporter := newMockReporter(t)
+	t.Run("invalid argument", func(t *testing.T) {
+		reporter := newMockReporter(t)
 
-	t.Run("check parameters", func(t *testing.T) {
-		NewNumber(reporter, 1234).IsInt(0, 1, 2, 3).
+		NewNumber(reporter, 1234).IsInt(16, 32).
 			chain.assertFailed(t)
 
-		NewNumber(reporter, 1234).IsInt().
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, 1234.0001).NotInt(0, 1, 2, 3).
+		NewNumber(reporter, 1234).NotInt(16, 32).
 			chain.assertFailed(t)
 
-		NewNumber(reporter, 1234.0001).NotInt().
-			chain.assertNotFailed(t)
+		NewNumber(reporter, 1234).IsInt(0).
+			chain.assertFailed(t)
+
+		NewNumber(reporter, 1234).NotInt(0).
+			chain.assertFailed(t)
+
+		NewNumber(reporter, 1234).IsInt(-16).
+			chain.assertFailed(t)
+
+		NewNumber(reporter, 1234).NotInt(-16).
+			chain.assertFailed(t)
 	})
 
-	t.Run("check boundary sets", func(t *testing.T) {
-		NewNumber(reporter, 0).IsInt().
-			chain.assertNotFailed(t)
+	t.Run("values", func(t *testing.T) {
+		tests := []struct {
+			name    string
+			value   float64
+			isInt16 bool
+			isInt32 bool
+			isInt   bool
+		}{
+			{
+				name:    "0",
+				value:   0,
+				isInt16: true,
+				isInt32: true,
+				isInt:   true,
+			},
+			{
+				name:    "1",
+				value:   1,
+				isInt16: true,
+				isInt32: true,
+				isInt:   true,
+			},
+			{
+				name:    "0.5",
+				value:   0.5,
+				isInt16: false,
+				isInt32: false,
+				isInt:   false,
+			},
+			{
+				name:    "NaN",
+				value:   math.NaN(),
+				isInt16: false,
+				isInt32: false,
+				isInt:   false,
+			},
+			{
+				name:    "-Inf",
+				value:   math.Inf(-1),
+				isInt16: false,
+				isInt32: false,
+				isInt:   false,
+			},
+			{
+				name:    "+Inf",
+				value:   math.Inf(+1),
+				isInt16: false,
+				isInt32: false,
+				isInt:   false,
+			},
+			{
+				name:    "MinInt16-1",
+				value:   math.MinInt16 - 1,
+				isInt16: false,
+				isInt32: true,
+				isInt:   true,
+			},
+			{
+				name:    "MinInt16",
+				value:   math.MinInt16,
+				isInt16: true,
+				isInt32: true,
+				isInt:   true,
+			},
+			{
+				name:    "MaxInt16",
+				value:   math.MaxInt16,
+				isInt16: true,
+				isInt32: true,
+				isInt:   true,
+			},
+			{
+				name:    "MaxInt16+1",
+				value:   math.MaxInt16 + 1,
+				isInt16: false,
+				isInt32: true,
+				isInt:   true,
+			},
+			{
+				name:    "MinInt32-1",
+				value:   math.MinInt32 - 1,
+				isInt16: false,
+				isInt32: false,
+				isInt:   true,
+			},
+			{
+				name:    "MinInt32",
+				value:   math.MinInt32,
+				isInt16: false,
+				isInt32: true,
+				isInt:   true,
+			},
+			{
+				name:    "MaxInt32",
+				value:   math.MaxInt32,
+				isInt16: false,
+				isInt32: true,
+				isInt:   true,
+			},
+			{
+				name:    "MaxInt32+1",
+				value:   math.MaxInt32 + 1,
+				isInt16: false,
+				isInt32: false,
+				isInt:   true,
+			},
+		}
 
-		NewNumber(reporter, 0).NotInt().
-			chain.assertFailed(t)
+		for _, tc := range tests {
+			t.Run(tc.name, func(t *testing.T) {
+				reporter := newMockReporter(t)
 
-		NewNumber(reporter, -math.MaxInt32-1).IsInt().
-			chain.assertNotFailed(t)
+				if tc.isInt {
+					NewNumber(reporter, tc.value).IsInt().chain.assertNotFailed(t)
+					NewNumber(reporter, tc.value).NotInt().chain.assertFailed(t)
+				} else {
+					NewNumber(reporter, tc.value).IsInt().chain.assertFailed(t)
+					NewNumber(reporter, tc.value).NotInt().chain.assertNotFailed(t)
+				}
 
-		NewNumber(reporter, -math.MaxInt32-1).NotInt().
-			chain.assertFailed(t)
+				if tc.isInt32 {
+					NewNumber(reporter, tc.value).IsInt(32).chain.assertNotFailed(t)
+					NewNumber(reporter, tc.value).NotInt(32).chain.assertFailed(t)
+				} else {
+					NewNumber(reporter, tc.value).IsInt(32).chain.assertFailed(t)
+					NewNumber(reporter, tc.value).NotInt(32).chain.assertNotFailed(t)
+				}
 
-		NewNumber(reporter, -math.MaxInt32).IsInt().
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, -math.MaxInt32).NotInt().
-			chain.assertFailed(t)
-
-		NewNumber(reporter, -math.MaxInt32+1).IsInt().
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, -math.MaxInt32+1).NotInt().
-			chain.assertFailed(t)
-
-		NewNumber(reporter, math.MaxInt32-1).IsInt().
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, math.MaxInt32-1).NotInt().
-			chain.assertFailed(t)
-
-		NewNumber(reporter, math.MaxInt32).IsInt().
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, math.MaxInt32).NotInt().
-			chain.assertFailed(t)
-
-		NewNumber(reporter, math.MaxInt32+1).IsInt().
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, math.MaxInt32+1).NotInt().
-			chain.assertFailed(t)
-
-		NewNumber(reporter, -math.MaxInt32-1).IsInt(32).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, -math.MaxInt32-1).NotInt(32).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, -math.MaxInt32).IsInt(32).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, -math.MaxInt32).NotInt(32).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, -math.MaxInt32+1).IsInt(32).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, -math.MaxInt32+1).NotInt(32).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, math.MaxInt32-1).IsInt(32).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, math.MaxInt32-1).NotInt(32).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, math.MaxInt32).IsInt(32).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, math.MaxInt32).NotInt(32).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, math.MaxInt32+1).IsInt(32).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, math.MaxInt32+1).NotInt(32).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, -math.MaxInt16-1).IsInt(16).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, -math.MaxInt16-1).NotInt(16).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, -math.MaxInt16).IsInt(16).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, -math.MaxInt16).NotInt(16).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, -math.MaxInt16+1).IsInt(16).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, -math.MaxInt16+1).NotInt(16).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, math.MaxInt16-1).IsInt(16).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, math.MaxInt16-1).NotInt(16).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, math.MaxInt16).IsInt(16).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, math.MaxInt16).NotInt(16).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, math.MaxInt16+1).IsInt(16).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, math.MaxInt16+1).NotInt(16).
-			chain.assertNotFailed(t)
-	})
-
-	t.Run("check non-numbers", func(t *testing.T) {
-		NewNumber(reporter, math.Inf(0)).IsInt().
-			chain.assertFailed(t)
-
-		NewNumber(reporter, math.Inf(0)).NotInt().
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, math.Inf(1)).IsInt().
-			chain.assertFailed(t)
-
-		NewNumber(reporter, math.Inf(1)).NotInt().
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, math.Inf(-1)).IsInt().
-			chain.assertFailed(t)
-
-		NewNumber(reporter, math.Inf(-1)).NotInt().
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, math.NaN()).IsInt().
-			chain.assertFailed(t)
-
-		NewNumber(reporter, math.NaN()).NotInt().
-			chain.assertNotFailed(t)
-	})
-
-	t.Run("check bitness cases", func(t *testing.T) {
-		NewNumber(reporter, 0).IsInt(8).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, 0).NotInt(8).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, 120).IsInt(8).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, 120).NotInt(8).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, 127).IsInt(8).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, 127).NotInt(8).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, 128).IsInt(8).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, 128).NotInt(8).
-			chain.assertNotFailed(t)
+				if tc.isInt16 {
+					NewNumber(reporter, tc.value).IsInt(16).chain.assertNotFailed(t)
+					NewNumber(reporter, tc.value).NotInt(16).chain.assertFailed(t)
+				} else {
+					NewNumber(reporter, tc.value).IsInt(16).chain.assertFailed(t)
+					NewNumber(reporter, tc.value).NotInt(16).chain.assertNotFailed(t)
+				}
+			})
+		}
 	})
 }
 
 func TestNumber_IsUint(t *testing.T) {
-	reporter := newMockReporter(t)
+	t.Run("invalid argument", func(t *testing.T) {
+		reporter := newMockReporter(t)
 
-	t.Run("check parameters", func(t *testing.T) {
-		NewNumber(reporter, 1234).IsUint(0, 1, 2, 3).
+		NewNumber(reporter, 1234).IsUint(16, 32).
 			chain.assertFailed(t)
 
-		NewNumber(reporter, 1234).IsUint().
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, 1234.0001).NotUint(0, 1, 2, 3).
+		NewNumber(reporter, 1234).NotUint(16, 32).
 			chain.assertFailed(t)
 
-		NewNumber(reporter, 1234.0001).NotUint().
-			chain.assertNotFailed(t)
+		NewNumber(reporter, 1234).IsUint(0).
+			chain.assertFailed(t)
+
+		NewNumber(reporter, 1234).NotUint(0).
+			chain.assertFailed(t)
+
+		NewNumber(reporter, 1234).IsUint(-16).
+			chain.assertFailed(t)
+
+		NewNumber(reporter, 1234).NotUint(-16).
+			chain.assertFailed(t)
 	})
 
-	t.Run("check boundary sets", func(t *testing.T) {
-		NewNumber(reporter, 0).IsUint().
-			chain.assertNotFailed(t)
+	t.Run("values", func(t *testing.T) {
+		tests := []struct {
+			name     string
+			value    float64
+			isUint16 bool
+			isUint32 bool
+			isUint   bool
+		}{
+			{
+				name:     "0",
+				value:    0,
+				isUint16: true,
+				isUint32: true,
+				isUint:   true,
+			},
+			{
+				name:     "1",
+				value:    1,
+				isUint16: true,
+				isUint32: true,
+				isUint:   true,
+			},
+			{
+				name:     "-1",
+				value:    -1,
+				isUint16: false,
+				isUint32: false,
+				isUint:   false,
+			},
+			{
+				name:     "0.5",
+				value:    0.5,
+				isUint16: false,
+				isUint32: false,
+				isUint:   false,
+			},
+			{
+				name:     "NaN",
+				value:    math.NaN(),
+				isUint16: false,
+				isUint32: false,
+				isUint:   false,
+			},
+			{
+				name:     "-Inf",
+				value:    math.Inf(-1),
+				isUint16: false,
+				isUint32: false,
+				isUint:   false,
+			},
+			{
+				name:     "+Inf",
+				value:    math.Inf(+1),
+				isUint16: false,
+				isUint32: false,
+				isUint:   false,
+			},
+			{
+				name:     "MaxUint16",
+				value:    math.MaxUint16,
+				isUint16: true,
+				isUint32: true,
+				isUint:   true,
+			},
+			{
+				name:     "MaxUint16+1",
+				value:    math.MaxUint16 + 1,
+				isUint16: false,
+				isUint32: true,
+				isUint:   true,
+			},
+			{
+				name:     "MaxUint32",
+				value:    math.MaxUint32,
+				isUint16: false,
+				isUint32: true,
+				isUint:   true,
+			},
+			{
+				name:     "MaxUint32+1",
+				value:    math.MaxUint32 + 1,
+				isUint16: false,
+				isUint32: false,
+				isUint:   true,
+			},
+		}
 
-		NewNumber(reporter, 0).NotUint().
-			chain.assertFailed(t)
+		for _, tc := range tests {
+			t.Run(tc.name, func(t *testing.T) {
+				reporter := newMockReporter(t)
 
-		NewNumber(reporter, -math.MaxUint32-1).IsUint().
-			chain.assertFailed(t)
+				if tc.isUint {
+					NewNumber(reporter, tc.value).IsUint().chain.assertNotFailed(t)
+					NewNumber(reporter, tc.value).NotUint().chain.assertFailed(t)
+				} else {
+					NewNumber(reporter, tc.value).IsUint().chain.assertFailed(t)
+					NewNumber(reporter, tc.value).NotUint().chain.assertNotFailed(t)
+				}
 
-		NewNumber(reporter, -math.MaxUint32-1).NotUint().
-			chain.assertNotFailed(t)
+				if tc.isUint32 {
+					NewNumber(reporter, tc.value).IsUint(32).chain.assertNotFailed(t)
+					NewNumber(reporter, tc.value).NotUint(32).chain.assertFailed(t)
+				} else {
+					NewNumber(reporter, tc.value).IsUint(32).chain.assertFailed(t)
+					NewNumber(reporter, tc.value).NotUint(32).chain.assertNotFailed(t)
+				}
 
-		NewNumber(reporter, -math.MaxUint32).IsUint().
-			chain.assertFailed(t)
-
-		NewNumber(reporter, -math.MaxUint32).NotUint().
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, -math.MaxUint32+1).IsUint().
-			chain.assertFailed(t)
-
-		NewNumber(reporter, -math.MaxUint32+1).NotUint().
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, math.MaxUint32-1).IsUint().
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, math.MaxUint32-1).NotUint().
-			chain.assertFailed(t)
-
-		NewNumber(reporter, math.MaxUint32).IsUint().
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, math.MaxUint32).NotUint().
-			chain.assertFailed(t)
-
-		NewNumber(reporter, math.MaxUint32+1).IsUint().
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, math.MaxUint32+1).NotUint().
-			chain.assertFailed(t)
-
-		NewNumber(reporter, -math.MaxUint32-1).IsUint(32).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, -math.MaxUint32-1).NotUint(32).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, -math.MaxUint32).IsUint(32).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, -math.MaxUint32).NotUint(32).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, -math.MaxUint32+1).IsUint(32).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, -math.MaxUint32+1).NotUint(32).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, math.MaxUint32-1).IsUint(32).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, math.MaxUint32-1).NotUint(32).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, math.MaxUint32).IsUint(32).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, math.MaxUint32).NotUint(32).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, math.MaxUint32+1).IsUint(32).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, math.MaxUint32+1).NotUint(32).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, -math.MaxUint16-1).IsUint(16).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, -math.MaxUint16-1).NotUint(16).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, -math.MaxUint16).IsUint(16).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, -math.MaxUint16).NotUint(16).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, -math.MaxUint16+1).IsUint(16).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, -math.MaxUint16+1).NotUint(16).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, math.MaxUint16-1).IsUint(16).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, math.MaxUint16-1).NotUint(16).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, math.MaxUint16).IsUint(16).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, math.MaxUint16).NotUint(16).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, math.MaxUint16+1).IsUint(16).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, math.MaxUint16+1).NotUint(16).
-			chain.assertNotFailed(t)
-	})
-
-	t.Run("check non-numbers", func(t *testing.T) {
-		NewNumber(reporter, math.Inf(0)).IsUint().
-			chain.assertFailed(t)
-
-		NewNumber(reporter, math.Inf(0)).NotUint().
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, math.Inf(1)).IsUint().
-			chain.assertFailed(t)
-
-		NewNumber(reporter, math.Inf(1)).NotUint().
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, math.Inf(-1)).IsUint().
-			chain.assertFailed(t)
-
-		NewNumber(reporter, math.Inf(-1)).NotUint().
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, math.NaN()).IsUint().
-			chain.assertFailed(t)
-
-		NewNumber(reporter, math.NaN()).NotUint().
-			chain.assertNotFailed(t)
-	})
-
-	t.Run("check bitness cases", func(t *testing.T) {
-		NewNumber(reporter, 0).IsUint(8).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, 0).NotUint(8).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, 250).IsUint(8).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, 250).NotUint(8).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, 255).IsUint(8).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, 255).NotUint(8).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, 256).IsUint(8).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, 256).NotUint(8).
-			chain.assertNotFailed(t)
+				if tc.isUint16 {
+					NewNumber(reporter, tc.value).IsUint(16).chain.assertNotFailed(t)
+					NewNumber(reporter, tc.value).NotUint(16).chain.assertFailed(t)
+				} else {
+					NewNumber(reporter, tc.value).IsUint(16).chain.assertFailed(t)
+					NewNumber(reporter, tc.value).NotUint(16).chain.assertNotFailed(t)
+				}
+			})
+		}
 	})
 }
 
 func TestNumber_IsFinite(t *testing.T) {
-	reporter := newMockReporter(t)
+	tests := []struct {
+		name     string
+		value    float64
+		isFinite bool
+	}{
+		{
+			name:     "0",
+			value:    0,
+			isFinite: true,
+		},
+		{
+			name:     "1",
+			value:    1,
+			isFinite: true,
+		},
+		{
+			name:     "-1",
+			value:    -1,
+			isFinite: true,
+		},
+		{
+			name:     "0.5",
+			value:    0.5,
+			isFinite: true,
+		},
+		{
+			name:     "NaN",
+			value:    math.NaN(),
+			isFinite: false,
+		},
+		{
+			name:     "-Inf",
+			value:    math.Inf(-1),
+			isFinite: false,
+		},
+		{
+			name:     "+Inf",
+			value:    math.Inf(+1),
+			isFinite: false,
+		},
+	}
 
-	NewNumber(reporter, 1234).IsFinite().
-		chain.assertNotFailed(t)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			reporter := newMockReporter(t)
 
-	NewNumber(reporter, 1234).NotFinite().
-		chain.assertFailed(t)
-
-	NewNumber(reporter, 1234.001234).IsFinite().
-		chain.assertNotFailed(t)
-
-	NewNumber(reporter, 1234.001234).NotFinite().
-		chain.assertFailed(t)
-
-	NewNumber(reporter, math.Inf(0)).IsFinite().
-		chain.assertFailed(t)
-
-	NewNumber(reporter, math.Inf(0)).NotFinite().
-		chain.assertNotFailed(t)
-
-	NewNumber(reporter, math.Inf(-1)).IsFinite().
-		chain.assertFailed(t)
-
-	NewNumber(reporter, math.Inf(-1)).NotFinite().
-		chain.assertNotFailed(t)
-
-	NewNumber(reporter, math.Inf(+1)).IsFinite().
-		chain.assertFailed(t)
-
-	NewNumber(reporter, math.Inf(+1)).NotFinite().
-		chain.assertNotFailed(t)
-
-	NewNumber(reporter, math.NaN()).IsFinite().
-		chain.assertFailed(t)
-
-	NewNumber(reporter, math.NaN()).NotFinite().
-		chain.assertNotFailed(t)
+			if tc.isFinite {
+				NewNumber(reporter, tc.value).IsFinite().chain.assertNotFailed(t)
+				NewNumber(reporter, tc.value).NotFinite().chain.assertFailed(t)
+			} else {
+				NewNumber(reporter, tc.value).IsFinite().chain.assertFailed(t)
+				NewNumber(reporter, tc.value).NotFinite().chain.assertNotFailed(t)
+			}
+		})
+	}
 }

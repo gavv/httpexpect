@@ -625,17 +625,22 @@ func (n *Number) Le(value interface{}) *Number {
 // as an optional argument.
 //
 // Bits argument defines maximum allowed bitness for the given number.
-// If bits is omitted, boundary checks is omitted too.
-//
-// value should have numeric type convertible to float64. Before comparison,
-// it is converted to float64.
+// If bits is omitted, boundary check is omitted too.
 //
 // Example:
 //
-//	number := NewNumber(t, 123)
-//	number.IsInt(32)
-//	number.IsInt(64)
-//	number.IsInt()
+//	number := NewNumber(t, 1000000)
+//	number.IsInt()   // success
+//	number.IsInt(32) // success
+//	number.IsInt(16) // failure
+//
+//	number := NewNumber(t, -1000000)
+//	number.IsInt()   // success
+//	number.IsInt(32) // success
+//	number.IsInt(16) // failure
+//
+//	number := NewNumber(t, 0.5)
+//	number.IsInt()   // failure
 func (n *Number) IsInt(bits ...int) *Number {
 	opChain := n.chain.enter("IsInt()")
 	defer opChain.leave()
@@ -654,9 +659,19 @@ func (n *Number) IsInt(bits ...int) *Number {
 		return n
 	}
 
+	if len(bits) == 1 && bits[0] <= 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected non-positive bits argument"),
+			},
+		})
+		return n
+	}
+
 	if math.IsNaN(n.value) {
 		opChain.fail(AssertionFailure{
-			Type:   AssertType,
+			Type:   AssertValid,
 			Actual: &AssertionValue{n.value},
 			Errors: []error{
 				errors.New("expected: number is signed integer"),
@@ -668,7 +683,7 @@ func (n *Number) IsInt(bits ...int) *Number {
 	inum, acc := big.NewFloat(n.value).Int(nil)
 	if !(acc == big.Exact) {
 		opChain.fail(AssertionFailure{
-			Type:   AssertType,
+			Type:   AssertValid,
 			Actual: &AssertionValue{n.value},
 			Errors: []error{
 				errors.New("expected: number is signed integer"),
@@ -709,17 +724,22 @@ func (n *Number) IsInt(bits ...int) *Number {
 // width as an optional argument.
 //
 // Bits argument defines maximum allowed bitness for the given number.
-// If bits is omitted, boundary checks is omitted too.
-//
-// value should have numeric type convertible to float64. Before comparison,
-// it is converted to float64.
+// If bits is omitted, boundary check is omitted too.
 //
 // Example:
 //
-//	number := NewNumber(t, 123.0123)
-//	number.NotInt(32)
-//	number.NotInt(64)
-//	number.NotInt()
+//	number := NewNumber(t, 1000000)
+//	number.NotInt()   // failure
+//	number.NotInt(32) // failure
+//	number.NotInt(16) // success
+//
+//	number := NewNumber(t, -1000000)
+//	number.NotInt()   // failure
+//	number.NotInt(32) // failure
+//	number.NotInt(16) // success
+//
+//	number := NewNumber(t, 0.5)
+//	number.NotInt()   // success
 func (n *Number) NotInt(bits ...int) *Number {
 	opChain := n.chain.enter("NotInt()")
 	defer opChain.leave()
@@ -738,12 +758,22 @@ func (n *Number) NotInt(bits ...int) *Number {
 		return n
 	}
 
+	if len(bits) == 1 && bits[0] <= 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected non-positive bits argument"),
+			},
+		})
+		return n
+	}
+
 	if !math.IsNaN(n.value) {
 		inum, acc := big.NewFloat(n.value).Int(nil)
 		if acc == big.Exact {
 			if len(bits) == 0 {
 				opChain.fail(AssertionFailure{
-					Type:   AssertType,
+					Type:   AssertValid,
 					Actual: &AssertionValue{n.value},
 					Errors: []error{
 						errors.New("expected: number is not signed integer"),
@@ -768,7 +798,9 @@ func (n *Number) NotInt(bits ...int) *Number {
 						Max: intBoundary{imax, +1, bitSize - 1},
 					}},
 					Errors: []error{
-						fmt.Errorf("expected: number doesn't fit %d-bit signed integer", bitSize),
+						fmt.Errorf(
+							"expected: number doesn't fit %d-bit signed integer",
+							bitSize),
 					},
 				})
 				return n
@@ -783,17 +815,22 @@ func (n *Number) NotInt(bits ...int) *Number {
 // width as an optional argument.
 //
 // Bits argument defines maximum allowed bitness for the given number.
-// If bits is omitted, boundary checks is omitted too.
-//
-// value should have numeric type convertible to float64. Before comparison,
-// it is converted to float64.
+// If bits is omitted, boundary check is omitted too.
 //
 // Example:
 //
-//	number := NewNumber(t, 123)
-//	number.IsUint(32)
-//	number.IsUint(64)
-//	number.IsUint()
+//	number := NewNumber(t, 1000000)
+//	number.IsUint()   // success
+//	number.IsUint(32) // success
+//	number.IsUint(16) // failure
+//
+//	number := NewNumber(t, -1000000)
+//	number.IsUint()   // failure
+//	number.IsUint(32) // failure
+//	number.IsUint(16) // failure
+//
+//	number := NewNumber(t, 0.5)
+//	number.IsUint()   // failure
 func (n *Number) IsUint(bits ...int) *Number {
 	opChain := n.chain.enter("IsUint()")
 	defer opChain.leave()
@@ -812,9 +849,19 @@ func (n *Number) IsUint(bits ...int) *Number {
 		return n
 	}
 
+	if len(bits) == 1 && bits[0] <= 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected non-positive bits argument"),
+			},
+		})
+		return n
+	}
+
 	if math.IsNaN(n.value) {
 		opChain.fail(AssertionFailure{
-			Type:   AssertType,
+			Type:   AssertValid,
 			Actual: &AssertionValue{n.value},
 			Errors: []error{
 				errors.New("expected: number is unsigned integer"),
@@ -826,7 +873,7 @@ func (n *Number) IsUint(bits ...int) *Number {
 	inum, acc := big.NewFloat(n.value).Int(nil)
 	if !(acc == big.Exact) {
 		opChain.fail(AssertionFailure{
-			Type:   AssertType,
+			Type:   AssertValid,
 			Actual: &AssertionValue{n.value},
 			Errors: []error{
 				errors.New("expected: number is unsigned integer"),
@@ -838,7 +885,7 @@ func (n *Number) IsUint(bits ...int) *Number {
 	imin := big.NewInt(0)
 	if inum.Cmp(imin) < 0 {
 		opChain.fail(AssertionFailure{
-			Type:   AssertType,
+			Type:   AssertValid,
 			Actual: &AssertionValue{n.value},
 			Errors: []error{
 				errors.New("expected: number is unsigned integer"),
@@ -857,7 +904,7 @@ func (n *Number) IsUint(bits ...int) *Number {
 				Type:   AssertInRange,
 				Actual: &AssertionValue{n.value},
 				Expected: &AssertionValue{AssertionRange{
-					Min: intBoundary{imin, -1, 0},
+					Min: intBoundary{imin, 0, 0},
 					Max: intBoundary{imax, +1, bitSize},
 				}},
 				Errors: []error{
@@ -875,17 +922,22 @@ func (n *Number) IsUint(bits ...int) *Number {
 // width as an optional argument.
 //
 // Bits argument defines maximum allowed bitness for the given number.
-// If bits is omitted, boundary checks is omitted too.
-//
-// value should have numeric type convertible to float64. Before comparison,
-// it is converted to float64.
+// If bits is omitted, boundary check is omitted too.
 //
 // Example:
 //
-//	number := NewNumber(t, -123.0123)
-//	number.NotUint(32)
-//	number.NotUint(64)
-//	number.NotUint()
+//	number := NewNumber(t, 1000000)
+//	number.NotUint()   // failure
+//	number.NotUint(32) // failure
+//	number.NotUint(16) // success
+//
+//	number := NewNumber(t, -1000000)
+//	number.NotUint()   // success
+//	number.NotUint(32) // success
+//	number.NotUint(16) // success
+//
+//	number := NewNumber(t, 0.5)
+//	number.NotUint()   // success
 func (n *Number) NotUint(bits ...int) *Number {
 	opChain := n.chain.enter("NotUint()")
 	defer opChain.leave()
@@ -904,6 +956,16 @@ func (n *Number) NotUint(bits ...int) *Number {
 		return n
 	}
 
+	if len(bits) == 1 && bits[0] <= 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected non-positive bits argument"),
+			},
+		})
+		return n
+	}
+
 	if !math.IsNaN(n.value) {
 		inum, acc := big.NewFloat(n.value).Int(nil)
 		if acc == big.Exact {
@@ -911,7 +973,7 @@ func (n *Number) NotUint(bits ...int) *Number {
 			if inum.Cmp(imin) >= 0 {
 				if len(bits) == 0 {
 					opChain.fail(AssertionFailure{
-						Type:   AssertType,
+						Type:   AssertValid,
 						Actual: &AssertionValue{n.value},
 						Errors: []error{
 							errors.New("expected: number is not unsigned integer"),
@@ -929,11 +991,13 @@ func (n *Number) NotUint(bits ...int) *Number {
 						Type:   AssertNotInRange,
 						Actual: &AssertionValue{n.value},
 						Expected: &AssertionValue{AssertionRange{
-							Min: intBoundary{imin, -1, 0},
+							Min: intBoundary{imin, 0, 0},
 							Max: intBoundary{imax, +1, bitSize},
 						}},
 						Errors: []error{
-							fmt.Errorf("expected: number doesn't fit %d-bit unsigned integer", bitSize),
+							fmt.Errorf(
+								"expected: number doesn't fit %d-bit unsigned integer",
+								bitSize),
 						},
 					})
 					return n
@@ -947,13 +1011,16 @@ func (n *Number) NotUint(bits ...int) *Number {
 
 // IsFinite succeeds if number is neither ±Inf nor NaN.
 //
-// value should have numeric type convertible to float64. Before comparison,
-// it is converted to float64.
-//
 // Example:
 //
-//	number := NewNumber(t, 1234.4321)
-//	number.IsFinite()
+//	number := NewNumber(t, 1234.5)
+//	number.IsFinite() // success
+//
+//	number := NewNumber(t, math.NaN())
+//	number.IsFinite() // failure
+//
+//	number := NewNumber(t, math.Inf(+1))
+//	number.IsFinite() // failure
 func (n *Number) IsFinite() *Number {
 	opChain := n.chain.enter("IsFinite()")
 	defer opChain.leave()
@@ -964,7 +1031,7 @@ func (n *Number) IsFinite() *Number {
 
 	if math.IsInf(n.value, 0) || math.IsNaN(n.value) {
 		opChain.fail(AssertionFailure{
-			Type:   AssertType,
+			Type:   AssertValid,
 			Actual: &AssertionValue{n.value},
 			Errors: []error{
 				errors.New("expected: number is neither ±Inf nor NaN"),
@@ -978,13 +1045,16 @@ func (n *Number) IsFinite() *Number {
 
 // NotFinite succeeds if number is either ±Inf or NaN.
 //
-// value should have numeric type convertible to float64. Before comparison,
-// it is converted to float64.
-//
 // Example:
 //
-//	number := NewNumber(t, math.Inf(1))
-//	number.NotFinite()
+//	number := NewNumber(t, 1234.5)
+//	number.NotFinite() // failure
+//
+//	number := NewNumber(t, math.NaN())
+//	number.NotFinite() // success
+//
+//	number := NewNumber(t, math.Inf(+1))
+//	number.NotFinite() // success
 func (n *Number) NotFinite() *Number {
 	opChain := n.chain.enter("NotFinite()")
 	defer opChain.leave()
@@ -995,7 +1065,7 @@ func (n *Number) NotFinite() *Number {
 
 	if !(math.IsInf(n.value, 0) || math.IsNaN(n.value)) {
 		opChain.fail(AssertionFailure{
-			Type:   AssertType,
+			Type:   AssertValid,
 			Actual: &AssertionValue{n.value},
 			Errors: []error{
 				errors.New("expected: number is either ±Inf or NaN"),
@@ -1015,8 +1085,9 @@ type intBoundary struct {
 
 func (b intBoundary) String() string {
 	if b.sign > 0 {
-		return fmt.Sprintf("2^%d-1 (%s)", b.bits, b.val)
-	} else {
-		return fmt.Sprintf("-2^%d (%s)", b.bits, b.val)
+		return fmt.Sprintf("+2^%d-1 (+%s)", b.bits, b.val)
+	} else if b.sign < 0 {
+		return fmt.Sprintf("-2^%d   (%s)", b.bits, b.val)
 	}
+	return fmt.Sprintf("%s", b.val)
 }
