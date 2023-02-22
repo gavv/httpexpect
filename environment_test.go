@@ -92,7 +92,7 @@ func TestEnvironment_Delete(t *testing.T) {
 
 func TestEnvironment_Clear(t *testing.T) {
 	env := newEnvironment(newMockChain(t))
-	
+
 	for i := 1; i < 11; i++ {
 		key := fmt.Sprint("key", i)
 		env.Put(key, i)
