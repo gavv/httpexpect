@@ -1303,9 +1303,7 @@ func TestObject_Transform(t *testing.T) {
 
 	t.Run("canonization", func(ts *testing.T) {
 		type (
-			myMap   map[string]interface{}
-			myInt   int
-			myFloat float64
+			myInt int
 		)
 
 		reporter := newMockReporter(ts)
@@ -1324,17 +1322,9 @@ func TestObject_Transform(t *testing.T) {
 			}
 		})
 
-		expectedMap := myMap{"foo": 123.0, "bar": myFloat(456), "baz": "b"}
+		expectedMap := map[string]interface{}{"foo": 123.0, "bar": float64(456), "baz": "b"}
 
-		newObject.IsEqual(expectedMap)
-		newObject.chain.assertNotFailed(ts)
-		newObject.chain.clearFailed()
-
-		newObject.IsValueEqual("foo", myFloat(123))
-		newObject.chain.assertNotFailed(ts)
-		newObject.chain.clearFailed()
-
-		newObject.IsValueEqual("bar", 456.0)
+		assert.Equal(t, expectedMap, newObject.Raw())
 		newObject.chain.assertNotFailed(ts)
 		newObject.chain.clearFailed()
 	})

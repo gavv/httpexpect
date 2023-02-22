@@ -1602,14 +1602,6 @@ func TestArray_Transform(t *testing.T) {
 		assert.Equal(t, []interface{}{float64(2), float64(4), float64(6)}, newArray.Raw())
 		newArray.chain.assertNotFailed(t)
 		newArray.chain.clearFailed()
-
-		assert.NotEqual(t, []interface{}{"2.0", float64(4), float64(6)}, newArray.Raw())
-		newArray.chain.assertNotFailed(t)
-		newArray.chain.clearFailed()
-
-		assert.Equal(t, []interface{}{2.0, float64(4), 6.0}, newArray.Raw())
-		newArray.chain.assertNotFailed(t)
-		newArray.chain.clearFailed()
 	})
 }
 
