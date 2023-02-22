@@ -3,7 +3,6 @@ package httpexpect
 import (
 	"bufio"
 	"fmt"
-	"math"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -89,6 +88,9 @@ const (
 	{{ wrap $err $.LineWidth | indent }}
 	{{- end -}}
 	{{- end -}}`
+
+	intSize = 32 << (^uint(0) >> 63) // 32 or 64
+	maxInt  = 1<<(intSize-1) - 1
 )
 
 func TestE2EReport_LineWidth(t *testing.T) {
@@ -142,7 +144,7 @@ func TestE2EReport_LineWidth(t *testing.T) {
 				TemplateFuncs:   defaultTemplateFuncs,
 				LineWidth:       -1,
 			},
-			wantMaxLineWidth: math.MaxInt,
+			wantMaxLineWidth: maxInt,
 		},
 		{
 			name: "errors zero value",
@@ -178,7 +180,7 @@ func TestE2EReport_LineWidth(t *testing.T) {
 				TemplateFuncs:   defaultTemplateFuncs,
 				LineWidth:       -1,
 			},
-			wantMaxLineWidth: math.MaxInt,
+			wantMaxLineWidth: maxInt,
 		},
 	}
 
