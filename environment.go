@@ -454,8 +454,11 @@ func (e *Environment) List() []string {
 	return keys
 }
 
-// Match accepts a glob pattern and returns a sorted slice of
-// keys that match pattern.
+// Glob accepts a glob pattern and returns a sorted slice of
+// keys that match the pattern.
+//
+// If the pattern is invalid, reports failure and returns an
+// empty slice.
 //
 // Example:
 //
@@ -463,9 +466,9 @@ func (e *Environment) List() []string {
 //	env.Put("key1", "v1")
 //	env.Put("key2", "v2")
 //	env.Put("abc", "v3")
-//	keys := env.Match("k*")
-func (e *Environment) Match(pattern string) []string {
-	opChain := e.chain.enter("Match(%q)", pattern)
+//	keys := env.Glob("k*")
+func (e *Environment) Glob(pattern string) []string {
+	opChain := e.chain.enter("Glob(%q)", pattern)
 	defer opChain.leave()
 
 	e.mu.RLock()
@@ -475,10 +478,9 @@ func (e *Environment) Match(pattern string) []string {
 	glb, err := glob.Compile(pattern)
 	if err != nil {
 		opChain.fail(AssertionFailure{
-			Type:   AssertType,
-			Actual: &AssertionValue{pattern},
+			Type: AssertUsage,
 			Errors: []error{
-				errors.New("expected: valid glob pattern"),
+				errors.New("unexpected invalid glob pattern"),
 			},
 		})
 		return keys

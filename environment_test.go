@@ -509,33 +509,45 @@ func TestEnvironment_List(t *testing.T) {
 	assert.Equal(t, []string{"abc", "k1", "pqr"}, env.List())
 }
 
-func TestEnvironment_Match(t *testing.T) {
-	env := newEnvironment(newMockChain(t))
+func TestEnvironment_Glob(t *testing.T) {
+	t.Run("valid glob pattern", func(t *testing.T) {
+		env := newEnvironment(newMockChain(t))
 
-	assert.Equal(t, []string{}, env.Match("*"))
+		assert.Equal(t, []string{}, env.Glob("*"))
 
-	env.Put("k1", 1)
-	env.Put("k2", 2)
-	env.Put("k3", 3)
-	assert.Equal(t, []string{"k1", "k2", "k3"}, env.Match("*"))
+		env.Put("k1", 1)
+		env.Put("k2", 2)
+		env.Put("k3", 3)
+		assert.Equal(t, []string{"k1", "k2", "k3"}, env.Glob("*"))
 
-	env.Put("abc", 5)
-	assert.Equal(t, []string{"k1", "k2", "k3"}, env.Match("k*"))
+		env.Put("abc", 5)
+		assert.Equal(t, []string{"k1", "k2", "k3"}, env.Glob("k*"))
 
-	env.Put("ab", 6)
-	env.Put("ac", 7)
-	assert.Equal(t, []string{"ab", "ac"}, env.Match("a?"))
+		env.Put("ab", 6)
+		env.Put("ac", 7)
+		assert.Equal(t, []string{"ab", "ac"}, env.Glob("a?"))
 
-	assert.Equal(t, []string{"ab", "abc"}, env.Match("ab*"))
+		assert.Equal(t, []string{"ab", "abc"}, env.Glob("ab*"))
 
-	env.Put("k4", 8)
-	assert.Equal(t, []string{"k2", "k3", "k4"}, env.Match("k[2-4]"))
+		env.Put("k4", 8)
+		assert.Equal(t, []string{"k2", "k3", "k4"}, env.Glob("k[2-4]"))
 
-	env.Put("a4", 9)
-	assert.Equal(t, []string{"a4", "ab", "ac", "k4"}, env.Match("?[!1-3]"))
-	assert.Equal(t, []string{"a4", "k1", "k4"}, env.Match("?[1,4]"))
-	assert.Equal(t, []string{"ab", "ac", "k2", "k3"}, env.Match("?[!1,4]"))
+		env.Put("a4", 9)
+		assert.Equal(t, []string{"a4", "ab", "ac", "k4"}, env.Glob("?[!1-3]"))
+		assert.Equal(t, []string{"a4", "k1", "k4"}, env.Glob("?[1,4]"))
+		assert.Equal(t, []string{"ab", "ac", "k2", "k3"}, env.Glob("?[!1,4]"))
+	})
 
-	assert.Equal(t, []string{}, env.Match("k[1-2"))
-	env.chain.assertFailed(t)
+	t.Run("invalid glob pattern", func(t *testing.T) {
+		env := newEnvironment(newMockChain(t))
+		assert.Equal(t, []string{}, env.Glob("k[1-2"))
+		env.chain.assertFailed(t)
+		env.chain.clearFailed()
+
+		env.Put("k1", 1)
+		env.Put("k2", 2)
+		assert.Equal(t, []string{}, env.Glob("k[]"))
+		env.chain.assertFailed(t)
+		env.chain.clearFailed()
+	})
 }
