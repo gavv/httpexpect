@@ -219,6 +219,121 @@ func (o *Object) Value(key string) *Value {
 	return newValue(opChain, value)
 }
 
+// HasValue succeeds if object's value for given key is equal to given value.
+// Before comparison, both values are converted to canonical form.
+//
+// value should be map[string]interface{} or struct.
+//
+// Example:
+//
+//	object := NewObject(t, map[string]interface{}{"foo": 123})
+//	object.HasValue("foo", 123)
+func (o *Object) HasValue(key string, value interface{}) *Object {
+	opChain := o.chain.enter("HasValue(%q)", key)
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return o
+	}
+
+	if !containsKey(opChain, o.value, key) {
+		opChain.fail(AssertionFailure{
+			Type:     AssertContainsKey,
+			Actual:   &AssertionValue{o.value},
+			Expected: &AssertionValue{key},
+			Errors: []error{
+				errors.New("expected: map contains key"),
+			},
+		})
+		return o
+	}
+
+	expected, ok := canonValue(opChain, value)
+	if !ok {
+		return o
+	}
+
+	if !reflect.DeepEqual(expected, o.value[key]) {
+		opChain.fail(AssertionFailure{
+			Type:     AssertEqual,
+			Actual:   &AssertionValue{o.value[key]},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				fmt.Errorf(
+					"expected: map value for key %q is equal to given value",
+					key),
+			},
+		})
+		return o
+	}
+
+	return o
+}
+
+// NotHasValue succeeds if object's value for given key is not equal to given
+// value. Before comparison, both values are converted to canonical form.
+//
+// value should be map[string]interface{} or struct.
+//
+// If object doesn't contain any value for given key, failure is reported.
+//
+// Example:
+//
+//	object := NewObject(t, map[string]interface{}{"foo": 123})
+//	object.NotHasValue("foo", "bad value")  // success
+//	object.NotHasValue("bar", "bad value")  // failure! (key is missing)
+func (o *Object) NotHasValue(key string, value interface{}) *Object {
+	opChain := o.chain.enter("NotHasValue(%q)", key)
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return o
+	}
+
+	if !containsKey(opChain, o.value, key) {
+		opChain.fail(AssertionFailure{
+			Type:     AssertContainsKey,
+			Actual:   &AssertionValue{o.value},
+			Expected: &AssertionValue{key},
+			Errors: []error{
+				errors.New("expected: map contains key"),
+			},
+		})
+		return o
+	}
+
+	expected, ok := canonValue(opChain, value)
+	if !ok {
+		return o
+	}
+
+	if reflect.DeepEqual(expected, o.value[key]) {
+		opChain.fail(AssertionFailure{
+			Type:     AssertNotEqual,
+			Actual:   &AssertionValue{o.value[key]},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				fmt.Errorf(
+					"expected: map value for key %q is non-equal to given value",
+					key),
+			},
+		})
+		return o
+	}
+
+	return o
+}
+
+// Deprecated: use HasValue instead.
+func (o *Object) ValueEqual(key string, value interface{}) *Object {
+	return o.HasValue(key, value)
+}
+
+// Deprecated: use NotHasValue instead.
+func (o *Object) ValueNotEqual(key string, value interface{}) *Object {
+	return o.NotHasValue(key, value)
+}
+
 // Iter returns a new map of Values attached to object elements.
 //
 // Example:
@@ -1064,121 +1179,6 @@ func (o *Object) ContainsMap(value interface{}) *Object {
 // Deprecated: use NotContainsSubset instead.
 func (o *Object) NotContainsMap(value interface{}) *Object {
 	return o.NotContainsSubset(value)
-}
-
-// IsValueEqual succeeds if object's value for given key is equal to given value.
-// Before comparison, both values are converted to canonical form.
-//
-// value should be map[string]interface{} or struct.
-//
-// Example:
-//
-//	object := NewObject(t, map[string]interface{}{"foo": 123})
-//	object.IsValueEqual("foo", 123)
-func (o *Object) IsValueEqual(key string, value interface{}) *Object {
-	opChain := o.chain.enter("IsValueEqual(%q)", key)
-	defer opChain.leave()
-
-	if opChain.failed() {
-		return o
-	}
-
-	if !containsKey(opChain, o.value, key) {
-		opChain.fail(AssertionFailure{
-			Type:     AssertContainsKey,
-			Actual:   &AssertionValue{o.value},
-			Expected: &AssertionValue{key},
-			Errors: []error{
-				errors.New("expected: map contains key"),
-			},
-		})
-		return o
-	}
-
-	expected, ok := canonValue(opChain, value)
-	if !ok {
-		return o
-	}
-
-	if !reflect.DeepEqual(expected, o.value[key]) {
-		opChain.fail(AssertionFailure{
-			Type:     AssertEqual,
-			Actual:   &AssertionValue{o.value[key]},
-			Expected: &AssertionValue{value},
-			Errors: []error{
-				fmt.Errorf(
-					"expected: map value for key %q is equal to given value",
-					key),
-			},
-		})
-		return o
-	}
-
-	return o
-}
-
-// NotValueEqual succeeds if object's value for given key is not equal to given
-// value. Before comparison, both values are converted to canonical form.
-//
-// value should be map[string]interface{} or struct.
-//
-// If object doesn't contain any value for given key, failure is reported.
-//
-// Example:
-//
-//	object := NewObject(t, map[string]interface{}{"foo": 123})
-//	object.NotValueEqual("foo", "bad value")  // success
-//	object.NotValueEqual("bar", "bad value")  // failure! (key is missing)
-func (o *Object) NotValueEqual(key string, value interface{}) *Object {
-	opChain := o.chain.enter("ValueNotEqual(%q)", key)
-	defer opChain.leave()
-
-	if opChain.failed() {
-		return o
-	}
-
-	if !containsKey(opChain, o.value, key) {
-		opChain.fail(AssertionFailure{
-			Type:     AssertContainsKey,
-			Actual:   &AssertionValue{o.value},
-			Expected: &AssertionValue{key},
-			Errors: []error{
-				errors.New("expected: map contains key"),
-			},
-		})
-		return o
-	}
-
-	expected, ok := canonValue(opChain, value)
-	if !ok {
-		return o
-	}
-
-	if reflect.DeepEqual(expected, o.value[key]) {
-		opChain.fail(AssertionFailure{
-			Type:     AssertNotEqual,
-			Actual:   &AssertionValue{o.value[key]},
-			Expected: &AssertionValue{value},
-			Errors: []error{
-				fmt.Errorf(
-					"expected: map value for key %q is non-equal to given value",
-					key),
-			},
-		})
-		return o
-	}
-
-	return o
-}
-
-// Deprecated: use IsValueEqual instead.
-func (o *Object) ValueEqual(key string, value interface{}) *Object {
-	return o.IsValueEqual(key, value)
-}
-
-// Deprecated: use NotValueEqual instead.
-func (o *Object) ValueNotEqual(key string, value interface{}) *Object {
-	return o.NotValueEqual(key, value)
 }
 
 type kv struct {

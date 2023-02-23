@@ -439,7 +439,7 @@ func TestResponse_BodyOperations(t *testing.T) {
 	})
 }
 
-func TestResponse_BodyLazyRead(t *testing.T) {
+func TestResponse_BodyDeferred(t *testing.T) {
 	t.Run("constructor does not read content", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
@@ -554,6 +554,46 @@ func TestResponse_BodyLazyRead(t *testing.T) {
 		// Second call should be no-op
 		resp.Body()
 		resp.chain.assertFailed(t)
+
+		assert.Equal(t, readCount, body.readCount)
+		assert.Equal(t, 1, body.closeCount)
+		assert.Nil(t, resp.content)
+		assert.Equal(t, contentFailed, resp.contentState)
+	})
+
+	t.Run("failed state", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		body := newMockBody("body string")
+		body.readErr = errors.New("test error")
+
+		resp := NewResponse(reporter, &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       body,
+		})
+
+		assert.Equal(t, 0, body.readCount)
+		assert.Equal(t, 0, body.closeCount)
+		assert.Nil(t, resp.content)
+		assert.Equal(t, contentPending, resp.contentState)
+
+		// Read body
+		resp.Body()
+		resp.chain.assertFailed(t)
+
+		readCount := body.readCount
+		assert.NotEqual(t, 0, body.readCount)
+		assert.Equal(t, 1, body.closeCount)
+		assert.Nil(t, resp.content)
+		assert.Equal(t, contentFailed, resp.contentState)
+
+		// Invoke getContent()
+		chain := resp.chain.enter("Test()")
+		content, ok := resp.getContent(chain)
+
+		chain.assertFailed(t)
+		assert.Nil(t, content)
+		assert.False(t, ok)
 
 		assert.Equal(t, readCount, body.readCount)
 		assert.Equal(t, 1, body.closeCount)

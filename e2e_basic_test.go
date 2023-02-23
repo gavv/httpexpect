@@ -63,12 +63,12 @@ func testBasicHandler(e *Expect) {
 	e.GET("/foo").Expect().Status(http.StatusOK)
 
 	e.GET("/foo").Expect().
-		Status(http.StatusOK).JSON().Object().IsValueEqual("foo", 123)
+		Status(http.StatusOK).JSON().Object().HasValue("foo", 123)
 
 	e.PUT("/bar").WithQuery("field1", "hello").WithFormField("field2", "world").
 		Expect().
 		Status(http.StatusOK).
-		Form().IsValueEqual("field1", "hello").IsValueEqual("field2", "world")
+		Form().HasValue("field1", "hello").HasValue("field2", "world")
 
 	e.GET("/{a}/{b}", "baz", "qux").
 		Expect().
@@ -88,7 +88,7 @@ func testBasicHandler(e *Expect) {
 	auth.PUT("/wee").
 		Expect().
 		Status(http.StatusOK).
-		Form().IsValueEqual("username", "john").IsValueEqual("password", "secret")
+		Form().HasValue("username", "john").HasValue("password", "secret")
 }
 
 func TestE2EBasic_LiveDefault(t *testing.T) {
