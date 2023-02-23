@@ -1,12 +1,12 @@
 package httpexpect
 
 import (
-	"bufio"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"unicode"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -79,16 +79,6 @@ func TestE2EReport_Aliases(t *testing.T) {
 }
 
 const (
-	failureTemplateAssertPath = `{{ join .AssertPath .LineWidth | indent }}`
-	failureTemplateErrors     = `
-	{{- range $n, $err := .Errors }}
-	{{ if eq $n 0 -}}
-	{{ wrap $err $.LineWidth }}
-	{{- else -}}
-	{{ wrap $err $.LineWidth | indent }}
-	{{- end -}}
-	{{- end -}}`
-
 	intSize = 32 << (^uint(0) >> 63) // 32 or 64
 	maxInt  = 1<<(intSize-1) - 1
 )
@@ -111,79 +101,34 @@ func TestE2EReport_LineWidth(t *testing.T) {
 		wantMaxLineWidth int
 	}{
 		{
-			name: "assertPath zero value",
+			name: "zero value",
 			formatter: &DefaultFormatter{
-				FailureTemplate: failureTemplateAssertPath,
-				TemplateFuncs:   defaultTemplateFuncs,
-				LineWidth:       0,
+				LineWidth: 0,
 			},
 			wantMaxLineWidth: defaultLineWidth,
 		},
 		{
-			name: "assertPath small positive value",
+			name: "small positive value",
 			formatter: &DefaultFormatter{
-				FailureTemplate: failureTemplateAssertPath,
-				TemplateFuncs:   defaultTemplateFuncs,
-				LineWidth:       15,
+				LineWidth: 15,
 			},
 			wantMaxLineWidth: 15,
 		},
 		{
-			name: "assertPath very large positive value",
+			name: "very large positive value",
 			formatter: &DefaultFormatter{
-				FailureTemplate: failureTemplateAssertPath,
-				TemplateFuncs:   defaultTemplateFuncs,
-				LineWidth:       1000,
+				LineWidth: 1000,
 			},
 			wantMaxLineWidth: 1000,
 		},
 		{
-			name: "assertPath negative value (no limit)",
+			name: "negative value (no limit)",
 			formatter: &DefaultFormatter{
-				FailureTemplate: failureTemplateAssertPath,
-				TemplateFuncs:   defaultTemplateFuncs,
-				LineWidth:       -1,
-			},
-			wantMaxLineWidth: maxInt,
-		},
-		{
-			name: "errors zero value",
-			formatter: &DefaultFormatter{
-				FailureTemplate: failureTemplateErrors,
-				TemplateFuncs:   defaultTemplateFuncs,
-				LineWidth:       0,
-			},
-			wantMaxLineWidth: defaultLineWidth,
-		},
-		{
-			name: "errors small positive value",
-			formatter: &DefaultFormatter{
-				FailureTemplate: failureTemplateErrors,
-				TemplateFuncs:   defaultTemplateFuncs,
-				LineWidth:       15,
-			},
-			wantMaxLineWidth: 15,
-		},
-		{
-			name: "errors very large positive value",
-			formatter: &DefaultFormatter{
-				FailureTemplate: failureTemplateErrors,
-				TemplateFuncs:   defaultTemplateFuncs,
-				LineWidth:       1000,
-			},
-			wantMaxLineWidth: 1000,
-		},
-		{
-			name: "errors negative value (no limit)",
-			formatter: &DefaultFormatter{
-				FailureTemplate: failureTemplateErrors,
-				TemplateFuncs:   defaultTemplateFuncs,
-				LineWidth:       -1,
+				LineWidth: -1,
 			},
 			wantMaxLineWidth: maxInt,
 		},
 	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			rep := &recordingReporter{}
@@ -203,24 +148,33 @@ func TestE2EReport_LineWidth(t *testing.T) {
 				Object().
 				IsValueEqual("foo", 1234)
 
-			scanner := bufio.NewScanner(strings.NewReader(rep.reported))
-
-			for scanner.Scan() {
-				s := strings.Trim(strings.TrimSpace(scanner.Text()), ".")
-
-				var ss []string
-				switch tt.formatter.FailureTemplate {
-				case failureTemplateAssertPath:
-					ss = strings.Split(s, ".")
-				case failureTemplateErrors:
-					ss = strings.Fields(s)
+			var skip bool
+			for _, s := range strings.Split(strings.Trim(rep.reported, "\n"), "\n") {
+				// only assert first errors block and assertPath block in defaultFailureTemplate
+				if strings.HasPrefix(s, "assertion:") {
+					skip = false
 				}
+				if len(s) == 0 {
+					skip = true
+				}
+				if skip {
+					continue
+				}
+
+				ss := strings.FieldsFunc(s, splitWhiteSpaceOrDot)
 
 				if len(ss) <= 1 {
 					continue
 				}
 
-				lenBeforeWrapped := len(s) - len(ss[len(ss)-1]) - 1
+				var lenBeforeWrapped int
+				for i, v := range ss {
+					if i >= len(ss)-1 {
+						break
+					}
+					lenBeforeWrapped += len(v) + 1
+				}
+				lenBeforeWrapped -= 1
 
 				t.Logf("%s", s)
 
@@ -228,4 +182,8 @@ func TestE2EReport_LineWidth(t *testing.T) {
 			}
 		})
 	}
+}
+
+func splitWhiteSpaceOrDot(r rune) bool {
+	return unicode.IsSpace(r) || r == '.'
 }
