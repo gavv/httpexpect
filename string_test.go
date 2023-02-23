@@ -85,7 +85,7 @@ func TestString_Constructors(t *testing.T) {
 }
 
 func TestString_Decode(t *testing.T) {
-	t.Run("Decode into empty interface", func(t *testing.T) {
+	t.Run("target is empty interface", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		value := NewString(reporter, "foo")
@@ -97,7 +97,7 @@ func TestString_Decode(t *testing.T) {
 		assert.Equal(t, "foo", target)
 	})
 
-	t.Run("Decode into string", func(t *testing.T) {
+	t.Run("target is string", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		value := NewString(reporter, "foo")
@@ -109,7 +109,7 @@ func TestString_Decode(t *testing.T) {
 		assert.Equal(t, "foo", target)
 	})
 
-	t.Run("Target is unmarshable", func(t *testing.T) {
+	t.Run("target is unmarshable", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		value := NewString(reporter, "foo")
@@ -119,7 +119,7 @@ func TestString_Decode(t *testing.T) {
 		value.chain.assertFailed(t)
 	})
 
-	t.Run("Target is nil", func(t *testing.T) {
+	t.Run("target is nil", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		value := NewString(reporter, "foo")
@@ -179,31 +179,37 @@ func TestString_Length(t *testing.T) {
 	assert.Equal(t, 7.0, num.Raw())
 }
 
-func TestString_Empty(t *testing.T) {
-	reporter := newMockReporter(t)
+func TestString_IsEmpty(t *testing.T) {
+	cases := map[string]struct {
+		str       string
+		wantEmpty bool
+	}{
+		"empty_string":     {str: "", wantEmpty: true},
+		"populated_string": {str: "a", wantEmpty: false},
+	}
 
-	value1 := NewString(reporter, "")
+	for name, value := range cases {
+		t.Run(name, func(t *testing.T) {
+			reporter := newMockReporter(t)
 
-	value1.IsEmpty()
-	value1.chain.assertNotFailed(t)
-	value1.chain.clearFailed()
+			if value.wantEmpty {
+				NewString(reporter, value.str).IsEmpty().
+					chain.assertNotFailed(t)
 
-	value1.NotEmpty()
-	value1.chain.assertFailed(t)
-	value1.chain.clearFailed()
+				NewString(reporter, value.str).NotEmpty().
+					chain.assertFailed(t)
+			} else {
+				NewString(reporter, value.str).IsEmpty().
+					chain.assertFailed(t)
 
-	value2 := NewString(reporter, "a")
-
-	value2.IsEmpty()
-	value2.chain.assertFailed(t)
-	value2.chain.clearFailed()
-
-	value2.NotEmpty()
-	value2.chain.assertNotFailed(t)
-	value2.chain.clearFailed()
+				NewString(reporter, value.str).NotEmpty().
+					chain.assertNotFailed(t)
+			}
+		})
+	}
 }
 
-func TestString_Equal(t *testing.T) {
+func TestString_IsEqual(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewString(reporter, "foo")
@@ -227,7 +233,7 @@ func TestString_Equal(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestString_EqualFold(t *testing.T) {
+func TestString_IsEqualFold(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewString(reporter, "foo")
@@ -475,164 +481,142 @@ func TestString_MatchInvalid(t *testing.T) {
 }
 
 func TestString_IsAscii(t *testing.T) {
-	reporter := newMockReporter(t)
+	cases := []struct {
+		str       string
+		wantASCII bool
+	}{
+		{"Ascii", true},
+		{string(rune(127)), true},
+		{"Ascii is アスキー", false},
+		{"アスキー", false},
+		{string(rune(128)), false},
+	}
 
-	value1 := NewString(reporter, "Ascii")
-	value1.IsASCII()
-	value1.chain.assertNotFailed(t)
-	value1.chain.clearFailed()
+	for _, value := range cases {
+		t.Run(value.str, func(t *testing.T) {
+			reporter := newMockReporter(t)
 
-	value2 := NewString(reporter, "Ascii is アスキー")
-	value2.IsASCII()
-	value2.chain.assertFailed(t)
-	value2.chain.clearFailed()
+			if value.wantASCII {
+				NewString(reporter, value.str).IsASCII().
+					chain.assertNotFailed(t)
 
-	value3 := NewString(reporter, "アスキー")
-	value3.IsASCII()
-	value3.chain.assertFailed(t)
-	value3.chain.clearFailed()
+				NewString(reporter, value.str).NotASCII().
+					chain.assertFailed(t)
+			} else {
+				NewString(reporter, value.str).IsASCII().
+					chain.assertFailed(t)
 
-	value4 := NewString(reporter, string(rune(127)))
-	value4.IsASCII()
-	value4.chain.assertNotFailed(t)
-	value4.chain.clearFailed()
-
-	value5 := NewString(reporter, string(rune(128)))
-	value5.IsASCII()
-	value5.chain.assertFailed(t)
-	value5.chain.clearFailed()
-}
-
-func TestString_NotAscii(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	value1 := NewString(reporter, "Ascii")
-	value1.NotASCII()
-	value1.chain.assertFailed(t)
-	value1.chain.clearFailed()
-
-	value2 := NewString(reporter, "Ascii is アスキー")
-	value2.NotASCII()
-	value2.chain.assertNotFailed(t)
-	value2.chain.clearFailed()
-
-	value3 := NewString(reporter, "アスキー")
-	value3.NotASCII()
-	value3.chain.assertNotFailed(t)
-	value3.chain.clearFailed()
-
-	value4 := NewString(reporter, string(rune(127)))
-	value4.NotASCII()
-	value4.chain.assertFailed(t)
-	value4.chain.clearFailed()
-
-	value5 := NewString(reporter, string(rune(128)))
-	value5.NotASCII()
-	value5.chain.assertNotFailed(t)
-	value5.chain.clearFailed()
+				NewString(reporter, value.str).NotASCII().
+					chain.assertNotFailed(t)
+			}
+		})
+	}
 }
 
 func TestString_AsNumber(t *testing.T) {
-	reporter := newMockReporter(t)
+	cases := map[string]struct {
+		str         string
+		base        []int
+		fail        bool
+		expectedNum float64
+	}{
+		"default_base_integer": {
+			str:         "1234567",
+			fail:        false,
+			expectedNum: float64(1234567),
+		},
+		"default_base_float": {
+			str:         "11.22",
+			fail:        false,
+			expectedNum: float64(11.22),
+		},
+		"default_base_bad": {
+			str:  "a1",
+			fail: true,
+		},
+		"base10_integer": {
+			str:         "100",
+			base:        []int{10},
+			fail:        false,
+			expectedNum: float64(100),
+		},
+		"base10_float": {
+			str:         "11.22",
+			base:        []int{10},
+			fail:        false,
+			expectedNum: float64(11.22),
+		},
+		"base16_integer": {
+			str:         "100",
+			base:        []int{16},
+			fail:        false,
+			expectedNum: float64(0x100),
+		},
+		"base16_float": {
+			str:  "11.22",
+			base: []int{16},
+			fail: true,
+		},
+		"base16_large_integer": {
+			str:         "4000000000000000",
+			base:        []int{16},
+			fail:        false,
+			expectedNum: float64(0x4000000000000000),
+		},
+		"default_float_precision_max": {
+			str:  "4611686018427387905",
+			fail: true,
+		},
+		"base10_float_precision_max": {
+			str:  "4611686018427387905",
+			base: []int{10},
+			fail: true,
+		},
+		"base16_float_precision_max": {
+			str:  "8000000000000001",
+			base: []int{16},
+			fail: true,
+		},
+		"base16_float_precision_min": {
+			str:  "-4000000000000001",
+			base: []int{16},
+			fail: true,
+		},
+		"multiple_base": {
+			str:  "100",
+			base: []int{10, 16},
+			fail: true,
+		},
+	}
 
-	t.Run("default_base", func(t *testing.T) {
-		value1 := NewString(reporter, "1234567")
-		num1 := value1.AsNumber()
-		value1.chain.assertNotFailed(t)
-		num1.chain.assertNotFailed(t)
-		assert.Equal(t, float64(1234567), num1.Raw())
+	for name, value := range cases {
+		t.Run(name, func(t *testing.T) {
+			reporter := newMockReporter(t)
 
-		value2 := NewString(reporter, "11.22")
-		num2 := value2.AsNumber()
-		value2.chain.assertNotFailed(t)
-		num2.chain.assertNotFailed(t)
-		assert.Equal(t, float64(11.22), num2.Raw())
+			str := NewString(reporter, value.str)
+			num := str.AsNumber(value.base...)
 
-		value3 := NewString(reporter, "a1")
-		num3 := value3.AsNumber()
-		value3.chain.assertFailed(t)
-		num3.chain.assertFailed(t)
-		assert.Equal(t, float64(0), num3.Raw())
-	})
-
-	t.Run("base10", func(t *testing.T) {
-		value1 := NewString(reporter, "100")
-		num1 := value1.AsNumber(10)
-		value1.chain.assertNotFailed(t)
-		num1.chain.assertNotFailed(t)
-		assert.Equal(t, float64(100), num1.Raw())
-
-		value2 := NewString(reporter, "11.22")
-		num2 := value2.AsNumber(10)
-		value2.chain.assertNotFailed(t)
-		num2.chain.assertNotFailed(t)
-		assert.Equal(t, float64(11.22), num2.Raw())
-	})
-
-	t.Run("base16", func(t *testing.T) {
-		value1 := NewString(reporter, "100")
-		num1 := value1.AsNumber(16)
-		value1.chain.assertNotFailed(t)
-		num1.chain.assertNotFailed(t)
-		assert.Equal(t, float64(0x100), num1.Raw())
-
-		value2 := NewString(reporter, "11.22")
-		num2 := value2.AsNumber(16)
-		value2.chain.assertFailed(t)
-		num2.chain.assertFailed(t)
-		assert.Equal(t, float64(0), num2.Raw())
-
-		value3 := NewString(reporter, "4000000000000000")
-		num3 := value3.AsNumber(16)
-		value3.chain.assertNotFailed(t)
-		num3.chain.assertNotFailed(t)
-		assert.Equal(t, float64(0x4000000000000000), num3.Raw())
-	})
-
-	t.Run("float_precision", func(t *testing.T) {
-		value1 := NewString(reporter, "4611686018427387905")
-		num1 := value1.AsNumber()
-		value1.chain.assertFailed(t)
-		num1.chain.assertFailed(t)
-		assert.Equal(t, float64(0), num1.Raw())
-
-		value2 := NewString(reporter, "4611686018427387905")
-		num2 := value2.AsNumber(10)
-		value2.chain.assertFailed(t)
-		num2.chain.assertFailed(t)
-		assert.Equal(t, float64(0), num2.Raw())
-
-		value3 := NewString(reporter, "8000000000000001")
-		num3 := value3.AsNumber(16)
-		value3.chain.assertFailed(t)
-		num3.chain.assertFailed(t)
-		assert.Equal(t, float64(0), num3.Raw())
-
-		value4 := NewString(reporter, "-4000000000000001")
-		num4 := value4.AsNumber(16)
-		value4.chain.assertFailed(t)
-		num4.chain.assertFailed(t)
-		assert.Equal(t, float64(0), num4.Raw())
-	})
-
-	t.Run("multiple_base", func(t *testing.T) {
-		value1 := NewString(reporter, "100")
-		num1 := value1.AsNumber(10, 16)
-		value1.chain.assertFailed(t)
-		num1.chain.assertFailed(t)
-		assert.Equal(t, float64(0), num1.Raw())
-	})
+			if value.fail {
+				str.chain.assertFailed(t)
+				num.chain.assertFailed(t)
+				assert.Equal(t, float64(0), num.Raw())
+			} else {
+				str.chain.assertNotFailed(t)
+				num.chain.assertNotFailed(t)
+				assert.Equal(t, value.expectedNum, num.Raw())
+			}
+		})
+	}
 }
 
 func TestString_AsBoolean(t *testing.T) {
-	reporter := newMockReporter(t)
-
 	trueValues := []string{"true", "True"}
 	falseValues := []string{"false", "False"}
 	badValues := []string{"TRUE", "FALSE", "t", "f", "1", "0", "bad"}
 
 	for _, str := range trueValues {
 		t.Run(str, func(t *testing.T) {
+			reporter := newMockReporter(t)
 			value := NewString(reporter, str)
 
 			b := value.AsBoolean()
@@ -644,6 +628,7 @@ func TestString_AsBoolean(t *testing.T) {
 
 	for _, str := range falseValues {
 		t.Run(str, func(t *testing.T) {
+			reporter := newMockReporter(t)
 			value := NewString(reporter, str)
 
 			b := value.AsBoolean()
@@ -655,6 +640,7 @@ func TestString_AsBoolean(t *testing.T) {
 
 	for _, str := range badValues {
 		t.Run(str, func(t *testing.T) {
+			reporter := newMockReporter(t)
 			value := NewString(reporter, str)
 
 			b := value.AsBoolean()
@@ -664,26 +650,37 @@ func TestString_AsBoolean(t *testing.T) {
 }
 
 func TestString_AsDateTime(t *testing.T) {
-	reporter := newMockReporter(t)
+	t.Run("default_formats_RFC1123+GMT", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		value := NewString(reporter, "Tue, 15 Nov 1994 08:12:31 GMT")
 
-	t.Run("basic", func(t *testing.T) {
-		value1 := NewString(reporter, "Tue, 15 Nov 1994 08:12:31 GMT")
-		dt1 := value1.AsDateTime()
-		value1.chain.assertNotFailed(t)
-		dt1.chain.assertNotFailed(t)
-		assert.True(t, time.Date(1994, 11, 15, 8, 12, 31, 0, time.UTC).Equal(dt1.Raw()))
+		dt := value.AsDateTime()
+		value.chain.assertNotFailed(t)
+		dt.chain.assertNotFailed(t)
 
-		value2 := NewString(reporter, "15 Nov 94 08:12 GMT")
-		dt2 := value2.AsDateTime(time.RFC822)
-		value2.chain.assertNotFailed(t)
-		dt2.chain.assertNotFailed(t)
-		assert.True(t, time.Date(1994, 11, 15, 8, 12, 0, 0, time.UTC).Equal(dt2.Raw()))
+		assert.True(t, time.Date(1994, 11, 15, 8, 12, 31, 0, time.UTC).Equal(dt.Raw()))
+	})
 
-		value3 := NewString(reporter, "bad")
-		dt3 := value3.AsDateTime()
-		value3.chain.assertFailed(t)
-		dt3.chain.assertFailed(t)
-		assert.True(t, time.Unix(0, 0).Equal(dt3.Raw()))
+	t.Run("RFC822", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		value := NewString(reporter, "15 Nov 94 08:12 GMT")
+
+		dt := value.AsDateTime(time.RFC822)
+		value.chain.assertNotFailed(t)
+		dt.chain.assertNotFailed(t)
+
+		assert.True(t, time.Date(1994, 11, 15, 8, 12, 0, 0, time.UTC).Equal(dt.Raw()))
+	})
+
+	t.Run("bad_input", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		value := NewString(reporter, "bad")
+
+		dt := value.AsDateTime()
+		value.chain.assertFailed(t)
+		dt.chain.assertFailed(t)
+
+		assert.True(t, time.Unix(0, 0).Equal(dt.Raw()))
 	})
 
 	formats := []string{
@@ -701,27 +698,47 @@ func TestString_AsDateTime(t *testing.T) {
 	}
 
 	for n, f := range formats {
-		t.Run(f, func(t *testing.T) {
+		t.Run("default_formats_"+f, func(t *testing.T) {
 			str := time.Now().Format(f)
 
-			value1 := NewString(reporter, str)
-			dt1 := value1.AsDateTime()
-			dt1.chain.assertNotFailed(t)
+			reporter := newMockReporter(t)
+			value := NewString(reporter, str)
 
-			value2 := NewString(reporter, str)
-			dt2 := value2.AsDateTime(formats...)
-			dt2.chain.assertNotFailed(t)
-
-			value3 := NewString(reporter, str)
-			dt3 := value3.AsDateTime(f)
-			dt3.chain.assertNotFailed(t)
-
-			if n != 0 {
-				value4 := NewString(reporter, str)
-				dt4 := value4.AsDateTime(formats[0])
-				dt4.chain.assertFailed(t)
-			}
+			dt := value.AsDateTime()
+			dt.chain.assertNotFailed(t)
 		})
+
+		t.Run("all_formats_"+f, func(t *testing.T) {
+			str := time.Now().Format(f)
+
+			reporter := newMockReporter(t)
+			value := NewString(reporter, str)
+
+			dt := value.AsDateTime(formats...)
+			dt.chain.assertNotFailed(t)
+		})
+
+		t.Run("same_format_"+f, func(t *testing.T) {
+			str := time.Now().Format(f)
+
+			reporter := newMockReporter(t)
+			value := NewString(reporter, str)
+
+			dt := value.AsDateTime(f)
+			dt.chain.assertNotFailed(t)
+		})
+
+		if n != 0 {
+			t.Run("different_format_"+f, func(t *testing.T) {
+				str := time.Now().Format(f)
+
+				reporter := newMockReporter(t)
+				value := NewString(reporter, str)
+
+				dt := value.AsDateTime(formats[0])
+				dt.chain.assertFailed(t)
+			})
+		}
 	}
 }
 

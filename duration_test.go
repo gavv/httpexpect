@@ -97,7 +97,7 @@ func TestDuration_Unset(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestDuration_Equal(t *testing.T) {
+func TestDuration_IsEqual(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewDuration(reporter, time.Second)
@@ -121,7 +121,7 @@ func TestDuration_Equal(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestDuration_Greater(t *testing.T) {
+func TestDuration_IsGreater(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewDuration(reporter, time.Second)
@@ -147,7 +147,7 @@ func TestDuration_Greater(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestDuration_Lesser(t *testing.T) {
+func TestDuration_IsLesser(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewDuration(reporter, time.Second)

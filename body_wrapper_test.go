@@ -112,7 +112,7 @@ func TestBodyWrapper_OneError(t *testing.T) {
 		assert.Nil(t, rd)
 	}
 
-	t.Run("readerr/read_close", func(t *testing.T) {
+	t.Run("read_err, read_close", func(t *testing.T) {
 		body := newMockBody("test_body")
 		body.readErr = bodyErr
 
@@ -125,7 +125,7 @@ func TestBodyWrapper_OneError(t *testing.T) {
 		checkCloseNoErr(t, wrp)
 	})
 
-	t.Run("readerr/close_read", func(t *testing.T) {
+	t.Run("read_err, close_read", func(t *testing.T) {
 		body := newMockBody("test_body")
 		body.readErr = bodyErr
 
@@ -138,7 +138,7 @@ func TestBodyWrapper_OneError(t *testing.T) {
 		checkReadErr(t, wrp)
 	})
 
-	t.Run("closeerr/read_close", func(t *testing.T) {
+	t.Run("close_err, read_close", func(t *testing.T) {
 		body := newMockBody("test_body")
 		body.closeErr = bodyErr
 
@@ -151,7 +151,7 @@ func TestBodyWrapper_OneError(t *testing.T) {
 		checkCloseErr(t, wrp)
 	})
 
-	t.Run("closeerr/close_read", func(t *testing.T) {
+	t.Run("close_err, close_read", func(t *testing.T) {
 		body := newMockBody("test_body")
 		body.closeErr = bodyErr
 
@@ -164,7 +164,7 @@ func TestBodyWrapper_OneError(t *testing.T) {
 		checkReadErr(t, wrp)
 	})
 
-	t.Run("readerr/getbody", func(t *testing.T) {
+	t.Run("read_err, get_body", func(t *testing.T) {
 		body := newMockBody("test_body")
 		body.readErr = bodyErr
 
@@ -174,7 +174,7 @@ func TestBodyWrapper_OneError(t *testing.T) {
 		checkGetBodyErr(t, wrp)
 	})
 
-	t.Run("closeerr/getbody", func(t *testing.T) {
+	t.Run("close_err, get_body", func(t *testing.T) {
 		body := newMockBody("test_body")
 		body.closeErr = bodyErr
 

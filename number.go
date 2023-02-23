@@ -636,3 +636,448 @@ func (n *Number) Le(value interface{}) *Number {
 
 	return n
 }
+
+// IsInt succeeds if number is a signed integer of the specified bit width
+// as an optional argument.
+//
+// Bits argument defines maximum allowed bitness for the given number.
+// If bits is omitted, boundary check is omitted too.
+//
+// Example:
+//
+//	number := NewNumber(t, 1000000)
+//	number.IsInt()   // success
+//	number.IsInt(32) // success
+//	number.IsInt(16) // failure
+//
+//	number := NewNumber(t, -1000000)
+//	number.IsInt()   // success
+//	number.IsInt(32) // success
+//	number.IsInt(16) // failure
+//
+//	number := NewNumber(t, 0.5)
+//	number.IsInt()   // failure
+func (n *Number) IsInt(bits ...int) *Number {
+	opChain := n.chain.enter("IsInt()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return n
+	}
+
+	if len(bits) > 1 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected multiple bits arguments"),
+			},
+		})
+		return n
+	}
+
+	if len(bits) == 1 && bits[0] <= 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected non-positive bits argument"),
+			},
+		})
+		return n
+	}
+
+	inum, acc := n.value.Int(nil)
+	if !(acc == big.Exact) {
+		opChain.fail(AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{n.value},
+			Errors: []error{
+				errors.New("expected: number is signed integer"),
+			},
+		})
+		return n
+	}
+
+	if len(bits) > 0 {
+		bitSize := bits[0]
+
+		imax := new(big.Int)
+		imax.Lsh(big.NewInt(1), uint(bitSize-1))
+		imax.Sub(imax, big.NewInt(1))
+		imin := new(big.Int)
+		imin.Neg(imax)
+		imin.Sub(imin, big.NewInt(1))
+		if inum.Cmp(imin) < 0 || inum.Cmp(imax) > 0 {
+			opChain.fail(AssertionFailure{
+				Type:   AssertInRange,
+				Actual: &AssertionValue{n.value},
+				Expected: &AssertionValue{AssertionRange{
+					Min: intBoundary{imin, -1, bitSize - 1},
+					Max: intBoundary{imax, +1, bitSize - 1},
+				}},
+				Errors: []error{
+					fmt.Errorf("expected: number is %d-bit signed integer", bitSize),
+				},
+			})
+			return n
+		}
+	}
+
+	return n
+}
+
+// NotInt succeeds if number is not a signed integer of the specified bit
+// width as an optional argument.
+//
+// Bits argument defines maximum allowed bitness for the given number.
+// If bits is omitted, boundary check is omitted too.
+//
+// Example:
+//
+//	number := NewNumber(t, 1000000)
+//	number.NotInt()   // failure
+//	number.NotInt(32) // failure
+//	number.NotInt(16) // success
+//
+//	number := NewNumber(t, -1000000)
+//	number.NotInt()   // failure
+//	number.NotInt(32) // failure
+//	number.NotInt(16) // success
+//
+//	number := NewNumber(t, 0.5)
+//	number.NotInt()   // success
+func (n *Number) NotInt(bits ...int) *Number {
+	opChain := n.chain.enter("NotInt()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return n
+	}
+
+	if len(bits) > 1 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected multiple bits arguments"),
+			},
+		})
+		return n
+	}
+
+	if len(bits) == 1 && bits[0] <= 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected non-positive bits argument"),
+			},
+		})
+		return n
+	}
+
+	inum, acc := n.value.Int(nil)
+	if acc == big.Exact {
+		if len(bits) == 0 {
+			opChain.fail(AssertionFailure{
+				Type:   AssertValid,
+				Actual: &AssertionValue{n.value},
+				Errors: []error{
+					errors.New("expected: number is not signed integer"),
+				},
+			})
+			return n
+		}
+
+		bitSize := bits[0]
+		imax := new(big.Int)
+		imax.Lsh(big.NewInt(1), uint(bitSize-1))
+		imax.Sub(imax, big.NewInt(1))
+		imin := new(big.Int)
+		imin.Neg(imax)
+		imin.Sub(imin, big.NewInt(1))
+		if !(inum.Cmp(imin) < 0 || inum.Cmp(imax) > 0) {
+			opChain.fail(AssertionFailure{
+				Type:   AssertNotInRange,
+				Actual: &AssertionValue{n.value},
+				Expected: &AssertionValue{AssertionRange{
+					Min: intBoundary{imin, -1, bitSize - 1},
+					Max: intBoundary{imax, +1, bitSize - 1},
+				}},
+				Errors: []error{
+					fmt.Errorf(
+						"expected: number doesn't fit %d-bit signed integer",
+						bitSize),
+				},
+			})
+			return n
+		}
+	}
+
+	return n
+}
+
+// IsUint succeeds if number is an unsigned integer of the specified bit
+// width as an optional argument.
+//
+// Bits argument defines maximum allowed bitness for the given number.
+// If bits is omitted, boundary check is omitted too.
+//
+// Example:
+//
+//	number := NewNumber(t, 1000000)
+//	number.IsUint()   // success
+//	number.IsUint(32) // success
+//	number.IsUint(16) // failure
+//
+//	number := NewNumber(t, -1000000)
+//	number.IsUint()   // failure
+//	number.IsUint(32) // failure
+//	number.IsUint(16) // failure
+//
+//	number := NewNumber(t, 0.5)
+//	number.IsUint()   // failure
+func (n *Number) IsUint(bits ...int) *Number {
+	opChain := n.chain.enter("IsUint()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return n
+	}
+
+	if len(bits) > 1 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected multiple bits arguments"),
+			},
+		})
+		return n
+	}
+
+	if len(bits) == 1 && bits[0] <= 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected non-positive bits argument"),
+			},
+		})
+		return n
+	}
+
+	inum, acc := n.value.Int(nil)
+	if !(acc == big.Exact) {
+		opChain.fail(AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{n.value},
+			Errors: []error{
+				errors.New("expected: number is unsigned integer"),
+			},
+		})
+		return n
+	}
+
+	imin := big.NewInt(0)
+	if inum.Cmp(imin) < 0 {
+		opChain.fail(AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{n.value},
+			Errors: []error{
+				errors.New("expected: number is unsigned integer"),
+			},
+		})
+		return n
+	}
+
+	if len(bits) > 0 {
+		bitSize := bits[0]
+		imax := new(big.Int)
+		imax.Lsh(big.NewInt(1), uint(bitSize))
+		imax.Sub(imax, big.NewInt(1))
+		if inum.Cmp(imax) > 0 {
+			opChain.fail(AssertionFailure{
+				Type:   AssertInRange,
+				Actual: &AssertionValue{n.value},
+				Expected: &AssertionValue{AssertionRange{
+					Min: intBoundary{imin, 0, 0},
+					Max: intBoundary{imax, +1, bitSize},
+				}},
+				Errors: []error{
+					fmt.Errorf("expected: number fits %d-bit unsigned integer", bitSize),
+				},
+			})
+			return n
+		}
+	}
+
+	return n
+}
+
+// NotUint succeeds if number is not an unsigned integer of the specified bit
+// width as an optional argument.
+//
+// Bits argument defines maximum allowed bitness for the given number.
+// If bits is omitted, boundary check is omitted too.
+//
+// Example:
+//
+//	number := NewNumber(t, 1000000)
+//	number.NotUint()   // failure
+//	number.NotUint(32) // failure
+//	number.NotUint(16) // success
+//
+//	number := NewNumber(t, -1000000)
+//	number.NotUint()   // success
+//	number.NotUint(32) // success
+//	number.NotUint(16) // success
+//
+//	number := NewNumber(t, 0.5)
+//	number.NotUint()   // success
+func (n *Number) NotUint(bits ...int) *Number {
+	opChain := n.chain.enter("NotUint()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return n
+	}
+
+	if len(bits) > 1 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected multiple bits arguments"),
+			},
+		})
+		return n
+	}
+
+	if len(bits) == 1 && bits[0] <= 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected non-positive bits argument"),
+			},
+		})
+		return n
+	}
+
+	inum, acc := n.value.Int(nil)
+	if acc == big.Exact {
+		imin := big.NewInt(0)
+		if inum.Cmp(imin) >= 0 {
+			if len(bits) == 0 {
+				opChain.fail(AssertionFailure{
+					Type:   AssertValid,
+					Actual: &AssertionValue{n.value},
+					Errors: []error{
+						errors.New("expected: number is not unsigned integer"),
+					},
+				})
+				return n
+			}
+
+			bitSize := bits[0]
+			imax := new(big.Int)
+			imax.Lsh(big.NewInt(1), uint(bitSize))
+			imax.Sub(imax, big.NewInt(1))
+			if inum.Cmp(imax) <= 0 {
+				opChain.fail(AssertionFailure{
+					Type:   AssertNotInRange,
+					Actual: &AssertionValue{n.value},
+					Expected: &AssertionValue{AssertionRange{
+						Min: intBoundary{imin, 0, 0},
+						Max: intBoundary{imax, +1, bitSize},
+					}},
+					Errors: []error{
+						fmt.Errorf(
+							"expected: number doesn't fit %d-bit unsigned integer",
+							bitSize),
+					},
+				})
+				return n
+			}
+		}
+	}
+
+	return n
+}
+
+// IsFinite succeeds if number is neither ±Inf nor NaN.
+//
+// Example:
+//
+//	number := NewNumber(t, 1234.5)
+//	number.IsFinite() // success
+//
+//	number := NewNumber(t, math.NaN())
+//	number.IsFinite() // failure
+//
+//	number := NewNumber(t, math.Inf(+1))
+//	number.IsFinite() // failure
+func (n *Number) IsFinite() *Number {
+	opChain := n.chain.enter("IsFinite()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return n
+	}
+
+	if n.value.IsInf() {
+		opChain.fail(AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{n.value},
+			Errors: []error{
+				errors.New("expected: number is neither ±Inf nor NaN"),
+			},
+		})
+		return n
+	}
+
+	return n
+}
+
+// NotFinite succeeds if number is either ±Inf or NaN.
+//
+// Example:
+//
+//	number := NewNumber(t, 1234.5)
+//	number.NotFinite() // failure
+//
+//	number := NewNumber(t, math.NaN())
+//	number.NotFinite() // success
+//
+//	number := NewNumber(t, math.Inf(+1))
+//	number.NotFinite() // success
+func (n *Number) NotFinite() *Number {
+	opChain := n.chain.enter("NotFinite()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return n
+	}
+
+	if !n.value.IsInf() {
+		opChain.fail(AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{n.value},
+			Errors: []error{
+				errors.New("expected: number is either ±Inf or NaN"),
+			},
+		})
+		return n
+	}
+
+	return n
+}
+
+type intBoundary struct {
+	val  *big.Int
+	sign int
+	bits int
+}
+
+func (b intBoundary) String() string {
+	if b.sign > 0 {
+		return fmt.Sprintf("+2^%d-1 (+%s)", b.bits, b.val)
+	} else if b.sign < 0 {
+		return fmt.Sprintf("-2^%d   (%s)", b.bits, b.val)
+	}
+	return fmt.Sprintf("%s", b.val)
+}

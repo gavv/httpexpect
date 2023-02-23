@@ -33,14 +33,14 @@ func TestWebsocketMessage_Failed(t *testing.T) {
 }
 
 func TestWebsocketMessage_Constructors(t *testing.T) {
-	t.Run("Constructor without config", func(t *testing.T) {
+	t.Run("reporter", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		msg := NewWebsocketMessage(reporter, websocket.CloseMessage, nil)
 		msg.CloseMessage()
 		msg.chain.assertNotFailed(t)
 	})
 
-	t.Run("Constructor with config", func(t *testing.T) {
+	t.Run("config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		msg := NewWebsocketMessageC(Config{
 			Reporter: reporter,
@@ -49,7 +49,7 @@ func TestWebsocketMessage_Constructors(t *testing.T) {
 		msg.chain.assertNotFailed(t)
 	})
 
-	t.Run("chain Constructor", func(t *testing.T) {
+	t.Run("chain", func(t *testing.T) {
 		chain := newMockChain(t)
 		value := newWebsocketMessage(chain, 0, nil)
 		assert.NotSame(t, value.chain, chain)

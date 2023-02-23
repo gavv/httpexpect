@@ -192,6 +192,114 @@ func (a *Array) Element(index int) *Value {
 	return a.Value(index)
 }
 
+// HasValue succeeds if array's value at the given index is equal to given value.
+//
+// Before comparison, both values are converted to canonical form. value should be
+// map[string]interface{} or struct.
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{"foo", "123"})
+//	array.HasValue(1, 123)
+func (a *Array) HasValue(index int, value interface{}) *Array {
+	opChain := a.chain.enter("HasValue(%d)", index)
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return a
+	}
+
+	if index < 0 || index >= len(a.value) {
+		opChain.fail(AssertionFailure{
+			Type:   AssertInRange,
+			Actual: &AssertionValue{index},
+			Expected: &AssertionValue{AssertionRange{
+				Min: 0,
+				Max: len(a.value) - 1,
+			}},
+			Errors: []error{
+				errors.New("expected: valid element index"),
+			},
+		})
+		return a
+	}
+
+	expected, ok := canonValue(opChain, value)
+	if !ok {
+		return a
+	}
+
+	if !reflect.DeepEqual(expected, a.value[index]) {
+		opChain.fail(AssertionFailure{
+			Type:     AssertEqual,
+			Actual:   &AssertionValue{a.value[index]},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				fmt.Errorf(
+					"expected: array value at index %d is equal to given value",
+					index),
+			},
+		})
+		return a
+	}
+
+	return a
+}
+
+// NotHasValue succeeds if array's value at the given index is not equal to given value.
+//
+// Before comparison, both values are converted to canonical form. value should be
+// map[string]interface{} or struct.
+//
+// Example:
+//
+//	array := NewArray(t, []interface{}{"foo", "123"})
+//	array.NotHasValue(1, 234)
+func (a *Array) NotHasValue(index int, value interface{}) *Array {
+	opChain := a.chain.enter("NotHasValue(%d)", index)
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return a
+	}
+
+	if index < 0 || index >= len(a.value) {
+		opChain.fail(AssertionFailure{
+			Type:   AssertInRange,
+			Actual: &AssertionValue{index},
+			Expected: &AssertionValue{AssertionRange{
+				Min: 0,
+				Max: len(a.value) - 1,
+			}},
+			Errors: []error{
+				errors.New("expected: valid element index"),
+			},
+		})
+		return a
+	}
+
+	expected, ok := canonValue(opChain, value)
+	if !ok {
+		return a
+	}
+
+	if reflect.DeepEqual(expected, a.value[index]) {
+		opChain.fail(AssertionFailure{
+			Type:     AssertNotEqual,
+			Actual:   &AssertionValue{a.value[index]},
+			Expected: &AssertionValue{value},
+			Errors: []error{
+				fmt.Errorf(
+					"expected: array value at index %d is not equal to given value",
+					index),
+			},
+		})
+		return a
+	}
+
+	return a
+}
+
 // First returns a new Value instance for the first element of array.
 //
 // If given array is empty, First reports failure and returns empty
@@ -1448,114 +1556,6 @@ func (a *Array) NotContainsOnly(values ...interface{}) *Array {
 					" (at least one distinguishing element needed)"),
 			},
 		})
-	}
-
-	return a
-}
-
-// IsValueEqual succeeds if array's value at the given index is equal to given value.
-//
-// Before comparison, both values are converted to canonical form. value should be
-// map[string]interface{} or struct.
-//
-// Example:
-//
-//	array := NewArray(t, []interface{}{"foo", "123"})
-//	array.IsValueEqual(1, 123)
-func (a *Array) IsValueEqual(index int, value interface{}) *Array {
-	opChain := a.chain.enter("IsValueEqual(%d)", index)
-	defer opChain.leave()
-
-	if opChain.failed() {
-		return a
-	}
-
-	if index < 0 || index >= len(a.value) {
-		opChain.fail(AssertionFailure{
-			Type:   AssertInRange,
-			Actual: &AssertionValue{index},
-			Expected: &AssertionValue{AssertionRange{
-				Min: 0,
-				Max: len(a.value) - 1,
-			}},
-			Errors: []error{
-				errors.New("expected: valid element index"),
-			},
-		})
-		return a
-	}
-
-	expected, ok := canonValue(opChain, value)
-	if !ok {
-		return a
-	}
-
-	if !reflect.DeepEqual(expected, a.value[index]) {
-		opChain.fail(AssertionFailure{
-			Type:     AssertEqual,
-			Actual:   &AssertionValue{a.value[index]},
-			Expected: &AssertionValue{value},
-			Errors: []error{
-				fmt.Errorf(
-					"expected: array value at index %d is equal to given value",
-					index),
-			},
-		})
-		return a
-	}
-
-	return a
-}
-
-// NotValueEqual succeeds if array's value at the given index is not equal to given value.
-//
-// Before comparison, both values are converted to canonical form. value should be
-// map[string]interface{} or struct.
-//
-// Example:
-//
-//	array := NewArray(t, []interface{}{"foo", "123"})
-//	array.NotValueEqual(1, 234)
-func (a *Array) NotValueEqual(index int, value interface{}) *Array {
-	opChain := a.chain.enter("NotValueEqual(%d)", index)
-	defer opChain.leave()
-
-	if opChain.failed() {
-		return a
-	}
-
-	if index < 0 || index >= len(a.value) {
-		opChain.fail(AssertionFailure{
-			Type:   AssertInRange,
-			Actual: &AssertionValue{index},
-			Expected: &AssertionValue{AssertionRange{
-				Min: 0,
-				Max: len(a.value) - 1,
-			}},
-			Errors: []error{
-				errors.New("expected: valid element index"),
-			},
-		})
-		return a
-	}
-
-	expected, ok := canonValue(opChain, value)
-	if !ok {
-		return a
-	}
-
-	if reflect.DeepEqual(expected, a.value[index]) {
-		opChain.fail(AssertionFailure{
-			Type:     AssertNotEqual,
-			Actual:   &AssertionValue{a.value[index]},
-			Expected: &AssertionValue{value},
-			Errors: []error{
-				fmt.Errorf(
-					"expected: array value at index %d is not equal to given value",
-					index),
-			},
-		})
-		return a
 	}
 
 	return a
