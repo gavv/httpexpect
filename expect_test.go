@@ -1,6 +1,7 @@
 package httpexpect
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -267,22 +268,30 @@ func TestExpect_Traverse(t *testing.T) {
 		"ccc": 456,
 	}
 
+	expected := map[string]interface{}{
+		"aaa": []interface{}{"bbb", 123, false, nil},
+		"bbb": "hello",
+		"ccc": 456,
+	}
+
 	resp := WithConfig(config).GET("/url").WithJSON(data).Expect()
 
 	m := resp.JSON().Object()
 
-	m.IsEqual(data)
+	fmt.Println(m)
+
+	m.IsEqual(expected)
 
 	m.ContainsKey("aaa")
 	m.ContainsKey("bbb")
 	m.ContainsKey("aaa")
 
-	m.HasValue("aaa", data["aaa"])
-	m.HasValue("bbb", data["bbb"])
-	m.HasValue("ccc", data["ccc"])
+	m.HasValue("aaa", expected["aaa"])
+	m.HasValue("bbb", expected["bbb"])
+	m.HasValue("ccc", expected["ccc"])
 
 	m.Keys().ConsistsOf("aaa", "bbb", "ccc")
-	m.Values().ConsistsOf(data["aaa"], data["bbb"], data["ccc"])
+	m.Values().ConsistsOf(expected["aaa"], expected["bbb"], expected["ccc"])
 
 	m.Value("aaa").Array().ConsistsOf("bbb", 123, false, nil)
 	m.Value("bbb").String().IsEqual("hello")

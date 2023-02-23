@@ -326,7 +326,7 @@ func (v *Value) String() *String {
 
 // Number returns a new Number attached to underlying value.
 //
-// If underlying value is not a number (numeric type convertible to float64), failure
+// If underlying value is not a number (numeric type convertible to json.Number), failure
 // is reported and empty (but non-nil) value is returned.
 //
 // Example:
@@ -341,7 +341,7 @@ func (v *Value) Number() *Number {
 		return newNumber(opChain, 0)
 	}
 
-	data, ok := v.value.(json.Number)
+	data, ok := v.value.(float64)
 
 	if !ok {
 		opChain.fail(AssertionFailure{
@@ -639,7 +639,7 @@ func (v *Value) NotString() *Value {
 
 // IsNumber succeeds if the underlying value is a number.
 //
-// If underlying value is not a number (numeric type convertible to float64),
+// If underlying value is not a number (numeric type convertible to json.Number),
 // failure is reported
 //
 // Example:
@@ -654,7 +654,7 @@ func (v *Value) IsNumber() *Value {
 		return v
 	}
 
-	if _, ok := v.value.(float64); !ok {
+	if _, ok := v.value.(json.Number); !ok {
 		opChain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{v.value},
@@ -684,7 +684,7 @@ func (v *Value) NotNumber() *Value {
 		return v
 	}
 
-	if _, ok := v.value.(float64); ok {
+	if _, ok := v.value.(json.Number); ok {
 		opChain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{v.value},

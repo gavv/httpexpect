@@ -27,7 +27,9 @@ func canonNumber(opChain *chain, in interface{}) (out big.Float, ok bool) {
 	}()
 
 	if in != in {
-		out, ok = *big.NewFloat(0), false
+		nan := new(big.Float)
+		nan.SetInf(false)
+		out, ok = *nan, false
 		return
 	}
 
@@ -216,7 +218,7 @@ func jsonDecode(opChain *chain, b []byte, target interface{}) {
 	dec.UseNumber()
 
 	for {
-		if err := dec.Decode(target); err == io.EOF {
+		if err := dec.Decode(target); err == io.EOF || target == nil {
 			break
 		} else if err != nil {
 			opChain.fail(AssertionFailure{

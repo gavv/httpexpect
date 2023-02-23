@@ -941,7 +941,7 @@ func (r *Response) getJSONP(
 	var value interface{}
 
 	for {
-		if err := dec.Decode(&value); err == io.EOF {
+		if err := dec.Decode(&value); err == io.EOF && value != nil {
 			break
 		} else if err != nil {
 			opChain.fail(AssertionFailure{

@@ -224,7 +224,7 @@ func (n *Number) InDelta(value, delta interface{}) *Number {
 
 	diff := big.NewFloat(0).Sub(&n.value, &num)
 
-	if diff.Cmp(del.Neg(&del)) < 0 || diff.Cmp(&del) > 0 {
+	if diff.Cmp(&del) == 1 || diff.Cmp(del.Neg(&del)) == -1 {
 		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{n.value},
@@ -270,11 +270,11 @@ func (n *Number) NotInDelta(value, delta interface{}) *Number {
 		return n
 	}
 
-	diff := n.value.Sub(&n.value, &num)
-	fmt.Println(diff.Cmp(del.Neg(&del)) < 0, diff.Cmp(&del) > 0)
-	fmt.Println(diff, del.Neg(&del))
+	diff := big.NewFloat(0).Sub(&n.value, &num)
+	le := diff.Cmp(&del)
+	fmt.Println("diff", diff, &del, le, diff.Cmp(&del) == -11)
 
-	if diff.Cmp(del.Neg(&del)) >= 0 && diff.Cmp(&del) <= 0 {
+	if diff.Cmp(&del) != 1 && diff.Cmp(del.Neg(&del)) != -1 {
 		opChain.fail(AssertionFailure{
 			Type:     AssertNotEqual,
 			Actual:   &AssertionValue{n.value},

@@ -1146,6 +1146,20 @@ func (a *Array) ConsistsOf(values ...interface{}) *Array {
 		return a
 	}
 
+	// for k, v := range a.value {
+	// 	switch v := v.(type) {
+	// 	case json.Number:
+	// 		a.value[k] = v.String()
+	// 	}
+	// }
+	//
+	// for i, v := range expected {
+	// 	switch v := v.(type) {
+	// 	case json.Number:
+	// 		values[i] = v.String()
+	// 	}
+	// }
+
 	if !reflect.DeepEqual(expected, a.value) {
 		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,

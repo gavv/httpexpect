@@ -1,6 +1,7 @@
 package httpexpect
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
@@ -253,7 +254,15 @@ func (o *Object) HasValue(key string, value interface{}) *Object {
 		return o
 	}
 
-	if !reflect.DeepEqual(expected, o.value[key]) {
+	if fmt.Sprintf("%T", expected) == "json.Number" {
+		expected = expected.(json.Number).String()
+	}
+	objectValue := o.value[key]
+	if fmt.Sprintf("%T", objectValue) == "json.Number" {
+		objectValue = objectValue.(json.Number).String()
+	}
+
+	if !reflect.DeepEqual(expected, objectValue) {
 		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{o.value[key]},
@@ -804,6 +813,20 @@ func (o *Object) IsEqual(value interface{}) *Object {
 		return o
 	}
 
+	for k, v := range o.value {
+		switch v := v.(type) {
+		case json.Number:
+			o.value[k] = v.String()
+		}
+	}
+
+	for k, v := range expected {
+		switch v := v.(type) {
+		case json.Number:
+			expected[k] = v.String()
+		}
+	}
+
 	if !reflect.DeepEqual(expected, o.value) {
 		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
@@ -838,6 +861,20 @@ func (o *Object) NotEqual(value interface{}) *Object {
 	expected, ok := canonMap(opChain, value)
 	if !ok {
 		return o
+	}
+
+	for k, v := range o.value {
+		switch v := v.(type) {
+		case json.Number:
+			o.value[k] = v.String()
+		}
+	}
+
+	for k, v := range expected {
+		switch v := v.(type) {
+		case json.Number:
+			expected[k] = v.String()
+		}
 	}
 
 	if reflect.DeepEqual(expected, o.value) {
