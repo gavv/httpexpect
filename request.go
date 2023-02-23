@@ -60,8 +60,8 @@ type Request struct {
 
 	wsUpgrade bool
 
-	transforms []func(*http.Request)
-	matchers   []func(*Response)
+	transformers []func(*http.Request)
+	matchers     []func(*Response)
 }
 
 // Deprecated: use NewRequestC instead.
@@ -282,7 +282,7 @@ func (r *Request) WithMatcher(matcher func(*Response)) *Request {
 //
 //	req := NewRequestC(config, "PUT", "http://example.com/path")
 //	req.WithTransformer(func(r *http.Request) { r.Header.Add("foo", "bar") })
-func (r *Request) WithTransformer(transform func(*http.Request)) *Request {
+func (r *Request) WithTransformer(transformer func(*http.Request)) *Request {
 	opChain := r.chain.enter("WithTransformer()")
 	defer opChain.leave()
 
@@ -297,7 +297,7 @@ func (r *Request) WithTransformer(transform func(*http.Request)) *Request {
 		return r
 	}
 
-	if transform == nil {
+	if transformer == nil {
 		opChain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
@@ -307,7 +307,7 @@ func (r *Request) WithTransformer(transform func(*http.Request)) *Request {
 		return r
 	}
 
-	r.transforms = append(r.transforms, transform)
+	r.transformers = append(r.transformers, transformer)
 
 	return r
 }
@@ -2009,7 +2009,7 @@ func (r *Request) execute(opChain *chain) *Response {
 		}
 	}
 
-	for _, transform := range r.transforms {
+	for _, transform := range r.transformers {
 		transform(r.httpReq)
 	}
 
