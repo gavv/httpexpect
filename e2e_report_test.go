@@ -146,7 +146,7 @@ func TestE2EReport_LineWidth(t *testing.T) {
 				Expect().
 				JSON().
 				Object().
-				IsValueEqual("foo", 1234)
+				IsEqual(map[string]interface{}{"foo": 1234})
 
 			var skip bool
 			for _, s := range strings.Split(strings.Trim(rep.reported, "\n"), "\n") {
