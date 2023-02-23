@@ -299,15 +299,7 @@ func (a *Array) NotHasValue(index int, value interface{}) *Array {
 	return a
 }
 
-// First returns a new Value instance for the first element of array.
-//
-// If given array is empty, First reports failure and returns empty
-// (but non-nil) instance.
-//
-// Example:
-//
-//	array := NewArray(t, []interface{}{"foo", 123})
-//	array.First().String().IsEqual("foo")
+// Deprecated: use Value or HasValue instead.
 func (a *Array) First() *Value {
 	opChain := a.chain.enter("First()")
 	defer opChain.leave()
@@ -330,15 +322,7 @@ func (a *Array) First() *Value {
 	return newValue(opChain, a.value[0])
 }
 
-// Last returns a new Value instance for the last element of array.
-//
-// If given array is empty, Last reports failure and returns empty
-// (but non-nil) instance.
-//
-// Example:
-//
-//	array := NewArray(t, []interface{}{"foo", 123})
-//	array.Last().Number().IsEqual(123)
+// Deprecated: use Value or HasValue instead.
 func (a *Array) Last() *Value {
 	opChain := a.chain.enter("Last()")
 	defer opChain.leave()
