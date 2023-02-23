@@ -197,7 +197,7 @@ func TestNumber_IsEqual(t *testing.T) {
 				NewNumber(reporter, instance.number).NotEqual(instance.reference).
 					chain.assertFailed(t)
 
-				assert.Equal(t, float64(instance.number), NewNumber(reporter, instance.number).Raw())
+				assert.Equal(t, instance.reference, int(NewNumber(reporter, instance.number).Raw()))
 			} else {
 				NewNumber(reporter, instance.number).NotEqual(instance.reference).
 					chain.assertNotFailed(t)
