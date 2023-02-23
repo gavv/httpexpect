@@ -780,6 +780,33 @@ func TestObject_ContainsValue(t *testing.T) {
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 	})
+
+	t.Run("canonization", func(t *testing.T) {
+		type (
+			myMap map[string]interface{}
+			myInt int
+		)
+
+		reporter := newMockReporter(t)
+
+		value := NewObject(reporter, map[string]interface{}{"foo": 123, "bar": 789})
+
+		value.ContainsValue(789.0)
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
+
+		value.NotContainsValue(789.0)
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.ContainsValue("123")
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.NotContainsValue(myInt(789.0))
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+	})
 }
 
 func TestObject_ContainsSubset(t *testing.T) {
