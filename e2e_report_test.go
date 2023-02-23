@@ -95,6 +95,10 @@ func TestE2EReport_LineWidth(t *testing.T) {
 	server := httptest.NewServer(mux)
 	defer server.Close()
 
+	splitWhiteSpaceOrDot := func(r rune) bool {
+		return unicode.IsSpace(r) || r == '.'
+	}
+
 	tests := []struct {
 		name             string
 		formatter        *DefaultFormatter
@@ -161,20 +165,23 @@ func TestE2EReport_LineWidth(t *testing.T) {
 					continue
 				}
 
+				s = strings.Trim(s, ".")
+
 				ss := strings.FieldsFunc(s, splitWhiteSpaceOrDot)
 
 				if len(ss) <= 1 {
 					continue
 				}
 
-				var lenBeforeWrapped int
-				for i, v := range ss {
-					if i >= len(ss)-1 {
-						break
-					}
-					lenBeforeWrapped += len(v) + 1
+				lenLastWord := len(ss[len(ss)-1])
+
+				// additional indent in template
+				var lenIndent int
+				if strings.HasPrefix(s, defaultIndent) {
+					lenIndent = len(defaultIndent)
 				}
-				lenBeforeWrapped--
+
+				lenBeforeWrapped := len(s) - lenLastWord - lenIndent - 1
 
 				t.Logf("%s", s)
 
@@ -182,8 +189,4 @@ func TestE2EReport_LineWidth(t *testing.T) {
 			}
 		})
 	}
-}
-
-func splitWhiteSpaceOrDot(r rune) bool {
-	return unicode.IsSpace(r) || r == '.'
 }
