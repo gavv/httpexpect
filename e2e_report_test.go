@@ -174,7 +174,7 @@ func TestE2EReport_LineWidth(t *testing.T) {
 					}
 					lenBeforeWrapped += len(v) + 1
 				}
-				lenBeforeWrapped -= 1
+				lenBeforeWrapped--
 
 				t.Logf("%s", s)
 
