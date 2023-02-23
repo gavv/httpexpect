@@ -641,6 +641,33 @@ func TestObject_InList(t *testing.T) {
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 	})
+
+	t.Run("canonization", func(t *testing.T) {
+		type (
+			myMap map[string]interface{}
+			myInt int
+		)
+
+		reporter := newMockReporter(t)
+
+		value := NewObject(reporter, map[string]interface{}{"foo": 123, "bar": 456})
+
+		value.InList(myMap{"foo": 123.0, "bar": 456.0})
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
+
+		value.NotInList(myMap{"foo": 123.0, "bar": 456.0})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.InList(myMap{"foo": "123", "bar": myInt(456.0)})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.NotInList(myMap{"foo": "123", "bar": myInt(456.0)})
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
+	})
 }
 
 func TestObject_ContainsKey(t *testing.T) {
