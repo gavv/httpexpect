@@ -108,6 +108,98 @@ func TestRequest_Alias(t *testing.T) {
 	assert.Equal(t, []string{"foo"}, value.chain.context.AliasedPath)
 }
 
+func TestRequest_Reentrant(t *testing.T) {
+	t.Run("call from reporter", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		config := Config{
+			Client:   &mockClient{err: errors.New("test")},
+			Reporter: reporter,
+		}
+
+		req := NewRequestC(config, "METHOD", "/")
+
+		callCount := 0
+		reporter.reportCb = func() {
+			callCount++
+			if callCount == 1 {
+				req.WithName("test")
+			}
+		}
+
+		resp := req.Expect()
+		assert.Equal(t, 2, callCount)
+
+		req.chain.assertFailed(t)
+		resp.chain.assertFailed(t)
+	})
+
+	t.Run("call from client", func(t *testing.T) {
+		client := &mockClient{}
+
+		config := Config{
+			Client:   client,
+			Reporter: newMockReporter(t),
+		}
+
+		req := NewRequestC(config, "METHOD", "/")
+
+		callCount := 0
+		client.cb = func(_ *http.Request) {
+			callCount++
+			req.WithName("test")
+		}
+
+		resp := req.Expect()
+		assert.Equal(t, 1, callCount)
+
+		req.chain.assertFailed(t)
+		resp.chain.assertNotFailed(t)
+	})
+
+	t.Run("call from transformer", func(t *testing.T) {
+		config := Config{
+			Client:   &mockClient{},
+			Reporter: newMockReporter(t),
+		}
+
+		req := NewRequestC(config, "METHOD", "/")
+
+		callCount := 0
+		req.WithTransformer(func(_ *http.Request) {
+			callCount++
+			req.WithName("test")
+		})
+
+		resp := req.Expect()
+		assert.Equal(t, 1, callCount)
+
+		req.chain.assertFailed(t)
+		resp.chain.assertNotFailed(t)
+	})
+
+	t.Run("call from matcher", func(t *testing.T) {
+		config := Config{
+			Client:   &mockClient{},
+			Reporter: newMockReporter(t),
+		}
+
+		req := NewRequestC(config, "METHOD", "/")
+
+		callCount := 0
+		req.WithMatcher(func(_ *Response) {
+			callCount++
+			req.WithName("test")
+		})
+
+		resp := req.Expect()
+		assert.Equal(t, 1, callCount)
+
+		req.chain.assertFailed(t)
+		resp.chain.assertNotFailed(t)
+	})
+}
+
 func TestRequest_Empty(t *testing.T) {
 	client := &mockClient{}
 
