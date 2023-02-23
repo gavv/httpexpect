@@ -167,7 +167,7 @@ func TestMatch_Values(t *testing.T) {
 				{target: []string{""}, fail: true},
 			},
 		},
-		"whole match index 0": {
+		"not empty index 0 only": {
 			submatches: []string{"m0"},
 			expectMatch: []wantMatch{
 				{target: nil, fail: false},
