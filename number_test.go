@@ -159,101 +159,136 @@ func TestNumber_Getters(t *testing.T) {
 }
 
 func TestNumber_IsEqual(t *testing.T) {
-	reporter := newMockReporter(t)
+	cases := map[string]struct {
+		number      float64
+		reference   interface{}
+		expectEqual bool
+	}{
+		"compare equivalent integers": {
+			number:      1234,
+			reference:   1234,
+			expectEqual: true,
+		},
+		"compare non-equivalent integers": {
+			number:      1234,
+			reference:   4321,
+			expectEqual: false,
+		},
+		"compare NaN to float": {
+			number:      math.NaN(),
+			reference:   1234.5,
+			expectEqual: false,
+		},
+		"compare float to NaN": {
+			number:      1234.5,
+			reference:   math.NaN(),
+			expectEqual: false,
+		},
+	}
 
-	value := NewNumber(reporter, 1234)
+	for name, instance := range cases {
+		t.Run(name, func(t *testing.T) {
+			reporter := newMockReporter(t)
 
-	assert.Equal(t, 1234, int(value.Raw()))
+			if instance.expectEqual {
+				NewNumber(reporter, instance.number).IsEqual(instance.reference).
+					chain.assertNotFailed(t)
 
-	value.IsEqual(1234)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+				NewNumber(reporter, instance.number).NotEqual(instance.reference).
+					chain.assertFailed(t)
 
-	value.IsEqual(4321)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+				assert.Equal(t, instance.reference, int(NewNumber(reporter, instance.number).Raw()))
+			} else {
+				NewNumber(reporter, instance.number).NotEqual(instance.reference).
+					chain.assertNotFailed(t)
 
-	value.NotEqual(4321)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotEqual(1234)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-}
-
-func TestNumber_EqualNaN(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	v1 := NewNumber(reporter, math.NaN())
-	v1.IsEqual(1234.5)
-	v1.chain.assertFailed(t)
-
-	v2 := NewNumber(reporter, 1234.5)
-	v2.IsEqual(math.NaN())
-	v2.chain.assertFailed(t)
-
-	v3 := NewNumber(reporter, math.NaN())
-	v3.InDelta(1234.0, 0.1)
-	v3.chain.assertFailed(t)
-
-	v4 := NewNumber(reporter, 1234.5)
-	v4.InDelta(math.NaN(), 0.1)
-	v4.chain.assertFailed(t)
-
-	v5 := NewNumber(reporter, 1234.5)
-	v5.InDelta(1234.5, math.NaN())
-	v5.chain.assertFailed(t)
-
-	v6 := NewNumber(reporter, math.NaN())
-	v6.NotInDelta(1234.0, 0.1)
-	v6.chain.assertFailed(t)
-
-	v7 := NewNumber(reporter, 1234.5)
-	v7.NotInDelta(math.NaN(), 0.1)
-	v7.chain.assertFailed(t)
-
-	v8 := NewNumber(reporter, 1234.5)
-	v8.NotInDelta(1234.5, math.NaN())
-	v8.chain.assertFailed(t)
+				NewNumber(reporter, instance.number).IsEqual(instance.reference).
+					chain.assertFailed(t)
+			}
+		})
+	}
 }
 
 func TestNumber_InDelta(t *testing.T) {
-	reporter := newMockReporter(t)
+	cases := map[string]struct {
+		number           float64
+		reference        float64
+		delta            float64
+		expectInDelta    bool
+		expectNotInDelta bool
+	}{
+		"larger reference in delta range": {
+			number:           1234.5,
+			reference:        1234.7,
+			delta:            0.3,
+			expectInDelta:    true,
+			expectNotInDelta: false,
+		},
+		"smaller reference in delta range": {
+			number:           1234.5,
+			reference:        1234.3,
+			delta:            0.3,
+			expectInDelta:    true,
+			expectNotInDelta: false,
+		},
+		"larger reference not in delta range": {
+			number:           1234.5,
+			reference:        1234.7,
+			delta:            0.1,
+			expectInDelta:    false,
+			expectNotInDelta: true,
+		},
+		"smaller reference not in delta range": {
+			number:           1234.5,
+			reference:        1234.3,
+			delta:            0.1,
+			expectInDelta:    false,
+			expectNotInDelta: true,
+		},
+		"target is NaN": {
+			number:           math.NaN(),
+			reference:        1234.0,
+			delta:            0.1,
+			expectInDelta:    false,
+			expectNotInDelta: false,
+		},
+		"reference is NaN": {
+			number:           1234.5,
+			reference:        math.NaN(),
+			delta:            0.1,
+			expectInDelta:    false,
+			expectNotInDelta: false,
+		},
+		"delta is NaN": {
+			number:           1234.5,
+			reference:        1234.0,
+			delta:            math.NaN(),
+			expectInDelta:    false,
+			expectNotInDelta: false,
+		},
+	}
 
-	value := NewNumber(reporter, 1234.5)
+	for name, instance := range cases {
+		t.Run(name, func(t *testing.T) {
+			reporter := newMockReporter(t)
 
-	value.InDelta(1234.3, 0.3)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+			if instance.expectInDelta {
+				NewNumber(reporter, instance.number).InDelta(instance.reference, instance.delta).
+					chain.assertNotFailed(t)
+			} else {
+				NewNumber(reporter, instance.number).InDelta(instance.reference, instance.delta).
+					chain.assertFailed(t)
+			}
 
-	value.InDelta(1234.7, 0.3)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.InDelta(1234.3, 0.1)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.InDelta(1234.7, 0.1)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInDelta(1234.3, 0.3)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInDelta(1234.7, 0.3)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInDelta(1234.3, 0.1)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInDelta(1234.7, 0.1)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+			if instance.expectNotInDelta {
+				NewNumber(reporter, instance.number).NotInDelta(instance.reference, instance.delta).
+					chain.assertNotFailed(t)
+			} else {
+				NewNumber(reporter, instance.number).NotInDelta(instance.reference, instance.delta).
+					chain.assertFailed(t)
+			}
+		})
+	}
 }
 
 func TestNumber_InRange(t *testing.T) {
