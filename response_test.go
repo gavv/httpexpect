@@ -1556,7 +1556,7 @@ func TestResponse_ContentOpts(t *testing.T) {
 	})
 }
 
-func TestResponse_UsageChecks(t *testing.T) {
+func TestResponse_Usage(t *testing.T) {
 	t.Run("NewResponse multiple rtt arguments", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		rtt := []time.Duration{time.Second, time.Second}

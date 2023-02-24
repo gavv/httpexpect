@@ -166,17 +166,11 @@ func TestString_Getters(t *testing.T) {
 	value.Schema(`{"type": "object"}`)
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
-}
-
-func TestString_Length(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	value := NewString(reporter, "1234567")
 
 	num := value.Length()
 	value.chain.assertNotFailed(t)
 	num.chain.assertNotFailed(t)
-	assert.Equal(t, 7.0, num.Raw())
+	assert.Equal(t, 3.0, num.Raw())
 }
 
 func TestString_IsEmpty(t *testing.T) {

@@ -197,7 +197,8 @@ func TestNumber_IsEqual(t *testing.T) {
 				NewNumber(reporter, instance.number).NotEqual(instance.reference).
 					chain.assertFailed(t)
 
-				assert.Equal(t, instance.reference, int(NewNumber(reporter, instance.number).Raw()))
+				assert.Equal(t, instance.reference,
+					int(NewNumber(reporter, instance.number).Raw()))
 			} else {
 				NewNumber(reporter, instance.number).NotEqual(instance.reference).
 					chain.assertNotFailed(t)
@@ -273,18 +274,22 @@ func TestNumber_InDelta(t *testing.T) {
 			reporter := newMockReporter(t)
 
 			if instance.expectInDelta {
-				NewNumber(reporter, instance.number).InDelta(instance.reference, instance.delta).
+				NewNumber(reporter, instance.number).
+					InDelta(instance.reference, instance.delta).
 					chain.assertNotFailed(t)
 			} else {
-				NewNumber(reporter, instance.number).InDelta(instance.reference, instance.delta).
+				NewNumber(reporter, instance.number).
+					InDelta(instance.reference, instance.delta).
 					chain.assertFailed(t)
 			}
 
 			if instance.expectNotInDelta {
-				NewNumber(reporter, instance.number).NotInDelta(instance.reference, instance.delta).
+				NewNumber(reporter, instance.number).
+					NotInDelta(instance.reference, instance.delta).
 					chain.assertNotFailed(t)
 			} else {
-				NewNumber(reporter, instance.number).NotInDelta(instance.reference, instance.delta).
+				NewNumber(reporter, instance.number).
+					NotInDelta(instance.reference, instance.delta).
 					chain.assertFailed(t)
 			}
 		})

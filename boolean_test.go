@@ -213,7 +213,7 @@ func TestBoolean_False(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestBoolean_UsageChecks(t *testing.T) {
+func TestBoolean_Usage(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewBoolean(reporter, true)
