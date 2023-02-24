@@ -273,6 +273,122 @@ func (n *Number) NotInDelta(value, delta float64) *Number {
 	return n
 }
 
+// InDeltaRelative succeeds if two numerals are within a relative delta (i.e. percentage) of each other.
+//
+// Example:
+//
+//	number := NewNumber(t, 123.0)
+//	number.InDeltaRelative(126.5, 0.03)
+func (n *Number) InDeltaRelative(value, delta float64) *Number {
+	opChain := n.chain.enter("InDeltaRelative()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return n
+	}
+
+	if math.IsNaN(n.value) || math.IsNaN(value) || math.IsNaN(delta) {
+		opChain.fail(AssertionFailure{
+			Type:     AssertEqual,
+			Actual:   &AssertionValue{n.value},
+			Expected: &AssertionValue{value},
+			Delta:    &AssertionValue{relativeDelta(delta)},
+			Errors: []error{
+				errors.New("expected: numbers are comparable"),
+			},
+		})
+		return n
+	}
+
+	if n.value == 0 {
+		opChain.fail(AssertionFailure{
+			Type:     AssertEqual,
+			Actual:   &AssertionValue{n.value},
+			Expected: &AssertionValue{value},
+			Delta:    &AssertionValue{relativeDelta(delta)},
+			Errors: []error{
+				errors.New("expected: number value is not 0"),
+			},
+		})
+		return n
+	}
+
+	relativeDiff := math.Abs(n.value-value) / math.Abs(n.value)
+
+	if relativeDiff > delta {
+		opChain.fail(AssertionFailure{
+			Type:     AssertEqual,
+			Actual:   &AssertionValue{n.value},
+			Expected: &AssertionValue{value},
+			Delta:    &AssertionValue{relativeDelta(delta)},
+			Errors: []error{
+				errors.New("expected: numbers lie within relative delta"),
+			},
+		})
+		return n
+	}
+
+	return n
+}
+
+// NotInDeltaRelative succeeds if two numerals are not within a relative delta (i.e. percentage) of each other.
+//
+// Example:
+//
+//	number := NewNumber(t, 123.0)
+//	number.NotInDeltaRelative(126.5, 0.01)
+func (n *Number) NotInDeltaRelative(value, delta float64) *Number {
+	opChain := n.chain.enter("NotInDeltaRelative()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return n
+	}
+
+	if math.IsNaN(n.value) || math.IsNaN(value) || math.IsNaN(delta) {
+		opChain.fail(AssertionFailure{
+			Type:     AssertEqual,
+			Actual:   &AssertionValue{n.value},
+			Expected: &AssertionValue{value},
+			Delta:    &AssertionValue{relativeDelta(delta)},
+			Errors: []error{
+				errors.New("expected: numbers are comparable"),
+			},
+		})
+		return n
+	}
+
+	if n.value == 0 {
+		opChain.fail(AssertionFailure{
+			Type:     AssertEqual,
+			Actual:   &AssertionValue{n.value},
+			Expected: &AssertionValue{value},
+			Delta:    &AssertionValue{relativeDelta(delta)},
+			Errors: []error{
+				errors.New("expected: number value is not 0"),
+			},
+		})
+		return n
+	}
+
+	relativeDiff := math.Abs(n.value-value) / math.Abs(n.value)
+
+	if !(relativeDiff > delta) {
+		opChain.fail(AssertionFailure{
+			Type:     AssertEqual,
+			Actual:   &AssertionValue{n.value},
+			Expected: &AssertionValue{value},
+			Delta:    &AssertionValue{relativeDelta(delta)},
+			Errors: []error{
+				errors.New("expected: numbers lie within relative delta"),
+			},
+		})
+		return n
+	}
+
+	return n
+}
+
 // Deprecated: use InDelta instead.
 func (n *Number) EqualDelta(value, delta float64) *Number {
 	return n.InDelta(value, delta)
@@ -1090,4 +1206,10 @@ func (b intBoundary) String() string {
 		return fmt.Sprintf("-2^%d   (%s)", b.bits, b.val)
 	}
 	return fmt.Sprintf("%s", b.val)
+}
+
+type relativeDelta float64
+
+func (rd relativeDelta) String() string {
+	return fmt.Sprintf("%f%%", rd*100)
 }

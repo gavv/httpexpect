@@ -317,6 +317,44 @@ func TestNumber_InDelta(t *testing.T) {
 	}
 }
 
+func TestNumber_InDeltaRelative(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewNumber(reporter, 1234.5)
+
+	value.InDeltaRelative(1221.1, 0.03)
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.InDeltaRelative(1271.5, 0.03)
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.InDeltaRelative(1209.8, 0.01)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.InDeltaRelative(1259.1, 0.01)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInDeltaRelative(1221.1, 0.03)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInDeltaRelative(1271.5, 0.03)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInDeltaRelative(1209.8, 0.01)
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.NotInDeltaRelative(1259.1, 0.01)
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+}
+
 func TestNumber_InRange(t *testing.T) {
 	t.Run("basic", func(t *testing.T) {
 		cases := []struct {
