@@ -83,44 +83,58 @@ func TestE2EReport_LineWidth(t *testing.T) {
 	mux.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(`{"foo":123}`))
+		_, _ = w.Write([]byte(`{"foo":{"bar":{"baz":[1,2,3]}}}`))
 	})
 
 	server := httptest.NewServer(mux)
 	defer server.Close()
 
+	type widthRange struct {
+		above int
+		below int
+	}
+
 	tests := []struct {
-		name             string
-		formatter        *DefaultFormatter
-		wantMaxLineWidth int
+		name        string
+		formatter   *DefaultFormatter
+		longestLine widthRange
 	}{
 		{
-			name: "zero value",
+			name: "no limit",
 			formatter: &DefaultFormatter{
-				LineWidth: 0,
+				LineWidth: -1, // no limit
 			},
-			wantMaxLineWidth: 60,
+			longestLine: widthRange{
+				above: 100,
+			},
 		},
 		{
-			name: "small positive value",
+			name: "large limit",
 			formatter: &DefaultFormatter{
-				LineWidth: 15,
+				LineWidth: 1000, // explicit limit - 1000 chars
 			},
-			wantMaxLineWidth: 26,
+			longestLine: widthRange{
+				above: 100,
+			},
 		},
 		{
-			name: "very large positive value",
+			name: "default limit",
 			formatter: &DefaultFormatter{
-				LineWidth: 1000,
+				LineWidth: 0, // default limit - 60 chars
 			},
-			wantMaxLineWidth: 60,
+			longestLine: widthRange{
+				above: 40,
+				below: 60,
+			},
 		},
 		{
-			name: "negative value (no limit)",
+			name: "explicit limit",
 			formatter: &DefaultFormatter{
-				LineWidth: -1,
+				LineWidth: 30, // explicit limit - 30 chars
 			},
-			wantMaxLineWidth: 60,
+			longestLine: widthRange{
+				below: 30,
+			},
 		},
 	}
 	for _, tt := range tests {
@@ -140,19 +154,30 @@ func TestE2EReport_LineWidth(t *testing.T) {
 				Expect().
 				JSON().
 				Object().
-				NotContainsValue(123)
+				Value("foo").
+				Object().
+				Value("bar").
+				Object().
+				Value("baz").
+				Array().
+				NotContains(1)
 
 			t.Logf("%s", rep.reported)
 
-			var hasMaxWidth bool
+			actualLongestLine := ""
+
 			for _, s := range strings.Split(rep.reported, "\n") {
-				width := len(s)
-				if width >= tt.wantMaxLineWidth {
-					hasMaxWidth = true
+				if len(actualLongestLine) < len(s) {
+					actualLongestLine = s
 				}
-				assert.LessOrEqual(t, width, tt.wantMaxLineWidth)
 			}
-			assert.True(t, hasMaxWidth)
+
+			if tt.longestLine.above != 0 {
+				assert.GreaterOrEqual(t, len(actualLongestLine), tt.longestLine.above)
+			}
+			if tt.longestLine.below != 0 {
+				assert.LessOrEqual(t, len(actualLongestLine), tt.longestLine.below)
+			}
 		})
 	}
 }
