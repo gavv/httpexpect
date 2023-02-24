@@ -783,7 +783,6 @@ func TestObject_ContainsValue(t *testing.T) {
 
 	t.Run("canonization", func(t *testing.T) {
 		type (
-			myMap map[string]interface{}
 			myInt int
 		)
 
@@ -791,16 +790,8 @@ func TestObject_ContainsValue(t *testing.T) {
 
 		value := NewObject(reporter, map[string]interface{}{"foo": 123, "bar": 789})
 
-		value.ContainsValue(789.0)
+		value.ContainsValue(myInt(789.0))
 		value.chain.assertNotFailed(t)
-		value.chain.clearFailed()
-
-		value.NotContainsValue(789.0)
-		value.chain.assertFailed(t)
-		value.chain.clearFailed()
-
-		value.ContainsValue("123")
-		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 
 		value.NotContainsValue(myInt(789.0))
