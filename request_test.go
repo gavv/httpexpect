@@ -200,36 +200,52 @@ func TestRequest_Alias(t *testing.T) {
 	assert.Equal(t, []string{"foo"}, value.chain.context.AliasedPath)
 }
 
-func TestRequest_Empty(t *testing.T) {
-	client := &mockClient{}
+func TestRequest_Basic(t *testing.T) {
+	t.Run("get", func(t *testing.T) {
+		client := &mockClient{}
 
-	config := Config{
-		Client:   client,
-		Reporter: newMockReporter(t),
-	}
+		config := Config{
+			Client:   client,
+			Reporter: newMockReporter(t),
+		}
 
-	req := NewRequestC(config, "", "")
-
-	resp := req.Expect()
-
-	req.chain.assertNotFailed(t)
-	resp.chain.assertNotFailed(t)
-}
-
-func TestRequest_Time(t *testing.T) {
-	client := &mockClient{}
-
-	config := Config{
-		Client:   client,
-		Reporter: newMockReporter(t),
-	}
-
-	for n := 0; n < 10; n++ {
-		req := NewRequestC(config, "", "")
+		req := NewRequestC(config, "GET", "/path")
 		resp := req.Expect()
-		require.NotNil(t, resp.rtt)
-		assert.True(t, *resp.rtt >= 0)
-	}
+
+		req.chain.assertNotFailed(t)
+		resp.chain.assertNotFailed(t)
+	})
+
+	t.Run("empty path", func(t *testing.T) {
+		client := &mockClient{}
+
+		config := Config{
+			Client:   client,
+			Reporter: newMockReporter(t),
+		}
+
+		req := NewRequestC(config, "GET", "")
+		resp := req.Expect()
+
+		req.chain.assertNotFailed(t)
+		resp.chain.assertNotFailed(t)
+	})
+
+	t.Run("round trip time", func(t *testing.T) {
+		client := &mockClient{}
+
+		config := Config{
+			Client:   client,
+			Reporter: newMockReporter(t),
+		}
+
+		for n := 0; n < 10; n++ {
+			req := NewRequestC(config, "GET", "/path")
+			resp := req.Expect()
+			require.NotNil(t, resp.rtt)
+			assert.True(t, *resp.rtt >= 0)
+		}
+	})
 }
 
 func TestRequest_Matchers(t *testing.T) {
