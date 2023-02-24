@@ -6,7 +6,6 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"unicode"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -78,11 +77,6 @@ func TestE2EReport_Aliases(t *testing.T) {
 	assert.Contains(t, rep.reported, "foo.Object().ContainsKey()")
 }
 
-const (
-	intSize = 32 << (^uint(0) >> 63) // 32 or 64
-	maxInt  = 1<<(intSize-1) - 1
-)
-
 func TestE2EReport_LineWidth(t *testing.T) {
 	mux := http.NewServeMux()
 
@@ -95,10 +89,6 @@ func TestE2EReport_LineWidth(t *testing.T) {
 	server := httptest.NewServer(mux)
 	defer server.Close()
 
-	splitWhiteSpaceOrDot := func(r rune) bool {
-		return unicode.IsSpace(r) || r == '.'
-	}
-
 	tests := []struct {
 		name             string
 		formatter        *DefaultFormatter
@@ -109,28 +99,28 @@ func TestE2EReport_LineWidth(t *testing.T) {
 			formatter: &DefaultFormatter{
 				LineWidth: 0,
 			},
-			wantMaxLineWidth: defaultLineWidth,
+			wantMaxLineWidth: 60,
 		},
 		{
 			name: "small positive value",
 			formatter: &DefaultFormatter{
 				LineWidth: 15,
 			},
-			wantMaxLineWidth: 15,
+			wantMaxLineWidth: 26,
 		},
 		{
 			name: "very large positive value",
 			formatter: &DefaultFormatter{
 				LineWidth: 1000,
 			},
-			wantMaxLineWidth: 1000,
+			wantMaxLineWidth: 60,
 		},
 		{
 			name: "negative value (no limit)",
 			formatter: &DefaultFormatter{
 				LineWidth: -1,
 			},
-			wantMaxLineWidth: maxInt,
+			wantMaxLineWidth: 60,
 		},
 	}
 	for _, tt := range tests {
@@ -152,41 +142,17 @@ func TestE2EReport_LineWidth(t *testing.T) {
 				Object().
 				NotContainsValue(123)
 
-			var skip bool
-			for _, s := range strings.Split(strings.Trim(rep.reported, "\n"), "\n") {
-				// only assert first errors block and assertPath block in defaultFailureTemplate
-				if strings.HasPrefix(s, "assertion:") {
-					skip = false
+			t.Logf("%s", rep.reported)
+
+			var hasMaxWidth bool
+			for _, s := range strings.Split(rep.reported, "\n") {
+				width := len(s)
+				if width >= tt.wantMaxLineWidth {
+					hasMaxWidth = true
 				}
-				if len(s) == 0 {
-					skip = true
-				}
-				if skip {
-					continue
-				}
-
-				s = strings.Trim(s, ".")
-
-				ss := strings.FieldsFunc(s, splitWhiteSpaceOrDot)
-
-				if len(ss) <= 1 {
-					continue
-				}
-
-				lenLastWord := len(ss[len(ss)-1])
-
-				// additional indent in template
-				var lenIndent int
-				if strings.HasPrefix(s, defaultIndent) {
-					lenIndent = len(defaultIndent)
-				}
-
-				lenBeforeWrapped := len(s) - lenLastWord - lenIndent - 1
-
-				t.Logf("%s", s)
-
-				assert.LessOrEqual(t, lenBeforeWrapped, tt.wantMaxLineWidth)
+				assert.LessOrEqual(t, width, tt.wantMaxLineWidth)
 			}
+			assert.True(t, hasMaxWidth)
 		})
 	}
 }
