@@ -1279,5 +1279,5 @@ func (b intBoundary) String() string {
 type relativeDelta float64
 
 func (rd relativeDelta) String() string {
-	return fmt.Sprintf("%f%%", rd*100)
+	return fmt.Sprintf("%.2f (%.f%%)", rd, rd*100)
 }
