@@ -318,41 +318,68 @@ func TestNumber_InDelta(t *testing.T) {
 }
 
 func TestNumber_InDeltaRelative(t *testing.T) {
-	reporter := newMockReporter(t)
+	cases := map[string]struct {
+		number           float64
+		reference        float64
+		delta            float64
+		expectInDelta    bool
+		expectNotInDelta bool
+	}{
+		"larger reference in delta range": {
+			number:           1234.5,
+			reference:        1271.5,
+			delta:            0.03,
+			expectInDelta:    true,
+			expectNotInDelta: false,
+		},
+		"smaller reference in delta range": {
+			number:           1234.5,
+			reference:        1221.1,
+			delta:            0.03,
+			expectInDelta:    true,
+			expectNotInDelta: false,
+		},
+		"larger reference not in delta range": {
+			number:           1234.5,
+			reference:        1259.1,
+			delta:            0.01,
+			expectInDelta:    false,
+			expectNotInDelta: true,
+		},
+		"smaller reference not in delta range": {
+			number:           1234.5,
+			reference:        1209.8,
+			delta:            0.01,
+			expectInDelta:    false,
+			expectNotInDelta: true,
+		},
+	}
 
-	value := NewNumber(reporter, 1234.5)
+	for name, instance := range cases {
+		t.Run(name, func(t *testing.T) {
+			reporter := newMockReporter(t)
 
-	value.InDeltaRelative(1221.1, 0.03)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+			if instance.expectInDelta {
+				NewNumber(reporter, instance.number).
+					InDeltaRelative(instance.reference, instance.delta).
+					chain.assertNotFailed(t)
+			} else {
+				NewNumber(reporter, instance.number).
+					InDeltaRelative(instance.reference, instance.delta).
+					chain.assertFailed(t)
+			}
 
-	value.InDeltaRelative(1271.5, 0.03)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.InDeltaRelative(1209.8, 0.01)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.InDeltaRelative(1259.1, 0.01)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInDeltaRelative(1221.1, 0.03)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInDeltaRelative(1271.5, 0.03)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInDeltaRelative(1209.8, 0.01)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInDeltaRelative(1259.1, 0.01)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+			if instance.expectNotInDelta {
+				NewNumber(reporter, instance.number).
+					NotInDeltaRelative(instance.reference, instance.delta).
+					chain.assertNotFailed(t)
+			} else {
+				NewNumber(reporter, instance.number).
+					NotInDeltaRelative(instance.reference, instance.delta).
+					chain.assertFailed(t)
+			}
+		})
+	}
 }
 
 func TestNumber_InRange(t *testing.T) {
