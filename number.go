@@ -295,7 +295,11 @@ func (n *Number) InDeltaRelative(value, delta float64) *Number {
 		return n
 	}
 
-	if math.IsNaN(n.value) || math.IsNaN(value) || math.IsNaN(delta) {
+	anyNumIsNaN := math.IsNaN(n.value) || math.IsNaN(value) || math.IsNaN(delta)
+	anyNumIsInf := math.IsInf(n.value, 0) || math.IsInf(value, 0) || math.IsInf(delta, 0)
+	anyNumIsZero := n.value == 0 || value == 0 || delta == 0
+
+	if anyNumIsNaN || anyNumIsInf || anyNumIsZero {
 		var assertionErrors []error
 		assertionErrors = append(
 			assertionErrors,
@@ -323,26 +327,54 @@ func (n *Number) InDeltaRelative(value, delta float64) *Number {
 			)
 		}
 
+		if math.IsInf(n.value, 0) {
+			assertionErrors = append(
+				assertionErrors,
+				errors.New("actual value is Inf"),
+			)
+		}
+
+		if math.IsInf(value, 0) {
+			assertionErrors = append(
+				assertionErrors,
+				errors.New("expected value is Inf"),
+			)
+		}
+
+		if math.IsInf(delta, 0) {
+			assertionErrors = append(
+				assertionErrors,
+				errors.New("delta is Inf"),
+			)
+		}
+
+		if n.value == 0 {
+			assertionErrors = append(
+				assertionErrors,
+				errors.New("actual value is 0, which is not allowed"),
+			)
+		}
+
+		if value == 0 {
+			assertionErrors = append(
+				assertionErrors,
+				errors.New("expected value is 0"),
+			)
+		}
+
+		if delta == 0 {
+			assertionErrors = append(
+				assertionErrors,
+				errors.New("delta is 0, which is not allowed"),
+			)
+		}
+
 		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{value},
 			Delta:    &AssertionValue{relativeDelta(delta)},
 			Errors:   assertionErrors,
-		})
-		return n
-	}
-
-	if n.value == 0 {
-		opChain.fail(AssertionFailure{
-			Type:     AssertEqual,
-			Actual:   &AssertionValue{n.value},
-			Expected: &AssertionValue{value},
-			Delta:    &AssertionValue{relativeDelta(delta)},
-			Errors: []error{
-				errors.New("expected: can compare values with relative delta"),
-				errors.New("actual value is zero, which is not allowed"),
-			},
 		})
 		return n
 	}
@@ -387,7 +419,11 @@ func (n *Number) NotInDeltaRelative(value, delta float64) *Number {
 		return n
 	}
 
-	if math.IsNaN(n.value) || math.IsNaN(value) || math.IsNaN(delta) {
+	anyNumIsNaN := math.IsNaN(n.value) || math.IsNaN(value) || math.IsNaN(delta)
+	anyNumIsInf := math.IsInf(n.value, 0) || math.IsInf(value, 0) || math.IsInf(delta, 0)
+	anyNumIsZero := n.value == 0 || value == 0 || delta == 0
+
+	if anyNumIsNaN || anyNumIsInf || anyNumIsZero {
 		var assertionErrors []error
 		assertionErrors = append(
 			assertionErrors,
@@ -415,26 +451,54 @@ func (n *Number) NotInDeltaRelative(value, delta float64) *Number {
 			)
 		}
 
+		if math.IsInf(n.value, 0) {
+			assertionErrors = append(
+				assertionErrors,
+				errors.New("actual value is Inf"),
+			)
+		}
+
+		if math.IsInf(value, 0) {
+			assertionErrors = append(
+				assertionErrors,
+				errors.New("expected value is Inf"),
+			)
+		}
+
+		if math.IsInf(delta, 0) {
+			assertionErrors = append(
+				assertionErrors,
+				errors.New("delta is Inf"),
+			)
+		}
+
+		if n.value == 0 {
+			assertionErrors = append(
+				assertionErrors,
+				errors.New("actual value is 0, which is not allowed"),
+			)
+		}
+
+		if value == 0 {
+			assertionErrors = append(
+				assertionErrors,
+				errors.New("expected value is 0"),
+			)
+		}
+
+		if delta == 0 {
+			assertionErrors = append(
+				assertionErrors,
+				errors.New("delta is 0, which is not allowed"),
+			)
+		}
+
 		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{value},
 			Delta:    &AssertionValue{relativeDelta(delta)},
 			Errors:   assertionErrors,
-		})
-		return n
-	}
-
-	if n.value == 0 {
-		opChain.fail(AssertionFailure{
-			Type:     AssertEqual,
-			Actual:   &AssertionValue{n.value},
-			Expected: &AssertionValue{value},
-			Delta:    &AssertionValue{relativeDelta(delta)},
-			Errors: []error{
-				errors.New("expected: can compare values with relative delta"),
-				errors.New("actual value is zero, which is not allowed"),
-			},
 		})
 		return n
 	}
