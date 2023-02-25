@@ -296,14 +296,39 @@ func (n *Number) InDeltaRelative(value, delta float64) *Number {
 	}
 
 	if math.IsNaN(n.value) || math.IsNaN(value) || math.IsNaN(delta) {
+		var assertionErrors []error
+		assertionErrors = append(
+			assertionErrors,
+			errors.New("expected: can compare values with relative delta"),
+		)
+
+		if math.IsNaN(n.value) {
+			assertionErrors = append(
+				assertionErrors,
+				errors.New("actual value is NaN"),
+			)
+		}
+
+		if math.IsNaN(value) {
+			assertionErrors = append(
+				assertionErrors,
+				errors.New("expected value is NaN"),
+			)
+		}
+
+		if math.IsNaN(delta) {
+			assertionErrors = append(
+				assertionErrors,
+				errors.New("delta is NaN"),
+			)
+		}
+
 		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{value},
 			Delta:    &AssertionValue{relativeDelta(delta)},
-			Errors: []error{
-				errors.New("expected: numbers are comparable"),
-			},
+			Errors:   assertionErrors,
 		})
 		return n
 	}
@@ -315,7 +340,8 @@ func (n *Number) InDeltaRelative(value, delta float64) *Number {
 			Expected: &AssertionValue{value},
 			Delta:    &AssertionValue{relativeDelta(delta)},
 			Errors: []error{
-				errors.New("expected: number value is not 0"),
+				errors.New("expected: can compare values with relative delta"),
+				errors.New("actual value is zero, which is not allowed"),
 			},
 		})
 		return n
@@ -362,14 +388,39 @@ func (n *Number) NotInDeltaRelative(value, delta float64) *Number {
 	}
 
 	if math.IsNaN(n.value) || math.IsNaN(value) || math.IsNaN(delta) {
+		var assertionErrors []error
+		assertionErrors = append(
+			assertionErrors,
+			errors.New("expected: can compare values with relative delta"),
+		)
+
+		if math.IsNaN(n.value) {
+			assertionErrors = append(
+				assertionErrors,
+				errors.New("actual value is NaN"),
+			)
+		}
+
+		if math.IsNaN(value) {
+			assertionErrors = append(
+				assertionErrors,
+				errors.New("expected value is NaN"),
+			)
+		}
+
+		if math.IsNaN(delta) {
+			assertionErrors = append(
+				assertionErrors,
+				errors.New("delta is NaN"),
+			)
+		}
+
 		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{value},
 			Delta:    &AssertionValue{relativeDelta(delta)},
-			Errors: []error{
-				errors.New("expected: numbers are comparable"),
-			},
+			Errors:   assertionErrors,
 		})
 		return n
 	}
@@ -381,7 +432,8 @@ func (n *Number) NotInDeltaRelative(value, delta float64) *Number {
 			Expected: &AssertionValue{value},
 			Delta:    &AssertionValue{relativeDelta(delta)},
 			Errors: []error{
-				errors.New("expected: number value is not 0"),
+				errors.New("expected: can compare values with relative delta"),
+				errors.New("actual value is zero, which is not allowed"),
 			},
 		})
 		return n
