@@ -273,9 +273,15 @@ func (n *Number) NotInDelta(value, delta float64) *Number {
 	return n
 }
 
-// InDeltaRelative succeeds if two numerals are within a relative delta of each other.
+// InDeltaRelative succeeds if two numbers are within relative delta of each other.
 //
-// The relative delta is expressed as a percentage (i.e. 0.01 is 1%).
+// The relative delta is expressed as a decimal. For example, to determine if a number
+// and a value are within 1% of each other, use 0.01.
+//
+// A number and a value are within relative delta if
+// Abs(number-value) / Abs(number) < relative delta.
+//
+// Please note that the number can't be 0 and the number, value, and delta can't be NaN.
 //
 // Example:
 //
@@ -333,9 +339,15 @@ func (n *Number) InDeltaRelative(value, delta float64) *Number {
 	return n
 }
 
-// NotInDeltaRelative succeeds if two numerals are not within a relative delta of each other.
+// NotInDeltaRelative succeeds if two numbers aren't within relative delta of each other.
 //
-// The relative delta is expressed as a percentage (i.e. 0.01 is 1%).
+// The relative delta is expressed as a decimal. For example, to determine if a number
+// and a value are within 1% of each other, use 0.01.
+//
+// A number and a value are within relative delta if
+// Abs(number-value) / Abs(number) < relative delta.
+//
+// Please note that the number can't be 0 and the number, value, and delta can't be NaN.
 //
 // Example:
 //
