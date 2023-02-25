@@ -24,6 +24,8 @@ func TestNumber_FailedChain(t *testing.T) {
 	value.NotEqual(0)
 	value.InDelta(0, 0)
 	value.NotInDelta(0, 0)
+	value.InDeltaRelative(0, 0)
+	value.NotInDeltaRelative(0, 0)
 	value.InRange(0, 0)
 	value.NotInRange(0, 0)
 	value.InList(0)
