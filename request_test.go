@@ -2700,109 +2700,38 @@ func TestRequest_Usage(t *testing.T) {
 		Reporter: newMockReporter(t),
 	}
 
-	t.Run("WithMatcher", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "/")
-		req.WithMatcher(nil)
-		req.chain.assertFailed(t)
-	})
+	config_http_client := Config{
+		Reporter: newMockReporter(t),
+		// WithRedirectPolicy and WithMaxRedirects requires
+		// Client to be http.Client, but we use another one.
+		Client: &mockClient{},
+	}
 
-	t.Run("WithTransformer", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "/")
-		req.WithTransformer(nil)
-		req.chain.assertFailed(t)
-	})
+	reqs := []*Request{
+		NewRequestC(config, "METHOD", "/").WithMatcher(nil),
+		NewRequestC(config, "METHOD", "/").WithTransformer(nil),
+		NewRequestC(config, "METHOD", "/").WithClient(nil),
+		NewRequestC(config, "METHOD", "/").WithHandler(nil),
+		NewRequestC(config, "METHOD", "/").WithContext(nil),
+		NewRequestC(config, "METHOD", "/").WithMaxRedirects(-1),
+		NewRequestC(config, "METHOD", "/").WithMaxRetries(-1),
+		NewRequestC(config, "METHOD", "/").WithRetryDelay(10, 5),
+		NewRequestC(config, "METHOD", "/").WithWebsocketDialer(nil),
+		NewRequestC(config, "METHOD", "/").WithPath("test-path", nil),
+		NewRequestC(config, "METHOD", "/").WithQuery("test-query", nil),
+		NewRequestC(config, "METHOD", "/").WithURL("%-invalid-url"),
+		NewRequestC(config, "METHOD", "/").WithFile("test-key", "test-path", nil, nil),
+		NewRequestC(config_http_client, "METHOD", "/").WithRedirectPolicy(FollowAllRedirects),
+		NewRequestC(config_http_client, "METHOD", "/").WithMaxRedirects(1),
+	}
 
-	t.Run("WithClient", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "/")
-		req.WithClient(nil)
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithHandler", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "/")
-		req.WithHandler(nil)
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithContext", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "/")
-		req.WithContext(nil) // nolint
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithMaxRedirects", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "/")
-		req.WithMaxRedirects(-1)
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithMaxRetries", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "/")
-		req.WithMaxRetries(-1)
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithRetryDelay", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "/")
-		req.WithRetryDelay(10, 5)
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithWebsocketDialer", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "/")
-		req.WithWebsocketDialer(nil)
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithPath", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "/")
-		req.WithPath("test-path", nil)
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithQuery", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "/")
-		req.WithQuery("test-query", nil)
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithURL", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "/")
-		req.WithURL("%-invalid-url")
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithFile", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "/")
-		req.WithFile("test-key", "test-path", nil, nil)
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithRedirectPolicy bad Client", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			// WithRedirectPolicy requires Client to be http.Client,
-			// but we use another one
-			Client: &mockClient{},
+	for _, req := range reqs {
+		if req.config.Client == config_http_client.Client {
+			req.Expect().chain.assertFailed(t)
+		} else {
+			req.chain.assertFailed(t)
 		}
-		req := NewRequestC(config, "METHOD", "/")
-		req.WithRedirectPolicy(FollowAllRedirects)
-		req.Expect()
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithMaxRedirects bad Client", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			// WithMaxRedirects requires Client to be http.Client,
-			// but we use another one
-			Client: &mockClient{},
-		}
-		req := NewRequestC(config, "METHOD", "/")
-		req.WithMaxRedirects(1)
-		req.Expect()
-		req.chain.assertFailed(t)
-	})
+	}
 }
 
 func TestRequest_Order(t *testing.T) {
