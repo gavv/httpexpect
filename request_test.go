@@ -2712,7 +2712,7 @@ func TestRequest_Usage(t *testing.T) {
 		NewRequestC(config1, "METHOD", "/").WithTransformer(nil),
 		NewRequestC(config1, "METHOD", "/").WithClient(nil),
 		NewRequestC(config1, "METHOD", "/").WithHandler(nil),
-		NewRequestC(config1, "METHOD", "/").WithContext(nil),
+		NewRequestC(config1, "METHOD", "/").WithContext(nil) /*nolint*/,
 		NewRequestC(config1, "METHOD", "/").WithMaxRedirects(-1),
 		NewRequestC(config1, "METHOD", "/").WithMaxRetries(-1),
 		NewRequestC(config1, "METHOD", "/").WithRetryDelay(10, 5),
