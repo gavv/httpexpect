@@ -196,117 +196,132 @@ func TestDateTime_IsLesser(t *testing.T) {
 }
 
 func TestDateTime_InRange(t *testing.T) {
-	reporter := newMockReporter(t)
+	cases := map[string]struct {
+		value            time.Time
+		min              time.Time
+		max              time.Time
+		expectInRange    bool
+		expectNotInRange bool
+	}{
+		"value equal to both min and max": {
+			value:            time.Unix(0, 1234),
+			min:              time.Unix(0, 1234),
+			max:              time.Unix(0, 1234),
+			expectInRange:    true,
+			expectNotInRange: false,
+		},
+		"value after min and equal to max": {
+			value:            time.Unix(0, 1234),
+			min:              time.Unix(0, 1234-1),
+			max:              time.Unix(0, 1234),
+			expectInRange:    true,
+			expectNotInRange: false,
+		},
+		"value equal to min and before max": {
+			value:            time.Unix(0, 1234),
+			min:              time.Unix(0, 1234),
+			max:              time.Unix(0, 1234+1),
+			expectInRange:    true,
+			expectNotInRange: false,
+		},
+		"value before range": {
+			value:            time.Unix(0, 1234),
+			min:              time.Unix(0, 1234+1),
+			max:              time.Unix(0, 1234+2),
+			expectInRange:    false,
+			expectNotInRange: true,
+		},
+		"value after range": {
+			value:            time.Unix(0, 1234),
+			min:              time.Unix(0, 1234-2),
+			max:              time.Unix(0, 1234-1),
+			expectInRange:    false,
+			expectNotInRange: true,
+		},
+		"invalid range": {
+			value:            time.Unix(0, 1234),
+			min:              time.Unix(0, 1234+1),
+			max:              time.Unix(0, 1234-1),
+			expectInRange:    false,
+			expectNotInRange: true,
+		},
+	}
 
-	value := NewDateTime(reporter, time.Unix(0, 1234))
+	for name, instance := range cases {
+		t.Run(name, func(t *testing.T) {
+			reporter := newMockReporter(t)
 
-	value.InRange(time.Unix(0, 1234), time.Unix(0, 1234))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInRange(time.Unix(0, 1234), time.Unix(0, 1234))
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.InRange(time.Unix(0, 1234-1), time.Unix(0, 1234))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInRange(time.Unix(0, 1234-1), time.Unix(0, 1234))
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.InRange(time.Unix(0, 1234), time.Unix(0, 1234+1))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInRange(time.Unix(0, 1234), time.Unix(0, 1234+1))
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.InRange(time.Unix(0, 1234+1), time.Unix(0, 1234+2))
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInRange(time.Unix(0, 1234+1), time.Unix(0, 1234+2))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.InRange(time.Unix(0, 1234-2), time.Unix(0, 1234-1))
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInRange(time.Unix(0, 1234-2), time.Unix(0, 1234-1))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.InRange(time.Unix(0, 1234+1), time.Unix(0, 1234-1))
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInRange(time.Unix(0, 1234+1), time.Unix(0, 1234-1))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+			if instance.expectInRange {
+				NewDateTime(reporter, instance.value).
+					InRange(instance.min, instance.max).
+					chain.assertNotFailed(t)
+			} else {
+				NewDateTime(reporter, instance.value).
+					InRange(instance.min, instance.max).
+					chain.assertFailed(t)
+			}
+			if instance.expectNotInRange {
+				NewDateTime(reporter, instance.value).
+					NotInRange(instance.min, instance.max).
+					chain.assertNotFailed(t)
+			} else {
+				NewDateTime(reporter, instance.value).
+					NotInRange(instance.min, instance.max).
+					chain.assertFailed(t)
+			}
+		})
+	}
 }
 
 func TestDateTime_InList(t *testing.T) {
-	reporter := newMockReporter(t)
+	cases := map[string]struct {
+		value           time.Time
+		list            []time.Time
+		expectInList    bool
+		expectNotInList bool
+	}{
+		"empty list": {
+			value:           time.Unix(0, 1234),
+			list:            []time.Time{},
+			expectInList:    false,
+			expectNotInList: false,
+		},
+		"value present in list": {
+			value:           time.Unix(0, 1234),
+			list:            []time.Time{time.Unix(0, 1234), time.Unix(0, 1234+1)},
+			expectInList:    true,
+			expectNotInList: false,
+		},
+		"value not present in list": {
+			value:           time.Unix(0, 1234),
+			list:            []time.Time{time.Unix(0, 1234-1), time.Unix(0, 1234+1)},
+			expectInList:    false,
+			expectNotInList: true,
+		},
+	}
 
-	value := NewDateTime(reporter, time.Unix(0, 1234))
+	for name, instance := range cases {
+		t.Run(name, func(t *testing.T) {
+			reporter := newMockReporter(t)
 
-	value.InList()
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInList()
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.InList(time.Unix(0, 1234), time.Unix(0, 1234))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInList(time.Unix(0, 1234), time.Unix(0, 1234))
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.InList(time.Unix(0, 1234-1), time.Unix(0, 1234))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInList(time.Unix(0, 1234-1), time.Unix(0, 1234))
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.InList(time.Unix(0, 1234), time.Unix(0, 1234+1))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInList(time.Unix(0, 1234), time.Unix(0, 1234+1))
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.InList(time.Unix(0, 1234+1), time.Unix(0, 1234+2))
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInList(time.Unix(0, 1234+1), time.Unix(0, 1234+2))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.InList(time.Unix(0, 1234-2), time.Unix(0, 1234-1))
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInList(time.Unix(0, 1234-2), time.Unix(0, 1234-1))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.InList(time.Unix(0, 1234+1), time.Unix(0, 1234-1))
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInList(time.Unix(0, 1234+1), time.Unix(0, 1234-1))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+			if instance.expectInList {
+				NewDateTime(reporter, instance.value).
+					InList(instance.list...).
+					chain.assertNotFailed(t)
+			} else {
+				NewDateTime(reporter, instance.value).
+					InList(instance.list...).
+					chain.assertFailed(t)
+			}
+			if instance.expectNotInList {
+				NewDateTime(reporter, instance.value).
+					NotInList(instance.list...).
+					chain.assertNotFailed(t)
+			} else {
+				NewDateTime(reporter, instance.value).
+					NotInList(instance.list...).
+					chain.assertFailed(t)
+			}
+		})
+	}
 }
