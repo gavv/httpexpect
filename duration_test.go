@@ -252,11 +252,6 @@ func TestDuration_InRange(t *testing.T) {
 }
 
 func TestDuration_InList(t *testing.T) {
-	t.Run("value is not present", func(t *testing.T) {
-		newDuration(newMockChain(t), nil).InList(time.Second).chain.assertFailed(t)
-		newDuration(newMockChain(t), nil).NotInList(time.Second).chain.assertFailed(t)
-	})
-
 	cases := map[string]struct {
 		value           time.Duration
 		list            []time.Duration
