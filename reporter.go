@@ -45,6 +45,22 @@ type FatalReporter struct {
 	backend testing.TB
 }
 
+// PanicReporter is similar to FatalReporter, but instead of calling t.Fatalf it just calls panic.
+type PanicReporter struct {
+	backend testing.TB
+}
+
+// NewPanicReporter returns a new PanicReporter object.
+func NewPanicReporter(t testing.TB) *PanicReporter {
+	return &PanicReporter{t}
+}
+
+// Errorf implements Reporter.Errorf.
+// it should only call panic
+func (r *PanicReporter) Errorf(message string, args ...interface{}) {
+	r.backend.Fatalf(message, args...)
+}
+
 // NewFatalReporter returns a new FatalReporter object.
 func NewFatalReporter(t testing.TB) *FatalReporter {
 	return &FatalReporter{t}
