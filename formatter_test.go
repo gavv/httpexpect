@@ -474,10 +474,10 @@ func TestFormatter_FailureDelta(t *testing.T) {
 
 func TestFormatter_FailureErrors(t *testing.T) {
 	type testCase struct {
-		name string
-		assertionType    AssertionType
+		name           string
+		assertionType  AssertionType
 		assertionValue interface{}
-		wantExpected     []string
+		wantExpected   []string
 	}
 }
 
