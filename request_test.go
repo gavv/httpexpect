@@ -2704,30 +2704,38 @@ func TestRequest_Usage(t *testing.T) {
 		expectFails bool
 	}{
 		{
-			name:        "with matcher",
-			client:      nil,
-			prepFunc:    func(req *Request) { req.WithMatcher(nil) },
+			name:   "with matcher",
+			client: nil,
+			prepFunc: func(req *Request) {
+				req.WithMatcher(nil)
+			},
 			prepFails:   true,
 			expectFails: true,
 		},
 		{
-			name:        "with transformer",
-			client:      nil,
-			prepFunc:    func(req *Request) { req.WithTransformer(nil) },
+			name:   "with transformer",
+			client: nil,
+			prepFunc: func(req *Request) {
+				req.WithTransformer(nil)
+			},
 			prepFails:   true,
 			expectFails: true,
 		},
 		{
-			name:        "with client",
-			client:      nil,
-			prepFunc:    func(req *Request) { req.WithClient(nil) },
+			name:   "with client",
+			client: nil,
+			prepFunc: func(req *Request) {
+				req.WithClient(nil)
+			},
 			prepFails:   true,
 			expectFails: true,
 		},
 		{
-			name:        "with handler",
-			client:      nil,
-			prepFunc:    func(req *Request) { req.WithHandler(nil) },
+			name:   "with handler",
+			client: nil,
+			prepFunc: func(req *Request) {
+				req.WithHandler(nil)
+			},
 			prepFails:   true,
 			expectFails: true,
 		},
@@ -2741,73 +2749,94 @@ func TestRequest_Usage(t *testing.T) {
 			expectFails: true,
 		},
 		{
-			name:        "max redirects method fail",
-			client:      nil,
-			prepFunc:    func(req *Request) { req.WithMaxRedirects(-1) },
+			name:   "max redirects method fail",
+			client: nil,
+			prepFunc: func(req *Request) {
+				req.WithMaxRedirects(-1)
+			},
 			prepFails:   true,
 			expectFails: true,
 		},
 		{
-			name:        "with max retries",
-			client:      nil,
-			prepFunc:    func(req *Request) { req.WithMaxRetries(-1) },
+			name:   "with max retries",
+			client: nil,
+			prepFunc: func(req *Request) {
+				req.WithMaxRetries(-1)
+			},
 			prepFails:   true,
 			expectFails: true,
 		},
 		{
-			name:        "with retry delay",
-			client:      nil,
-			prepFunc:    func(req *Request) { req.WithRetryDelay(10, 5) },
+			name:   "with retry delay",
+			client: nil,
+			prepFunc: func(req *Request) {
+				req.WithRetryDelay(10, 5)
+			},
 			prepFails:   true,
 			expectFails: true,
 		},
 		{
-			name:        "with websocket dialer",
-			client:      nil,
-			prepFunc:    func(req *Request) { req.WithWebsocketDialer(nil) },
+			name:   "with websocket dialer",
+			client: nil,
+			prepFunc: func(req *Request) {
+				req.WithWebsocketDialer(nil)
+			},
 			prepFails:   true,
 			expectFails: true,
 		},
 		{
-			name:        "with path",
-			client:      nil,
-			prepFunc:    func(req *Request) { req.WithPath("test-path", nil) },
+			name:   "with path",
+			client: nil,
+			prepFunc: func(req *Request) {
+				req.WithPath("test-path", nil)
+			},
 			prepFails:   true,
 			expectFails: true,
 		},
 		{
-			name:        "with query",
-			client:      nil,
-			prepFunc:    func(req *Request) { req.WithPath("test-query", nil) },
+			name:   "with query",
+			client: nil,
+			prepFunc: func(req *Request) {
+				req.WithPath("test-query", nil)
+			},
 			prepFails:   true,
 			expectFails: true,
 		},
 		{
-			name:        "with url",
-			client:      nil,
-			prepFunc:    func(req *Request) { req.WithURL("%-invalid-url") },
+			name:   "with url",
+			client: nil,
+			prepFunc: func(req *Request) {
+				req.WithURL("%-invalid-url")
+			},
 			prepFails:   true,
 			expectFails: true,
 		},
 		{
-			name:        "with file",
-			client:      nil,
-			prepFunc:    func(req *Request) { req.WithFile("test-key", "test-path", nil, nil) },
+			name:   "with file",
+			client: nil,
+			prepFunc: func(req *Request) {
+				req.WithFile("test-key", "test-path", nil, nil)
+			},
 			prepFails:   true,
 			expectFails: true,
 		},
-		// WithRedirectPolicy and WithMaxRedirects requires Client to be http.Client, but we use another one.
+		// WithRedirectPolicy and WithMaxRedirects requires
+		// Client to be http.Client, but we use another one.
 		{
-			name:        "with redirect policy",
-			client:      &mockClient{},
-			prepFunc:    func(req *Request) { req.WithRedirectPolicy(FollowAllRedirects) },
+			name:   "with redirect policy",
+			client: &mockClient{},
+			prepFunc: func(req *Request) {
+				req.WithRedirectPolicy(FollowAllRedirects)
+			},
 			prepFails:   false,
 			expectFails: true,
 		},
 		{
-			name:        "max redirects Expect() fail",
-			client:      &mockClient{},
-			prepFunc:    func(req *Request) { req.WithMaxRedirects(1) },
+			name:   "max redirects Expect() fail",
+			client: &mockClient{},
+			prepFunc: func(req *Request) {
+				req.WithMaxRedirects(1)
+			},
 			prepFails:   false,
 			expectFails: true,
 		},
