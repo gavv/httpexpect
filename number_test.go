@@ -429,19 +429,47 @@ func TestNumber_InRange(t *testing.T) {
 	})
 
 	t.Run("canonization", func(t *testing.T) {
+		cases := []struct {
+			number    float64
+			min       interface{}
+			max       interface{}
+			isInRange bool
+		}{
+			{
+				number:    1234,
+				min:       int64(1233),
+				max:       float32(1235),
+				isInRange: true,
+			},
+			{
+				number:    1234,
+				min:       1235,
+				max:       1236,
+				isInRange: false,
+			},
+		}
+
 		reporter := newMockReporter(t)
 
-		NewNumber(reporter, 1234).InRange(int64(1233), float32(1235)).
-			chain.assertNotFailed(t)
+		for _, instance := range cases {
+			if instance.isInRange {
+				NewNumber(reporter, instance.number).
+					InRange(instance.min, instance.max).
+					chain.assertNotFailed(t)
 
-		NewNumber(reporter, 1234).NotInRange(int64(1233), float32(1235)).
-			chain.assertFailed(t)
+				NewNumber(reporter, instance.number).
+					NotInRange(instance.min, instance.max).
+					chain.assertFailed(t)
+			} else {
+				NewNumber(reporter, instance.number).
+					NotInRange(instance.min, instance.max).
+					chain.assertNotFailed(t)
 
-		NewNumber(reporter, 1234).InRange(1235, 1236).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, 1234).NotInRange(1235, 1236).
-			chain.assertNotFailed(t)
+				NewNumber(reporter, instance.number).
+					InRange(instance.min, instance.max).
+					chain.assertFailed(t)
+			}
+		}
 	})
 
 	t.Run("invalid argument", func(t *testing.T) {
@@ -528,25 +556,49 @@ func TestNumber_InList(t *testing.T) {
 	})
 
 	t.Run("canonization", func(t *testing.T) {
+		cases := []struct {
+			number   float64
+			list     []interface{}
+			isInList bool
+		}{
+			{
+				number:   111,
+				list:     []interface{}{int64(111), float32(222)},
+				isInList: true,
+			},
+			{
+				number:   111,
+				list:     []interface{}{float32(111), int64(222)},
+				isInList: true,
+			},
+			{
+				number:   111,
+				list:     []interface{}{222, 333},
+				isInList: false,
+			},
+		}
+
 		reporter := newMockReporter(t)
 
-		NewNumber(reporter, 111).InList(int64(111), float32(222)).
-			chain.assertNotFailed(t)
+		for _, instance := range cases {
+			if instance.isInList {
+				NewNumber(reporter, instance.number).
+					InList(instance.list...).
+					chain.assertNotFailed(t)
 
-		NewNumber(reporter, 111).NotInList(int64(111), float32(222)).
-			chain.assertFailed(t)
+				NewNumber(reporter, instance.number).
+					NotInList(instance.list...).
+					chain.assertFailed(t)
+			} else {
+				NewNumber(reporter, instance.number).
+					NotInList(instance.list...).
+					chain.assertNotFailed(t)
 
-		NewNumber(reporter, 111).InList(float32(111), int64(222)).
-			chain.assertNotFailed(t)
-
-		NewNumber(reporter, 111).NotInList(float32(111), int64(222)).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, 111).InList(222, 333).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, 111).NotInList(222, 333).
-			chain.assertNotFailed(t)
+				NewNumber(reporter, instance.number).
+					InList(instance.list...).
+					chain.assertFailed(t)
+			}
+		}
 	})
 
 	t.Run("invalid argument", func(t *testing.T) {
