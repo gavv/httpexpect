@@ -5,10 +5,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"os"
 	"strconv"
 	"strings"
+	"testing"
 	"text/template"
 
+	"github.com/fatih/color"
+	"github.com/mattn/go-isatty"
 	"github.com/mitchellh/go-wordwrap"
 	"github.com/sanity-io/litter"
 	"github.com/yudai/gojsondiff"
@@ -65,6 +69,10 @@ type DefaultFormatter struct {
 	// defines the function map passed to template engine.
 	// May be nil.
 	TemplateFuncs template.FuncMap
+
+	// Color text.
+	// Default is ColorModeAuto.
+	ColorMode ColorMode
 }
 
 // FormatSuccess implements Formatter.FormatSuccess.
@@ -143,6 +151,8 @@ type FormatData struct {
 	Diff     string
 
 	LineWidth int
+
+	EnableColor bool
 }
 
 const (
@@ -157,6 +167,18 @@ const (
 	kindSubset     = "subset"
 	kindValue      = "value"
 	kindValueList  = "values"
+)
+
+// ColorMode defines how the text color is enabled.
+type ColorMode int
+
+const (
+	// Enable colors if testing.Verbose() is true and stdout is a tty / console.
+	ColorModeAuto ColorMode = iota
+	// Always use colors.
+	ColorModeAlways
+	// Never use colors.
+	ColorModeNever
 )
 
 func (f *DefaultFormatter) applyTemplate(
@@ -214,6 +236,19 @@ func (f *DefaultFormatter) buildFormatData(
 			f.fillDelta(&data, ctx, failure)
 		}
 	}
+
+	var enableColor bool
+	switch f.ColorMode {
+	case ColorModeAuto:
+		fd := os.Stdout.Fd()
+		enableColor = testing.Verbose() &&
+			(isatty.IsTerminal(fd) || isatty.IsCygwinTerminal(fd))
+	case ColorModeAlways:
+		enableColor = true
+	case ColorModeNever:
+		enableColor = false
+	}
+	data.EnableColor = enableColor
 
 	return &data
 }
@@ -677,30 +712,49 @@ var defaultTemplateFuncs = template.FuncMap{
 
 		return sb.String()
 	},
+	"color": func(enable bool, c, s string) string {
+		if !enable {
+			return s
+		}
+		var ca color.Attribute
+		switch c {
+		case "red":
+			ca = color.FgRed
+		case "yellow":
+			ca = color.FgYellow
+		case "green":
+			ca = color.FgGreen
+		case "cyan":
+			ca = color.FgCyan
+		default:
+			ca = color.FgCyan
+		}
+		return color.New(ca).Sprint(s)
+	},
 }
 
-var defaultSuccessTemplate = `[OK] {{ join .AssertPath .LineWidth }}`
+var defaultSuccessTemplate = `[OK] {{ join .AssertPath .LineWidth | color .EnableColor "green" }}` //nolint
 
 var defaultFailureTemplate = `
 {{- range $n, $err := .Errors }}
 {{ if eq $n 0 -}}
-{{ wrap $err $.LineWidth }}
+{{ wrap $err $.LineWidth | color $.EnableColor "red" }}
 {{- else -}}
-{{ wrap $err $.LineWidth | indent }}
+{{ wrap $err $.LineWidth | indent | color $.EnableColor "red" }}
 {{- end -}}
 {{- end -}}
 {{- if .TestName }}
 
-test name: {{ .TestName }}
+test name: {{ .TestName | color $.EnableColor "cyan" }}
 {{- end -}}
 {{- if .RequestName }}
 
-request name: {{ .RequestName }}
+request name: {{ .RequestName | color $.EnableColor "cyan" }}
 {{- end -}}
 {{- if .AssertPath }}
 
 assertion:
-{{ join .AssertPath .LineWidth | indent }}
+{{ join .AssertPath .LineWidth | indent | color .EnableColor "yellow" }}
 {{- end -}}
 {{- if .HaveExpected }}
 
@@ -709,27 +763,27 @@ assertion:
 {{- else }}expected
 {{- end }} {{ .ExpectedKind }}:
 {{- range $n, $exp := .Expected }}
-{{ $exp | indent }}
+{{ $exp | indent | color $.EnableColor "red" }}
 {{- end -}}
 {{- end -}}
 {{- if .HaveActual }}
 
 actual value:
-{{ .Actual | indent }}
+{{ .Actual | indent | color .EnableColor "red" }}
 {{- end -}}
 {{- if .HaveReference }}
 
 reference value:
-{{ .Reference | indent }}
+{{ .Reference | indent | color .EnableColor "red" }}
 {{- end -}}
 {{- if .HaveDelta }}
 
 allowed delta:
-{{ .Delta | indent }}
+{{ .Delta | indent | color .EnableColor "red" }}
 {{- end -}}
 {{- if .HaveDiff }}
 
 diff:
-{{ .Diff | indent }}
+{{ .Diff | indent | color .EnableColor "red" }}
 {{- end -}}
 `

@@ -105,42 +105,36 @@ func TestE2EReport_LineWidth(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		formatter   *DefaultFormatter
+		lineWidth   int
 		longestLine widthRange
 	}{
 		{
-			name: "no limit",
-			formatter: &DefaultFormatter{
-				LineWidth: -1, // no limit
-			},
+			name:      "no limit",
+			lineWidth: -1, // no limit
 			longestLine: widthRange{
 				above: 100,
 			},
 		},
 		{
 			name: "large limit",
-			formatter: &DefaultFormatter{
-				LineWidth: 1000, // explicit limit - 1000 chars
-			},
+
+			lineWidth: 1000, // explicit limit - 1000 chars
+
 			longestLine: widthRange{
 				above: 100,
 			},
 		},
 		{
-			name: "default limit",
-			formatter: &DefaultFormatter{
-				LineWidth: 0, // default limit - 60 chars
-			},
+			name:      "default limit",
+			lineWidth: 0, // default limit - 60 chars
 			longestLine: widthRange{
 				above: 40,
 				below: 60,
 			},
 		},
 		{
-			name: "explicit limit",
-			formatter: &DefaultFormatter{
-				LineWidth: 30, // explicit limit - 30 chars
-			},
+			name:      "explicit limit",
+			lineWidth: 30, // explicit limit - 30 chars
 			longestLine: widthRange{
 				below: 30,
 			},
@@ -154,8 +148,11 @@ func TestE2EReport_LineWidth(t *testing.T) {
 				TestName: "TestExample",
 				BaseURL:  server.URL,
 				AssertionHandler: &DefaultAssertionHandler{
-					Formatter: tt.formatter,
-					Reporter:  rep,
+					Formatter: &DefaultFormatter{
+						LineWidth: tt.lineWidth,
+						ColorMode: ColorModeNever,
+					},
+					Reporter: rep,
 				},
 			})
 
