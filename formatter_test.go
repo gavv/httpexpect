@@ -473,11 +473,57 @@ func TestFormatter_FailureDelta(t *testing.T) {
 }
 
 func TestFormatter_FailureErrors(t *testing.T) {
-	type testCase struct {
-		name           string
-		assertionType  AssertionType
-		assertionValue interface{}
-		wantExpected   []string
+	type caseStructure struct {
+		name     string
+		errors   []error
+		expected []string
+	}
+
+	cases := []caseStructure{
+		{
+			name:     "nil errors slice",
+			errors:   nil,
+			expected: nil,
+		},
+		{
+			name:     "empty errors slice",
+			errors:   []error{},
+			expected: nil,
+		},
+		{
+			name:     "errors slice with nil error",
+			errors:   []error{nil},
+			expected: nil,
+		},
+		{
+			name:     "errors slice with typed nil error",
+			errors:   []error{fmt.Errorf("error message: %w", nil)},
+			expected: []string{"error message: %!w(<nil>)"},
+		},
+		{
+			name:     "errors slice with one error",
+			errors:   []error{fmt.Errorf("error message")},
+			expected: []string{"error message"},
+		},
+		{
+			name:     "errors slice with multiple errors",
+			errors:   []error{fmt.Errorf("error message 1"), fmt.Errorf("error message 2")},
+			expected: []string{"error message 1", "error message 2"},
+		},
+	}
+
+	df := &DefaultFormatter{}
+	ctx := &AssertionContext{}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			fl := &AssertionFailure{
+				Errors: tc.errors,
+			}
+			fd := df.buildFormatData(ctx, fl)
+			assert.Equal(t, tc.expected, fd.Errors)
+
+		})
 	}
 }
 
