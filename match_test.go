@@ -194,11 +194,11 @@ func TestMatch_HasValues(t *testing.T) {
 					NewMatch(reporter, instance.submatches, nil).NotValues(match.target...).
 						chain.assertNotFailed(t)
 
-					NewMatch(reporter, instance.submatches, nil).Values(match.target...).
+					NewMatch(reporter, instance.submatches, nil).HasValues(match.target...).
 						chain.assertFailed(t)
 
 				} else {
-					NewMatch(reporter, instance.submatches, nil).Values(match.target...).
+					NewMatch(reporter, instance.submatches, nil).HasValues(match.target...).
 						chain.assertNotFailed(t)
 
 					NewMatch(reporter, instance.submatches, nil).NotValues(match.target...).
