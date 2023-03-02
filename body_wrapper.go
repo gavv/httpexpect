@@ -3,6 +3,7 @@ package httpexpect
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"io/ioutil"
 	"runtime"
@@ -39,6 +40,23 @@ func newBodyWrapper(reader io.ReadCloser, cancelFunc context.CancelFunc) *bodyWr
 	runtime.SetFinalizer(bw, (*bodyWrapper).Close)
 
 	return bw
+}
+
+func newBodyWrapperLimit(reader io.ReadCloser, cancelFunc context.CancelFunc, limit int64) (*bodyWrapper, error) {
+	b := make([]byte, limit)
+	_, err := io.ReadFull(reader, b)
+	if err != nil {
+		bw := &bodyWrapper{
+			origReader: reader,
+			cancelFunc: cancelFunc,
+		}
+
+		// Finalizer will close body if closeAndCancel was never called.
+		runtime.SetFinalizer(bw, (*bodyWrapper).Close)
+
+		return bw, nil
+	}
+	return nil, errors.New("unexpected: response body size larger than limit %s that is %s")
 }
 
 // Read body contents

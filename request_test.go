@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"io/ioutil"
 	"mime"
 	"mime/multipart"
@@ -214,6 +215,45 @@ func TestRequest_Empty(t *testing.T) {
 
 	req.chain.assertNotFailed(t)
 	resp.chain.assertNotFailed(t)
+}
+
+func TestResponse_Limit(t *testing.T) {
+	t.Run("response size exceeds limit", func(t *testing.T) {
+		client := &mockClient{}
+
+		config := Config{
+			Client:   client,
+			Reporter: newMockReporter(t),
+		}
+
+		req := NewRequestC(config, "METHOD", "/")
+		req.WithText("test string")
+		req.WithLimit(3)
+
+		resp := req.Expect()
+
+		req.chain.assertFailed(t)
+		resp.chain.assertFailed(t)
+	})
+
+	t.Run("response size doesn't exceed limit", func(t *testing.T) {
+		client := &mockClient{}
+
+		config := Config{
+			Client:   client,
+			Reporter: newMockReporter(t),
+		}
+
+		req := NewRequestC(config, "METHOD", "/")
+		req.WithText("1234")
+		req.WithLimit(5)
+
+		resp := req.Expect()
+
+		req.chain.assertNotFailed(t)
+		resp.chain.assertNotFailed(t)
+	})
+
 }
 
 func TestRequest_Time(t *testing.T) {
@@ -2413,6 +2453,7 @@ func TestRequest_Retries(t *testing.T) {
 		return &mockClient{
 			resp: http.Response{
 				StatusCode: http.StatusOK,
+				Body:       io.NopCloser(bytes.NewBuffer([]byte{0, 1, 2, 3, 4})),
 			},
 			cb: cb,
 		}

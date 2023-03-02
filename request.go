@@ -53,6 +53,7 @@ type Request struct {
 	formbuf   *bytes.Buffer
 	multipart *multipart.Writer
 
+	limit        int64
 	bodySetter   string
 	typeSetter   string
 	forceType    bool
@@ -232,6 +233,21 @@ func (r *Request) WithName(name string) *Request {
 
 	r.chain.setRequestName(name)
 
+	return r
+}
+
+func (r *Request) WithLimit(limit int64) *Request {
+	opChain := r.chain.enter("WithLimit()")
+	defer opChain.leave()
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if !r.checkOrder(opChain, "WithLimit()") {
+		return r
+	}
+
+	r.limit = limit
 	return r
 }
 
@@ -2215,7 +2231,15 @@ func (r *Request) retryRequest(reqFunc func() (*http.Response, error)) (
 		elapsed := time.Since(start)
 
 		if resp != nil && resp.Body != nil {
-			resp.Body = newBodyWrapper(resp.Body, cancelFn)
+			if r.limit != 0 {
+				resp.Body, err = newBodyWrapperLimit(resp.Body, cancelFn, r.limit)
+				if err != nil {
+					return nil, 0, err
+				}
+			} else {
+				resp.Body = newBodyWrapper(resp.Body, cancelFn)
+			}
+
 		} else if cancelFn != nil {
 			cancelFn()
 		}
