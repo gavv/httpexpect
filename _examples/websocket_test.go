@@ -46,7 +46,7 @@ func TestWsHandlerJSON(t *testing.T) {
 		Message string `json:"message"`
 	}{"hi"}).
 		Expect().
-		TextMessage().JSON().Object().ValueEqual("message", "hi")
+		TextMessage().JSON().Object().HasValue("message", "hi")
 }
 
 func TestWsHandlerClose(t *testing.T) {
@@ -101,7 +101,7 @@ func TestWsFastHandlerJSON(t *testing.T) {
 		Message string `json:"message"`
 	}{"hi"}).
 		Expect().
-		TextMessage().JSON().Object().ValueEqual("message", "hi")
+		TextMessage().JSON().Object().HasValue("message", "hi")
 }
 
 func TestWsFastHandlerClose(t *testing.T) {

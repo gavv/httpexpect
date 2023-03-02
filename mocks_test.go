@@ -14,6 +14,20 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type mockRequestFactory struct {
+	lastreq *http.Request
+	fail    bool
+}
+
+func (f *mockRequestFactory) NewRequest(
+	method, urlStr string, body io.Reader) (*http.Request, error) {
+	if f.fail {
+		return nil, errors.New("testRequestFactory")
+	}
+	f.lastreq = httptest.NewRequest(method, urlStr, body)
+	return f.lastreq, nil
+}
+
 type mockClient struct {
 	req  *http.Request
 	resp http.Response

@@ -632,15 +632,18 @@ var defaultTemplateFuncs = template.FuncMap{
 	},
 	"wrap": func(s string, width int) string {
 		s = strings.TrimSpace(s)
-		if width < 0 {
+
+		width -= len(defaultIndent)
+		if width <= 0 {
 			return s
 		}
 
 		return wordwrap.WrapString(s, uint(width))
 	},
-	"join": func(strs []string, width int) string {
-		if width < 0 {
-			return strings.Join(strs, ".")
+	"join": func(tokenList []string, width int) string {
+		width -= len(defaultIndent)
+		if width <= 0 {
+			return strings.Join(tokenList, ".")
 		}
 
 		var sb strings.Builder
@@ -653,19 +656,21 @@ var defaultTemplateFuncs = template.FuncMap{
 			lineLen += len(s)
 		}
 
-		for n, s := range strs {
-			if lineLen > width {
+		for n, token := range tokenList {
+			if lineLen+len(token)+1 > width {
 				write("\n")
 				lineLen = 0
-				lineNum++
+				if lineNum < 2 {
+					lineNum++
+				}
 			}
 			if lineLen == 0 {
 				for l := 0; l < lineNum; l++ {
 					write(defaultIndent)
 				}
 			}
-			write(s)
-			if n != len(strs)-1 {
+			write(token)
+			if n != len(tokenList)-1 {
 				write(".")
 			}
 		}

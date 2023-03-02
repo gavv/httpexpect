@@ -32,7 +32,7 @@ func TestEnvironment_Constructors(t *testing.T) {
 	})
 }
 
-func TestEnvironment_Reentrant(t *testing.T) {
+func TestEnvironment_Reentrancy(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	env := NewEnvironment(reporter)
@@ -88,6 +88,34 @@ func TestEnvironment_Delete(t *testing.T) {
 	assert.Nil(t, env.Get("good_key"))
 	env.chain.assertFailed(t)
 	env.chain.clearFailed()
+}
+
+func TestEnvironment_Clear(t *testing.T) {
+	env := newEnvironment(newMockChain(t))
+
+	for i := 1; i < 11; i++ {
+		key := fmt.Sprint("key", i)
+		env.Put(key, i)
+		env.chain.assertNotFailed(t)
+		assert.True(t, env.Has(key))
+		assert.NotNil(t, env.Get(key))
+		assert.Equal(t, i, env.Get(key).(int))
+		env.chain.assertNotFailed(t)
+	}
+
+	env.Clear()
+	env.chain.assertNotFailed(t)
+
+	for i := 1; i < 11; i++ {
+		key := fmt.Sprint("key", i)
+		assert.False(t, env.Has(key))
+		assert.Nil(t, env.Get(key))
+		env.chain.assertFailed(t)
+		env.chain.clearFailed()
+	}
+
+	assert.Zero(t, len(env.data))
+	env.chain.assertNotFailed(t)
 }
 
 func TestEnvironment_NotFound(t *testing.T) {
@@ -488,4 +516,66 @@ func TestEnvironment_Time(t *testing.T) {
 				}
 			})
 	}
+}
+
+func TestEnvironment_List(t *testing.T) {
+	env := newEnvironment(newMockChain(t))
+
+	assert.Equal(t, []string{}, env.List())
+
+	env.Put("k1", 1)
+	env.Put("k2", 2)
+	env.Put("k3", 3)
+	assert.Equal(t, []string{"k1", "k2", "k3"}, env.List())
+
+	env.Put("abc", 4)
+	assert.Equal(t, []string{"abc", "k1", "k2", "k3"}, env.List())
+
+	env.Delete("k2")
+	env.Delete("k3")
+	env.Put("pqr", 5)
+	assert.Equal(t, []string{"abc", "k1", "pqr"}, env.List())
+}
+
+func TestEnvironment_Glob(t *testing.T) {
+	t.Run("valid glob pattern", func(t *testing.T) {
+		env := newEnvironment(newMockChain(t))
+
+		assert.Equal(t, []string{}, env.Glob("*"))
+
+		env.Put("k1", 1)
+		env.Put("k2", 2)
+		env.Put("k3", 3)
+		assert.Equal(t, []string{"k1", "k2", "k3"}, env.Glob("*"))
+
+		env.Put("abc", 5)
+		assert.Equal(t, []string{"k1", "k2", "k3"}, env.Glob("k*"))
+
+		env.Put("ab", 6)
+		env.Put("ac", 7)
+		assert.Equal(t, []string{"ab", "ac"}, env.Glob("a?"))
+
+		assert.Equal(t, []string{"ab", "abc"}, env.Glob("ab*"))
+
+		env.Put("k4", 8)
+		assert.Equal(t, []string{"k2", "k3", "k4"}, env.Glob("k[2-4]"))
+
+		env.Put("a4", 9)
+		assert.Equal(t, []string{"a4", "ab", "ac", "k4"}, env.Glob("?[!1-3]"))
+		assert.Equal(t, []string{"a4", "k1", "k4"}, env.Glob("?[1,4]"))
+		assert.Equal(t, []string{"ab", "ac", "k2", "k3"}, env.Glob("?[!1,4]"))
+	})
+
+	t.Run("invalid glob pattern", func(t *testing.T) {
+		env := newEnvironment(newMockChain(t))
+		assert.Equal(t, []string{}, env.Glob("k[1-2"))
+		env.chain.assertFailed(t)
+		env.chain.clearFailed()
+
+		env.Put("k1", 1)
+		env.Put("k2", 2)
+		assert.Equal(t, []string{}, env.Glob("k[]"))
+		env.chain.assertFailed(t)
+		env.chain.clearFailed()
+	})
 }

@@ -130,11 +130,10 @@ func TestResponse_Alias(t *testing.T) {
 }
 
 func TestResponse_RoundTripTime(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	t.Run("set", func(t *testing.T) {
+	t.Run("provided", func(t *testing.T) {
 		duration := time.Second
 
+		reporter := newMockReporter(t)
 		resp := NewResponse(reporter, &http.Response{}, duration)
 		resp.chain.assertNotFailed(t)
 		resp.chain.clearFailed()
@@ -148,7 +147,8 @@ func TestResponse_RoundTripTime(t *testing.T) {
 		rt.chain.assertNotFailed(t)
 	})
 
-	t.Run("unset", func(t *testing.T) {
+	t.Run("omitted", func(t *testing.T) {
+		reporter := newMockReporter(t)
 		resp := NewResponse(reporter, &http.Response{})
 		resp.chain.assertNotFailed(t)
 		resp.chain.clearFailed()
@@ -439,7 +439,7 @@ func TestResponse_BodyOperations(t *testing.T) {
 	})
 }
 
-func TestResponse_BodyLazyRead(t *testing.T) {
+func TestResponse_BodyDeferred(t *testing.T) {
 	t.Run("constructor does not read content", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
@@ -554,6 +554,46 @@ func TestResponse_BodyLazyRead(t *testing.T) {
 		// Second call should be no-op
 		resp.Body()
 		resp.chain.assertFailed(t)
+
+		assert.Equal(t, readCount, body.readCount)
+		assert.Equal(t, 1, body.closeCount)
+		assert.Nil(t, resp.content)
+		assert.Equal(t, contentFailed, resp.contentState)
+	})
+
+	t.Run("failed state", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		body := newMockBody("body string")
+		body.readErr = errors.New("test error")
+
+		resp := NewResponse(reporter, &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       body,
+		})
+
+		assert.Equal(t, 0, body.readCount)
+		assert.Equal(t, 0, body.closeCount)
+		assert.Nil(t, resp.content)
+		assert.Equal(t, contentPending, resp.contentState)
+
+		// Read body
+		resp.Body()
+		resp.chain.assertFailed(t)
+
+		readCount := body.readCount
+		assert.NotEqual(t, 0, body.readCount)
+		assert.Equal(t, 1, body.closeCount)
+		assert.Nil(t, resp.content)
+		assert.Equal(t, contentFailed, resp.contentState)
+
+		// Invoke getContent()
+		chain := resp.chain.enter("Test()")
+		content, ok := resp.getContent(chain)
+
+		chain.assertFailed(t)
+		assert.Nil(t, content)
+		assert.False(t, ok)
 
 		assert.Equal(t, readCount, body.readCount)
 		assert.Equal(t, 1, body.closeCount)
@@ -1371,8 +1411,6 @@ func TestResponse_JSONP(t *testing.T) {
 }
 
 func TestResponse_ContentOpts(t *testing.T) {
-	reporter := newMockReporter(t)
-
 	type testCase struct {
 		respContentType   string
 		respBody          string
@@ -1382,7 +1420,7 @@ func TestResponse_ContentOpts(t *testing.T) {
 		chainFunc         func(*Response, ContentOpts) *chain
 	}
 
-	runTest := func(tc testCase) {
+	runTest := func(t *testing.T, tc testCase) {
 		headers := map[string][]string{
 			"Content-Type": {tc.respContentType},
 		}
@@ -1393,6 +1431,7 @@ func TestResponse_ContentOpts(t *testing.T) {
 			Body:       ioutil.NopCloser(bytes.NewBufferString(tc.respBody)),
 		}
 
+		reporter := newMockReporter(t)
 		resp := NewResponse(reporter, httpResp)
 
 		c := tc.chainFunc(resp, ContentOpts{
@@ -1407,11 +1446,12 @@ func TestResponse_ContentOpts(t *testing.T) {
 		}
 	}
 
-	check := func(
+	runAllTests := func(
+		t *testing.T,
 		defaultType, defaultCharset, respBody string,
 		chainFunc func(*Response, ContentOpts) *chain,
 	) {
-		runTest(testCase{
+		runTest(t, testCase{
 			respContentType:   "test-type; charset=test-charset",
 			respBody:          respBody,
 			expectedMediaType: "test-type",
@@ -1419,7 +1459,7 @@ func TestResponse_ContentOpts(t *testing.T) {
 			match:             true,
 			chainFunc:         chainFunc,
 		})
-		runTest(testCase{
+		runTest(t, testCase{
 			respContentType:   "test-type; charset=BAD",
 			respBody:          respBody,
 			expectedMediaType: "test-type",
@@ -1427,7 +1467,7 @@ func TestResponse_ContentOpts(t *testing.T) {
 			match:             false,
 			chainFunc:         chainFunc,
 		})
-		runTest(testCase{
+		runTest(t, testCase{
 			respContentType:   "BAD; charset=test-charset",
 			respBody:          respBody,
 			expectedMediaType: "test-type",
@@ -1436,7 +1476,7 @@ func TestResponse_ContentOpts(t *testing.T) {
 			chainFunc:         chainFunc,
 		})
 		if defaultCharset != "" {
-			runTest(testCase{
+			runTest(t, testCase{
 				respContentType:   "test-type; charset=" + defaultCharset,
 				respBody:          respBody,
 				expectedMediaType: "test-type",
@@ -1444,7 +1484,7 @@ func TestResponse_ContentOpts(t *testing.T) {
 				match:             true,
 				chainFunc:         chainFunc,
 			})
-			runTest(testCase{
+			runTest(t, testCase{
 				respContentType:   "test-type; charset=" + defaultCharset,
 				respBody:          respBody,
 				expectedMediaType: "test-type",
@@ -1453,7 +1493,7 @@ func TestResponse_ContentOpts(t *testing.T) {
 				chainFunc:         chainFunc,
 			})
 		}
-		runTest(testCase{
+		runTest(t, testCase{
 			respContentType:   "test-type",
 			respBody:          respBody,
 			expectedMediaType: "test-type",
@@ -1461,7 +1501,7 @@ func TestResponse_ContentOpts(t *testing.T) {
 			match:             true,
 			chainFunc:         chainFunc,
 		})
-		runTest(testCase{
+		runTest(t, testCase{
 			respContentType:   defaultType + "; charset=test-charset",
 			respBody:          respBody,
 			expectedMediaType: defaultType,
@@ -1469,7 +1509,7 @@ func TestResponse_ContentOpts(t *testing.T) {
 			match:             true,
 			chainFunc:         chainFunc,
 		})
-		runTest(testCase{
+		runTest(t, testCase{
 			respContentType:   defaultType + "; charset=test-charset",
 			respBody:          respBody,
 			expectedMediaType: "",
@@ -1480,7 +1520,7 @@ func TestResponse_ContentOpts(t *testing.T) {
 	}
 
 	t.Run("text", func(t *testing.T) {
-		check("text/plain",
+		runAllTests(t, "text/plain",
 			"utf-8",
 			"test text",
 			func(resp *Response, opts ContentOpts) *chain {
@@ -1489,7 +1529,7 @@ func TestResponse_ContentOpts(t *testing.T) {
 	})
 
 	t.Run("form", func(t *testing.T) {
-		check("application/x-www-form-urlencoded",
+		runAllTests(t, "application/x-www-form-urlencoded",
 			"",
 			"a=b",
 			func(resp *Response, opts ContentOpts) *chain {
@@ -1498,7 +1538,7 @@ func TestResponse_ContentOpts(t *testing.T) {
 	})
 
 	t.Run("json", func(t *testing.T) {
-		check("application/json",
+		runAllTests(t, "application/json",
 			"utf-8",
 			"{}",
 			func(resp *Response, opts ContentOpts) *chain {
@@ -1507,7 +1547,7 @@ func TestResponse_ContentOpts(t *testing.T) {
 	})
 
 	t.Run("jsonp", func(t *testing.T) {
-		check("application/javascript",
+		runAllTests(t, "application/javascript",
 			"utf-8",
 			"cb({})",
 			func(resp *Response, opts ContentOpts) *chain {
@@ -1516,7 +1556,7 @@ func TestResponse_ContentOpts(t *testing.T) {
 	})
 }
 
-func TestResponse_UsageChecks(t *testing.T) {
+func TestResponse_Usage(t *testing.T) {
 	t.Run("NewResponse multiple rtt arguments", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		rtt := []time.Duration{time.Second, time.Second}
