@@ -2904,12 +2904,12 @@ func TestRequest_Order(t *testing.T) {
 				return req.WithWebsocketUpgrade()
 			},
 		},
-		//{
-		//	name: "WithWebsocketDialer after Expect",
-		//	prepFunc: func(req *Request) *Request {
-		//		return req.WithWebsocketDialer(&websocket.Dialer{})
-		//	},
-		//},
+		{
+			name: "WithWebsocketDialer after Expect",
+			prepFunc: func(req *Request) *Request {
+				return req.WithWebsocketDialer(&websocket.Dialer{})
+			},
+		},
 		{
 			name: "WithPath after Expect",
 			prepFunc: func(req *Request) *Request {
