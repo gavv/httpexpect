@@ -224,6 +224,31 @@ func TestRequest_Basic(t *testing.T) {
 			Reporter: newMockReporter(t),
 		}
 
+		req := NewRequestC(config, "GET", "")
+		resp := req.Expect()
+
+		req.chain.assertNotFailed(t)
+		resp.chain.assertNotFailed(t)
+	})
+
+	t.Run("round trip time", func(t *testing.T) {
+		client := &mockClient{}
+
+		config := Config{
+			Client:   client,
+			Reporter: newMockReporter(t),
+		}
+
+		for n := 0; n < 10; n++ {
+			req := NewRequestC(config, "GET", "/path")
+			resp := req.Expect()
+			require.NotNil(t, resp.rtt)
+			assert.True(t, *resp.rtt >= 0)
+		}
+	})
+
+}
+
 func TestResponse_Limit(t *testing.T) {
 	t.Run("response size exceeds limit", func(t *testing.T) {
 		client := &mockClient{}
@@ -261,36 +286,6 @@ func TestResponse_Limit(t *testing.T) {
 		resp.chain.assertNotFailed(t)
 	})
 
-	t.Run("empty path", func(t *testing.T) {
-		client := &mockClient{}
-
-		config := Config{
-			Client:   client,
-			Reporter: newMockReporter(t),
-		}
-
-		req := NewRequestC(config, "GET", "")
-		resp := req.Expect()
-
-		req.chain.assertNotFailed(t)
-		resp.chain.assertNotFailed(t)
-	})
-
-	t.Run("round trip time", func(t *testing.T) {
-		client := &mockClient{}
-
-		config := Config{
-			Client:   client,
-			Reporter: newMockReporter(t),
-		}
-
-		for n := 0; n < 10; n++ {
-			req := NewRequestC(config, "GET", "/path")
-			resp := req.Expect()
-			require.NotNil(t, resp.rtt)
-			assert.True(t, *resp.rtt >= 0)
-		}
-	})
 }
 
 func TestRequest_Matchers(t *testing.T) {
