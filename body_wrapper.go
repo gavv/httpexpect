@@ -56,7 +56,7 @@ func newBodyWrapperLimit(reader io.ReadCloser, cancelFunc context.CancelFunc, li
 
 		return bw, nil
 	}
-	return nil, errors.New("unexpected: response body size larger than limit %s that is %s")
+	return nil, errors.New("unexpected: response body size larger than limit")
 }
 
 // Read body contents
