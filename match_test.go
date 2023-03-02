@@ -16,12 +16,12 @@ func TestMatch_FailedChain(t *testing.T) {
 	value.Alias("foo")
 
 	value.Length().chain.assertFailed(t)
-	value.Index(0).chain.assertFailed(t)
-	value.Name("").chain.assertFailed(t)
+	value.Value(0).chain.assertFailed(t)
+	value.NamedValue("").chain.assertFailed(t)
 
 	value.IsEmpty()
 	value.NotEmpty()
-	value.Values("")
+	value.HasValues("")
 	value.NotValues("")
 }
 
@@ -67,7 +67,7 @@ func TestMatch_Alias(t *testing.T) {
 	assert.Equal(t, []string{"Match()"}, value.chain.context.Path)
 	assert.Equal(t, []string{"foo"}, value.chain.context.AliasedPath)
 
-	childValue := value.Index(0)
+	childValue := value.Value(0)
 	assert.Equal(t, []string{"Match()", "Index(0)"}, childValue.chain.context.Path)
 	assert.Equal(t, []string{"foo", "Index(0)"}, childValue.chain.context.AliasedPath)
 }
@@ -84,28 +84,28 @@ func TestMatch_Getters(t *testing.T) {
 
 	assert.Equal(t, 3.0, value.Length().Raw())
 
-	assert.Equal(t, "m0", value.Index(0).Raw())
-	assert.Equal(t, "m1", value.Index(1).Raw())
-	assert.Equal(t, "m2", value.Index(2).Raw())
+	assert.Equal(t, "m0", value.Value(0).Raw())
+	assert.Equal(t, "m1", value.Value(1).Raw())
+	assert.Equal(t, "m2", value.Value(2).Raw())
 	value.chain.assertNotFailed(t)
 
-	assert.Equal(t, "m1", value.Name("n1").Raw())
-	assert.Equal(t, "m2", value.Name("n2").Raw())
+	assert.Equal(t, "m1", value.NamedValue("n1").Raw())
+	assert.Equal(t, "m2", value.NamedValue("n2").Raw())
 	value.chain.assertNotFailed(t)
 
-	assert.Equal(t, "", value.Index(-1).Raw())
+	assert.Equal(t, "", value.Value(-1).Raw())
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	assert.Equal(t, "", value.Index(3).Raw())
+	assert.Equal(t, "", value.Value(3).Raw())
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	assert.Equal(t, "", value.Name("").Raw())
+	assert.Equal(t, "", value.NamedValue("").Raw())
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 
-	assert.Equal(t, "", value.Name("bad").Raw())
+	assert.Equal(t, "", value.NamedValue("bad").Raw())
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
 }
@@ -153,27 +153,27 @@ func TestMatch_Values(t *testing.T) {
 		value2 := NewMatch(reporter, []string{}, nil)
 		value3 := NewMatch(reporter, []string{"m0"}, nil)
 
-		value1.Values()
+		value1.HasValues()
 		value1.chain.assertNotFailed(t)
 		value1.chain.clearFailed()
 
-		value1.Values("")
+		value1.HasValues("")
 		value1.chain.assertFailed(t)
 		value1.chain.clearFailed()
 
-		value2.Values()
+		value2.HasValues()
 		value2.chain.assertNotFailed(t)
 		value2.chain.clearFailed()
 
-		value2.Values("")
+		value2.HasValues("")
 		value2.chain.assertFailed(t)
 		value2.chain.clearFailed()
 
-		value3.Values()
+		value3.HasValues()
 		value3.chain.assertNotFailed(t)
 		value3.chain.clearFailed()
 
-		value3.Values("m0")
+		value3.HasValues("m0")
 		value3.chain.assertFailed(t)
 		value3.chain.clearFailed()
 	})
@@ -183,19 +183,19 @@ func TestMatch_Values(t *testing.T) {
 
 		value := NewMatch(reporter, []string{"m0", "m1", "m2"}, nil)
 
-		value.Values("m1", "m2")
+		value.HasValues("m1", "m2")
 		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
 
-		value.Values("m2", "m1")
+		value.HasValues("m2", "m1")
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 
-		value.Values("m1")
+		value.HasValues("m1")
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 
-		value.Values()
+		value.HasValues()
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 

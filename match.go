@@ -103,10 +103,10 @@ func (m *Match) Length() *Number {
 	return newNumber(opChain, float64(len(m.submatches)))
 }
 
-// Index returns a new String instance with submatch for given index.
+// Value returns a new String instance with submatch for given index.
 //
 // Note that submatch with index 0 contains the whole match. If index is out
-// of bounds, Index reports failure and returns empty (but non-nil) instance.
+// of bounds, Value reports failure and returns empty (but non-nil) instance.
 //
 // Example:
 //
@@ -115,10 +115,10 @@ func (m *Match) Length() *Number {
 //	r := regexp.MustCompile(`http://(.+)/users/(.+)`)
 //	m := NewMatch(t, r.FindStringSubmatch(s), nil)
 //
-//	m.Index(0).IsEqual("http://example.com/users/john")
-//	m.Index(1).IsEqual("example.com")
-//	m.Index(2).IsEqual("john")
-func (m *Match) Index(index int) *String {
+//	m.Value(0).IsEqual("http://example.com/users/john")
+//	m.Value(1).IsEqual("example.com")
+//	m.Value(2).IsEqual("john")
+func (m *Match) Value(index int) *String {
 	opChain := m.chain.enter("Index(%d)", index)
 	defer opChain.leave()
 
@@ -144,9 +144,9 @@ func (m *Match) Index(index int) *String {
 	return newString(opChain, m.submatches[index])
 }
 
-// Name returns a new String instance with submatch for given name.
+// NamedValue returns a new String instance with submatch for given name.
 //
-// If there is no submatch with given name, Name reports failure and returns
+// If there is no submatch with given name, NamedValue reports failure and returns
 // empty (but non-nil) instance.
 //
 // Example:
@@ -156,9 +156,9 @@ func (m *Match) Index(index int) *String {
 //	r := regexp.MustCompile(`http://(?P<host>.+)/users/(?P<user>.+)`)
 //	m := NewMatch(t, r.FindStringSubmatch(s), r.SubexpNames())
 //
-//	m.Name("host").IsEqual("example.com")
-//	m.Name("user").IsEqual("john")
-func (m *Match) Name(name string) *String {
+//	m.NamedValue("host").IsEqual("example.com")
+//	m.NamedValue("user").IsEqual("john")
+func (m *Match) NamedValue(name string) *String {
 	opChain := m.chain.enter("Name(%q)", name)
 	defer opChain.leave()
 
@@ -247,7 +247,7 @@ func (m *Match) Empty() *Match {
 	return m.IsEmpty()
 }
 
-// Values succeeds if submatches array, starting from index 1, is equal to
+// HasValues succeeds if submatches array, starting from index 1, is equal to
 // given array.
 //
 // Note that submatch with index 0 contains the whole match and is not
@@ -258,8 +258,8 @@ func (m *Match) Empty() *Match {
 //	s := "http://example.com/users/john"
 //	r := regexp.MustCompile(`http://(.+)/users/(.+)`)
 //	m := NewMatch(t, r.FindStringSubmatch(s), nil)
-//	m.Values("example.com", "john")
-func (m *Match) Values(values ...string) *Match {
+//	m.HasValues("example.com", "john")
+func (m *Match) HasValues(values ...string) *Match {
 	opChain := m.chain.enter("Values()")
 	defer opChain.leave()
 

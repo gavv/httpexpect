@@ -28,7 +28,7 @@ func TestCookie_FailedChain(t *testing.T) {
 		value.Expires().chain.assertFailed(t)
 		value.MaxAge().chain.assertFailed(t)
 
-		value.HasMaxAge()
+		value.ContainsMaxAge()
 		value.NotHasMaxAge()
 	}
 
@@ -160,7 +160,7 @@ func TestCookie_MaxAge(t *testing.T) {
 
 		value.chain.assertNotFailed(t)
 
-		value.HasMaxAge().chain.assertFailed(t)
+		value.ContainsMaxAge().chain.assertFailed(t)
 		value.chain.clearFailed()
 
 		value.NotHasMaxAge().chain.assertNotFailed(t)
@@ -179,7 +179,7 @@ func TestCookie_MaxAge(t *testing.T) {
 
 		value.chain.assertNotFailed(t)
 
-		value.HasMaxAge().chain.assertNotFailed(t)
+		value.ContainsMaxAge().chain.assertNotFailed(t)
 		value.chain.clearFailed()
 
 		value.NotHasMaxAge().chain.assertFailed(t)
@@ -199,7 +199,7 @@ func TestCookie_MaxAge(t *testing.T) {
 
 		value.chain.assertNotFailed(t)
 
-		value.HasMaxAge().chain.assertNotFailed(t)
+		value.ContainsMaxAge().chain.assertNotFailed(t)
 		value.chain.clearFailed()
 
 		value.NotHasMaxAge().chain.assertFailed(t)

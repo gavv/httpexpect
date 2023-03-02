@@ -165,7 +165,7 @@ func (c *Cookie) Expires() *DateTime {
 	return newDateTime(opChain, c.value.Expires)
 }
 
-// HasMaxAge succeeds if cookie has Max-Age field.
+// ContainsMaxAge succeeds if cookie has Max-Age field.
 //
 // In particular, if Max-Age is present and is zero (which means delete
 // cookie now), method succeeds.
@@ -173,9 +173,9 @@ func (c *Cookie) Expires() *DateTime {
 // Example:
 //
 //	cookie := NewCookie(t, &http.Cookie{...})
-//	cookie.HasMaxAge()
-func (c *Cookie) HasMaxAge() *Cookie {
-	opChain := c.chain.enter("HasMaxAge()")
+//	cookie.ContainsMaxAge()
+func (c *Cookie) ContainsMaxAge() *Cookie {
+	opChain := c.chain.enter("ContainsMaxAge()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -227,7 +227,7 @@ func (c *Cookie) NotHasMaxAge() *Cookie {
 
 // Deprecated: use HasMaxAge instead.
 func (c *Cookie) HaveMaxAge() *Cookie {
-	return c.HasMaxAge()
+	return c.ContainsMaxAge()
 }
 
 // Deprecated: use NotHasMaxAge instead.
