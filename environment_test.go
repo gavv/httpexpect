@@ -32,7 +32,7 @@ func TestEnvironment_Constructors(t *testing.T) {
 	})
 }
 
-func TestEnvironment_Reentrant(t *testing.T) {
+func TestEnvironment_Reentrancy(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	env := NewEnvironment(reporter)
