@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"io"
 	"io/ioutil"
 	"mime"
 	"mime/multipart"
@@ -2453,7 +2452,6 @@ func TestRequest_Retries(t *testing.T) {
 		return &mockClient{
 			resp: http.Response{
 				StatusCode: http.StatusOK,
-				Body:       io.NopCloser(bytes.NewBuffer([]byte{0, 1, 2, 3, 4})),
 			},
 			cb: cb,
 		}
