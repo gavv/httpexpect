@@ -42,7 +42,9 @@ func newBodyWrapper(reader io.ReadCloser, cancelFunc context.CancelFunc) *bodyWr
 	return bw
 }
 
-func newBWLimit(reader io.ReadCloser, cancelFunc context.CancelFunc, limit int64) (*bodyWrapper, error) {
+func newBodyWrapperLimit(reader io.ReadCloser, cancelFunc context.CancelFunc,
+	limit int64) (*bodyWrapper, error) {
+
 	b := make([]byte, limit)
 	_, err := io.ReadFull(reader, b)
 	if err != nil {
