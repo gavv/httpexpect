@@ -31,6 +31,7 @@ func TestRequest_FailedChain(t *testing.T) {
 	req.chain.assertFailed(t)
 
 	req.Alias("foo")
+	req.WithName("foo")
 	req.WithMatcher(func(resp *Response) {
 	})
 	req.WithTransformer(func(r *http.Request) {
@@ -1348,7 +1349,7 @@ func TestRequest_Errors(t *testing.T) {
 		assert.Nil(t, resp.Raw())
 	})
 
-	t.Run("error marshalJSON", func(t *testing.T) {
+	t.Run("error marshal json", func(t *testing.T) {
 		req := NewRequestC(config, "METHOD", "url")
 
 		req.WithJSON(func() {})
@@ -2698,7 +2699,6 @@ func TestRequest_Retries(t *testing.T) {
 func TestRequest_Usage(t *testing.T) {
 	tests := []struct {
 		name        string
-		path        string
 		client      Client
 		prepFunc    func(req *Request)
 		prepFails   bool
@@ -2777,16 +2777,7 @@ func TestRequest_Usage(t *testing.T) {
 			expectFails: true,
 		},
 		{
-			name: "WithPath - invalid key",
-			prepFunc: func(req *Request) {
-				req.WithPath("test-key", "test-value")
-			},
-			prepFails:   true,
-			expectFails: true,
-		},
-		{
-			name: "WithPath - nil value",
-			path: "/{test-key}",
+			name: "WithPath - nil argument",
 			prepFunc: func(req *Request) {
 				req.WithPath("test-key", nil)
 			},
@@ -2794,7 +2785,7 @@ func TestRequest_Usage(t *testing.T) {
 			expectFails: true,
 		},
 		{
-			name: "WithQuery - nil value",
+			name: "WithQuery - nil argument",
 			prepFunc: func(req *Request) {
 				req.WithQuery("test-query", nil)
 			},
@@ -2839,25 +2830,25 @@ func TestRequest_Usage(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
 			config := Config{
-				Client:   tt.client,
+				Client:   tc.client,
 				Reporter: newMockReporter(t),
 			}
 
-			req := NewRequestC(config, "GET", tt.path)
+			req := NewRequestC(config, "GET", "/")
 
-			tt.prepFunc(req)
+			tc.prepFunc(req)
 
-			if tt.prepFails {
+			if tc.prepFails {
 				req.chain.assertFailed(t)
 			} else {
 				req.chain.assertNotFailed(t)
 
 				resp := req.Expect()
 
-				if tt.expectFails {
+				if tc.expectFails {
 					req.chain.assertFailed(t)
 					resp.chain.assertFailed(t)
 				} else {
