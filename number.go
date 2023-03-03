@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"math/big"
+	"strconv"
 )
 
 // Number provides methods to inspect attached float64 value
@@ -1364,5 +1365,9 @@ func (b intBoundary) String() string {
 type relativeDelta float64
 
 func (rd relativeDelta) String() string {
-	return fmt.Sprintf("%.2f (%.f%%)", rd, rd*100)
+	// Using %v inside a Stringer function causes recursive error.
+	// Reproduce result you'd get with %v: format decimal with the fewest decimal places
+	// needed.
+	rdString := strconv.FormatFloat(float64(rd), 'f', -1, 64)
+	return fmt.Sprintf("%s (%.f%%)", rdString, rd*100)
 }
