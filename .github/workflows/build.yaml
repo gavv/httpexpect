@@ -19,7 +19,7 @@ jobs:
 
     strategy:
       matrix:
-        go: [1.14, 1.x]
+        go: [1.16, 1.x]
 
     name: Go ${{ matrix.go }}
     steps:
