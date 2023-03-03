@@ -2011,6 +2011,10 @@ func (r *Request) execute(opChain *chain) *Response {
 
 	for _, transform := range r.transformers {
 		transform(r.httpReq)
+
+		if opChain.failed() {
+			return nil
+		}
 	}
 
 	var (
@@ -2038,10 +2042,6 @@ func (r *Request) execute(opChain *chain) *Response {
 }
 
 func (r *Request) encodeRequest(opChain *chain) bool {
-	if opChain.failed() {
-		return false
-	}
-
 	r.httpReq.URL.Path = concatPaths(r.httpReq.URL.Path, r.path)
 
 	if r.query != nil {
@@ -2086,10 +2086,6 @@ var websocketErr = `webocket request can not have body:
   webocket was enabled by WithWebsocketUpgrade()`
 
 func (r *Request) encodeWebsocketRequest(opChain *chain) bool {
-	if opChain.failed() {
-		return false
-	}
-
 	if r.bodySetter != "" {
 		opChain.fail(AssertionFailure{
 			Type: AssertUsage,
@@ -2111,10 +2107,6 @@ func (r *Request) encodeWebsocketRequest(opChain *chain) bool {
 }
 
 func (r *Request) sendRequest(opChain *chain) (*http.Response, time.Duration) {
-	if opChain.failed() {
-		return nil, 0
-	}
-
 	resp, elapsed, err := r.retryRequest(func() (*http.Response, error) {
 		return r.config.Client.Do(r.httpReq)
 	})
@@ -2136,10 +2128,6 @@ func (r *Request) sendRequest(opChain *chain) (*http.Response, time.Duration) {
 func (r *Request) sendWebsocketRequest(opChain *chain) (
 	*http.Response, *websocket.Conn, time.Duration,
 ) {
-	if opChain.failed() {
-		return nil, nil, 0
-	}
-
 	var conn *websocket.Conn
 	resp, elapsed, err := r.retryRequest(func() (resp *http.Response, err error) {
 		conn, resp, err = r.config.WebsocketDialer.Dial(
