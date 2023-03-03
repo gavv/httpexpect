@@ -103,7 +103,7 @@ func TestRequest_Reentrancy(t *testing.T) {
 			Reporter: reporter,
 		}
 
-		req := NewRequestC(config, "METHOD", "/")
+		req := NewRequestC(config, "GET", "/")
 
 		callCount := 0
 		reporter.reportCb = func() {
@@ -128,7 +128,7 @@ func TestRequest_Reentrancy(t *testing.T) {
 			Reporter: newMockReporter(t),
 		}
 
-		req := NewRequestC(config, "METHOD", "/")
+		req := NewRequestC(config, "GET", "/")
 
 		callCount := 0
 		client.cb = func(_ *http.Request) {
@@ -149,7 +149,7 @@ func TestRequest_Reentrancy(t *testing.T) {
 			Reporter: newMockReporter(t),
 		}
 
-		req := NewRequestC(config, "METHOD", "/")
+		req := NewRequestC(config, "GET", "/")
 
 		callCount := 0
 		req.WithTransformer(func(_ *http.Request) {
@@ -170,7 +170,7 @@ func TestRequest_Reentrancy(t *testing.T) {
 			Reporter: newMockReporter(t),
 		}
 
-		req := NewRequestC(config, "METHOD", "/")
+		req := NewRequestC(config, "GET", "/")
 
 		callCount := 0
 		req.WithMatcher(func(_ *Response) {
@@ -258,7 +258,7 @@ func TestRequest_Basic(t *testing.T) {
 			Reporter: newMockReporter(t),
 		}
 
-		req := NewRequestC(config, "METHOD", "url")
+		req := NewRequestC(config, "GET", "url")
 
 		resp := req.Expect()
 		resp.chain.assertFailed(t)
@@ -275,7 +275,7 @@ func TestRequest_Matchers(t *testing.T) {
 		Reporter: newMockReporter(t),
 	}
 
-	req := NewRequestC(config, "METHOD", "/")
+	req := NewRequestC(config, "GET", "/")
 
 	var resps []*Response
 
@@ -305,7 +305,7 @@ func TestRequest_Transformers(t *testing.T) {
 			savedReq = r
 		}
 
-		req := NewRequestC(config, "METHOD", "/")
+		req := NewRequestC(config, "GET", "/")
 		req.WithTransformer(transform)
 		req.Expect().chain.assertNotFailed(t)
 
@@ -313,7 +313,7 @@ func TestRequest_Transformers(t *testing.T) {
 	})
 
 	t.Run("append header", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "/")
+		req := NewRequestC(config, "GET", "/")
 
 		req.WithTransformer(func(r *http.Request) {
 			r.Header.Add("foo", "11")
@@ -330,7 +330,7 @@ func TestRequest_Transformers(t *testing.T) {
 	})
 
 	t.Run("append url", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "/{arg1}/{arg2}")
+		req := NewRequestC(config, "GET", "/{arg1}/{arg2}")
 
 		req.WithPath("arg1", "11")
 		req.WithPath("arg2", "22")
@@ -349,7 +349,7 @@ func TestRequest_Transformers(t *testing.T) {
 	})
 
 	t.Run("nil func", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "/")
+		req := NewRequestC(config, "GET", "/")
 		req.WithTransformer(nil)
 		req.chain.assertFailed(t)
 	})
@@ -366,16 +366,16 @@ func TestRequest_Client(t *testing.T) {
 
 	var req *Request
 
-	req = NewRequestC(config, "METHOD", "/")
+	req = NewRequestC(config, "GET", "/")
 	req.Expect().chain.assertNotFailed(t)
 	assert.NotNil(t, client1.req)
 
-	req = NewRequestC(config, "METHOD", "/")
+	req = NewRequestC(config, "GET", "/")
 	req.WithClient(client2)
 	req.Expect().chain.assertNotFailed(t)
 	assert.NotNil(t, client2.req)
 
-	req = NewRequestC(config, "METHOD", "/")
+	req = NewRequestC(config, "GET", "/")
 	req.WithClient(nil)
 	req.chain.assertFailed(t)
 }
@@ -403,11 +403,11 @@ func TestRequest_Handler(t *testing.T) {
 
 		var req *Request
 
-		req = NewRequestC(config, "METHOD", "/")
+		req = NewRequestC(config, "GET", "/")
 		req.Expect().chain.assertNotFailed(t)
 		assert.NotNil(t, hr1)
 
-		req = NewRequestC(config, "METHOD", "/")
+		req = NewRequestC(config, "GET", "/")
 		req.WithHandler(handler2)
 		req.Expect().chain.assertNotFailed(t)
 		assert.NotNil(t, hr2)
@@ -420,7 +420,7 @@ func TestRequest_Handler(t *testing.T) {
 			Reporter: reporter,
 		}
 
-		req := NewRequestC(config, "METHOD", "/")
+		req := NewRequestC(config, "GET", "/")
 		req.WithHandler(nil)
 		req.chain.assertFailed(t)
 	})
@@ -440,7 +440,7 @@ func TestRequest_Handler(t *testing.T) {
 			Client:   client,
 		}
 
-		req := NewRequestC(config, "METHOD", "/")
+		req := NewRequestC(config, "GET", "/")
 		req.WithHandler(handler)
 		req.Expect().chain.assertNotFailed(t)
 		assert.NotNil(t, hr)
@@ -463,7 +463,7 @@ func TestRequest_Handler(t *testing.T) {
 			Client:   client,
 		}
 
-		req := NewRequestC(config, "METHOD", "/")
+		req := NewRequestC(config, "GET", "/")
 		req.WithHandler(handler2)
 		assert.Same(t, client.Jar, req.config.Client.(*http.Client).Jar)
 	})
@@ -477,7 +477,7 @@ func TestRequest_Proto(t *testing.T) {
 		Reporter: newMockReporter(t),
 	}
 
-	req := NewRequestC(config, "METHOD", "/")
+	req := NewRequestC(config, "GET", "/")
 
 	assert.Equal(t, 1, req.httpReq.ProtoMajor)
 	assert.Equal(t, 1, req.httpReq.ProtoMinor)
@@ -523,12 +523,12 @@ func TestRequest_URLConcatenate(t *testing.T) {
 	}
 
 	reqs := []*Request{
-		NewRequestC(config2, "METHOD", "path"),
-		NewRequestC(config2, "METHOD", "/path"),
-		NewRequestC(config3, "METHOD", "path"),
-		NewRequestC(config3, "METHOD", "/path"),
-		NewRequestC(config3, "METHOD", "{arg}", "/path"),
-		NewRequestC(config3, "METHOD", "{arg}").WithPath("arg", "/path"),
+		NewRequestC(config2, "GET", "path"),
+		NewRequestC(config2, "GET", "/path"),
+		NewRequestC(config3, "GET", "path"),
+		NewRequestC(config3, "GET", "/path"),
+		NewRequestC(config3, "GET", "{arg}", "/path"),
+		NewRequestC(config3, "GET", "{arg}").WithPath("arg", "/path"),
 	}
 
 	for _, req := range reqs {
@@ -536,9 +536,9 @@ func TestRequest_URLConcatenate(t *testing.T) {
 		assert.Equal(t, "http://example.com/path", client.req.URL.String())
 	}
 
-	empty1 := NewRequestC(config1, "METHOD", "")
-	empty2 := NewRequestC(config2, "METHOD", "")
-	empty3 := NewRequestC(config3, "METHOD", "")
+	empty1 := NewRequestC(config1, "GET", "")
+	empty2 := NewRequestC(config2, "GET", "")
+	empty3 := NewRequestC(config3, "GET", "")
 
 	empty1.Expect().chain.assertNotFailed(t)
 	empty2.Expect().chain.assertNotFailed(t)
@@ -567,14 +567,14 @@ func TestRequest_URLOverwrite(t *testing.T) {
 	}
 
 	reqs := []*Request{
-		NewRequestC(config1, "METHOD", "/path").WithURL("http://example.com"),
-		NewRequestC(config1, "METHOD", "path").WithURL("http://example.com"),
-		NewRequestC(config1, "METHOD", "/path").WithURL("http://example.com/"),
-		NewRequestC(config1, "METHOD", "path").WithURL("http://example.com/"),
-		NewRequestC(config2, "METHOD", "/path").WithURL("http://example.com"),
-		NewRequestC(config2, "METHOD", "path").WithURL("http://example.com"),
-		NewRequestC(config2, "METHOD", "/path").WithURL("http://example.com/"),
-		NewRequestC(config2, "METHOD", "path").WithURL("http://example.com/"),
+		NewRequestC(config1, "GET", "/path").WithURL("http://example.com"),
+		NewRequestC(config1, "GET", "path").WithURL("http://example.com"),
+		NewRequestC(config1, "GET", "/path").WithURL("http://example.com/"),
+		NewRequestC(config1, "GET", "path").WithURL("http://example.com/"),
+		NewRequestC(config2, "GET", "/path").WithURL("http://example.com"),
+		NewRequestC(config2, "GET", "path").WithURL("http://example.com"),
+		NewRequestC(config2, "GET", "/path").WithURL("http://example.com/"),
+		NewRequestC(config2, "GET", "path").WithURL("http://example.com/"),
 	}
 
 	for _, req := range reqs {
@@ -594,28 +594,28 @@ func TestRequest_URLInterpolate(t *testing.T) {
 
 	var reqs [3]*Request
 
-	reqs[0] = NewRequestC(config, "METHOD", "/foo/{arg}", "bar")
-	reqs[1] = NewRequestC(config, "METHOD", "{arg}foo{arg}", "/", "/bar")
-	reqs[2] = NewRequestC(config, "METHOD", "{arg}", "/foo/bar")
+	reqs[0] = NewRequestC(config, "GET", "/foo/{arg}", "bar")
+	reqs[1] = NewRequestC(config, "GET", "{arg}foo{arg}", "/", "/bar")
+	reqs[2] = NewRequestC(config, "GET", "{arg}", "/foo/bar")
 
 	for _, req := range reqs {
 		req.Expect().chain.assertNotFailed(t)
 		assert.Equal(t, "http://example.com/foo/bar", client.req.URL.String())
 	}
 
-	r1 := NewRequestC(config, "METHOD", "/{arg1}/{arg2}", "foo")
+	r1 := NewRequestC(config, "GET", "/{arg1}/{arg2}", "foo")
 	r1.Expect().chain.assertNotFailed(t)
 	assert.Equal(t, "http://example.com/foo/%7Barg2%7D",
 		client.req.URL.String())
 
-	r2 := NewRequestC(config, "METHOD", "/{arg1}/{arg2}/{arg3}")
+	r2 := NewRequestC(config, "GET", "/{arg1}/{arg2}/{arg3}")
 	r2.WithPath("ARG3", "foo")
 	r2.WithPath("arg2", "bar")
 	r2.Expect().chain.assertNotFailed(t)
 	assert.Equal(t, "http://example.com/%7Barg1%7D/bar/foo",
 		client.req.URL.String())
 
-	r3 := NewRequestC(config, "METHOD", "/{arg1}.{arg2}.{arg3}")
+	r3 := NewRequestC(config, "GET", "/{arg1}.{arg2}.{arg3}")
 	r3.WithPath("arg2", "bar")
 	r3.WithPathObject(map[string]string{"ARG1": "foo", "arg3": "baz"})
 	r3.WithPathObject(nil)
@@ -629,12 +629,12 @@ func TestRequest_URLInterpolate(t *testing.T) {
 		A3   int `path:"-"`
 	}
 
-	r4 := NewRequestC(config, "METHOD", "/{arg1}{arg2}")
+	r4 := NewRequestC(config, "GET", "/{arg1}{arg2}")
 	r4.WithPathObject(S{"foo", 1, 2})
 	r4.Expect().chain.assertNotFailed(t)
 	assert.Equal(t, "http://example.com/foo1", client.req.URL.String())
 
-	r5 := NewRequestC(config, "METHOD", "/{arg1}{arg2}")
+	r5 := NewRequestC(config, "GET", "/{arg1}{arg2}")
 	r5.WithPathObject(&S{"foo", 1, 2})
 	r5.Expect().chain.assertNotFailed(t)
 	assert.Equal(t, "http://example.com/foo1", client.req.URL.String())
@@ -672,7 +672,7 @@ func TestRequest_URLQuery(t *testing.T) {
 		Reporter: newMockReporter(t),
 	}
 
-	req1 := NewRequestC(config, "METHOD", "/path").
+	req1 := NewRequestC(config, "GET", "/path").
 		WithQuery("aa", "foo").WithQuery("bb", 123).WithQuery("cc", "*&@")
 
 	q := map[string]interface{}{
@@ -680,7 +680,7 @@ func TestRequest_URLQuery(t *testing.T) {
 		"cc": "*&@",
 	}
 
-	req2 := NewRequestC(config, "METHOD", "/path").
+	req2 := NewRequestC(config, "GET", "/path").
 		WithQuery("aa", "foo").
 		WithQueryObject(q)
 
@@ -690,17 +690,17 @@ func TestRequest_URLQuery(t *testing.T) {
 		Dd string `url:"-"`
 	}
 
-	req3 := NewRequestC(config, "METHOD", "/path").
+	req3 := NewRequestC(config, "GET", "/path").
 		WithQueryObject(S{123, "*&@", "dummy"}).WithQuery("aa", "foo")
 
-	req4 := NewRequestC(config, "METHOD", "/path").
+	req4 := NewRequestC(config, "GET", "/path").
 		WithQueryObject(&S{123, "*&@", "dummy"}).WithQuery("aa", "foo")
 
-	req5 := NewRequestC(config, "METHOD", "/path").
+	req5 := NewRequestC(config, "GET", "/path").
 		WithQuery("bb", 123).
 		WithQueryString("aa=foo&cc=%2A%26%40")
 
-	req6 := NewRequestC(config, "METHOD", "/path").
+	req6 := NewRequestC(config, "GET", "/path").
 		WithQueryString("aa=foo&cc=%2A%26%40").
 		WithQuery("bb", 123)
 
@@ -712,7 +712,7 @@ func TestRequest_URLQuery(t *testing.T) {
 			client.req.URL.String())
 	}
 
-	req7 := NewRequestC(config, "METHOD", "/path").
+	req7 := NewRequestC(config, "GET", "/path").
 		WithQuery("foo", "bar").
 		WithQueryObject(nil)
 
@@ -720,10 +720,10 @@ func TestRequest_URLQuery(t *testing.T) {
 	req7.chain.assertNotFailed(t)
 	assert.Equal(t, "http://example.com/path?foo=bar", client.req.URL.String())
 
-	NewRequestC(config, "METHOD", "/path").
+	NewRequestC(config, "GET", "/path").
 		WithQueryObject(func() {}).chain.assertFailed(t)
 
-	NewRequestC(config, "METHOD", "/path").
+	NewRequestC(config, "GET", "/path").
 		WithQueryString("%").chain.assertFailed(t)
 }
 
@@ -735,7 +735,7 @@ func TestRequest_Headers(t *testing.T) {
 		Reporter: newMockReporter(t),
 	}
 
-	req := NewRequestC(config, "METHOD", "url")
+	req := NewRequestC(config, "GET", "url")
 
 	req.WithHeader("first-header", "foo")
 
@@ -754,7 +754,7 @@ func TestRequest_Headers(t *testing.T) {
 	resp := req.Expect()
 	resp.chain.assertNotFailed(t)
 
-	assert.Equal(t, "METHOD", client.req.Method)
+	assert.Equal(t, "GET", client.req.Method)
 	assert.Equal(t, "example.com", client.req.Host)
 	assert.Equal(t, "url", client.req.URL.String())
 	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
@@ -770,7 +770,7 @@ func TestRequest_Cookies(t *testing.T) {
 		Reporter: newMockReporter(t),
 	}
 
-	req := NewRequestC(config, "METHOD", "url")
+	req := NewRequestC(config, "GET", "url")
 
 	req.WithCookie("foo", "1")
 	req.WithCookie("bar", "2 ")
@@ -786,7 +786,7 @@ func TestRequest_Cookies(t *testing.T) {
 	resp := req.Expect()
 	resp.chain.assertNotFailed(t)
 
-	assert.Equal(t, "METHOD", client.req.Method)
+	assert.Equal(t, "GET", client.req.Method)
 	assert.Equal(t, "url", client.req.URL.String())
 	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
 
@@ -801,7 +801,7 @@ func TestRequest_BasicAuth(t *testing.T) {
 		Reporter: newMockReporter(t),
 	}
 
-	req := NewRequestC(config, "METHOD", "url")
+	req := NewRequestC(config, "GET", "url")
 
 	req.WithBasicAuth("Aladdin", "open sesame")
 	req.chain.assertNotFailed(t)
@@ -819,14 +819,14 @@ func TestRequest_Host(t *testing.T) {
 		Reporter: reporter1,
 	}
 
-	req1 := NewRequestC(config1, "METHOD", "url")
+	req1 := NewRequestC(config1, "GET", "url")
 
 	req1.WithHost("example.com")
 
 	resp := req1.Expect()
 	resp.chain.assertNotFailed(t)
 
-	assert.Equal(t, "METHOD", client1.req.Method)
+	assert.Equal(t, "GET", client1.req.Method)
 	assert.Equal(t, "example.com", client1.req.Host)
 	assert.Equal(t, "url", client1.req.URL.String())
 
@@ -840,7 +840,7 @@ func TestRequest_Host(t *testing.T) {
 		Reporter: reporter2,
 	}
 
-	req2 := NewRequestC(config2, "METHOD", "url")
+	req2 := NewRequestC(config2, "GET", "url")
 
 	req2.WithHeader("HOST", "example1.com")
 	req2.WithHost("example2.com")
@@ -857,7 +857,7 @@ func TestRequest_Host(t *testing.T) {
 		Reporter: reporter3,
 	}
 
-	req3 := NewRequestC(config3, "METHOD", "url")
+	req3 := NewRequestC(config3, "GET", "url")
 
 	req3.WithHost("example2.com")
 	req3.WithHeader("HOST", "example1.com")
@@ -876,7 +876,7 @@ func TestRequest_BodyChunked(t *testing.T) {
 	}
 
 	t.Run("body", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "url")
+		req := NewRequestC(config, "GET", "url")
 
 		req.WithChunked(bytes.NewBufferString("body"))
 
@@ -886,7 +886,7 @@ func TestRequest_BodyChunked(t *testing.T) {
 		assert.NotNil(t, client.req.Body)
 		assert.Equal(t, int64(-1), client.req.ContentLength)
 
-		assert.Equal(t, "METHOD", client.req.Method)
+		assert.Equal(t, "GET", client.req.Method)
 		assert.Equal(t, "url", client.req.URL.String())
 		assert.Equal(t, make(http.Header), client.req.Header)
 		assert.Equal(t, "body", resp.Body().Raw())
@@ -895,7 +895,7 @@ func TestRequest_BodyChunked(t *testing.T) {
 	})
 
 	t.Run("nil", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "url")
+		req := NewRequestC(config, "GET", "url")
 
 		req.WithChunked(nil)
 
@@ -907,7 +907,7 @@ func TestRequest_BodyChunked(t *testing.T) {
 	})
 
 	t.Run("proto 1.0", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "url")
+		req := NewRequestC(config, "GET", "url")
 
 		req.WithProto("HTTP/1.0")
 		assert.Equal(t, 1, req.httpReq.ProtoMajor)
@@ -918,7 +918,7 @@ func TestRequest_BodyChunked(t *testing.T) {
 	})
 
 	t.Run("proto 2.0", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "url")
+		req := NewRequestC(config, "GET", "url")
 
 		req.WithProto("HTTP/2.0")
 		assert.Equal(t, 2, req.httpReq.ProtoMajor)
@@ -939,7 +939,7 @@ func TestRequest_BodyBytes(t *testing.T) {
 	}
 
 	t.Run("byte slice", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "/path")
+		req := NewRequestC(config, "GET", "/path")
 
 		req.WithBytes([]byte("body"))
 
@@ -949,7 +949,7 @@ func TestRequest_BodyBytes(t *testing.T) {
 		assert.NotNil(t, client.req.Body)
 		assert.Equal(t, int64(len("body")), client.req.ContentLength)
 
-		assert.Equal(t, "METHOD", client.req.Method)
+		assert.Equal(t, "GET", client.req.Method)
 		assert.Equal(t, "/path", client.req.URL.String())
 		assert.Equal(t, make(http.Header), client.req.Header)
 		assert.Equal(t, "body", resp.Body().Raw())
@@ -958,7 +958,7 @@ func TestRequest_BodyBytes(t *testing.T) {
 	})
 
 	t.Run("nil", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "url")
+		req := NewRequestC(config, "GET", "url")
 
 		req.WithBytes(nil)
 
@@ -983,7 +983,7 @@ func TestRequest_BodyText(t *testing.T) {
 		"Some-Header":  {"foo"},
 	}
 
-	req := NewRequestC(config, "METHOD", "url")
+	req := NewRequestC(config, "GET", "url")
 
 	req.WithHeaders(map[string]string{
 		"Some-Header": "foo",
@@ -994,7 +994,7 @@ func TestRequest_BodyText(t *testing.T) {
 	resp := req.Expect()
 	resp.chain.assertNotFailed(t)
 
-	assert.Equal(t, "METHOD", client.req.Method)
+	assert.Equal(t, "GET", client.req.Method)
 	assert.Equal(t, "url", client.req.URL.String())
 	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
 	assert.Equal(t, "some text", resp.Body().Raw())
@@ -1016,7 +1016,7 @@ func TestRequest_BodyForm(t *testing.T) {
 			"Some-Header":  {"foo"},
 		}
 
-		req := NewRequestC(config, "METHOD", "url")
+		req := NewRequestC(config, "GET", "url")
 
 		req.WithHeaders(map[string]string{
 			"Some-Header": "foo",
@@ -1030,7 +1030,7 @@ func TestRequest_BodyForm(t *testing.T) {
 		resp := req.Expect()
 		resp.chain.assertNotFailed(t)
 
-		assert.Equal(t, "METHOD", client.req.Method)
+		assert.Equal(t, "GET", client.req.Method)
 		assert.Equal(t, "url", client.req.URL.String())
 		assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
 		assert.Equal(t, `a=1&b=2`, resp.Body().Raw())
@@ -1044,7 +1044,7 @@ func TestRequest_BodyForm(t *testing.T) {
 			"Some-Header":  {"foo"},
 		}
 
-		req := NewRequestC(config, "METHOD", "url")
+		req := NewRequestC(config, "GET", "url")
 
 		req.WithHeaders(map[string]string{
 			"Some-Header": "foo",
@@ -1056,7 +1056,7 @@ func TestRequest_BodyForm(t *testing.T) {
 		resp := req.Expect()
 		resp.chain.assertNotFailed(t)
 
-		assert.Equal(t, "METHOD", client.req.Method)
+		assert.Equal(t, "GET", client.req.Method)
 		assert.Equal(t, "url", client.req.URL.String())
 		assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
 		assert.Equal(t, `a=1&b=2`, resp.Body().Raw())
@@ -1069,7 +1069,7 @@ func TestRequest_BodyForm(t *testing.T) {
 			"Content-Type": {"application/x-www-form-urlencoded"},
 		}
 
-		req := NewRequestC(config, "METHOD", "url")
+		req := NewRequestC(config, "GET", "url")
 
 		type S struct {
 			A string `form:"a"`
@@ -1082,7 +1082,7 @@ func TestRequest_BodyForm(t *testing.T) {
 		resp := req.Expect()
 		resp.chain.assertNotFailed(t)
 
-		assert.Equal(t, "METHOD", client.req.Method)
+		assert.Equal(t, "GET", client.req.Method)
 		assert.Equal(t, "url", client.req.URL.String())
 		assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
 		assert.Equal(t, `a=1&b=2`, resp.Body().Raw())
@@ -1095,7 +1095,7 @@ func TestRequest_BodyForm(t *testing.T) {
 			"Content-Type": {"application/x-www-form-urlencoded"},
 		}
 
-		req := NewRequestC(config, "METHOD", "url")
+		req := NewRequestC(config, "GET", "url")
 
 		type S struct {
 			A int `form:"a"`
@@ -1108,7 +1108,7 @@ func TestRequest_BodyForm(t *testing.T) {
 		resp := req.Expect()
 		resp.chain.assertNotFailed(t)
 
-		assert.Equal(t, "METHOD", client.req.Method)
+		assert.Equal(t, "GET", client.req.Method)
 		assert.Equal(t, "url", client.req.URL.String())
 		assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
 		assert.Equal(t, `a=1&b=2&c=3`, resp.Body().Raw())
@@ -1117,7 +1117,7 @@ func TestRequest_BodyForm(t *testing.T) {
 	})
 
 	t.Run("marshal error", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "url")
+		req := NewRequestC(config, "GET", "url")
 
 		req.WithForm(func() {})
 
@@ -1253,7 +1253,7 @@ func TestRequest_BodyJSON(t *testing.T) {
 			"Some-Header":  {"foo"},
 		}
 
-		req := NewRequestC(config, "METHOD", "url")
+		req := NewRequestC(config, "GET", "url")
 
 		req.WithHeaders(map[string]string{
 			"Some-Header": "foo",
@@ -1264,7 +1264,7 @@ func TestRequest_BodyJSON(t *testing.T) {
 		resp := req.Expect()
 		resp.chain.assertNotFailed(t)
 
-		assert.Equal(t, "METHOD", client.req.Method)
+		assert.Equal(t, "GET", client.req.Method)
 		assert.Equal(t, "url", client.req.URL.String())
 		assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
 		assert.Equal(t, `{"key":"value"}`, resp.Body().Raw())
@@ -1273,7 +1273,7 @@ func TestRequest_BodyJSON(t *testing.T) {
 	})
 
 	t.Run("marshal error", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "url")
+		req := NewRequestC(config, "GET", "url")
 
 		req.WithJSON(func() {})
 
@@ -1292,39 +1292,39 @@ func TestRequest_ContentLength(t *testing.T) {
 		Reporter: newMockReporter(t),
 	}
 
-	req1 := NewRequestC(config, "METHOD", "url")
+	req1 := NewRequestC(config, "GET", "url")
 	req1.WithChunked(bytes.NewReader([]byte("12345")))
 	req1.Expect().chain.assertNotFailed(t)
 	assert.Equal(t, int64(-1), client.req.ContentLength)
 
-	req2 := NewRequestC(config, "METHOD", "url")
+	req2 := NewRequestC(config, "GET", "url")
 	req2.WithBytes([]byte("12345"))
 	req2.Expect().chain.assertNotFailed(t)
 	assert.Equal(t, int64(5), client.req.ContentLength)
 
-	req3 := NewRequestC(config, "METHOD", "url")
+	req3 := NewRequestC(config, "GET", "url")
 	req3.WithText("12345")
 	req3.Expect().chain.assertNotFailed(t)
 	assert.Equal(t, int64(5), client.req.ContentLength)
 
 	j, _ := json.Marshal(map[string]string{"a": "b"})
-	req4 := NewRequestC(config, "METHOD", "url")
+	req4 := NewRequestC(config, "GET", "url")
 	req4.WithJSON(map[string]string{"a": "b"})
 	req4.Expect().chain.assertNotFailed(t)
 	assert.Equal(t, int64(len(j)), client.req.ContentLength)
 
 	f := `a=b`
-	req5 := NewRequestC(config, "METHOD", "url")
+	req5 := NewRequestC(config, "GET", "url")
 	req5.WithForm(map[string]string{"a": "b"})
 	req5.Expect().chain.assertNotFailed(t)
 	assert.Equal(t, int64(len(f)), client.req.ContentLength)
 
-	req6 := NewRequestC(config, "METHOD", "url")
+	req6 := NewRequestC(config, "GET", "url")
 	req6.WithFormField("a", "b")
 	req6.Expect().chain.assertNotFailed(t)
 	assert.Equal(t, int64(len(f)), client.req.ContentLength)
 
-	req7 := NewRequestC(config, "METHOD", "url")
+	req7 := NewRequestC(config, "GET", "url")
 	req7.WithMultipart()
 	req7.WithFileBytes("a", "b", []byte("12345"))
 	req7.Expect().chain.assertNotFailed(t)
@@ -1339,33 +1339,33 @@ func TestRequest_ContentType(t *testing.T) {
 		Reporter: newMockReporter(t),
 	}
 
-	req1 := NewRequestC(config, "METHOD", "url")
+	req1 := NewRequestC(config, "GET", "url")
 	req1.WithText("hello")
 	req1.WithHeader("Content-Type", "foo")
 	req1.Expect().chain.assertNotFailed(t)
 	assert.Equal(t, http.Header{"Content-Type": {"foo"}}, client.req.Header)
 
-	req2 := NewRequestC(config, "METHOD", "url")
+	req2 := NewRequestC(config, "GET", "url")
 	req2.WithHeader("Content-Type", "foo")
 	req2.WithText("hello")
 	req2.Expect().chain.assertNotFailed(t)
 	assert.Equal(t, http.Header{"Content-Type": {"foo"}}, client.req.Header)
 
-	req3 := NewRequestC(config, "METHOD", "url")
+	req3 := NewRequestC(config, "GET", "url")
 	req3.WithJSON(map[string]interface{}{"a": "b"})
 	req3.WithHeader("Content-Type", "foo")
 	req3.WithHeader("Content-Type", "bar")
 	req3.Expect().chain.assertNotFailed(t)
 	assert.Equal(t, http.Header{"Content-Type": {"foo", "bar"}}, client.req.Header)
 
-	req4 := NewRequestC(config, "METHOD", "url")
+	req4 := NewRequestC(config, "GET", "url")
 	req4.WithForm(map[string]interface{}{"a": "b"})
 	req4.WithHeader("Content-Type", "foo")
 	req4.WithHeader("Content-Type", "bar")
 	req4.Expect().chain.assertNotFailed(t)
 	assert.Equal(t, http.Header{"Content-Type": {"foo", "bar"}}, client.req.Header)
 
-	req5 := NewRequestC(config, "METHOD", "url")
+	req5 := NewRequestC(config, "GET", "url")
 	req5.WithMultipart()
 	req5.WithForm(map[string]interface{}{"a": "b"})
 	req5.WithHeader("Content-Type", "foo")
@@ -2594,45 +2594,45 @@ func TestRequest_Conflicts(t *testing.T) {
 	}
 
 	t.Run("body conflict", func(t *testing.T) {
-		req1 := NewRequestC(config, "METHOD", "url")
+		req1 := NewRequestC(config, "GET", "url")
 		req1.WithChunked(nil)
 		req1.chain.assertNotFailed(t)
 		req1.WithChunked(nil)
 		req1.chain.assertFailed(t)
 
-		req2 := NewRequestC(config, "METHOD", "url")
+		req2 := NewRequestC(config, "GET", "url")
 		req2.WithChunked(nil)
 		req2.chain.assertNotFailed(t)
 		req2.WithBytes(nil)
 		req2.chain.assertFailed(t)
 
-		req3 := NewRequestC(config, "METHOD", "url")
+		req3 := NewRequestC(config, "GET", "url")
 		req3.WithChunked(nil)
 		req3.chain.assertNotFailed(t)
 		req3.WithText("")
 		req3.chain.assertFailed(t)
 
-		req4 := NewRequestC(config, "METHOD", "url")
+		req4 := NewRequestC(config, "GET", "url")
 		req4.WithChunked(nil)
 		req4.chain.assertNotFailed(t)
 		req4.WithJSON(map[string]interface{}{"a": "b"})
 		req4.chain.assertFailed(t)
 
-		req5 := NewRequestC(config, "METHOD", "url")
+		req5 := NewRequestC(config, "GET", "url")
 		req5.WithChunked(nil)
 		req5.chain.assertNotFailed(t)
 		req5.WithForm(map[string]interface{}{"a": "b"})
 		req5.Expect()
 		req5.chain.assertFailed(t)
 
-		req6 := NewRequestC(config, "METHOD", "url")
+		req6 := NewRequestC(config, "GET", "url")
 		req6.WithChunked(nil)
 		req6.chain.assertNotFailed(t)
 		req6.WithFormField("a", "b")
 		req6.Expect()
 		req6.chain.assertFailed(t)
 
-		req7 := NewRequestC(config, "METHOD", "url")
+		req7 := NewRequestC(config, "GET", "url")
 		req7.WithChunked(nil)
 		req7.chain.assertNotFailed(t)
 		req7.WithMultipart()
@@ -2640,25 +2640,25 @@ func TestRequest_Conflicts(t *testing.T) {
 	})
 
 	t.Run("type conflict", func(t *testing.T) {
-		req1 := NewRequestC(config, "METHOD", "url")
+		req1 := NewRequestC(config, "GET", "url")
 		req1.WithText("")
 		req1.chain.assertNotFailed(t)
 		req1.WithJSON(map[string]interface{}{"a": "b"})
 		req1.chain.assertFailed(t)
 
-		req2 := NewRequestC(config, "METHOD", "url")
+		req2 := NewRequestC(config, "GET", "url")
 		req2.WithText("")
 		req2.chain.assertNotFailed(t)
 		req2.WithForm(map[string]interface{}{"a": "b"})
 		req2.chain.assertFailed(t)
 
-		req3 := NewRequestC(config, "METHOD", "url")
+		req3 := NewRequestC(config, "GET", "url")
 		req3.WithText("")
 		req3.chain.assertNotFailed(t)
 		req3.WithFormField("a", "b")
 		req3.chain.assertFailed(t)
 
-		req4 := NewRequestC(config, "METHOD", "url")
+		req4 := NewRequestC(config, "GET", "url")
 		req4.WithText("")
 		req4.chain.assertNotFailed(t)
 		req4.WithMultipart()
@@ -2666,19 +2666,19 @@ func TestRequest_Conflicts(t *testing.T) {
 	})
 
 	t.Run("multipart conflict", func(t *testing.T) {
-		req1 := NewRequestC(config, "METHOD", "url")
+		req1 := NewRequestC(config, "GET", "url")
 		req1.WithForm(map[string]interface{}{"a": "b"})
 		req1.chain.assertNotFailed(t)
 		req1.WithMultipart()
 		req1.chain.assertFailed(t)
 
-		req2 := NewRequestC(config, "METHOD", "url")
+		req2 := NewRequestC(config, "GET", "url")
 		req2.WithFormField("a", "b")
 		req2.chain.assertNotFailed(t)
 		req2.WithMultipart()
 		req2.chain.assertFailed(t)
 
-		req3 := NewRequestC(config, "METHOD", "url")
+		req3 := NewRequestC(config, "GET", "url")
 		req3.WithFileBytes("a", "a", []byte("a"))
 		req3.chain.assertFailed(t)
 	})
@@ -3129,7 +3129,7 @@ func TestRequest_Panics(t *testing.T) {
 			AssertionHandler: &mockAssertionHandler{},
 		}
 
-		assert.Panics(t, func() { newRequest(newMockChain(t), config, "METHOD", "") })
+		assert.Panics(t, func() { newRequest(newMockChain(t), config, "GET", "") })
 	})
 
 	t.Run("Client is nil", func(t *testing.T) {
@@ -3139,7 +3139,7 @@ func TestRequest_Panics(t *testing.T) {
 			AssertionHandler: &mockAssertionHandler{},
 		}
 
-		assert.Panics(t, func() { newRequest(newMockChain(t), config, "METHOD", "") })
+		assert.Panics(t, func() { newRequest(newMockChain(t), config, "GET", "") })
 	})
 
 	t.Run("AssertionHandler is nil", func(t *testing.T) {
@@ -3149,6 +3149,6 @@ func TestRequest_Panics(t *testing.T) {
 			AssertionHandler: nil,
 		}
 
-		assert.Panics(t, func() { newRequest(newMockChain(t), config, "METHOD", "") })
+		assert.Panics(t, func() { newRequest(newMockChain(t), config, "GET", "") })
 	})
 }
