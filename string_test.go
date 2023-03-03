@@ -555,19 +555,23 @@ func TestString_MatchOne(t *testing.T) {
 
 	value := NewString(reporter, "http://example.com/users/john")
 
-	m1 := value.Match(`http://(?P<host>.+)/users/(?P<user>.+)`)
-	m1.chain.assertNotFailed(t)
+	t.Run("named", func(t *testing.T) {
+		m := value.Match(`http://(?P<host>.+)/users/(?P<user>.+)`)
+		m.chain.assertNotFailed(t)
 
-	assert.Equal(t,
-		[]string{"http://example.com/users/john", "example.com", "john"},
-		m1.submatches)
+		assert.Equal(t,
+			[]string{"http://example.com/users/john", "example.com", "john"},
+			m.submatches)
+	})
 
-	m2 := value.Match(`http://(.+)/users/(.+)`)
-	m2.chain.assertNotFailed(t)
+	t.Run("unnamed", func(t *testing.T) {
+		m := value.Match(`http://(.+)/users/(.+)`)
+		m.chain.assertNotFailed(t)
 
-	assert.Equal(t,
-		[]string{"http://example.com/users/john", "example.com", "john"},
-		m2.submatches)
+		assert.Equal(t,
+			[]string{"http://example.com/users/john", "example.com", "john"},
+			m.submatches)
+	})
 }
 
 func TestString_MatchAll(t *testing.T) {
