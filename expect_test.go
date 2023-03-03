@@ -35,7 +35,7 @@ func TestExpect_Requests(t *testing.T) {
 
 	e := WithConfig(config)
 
-	reqs[0] = e.Request("METHOD", "/url")
+	reqs[0] = e.Request("GET", "/url")
 	reqs[1] = e.OPTIONS("/url")
 	reqs[2] = e.HEAD("/url")
 	reqs[3] = e.GET("/url")
@@ -44,7 +44,7 @@ func TestExpect_Requests(t *testing.T) {
 	reqs[6] = e.PATCH("/url")
 	reqs[7] = e.DELETE("/url")
 
-	assert.Equal(t, "METHOD", reqs[0].httpReq.Method)
+	assert.Equal(t, "GET", reqs[0].httpReq.Method)
 	assert.Equal(t, "OPTIONS", reqs[1].httpReq.Method)
 	assert.Equal(t, "HEAD", reqs[2].httpReq.Method)
 	assert.Equal(t, "GET", reqs[3].httpReq.Method)
@@ -79,10 +79,10 @@ func TestExpect_Builders(t *testing.T) {
 			reqs2 = append(reqs2, r)
 		})
 
-		e.Request("METHOD", "/url")
+		e.Request("GET", "/url")
 
-		r1 := e1.Request("METHOD", "/url")
-		r2 := e2.Request("METHOD", "/url")
+		r1 := e1.Request("GET", "/url")
+		r2 := e2.Request("GET", "/url")
 
 		assert.Equal(t, 2, len(reqs1))
 		assert.Equal(t, 1, len(reqs2))
@@ -127,22 +127,22 @@ func TestExpect_Builders(t *testing.T) {
 			counter2b++
 		})
 
-		e0.Request("METHOD", "/url")
+		e0.Request("GET", "/url")
 		assert.Equal(t, 0, counter1)
 		assert.Equal(t, 0, counter2a)
 		assert.Equal(t, 0, counter2b)
 
-		e1.Request("METHOD", "/url")
+		e1.Request("GET", "/url")
 		assert.Equal(t, 1, counter1)
 		assert.Equal(t, 0, counter2a)
 		assert.Equal(t, 0, counter2b)
 
-		e2a.Request("METHOD", "/url")
+		e2a.Request("GET", "/url")
 		assert.Equal(t, 2, counter1)
 		assert.Equal(t, 1, counter2a)
 		assert.Equal(t, 0, counter2b)
 
-		e2b.Request("METHOD", "/url")
+		e2b.Request("GET", "/url")
 		assert.Equal(t, 3, counter1)
 		assert.Equal(t, 1, counter2a)
 		assert.Equal(t, 1, counter2b)
@@ -174,10 +174,10 @@ func TestExpect_Matchers(t *testing.T) {
 			resps2 = append(resps2, r)
 		})
 
-		e.Request("METHOD", "/url")
+		e.Request("GET", "/url")
 
-		req1 := e1.Request("METHOD", "/url")
-		req2 := e2.Request("METHOD", "/url")
+		req1 := e1.Request("GET", "/url")
+		req2 := e2.Request("GET", "/url")
 
 		assert.Equal(t, 0, len(resps1))
 		assert.Equal(t, 0, len(resps2))
@@ -228,22 +228,22 @@ func TestExpect_Matchers(t *testing.T) {
 			counter2b++
 		})
 
-		e0.Request("METHOD", "/url").Expect()
+		e0.Request("GET", "/url").Expect()
 		assert.Equal(t, 0, counter1)
 		assert.Equal(t, 0, counter2a)
 		assert.Equal(t, 0, counter2b)
 
-		e1.Request("METHOD", "/url").Expect()
+		e1.Request("GET", "/url").Expect()
 		assert.Equal(t, 1, counter1)
 		assert.Equal(t, 0, counter2a)
 		assert.Equal(t, 0, counter2b)
 
-		e2a.Request("METHOD", "/url").Expect()
+		e2a.Request("GET", "/url").Expect()
 		assert.Equal(t, 2, counter1)
 		assert.Equal(t, 1, counter2a)
 		assert.Equal(t, 0, counter2b)
 
-		e2b.Request("METHOD", "/url").Expect()
+		e2b.Request("GET", "/url").Expect()
 		assert.Equal(t, 3, counter1)
 		assert.Equal(t, 1, counter2a)
 		assert.Equal(t, 1, counter2b)
