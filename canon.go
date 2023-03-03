@@ -161,27 +161,9 @@ func canonValue(opChain *chain, in interface{}) (interface{}, bool) {
 		return nil, false
 	}
 
-	reader := bytes.NewReader(b)
-	dec := json.NewDecoder(reader)
-	dec.UseNumber()
-
 	var out interface{}
 
-	for {
-		if err := dec.Decode(&out); err == io.EOF {
-			break
-		} else if err != nil {
-			opChain.fail(AssertionFailure{
-				Type:   AssertValid,
-				Actual: &AssertionValue{in},
-				Errors: []error{
-					errors.New("expected: unmarshalable value"),
-					err,
-				},
-			})
-			return nil, false
-		}
-	}
+	jsonDecode(opChain, b, &out)
 
 	return out, true
 }

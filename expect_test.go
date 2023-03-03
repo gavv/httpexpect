@@ -1,7 +1,8 @@
 package httpexpect
 
 import (
-	"fmt"
+	"encoding/json"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -278,9 +279,7 @@ func TestExpect_Traverse(t *testing.T) {
 
 	m := resp.JSON().Object()
 
-	fmt.Println(m)
-
-	m.IsEqual(expected)
+	m.IsEqual(data)
 
 	m.ContainsKey("aaa")
 	m.ContainsKey("bbb")
@@ -291,11 +290,13 @@ func TestExpect_Traverse(t *testing.T) {
 	m.HasValue("ccc", expected["ccc"])
 
 	m.Keys().ConsistsOf("aaa", "bbb", "ccc")
-	m.Values().ConsistsOf(expected["aaa"], expected["bbb"], expected["ccc"])
+	v, _ := expected["ccc"].(int)
+	m.Values().ConsistsOf(expected["aaa"], expected["bbb"], strconv.Itoa(v))
 
 	m.Value("aaa").Array().ConsistsOf("bbb", 123, false, nil)
 	m.Value("bbb").String().IsEqual("hello")
-	m.Value("ccc").Number().IsEqual(456)
+
+	m.Value("ccc").Number().IsEqual(json.Number("456"))
 
 	m.Value("aaa").Array().Value(2).Boolean().IsFalse()
 	m.Value("aaa").Array().Value(3).IsNull()

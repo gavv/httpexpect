@@ -2,6 +2,7 @@ package httpexpect
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -378,9 +379,9 @@ func TestValue_GetNumber(t *testing.T) {
 		fail        bool
 		expectedNum float64
 	}{
-		"float":   {data: 123.0, fail: false, expectedNum: float64(123.0)},
-		"integer": {data: 123, fail: false, expectedNum: float64(123)},
-		"myInt":   {data: myInt(123), fail: false, expectedNum: float64(myInt(123))},
+		"float":   {data: 123.0, fail: false, expectedNum: 123.0},
+		"integer": {data: 123, fail: false, expectedNum: 123},
+		"myInt":   {data: myInt(123), fail: false, expectedNum: 123},
 	}
 
 	for name, instance := range cases {
@@ -389,6 +390,7 @@ func TestValue_GetNumber(t *testing.T) {
 
 			value := NewValue(reporter, instance.data)
 			inner := value.Number()
+			fmt.Println("inner", inner)
 
 			if instance.fail {
 				value.chain.assertFailed(t)

@@ -341,9 +341,14 @@ func (v *Value) Number() *Number {
 		return newNumber(opChain, 0)
 	}
 
-	data, ok := v.value.(float64)
+	data, ok := v.value.(json.Number)
 
-	if !ok {
+	str, strOk := v.value.(string)
+	if strOk {
+		data = json.Number(str)
+	}
+
+	if !ok && !strOk {
 		opChain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{v.value},
