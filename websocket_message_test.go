@@ -305,19 +305,22 @@ func TestWebsocketMessage_MatchCodes(t *testing.T) {
 }
 
 func TestWebsocketMessage_CodeAndType(t *testing.T) {
-	cases := map[string]struct {
+	cases := []struct {
+		name            string
 		typ             int
 		code            int
 		expectCodeOK    bool
 		expectNotCodeOK bool
 	}{
-		"text message with close code 10": {
+		{
+			name:            "text message with close code 10",
 			typ:             websocket.TextMessage,
 			code:            10,
 			expectCodeOK:    false,
 			expectNotCodeOK: false,
 		},
-		"close message with close code 10": {
+		{
+			name:            "close message with close code 10",
 			typ:             websocket.CloseMessage,
 			code:            10,
 			expectCodeOK:    true,
@@ -325,76 +328,83 @@ func TestWebsocketMessage_CodeAndType(t *testing.T) {
 		},
 	}
 
-	for name, instance := range cases {
-		t.Run(name, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			if instance.expectCodeOK {
-				NewWebsocketMessage(reporter, instance.typ, nil, instance.code).
-					Code(instance.code).chain.assertNotFailed(t)
+			if tc.expectCodeOK {
+				NewWebsocketMessage(reporter, tc.typ, nil, tc.code).
+					Code(tc.code).chain.assertNotFailed(t)
 			} else {
-				NewWebsocketMessage(reporter, instance.typ, nil, instance.code).
-					Code(instance.code).chain.assertFailed(t)
+				NewWebsocketMessage(reporter, tc.typ, nil, tc.code).
+					Code(tc.code).chain.assertFailed(t)
 			}
 
-			if instance.expectNotCodeOK {
-				NewWebsocketMessage(reporter, instance.typ, nil, instance.code).
-					NotCode(instance.code).chain.assertNotFailed(t)
+			if tc.expectNotCodeOK {
+				NewWebsocketMessage(reporter, tc.typ, nil, tc.code).
+					NotCode(tc.code).chain.assertNotFailed(t)
 			} else {
-				NewWebsocketMessage(reporter, instance.typ, nil, instance.code).
-					NotCode(instance.code).chain.assertFailed(t)
+				NewWebsocketMessage(reporter, tc.typ, nil, tc.code).
+					NotCode(tc.code).chain.assertFailed(t)
 			}
 		})
 	}
 }
 
 func TestWebsocketMessage_NoContent(t *testing.T) {
-	cases := map[string]struct {
+	cases := []struct {
+		name       string
 		typ        int
 		content    []byte
 		hasContent bool
 	}{
-		"nil text message": {
+		{
+			name:       "nil text message",
 			typ:        websocket.TextMessage,
 			content:    nil,
 			hasContent: false,
 		},
-		"empty text message": {
+		{
+			name:       "empty text message",
 			typ:        websocket.TextMessage,
 			content:    []byte(""),
 			hasContent: false,
 		},
-		"text message with content": {
+		{
+			name:       "text message with content",
 			typ:        websocket.TextMessage,
 			content:    []byte("test"),
 			hasContent: true,
 		},
-		"nil binary message": {
+		{
+			name:       "nil binary message",
 			typ:        websocket.BinaryMessage,
 			content:    nil,
 			hasContent: false,
 		},
-		"empty binary message": {
+		{
+			name:       "empty binary message",
 			typ:        websocket.BinaryMessage,
 			content:    []byte(""),
 			hasContent: false,
 		},
-		"binary message with content": {
+		{
+			name:       "binary message with content",
 			typ:        websocket.BinaryMessage,
 			content:    []byte("test"),
 			hasContent: true,
 		},
 	}
 
-	for name, instance := range cases {
-		t.Run(name, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			if instance.hasContent {
-				NewWebsocketMessage(reporter, instance.typ, instance.content).
+			if tc.hasContent {
+				NewWebsocketMessage(reporter, tc.typ, tc.content).
 					NoContent().chain.assertFailed(t)
 			} else {
-				NewWebsocketMessage(reporter, instance.typ, instance.content).
+				NewWebsocketMessage(reporter, tc.typ, tc.content).
 					NoContent().chain.assertNotFailed(t)
 			}
 		})

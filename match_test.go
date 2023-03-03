@@ -111,32 +111,46 @@ func TestMatch_Getters(t *testing.T) {
 }
 
 func TestMatch_IsEmpty(t *testing.T) {
-	cases := map[string]struct {
+	cases := []struct {
+		name        string
 		submatch    []string
 		expectEmpty bool
 	}{
-		"string":             {submatch: []string{"m"}, expectEmpty: false},
-		"empty string slice": {submatch: []string{}, expectEmpty: true},
-		"nil":                {submatch: nil, expectEmpty: true},
+		{
+			name:        "string",
+			submatch:    []string{"m"},
+			expectEmpty: false,
+		},
+		{
+			name:        "empty string slice",
+			submatch:    []string{},
+			expectEmpty: true,
+		},
+		{
+			name:        "nil",
+			submatch:    nil,
+			expectEmpty: true,
+		},
 	}
 
-	for name, instance := range cases {
-		t.Run(name, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			if instance.expectEmpty {
-				NewMatch(reporter, instance.submatch, nil).IsEmpty().
+			if tc.expectEmpty {
+				NewMatch(reporter, tc.submatch, nil).IsEmpty().
 					chain.assertNotFailed(t)
 
-				NewMatch(reporter, instance.submatch, nil).NotEmpty().
+				NewMatch(reporter, tc.submatch, nil).NotEmpty().
 					chain.assertFailed(t)
 
-				assert.Equal(t, []string{}, NewMatch(reporter, instance.submatch, nil).Raw())
+				assert.Equal(t, []string{},
+					NewMatch(reporter, tc.submatch, nil).Raw())
 			} else {
-				NewMatch(reporter, instance.submatch, nil).NotEmpty().
+				NewMatch(reporter, tc.submatch, nil).NotEmpty().
 					chain.assertNotFailed(t)
 
-				NewMatch(reporter, instance.submatch, nil).IsEmpty().
+				NewMatch(reporter, tc.submatch, nil).IsEmpty().
 					chain.assertFailed(t)
 			}
 		})
@@ -149,32 +163,37 @@ func TestMatch_Values(t *testing.T) {
 		fail   bool
 	}
 
-	cases := map[string]struct {
+	cases := []struct {
+		name        string
 		submatches  []string
 		expectMatch []wantMatch
 	}{
-		"nil match instance": {
+		{
+			name:       "nil match instance",
 			submatches: nil,
 			expectMatch: []wantMatch{
 				{target: nil, fail: false},
 				{target: []string{""}, fail: true},
 			},
 		},
-		"empty match instance": {
+		{
+			name:       "empty match instance",
 			submatches: []string{},
 			expectMatch: []wantMatch{
 				{target: nil, fail: false},
 				{target: []string{""}, fail: true},
 			},
 		},
-		"not empty index 0 only": {
+		{
+			name:       "not empty index 0 only",
 			submatches: []string{"m0"},
 			expectMatch: []wantMatch{
 				{target: nil, fail: false},
 				{target: []string{"m0"}, fail: true},
 			},
 		},
-		"not empty": {
+		{
+			name:       "not empty",
 			submatches: []string{"m0", "m1", "m2"},
 			expectMatch: []wantMatch{
 				{target: nil, fail: true},
@@ -185,23 +204,23 @@ func TestMatch_Values(t *testing.T) {
 		},
 	}
 
-	for name, instance := range cases {
-		t.Run(name, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			for _, match := range instance.expectMatch {
+			for _, match := range tc.expectMatch {
 				if match.fail {
-					NewMatch(reporter, instance.submatches, nil).NotValues(match.target...).
+					NewMatch(reporter, tc.submatches, nil).NotValues(match.target...).
 						chain.assertNotFailed(t)
 
-					NewMatch(reporter, instance.submatches, nil).Values(match.target...).
+					NewMatch(reporter, tc.submatches, nil).Values(match.target...).
 						chain.assertFailed(t)
 
 				} else {
-					NewMatch(reporter, instance.submatches, nil).Values(match.target...).
+					NewMatch(reporter, tc.submatches, nil).Values(match.target...).
 						chain.assertNotFailed(t)
 
-					NewMatch(reporter, instance.submatches, nil).NotValues(match.target...).
+					NewMatch(reporter, tc.submatches, nil).NotValues(match.target...).
 						chain.assertFailed(t)
 				}
 			}

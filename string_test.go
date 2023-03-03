@@ -174,29 +174,38 @@ func TestString_Getters(t *testing.T) {
 }
 
 func TestString_IsEmpty(t *testing.T) {
-	cases := map[string]struct {
+	cases := []struct {
+		name      string
 		str       string
 		wantEmpty bool
 	}{
-		"empty_string":     {str: "", wantEmpty: true},
-		"populated_string": {str: "a", wantEmpty: false},
+		{
+			name:      "empty string",
+			str:       "",
+			wantEmpty: true,
+		},
+		{
+			name:      "populated string",
+			str:       "a",
+			wantEmpty: false,
+		},
 	}
 
-	for name, value := range cases {
-		t.Run(name, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			if value.wantEmpty {
-				NewString(reporter, value.str).IsEmpty().
+			if tc.wantEmpty {
+				NewString(reporter, tc.str).IsEmpty().
 					chain.assertNotFailed(t)
 
-				NewString(reporter, value.str).NotEmpty().
+				NewString(reporter, tc.str).NotEmpty().
 					chain.assertFailed(t)
 			} else {
-				NewString(reporter, value.str).IsEmpty().
+				NewString(reporter, tc.str).IsEmpty().
 					chain.assertFailed(t)
 
-				NewString(reporter, value.str).NotEmpty().
+				NewString(reporter, tc.str).NotEmpty().
 					chain.assertNotFailed(t)
 			}
 		})
@@ -668,96 +677,112 @@ func TestString_IsAscii(t *testing.T) {
 }
 
 func TestString_AsNumber(t *testing.T) {
-	cases := map[string]struct {
+	cases := []struct {
+		name        string
 		str         string
 		base        []int
 		fail        bool
 		expectedNum float64
 	}{
-		"default_base_integer": {
+		{
+			name:        "default_base_integer",
 			str:         "1234567",
 			fail:        false,
 			expectedNum: float64(1234567),
 		},
-		"default_base_float": {
+		{
+			name:        "default_base_float",
 			str:         "11.22",
 			fail:        false,
 			expectedNum: float64(11.22),
 		},
-		"default_base_bad": {
-			str:  "a1",
-			fail: true,
+		{
+			name:        "default_base_bad",
+			str:         "a1",
+			fail:        true,
+			expectedNum: 0,
 		},
-		"base10_integer": {
+		{
+			name:        "base10_integer",
 			str:         "100",
 			base:        []int{10},
 			fail:        false,
 			expectedNum: float64(100),
 		},
-		"base10_float": {
+		{
+			name:        "base10_float",
 			str:         "11.22",
 			base:        []int{10},
 			fail:        false,
 			expectedNum: float64(11.22),
 		},
-		"base16_integer": {
+		{
+			name:        "base16_integer",
 			str:         "100",
 			base:        []int{16},
 			fail:        false,
 			expectedNum: float64(0x100),
 		},
-		"base16_float": {
-			str:  "11.22",
-			base: []int{16},
-			fail: true,
+		{
+			name:        "base16_float",
+			str:         "11.22",
+			base:        []int{16},
+			fail:        true,
+			expectedNum: 0,
 		},
-		"base16_large_integer": {
+		{
+			name:        "base16_large_integer",
 			str:         "4000000000000000",
 			base:        []int{16},
 			fail:        false,
 			expectedNum: float64(0x4000000000000000),
 		},
-		"default_float_precision_max": {
+		{
+			name: "default_float_precision_max",
 			str:  "4611686018427387905",
 			fail: true,
 		},
-		"base10_float_precision_max": {
+		{
+			name: "base10_float_precision_max",
 			str:  "4611686018427387905",
 			base: []int{10},
 			fail: true,
 		},
-		"base16_float_precision_max": {
+		{
+			name: "base16_float_precision_max",
 			str:  "8000000000000001",
 			base: []int{16},
 			fail: true,
 		},
-		"base16_float_precision_min": {
+		{
+			name: "base16_float_precision_min",
 			str:  "-4000000000000001",
 			base: []int{16},
 			fail: true,
 		},
-		"multiple_base": {
+		{
+			name: "multiple_base",
 			str:  "100",
 			base: []int{10, 16},
 			fail: true,
 		},
 	}
 
-	for name, value := range cases {
-		t.Run(name, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			str := NewString(reporter, value.str)
-			num := str.AsNumber(value.base...)
+			str := NewString(reporter, tc.str)
+			num := str.AsNumber(tc.base...)
 
-			if value.fail {
+			if tc.fail {
 				str.chain.assertFailed(t)
 				num.chain.assertFailed(t)
 				assert.Equal(t, float64(0), num.Raw())
 			} else {
 				str.chain.assertNotFailed(t)
 				num.chain.assertNotFailed(t)
-				assert.Equal(t, value.expectedNum, num.Raw())
+				assert.Equal(t, tc.expectedNum, num.Raw())
 			}
 		})
 	}
