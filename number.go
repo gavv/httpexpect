@@ -376,20 +376,6 @@ func (n *Number) InDeltaRelative(value, delta float64) *Number {
 		}
 	}
 
-	if (math.IsInf(n.value, 1) && math.IsInf(value, -1)) ||
-		(math.IsInf(n.value, -1) && math.IsInf(value, 1)) {
-		opChain.fail(AssertionFailure{
-			Type:     AssertEqual,
-			Actual:   &AssertionValue{n.value},
-			Expected: &AssertionValue{value},
-			Delta:    &AssertionValue{relativeDelta(delta)},
-			Errors: []error{
-				errors.New("expected: values are comparable infinite numbers"),
-			},
-		})
-		return n
-	}
-
 	relativeDiff := math.Abs(n.value-value) / math.Abs(n.value)
 
 	if relativeDiff > delta {
@@ -508,20 +494,6 @@ func (n *Number) NotInDeltaRelative(value, delta float64) *Number {
 			})
 			return n
 		}
-	}
-
-	if (math.IsInf(n.value, 1) && math.IsInf(value, -1)) ||
-		(math.IsInf(n.value, -1) && math.IsInf(value, 1)) {
-		opChain.fail(AssertionFailure{
-			Type:     AssertEqual,
-			Actual:   &AssertionValue{n.value},
-			Expected: &AssertionValue{value},
-			Delta:    &AssertionValue{relativeDelta(delta)},
-			Errors: []error{
-				errors.New("expected: values are comparable infinite numbers"),
-			},
-		})
-		return n
 	}
 
 	relativeDiff := math.Abs(n.value-value) / math.Abs(n.value)
