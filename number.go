@@ -281,8 +281,7 @@ func (n *Number) NotInDelta(value, delta float64) *Number {
 // A number and a value are within relative delta if
 // Abs(number-value) / Abs(number) < relative delta.
 //
-// Please note that the number can't be 0 and the number, value, and delta can't be
-// Inf or NaN.
+// Please note that number, value, and delta can't be NaN.
 //
 // Example:
 //
@@ -297,10 +296,9 @@ func (n *Number) InDeltaRelative(value, delta float64) *Number {
 	}
 
 	anyNumIsNaN := math.IsNaN(n.value) || math.IsNaN(value) || math.IsNaN(delta)
-	anyNumIsInf := math.IsInf(n.value, 0) || math.IsInf(value, 0) || math.IsInf(delta, 0)
-	anyNumIsZero := n.value == 0 || value == 0 || delta == 0
+	numbersAreInf := math.IsInf(n.value, 0) || math.IsInf(value, 0)
 
-	if anyNumIsNaN || anyNumIsInf || anyNumIsZero {
+	if anyNumIsNaN || numbersAreInf {
 		var assertionErrors []error
 		assertionErrors = append(
 			assertionErrors,
@@ -342,40 +340,51 @@ func (n *Number) InDeltaRelative(value, delta float64) *Number {
 			)
 		}
 
-		if math.IsInf(delta, 0) {
-			assertionErrors = append(
-				assertionErrors,
-				errors.New("delta is Inf"),
-			)
-		}
-
-		if n.value == 0 {
-			assertionErrors = append(
-				assertionErrors,
-				errors.New("actual value is 0, which is not allowed"),
-			)
-		}
-
-		if value == 0 {
-			assertionErrors = append(
-				assertionErrors,
-				errors.New("expected value is 0"),
-			)
-		}
-
-		if delta == 0 {
-			assertionErrors = append(
-				assertionErrors,
-				errors.New("delta is 0, which is not allowed"),
-			)
-		}
-
 		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{n.value},
 			Expected: &AssertionValue{value},
 			Delta:    &AssertionValue{relativeDelta(delta)},
 			Errors:   assertionErrors,
+		})
+		return n
+	}
+
+	if delta < 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected negative delta argument"),
+			},
+		})
+		return n
+	}
+
+	if n.value == 0 {
+		if math.Abs(n.value-value) > math.Abs(n.value)*delta {
+			opChain.fail(AssertionFailure{
+				Type:     AssertEqual,
+				Actual:   &AssertionValue{n.value},
+				Expected: &AssertionValue{value},
+				Delta:    &AssertionValue{relativeDelta(delta)},
+				Errors: []error{
+					errors.New("expected: numbers lie within relative delta"),
+				},
+			})
+			return n
+		}
+	}
+
+	if (math.IsInf(n.value, 1) && math.IsInf(value, -1)) ||
+		(math.IsInf(n.value, -1) && math.IsInf(value, 1)) {
+		opChain.fail(AssertionFailure{
+			Type:     AssertEqual,
+			Actual:   &AssertionValue{n.value},
+			Expected: &AssertionValue{value},
+			Delta:    &AssertionValue{relativeDelta(delta)},
+			Errors: []error{
+				errors.New("expected: values are comparable infinite numbers"),
+			},
 		})
 		return n
 	}
@@ -406,8 +415,7 @@ func (n *Number) InDeltaRelative(value, delta float64) *Number {
 // A number and a value are within relative delta if
 // Abs(number-value) / Abs(number) < relative delta.
 //
-// Please note that the number can't be 0 and the number, value, and delta can't be
-// Inf or NaN.
+// Please note that number, value, and delta can't be NaN.
 //
 // Example:
 //
@@ -422,10 +430,9 @@ func (n *Number) NotInDeltaRelative(value, delta float64) *Number {
 	}
 
 	anyNumIsNaN := math.IsNaN(n.value) || math.IsNaN(value) || math.IsNaN(delta)
-	anyNumIsInf := math.IsInf(n.value, 0) || math.IsInf(value, 0) || math.IsInf(delta, 0)
-	anyNumIsZero := n.value == 0 || value == 0 || delta == 0
+	numbersAreInf := math.IsInf(n.value, 0) || math.IsInf(value, 0)
 
-	if anyNumIsNaN || anyNumIsInf || anyNumIsZero {
+	if anyNumIsNaN || numbersAreInf {
 		var assertionErrors []error
 		assertionErrors = append(
 			assertionErrors,
@@ -467,34 +474,6 @@ func (n *Number) NotInDeltaRelative(value, delta float64) *Number {
 			)
 		}
 
-		if math.IsInf(delta, 0) {
-			assertionErrors = append(
-				assertionErrors,
-				errors.New("delta is Inf"),
-			)
-		}
-
-		if n.value == 0 {
-			assertionErrors = append(
-				assertionErrors,
-				errors.New("actual value is 0, which is not allowed"),
-			)
-		}
-
-		if value == 0 {
-			assertionErrors = append(
-				assertionErrors,
-				errors.New("expected value is 0"),
-			)
-		}
-
-		if delta == 0 {
-			assertionErrors = append(
-				assertionErrors,
-				errors.New("delta is 0, which is not allowed"),
-			)
-		}
-
 		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{n.value},
@@ -505,9 +484,49 @@ func (n *Number) NotInDeltaRelative(value, delta float64) *Number {
 		return n
 	}
 
+	if delta < 0 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected negative delta argument"),
+			},
+		})
+		return n
+	}
+
+	if n.value == 0 {
+		if !(math.Abs(n.value-value) > math.Abs(n.value)*delta) {
+			opChain.fail(AssertionFailure{
+				Type:     AssertEqual,
+				Actual:   &AssertionValue{n.value},
+				Expected: &AssertionValue{value},
+				Delta:    &AssertionValue{relativeDelta(delta)},
+				Errors: []error{
+					errors.New("expected: numbers lie within relative delta"),
+				},
+			})
+			return n
+		}
+	}
+
+	if (math.IsInf(n.value, 1) && math.IsInf(value, -1)) ||
+		(math.IsInf(n.value, -1) && math.IsInf(value, 1)) {
+		opChain.fail(AssertionFailure{
+			Type:     AssertEqual,
+			Actual:   &AssertionValue{n.value},
+			Expected: &AssertionValue{value},
+			Delta:    &AssertionValue{relativeDelta(delta)},
+			Errors: []error{
+				errors.New("expected: values are comparable infinite numbers"),
+			},
+		})
+		return n
+	}
+
 	relativeDiff := math.Abs(n.value-value) / math.Abs(n.value)
 
 	if !(relativeDiff > delta) {
+		fmt.Println("hit chain failure")
 		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{n.value},
