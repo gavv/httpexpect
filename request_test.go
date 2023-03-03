@@ -247,6 +247,24 @@ func TestRequest_Basic(t *testing.T) {
 			assert.True(t, *resp.rtt >= 0)
 		}
 	})
+
+	t.Run("client error", func(t *testing.T) {
+		client := &mockClient{
+			err: errors.New("error"),
+		}
+
+		config := Config{
+			Client:   client,
+			Reporter: newMockReporter(t),
+		}
+
+		req := NewRequestC(config, "METHOD", "url")
+
+		resp := req.Expect()
+		resp.chain.assertFailed(t)
+
+		assert.Nil(t, resp.Raw())
+	})
 }
 
 func TestRequest_Matchers(t *testing.T) {
@@ -888,25 +906,27 @@ func TestRequest_BodyChunked(t *testing.T) {
 		assert.Equal(t, int64(0), client.req.ContentLength)
 	})
 
-	t.Run("proto", func(t *testing.T) {
-		req1 := NewRequestC(config, "METHOD", "url")
+	t.Run("proto 1.0", func(t *testing.T) {
+		req := NewRequestC(config, "METHOD", "url")
 
-		req1.WithProto("HTTP/1.0")
-		assert.Equal(t, 1, req1.httpReq.ProtoMajor)
-		assert.Equal(t, 0, req1.httpReq.ProtoMinor)
+		req.WithProto("HTTP/1.0")
+		assert.Equal(t, 1, req.httpReq.ProtoMajor)
+		assert.Equal(t, 0, req.httpReq.ProtoMinor)
 
-		req1.WithChunked(bytes.NewBufferString("body"))
-		req1.chain.assertFailed(t)
+		req.WithChunked(bytes.NewBufferString("body"))
+		req.chain.assertFailed(t)
+	})
 
-		req2 := NewRequestC(config, "METHOD", "url")
+	t.Run("proto 2.0", func(t *testing.T) {
+		req := NewRequestC(config, "METHOD", "url")
 
-		req2.WithProto("HTTP/2.0")
-		assert.Equal(t, 2, req2.httpReq.ProtoMajor)
-		assert.Equal(t, 0, req2.httpReq.ProtoMinor)
+		req.WithProto("HTTP/2.0")
+		assert.Equal(t, 2, req.httpReq.ProtoMajor)
+		assert.Equal(t, 0, req.httpReq.ProtoMinor)
 
-		req2.WithChunked(bytes.NewBufferString("body"))
-		assert.Equal(t, 2, req2.httpReq.ProtoMajor)
-		assert.Equal(t, 0, req2.httpReq.ProtoMinor)
+		req.WithChunked(bytes.NewBufferString("body"))
+		assert.Equal(t, 2, req.httpReq.ProtoMajor)
+		assert.Equal(t, 0, req.httpReq.ProtoMinor)
 	})
 }
 
@@ -1095,6 +1115,17 @@ func TestRequest_BodyForm(t *testing.T) {
 
 		assert.Same(t, &client.resp, resp.Raw())
 	})
+
+	t.Run("marshal error", func(t *testing.T) {
+		req := NewRequestC(config, "METHOD", "url")
+
+		req.WithForm(func() {})
+
+		resp := req.Expect()
+		resp.chain.assertFailed(t)
+
+		assert.Nil(t, resp.Raw())
+	})
 }
 
 func TestRequest_BodyMultipart(t *testing.T) {
@@ -1216,28 +1247,41 @@ func TestRequest_BodyJSON(t *testing.T) {
 		Reporter: newMockReporter(t),
 	}
 
-	expectedHeaders := map[string][]string{
-		"Content-Type": {"application/json; charset=utf-8"},
-		"Some-Header":  {"foo"},
-	}
+	t.Run("json", func(t *testing.T) {
+		expectedHeaders := map[string][]string{
+			"Content-Type": {"application/json; charset=utf-8"},
+			"Some-Header":  {"foo"},
+		}
 
-	req := NewRequestC(config, "METHOD", "url")
+		req := NewRequestC(config, "METHOD", "url")
 
-	req.WithHeaders(map[string]string{
-		"Some-Header": "foo",
+		req.WithHeaders(map[string]string{
+			"Some-Header": "foo",
+		})
+
+		req.WithJSON(map[string]interface{}{"key": "value"})
+
+		resp := req.Expect()
+		resp.chain.assertNotFailed(t)
+
+		assert.Equal(t, "METHOD", client.req.Method)
+		assert.Equal(t, "url", client.req.URL.String())
+		assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
+		assert.Equal(t, `{"key":"value"}`, resp.Body().Raw())
+
+		assert.Same(t, &client.resp, resp.Raw())
 	})
 
-	req.WithJSON(map[string]interface{}{"key": "value"})
+	t.Run("marshal error", func(t *testing.T) {
+		req := NewRequestC(config, "METHOD", "url")
 
-	resp := req.Expect()
-	resp.chain.assertNotFailed(t)
+		req.WithJSON(func() {})
 
-	assert.Equal(t, "METHOD", client.req.Method)
-	assert.Equal(t, "url", client.req.URL.String())
-	assert.Equal(t, http.Header(expectedHeaders), client.req.Header)
-	assert.Equal(t, `{"key":"value"}`, resp.Body().Raw())
+		resp := req.Expect()
+		resp.chain.assertFailed(t)
 
-	assert.Same(t, &client.resp, resp.Raw())
+		assert.Nil(t, resp.Raw())
+	})
 }
 
 func TestRequest_ContentLength(t *testing.T) {
@@ -1328,161 +1372,6 @@ func TestRequest_ContentType(t *testing.T) {
 	req5.WithHeader("Content-Type", "bar")
 	req5.Expect().chain.assertNotFailed(t)
 	assert.Equal(t, http.Header{"Content-Type": {"foo", "bar"}}, client.req.Header)
-}
-
-func TestRequest_Errors(t *testing.T) {
-	client := &mockClient{}
-
-	config := Config{
-		Client:   client,
-		Reporter: newMockReporter(t),
-	}
-
-	t.Run("error marshal form", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "url")
-
-		req.WithForm(func() {})
-
-		resp := req.Expect()
-		resp.chain.assertFailed(t)
-
-		assert.Nil(t, resp.Raw())
-	})
-
-	t.Run("error marshal json", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "url")
-
-		req.WithJSON(func() {})
-
-		resp := req.Expect()
-		resp.chain.assertFailed(t)
-
-		assert.Nil(t, resp.Raw())
-	})
-
-	t.Run("error read file", func(t *testing.T) {
-		client.err = errors.New("error")
-
-		req := NewRequestC(config, "METHOD", "url")
-
-		req.WithMultipart()
-		req.WithFile("", "")
-
-		resp := req.Expect()
-		resp.chain.assertFailed(t)
-
-		assert.Nil(t, resp.Raw())
-	})
-
-	t.Run("error send", func(t *testing.T) {
-		client.err = errors.New("error")
-
-		req := NewRequestC(config, "METHOD", "url")
-
-		resp := req.Expect()
-		resp.chain.assertFailed(t)
-
-		assert.Nil(t, resp.Raw())
-	})
-}
-
-func TestRequest_Conflicts(t *testing.T) {
-	client := &mockClient{}
-
-	config := Config{
-		Client:   client,
-		Reporter: newMockReporter(t),
-	}
-
-	t.Run("body conflict", func(t *testing.T) {
-		req1 := NewRequestC(config, "METHOD", "url")
-		req1.WithChunked(nil)
-		req1.chain.assertNotFailed(t)
-		req1.WithChunked(nil)
-		req1.chain.assertFailed(t)
-
-		req2 := NewRequestC(config, "METHOD", "url")
-		req2.WithChunked(nil)
-		req2.chain.assertNotFailed(t)
-		req2.WithBytes(nil)
-		req2.chain.assertFailed(t)
-
-		req3 := NewRequestC(config, "METHOD", "url")
-		req3.WithChunked(nil)
-		req3.chain.assertNotFailed(t)
-		req3.WithText("")
-		req3.chain.assertFailed(t)
-
-		req4 := NewRequestC(config, "METHOD", "url")
-		req4.WithChunked(nil)
-		req4.chain.assertNotFailed(t)
-		req4.WithJSON(map[string]interface{}{"a": "b"})
-		req4.chain.assertFailed(t)
-
-		req5 := NewRequestC(config, "METHOD", "url")
-		req5.WithChunked(nil)
-		req5.chain.assertNotFailed(t)
-		req5.WithForm(map[string]interface{}{"a": "b"})
-		req5.Expect()
-		req5.chain.assertFailed(t)
-
-		req6 := NewRequestC(config, "METHOD", "url")
-		req6.WithChunked(nil)
-		req6.chain.assertNotFailed(t)
-		req6.WithFormField("a", "b")
-		req6.Expect()
-		req6.chain.assertFailed(t)
-
-		req7 := NewRequestC(config, "METHOD", "url")
-		req7.WithChunked(nil)
-		req7.chain.assertNotFailed(t)
-		req7.WithMultipart()
-		req7.chain.assertFailed(t)
-	})
-
-	t.Run("type conflict", func(t *testing.T) {
-		req1 := NewRequestC(config, "METHOD", "url")
-		req1.WithText("")
-		req1.chain.assertNotFailed(t)
-		req1.WithJSON(map[string]interface{}{"a": "b"})
-		req1.chain.assertFailed(t)
-
-		req2 := NewRequestC(config, "METHOD", "url")
-		req2.WithText("")
-		req2.chain.assertNotFailed(t)
-		req2.WithForm(map[string]interface{}{"a": "b"})
-		req2.chain.assertFailed(t)
-
-		req3 := NewRequestC(config, "METHOD", "url")
-		req3.WithText("")
-		req3.chain.assertNotFailed(t)
-		req3.WithFormField("a", "b")
-		req3.chain.assertFailed(t)
-
-		req4 := NewRequestC(config, "METHOD", "url")
-		req4.WithText("")
-		req4.chain.assertNotFailed(t)
-		req4.WithMultipart()
-		req4.chain.assertFailed(t)
-	})
-
-	t.Run("multipart conflict", func(t *testing.T) {
-		req1 := NewRequestC(config, "METHOD", "url")
-		req1.WithForm(map[string]interface{}{"a": "b"})
-		req1.chain.assertNotFailed(t)
-		req1.WithMultipart()
-		req1.chain.assertFailed(t)
-
-		req2 := NewRequestC(config, "METHOD", "url")
-		req2.WithFormField("a", "b")
-		req2.chain.assertNotFailed(t)
-		req2.WithMultipart()
-		req2.chain.assertFailed(t)
-
-		req3 := NewRequestC(config, "METHOD", "url")
-		req3.WithFileBytes("a", "a", []byte("a"))
-		req3.chain.assertFailed(t)
-	})
 }
 
 func TestRequest_Redirects(t *testing.T) {
@@ -2696,6 +2585,105 @@ func TestRequest_Retries(t *testing.T) {
 	})
 }
 
+func TestRequest_Conflicts(t *testing.T) {
+	client := &mockClient{}
+
+	config := Config{
+		Client:   client,
+		Reporter: newMockReporter(t),
+	}
+
+	t.Run("body conflict", func(t *testing.T) {
+		req1 := NewRequestC(config, "METHOD", "url")
+		req1.WithChunked(nil)
+		req1.chain.assertNotFailed(t)
+		req1.WithChunked(nil)
+		req1.chain.assertFailed(t)
+
+		req2 := NewRequestC(config, "METHOD", "url")
+		req2.WithChunked(nil)
+		req2.chain.assertNotFailed(t)
+		req2.WithBytes(nil)
+		req2.chain.assertFailed(t)
+
+		req3 := NewRequestC(config, "METHOD", "url")
+		req3.WithChunked(nil)
+		req3.chain.assertNotFailed(t)
+		req3.WithText("")
+		req3.chain.assertFailed(t)
+
+		req4 := NewRequestC(config, "METHOD", "url")
+		req4.WithChunked(nil)
+		req4.chain.assertNotFailed(t)
+		req4.WithJSON(map[string]interface{}{"a": "b"})
+		req4.chain.assertFailed(t)
+
+		req5 := NewRequestC(config, "METHOD", "url")
+		req5.WithChunked(nil)
+		req5.chain.assertNotFailed(t)
+		req5.WithForm(map[string]interface{}{"a": "b"})
+		req5.Expect()
+		req5.chain.assertFailed(t)
+
+		req6 := NewRequestC(config, "METHOD", "url")
+		req6.WithChunked(nil)
+		req6.chain.assertNotFailed(t)
+		req6.WithFormField("a", "b")
+		req6.Expect()
+		req6.chain.assertFailed(t)
+
+		req7 := NewRequestC(config, "METHOD", "url")
+		req7.WithChunked(nil)
+		req7.chain.assertNotFailed(t)
+		req7.WithMultipart()
+		req7.chain.assertFailed(t)
+	})
+
+	t.Run("type conflict", func(t *testing.T) {
+		req1 := NewRequestC(config, "METHOD", "url")
+		req1.WithText("")
+		req1.chain.assertNotFailed(t)
+		req1.WithJSON(map[string]interface{}{"a": "b"})
+		req1.chain.assertFailed(t)
+
+		req2 := NewRequestC(config, "METHOD", "url")
+		req2.WithText("")
+		req2.chain.assertNotFailed(t)
+		req2.WithForm(map[string]interface{}{"a": "b"})
+		req2.chain.assertFailed(t)
+
+		req3 := NewRequestC(config, "METHOD", "url")
+		req3.WithText("")
+		req3.chain.assertNotFailed(t)
+		req3.WithFormField("a", "b")
+		req3.chain.assertFailed(t)
+
+		req4 := NewRequestC(config, "METHOD", "url")
+		req4.WithText("")
+		req4.chain.assertNotFailed(t)
+		req4.WithMultipart()
+		req4.chain.assertFailed(t)
+	})
+
+	t.Run("multipart conflict", func(t *testing.T) {
+		req1 := NewRequestC(config, "METHOD", "url")
+		req1.WithForm(map[string]interface{}{"a": "b"})
+		req1.chain.assertNotFailed(t)
+		req1.WithMultipart()
+		req1.chain.assertFailed(t)
+
+		req2 := NewRequestC(config, "METHOD", "url")
+		req2.WithFormField("a", "b")
+		req2.chain.assertNotFailed(t)
+		req2.WithMultipart()
+		req2.chain.assertFailed(t)
+
+		req3 := NewRequestC(config, "METHOD", "url")
+		req3.WithFileBytes("a", "a", []byte("a"))
+		req3.chain.assertFailed(t)
+	})
+}
+
 func TestRequest_Usage(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -2808,8 +2796,8 @@ func TestRequest_Usage(t *testing.T) {
 			prepFails:   true,
 			expectFails: true,
 		},
-		// WithRedirectPolicy and WithMaxRedirects require
-		// Client to be http.Client, but we use another one
+		// WithRedirectPolicy and WithMaxRedirects require Client
+		// to be http.Client, but we use another one
 		{
 			name:   "WithRedirectPolicy - incompatible client",
 			client: &mockClient{},
