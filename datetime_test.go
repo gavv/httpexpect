@@ -196,49 +196,56 @@ func TestDateTime_IsLesser(t *testing.T) {
 }
 
 func TestDateTime_InRange(t *testing.T) {
-	cases := map[string]struct {
+	cases := []struct {
+		name             string
 		value            time.Time
 		min              time.Time
 		max              time.Time
 		expectInRange    bool
 		expectNotInRange bool
 	}{
-		"value equal to both min and max": {
+		{
+			name:             "value equal to both min and max",
 			value:            time.Unix(0, 1234),
 			min:              time.Unix(0, 1234),
 			max:              time.Unix(0, 1234),
 			expectInRange:    true,
 			expectNotInRange: false,
 		},
-		"value after min and equal to max": {
+		{
+			name:             "value after min and equal to max",
 			value:            time.Unix(0, 1234),
 			min:              time.Unix(0, 1234-1),
 			max:              time.Unix(0, 1234),
 			expectInRange:    true,
 			expectNotInRange: false,
 		},
-		"value equal to min and before max": {
+		{
+			name:             "value equal to min and before max",
 			value:            time.Unix(0, 1234),
 			min:              time.Unix(0, 1234),
 			max:              time.Unix(0, 1234+1),
 			expectInRange:    true,
 			expectNotInRange: false,
 		},
-		"value before range": {
+		{
+			name:             "value before range",
 			value:            time.Unix(0, 1234),
 			min:              time.Unix(0, 1234+1),
 			max:              time.Unix(0, 1234+2),
 			expectInRange:    false,
 			expectNotInRange: true,
 		},
-		"value after range": {
+		{
+			name:             "value after range",
 			value:            time.Unix(0, 1234),
 			min:              time.Unix(0, 1234-2),
 			max:              time.Unix(0, 1234-1),
 			expectInRange:    false,
 			expectNotInRange: true,
 		},
-		"invalid range": {
+		{
+			name:             "invalid range",
 			value:            time.Unix(0, 1234),
 			min:              time.Unix(0, 1234+1),
 			max:              time.Unix(0, 1234-1),
@@ -247,26 +254,26 @@ func TestDateTime_InRange(t *testing.T) {
 		},
 	}
 
-	for name, instance := range cases {
-		t.Run(name, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			if instance.expectInRange {
-				NewDateTime(reporter, instance.value).
-					InRange(instance.min, instance.max).
+			if tc.expectInRange {
+				NewDateTime(reporter, tc.value).
+					InRange(tc.min, tc.max).
 					chain.assertNotFailed(t)
 			} else {
-				NewDateTime(reporter, instance.value).
-					InRange(instance.min, instance.max).
+				NewDateTime(reporter, tc.value).
+					InRange(tc.min, tc.max).
 					chain.assertFailed(t)
 			}
-			if instance.expectNotInRange {
-				NewDateTime(reporter, instance.value).
-					NotInRange(instance.min, instance.max).
+			if tc.expectNotInRange {
+				NewDateTime(reporter, tc.value).
+					NotInRange(tc.min, tc.max).
 					chain.assertNotFailed(t)
 			} else {
-				NewDateTime(reporter, instance.value).
-					NotInRange(instance.min, instance.max).
+				NewDateTime(reporter, tc.value).
+					NotInRange(tc.min, tc.max).
 					chain.assertFailed(t)
 			}
 		})
@@ -274,25 +281,29 @@ func TestDateTime_InRange(t *testing.T) {
 }
 
 func TestDateTime_InList(t *testing.T) {
-	cases := map[string]struct {
+	cases := []struct {
+		name            string
 		value           time.Time
 		list            []time.Time
 		expectInList    bool
 		expectNotInList bool
 	}{
-		"empty list": {
+		{
+			name:            "empty list",
 			value:           time.Unix(0, 1234),
 			list:            []time.Time{},
 			expectInList:    false,
 			expectNotInList: false,
 		},
-		"value present in list": {
+		{
+			name:            "value present in list",
 			value:           time.Unix(0, 1234),
 			list:            []time.Time{time.Unix(0, 1234), time.Unix(0, 1234+1)},
 			expectInList:    true,
 			expectNotInList: false,
 		},
-		"value not present in list": {
+		{
+			name:            "value not present in list",
 			value:           time.Unix(0, 1234),
 			list:            []time.Time{time.Unix(0, 1234-1), time.Unix(0, 1234+1)},
 			expectInList:    false,
@@ -300,26 +311,26 @@ func TestDateTime_InList(t *testing.T) {
 		},
 	}
 
-	for name, instance := range cases {
-		t.Run(name, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			if instance.expectInList {
-				NewDateTime(reporter, instance.value).
-					InList(instance.list...).
+			if tc.expectInList {
+				NewDateTime(reporter, tc.value).
+					InList(tc.list...).
 					chain.assertNotFailed(t)
 			} else {
-				NewDateTime(reporter, instance.value).
-					InList(instance.list...).
+				NewDateTime(reporter, tc.value).
+					InList(tc.list...).
 					chain.assertFailed(t)
 			}
-			if instance.expectNotInList {
-				NewDateTime(reporter, instance.value).
-					NotInList(instance.list...).
+			if tc.expectNotInList {
+				NewDateTime(reporter, tc.value).
+					NotInList(tc.list...).
 					chain.assertNotFailed(t)
 			} else {
-				NewDateTime(reporter, instance.value).
-					NotInList(instance.list...).
+				NewDateTime(reporter, tc.value).
+					NotInList(tc.list...).
 					chain.assertFailed(t)
 			}
 		})

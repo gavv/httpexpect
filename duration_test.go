@@ -174,49 +174,56 @@ func TestDuration_IsLesser(t *testing.T) {
 }
 
 func TestDuration_InRange(t *testing.T) {
-	cases := map[string]struct {
+	cases := []struct {
+		name             string
 		value            time.Duration
 		min              time.Duration
 		max              time.Duration
 		expectInRange    bool
 		expectNotInRange bool
 	}{
-		"value equal to both min and max": {
+		{
+			name:             "value equal to both min and max",
 			value:            time.Second,
 			min:              time.Second,
 			max:              time.Second,
 			expectInRange:    true,
 			expectNotInRange: false,
 		},
-		"value greater than min and equal to max": {
+		{
+			name:             "value greater than min and equal to max",
 			value:            time.Second,
 			min:              time.Second - 1,
 			max:              time.Second,
 			expectInRange:    true,
 			expectNotInRange: false,
 		},
-		"value equal to min and smaller than max": {
+		{
+			name:             "value equal to min and smaller than max",
 			value:            time.Second,
 			min:              time.Second,
 			max:              time.Second + 1,
 			expectInRange:    true,
 			expectNotInRange: false,
 		},
-		"value smaller than min": {
+		{
+			name:             "value smaller than min",
 			value:            time.Second,
 			min:              time.Second + 1,
 			max:              time.Second + 2,
 			expectInRange:    false,
 			expectNotInRange: true,
 		},
-		"value greater than max": {
+		{
+			name:             "value greater than max",
 			value:            time.Second,
 			min:              time.Second - 2,
 			max:              time.Second - 1,
 			expectInRange:    false,
 			expectNotInRange: true,
 		},
-		"min smaller than max": {
+		{
+			name:             "min smaller than max",
 			value:            time.Second,
 			min:              time.Second + 1,
 			max:              time.Second - 1,
@@ -225,26 +232,26 @@ func TestDuration_InRange(t *testing.T) {
 		},
 	}
 
-	for name, instance := range cases {
-		t.Run(name, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			if instance.expectInRange {
-				NewDuration(reporter, instance.value).
-					InRange(instance.min, instance.max).
+			if tc.expectInRange {
+				NewDuration(reporter, tc.value).
+					InRange(tc.min, tc.max).
 					chain.assertNotFailed(t)
 			} else {
-				NewDuration(reporter, instance.value).
-					InRange(instance.min, instance.max).
+				NewDuration(reporter, tc.value).
+					InRange(tc.min, tc.max).
 					chain.assertFailed(t)
 			}
-			if instance.expectNotInRange {
-				NewDuration(reporter, instance.value).
-					NotInRange(instance.min, instance.max).
+			if tc.expectNotInRange {
+				NewDuration(reporter, tc.value).
+					NotInRange(tc.min, tc.max).
 					chain.assertNotFailed(t)
 			} else {
-				NewDuration(reporter, instance.value).
-					NotInRange(instance.min, instance.max).
+				NewDuration(reporter, tc.value).
+					NotInRange(tc.min, tc.max).
 					chain.assertFailed(t)
 			}
 		})
@@ -252,25 +259,29 @@ func TestDuration_InRange(t *testing.T) {
 }
 
 func TestDuration_InList(t *testing.T) {
-	cases := map[string]struct {
+	cases := []struct {
+		name            string
 		value           time.Duration
 		list            []time.Duration
 		expectInList    bool
 		expectNotInList bool
 	}{
-		"empty list": {
+		{
+			name:            "empty list",
 			value:           time.Second,
 			list:            []time.Duration{},
 			expectInList:    false,
 			expectNotInList: false,
 		},
-		"value present in list": {
+		{
+			name:            "value present in list",
 			value:           time.Second,
 			list:            []time.Duration{time.Second, time.Minute},
 			expectInList:    true,
 			expectNotInList: false,
 		},
-		"value not present in list": {
+		{
+			name:            "value not present in list",
 			value:           time.Second,
 			list:            []time.Duration{time.Second - 1, time.Second + 1},
 			expectInList:    false,
@@ -278,26 +289,26 @@ func TestDuration_InList(t *testing.T) {
 		},
 	}
 
-	for name, instance := range cases {
-		t.Run(name, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			if instance.expectInList {
-				NewDuration(reporter, instance.value).
-					InList(instance.list...).
+			if tc.expectInList {
+				NewDuration(reporter, tc.value).
+					InList(tc.list...).
 					chain.assertNotFailed(t)
 			} else {
-				NewDuration(reporter, instance.value).
-					InList(instance.list...).
+				NewDuration(reporter, tc.value).
+					InList(tc.list...).
 					chain.assertFailed(t)
 			}
-			if instance.expectNotInList {
-				NewDuration(reporter, instance.value).
-					NotInList(instance.list...).
+			if tc.expectNotInList {
+				NewDuration(reporter, tc.value).
+					NotInList(tc.list...).
 					chain.assertNotFailed(t)
 			} else {
-				NewDuration(reporter, instance.value).
-					NotInList(instance.list...).
+				NewDuration(reporter, tc.value).
+					NotInList(tc.list...).
 					chain.assertFailed(t)
 			}
 		})
