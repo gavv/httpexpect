@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"text/template"
 	"time"
 
 	"github.com/stretchr/testify/assert"
@@ -787,4 +788,64 @@ func TestFormatter_FormatDiff(t *testing.T) {
 
 	checkOK(map[string]interface{}{"a": 1}, map[string]interface{}{})
 	checkOK([]interface{}{"a"}, []interface{}{})
+}
+
+func TestFormatter_CustomTemplate(t *testing.T) {
+	formatter := &DefaultFormatter{
+		DisableNames:    false,
+		SuccessTemplate: "{{ .TestName | underscore }} is OK",
+		FailureTemplate: `{{ .TestName | underscore }} failed.
+Expected {{ index .Expected 0 }}, but got {{ .Actual }}`,
+		TemplateFuncs: template.FuncMap{
+			"underscore": func(s string) string {
+				var sb strings.Builder
+
+				elems := strings.Split(s, " ")
+				sb.WriteString(strings.Join(elems, "_"))
+
+				return sb.String()
+			},
+		},
+	}
+
+	ctx := &AssertionContext{
+		TestName: "Formatter test",
+	}
+
+	t.Run("custom success template", func(t *testing.T) {
+		successMsg := formatter.FormatSuccess(ctx)
+		assert.Equal(t, "Formatter_test is OK", successMsg)
+	})
+
+	t.Run("custom failure template", func(t *testing.T) {
+		failure := &AssertionFailure{
+			Type:     AssertEqual,
+			Actual:   &AssertionValue{"Foo"},
+			Expected: &AssertionValue{"Bar"},
+		}
+		failureMsg := formatter.FormatFailure(ctx, failure)
+		expectedFailureMsg := `Formatter_test failed.
+Expected "Bar", but got "Foo"`
+		assert.Equal(t, expectedFailureMsg, failureMsg)
+	})
+
+	t.Run("invalid template", func(t *testing.T) {
+		formatter := &DefaultFormatter{
+			SuccessTemplate: "{{ TestName }} is OK",
+		}
+		panicTestFunc := func() {
+			formatter.FormatSuccess(&AssertionContext{TestName: "Formatter Test"})
+		}
+		assert.Panics(t, panicTestFunc)
+	})
+
+	t.Run("template trying to access non-existent field", func(t *testing.T) {
+		formatter := &DefaultFormatter{
+			SuccessTemplate: "{{ .Test }} is OK",
+		}
+		panicTestFunc := func() {
+			formatter.FormatSuccess(&AssertionContext{})
+		}
+		assert.Panics(t, panicTestFunc)
+	})
 }
