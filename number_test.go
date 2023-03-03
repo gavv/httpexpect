@@ -161,34 +161,34 @@ func TestNumber_Getters(t *testing.T) {
 func TestNumber_IsEqual(t *testing.T) {
 	t.Run("basic", func(t *testing.T) {
 		cases := []struct {
-			name      string
-			number    float64
-			reference interface{}
-			isEqual   bool
+			name    string
+			number  float64
+			value   interface{}
+			isEqual bool
 		}{
 			{
-				name:      "compare equivalent integers",
-				number:    1234,
-				reference: 1234,
-				isEqual:   true,
+				name:    "compare equivalent integers",
+				number:  1234,
+				value:   1234,
+				isEqual: true,
 			},
 			{
-				name:      "compare non-equivalent integers",
-				number:    1234,
-				reference: 4321,
-				isEqual:   false,
+				name:    "compare non-equivalent integers",
+				number:  1234,
+				value:   4321,
+				isEqual: false,
 			},
 			{
-				name:      "compare NaN to float",
-				number:    math.NaN(),
-				reference: 1234.5,
-				isEqual:   false,
+				name:    "compare NaN to float",
+				number:  math.NaN(),
+				value:   1234.5,
+				isEqual: false,
 			},
 			{
-				name:      "compare float to NaN",
-				number:    1234.5,
-				reference: math.NaN(),
-				isEqual:   false,
+				name:    "compare float to NaN",
+				number:  1234.5,
+				value:   math.NaN(),
+				isEqual: false,
 			},
 		}
 
@@ -198,22 +198,19 @@ func TestNumber_IsEqual(t *testing.T) {
 
 				if instance.isEqual {
 					NewNumber(reporter, instance.number).
-						IsEqual(instance.reference).
+						IsEqual(instance.value).
 						chain.assertNotFailed(t)
 
 					NewNumber(reporter, instance.number).
-						NotEqual(instance.reference).
+						NotEqual(instance.value).
 						chain.assertFailed(t)
-
-					assert.Equal(t, instance.reference,
-						int(NewNumber(reporter, instance.number).Raw()))
 				} else {
 					NewNumber(reporter, instance.number).
-						NotEqual(instance.reference).
+						NotEqual(instance.value).
 						chain.assertNotFailed(t)
 
 					NewNumber(reporter, instance.number).
-						IsEqual(instance.reference).
+						IsEqual(instance.value).
 						chain.assertFailed(t)
 				}
 			})
@@ -251,55 +248,55 @@ func TestNumber_InDelta(t *testing.T) {
 	cases := []struct {
 		name         string
 		number       float64
-		reference    float64
+		value        float64
 		delta        float64
 		isInDelta    bool
 		isNotInDelta bool
 	}{
 		{
-			name:         "larger reference in delta range",
+			name:         "larger value in delta range",
 			number:       1234.5,
-			reference:    1234.7,
+			value:        1234.7,
 			delta:        0.3,
 			isInDelta:    true,
 			isNotInDelta: false,
 		},
 		{
-			name:         "smaller reference in delta range",
+			name:         "smaller value in delta range",
 			number:       1234.5,
-			reference:    1234.3,
+			value:        1234.3,
 			delta:        0.3,
 			isInDelta:    true,
 			isNotInDelta: false,
 		},
 		{
-			name:         "larger reference not in delta range",
+			name:         "larger value not in delta range",
 			number:       1234.5,
-			reference:    1234.7,
+			value:        1234.7,
 			delta:        0.1,
 			isInDelta:    false,
 			isNotInDelta: true,
 		},
 		{
-			name:         "smaller reference not in delta range",
+			name:         "smaller value not in delta range",
 			number:       1234.5,
-			reference:    1234.3,
+			value:        1234.3,
 			delta:        0.1,
 			isInDelta:    false,
 			isNotInDelta: true,
 		},
 		{
-			name:         "target is NaN",
+			name:         "number is NaN",
 			number:       math.NaN(),
-			reference:    1234.0,
+			value:        1234.0,
 			delta:        0.1,
 			isInDelta:    false,
 			isNotInDelta: false,
 		},
 		{
-			name:         "reference is NaN",
+			name:         "value is NaN",
 			number:       1234.5,
-			reference:    math.NaN(),
+			value:        math.NaN(),
 			delta:        0.1,
 			isInDelta:    false,
 			isNotInDelta: false,
@@ -307,7 +304,7 @@ func TestNumber_InDelta(t *testing.T) {
 		{
 			name:         "delta is NaN",
 			number:       1234.5,
-			reference:    1234.0,
+			value:        1234.0,
 			delta:        math.NaN(),
 			isInDelta:    false,
 			isNotInDelta: false,
@@ -320,21 +317,21 @@ func TestNumber_InDelta(t *testing.T) {
 
 			if instance.isInDelta {
 				NewNumber(reporter, instance.number).
-					InDelta(instance.reference, instance.delta).
+					InDelta(instance.value, instance.delta).
 					chain.assertNotFailed(t)
 			} else {
 				NewNumber(reporter, instance.number).
-					InDelta(instance.reference, instance.delta).
+					InDelta(instance.value, instance.delta).
 					chain.assertFailed(t)
 			}
 
 			if instance.isNotInDelta {
 				NewNumber(reporter, instance.number).
-					NotInDelta(instance.reference, instance.delta).
+					NotInDelta(instance.value, instance.delta).
 					chain.assertNotFailed(t)
 			} else {
 				NewNumber(reporter, instance.number).
-					NotInDelta(instance.reference, instance.delta).
+					NotInDelta(instance.value, instance.delta).
 					chain.assertFailed(t)
 			}
 		})
@@ -506,6 +503,13 @@ func TestNumber_InList(t *testing.T) {
 				isNotInList: false,
 			},
 			{
+				name:        "empty list",
+				number:      1234,
+				list:        []interface{}{},
+				isInList:    false,
+				isNotInList: false,
+			},
+			{
 				name:        "in integer list",
 				number:      1234,
 				list:        []interface{}{1234, 4567},
@@ -621,32 +625,32 @@ func TestNumber_InList(t *testing.T) {
 func TestNumber_IsGreater(t *testing.T) {
 	t.Run("basic", func(t *testing.T) {
 		cases := []struct {
-			name      string
-			number    float64
-			reference interface{}
-			isGt      bool
-			isGe      bool
+			name   string
+			number float64
+			value  interface{}
+			isGt   bool
+			isGe   bool
 		}{
 			{
-				name:      "number is lesser",
-				number:    1234,
-				reference: 1234 + 1,
-				isGt:      false,
-				isGe:      false,
+				name:   "number is lesser",
+				number: 1234,
+				value:  1234 + 1,
+				isGt:   false,
+				isGe:   false,
 			},
 			{
-				name:      "number is equal",
-				number:    1234,
-				reference: 1234,
-				isGt:      false,
-				isGe:      true,
+				name:   "number is equal",
+				number: 1234,
+				value:  1234,
+				isGt:   false,
+				isGe:   true,
 			},
 			{
-				name:      "number is greater",
-				number:    1234,
-				reference: 1234 - 1,
-				isGt:      true,
-				isGe:      true,
+				name:   "number is greater",
+				number: 1234,
+				value:  1234 - 1,
+				isGt:   true,
+				isGe:   true,
 			},
 		}
 
@@ -656,21 +660,21 @@ func TestNumber_IsGreater(t *testing.T) {
 
 				if instance.isGt {
 					NewNumber(reporter, instance.number).
-						Gt(instance.reference).
+						Gt(instance.value).
 						chain.assertNotFailed(t)
 				} else {
 					NewNumber(reporter, instance.number).
-						Gt(instance.reference).
+						Gt(instance.value).
 						chain.assertFailed(t)
 				}
 
 				if instance.isGe {
 					NewNumber(reporter, instance.number).
-						Ge(instance.reference).
+						Ge(instance.value).
 						chain.assertNotFailed(t)
 				} else {
 					NewNumber(reporter, instance.number).
-						Ge(instance.reference).
+						Ge(instance.value).
 						chain.assertFailed(t)
 				}
 			})
@@ -707,32 +711,32 @@ func TestNumber_IsGreater(t *testing.T) {
 func TestNumber_IsLesser(t *testing.T) {
 	t.Run("basic", func(t *testing.T) {
 		cases := []struct {
-			name      string
-			number    float64
-			reference interface{}
-			isLt      bool
-			isLe      bool
+			name   string
+			number float64
+			value  interface{}
+			isLt   bool
+			isLe   bool
 		}{
 			{
-				name:      "number is lesser",
-				number:    1234,
-				reference: 1234 + 1,
-				isLt:      true,
-				isLe:      true,
+				name:   "number is lesser",
+				number: 1234,
+				value:  1234 + 1,
+				isLt:   true,
+				isLe:   true,
 			},
 			{
-				name:      "number is equal",
-				number:    1234,
-				reference: 1234,
-				isLt:      false,
-				isLe:      true,
+				name:   "number is equal",
+				number: 1234,
+				value:  1234,
+				isLt:   false,
+				isLe:   true,
 			},
 			{
-				name:      "number is greater",
-				number:    1234,
-				reference: 1234 - 1,
-				isLt:      false,
-				isLe:      false,
+				name:   "number is greater",
+				number: 1234,
+				value:  1234 - 1,
+				isLt:   false,
+				isLe:   false,
 			},
 		}
 
@@ -742,21 +746,21 @@ func TestNumber_IsLesser(t *testing.T) {
 
 				if instance.isLt {
 					NewNumber(reporter, instance.number).
-						Lt(instance.reference).
+						Lt(instance.value).
 						chain.assertNotFailed(t)
 				} else {
 					NewNumber(reporter, instance.number).
-						Lt(instance.reference).
+						Lt(instance.value).
 						chain.assertFailed(t)
 				}
 
 				if instance.isLe {
 					NewNumber(reporter, instance.number).
-						Le(instance.reference).
+						Le(instance.value).
 						chain.assertNotFailed(t)
 				} else {
 					NewNumber(reporter, instance.number).
-						Le(instance.reference).
+						Le(instance.value).
 						chain.assertFailed(t)
 				}
 			})
