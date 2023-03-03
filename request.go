@@ -2232,7 +2232,7 @@ func (r *Request) retryRequest(reqFunc func() (*http.Response, error)) (
 
 		if resp != nil && resp.Body != nil {
 			if r.limit != 0 {
-				resp.Body, err = newBodyWrapperLimit(resp.Body, cancelFn, r.limit)
+				resp.Body, err = newBWLimit(resp.Body, cancelFn, r.limit)
 				if err != nil {
 					return nil, 0, err
 				}
