@@ -390,8 +390,15 @@ func TestNumber_InDeltaRelative(t *testing.T) {
 			expectInDelta:    true,
 			expectNotInDelta: false,
 		},
-		"+Inf target and -Inf reference": {
+		"+Inf target": {
 			number:           math.Inf(1),
+			reference:        1234.0,
+			delta:            0,
+			expectInDelta:    false,
+			expectNotInDelta: false,
+		},
+		"-Inf reference": {
+			number:           1234.5,
 			reference:        math.Inf(-1),
 			delta:            0,
 			expectInDelta:    false,
