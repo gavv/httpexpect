@@ -282,7 +282,8 @@ func (n *Number) NotInDelta(value, delta float64) *Number {
 // A number and a value are within relative delta if
 // Abs(number-value) / Abs(number) < relative delta.
 //
-// Please note that number, value, and delta can't be NaN.
+// Please note that number, value, and delta can't be NaN and number and value can't
+// be Inf.
 //
 // Example:
 //
@@ -402,7 +403,8 @@ func (n *Number) InDeltaRelative(value, delta float64) *Number {
 // A number and a value are within relative delta if
 // Abs(number-value) / Abs(number) < relative delta.
 //
-// Please note that number, value, and delta can't be NaN.
+// Please note that number, value, and delta can't be NaN and number and value can't
+// be Inf.
 //
 // Example:
 //
