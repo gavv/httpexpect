@@ -2696,113 +2696,170 @@ func TestRequest_Retries(t *testing.T) {
 }
 
 func TestRequest_Usage(t *testing.T) {
-	config := Config{
-		Reporter: newMockReporter(t),
+	tests := []struct {
+		name        string
+		client      Client
+		prepFunc    func(req *Request)
+		prepFails   bool
+		expectFails bool
+	}{
+		{
+			name:   "with matcher",
+			client: nil,
+			prepFunc: func(req *Request) {
+				req.WithMatcher(nil)
+			},
+			prepFails:   true,
+			expectFails: true,
+		},
+		{
+			name:   "with transformer",
+			client: nil,
+			prepFunc: func(req *Request) {
+				req.WithTransformer(nil)
+			},
+			prepFails:   true,
+			expectFails: true,
+		},
+		{
+			name:   "with client",
+			client: nil,
+			prepFunc: func(req *Request) {
+				req.WithClient(nil)
+			},
+			prepFails:   true,
+			expectFails: true,
+		},
+		{
+			name:   "with handler",
+			client: nil,
+			prepFunc: func(req *Request) {
+				req.WithHandler(nil)
+			},
+			prepFails:   true,
+			expectFails: true,
+		},
+		{
+			name:   "with context",
+			client: nil,
+			prepFunc: func(req *Request) {
+				req.WithContext(nil) //nolint
+			},
+			prepFails:   true,
+			expectFails: true,
+		},
+		{
+			name:   "max redirects method fail",
+			client: nil,
+			prepFunc: func(req *Request) {
+				req.WithMaxRedirects(-1)
+			},
+			prepFails:   true,
+			expectFails: true,
+		},
+		{
+			name:   "with max retries",
+			client: nil,
+			prepFunc: func(req *Request) {
+				req.WithMaxRetries(-1)
+			},
+			prepFails:   true,
+			expectFails: true,
+		},
+		{
+			name:   "with retry delay",
+			client: nil,
+			prepFunc: func(req *Request) {
+				req.WithRetryDelay(10, 5)
+			},
+			prepFails:   true,
+			expectFails: true,
+		},
+		{
+			name:   "with websocket dialer",
+			client: nil,
+			prepFunc: func(req *Request) {
+				req.WithWebsocketDialer(nil)
+			},
+			prepFails:   true,
+			expectFails: true,
+		},
+		{
+			name:   "with path",
+			client: nil,
+			prepFunc: func(req *Request) {
+				req.WithPath("test-path", nil)
+			},
+			prepFails:   true,
+			expectFails: true,
+		},
+		{
+			name:   "with query",
+			client: nil,
+			prepFunc: func(req *Request) {
+				req.WithPath("test-query", nil)
+			},
+			prepFails:   true,
+			expectFails: true,
+		},
+		{
+			name:   "with url",
+			client: nil,
+			prepFunc: func(req *Request) {
+				req.WithURL("%-invalid-url")
+			},
+			prepFails:   true,
+			expectFails: true,
+		},
+		{
+			name:   "with file",
+			client: nil,
+			prepFunc: func(req *Request) {
+				req.WithFile("test-key", "test-path", nil, nil)
+			},
+			prepFails:   true,
+			expectFails: true,
+		},
+		// WithRedirectPolicy and WithMaxRedirects requires
+		// Client to be http.Client, but we use another one.
+		{
+			name:   "with redirect policy",
+			client: &mockClient{},
+			prepFunc: func(req *Request) {
+				req.WithRedirectPolicy(FollowAllRedirects)
+			},
+			prepFails:   false,
+			expectFails: true,
+		},
+		{
+			name:   "max redirects Expect() fail",
+			client: &mockClient{},
+			prepFunc: func(req *Request) {
+				req.WithMaxRedirects(1)
+			},
+			prepFails:   false,
+			expectFails: true,
+		},
 	}
 
-	t.Run("WithMatcher", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "/")
-		req.WithMatcher(nil)
-		req.chain.assertFailed(t)
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := Config{
+				Client:   tt.client,
+				Reporter: newMockReporter(t),
+			}
 
-	t.Run("WithTransformer", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "/")
-		req.WithTransformer(nil)
-		req.chain.assertFailed(t)
-	})
+			req := NewRequestC(config, "METHOD", "/")
 
-	t.Run("WithClient", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "/")
-		req.WithClient(nil)
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithHandler", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "/")
-		req.WithHandler(nil)
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithContext", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "/")
-		req.WithContext(nil) // nolint
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithMaxRedirects", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "/")
-		req.WithMaxRedirects(-1)
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithMaxRetries", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "/")
-		req.WithMaxRetries(-1)
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithRetryDelay", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "/")
-		req.WithRetryDelay(10, 5)
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithWebsocketDialer", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "/")
-		req.WithWebsocketDialer(nil)
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithPath", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "/")
-		req.WithPath("test-path", nil)
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithQuery", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "/")
-		req.WithQuery("test-query", nil)
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithURL", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "/")
-		req.WithURL("%-invalid-url")
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithFile", func(t *testing.T) {
-		req := NewRequestC(config, "METHOD", "/")
-		req.WithFile("test-key", "test-path", nil, nil)
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithRedirectPolicy bad Client", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			// WithRedirectPolicy requires Client to be http.Client,
-			// but we use another one
-			Client: &mockClient{},
-		}
-		req := NewRequestC(config, "METHOD", "/")
-		req.WithRedirectPolicy(FollowAllRedirects)
-		req.Expect()
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithMaxRedirects bad Client", func(t *testing.T) {
-		config := Config{
-			Reporter: newMockReporter(t),
-			// WithMaxRedirects requires Client to be http.Client,
-			// but we use another one
-			Client: &mockClient{},
-		}
-		req := NewRequestC(config, "METHOD", "/")
-		req.WithMaxRedirects(1)
-		req.Expect()
-		req.chain.assertFailed(t)
-	})
+			if !(tt.prepFails && tt.expectFails) {
+				tt.prepFunc(req)
+				req.Expect().chain.assertFailed(t)
+			} else {
+				tt.prepFunc(req)
+				req.chain.assertFailed(t)
+			}
+		})
+	}
 }
 
 func TestRequest_Order(t *testing.T) {
