@@ -640,7 +640,14 @@ func TestArray_IsEqualUnordered(t *testing.T) {
 
 		value := NewArray(reporter, []interface{}{123, 456, "foo"})
 
-		assert.Equal(t, []interface{}{json.Number("123"), json.Number("456"), "foo"}, value.Raw())
+		assert.Equal(t,
+			[]interface{}{
+				json.Number("123"),
+				json.Number("456"),
+				"foo",
+			},
+			value.Raw(),
+		)
 
 		value.IsEqualUnordered(myArray{myInt(456), 123.0, "foo"})
 		value.chain.assertNotFailed(t)
@@ -1554,7 +1561,14 @@ func TestArray_Transform(t *testing.T) {
 			return val
 		})
 
-		assert.Equal(t, []interface{}{json.Number("1"), json.Number("2"), json.Number("3")}, newArray.value)
+		assert.Equal(t,
+			[]interface{}{
+				json.Number("1"),
+				json.Number("2"),
+				json.Number("3"),
+			},
+			newArray.value,
+		)
 		newArray.chain.assertNotFailed(t)
 	})
 
@@ -1711,7 +1725,17 @@ func TestArray_Filter(t *testing.T) {
 		})
 
 		assert.Equal(t, []interface{}{"foo", "baz"}, filteredArray.Raw())
-		assert.Equal(t, array.Raw(), []interface{}{json.Number("1"), "foo", "bar", json.Number("4"), "baz", json.Number("6")})
+		assert.Equal(t,
+			array.Raw(),
+			[]interface{}{
+				json.Number("1"),
+				"foo",
+				"bar",
+				json.Number("4"),
+				"baz",
+				json.Number("6"),
+			},
+		)
 
 		array.chain.assertNotFailed(t)
 		filteredArray.chain.assertNotFailed(t)
@@ -1864,7 +1888,17 @@ func TestArray_FindAll(t *testing.T) {
 		}
 
 		assert.Equal(t, []interface{}{json.Number("2"), json.Number("5")}, actual)
-		assert.Equal(t, array.Raw(), []interface{}{json.Number("1"), json.Number("2"), json.Number("3"), json.Number("4"), json.Number("5"), json.Number("6")})
+		assert.Equal(t,
+			array.Raw(),
+			[]interface{}{
+				json.Number("1"),
+				json.Number("2"),
+				json.Number("3"),
+				json.Number("4"),
+				json.Number("5"),
+				json.Number("6"),
+			},
+		)
 
 		array.chain.assertNotFailed(t)
 		for _, value := range foundValues {
@@ -1977,7 +2011,15 @@ func TestArray_FindAll(t *testing.T) {
 		}
 
 		assert.Equal(t, []interface{}{"foo", "bar"}, actual)
-		assert.Equal(t, []interface{}{"foo", json.Number("1"), json.Number("2"), "bar"}, array.Raw())
+		assert.Equal(t,
+			[]interface{}{
+				"foo",
+				json.Number("1"),
+				json.Number("2"),
+				"bar",
+			},
+			array.Raw(),
+		)
 
 		array.chain.assertNotFailed(t)
 		for _, value := range foundValues {

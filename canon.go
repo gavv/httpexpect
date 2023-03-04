@@ -77,6 +77,22 @@ func canonConvertNumberNative(
 	case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint:
 		int := value.Uint()
 		return big.NewFloat(0).SetUint64(int), true
+	case reflect.Invalid,
+		reflect.Bool,
+		reflect.Uintptr,
+		reflect.Complex64,
+		reflect.Complex128,
+		reflect.Array,
+		reflect.Chan,
+		reflect.Func,
+		reflect.Interface,
+		reflect.Map,
+		reflect.Slice,
+		reflect.String,
+		reflect.Struct,
+		reflect.Pointer,
+		reflect.UnsafePointer:
+		return big.NewFloat(0), false
 	default:
 		return big.NewFloat(0), false
 	}
@@ -198,45 +214,33 @@ func canonNumberDecode(opChain *chain, value big.Float, target interface{}) {
 	}
 	t := reflect.Indirect(reflect.ValueOf(target)).Kind()
 	switch t {
-	case reflect.Float64:
+	case reflect.Float64, reflect.Interface:
 		f, _ := value.Float64()
 		canonDecode(opChain, f, target)
 	case reflect.Float32:
 		f, _ := value.Float32()
 		canonDecode(opChain, f, target)
-	case reflect.Int8:
+	case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Int:
 		i, _ := value.Int64()
 		canonDecode(opChain, i, target)
-	case reflect.Int16:
+	case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint:
 		i, _ := value.Int64()
 		canonDecode(opChain, i, target)
-	case reflect.Int32:
-		i, _ := value.Int64()
-		canonDecode(opChain, i, target)
-	case reflect.Int64:
-		i, _ := value.Int64()
-		canonDecode(opChain, i, target)
-	case reflect.Int:
-		i, _ := value.Int64()
-		canonDecode(opChain, i, target)
-	case reflect.Uint8:
-		i, _ := value.Int64()
-		canonDecode(opChain, i, target)
-	case reflect.Uint16:
-		i, _ := value.Int64()
-		canonDecode(opChain, i, target)
-	case reflect.Uint32:
-		i, _ := value.Int64()
-		canonDecode(opChain, i, target)
-	case reflect.Uint64:
-		i, _ := value.Int64()
-		canonDecode(opChain, i, target)
-	case reflect.Uint:
-		i, _ := value.Int64()
-		canonDecode(opChain, i, target)
-	case reflect.Interface:
-		f, _ := value.Float64()
-		canonDecode(opChain, f, target)
+	case reflect.Invalid,
+		reflect.Bool,
+		reflect.Uintptr,
+		reflect.Complex64,
+		reflect.Complex128,
+		reflect.Array,
+		reflect.Chan,
+		reflect.Func,
+		reflect.Map,
+		reflect.Slice,
+		reflect.String,
+		reflect.Struct,
+		reflect.Pointer,
+		reflect.UnsafePointer:
+		canonDecode(opChain, value, target)
 	default:
 		canonDecode(opChain, value, target)
 	}
