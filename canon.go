@@ -90,7 +90,7 @@ func canonConvertNumberNative(
 		reflect.Slice,
 		reflect.String,
 		reflect.Struct,
-		reflect.Pointer,
+		reflect.Ptr,
 		reflect.UnsafePointer:
 		return big.NewFloat(0), false
 	default:
@@ -238,7 +238,7 @@ func canonNumberDecode(opChain *chain, value big.Float, target interface{}) {
 		reflect.Slice,
 		reflect.String,
 		reflect.Struct,
-		reflect.Pointer,
+		reflect.Ptr,
 		reflect.UnsafePointer:
 		canonDecode(opChain, value, target)
 	default:
