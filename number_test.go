@@ -294,22 +294,22 @@ func TestNumber_InDelta(t *testing.T) {
 			isInDelta:    false,
 			isNotInDelta: false,
 		},
-		// {
-		// 	name:         "value is NaN",
-		// 	number:       1234.5,
-		// 	value:        math.NaN(),
-		// 	delta:        0.1,
-		// 	isInDelta:    false,
-		// 	isNotInDelta: false,
-		// },
-		// {
-		// 	name:         "delta is NaN",
-		// 	number:       1234.5,
-		// 	value:        1234.0,
-		// 	delta:        math.NaN(),
-		// 	isInDelta:    false,
-		// 	isNotInDelta: false,
-		// },
+		{
+			name:         "value is NaN",
+			number:       1234.5,
+			value:        math.NaN(),
+			delta:        0.1,
+			isInDelta:    false,
+			isNotInDelta: false,
+		},
+		{
+			name:         "delta is NaN",
+			number:       1234.5,
+			value:        1234.0,
+			delta:        math.NaN(),
+			isInDelta:    false,
+			isNotInDelta: false,
+		},
 	}
 
 	for _, tc := range cases {
