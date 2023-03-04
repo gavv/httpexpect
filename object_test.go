@@ -397,29 +397,29 @@ func TestObject_IsEmpty(t *testing.T) {
 }
 
 func TestObject_IsEqual(t *testing.T) {
-	// t.Run("empty", func(t *testing.T) {
-	// 	reporter := newMockReporter(t)
-	//
-	// 	value := NewObject(reporter, map[string]interface{}{})
-	//
-	// 	assert.Equal(t, map[string]interface{}{}, value.Raw())
-	//
-	// 	value.IsEqual(map[string]interface{}{})
-	// 	value.chain.assertNotFailed(t)
-	// 	value.chain.clearFailed()
-	//
-	// 	value.NotEqual(map[string]interface{}{})
-	// 	value.chain.assertFailed(t)
-	// 	value.chain.clearFailed()
-	//
-	// 	value.IsEqual(map[string]interface{}{"": nil})
-	// 	value.chain.assertFailed(t)
-	// 	value.chain.clearFailed()
-	//
-	// 	value.NotEqual(map[string]interface{}{"": nil})
-	// 	value.chain.assertNotFailed(t)
-	// 	value.chain.clearFailed()
-	// })
+	t.Run("empty", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewObject(reporter, map[string]interface{}{})
+
+		assert.Equal(t, map[string]interface{}{}, value.Raw())
+
+		value.IsEqual(map[string]interface{}{})
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
+
+		value.NotEqual(map[string]interface{}{})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.IsEqual(map[string]interface{}{"": nil})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.NotEqual(map[string]interface{}{"": nil})
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
+	})
 
 	t.Run("not empty", func(t *testing.T) {
 		reporter := newMockReporter(t)
