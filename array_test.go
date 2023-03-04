@@ -425,12 +425,57 @@ func TestArray_IsEqual(t *testing.T) {
 		value.chain.clearFailed()
 	})
 
-	t.Run("types", func(t *testing.T) {
+	t.Run("strings", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
-		value1 := NewArray(reporter, []interface{}{"foo", "bar"})
-		value2 := NewArray(reporter, []interface{}{123, 456})
-		value3 := NewArray(reporter, []interface{}{
+		value := NewArray(reporter, []interface{}{"foo", "bar"})
+
+		value.IsEqual([]string{"foo", "bar"})
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
+
+		value.IsEqual([]string{"bar", "foo"})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.NotEqual([]string{"foo", "bar"})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.NotEqual([]string{"bar", "foo"})
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
+	})
+
+	t.Run("numbers", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewArray(reporter, []interface{}{123, 456})
+
+		value.IsEqual([]int{123, 456})
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
+
+		value.IsEqual([]int{456, 123})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.NotEqual([]int{123, 456})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.NotEqual([]int{456, 123})
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
+	})
+
+	t.Run("struct", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		type S struct {
+			Foo int `json:"foo"`
+		}
+
+		value := NewArray(reporter, []interface{}{
 			map[string]interface{}{
 				"foo": 123,
 			},
@@ -439,57 +484,21 @@ func TestArray_IsEqual(t *testing.T) {
 			},
 		})
 
-		value1.IsEqual([]string{"foo", "bar"})
-		value1.chain.assertNotFailed(t)
-		value1.chain.clearFailed()
+		value.IsEqual([]S{{123}, {456}})
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 
-		value1.IsEqual([]string{"bar", "foo"})
-		value1.chain.assertFailed(t)
-		value1.chain.clearFailed()
+		value.IsEqual([]S{{456}, {123}})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
 
-		value1.NotEqual([]string{"foo", "bar"})
-		value1.chain.assertFailed(t)
-		value1.chain.clearFailed()
+		value.NotEqual([]S{{123}, {456}})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
 
-		value1.NotEqual([]string{"bar", "foo"})
-		value1.chain.assertNotFailed(t)
-		value1.chain.clearFailed()
-
-		value2.IsEqual([]int{123, 456})
-		value2.chain.assertNotFailed(t)
-		value2.chain.clearFailed()
-
-		value2.IsEqual([]int{456, 123})
-		value2.chain.assertFailed(t)
-		value2.chain.clearFailed()
-
-		value2.NotEqual([]int{123, 456})
-		value2.chain.assertFailed(t)
-		value2.chain.clearFailed()
-
-		value2.NotEqual([]int{456, 123})
-		value2.chain.assertNotFailed(t)
-		value2.chain.clearFailed()
-
-		type S struct {
-			Foo int `json:"foo"`
-		}
-
-		value3.IsEqual([]S{{123}, {456}})
-		value3.chain.assertNotFailed(t)
-		value3.chain.clearFailed()
-
-		value3.IsEqual([]S{{456}, {123}})
-		value3.chain.assertFailed(t)
-		value3.chain.clearFailed()
-
-		value3.NotEqual([]S{{123}, {456}})
-		value3.chain.assertFailed(t)
-		value3.chain.clearFailed()
-
-		value3.NotEqual([]S{{456}, {123}})
-		value3.chain.assertNotFailed(t)
-		value3.chain.clearFailed()
+		value.NotEqual([]S{{456}, {123}})
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 	})
 
 	t.Run("canonization", func(t *testing.T) {
@@ -2077,7 +2086,7 @@ func TestArray_IsOrdered(t *testing.T) {
 		less        []func(x, y *Value) bool
 		chainFailed bool
 	}
-	tests := []struct {
+	cases := []struct {
 		name        string
 		args        args
 		isInvalid   bool
@@ -2297,48 +2306,48 @@ func TestArray_IsOrdered(t *testing.T) {
 			isInvalid: true,
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			if tt.isInvalid {
+			if tc.isInvalid {
 				t.Run("normal", func(t *testing.T) {
-					NewArray(reporter, tt.args.values).IsOrdered(tt.args.less...).
+					NewArray(reporter, tc.args.values).IsOrdered(tc.args.less...).
 						chain.assertFailed(t)
 
-					NewArray(reporter, tt.args.values).NotOrdered(tt.args.less...).
+					NewArray(reporter, tc.args.values).NotOrdered(tc.args.less...).
 						chain.assertFailed(t)
 				})
 
 				t.Run("reversed", func(t *testing.T) {
 					// reverse slice
-					sort.SliceStable(tt.args.values, func(i, j int) bool {
+					sort.SliceStable(tc.args.values, func(i, j int) bool {
 						return i > j
 					})
 
-					NewArray(reporter, tt.args.values).IsOrdered(tt.args.less...).
+					NewArray(reporter, tc.args.values).IsOrdered(tc.args.less...).
 						chain.assertFailed(t)
 
-					NewArray(reporter, tt.args.values).NotOrdered(tt.args.less...).
+					NewArray(reporter, tc.args.values).NotOrdered(tc.args.less...).
 						chain.assertFailed(t)
 				})
 			} else {
 				t.Run("is ordered", func(t *testing.T) {
-					if tt.isOrdered {
-						NewArray(reporter, tt.args.values).IsOrdered(tt.args.less...).
+					if tc.isOrdered {
+						NewArray(reporter, tc.args.values).IsOrdered(tc.args.less...).
 							chain.assertNotFailed(t)
 					} else {
-						NewArray(reporter, tt.args.values).IsOrdered(tt.args.less...).
+						NewArray(reporter, tc.args.values).IsOrdered(tc.args.less...).
 							chain.assertFailed(t)
 					}
 				})
 
 				t.Run("not ordered", func(t *testing.T) {
-					if tt.isUnordered {
-						NewArray(reporter, tt.args.values).NotOrdered(tt.args.less...).
+					if tc.isUnordered {
+						NewArray(reporter, tc.args.values).NotOrdered(tc.args.less...).
 							chain.assertNotFailed(t)
 					} else {
-						NewArray(reporter, tt.args.values).NotOrdered(tt.args.less...).
+						NewArray(reporter, tc.args.values).NotOrdered(tc.args.less...).
 							chain.assertFailed(t)
 					}
 				})

@@ -12,7 +12,7 @@ import (
 type Number struct {
 	noCopy noCopy
 	chain  *chain
-	value  big.Float
+	value  *big.Float
 }
 
 // NewNumber returns a new Number instance.
@@ -78,7 +78,7 @@ func (n *Number) Decode(target interface{}) *Number {
 		return n
 	}
 
-	canonNumberDecode(opChain, n.value, target)
+	canonNumberDecode(opChain, *n.value, target)
 	return n
 }
 
@@ -139,7 +139,7 @@ func (n *Number) IsEqual(value interface{}) *Number {
 		return n
 	}
 
-	if n.value.Cmp(&num) != 0 {
+	if n.value == nil || n.value.Cmp(num) != 0 {
 		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{n.value},
@@ -171,9 +171,19 @@ func (n *Number) NotEqual(value interface{}) *Number {
 		return n
 	}
 
-	num, ok := canonNumber(opChain, value)
+	// n is nil (NaN) && value is NaN
+	if n.value == nil {
+		return n
+	}
 
-	if n.value.Cmp(&num) == 0 || !ok {
+	// n is not nil && value is NaN
+	if n.value != nil && value != value {
+		return n
+	}
+
+	num, _ := canonNumber(opChain, value)
+
+	if n.value.Cmp(num) == 0 {
 		opChain.fail(AssertionFailure{
 			Type:     AssertNotEqual,
 			Actual:   &AssertionValue{n.value},
@@ -209,7 +219,7 @@ func (n *Number) InDelta(value, delta interface{}) *Number {
 	num, ok := canonNumber(opChain, value)
 	del, okDel := canonNumber(opChain, delta)
 
-	if !ok || !okDel || delta != delta || value != value {
+	if !ok || !okDel || delta != delta || value != value || n.value == nil {
 		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{n.value},
@@ -222,9 +232,9 @@ func (n *Number) InDelta(value, delta interface{}) *Number {
 		return n
 	}
 
-	diff := big.NewFloat(0).Sub(&n.value, &num)
+	diff := big.NewFloat(0).Sub(n.value, num)
 
-	if diff.Cmp(&del) == 1 || diff.Cmp(del.Neg(&del)) == -1 {
+	if diff.Cmp(del) == 1 || diff.Cmp(del.Neg(del)) == -1 {
 		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{n.value},
@@ -257,7 +267,7 @@ func (n *Number) NotInDelta(value, delta interface{}) *Number {
 	num, ok := canonNumber(opChain, value)
 	del, okDel := canonNumber(opChain, delta)
 
-	if !ok || !okDel || delta != delta || value != value {
+	if !ok || !okDel || delta != delta || value != value || n.value == nil {
 		opChain.fail(AssertionFailure{
 			Type:     AssertNotEqual,
 			Actual:   &AssertionValue{n.value},
@@ -270,11 +280,9 @@ func (n *Number) NotInDelta(value, delta interface{}) *Number {
 		return n
 	}
 
-	diff := big.NewFloat(0).Sub(&n.value, &num)
-	le := diff.Cmp(&del)
-	fmt.Println("diff", diff, &del, le, diff.Cmp(&del) == -11)
+	diff := big.NewFloat(0).Sub(n.value, num)
 
-	if diff.Cmp(&del) != 1 && diff.Cmp(del.Neg(&del)) != -1 {
+	if diff.Cmp(del) != 1 && diff.Cmp(del.Neg(del)) != -1 {
 		opChain.fail(AssertionFailure{
 			Type:     AssertNotEqual,
 			Actual:   &AssertionValue{n.value},
@@ -328,7 +336,7 @@ func (n *Number) InRange(min, max interface{}) *Number {
 		return n
 	}
 
-	if n.value.Cmp(&a) < 0 || n.value.Cmp(&b) > 0 {
+	if n.value.Cmp(a) < 0 || n.value.Cmp(b) > 0 {
 		opChain.fail(AssertionFailure{
 			Type:     AssertInRange,
 			Actual:   &AssertionValue{n.value},
@@ -370,7 +378,7 @@ func (n *Number) NotInRange(min, max interface{}) *Number {
 		return n
 	}
 
-	if n.value.Cmp(&a) >= 0 && n.value.Cmp(&b) <= 0 {
+	if n.value.Cmp(a) >= 0 && n.value.Cmp(b) <= 0 {
 		opChain.fail(AssertionFailure{
 			Type:     AssertNotInRange,
 			Actual:   &AssertionValue{n.value},
@@ -419,7 +427,7 @@ func (n *Number) InList(values ...interface{}) *Number {
 			return n
 		}
 
-		if n.value.Cmp(&num) == 0 {
+		if n.value.Cmp(num) == 0 {
 			isListed = true
 			// continue loop to check that all values are correct
 		}
@@ -473,7 +481,7 @@ func (n *Number) NotInList(values ...interface{}) *Number {
 			return n
 		}
 
-		if n.value.Cmp(&num) == 0 {
+		if n.value.Cmp(num) == 0 {
 			opChain.fail(AssertionFailure{
 				Type:     AssertNotBelongs,
 				Actual:   &AssertionValue{n.value},
@@ -512,7 +520,7 @@ func (n *Number) Gt(value interface{}) *Number {
 		return n
 	}
 
-	if n.value.Cmp(&num) <= 0 {
+	if n.value.Cmp(num) <= 0 {
 		opChain.fail(AssertionFailure{
 			Type:     AssertGt,
 			Actual:   &AssertionValue{n.value},
@@ -549,7 +557,7 @@ func (n *Number) Ge(value interface{}) *Number {
 		return n
 	}
 
-	if n.value.Cmp(&num) < 0 {
+	if n.value.Cmp(num) < 0 {
 		opChain.fail(AssertionFailure{
 			Type:     AssertGe,
 			Actual:   &AssertionValue{n.value},
@@ -586,7 +594,7 @@ func (n *Number) Lt(value interface{}) *Number {
 		return n
 	}
 
-	if n.value.Cmp(&num) >= 0 {
+	if n.value.Cmp(num) >= 0 {
 		opChain.fail(AssertionFailure{
 			Type:     AssertLt,
 			Actual:   &AssertionValue{n.value},
@@ -623,7 +631,7 @@ func (n *Number) Le(value interface{}) *Number {
 		return n
 	}
 
-	if n.value.Cmp(&num) > 0 {
+	if n.value.Cmp(num) > 0 {
 		opChain.fail(AssertionFailure{
 			Type:     AssertLe,
 			Actual:   &AssertionValue{n.value},
@@ -680,6 +688,17 @@ func (n *Number) IsInt(bits ...int) *Number {
 			Type: AssertUsage,
 			Errors: []error{
 				errors.New("unexpected non-positive bits argument"),
+			},
+		})
+		return n
+	}
+
+	if n.value == nil {
+		opChain.fail(AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{n.value},
+			Errors: []error{
+				errors.New("expected: number is not NaN"),
 			},
 		})
 		return n
@@ -750,6 +769,10 @@ func (n *Number) NotInt(bits ...int) *Number {
 	defer opChain.leave()
 
 	if opChain.failed() {
+		return n
+	}
+
+	if n.value == nil {
 		return n
 	}
 
@@ -862,6 +885,17 @@ func (n *Number) IsUint(bits ...int) *Number {
 		return n
 	}
 
+	if n.value == nil {
+		opChain.fail(AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{n.value},
+			Errors: []error{
+				errors.New("expected: number is not NaN"),
+			},
+		})
+		return n
+	}
+
 	inum, acc := n.value.Int(nil)
 	if !(acc == big.Exact) {
 		opChain.fail(AssertionFailure{
@@ -935,6 +969,10 @@ func (n *Number) NotUint(bits ...int) *Number {
 	defer opChain.leave()
 
 	if opChain.failed() {
+		return n
+	}
+
+	if n.value == nil {
 		return n
 	}
 
@@ -1019,7 +1057,7 @@ func (n *Number) IsFinite() *Number {
 		return n
 	}
 
-	if n.value.IsInf() {
+	if n.value == nil || n.value.IsInf() {
 		opChain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{n.value},
@@ -1050,6 +1088,10 @@ func (n *Number) NotFinite() *Number {
 	defer opChain.leave()
 
 	if opChain.failed() {
+		return n
+	}
+
+	if n.value == nil {
 		return n
 	}
 

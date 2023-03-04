@@ -17,25 +17,25 @@ func TestCanon_Number(t *testing.T) {
 	defer chain.leave()
 
 	var (
-		val big.Float
+		val *big.Float
 		ok  bool
 	)
 
 	val, ok = canonNumber(chain, 123)
 	assert.True(t, ok)
-	assert.Equal(t, *big.NewFloat(123), val)
+	assert.Equal(t, big.NewFloat(123), val)
 	chain.assertNotFailed(t)
 	chain.clearFailed()
 
 	val, ok = canonNumber(chain, 123.0)
 	assert.True(t, ok)
-	assert.Equal(t, *big.NewFloat(123), val)
+	assert.Equal(t, big.NewFloat(123), val)
 	chain.assertNotFailed(t)
 	chain.clearFailed()
 
 	val, ok = canonNumber(chain, myInt(123))
 	assert.True(t, ok)
-	assert.Equal(t, *big.NewFloat(123), val)
+	assert.Equal(t, big.NewFloat(123), val)
 	chain.assertNotFailed(t)
 	chain.clearFailed()
 

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"math/big"
 	"reflect"
+	"strconv"
 )
 
 // Value provides methods to inspect attached interface{} object
@@ -345,6 +346,17 @@ func (v *Value) Number() *Number {
 
 	str, strOk := v.value.(string)
 	if strOk {
+		if _, err := strconv.Atoi(str); err != nil {
+			opChain.fail(AssertionFailure{
+				Type:   AssertValid,
+				Actual: &AssertionValue{v.value},
+				Errors: []error{
+					errors.New("expected: value is number"),
+				},
+			})
+			return newNumber(opChain, 0)
+		}
+
 		data = json.Number(str)
 	}
 

@@ -160,460 +160,642 @@ func TestNumber_Getters(t *testing.T) {
 }
 
 func TestNumber_IsEqual(t *testing.T) {
-	reporter := newMockReporter(t)
+	t.Run("basic", func(t *testing.T) {
+		cases := []struct {
+			name    string
+			number  float64
+			value   interface{}
+			isEqual bool
+		}{
+			{
+				name:    "compare equivalent integers",
+				number:  1234,
+				value:   1234,
+				isEqual: true,
+			},
+			{
+				name:    "compare non-equivalent integers",
+				number:  1234,
+				value:   4321,
+				isEqual: false,
+			},
+			{
+				name:    "compare NaN to float",
+				number:  math.NaN(),
+				value:   1234.5,
+				isEqual: false,
+			},
+			{
+				name:    "compare float to NaN",
+				number:  1234.5,
+				value:   math.NaN(),
+				isEqual: false,
+			},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				reporter := newMockReporter(t)
+
+				if tc.isEqual {
+					NewNumber(reporter, tc.number).
+						IsEqual(tc.value).
+						chain.assertNotFailed(t)
+
+					NewNumber(reporter, tc.number).
+						NotEqual(tc.value).
+						chain.assertFailed(t)
+				} else {
+					NewNumber(reporter, tc.number).
+						NotEqual(tc.value).
+						chain.assertNotFailed(t)
+
+					NewNumber(reporter, tc.number).
+						IsEqual(tc.value).
+						chain.assertFailed(t)
+				}
+			})
+		}
+	})
+
+	t.Run("canonization", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		NewNumber(reporter, 1234).IsEqual(int64(1234)).
+			chain.assertNotFailed(t)
+
+		NewNumber(reporter, 1234).IsEqual(float32(1234)).
+			chain.assertNotFailed(t)
+
+		NewNumber(reporter, 1234).NotEqual(int64(4321)).
+			chain.assertNotFailed(t)
+
+		NewNumber(reporter, 1234).NotEqual(float32(4321)).
+			chain.assertNotFailed(t)
+	})
 
-	value := NewNumber(reporter, 1234)
-
-	assert.Equal(t, 1234, int(value.Raw()))
-
-	value.IsEqual(1234)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.IsEqual(4321)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotEqual(4321)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotEqual(1234)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-}
-
-func TestNumber_EqualNaN(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	// v1 := NewNumber(reporter, math.NaN())
-	// v1.IsEqual(1234.5)
-	// v1.chain.assertFailed(t)
-	//
-	// v2 := NewNumber(reporter, 1234.5)
-	// v2.IsEqual(math.NaN())
-	// v2.chain.assertFailed(t)
-	//
-	// v3 := NewNumber(reporter, math.NaN())
-	// v3.InDelta(1234.0, 0.1)
-	// v3.chain.assertFailed(t)
-	//
-	// v4 := NewNumber(reporter, 1234.5)
-	// v4.InDelta(math.NaN(), 0.1)
-	// v4.chain.assertFailed(t)
-	//
-	// v5 := NewNumber(reporter, 1234.5)
-	// v5.InDelta(1234.5, math.NaN())
-	// v5.chain.assertFailed(t)
-
-	v6 := NewNumber(reporter, math.NaN())
-	v6.NotInDelta(1234.0, 0.1)
-	v6.chain.assertFailed(t)
-
-	// v7 := NewNumber(reporter, 1234.5)
-	// v7.NotInDelta(math.NaN(), 0.1)
-	// v7.chain.assertFailed(t)
-	//
-	// v8 := NewNumber(reporter, 1234.5)
-	// v8.NotInDelta(1234.5, math.NaN())
-	// v8.chain.assertFailed(t)
-}
-
-func TestNumber_InDelta(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	value := NewNumber(reporter, 1234.5)
-
-	value.InDelta(1234.3, 0.3)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.InDelta(1234.7, 0.3)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.InDelta(1234.3, 0.1)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.InDelta(1234.7, 0.1)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInDelta(1234.3, 0.3)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInDelta(1234.7, 0.3)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInDelta(1234.3, 0.1)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInDelta(1234.7, 0.1)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-}
-
-func TestNumber_InRange(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	value := NewNumber(reporter, 1234)
-
-	value.InRange(1234, 1234)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInRange(1234, 1234)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.InRange(1234-1, 1234)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInRange(1234-1, 1234)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.InRange(1234, 1234+1)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInRange(1234, 1234+1)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.InRange(1234+1, 1234+2)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInRange(1234+1, 1234+2)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.InRange(1234-2, 1234-1)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInRange(1234-2, 1234-1)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.InRange(1234+1, 1234-1)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInRange(1234+1, 1234-1)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInRange(1234+1, "NOT NUMBER")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInRange("NOT NUMBER", 1234+2)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-}
-
-func TestNumber_InList(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	value := NewNumber(reporter, 1234)
-
-	value.InList()
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInList()
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.InList(1234, 4567)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInList(1234, 4567)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.InList(1234.00, 4567.00)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInList(1234.00, 4567.00)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.InList(4567.00, 1234.01)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInList(4567.00, 1234.01)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.InList(1234+1, "NOT NUMBER")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInList("NOT NUMBER", 1234+2)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-}
-
-func TestNumber_IsGreater(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	value := NewNumber(reporter, 1234)
-
-	value.Gt(1234 - 1)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.Gt(1234)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.Ge(1234 - 1)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.Ge(1234)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.Ge(1234 + 1)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-}
-
-func TestNumber_IsLesser(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	value := NewNumber(reporter, 1234)
-
-	value.Lt(1234 + 1)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.Lt(1234)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.Le(1234 + 1)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.Le(1234)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.Le(1234 - 1)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-}
-
-func TestNumber_ConvertEqual(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	value := NewNumber(reporter, 1234)
-
-	value.IsEqual(int64(1234))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.IsEqual(float32(1234))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.IsEqual("NOT NUMBER")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotEqual(int64(4321))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotEqual(float32(4321))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotEqual("NOT NUMBER")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-}
-
-func TestNumber_ConvertInRange(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	value := NewNumber(reporter, 1234)
-
-	value.InRange(int64(1233), float32(1235))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInRange(int64(1233), float32(1235))
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.InRange(1235, 1236)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInRange(1235, 1236)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.InRange(int64(1233), "NOT NUMBER")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInRange(int64(1233), "NOT NUMBER")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.InRange("NOT NUMBER", float32(1235))
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInRange("NOT NUMBER", float32(1235))
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-}
-
-func TestNumber_ConvertInList(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	value := NewNumber(reporter, 111)
-
-	value.InList(int64(111), float32(222))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInList(int64(111), float32(222))
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.InList(float32(111), int64(222))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInList(float32(111), int64(222))
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.InList(222, 333)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInList(222, 333)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.InList(222, "NOT NUMBER")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInList(222, "NOT NUMBER")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.InList(111, "NOT NUMBER")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInList(111, "NOT NUMBER")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-}
-
-func TestNumber_ConvertGreater(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	value := NewNumber(reporter, 1234)
-
-	value.Gt(int64(1233))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.Gt(float32(1233))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.Gt("NOT NUMBER")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.Ge(int64(1233))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.Ge(float32(1233))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.Ge("NOT NUMBER")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-}
-
-func TestNumber_ConvertLesser(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	value := NewNumber(reporter, 1234)
-
-	value.Lt(int64(1235))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.Lt(float32(1235))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.Lt("NOT NUMBER")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.Le(int64(1235))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.Le(float32(1235))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.Le("NOT NUMBER")
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-}
-
-func TestNumber_IsInt(t *testing.T) {
 	t.Run("invalid argument", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
-		NewNumber(reporter, 1234).IsInt(16, 32).
+		NewNumber(reporter, 1234).IsEqual("NOT NUMBER").
 			chain.assertFailed(t)
 
-		NewNumber(reporter, 1234).NotInt(16, 32).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, 1234).IsInt(0).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, 1234).NotInt(0).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, 1234).IsInt(-16).
-			chain.assertFailed(t)
-
-		NewNumber(reporter, 1234).NotInt(-16).
+		NewNumber(reporter, 1234).NotEqual("NOT NUMBER").
 			chain.assertFailed(t)
 	})
+}
 
+func TestNumber_InDelta(t *testing.T) {
+	cases := []struct {
+		name         string
+		number       float64
+		value        float64
+		delta        float64
+		isInDelta    bool
+		isNotInDelta bool
+	}{
+		{
+			name:         "larger value in delta range",
+			number:       1234.5,
+			value:        1234.7,
+			delta:        0.3,
+			isInDelta:    true,
+			isNotInDelta: false,
+		},
+		{
+			name:         "smaller value in delta range",
+			number:       1234.5,
+			value:        1234.3,
+			delta:        0.3,
+			isInDelta:    true,
+			isNotInDelta: false,
+		},
+		{
+			name:         "larger value not in delta range",
+			number:       1234.5,
+			value:        1234.7,
+			delta:        0.1,
+			isInDelta:    false,
+			isNotInDelta: true,
+		},
+		{
+			name:         "smaller value not in delta range",
+			number:       1234.5,
+			value:        1234.3,
+			delta:        0.1,
+			isInDelta:    false,
+			isNotInDelta: true,
+		},
+		{
+			name:         "number is NaN",
+			number:       math.NaN(),
+			value:        1234.0,
+			delta:        0.1,
+			isInDelta:    false,
+			isNotInDelta: false,
+		},
+		// {
+		// 	name:         "value is NaN",
+		// 	number:       1234.5,
+		// 	value:        math.NaN(),
+		// 	delta:        0.1,
+		// 	isInDelta:    false,
+		// 	isNotInDelta: false,
+		// },
+		// {
+		// 	name:         "delta is NaN",
+		// 	number:       1234.5,
+		// 	value:        1234.0,
+		// 	delta:        math.NaN(),
+		// 	isInDelta:    false,
+		// 	isNotInDelta: false,
+		// },
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			reporter := newMockReporter(t)
+
+			if tc.isInDelta {
+				NewNumber(reporter, tc.number).
+					InDelta(tc.value, tc.delta).
+					chain.assertNotFailed(t)
+			} else {
+				NewNumber(reporter, tc.number).
+					InDelta(tc.value, tc.delta).
+					chain.assertFailed(t)
+			}
+
+			if tc.isNotInDelta {
+				NewNumber(reporter, tc.number).
+					NotInDelta(tc.value, tc.delta).
+					chain.assertNotFailed(t)
+			} else {
+				NewNumber(reporter, tc.number).
+					NotInDelta(tc.value, tc.delta).
+					chain.assertFailed(t)
+			}
+		})
+	}
+}
+
+func TestNumber_InRange(t *testing.T) {
+	t.Run("basic", func(t *testing.T) {
+		cases := []struct {
+			name         string
+			number       float64
+			min          interface{}
+			max          interface{}
+			isInRange    bool
+			isNotInRange bool
+		}{
+			{
+				name:         "range includes only number",
+				number:       1234,
+				min:          1234,
+				max:          1234,
+				isInRange:    true,
+				isNotInRange: false,
+			},
+			{
+				name:         "range includes number and below",
+				number:       1234,
+				min:          1234 - 1,
+				max:          1234,
+				isInRange:    true,
+				isNotInRange: false,
+			},
+			{
+				name:         "range includes number and above",
+				number:       1234,
+				min:          1234,
+				max:          1234 + 1,
+				isInRange:    true,
+				isNotInRange: false,
+			},
+			{
+				name:         "range is above number",
+				number:       1234,
+				min:          1234 + 1,
+				max:          1234 + 2,
+				isInRange:    false,
+				isNotInRange: true,
+			},
+			{
+				name:         "range is below number",
+				number:       1234,
+				min:          1234 - 2,
+				max:          1234 - 1,
+				isInRange:    false,
+				isNotInRange: true,
+			},
+			{
+				name:         "range min is larger than max",
+				number:       1234,
+				min:          1234 + 1,
+				max:          1234 - 1,
+				isInRange:    false,
+				isNotInRange: true,
+			},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				reporter := newMockReporter(t)
+
+				if tc.isInRange {
+					NewNumber(reporter, tc.number).
+						InRange(tc.min, tc.max).
+						chain.assertNotFailed(t)
+				} else {
+					NewNumber(reporter, tc.number).
+						InRange(tc.min, tc.max).
+						chain.assertFailed(t)
+				}
+
+				if tc.isNotInRange {
+					NewNumber(reporter, tc.number).
+						NotInRange(tc.min, tc.max).
+						chain.assertNotFailed(t)
+				} else {
+					NewNumber(reporter, tc.number).
+						NotInRange(tc.min, tc.max).
+						chain.assertFailed(t)
+				}
+			})
+		}
+	})
+
+	t.Run("canonization", func(t *testing.T) {
+		cases := []struct {
+			number    float64
+			min       interface{}
+			max       interface{}
+			isInRange bool
+		}{
+			{
+				number:    1234,
+				min:       int64(1233),
+				max:       float32(1235),
+				isInRange: true,
+			},
+			{
+				number:    1234,
+				min:       1235,
+				max:       1236,
+				isInRange: false,
+			},
+		}
+
+		reporter := newMockReporter(t)
+
+		for _, tc := range cases {
+			if tc.isInRange {
+				NewNumber(reporter, tc.number).
+					InRange(tc.min, tc.max).
+					chain.assertNotFailed(t)
+
+				NewNumber(reporter, tc.number).
+					NotInRange(tc.min, tc.max).
+					chain.assertFailed(t)
+			} else {
+				NewNumber(reporter, tc.number).
+					NotInRange(tc.min, tc.max).
+					chain.assertNotFailed(t)
+
+				NewNumber(reporter, tc.number).
+					InRange(tc.min, tc.max).
+					chain.assertFailed(t)
+			}
+		}
+	})
+
+	t.Run("invalid argument", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		NewNumber(reporter, 1234).InRange(int64(1233), "NOT NUMBER").
+			chain.assertFailed(t)
+
+		NewNumber(reporter, 1234).NotInRange(int64(1233), "NOT NUMBER").
+			chain.assertFailed(t)
+
+		NewNumber(reporter, 1234).InRange("NOT NUMBER", float32(1235)).
+			chain.assertFailed(t)
+
+		NewNumber(reporter, 1234).NotInRange("NOT NUMBER", float32(1235)).
+			chain.assertFailed(t)
+	})
+}
+
+func TestNumber_InList(t *testing.T) {
+	t.Run("basic", func(t *testing.T) {
+		cases := []struct {
+			name        string
+			number      float64
+			list        []interface{}
+			isInList    bool
+			isNotInList bool
+		}{
+			{
+				name:        "no list",
+				number:      1234,
+				list:        nil,
+				isInList:    false,
+				isNotInList: false,
+			},
+			{
+				name:        "empty list",
+				number:      1234,
+				list:        []interface{}{},
+				isInList:    false,
+				isNotInList: false,
+			},
+			{
+				name:        "in integer list",
+				number:      1234,
+				list:        []interface{}{1234, 4567},
+				isInList:    true,
+				isNotInList: false,
+			},
+			{
+				name:        "in float list",
+				number:      1234,
+				list:        []interface{}{1234.00, 4567.00},
+				isInList:    true,
+				isNotInList: false,
+			},
+			{
+				name:        "not in float list",
+				number:      1234,
+				list:        []interface{}{4567.00, 1234.01},
+				isInList:    false,
+				isNotInList: true,
+			},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				reporter := newMockReporter(t)
+
+				if tc.isInList {
+					NewNumber(reporter, tc.number).
+						InList(tc.list...).
+						chain.assertNotFailed(t)
+				} else {
+					NewNumber(reporter, tc.number).
+						InList(tc.list...).
+						chain.assertFailed(t)
+				}
+
+				if tc.isNotInList {
+					NewNumber(reporter, tc.number).
+						NotInList(tc.list...).
+						chain.assertNotFailed(t)
+				} else {
+					NewNumber(reporter, tc.number).
+						NotInList(tc.list...).
+						chain.assertFailed(t)
+				}
+			})
+		}
+	})
+
+	t.Run("canonization", func(t *testing.T) {
+		cases := []struct {
+			number   float64
+			list     []interface{}
+			isInList bool
+		}{
+			{
+				number:   111,
+				list:     []interface{}{int64(111), float32(222)},
+				isInList: true,
+			},
+			{
+				number:   111,
+				list:     []interface{}{float32(111), int64(222)},
+				isInList: true,
+			},
+			{
+				number:   111,
+				list:     []interface{}{222, 333},
+				isInList: false,
+			},
+		}
+
+		reporter := newMockReporter(t)
+
+		for _, tc := range cases {
+			if tc.isInList {
+				NewNumber(reporter, tc.number).
+					InList(tc.list...).
+					chain.assertNotFailed(t)
+
+				NewNumber(reporter, tc.number).
+					NotInList(tc.list...).
+					chain.assertFailed(t)
+			} else {
+				NewNumber(reporter, tc.number).
+					NotInList(tc.list...).
+					chain.assertNotFailed(t)
+
+				NewNumber(reporter, tc.number).
+					InList(tc.list...).
+					chain.assertFailed(t)
+			}
+		}
+	})
+
+	t.Run("invalid argument", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		NewNumber(reporter, 111).InList(222, "NOT NUMBER").
+			chain.assertFailed(t)
+
+		NewNumber(reporter, 111).NotInList(222, "NOT NUMBER").
+			chain.assertFailed(t)
+
+		NewNumber(reporter, 111).InList(111, "NOT NUMBER").
+			chain.assertFailed(t)
+
+		NewNumber(reporter, 111).NotInList(111, "NOT NUMBER").
+			chain.assertFailed(t)
+	})
+}
+
+func TestNumber_IsGreater(t *testing.T) {
+	t.Run("basic", func(t *testing.T) {
+		cases := []struct {
+			name   string
+			number float64
+			value  interface{}
+			isGt   bool
+			isGe   bool
+		}{
+			{
+				name:   "number is lesser",
+				number: 1234,
+				value:  1234 + 1,
+				isGt:   false,
+				isGe:   false,
+			},
+			{
+				name:   "number is equal",
+				number: 1234,
+				value:  1234,
+				isGt:   false,
+				isGe:   true,
+			},
+			{
+				name:   "number is greater",
+				number: 1234,
+				value:  1234 - 1,
+				isGt:   true,
+				isGe:   true,
+			},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				reporter := newMockReporter(t)
+
+				if tc.isGt {
+					NewNumber(reporter, tc.number).
+						Gt(tc.value).
+						chain.assertNotFailed(t)
+				} else {
+					NewNumber(reporter, tc.number).
+						Gt(tc.value).
+						chain.assertFailed(t)
+				}
+
+				if tc.isGe {
+					NewNumber(reporter, tc.number).
+						Ge(tc.value).
+						chain.assertNotFailed(t)
+				} else {
+					NewNumber(reporter, tc.number).
+						Ge(tc.value).
+						chain.assertFailed(t)
+				}
+			})
+		}
+	})
+
+	t.Run("canonization", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		NewNumber(reporter, 1234).Gt(int64(1233)).
+			chain.assertNotFailed(t)
+
+		NewNumber(reporter, 1234).Gt(float32(1233)).
+			chain.assertNotFailed(t)
+
+		NewNumber(reporter, 1234).Ge(int64(1233)).
+			chain.assertNotFailed(t)
+
+		NewNumber(reporter, 1234).Ge(float32(1233)).
+			chain.assertNotFailed(t)
+	})
+
+	t.Run("invalid argument", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		NewNumber(reporter, 1234).Gt("NOT NUMBER").
+			chain.assertFailed(t)
+
+		NewNumber(reporter, 1234).Ge("NOT NUMBER").
+			chain.assertFailed(t)
+	})
+}
+
+func TestNumber_IsLesser(t *testing.T) {
+	t.Run("basic", func(t *testing.T) {
+		cases := []struct {
+			name   string
+			number float64
+			value  interface{}
+			isLt   bool
+			isLe   bool
+		}{
+			{
+				name:   "number is lesser",
+				number: 1234,
+				value:  1234 + 1,
+				isLt:   true,
+				isLe:   true,
+			},
+			{
+				name:   "number is equal",
+				number: 1234,
+				value:  1234,
+				isLt:   false,
+				isLe:   true,
+			},
+			{
+				name:   "number is greater",
+				number: 1234,
+				value:  1234 - 1,
+				isLt:   false,
+				isLe:   false,
+			},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				reporter := newMockReporter(t)
+
+				if tc.isLt {
+					NewNumber(reporter, tc.number).
+						Lt(tc.value).
+						chain.assertNotFailed(t)
+				} else {
+					NewNumber(reporter, tc.number).
+						Lt(tc.value).
+						chain.assertFailed(t)
+				}
+
+				if tc.isLe {
+					NewNumber(reporter, tc.number).
+						Le(tc.value).
+						chain.assertNotFailed(t)
+				} else {
+					NewNumber(reporter, tc.number).
+						Le(tc.value).
+						chain.assertFailed(t)
+				}
+			})
+		}
+	})
+
+	t.Run("canonization", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		NewNumber(reporter, 1234).Lt(int64(1235)).
+			chain.assertNotFailed(t)
+
+		NewNumber(reporter, 1234).Lt(float32(1235)).
+			chain.assertNotFailed(t)
+
+		NewNumber(reporter, 1234).Le(int64(1235)).
+			chain.assertNotFailed(t)
+
+		NewNumber(reporter, 1234).Le(float32(1235)).
+			chain.assertNotFailed(t)
+	})
+
+	t.Run("invalid argument", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		NewNumber(reporter, 1234).Lt("NOT NUMBER").
+			chain.assertFailed(t)
+
+		NewNumber(reporter, 1234).Le("NOT NUMBER").
+			chain.assertFailed(t)
+	})
+}
+
+func TestNumber_IsInt(t *testing.T) {
 	t.Run("values", func(t *testing.T) {
 		tests := []struct {
 			name    string
@@ -752,31 +934,31 @@ func TestNumber_IsInt(t *testing.T) {
 			})
 		}
 	})
-}
 
-func TestNumber_IsUint(t *testing.T) {
 	t.Run("invalid argument", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
-		NewNumber(reporter, 1234).IsUint(16, 32).
+		NewNumber(reporter, 1234).IsInt(16, 32).
 			chain.assertFailed(t)
 
-		NewNumber(reporter, 1234).NotUint(16, 32).
+		NewNumber(reporter, 1234).NotInt(16, 32).
 			chain.assertFailed(t)
 
-		NewNumber(reporter, 1234).IsUint(0).
+		NewNumber(reporter, 1234).IsInt(0).
 			chain.assertFailed(t)
 
-		NewNumber(reporter, 1234).NotUint(0).
+		NewNumber(reporter, 1234).NotInt(0).
 			chain.assertFailed(t)
 
-		NewNumber(reporter, 1234).IsUint(-16).
+		NewNumber(reporter, 1234).IsInt(-16).
 			chain.assertFailed(t)
 
-		NewNumber(reporter, 1234).NotUint(-16).
+		NewNumber(reporter, 1234).NotInt(-16).
 			chain.assertFailed(t)
 	})
+}
 
+func TestNumber_IsUint(t *testing.T) {
 	t.Run("values", func(t *testing.T) {
 		tests := []struct {
 			name     string
@@ -893,6 +1075,28 @@ func TestNumber_IsUint(t *testing.T) {
 				}
 			})
 		}
+	})
+
+	t.Run("invalid argument", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		NewNumber(reporter, 1234).IsUint(16, 32).
+			chain.assertFailed(t)
+
+		NewNumber(reporter, 1234).NotUint(16, 32).
+			chain.assertFailed(t)
+
+		NewNumber(reporter, 1234).IsUint(0).
+			chain.assertFailed(t)
+
+		NewNumber(reporter, 1234).NotUint(0).
+			chain.assertFailed(t)
+
+		NewNumber(reporter, 1234).IsUint(-16).
+			chain.assertFailed(t)
+
+		NewNumber(reporter, 1234).NotUint(-16).
+			chain.assertFailed(t)
 	})
 }
 

@@ -166,43 +166,46 @@ func TestString_Getters(t *testing.T) {
 	value.Schema(`{"type": "object"}`)
 	value.chain.assertFailed(t)
 	value.chain.clearFailed()
-}
-
-func TestString_Length(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	value := NewString(reporter, "1234567")
 
 	num := value.Length()
 	value.chain.assertNotFailed(t)
 	num.chain.assertNotFailed(t)
-	assert.Equal(t, 7.0, num.Raw())
+	assert.Equal(t, 3.0, num.Raw())
 }
 
 func TestString_IsEmpty(t *testing.T) {
-	cases := map[string]struct {
+	cases := []struct {
+		name      string
 		str       string
 		wantEmpty bool
 	}{
-		"empty_string":     {str: "", wantEmpty: true},
-		"populated_string": {str: "a", wantEmpty: false},
+		{
+			name:      "empty string",
+			str:       "",
+			wantEmpty: true,
+		},
+		{
+			name:      "populated string",
+			str:       "a",
+			wantEmpty: false,
+		},
 	}
 
-	for name, value := range cases {
-		t.Run(name, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			if value.wantEmpty {
-				NewString(reporter, value.str).IsEmpty().
+			if tc.wantEmpty {
+				NewString(reporter, tc.str).IsEmpty().
 					chain.assertNotFailed(t)
 
-				NewString(reporter, value.str).NotEmpty().
+				NewString(reporter, tc.str).NotEmpty().
 					chain.assertFailed(t)
 			} else {
-				NewString(reporter, value.str).IsEmpty().
+				NewString(reporter, tc.str).IsEmpty().
 					chain.assertFailed(t)
 
-				NewString(reporter, value.str).NotEmpty().
+				NewString(reporter, tc.str).NotEmpty().
 					chain.assertNotFailed(t)
 			}
 		})
@@ -387,361 +390,6 @@ func TestString_ContainsFold(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestString_MatchOne(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	value := NewString(reporter, "http://example.com/users/john")
-
-	m1 := value.Match(`http://(?P<host>.+)/users/(?P<user>.+)`)
-	m1.chain.assertNotFailed(t)
-
-	assert.Equal(t,
-		[]string{"http://example.com/users/john", "example.com", "john"},
-		m1.submatches)
-
-	m2 := value.Match(`http://(.+)/users/(.+)`)
-	m2.chain.assertNotFailed(t)
-
-	assert.Equal(t,
-		[]string{"http://example.com/users/john", "example.com", "john"},
-		m2.submatches)
-}
-
-func TestString_MatchAll(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	value := NewString(reporter,
-		"http://example.com/users/john http://example.com/users/bob")
-
-	m := value.MatchAll(`http://(\S+)/users/(\S+)`)
-
-	assert.Equal(t, 2, len(m))
-
-	m[0].chain.assertNotFailed(t)
-	m[1].chain.assertNotFailed(t)
-
-	assert.Equal(t,
-		[]string{"http://example.com/users/john", "example.com", "john"},
-		m[0].submatches)
-
-	assert.Equal(t,
-		[]string{"http://example.com/users/bob", "example.com", "bob"},
-		m[1].submatches)
-}
-
-func TestString_MatchStatus(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	value := NewString(reporter, "a")
-
-	value.Match(`a`)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.MatchAll(`a`)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotMatch(`a`)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.Match(`[^a]`)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.MatchAll(`[^a]`)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotMatch(`[^a]`)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	assert.Equal(t, []string{}, value.Match(`[^a]`).submatches)
-	assert.Equal(t, []Match{}, value.MatchAll(`[^a]`))
-}
-
-func TestString_MatchInvalid(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	value := NewString(reporter, "a")
-
-	value.Match(`[`)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.MatchAll(`[`)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotMatch(`[`)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-}
-
-func TestString_IsAscii(t *testing.T) {
-	cases := []struct {
-		str       string
-		wantASCII bool
-	}{
-		{"Ascii", true},
-		{string(rune(127)), true},
-		{"Ascii is アスキー", false},
-		{"アスキー", false},
-		{string(rune(128)), false},
-	}
-
-	for _, value := range cases {
-		t.Run(value.str, func(t *testing.T) {
-			reporter := newMockReporter(t)
-
-			if value.wantASCII {
-				NewString(reporter, value.str).IsASCII().
-					chain.assertNotFailed(t)
-
-				NewString(reporter, value.str).NotASCII().
-					chain.assertFailed(t)
-			} else {
-				NewString(reporter, value.str).IsASCII().
-					chain.assertFailed(t)
-
-				NewString(reporter, value.str).NotASCII().
-					chain.assertNotFailed(t)
-			}
-		})
-	}
-}
-
-func TestString_AsNumber(t *testing.T) {
-	cases := map[string]struct {
-		str         string
-		base        []int
-		fail        bool
-		expectedNum float64
-	}{
-		"default_base_integer": {
-			str:         "1234567",
-			fail:        false,
-			expectedNum: float64(1234567),
-		},
-		"default_base_float": {
-			str:         "11.22",
-			fail:        false,
-			expectedNum: float64(11.22),
-		},
-		"default_base_bad": {
-			str:  "a1",
-			fail: true,
-		},
-		"base10_integer": {
-			str:         "100",
-			base:        []int{10},
-			fail:        false,
-			expectedNum: float64(100),
-		},
-		"base10_float": {
-			str:         "11.22",
-			base:        []int{10},
-			fail:        false,
-			expectedNum: float64(11.22),
-		},
-		"base16_integer": {
-			str:         "100",
-			base:        []int{16},
-			fail:        false,
-			expectedNum: float64(0x100),
-		},
-		"base16_float": {
-			str:  "11.22",
-			base: []int{16},
-			fail: true,
-		},
-		"base16_large_integer": {
-			str:         "4000000000000000",
-			base:        []int{16},
-			fail:        false,
-			expectedNum: float64(0x4000000000000000),
-		},
-		"default_float_precision_max": {
-			str:  "4611686018427387905",
-			fail: true,
-		},
-		"base10_float_precision_max": {
-			str:  "4611686018427387905",
-			base: []int{10},
-			fail: true,
-		},
-		"base16_float_precision_max": {
-			str:  "8000000000000001",
-			base: []int{16},
-			fail: true,
-		},
-		"base16_float_precision_min": {
-			str:  "-4000000000000001",
-			base: []int{16},
-			fail: true,
-		},
-		"multiple_base": {
-			str:  "100",
-			base: []int{10, 16},
-			fail: true,
-		},
-	}
-
-	for name, value := range cases {
-		t.Run(name, func(t *testing.T) {
-			reporter := newMockReporter(t)
-
-			str := NewString(reporter, value.str)
-			num := str.AsNumber(value.base...)
-
-			if value.fail {
-				str.chain.assertFailed(t)
-				num.chain.assertFailed(t)
-				assert.Equal(t, float64(0), num.Raw())
-			} else {
-				str.chain.assertNotFailed(t)
-				num.chain.assertNotFailed(t)
-				assert.Equal(t, value.expectedNum, num.Raw())
-			}
-		})
-	}
-}
-
-func TestString_AsBoolean(t *testing.T) {
-	trueValues := []string{"true", "True"}
-	falseValues := []string{"false", "False"}
-	badValues := []string{"TRUE", "FALSE", "t", "f", "1", "0", "bad"}
-
-	for _, str := range trueValues {
-		t.Run(str, func(t *testing.T) {
-			reporter := newMockReporter(t)
-			value := NewString(reporter, str)
-
-			b := value.AsBoolean()
-			b.chain.assertNotFailed(t)
-
-			assert.True(t, b.Raw())
-		})
-	}
-
-	for _, str := range falseValues {
-		t.Run(str, func(t *testing.T) {
-			reporter := newMockReporter(t)
-			value := NewString(reporter, str)
-
-			b := value.AsBoolean()
-			b.chain.assertNotFailed(t)
-
-			assert.False(t, b.Raw())
-		})
-	}
-
-	for _, str := range badValues {
-		t.Run(str, func(t *testing.T) {
-			reporter := newMockReporter(t)
-			value := NewString(reporter, str)
-
-			b := value.AsBoolean()
-			b.chain.assertFailed(t)
-		})
-	}
-}
-
-func TestString_AsDateTime(t *testing.T) {
-	t.Run("default_formats_RFC1123+GMT", func(t *testing.T) {
-		reporter := newMockReporter(t)
-		value := NewString(reporter, "Tue, 15 Nov 1994 08:12:31 GMT")
-
-		dt := value.AsDateTime()
-		value.chain.assertNotFailed(t)
-		dt.chain.assertNotFailed(t)
-
-		assert.True(t, time.Date(1994, 11, 15, 8, 12, 31, 0, time.UTC).Equal(dt.Raw()))
-	})
-
-	t.Run("RFC822", func(t *testing.T) {
-		reporter := newMockReporter(t)
-		value := NewString(reporter, "15 Nov 94 08:12 GMT")
-
-		dt := value.AsDateTime(time.RFC822)
-		value.chain.assertNotFailed(t)
-		dt.chain.assertNotFailed(t)
-
-		assert.True(t, time.Date(1994, 11, 15, 8, 12, 0, 0, time.UTC).Equal(dt.Raw()))
-	})
-
-	t.Run("bad_input", func(t *testing.T) {
-		reporter := newMockReporter(t)
-		value := NewString(reporter, "bad")
-
-		dt := value.AsDateTime()
-		value.chain.assertFailed(t)
-		dt.chain.assertFailed(t)
-
-		assert.True(t, time.Unix(0, 0).Equal(dt.Raw()))
-	})
-
-	formats := []string{
-		http.TimeFormat,
-		time.RFC850,
-		time.ANSIC,
-		time.UnixDate,
-		time.RubyDate,
-		time.RFC1123,
-		time.RFC1123Z,
-		time.RFC822,
-		time.RFC822Z,
-		time.RFC3339,
-		time.RFC3339Nano,
-	}
-
-	for n, f := range formats {
-		t.Run("default_formats_"+f, func(t *testing.T) {
-			str := time.Now().Format(f)
-
-			reporter := newMockReporter(t)
-			value := NewString(reporter, str)
-
-			dt := value.AsDateTime()
-			dt.chain.assertNotFailed(t)
-		})
-
-		t.Run("all_formats_"+f, func(t *testing.T) {
-			str := time.Now().Format(f)
-
-			reporter := newMockReporter(t)
-			value := NewString(reporter, str)
-
-			dt := value.AsDateTime(formats...)
-			dt.chain.assertNotFailed(t)
-		})
-
-		t.Run("same_format_"+f, func(t *testing.T) {
-			str := time.Now().Format(f)
-
-			reporter := newMockReporter(t)
-			value := NewString(reporter, str)
-
-			dt := value.AsDateTime(f)
-			dt.chain.assertNotFailed(t)
-		})
-
-		if n != 0 {
-			t.Run("different_format_"+f, func(t *testing.T) {
-				str := time.Now().Format(f)
-
-				reporter := newMockReporter(t)
-				value := NewString(reporter, str)
-
-				dt := value.AsDateTime(formats[0])
-				dt.chain.assertFailed(t)
-			})
-		}
-	}
-}
-
 func TestString_HasPrefix(t *testing.T) {
 	reporter := newMockReporter(t)
 
@@ -900,4 +548,375 @@ func TestString_HasSuffixFold(t *testing.T) {
 	value.NotHasSuffixFold("world!")
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
+}
+
+func TestString_MatchOne(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewString(reporter, "http://example.com/users/john")
+
+	m1 := value.Match(`http://(?P<host>.+)/users/(?P<user>.+)`)
+	m1.chain.assertNotFailed(t)
+
+	assert.Equal(t,
+		[]string{"http://example.com/users/john", "example.com", "john"},
+		m1.submatches)
+
+	m2 := value.Match(`http://(.+)/users/(.+)`)
+	m2.chain.assertNotFailed(t)
+
+	assert.Equal(t,
+		[]string{"http://example.com/users/john", "example.com", "john"},
+		m2.submatches)
+}
+
+func TestString_MatchAll(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewString(reporter,
+		"http://example.com/users/john http://example.com/users/bob")
+
+	m := value.MatchAll(`http://(\S+)/users/(\S+)`)
+
+	assert.Equal(t, 2, len(m))
+
+	m[0].chain.assertNotFailed(t)
+	m[1].chain.assertNotFailed(t)
+
+	assert.Equal(t,
+		[]string{"http://example.com/users/john", "example.com", "john"},
+		m[0].submatches)
+
+	assert.Equal(t,
+		[]string{"http://example.com/users/bob", "example.com", "bob"},
+		m[1].submatches)
+}
+
+func TestString_MatchStatus(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewString(reporter, "a")
+
+	value.Match(`a`)
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.MatchAll(`a`)
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	value.NotMatch(`a`)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.Match(`[^a]`)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.MatchAll(`[^a]`)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotMatch(`[^a]`)
+	value.chain.assertNotFailed(t)
+	value.chain.clearFailed()
+
+	assert.Equal(t, []string{}, value.Match(`[^a]`).submatches)
+	assert.Equal(t, []Match{}, value.MatchAll(`[^a]`))
+}
+
+func TestString_MatchInvalid(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewString(reporter, "a")
+
+	value.Match(`[`)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.MatchAll(`[`)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+
+	value.NotMatch(`[`)
+	value.chain.assertFailed(t)
+	value.chain.clearFailed()
+}
+
+func TestString_IsAscii(t *testing.T) {
+	cases := []struct {
+		str       string
+		wantASCII bool
+	}{
+		{"Ascii", true},
+		{string(rune(127)), true},
+		{"Ascii is アスキー", false},
+		{"アスキー", false},
+		{string(rune(128)), false},
+	}
+
+	for _, value := range cases {
+		t.Run(value.str, func(t *testing.T) {
+			reporter := newMockReporter(t)
+
+			if value.wantASCII {
+				NewString(reporter, value.str).IsASCII().
+					chain.assertNotFailed(t)
+
+				NewString(reporter, value.str).NotASCII().
+					chain.assertFailed(t)
+			} else {
+				NewString(reporter, value.str).IsASCII().
+					chain.assertFailed(t)
+
+				NewString(reporter, value.str).NotASCII().
+					chain.assertNotFailed(t)
+			}
+		})
+	}
+}
+
+func TestString_AsNumber(t *testing.T) {
+	cases := []struct {
+		name        string
+		str         string
+		base        []int
+		fail        bool
+		expectedNum float64
+	}{
+		{
+			name:        "default_base_integer",
+			str:         "1234567",
+			fail:        false,
+			expectedNum: float64(1234567),
+		},
+		{
+			name:        "default_base_float",
+			str:         "11.22",
+			fail:        false,
+			expectedNum: float64(11.22),
+		},
+		{
+			name:        "default_base_bad",
+			str:         "a1",
+			fail:        true,
+			expectedNum: 0,
+		},
+		{
+			name:        "base10_integer",
+			str:         "100",
+			base:        []int{10},
+			fail:        false,
+			expectedNum: float64(100),
+		},
+		{
+			name:        "base10_float",
+			str:         "11.22",
+			base:        []int{10},
+			fail:        false,
+			expectedNum: float64(11.22),
+		},
+		{
+			name:        "base16_integer",
+			str:         "100",
+			base:        []int{16},
+			fail:        false,
+			expectedNum: float64(0x100),
+		},
+		{
+			name:        "base16_float",
+			str:         "11.22",
+			base:        []int{16},
+			fail:        true,
+			expectedNum: 0,
+		},
+		{
+			name:        "base16_large_integer",
+			str:         "4000000000000000",
+			base:        []int{16},
+			fail:        false,
+			expectedNum: float64(0x4000000000000000),
+		},
+		{
+			name: "default_float_precision_max",
+			str:  "4611686018427387905",
+			fail: true,
+		},
+		{
+			name: "base10_float_precision_max",
+			str:  "4611686018427387905",
+			base: []int{10},
+			fail: true,
+		},
+		{
+			name: "base16_float_precision_max",
+			str:  "8000000000000001",
+			base: []int{16},
+			fail: true,
+		},
+		{
+			name: "base16_float_precision_min",
+			str:  "-4000000000000001",
+			base: []int{16},
+			fail: true,
+		},
+		{
+			name: "multiple_base",
+			str:  "100",
+			base: []int{10, 16},
+			fail: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			reporter := newMockReporter(t)
+
+			str := NewString(reporter, tc.str)
+			num := str.AsNumber(tc.base...)
+
+			if tc.fail {
+				str.chain.assertFailed(t)
+				num.chain.assertFailed(t)
+				assert.Equal(t, float64(0), num.Raw())
+			} else {
+				str.chain.assertNotFailed(t)
+				num.chain.assertNotFailed(t)
+				assert.Equal(t, tc.expectedNum, num.Raw())
+			}
+		})
+	}
+}
+
+func TestString_AsBoolean(t *testing.T) {
+	trueValues := []string{"true", "True"}
+	falseValues := []string{"false", "False"}
+	badValues := []string{"TRUE", "FALSE", "t", "f", "1", "0", "bad"}
+
+	for _, str := range trueValues {
+		t.Run(str, func(t *testing.T) {
+			reporter := newMockReporter(t)
+			value := NewString(reporter, str)
+
+			b := value.AsBoolean()
+			b.chain.assertNotFailed(t)
+
+			assert.True(t, b.Raw())
+		})
+	}
+
+	for _, str := range falseValues {
+		t.Run(str, func(t *testing.T) {
+			reporter := newMockReporter(t)
+			value := NewString(reporter, str)
+
+			b := value.AsBoolean()
+			b.chain.assertNotFailed(t)
+
+			assert.False(t, b.Raw())
+		})
+	}
+
+	for _, str := range badValues {
+		t.Run(str, func(t *testing.T) {
+			reporter := newMockReporter(t)
+			value := NewString(reporter, str)
+
+			b := value.AsBoolean()
+			b.chain.assertFailed(t)
+		})
+	}
+}
+
+func TestString_AsDateTime(t *testing.T) {
+	t.Run("default_formats_RFC1123+GMT", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		value := NewString(reporter, "Tue, 15 Nov 1994 08:12:31 GMT")
+
+		dt := value.AsDateTime()
+		value.chain.assertNotFailed(t)
+		dt.chain.assertNotFailed(t)
+
+		assert.True(t, time.Date(1994, 11, 15, 8, 12, 31, 0, time.UTC).Equal(dt.Raw()))
+	})
+
+	t.Run("RFC822", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		value := NewString(reporter, "15 Nov 94 08:12 GMT")
+
+		dt := value.AsDateTime(time.RFC822)
+		value.chain.assertNotFailed(t)
+		dt.chain.assertNotFailed(t)
+
+		assert.True(t, time.Date(1994, 11, 15, 8, 12, 0, 0, time.UTC).Equal(dt.Raw()))
+	})
+
+	t.Run("bad_input", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		value := NewString(reporter, "bad")
+
+		dt := value.AsDateTime()
+		value.chain.assertFailed(t)
+		dt.chain.assertFailed(t)
+
+		assert.True(t, time.Unix(0, 0).Equal(dt.Raw()))
+	})
+
+	formats := []string{
+		http.TimeFormat,
+		time.RFC850,
+		time.ANSIC,
+		time.UnixDate,
+		time.RubyDate,
+		time.RFC1123,
+		time.RFC1123Z,
+		time.RFC822,
+		time.RFC822Z,
+		time.RFC3339,
+		time.RFC3339Nano,
+	}
+
+	for n, f := range formats {
+		t.Run("default_formats_"+f, func(t *testing.T) {
+			str := time.Now().Format(f)
+
+			reporter := newMockReporter(t)
+			value := NewString(reporter, str)
+
+			dt := value.AsDateTime()
+			dt.chain.assertNotFailed(t)
+		})
+
+		t.Run("all_formats_"+f, func(t *testing.T) {
+			str := time.Now().Format(f)
+
+			reporter := newMockReporter(t)
+			value := NewString(reporter, str)
+
+			dt := value.AsDateTime(formats...)
+			dt.chain.assertNotFailed(t)
+		})
+
+		t.Run("same_format_"+f, func(t *testing.T) {
+			str := time.Now().Format(f)
+
+			reporter := newMockReporter(t)
+			value := NewString(reporter, str)
+
+			dt := value.AsDateTime(f)
+			dt.chain.assertNotFailed(t)
+		})
+
+		if n != 0 {
+			t.Run("different_format_"+f, func(t *testing.T) {
+				str := time.Now().Format(f)
+
+				reporter := newMockReporter(t)
+				value := NewString(reporter, str)
+
+				dt := value.AsDateTime(formats[0])
+				dt.chain.assertFailed(t)
+			})
+		}
+	}
 }

@@ -28,5 +28,5 @@ func TestGinHandler(t *testing.T) {
 	// Assert response
 	e.GET("/example").
 		Expect().
-		Status(http.StatusOK).JSON().Object().ValueEqual("message", "pong")
+		Status(http.StatusOK).JSON().Object().HasValue("message", "pong")
 }

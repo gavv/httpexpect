@@ -10,7 +10,7 @@ import (
 	"reflect"
 )
 
-func canonNumber(opChain *chain, in interface{}) (out big.Float, ok bool) {
+func canonNumber(opChain *chain, in interface{}) (out *big.Float, ok bool) {
 	ok = true
 	defer func() {
 		if err := recover(); err != nil {
@@ -27,9 +27,7 @@ func canonNumber(opChain *chain, in interface{}) (out big.Float, ok bool) {
 	}()
 
 	if in != in {
-		nan := new(big.Float)
-		nan.SetInf(false)
-		out, ok = *nan, false
+		out, ok = nil, false
 		return
 	}
 
@@ -47,18 +45,18 @@ func canonNumber(opChain *chain, in interface{}) (out big.Float, ok bool) {
 	return
 }
 
-func canonNumberConvert(in interface{}) (out big.Float, ok bool) {
+func canonNumberConvert(in interface{}) (out *big.Float, ok bool) {
 	value := reflect.ValueOf(in)
 	switch in := in.(type) {
 	case big.Int:
 		val := in
-		return *big.NewFloat(0).SetInt(&val), true
+		return big.NewFloat(0).SetInt(&val), true
 	case big.Float:
-		return in, true
+		return &in, true
 	case json.Number:
 		data := in.String()
 		num, ok := big.NewFloat(0).SetString(data)
-		return *num, ok
+		return num, ok
 	default:
 		return canonConvertNumberNative(value, in)
 	}
@@ -67,47 +65,20 @@ func canonNumberConvert(in interface{}) (out big.Float, ok bool) {
 func canonConvertNumberNative(
 	value reflect.Value,
 	in interface{},
-) (out big.Float, ok bool) {
+) (out *big.Float, ok bool) {
 	t := reflect.TypeOf(in).Kind()
 	switch t {
-	case reflect.Float64:
+	case reflect.Float64, reflect.Float32:
 		float := value.Float()
-		return *big.NewFloat(float), true
-	case reflect.Float32:
-		float := value.Float()
-		return *big.NewFloat(float), true
-	case reflect.Int8:
+		return big.NewFloat(float), true
+	case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Int:
 		int := value.Int()
-		return *big.NewFloat(0).SetInt64(int), true
-	case reflect.Int16:
-		int := value.Int()
-		return *big.NewFloat(0).SetInt64(int), true
-	case reflect.Int32:
-		int := value.Int()
-		return *big.NewFloat(0).SetInt64(int), true
-	case reflect.Int64:
-		int := value.Int()
-		return *big.NewFloat(0).SetInt64(int), true
-	case reflect.Int:
-		int := value.Int()
-		return *big.NewFloat(0).SetInt64(int), true
-	case reflect.Uint8:
+		return big.NewFloat(0).SetInt64(int), true
+	case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uint:
 		int := value.Uint()
-		return *big.NewFloat(0).SetUint64(int), true
-	case reflect.Uint16:
-		int := value.Uint()
-		return *big.NewFloat(0).SetUint64(int), true
-	case reflect.Uint32:
-		int := value.Uint()
-		return *big.NewFloat(0).SetUint64(int), true
-	case reflect.Uint64:
-		int := value.Uint()
-		return *big.NewFloat(0).SetUint64(int), true
-	case reflect.Uint:
-		int := value.Uint()
-		return *big.NewFloat(0).SetUint64(int), true
+		return big.NewFloat(0).SetUint64(int), true
 	default:
-		return *big.NewFloat(0), false
+		return big.NewFloat(0), false
 	}
 }
 

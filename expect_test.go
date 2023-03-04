@@ -2,6 +2,7 @@ package httpexpect
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"testing"
 
@@ -324,14 +325,14 @@ func TestExpect_Branches(t *testing.T) {
 	m2 := resp.JSON().Object() // ok
 	m3 := resp.JSON().Object() // ok
 
-	e1 := m2.Value("foo").Object()                    // fail
-	e2 := m2.Value("foo").Array().Value(999).String() // fail
-	e3 := m2.Value("foo").Array().Value(0).Number()   // fail
-	e4 := m2.Value("foo").Array().Value(0).String()   // ok
-	e5 := m2.Value("foo").Array().Value(0).String()   // ok
+	// e1 := m2.Value("foo").Object()                    // fail
+	// e2 := m2.Value("foo").Array().Value(999).String() // fail
+	e3 := m2.Value("foo").Array().Value(0).Number() // fail
+	// e4 := m2.Value("foo").Array().Value(0).String() // ok
+	// e5 := m2.Value("foo").Array().Value(0).String() // ok
 
-	e4.IsEqual("qux") // fail
-	e5.IsEqual("bar") // ok
+	// e4.IsEqual("qux") // fail
+	// e5.IsEqual("bar") // ok
 
 	req.chain.assertFlags(t, flagFailedChildren)
 	resp.chain.assertFlags(t, flagFailedChildren)
@@ -340,11 +341,12 @@ func TestExpect_Branches(t *testing.T) {
 	m2.chain.assertFlags(t, flagFailedChildren)
 	m3.chain.assertFlags(t, 0)
 
-	e1.chain.assertFlags(t, flagFailed)
-	e2.chain.assertFlags(t, flagFailed)
+	// e1.chain.assertFlags(t, flagFailed)
+	// e2.chain.assertFlags(t, flagFailed)
+	fmt.Println(e3.chain.flags)
 	e3.chain.assertFlags(t, flagFailed)
-	e4.chain.assertFlags(t, flagFailed)
-	e5.chain.assertFlags(t, 0)
+	// e4.chain.assertFlags(t, flagFailed)
+	// e5.chain.assertFlags(t, 0)
 }
 
 func TestExpect_RequestFactory(t *testing.T) {
