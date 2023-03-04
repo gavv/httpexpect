@@ -763,28 +763,32 @@ func TestFormatter_FormatValue(t *testing.T) {
 }
 
 func TestFormatter_FormatDiff(t *testing.T) {
-	var formatter = &DefaultFormatter{}
+	t.Run("success", func(t *testing.T) {
+		check := func(a, b interface{}) {
+			formatter := &DefaultFormatter{}
+			diff, ok := formatter.formatDiff(a, b)
+			assert.True(t, ok)
+			assert.NotEqual(t, "", diff)
+		}
 
-	checkOK := func(a, b interface{}) {
-		s, ok := formatter.formatDiff(a, b)
-		assert.True(t, ok)
-		assert.NotEqual(t, "", s)
-	}
+		check(map[string]interface{}{"a": 1}, map[string]interface{}{})
+		check([]interface{}{"a"}, []interface{}{})
+	})
 
-	checkNotOK := func(a, b interface{}) {
-		s, ok := formatter.formatDiff(a, b)
-		assert.False(t, ok)
-		assert.Equal(t, "", s)
-	}
+	t.Run("failure", func(t *testing.T) {
+		check := func(a, b interface{}) {
+			formatter := &DefaultFormatter{}
+			diff, ok := formatter.formatDiff(a, b)
+			assert.False(t, ok)
+			assert.Equal(t, "", diff)
+		}
 
-	checkNotOK(map[string]interface{}{}, []interface{}{})
-	checkNotOK([]interface{}{}, map[string]interface{}{})
-	checkNotOK("foo", "bar")
-	checkNotOK(func() {}, func() {})
+		check(map[string]interface{}{}, []interface{}{})
+		check([]interface{}{}, map[string]interface{}{})
+		check("foo", "bar")
+		check(func() {}, func() {})
 
-	checkNotOK(map[string]interface{}{}, map[string]interface{}{})
-	checkNotOK([]interface{}{}, []interface{}{})
-
-	checkOK(map[string]interface{}{"a": 1}, map[string]interface{}{})
-	checkOK([]interface{}{"a"}, []interface{}{})
+		check(map[string]interface{}{}, map[string]interface{}{})
+		check([]interface{}{}, []interface{}{})
+	})
 }
