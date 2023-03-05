@@ -268,7 +268,7 @@ func TestString_IsEqualFold(t *testing.T) {
 			isEqualFold: true,
 		},
 		{
-			name:        "equivalent string with case-insensitive match",
+			name:        "equivalent string because case insensitive",
 			str:         "foo",
 			value:       "FOO",
 			isEqualFold: true,
@@ -317,7 +317,7 @@ func TestString_InList(t *testing.T) {
 				isInList: true,
 			},
 			{
-				name:     "not in list",
+				name:     "not in list because case sensitive",
 				str:      "foo",
 				value:    []string{"FOO", "BAR"},
 				isInList: false,
@@ -385,7 +385,7 @@ func TestString_InListFold(t *testing.T) {
 				isInListFold: true,
 			},
 			{
-				name:         "in list with case-insensitive match",
+				name:         "in list because case insensitive",
 				str:          "foo",
 				value:        []string{"FOO", "BAR"},
 				isInListFold: true,
@@ -488,7 +488,7 @@ func TestString_ContainsFold(t *testing.T) {
 			isContainsFold: true,
 		},
 		{
-			name:           "contains with case-insensitive match",
+			name:           "contains because case insensitive",
 			str:            "11-foo-22",
 			value:          "FOO",
 			isContainsFold: true,
@@ -548,25 +548,25 @@ func TestString_HasPrefix(t *testing.T) {
 			isHasPrefix: true,
 		},
 		{
-			name:        "not has prefix",
+			name:        "not has prefix because value has extra char",
 			str:         "Hello World",
 			value:       "Hello!",
 			isHasPrefix: false,
 		},
 		{
-			name:        "not has prefix",
+			name:        "not has prefix because case sensitive",
 			str:         "Hello World",
 			value:       "hello",
 			isHasPrefix: false,
 		},
 		{
-			name:        "not has prefix",
+			name:        "not has prefix because value is suffix",
 			str:         "Hello World",
 			value:       "World",
 			isHasPrefix: false,
 		},
 		{
-			name:        "not has prefix",
+			name:        "not has prefix because value does not exist in sentence",
 			str:         "Hello World",
 			value:       "Bye",
 			isHasPrefix: false,
@@ -620,25 +620,25 @@ func TestString_HasSuffix(t *testing.T) {
 			isHasSuffix: true,
 		},
 		{
-			name:        "not has suffix",
+			name:        "not has suffix because value has extra char",
 			str:         "Hello World",
 			value:       "World!",
 			isHasSuffix: false,
 		},
 		{
-			name:        "not has suffix",
+			name:        "not has suffix because case sensitive",
 			str:         "Hello World",
 			value:       "world",
 			isHasSuffix: false,
 		},
 		{
-			name:        "not has suffix",
+			name:        "not has suffix because value is prefix",
 			str:         "Hello World",
 			value:       "Hello",
 			isHasSuffix: false,
 		},
 		{
-			name:        "not has suffix",
+			name:        "not has suffix because value does not exist in sentence",
 			str:         "Hello World",
 			value:       "Bye",
 			isHasSuffix: false,
@@ -674,13 +674,13 @@ func TestString_HasPrefixFold(t *testing.T) {
 		isHasPrefixFold bool
 	}{
 		{
-			name:            "has prefix with case-insensitive match",
+			name:            "has prefix because case insensitive",
 			str:             "Hello World",
 			value:           "hello",
 			isHasPrefixFold: true,
 		},
 		{
-			name:            "full sentence with case-insensitive match",
+			name:            "full sentence and case insensitive",
 			str:             "Hello World",
 			value:           "HeLlO wOrLd",
 			isHasPrefixFold: true,
@@ -692,25 +692,25 @@ func TestString_HasPrefixFold(t *testing.T) {
 			isHasPrefixFold: true,
 		},
 		{
-			name:            "not has prefix",
+			name:            "not has prefix because value is suffix",
 			str:             "Hello World",
 			value:           "World",
 			isHasPrefixFold: false,
 		},
 		{
-			name:            "not has prefix",
+			name:            "not has prefix because value does not exist in sentence",
 			str:             "Hello World",
 			value:           "Bye",
 			isHasPrefixFold: false,
 		},
 		{
-			name:            "not has prefix",
+			name:            "not has prefix because value is suffix and case sensitive",
 			str:             "Hello World",
 			value:           "world",
 			isHasPrefixFold: false,
 		},
 		{
-			name:            "not has prefix",
+			name:            "not has prefix because value has extra char",
 			str:             "Hello World",
 			value:           "world!",
 			isHasPrefixFold: false,
@@ -752,7 +752,7 @@ func TestString_HasSuffixFold(t *testing.T) {
 			isHasSuffixFold: true,
 		},
 		{
-			name:            "full sentence with case-insensitive match",
+			name:            "full sentence and case insensitive",
 			str:             "Hello World",
 			value:           "hElLo WoRlD",
 			isHasSuffixFold: true,
@@ -764,19 +764,19 @@ func TestString_HasSuffixFold(t *testing.T) {
 			isHasSuffixFold: true,
 		},
 		{
-			name:            "not has suffix",
+			name:            "not has suffix because value is prefix and case sensitive",
 			str:             "Hello World",
 			value:           "hello",
 			isHasSuffixFold: false,
 		},
 		{
-			name:            "not has suffix",
+			name:            "not has suffix because value has extra char",
 			str:             "Hello World",
 			value:           "world!",
 			isHasSuffixFold: false,
 		},
 		{
-			name:            "not has suffix",
+			name:            "not has suffix because value does not exist in sentence",
 			str:             "Hello World",
 			value:           "Bye",
 			isHasSuffixFold: false,
