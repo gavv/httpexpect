@@ -175,19 +175,19 @@ func TestString_Getters(t *testing.T) {
 
 func TestString_IsEmpty(t *testing.T) {
 	cases := []struct {
-		name      string
-		str       string
-		wantEmpty bool
+		name    string
+		str     string
+		isEmpty bool
 	}{
 		{
-			name:      "empty string",
-			str:       "",
-			wantEmpty: true,
+			name:    "empty string",
+			str:     "",
+			isEmpty: true,
 		},
 		{
-			name:      "populated string",
-			str:       "a",
-			wantEmpty: false,
+			name:    "non-empty string",
+			str:     "foo",
+			isEmpty: false,
 		},
 	}
 
@@ -195,16 +195,14 @@ func TestString_IsEmpty(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			if tc.wantEmpty {
+			if tc.isEmpty {
 				NewString(reporter, tc.str).IsEmpty().
 					chain.assertNotFailed(t)
-
 				NewString(reporter, tc.str).NotEmpty().
 					chain.assertFailed(t)
 			} else {
 				NewString(reporter, tc.str).IsEmpty().
 					chain.assertFailed(t)
-
 				NewString(reporter, tc.str).NotEmpty().
 					chain.assertNotFailed(t)
 			}
@@ -214,22 +212,32 @@ func TestString_IsEmpty(t *testing.T) {
 
 func TestString_IsEqual(t *testing.T) {
 	cases := []struct {
-		name    string
-		str     string
-		value   string
-		isEqual bool
+		name        string
+		str         string
+		value       string
+		isEqual     bool
+		isEqualFold bool
 	}{
 		{
-			name:    "equivalent string",
-			str:     "foo",
-			value:   "foo",
-			isEqual: true,
+			name:        "equivalent string",
+			str:         "foo",
+			value:       "foo",
+			isEqual:     true,
+			isEqualFold: true,
 		},
 		{
-			name:    "non-equivalent string",
-			str:     "foo",
-			value:   "FOO",
-			isEqual: false,
+			name:        "non-equivalent string",
+			str:         "foo",
+			value:       "bar",
+			isEqual:     false,
+			isEqualFold: false,
+		},
+		{
+			name:        "different case",
+			str:         "foo",
+			value:       "FOO",
+			isEqual:     false,
+			isEqualFold: true,
 		},
 	}
 
@@ -237,67 +245,27 @@ func TestString_IsEqual(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		if tc.isEqual {
-			NewString(reporter, tc.str).
-				IsEqual(tc.value).
+			NewString(reporter, tc.str).IsEqual(tc.value).
 				chain.assertNotFailed(t)
-			NewString(reporter, tc.str).
-				NotEqual(tc.value).
+			NewString(reporter, tc.str).NotEqual(tc.value).
 				chain.assertFailed(t)
 		} else {
-			NewString(reporter, tc.str).
-				NotEqual(tc.value).
-				chain.assertNotFailed(t)
-			NewString(reporter, tc.str).
-				IsEqual(tc.value).
+			NewString(reporter, tc.str).IsEqual(tc.value).
 				chain.assertFailed(t)
+			NewString(reporter, tc.str).NotEqual(tc.value).
+				chain.assertNotFailed(t)
 		}
-	}
-}
-
-func TestString_IsEqualFold(t *testing.T) {
-	cases := []struct {
-		name        string
-		str         string
-		value       string
-		isEqualFold bool
-	}{
-		{
-			name:        "equivalent string",
-			str:         "foo",
-			value:       "foo",
-			isEqualFold: true,
-		},
-		{
-			name:        "equivalent string because case insensitive",
-			str:         "foo",
-			value:       "FOO",
-			isEqualFold: true,
-		},
-		{
-			name:        "non-equivalent string",
-			str:         "foo",
-			value:       "foo2",
-			isEqualFold: false,
-		},
-	}
-
-	for _, tc := range cases {
-		reporter := newMockReporter(t)
 
 		if tc.isEqualFold {
-			NewString(reporter, tc.str).
-				IsEqualFold(tc.value).
+			NewString(reporter, tc.str).IsEqualFold(tc.value).
 				chain.assertNotFailed(t)
-			NewString(reporter, tc.str).
-				NotEqualFold(tc.value).
+			NewString(reporter, tc.str).NotEqualFold(tc.value).
 				chain.assertFailed(t)
 		} else {
-			NewString(reporter, tc.str).
-				NotEqualFold(tc.value).
-				chain.assertNotFailed(t)
-			NewString(reporter, tc.str).
-				IsEqualFold(tc.value).
+			NewString(reporter, tc.str).IsEqualFold(tc.value).
 				chain.assertFailed(t)
+			NewString(reporter, tc.str).NotEqualFold(tc.value).
+				chain.assertNotFailed(t)
 		}
 	}
 }
@@ -305,54 +273,60 @@ func TestString_IsEqualFold(t *testing.T) {
 func TestString_InList(t *testing.T) {
 	t.Run("basic", func(t *testing.T) {
 		cases := []struct {
-			name     string
-			str      string
-			value    []string
-			isInList bool
+			name       string
+			str        string
+			value      []string
+			inList     bool
+			inListFold bool
 		}{
 			{
-				name:     "in list",
-				str:      "foo",
-				value:    []string{"foo", "bar"},
-				isInList: true,
+				name:       "in list",
+				str:        "foo",
+				value:      []string{"foo", "bar"},
+				inList:     true,
+				inListFold: true,
 			},
 			{
-				name:     "not in list because case sensitive",
-				str:      "foo",
-				value:    []string{"FOO", "BAR"},
-				isInList: false,
+				name:       "not in list",
+				str:        "baz",
+				value:      []string{"foo", "bar"},
+				inList:     false,
+				inListFold: false,
 			},
 			{
-				name:     "not in list",
-				str:      "foo",
-				value:    []string{"FOO", "bar"},
-				isInList: false,
-			},
-			{
-				name:     "in list",
-				str:      "foo",
-				value:    []string{"foo", "BAR"},
-				isInList: true,
+				name:       "different case",
+				str:        "FOO",
+				value:      []string{"foo", "bar"},
+				inList:     false,
+				inListFold: true,
 			},
 		}
 
 		for _, tc := range cases {
 			reporter := newMockReporter(t)
 
-			if tc.isInList {
-				NewString(reporter, tc.str).
-					InList(tc.value...).
+			if tc.inList {
+				NewString(reporter, tc.str).InList(tc.value...).
 					chain.assertNotFailed(t)
-				NewString(reporter, tc.str).
-					NotInList(tc.value...).
+				NewString(reporter, tc.str).NotInList(tc.value...).
 					chain.assertFailed(t)
 			} else {
-				NewString(reporter, tc.str).
-					NotInList(tc.value...).
-					chain.assertNotFailed(t)
-				NewString(reporter, tc.str).
-					InList(tc.value...).
+				NewString(reporter, tc.str).InList(tc.value...).
 					chain.assertFailed(t)
+				NewString(reporter, tc.str).NotInList(tc.value...).
+					chain.assertNotFailed(t)
+			}
+
+			if tc.inListFold {
+				NewString(reporter, tc.str).InListFold(tc.value...).
+					chain.assertNotFailed(t)
+				NewString(reporter, tc.str).NotInListFold(tc.value...).
+					chain.assertFailed(t)
+			} else {
+				NewString(reporter, tc.str).InListFold(tc.value...).
+					chain.assertFailed(t)
+				NewString(reporter, tc.str).NotInListFold(tc.value...).
+					chain.assertNotFailed(t)
 			}
 		}
 	})
@@ -367,60 +341,6 @@ func TestString_InList(t *testing.T) {
 		NewString(reporter, "foo").
 			NotInList(). // empty list
 			chain.assertFailed(t)
-	})
-}
-
-func TestString_InListFold(t *testing.T) {
-	t.Run("basic", func(t *testing.T) {
-		cases := []struct {
-			name         string
-			str          string
-			value        []string
-			isInListFold bool
-		}{
-			{
-				name:         "in list",
-				str:          "foo",
-				value:        []string{"foo", "bar"},
-				isInListFold: true,
-			},
-			{
-				name:         "in list because case insensitive",
-				str:          "foo",
-				value:        []string{"FOO", "BAR"},
-				isInListFold: true,
-			},
-			{
-				name:         "not in list",
-				str:          "foo",
-				value:        []string{"BAR", "BAZ"},
-				isInListFold: false,
-			},
-		}
-
-		for _, tc := range cases {
-			reporter := newMockReporter(t)
-
-			if tc.isInListFold {
-				NewString(reporter, tc.str).
-					InListFold(tc.value...).
-					chain.assertNotFailed(t)
-				NewString(reporter, tc.str).
-					NotInListFold(tc.value...).
-					chain.assertFailed(t)
-			} else {
-				NewString(reporter, tc.str).
-					NotInListFold(tc.value...).
-					chain.assertNotFailed(t)
-				NewString(reporter, tc.str).
-					InListFold(tc.value...).
-					chain.assertFailed(t)
-			}
-		}
-	})
-
-	t.Run("invalid argument", func(t *testing.T) {
-		reporter := newMockReporter(t)
 
 		NewString(reporter, "foo").
 			InListFold(). // empty list
@@ -434,382 +354,246 @@ func TestString_InListFold(t *testing.T) {
 
 func TestString_Contains(t *testing.T) {
 	cases := []struct {
-		name       string
-		str        string
-		value      string
-		isContains bool
+		name         string
+		str          string
+		value        string
+		contains     bool
+		containsFold bool
 	}{
 		{
-			name:       "contains",
-			str:        "11-foo-22",
-			value:      "foo",
-			isContains: true,
+			name:         "contains",
+			str:          "11-foo-22",
+			value:        "foo",
+			contains:     true,
+			containsFold: true,
 		},
 		{
-			name:       "not contains",
-			str:        "11-foo-22",
-			value:      "FOO",
-			isContains: false,
+			name:         "not contains",
+			str:          "11-foo-22",
+			value:        "bar",
+			contains:     false,
+			containsFold: false,
+		},
+		{
+			name:         "different case",
+			str:          "11-foo-22",
+			value:        "FOO",
+			contains:     false,
+			containsFold: true,
 		},
 	}
 
 	for _, tc := range cases {
 		reporter := newMockReporter(t)
 
-		if tc.isContains {
-			NewString(reporter, tc.str).
-				Contains(tc.value).
+		if tc.contains {
+			NewString(reporter, tc.str).Contains(tc.value).
 				chain.assertNotFailed(t)
-			NewString(reporter, tc.str).
-				NotContains(tc.value).
+			NewString(reporter, tc.str).NotContains(tc.value).
 				chain.assertFailed(t)
 		} else {
-			NewString(reporter, tc.str).
-				NotContains(tc.value).
-				chain.assertNotFailed(t)
-			NewString(reporter, tc.str).
-				Contains(tc.value).
+			NewString(reporter, tc.str).Contains(tc.value).
 				chain.assertFailed(t)
+			NewString(reporter, tc.str).NotContains(tc.value).
+				chain.assertNotFailed(t)
 		}
-	}
-}
 
-func TestString_ContainsFold(t *testing.T) {
-	cases := []struct {
-		name           string
-		str            string
-		value          string
-		isContainsFold bool
-	}{
-		{
-			name:           "contains",
-			str:            "11-foo-22",
-			value:          "foo",
-			isContainsFold: true,
-		},
-		{
-			name:           "contains because case insensitive",
-			str:            "11-foo-22",
-			value:          "FOO",
-			isContainsFold: true,
-		},
-		{
-			name:           "not contains",
-			str:            "11-foo-22",
-			value:          "foo3",
-			isContainsFold: false,
-		},
-	}
-
-	for _, tc := range cases {
-		reporter := newMockReporter(t)
-
-		if tc.isContainsFold {
-			NewString(reporter, tc.str).
-				ContainsFold(tc.value).
+		if tc.containsFold {
+			NewString(reporter, tc.str).ContainsFold(tc.value).
 				chain.assertNotFailed(t)
-			NewString(reporter, tc.str).
-				NotContainsFold(tc.value).
+			NewString(reporter, tc.str).NotContainsFold(tc.value).
 				chain.assertFailed(t)
 		} else {
-			NewString(reporter, tc.str).
-				NotContainsFold(tc.value).
-				chain.assertNotFailed(t)
-			NewString(reporter, tc.str).
-				ContainsFold(tc.value).
+			NewString(reporter, tc.str).ContainsFold(tc.value).
 				chain.assertFailed(t)
+			NewString(reporter, tc.str).NotContainsFold(tc.value).
+				chain.assertNotFailed(t)
 		}
 	}
 }
 
 func TestString_HasPrefix(t *testing.T) {
 	cases := []struct {
-		name        string
-		str         string
-		value       string
-		isHasPrefix bool
+		name          string
+		str           string
+		value         string
+		hasPrefix     bool
+		hasPrefixFold bool
 	}{
 		{
-			name:        "has prefix",
-			str:         "Hello World",
-			value:       "Hello",
-			isHasPrefix: true,
+			name:          "has prefix",
+			str:           "Hello World",
+			value:         "Hello",
+			hasPrefix:     true,
+			hasPrefixFold: true,
 		},
 		{
-			name:        "full sentence",
-			str:         "Hello World",
-			value:       "Hello World",
-			isHasPrefix: true,
+			name:          "full match",
+			str:           "Hello World",
+			value:         "Hello World",
+			hasPrefix:     true,
+			hasPrefixFold: true,
 		},
 		{
-			name:        "empty string",
-			str:         "Hello World",
-			value:       "",
-			isHasPrefix: true,
+			name:          "empty string",
+			str:           "Hello World",
+			value:         "",
+			hasPrefix:     true,
+			hasPrefixFold: true,
 		},
 		{
-			name:        "not has prefix because value has extra char",
-			str:         "Hello World",
-			value:       "Hello!",
-			isHasPrefix: false,
+			name:          "extra char",
+			str:           "Hello World",
+			value:         "Hello!",
+			hasPrefix:     false,
+			hasPrefixFold: false,
 		},
 		{
-			name:        "not has prefix because case sensitive",
-			str:         "Hello World",
-			value:       "hello",
-			isHasPrefix: false,
+			name:          "different case",
+			str:           "Hello World",
+			value:         "hell",
+			hasPrefix:     false,
+			hasPrefixFold: true,
 		},
 		{
-			name:        "not has prefix because value is suffix",
-			str:         "Hello World",
-			value:       "World",
-			isHasPrefix: false,
+			name:          "different case extra char",
+			str:           "Hello World",
+			value:         "hella",
+			hasPrefix:     false,
+			hasPrefixFold: false,
 		},
 		{
-			name:        "not has prefix because value does not exist in sentence",
-			str:         "Hello World",
-			value:       "Bye",
-			isHasPrefix: false,
+			name:          "different case full match",
+			str:           "Hello World",
+			value:         "hELLO wORLD",
+			hasPrefix:     false,
+			hasPrefixFold: true,
 		},
 	}
 
 	for _, tc := range cases {
 		reporter := newMockReporter(t)
 
-		if tc.isHasPrefix {
-			NewString(reporter, tc.str).
-				HasPrefix(tc.value).
+		if tc.hasPrefix {
+			NewString(reporter, tc.str).HasPrefix(tc.value).
 				chain.assertNotFailed(t)
-			NewString(reporter, tc.str).
-				NotHasPrefix(tc.value).
+			NewString(reporter, tc.str).NotHasPrefix(tc.value).
 				chain.assertFailed(t)
 		} else {
-			NewString(reporter, tc.str).
-				NotHasPrefix(tc.value).
-				chain.assertNotFailed(t)
-			NewString(reporter, tc.str).
-				HasPrefix(tc.value).
+			NewString(reporter, tc.str).HasPrefix(tc.value).
 				chain.assertFailed(t)
+			NewString(reporter, tc.str).NotHasPrefix(tc.value).
+				chain.assertNotFailed(t)
+		}
+
+		if tc.hasPrefixFold {
+			NewString(reporter, tc.str).HasPrefixFold(tc.value).
+				chain.assertNotFailed(t)
+			NewString(reporter, tc.str).NotHasPrefixFold(tc.value).
+				chain.assertFailed(t)
+		} else {
+			NewString(reporter, tc.str).HasPrefixFold(tc.value).
+				chain.assertFailed(t)
+			NewString(reporter, tc.str).NotHasPrefixFold(tc.value).
+				chain.assertNotFailed(t)
 		}
 	}
 }
 
 func TestString_HasSuffix(t *testing.T) {
 	cases := []struct {
-		name        string
-		str         string
-		value       string
-		isHasSuffix bool
+		name          string
+		str           string
+		value         string
+		hasSuffix     bool
+		hasSuffixFold bool
 	}{
 		{
-			name:        "has suffix",
-			str:         "Hello World",
-			value:       "World",
-			isHasSuffix: true,
+			name:          "has suffix",
+			str:           "Hello World",
+			value:         "World",
+			hasSuffix:     true,
+			hasSuffixFold: true,
 		},
 		{
-			name:        "full sentence",
-			str:         "Hello World",
-			value:       "Hello World",
-			isHasSuffix: true,
+			name:          "full match",
+			str:           "Hello World",
+			value:         "Hello World",
+			hasSuffix:     true,
+			hasSuffixFold: true,
 		},
 		{
-			name:        "empty string",
-			str:         "Hello World",
-			value:       "",
-			isHasSuffix: true,
+			name:          "empty string",
+			str:           "Hello World",
+			value:         "",
+			hasSuffix:     true,
+			hasSuffixFold: true,
 		},
 		{
-			name:        "not has suffix because value has extra char",
-			str:         "Hello World",
-			value:       "World!",
-			isHasSuffix: false,
+			name:          "extra char",
+			str:           "Hello World",
+			value:         "!World",
+			hasSuffix:     false,
+			hasSuffixFold: false,
 		},
 		{
-			name:        "not has suffix because case sensitive",
-			str:         "Hello World",
-			value:       "world",
-			isHasSuffix: false,
+			name:          "different case",
+			str:           "Hello World",
+			value:         "WORLD",
+			hasSuffix:     false,
+			hasSuffixFold: true,
 		},
 		{
-			name:        "not has suffix because value is prefix",
-			str:         "Hello World",
-			value:       "Hello",
-			isHasSuffix: false,
+			name:          "different case extra char",
+			str:           "Hello World",
+			value:         "!WORLD",
+			hasSuffix:     false,
+			hasSuffixFold: false,
 		},
 		{
-			name:        "not has suffix because value does not exist in sentence",
-			str:         "Hello World",
-			value:       "Bye",
-			isHasSuffix: false,
+			name:          "different case full match",
+			str:           "Hello World",
+			value:         "hELLO wORLD",
+			hasSuffix:     false,
+			hasSuffixFold: true,
 		},
 	}
 
 	for _, tc := range cases {
 		reporter := newMockReporter(t)
 
-		if tc.isHasSuffix {
-			NewString(reporter, tc.str).
-				HasSuffix(tc.value).
+		if tc.hasSuffix {
+			NewString(reporter, tc.str).HasSuffix(tc.value).
 				chain.assertNotFailed(t)
-			NewString(reporter, tc.str).
-				NotHasSuffix(tc.value).
+			NewString(reporter, tc.str).NotHasSuffix(tc.value).
 				chain.assertFailed(t)
 		} else {
-			NewString(reporter, tc.str).
-				NotHasSuffix(tc.value).
-				chain.assertNotFailed(t)
-			NewString(reporter, tc.str).
-				HasSuffix(tc.value).
+			NewString(reporter, tc.str).HasSuffix(tc.value).
 				chain.assertFailed(t)
+			NewString(reporter, tc.str).NotHasSuffix(tc.value).
+				chain.assertNotFailed(t)
+		}
+
+		if tc.hasSuffixFold {
+			NewString(reporter, tc.str).HasSuffixFold(tc.value).
+				chain.assertNotFailed(t)
+			NewString(reporter, tc.str).NotHasSuffixFold(tc.value).
+				chain.assertFailed(t)
+		} else {
+			NewString(reporter, tc.str).HasSuffixFold(tc.value).
+				chain.assertFailed(t)
+			NewString(reporter, tc.str).NotHasSuffixFold(tc.value).
+				chain.assertNotFailed(t)
 		}
 	}
 }
 
-func TestString_HasPrefixFold(t *testing.T) {
-	cases := []struct {
-		name            string
-		str             string
-		value           string
-		isHasPrefixFold bool
-	}{
-		{
-			name:            "has prefix because case insensitive",
-			str:             "Hello World",
-			value:           "hello",
-			isHasPrefixFold: true,
-		},
-		{
-			name:            "full sentence and case insensitive",
-			str:             "Hello World",
-			value:           "HeLlO wOrLd",
-			isHasPrefixFold: true,
-		},
-		{
-			name:            "empty string",
-			str:             "Hello World",
-			value:           "",
-			isHasPrefixFold: true,
-		},
-		{
-			name:            "not has prefix because value is suffix",
-			str:             "Hello World",
-			value:           "World",
-			isHasPrefixFold: false,
-		},
-		{
-			name:            "not has prefix because value does not exist in sentence",
-			str:             "Hello World",
-			value:           "Bye",
-			isHasPrefixFold: false,
-		},
-		{
-			name:            "not has prefix because value is suffix and case sensitive",
-			str:             "Hello World",
-			value:           "world",
-			isHasPrefixFold: false,
-		},
-		{
-			name:            "not has prefix because value has extra char",
-			str:             "Hello World",
-			value:           "world!",
-			isHasPrefixFold: false,
-		},
-	}
-
-	for _, tc := range cases {
-		reporter := newMockReporter(t)
-
-		if tc.isHasPrefixFold {
-			NewString(reporter, tc.str).
-				HasPrefixFold(tc.value).
-				chain.assertNotFailed(t)
-			NewString(reporter, tc.str).
-				NotHasPrefixFold(tc.value).
-				chain.assertFailed(t)
-		} else {
-			NewString(reporter, tc.str).
-				NotHasPrefixFold(tc.value).
-				chain.assertNotFailed(t)
-			NewString(reporter, tc.str).
-				HasPrefixFold(tc.value).
-				chain.assertFailed(t)
-		}
-	}
-}
-
-func TestString_HasSuffixFold(t *testing.T) {
-	cases := []struct {
-		name            string
-		str             string
-		value           string
-		isHasSuffixFold bool
-	}{
-		{
-			name:            "has suffix",
-			str:             "Hello World",
-			value:           "world",
-			isHasSuffixFold: true,
-		},
-		{
-			name:            "full sentence and case insensitive",
-			str:             "Hello World",
-			value:           "hElLo WoRlD",
-			isHasSuffixFold: true,
-		},
-		{
-			name:            "empty string",
-			str:             "Hello World",
-			value:           "",
-			isHasSuffixFold: true,
-		},
-		{
-			name:            "not has suffix because value is prefix and case sensitive",
-			str:             "Hello World",
-			value:           "hello",
-			isHasSuffixFold: false,
-		},
-		{
-			name:            "not has suffix because value has extra char",
-			str:             "Hello World",
-			value:           "world!",
-			isHasSuffixFold: false,
-		},
-		{
-			name:            "not has suffix because value does not exist in sentence",
-			str:             "Hello World",
-			value:           "Bye",
-			isHasSuffixFold: false,
-		},
-	}
-
-	for _, tc := range cases {
-		reporter := newMockReporter(t)
-
-		if tc.isHasSuffixFold {
-			NewString(reporter, tc.str).
-				HasSuffixFold(tc.value).
-				chain.assertNotFailed(t)
-			NewString(reporter, tc.str).
-				NotHasSuffixFold(tc.value).
-				chain.assertFailed(t)
-		} else {
-			NewString(reporter, tc.str).
-				NotHasSuffixFold(tc.value).
-				chain.assertNotFailed(t)
-			NewString(reporter, tc.str).
-				HasSuffixFold(tc.value).
-				chain.assertFailed(t)
-		}
-	}
-}
-
-func TestString_MatchOne(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	value := NewString(reporter, "http://example.com/users/john")
-
+func TestString_Match(t *testing.T) {
 	t.Run("named", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewString(reporter, "http://example.com/users/john")
+
 		m := value.Match(`http://(?P<host>.+)/users/(?P<user>.+)`)
 		m.chain.assertNotFailed(t)
 
@@ -819,6 +603,10 @@ func TestString_MatchOne(t *testing.T) {
 	})
 
 	t.Run("unnamed", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewString(reporter, "http://example.com/users/john")
+
 		m := value.Match(`http://(.+)/users/(.+)`)
 		m.chain.assertNotFailed(t)
 
@@ -826,85 +614,98 @@ func TestString_MatchOne(t *testing.T) {
 			[]string{"http://example.com/users/john", "example.com", "john"},
 			m.submatches)
 	})
-}
 
-func TestString_MatchAll(t *testing.T) {
-	reporter := newMockReporter(t)
+	t.Run("all", func(t *testing.T) {
+		reporter := newMockReporter(t)
 
-	value := NewString(reporter,
-		"http://example.com/users/john http://example.com/users/bob")
+		value := NewString(reporter,
+			"http://example.com/users/john http://example.com/users/bob")
 
-	m := value.MatchAll(`http://(\S+)/users/(\S+)`)
+		m := value.MatchAll(`http://(\S+)/users/(\S+)`)
 
-	assert.Equal(t, 2, len(m))
+		assert.Equal(t, 2, len(m))
 
-	m[0].chain.assertNotFailed(t)
-	m[1].chain.assertNotFailed(t)
+		m[0].chain.assertNotFailed(t)
+		m[1].chain.assertNotFailed(t)
 
-	assert.Equal(t,
-		[]string{"http://example.com/users/john", "example.com", "john"},
-		m[0].submatches)
+		assert.Equal(t,
+			[]string{"http://example.com/users/john", "example.com", "john"},
+			m[0].submatches)
 
-	assert.Equal(t,
-		[]string{"http://example.com/users/bob", "example.com", "bob"},
-		m[1].submatches)
-}
+		assert.Equal(t,
+			[]string{"http://example.com/users/bob", "example.com", "bob"},
+			m[1].submatches)
+	})
 
-func TestString_MatchStatus(t *testing.T) {
-	reporter := newMockReporter(t)
+	t.Run("status", func(t *testing.T) {
+		cases := []struct {
+			str      string
+			re       string
+			match    bool
+			notMatch bool
+		}{
+			{
+				str:      `a`,
+				re:       `a`,
+				match:    true,
+				notMatch: false,
+			},
+			{
+				str:      `a`,
+				re:       `[^a]`,
+				match:    false,
+				notMatch: true,
+			},
+			{
+				str:      `a`,
+				re:       `[`,
+				match:    false,
+				notMatch: false,
+			},
+		}
 
-	value := NewString(reporter, "a")
+		for _, tc := range cases {
+			t.Run(tc.str, func(t *testing.T) {
+				reporter := newMockReporter(t)
 
-	value.Match(`a`)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+				var value *String
 
-	value.MatchAll(`a`)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+				if tc.match {
+					value = NewString(reporter, tc.str)
+					value.Match(tc.re).chain.assertNotFailed(t)
+					value.chain.assertNotFailed(t)
 
-	value.NotMatch(`a`)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+					value = NewString(reporter, tc.str)
+					value.MatchAll(tc.re)
+					value.chain.assertNotFailed(t)
+				} else {
+					value = NewString(reporter, tc.str)
+					value.Match(tc.re).chain.assertFailed(t)
+					value.chain.assertFailed(t)
 
-	value.Match(`[^a]`)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+					value = NewString(reporter, tc.str)
+					value.MatchAll(tc.re)
+					value.chain.assertFailed(t)
+				}
 
-	value.MatchAll(`[^a]`)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotMatch(`[^a]`)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	assert.Equal(t, []string{}, value.Match(`[^a]`).submatches)
-	assert.Equal(t, []Match{}, value.MatchAll(`[^a]`))
-}
-
-func TestString_MatchInvalid(t *testing.T) {
-	reporter := newMockReporter(t)
-
-	value := NewString(reporter, "a")
-
-	value.Match(`[`)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.MatchAll(`[`)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotMatch(`[`)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+				if tc.notMatch {
+					value = NewString(reporter, tc.str)
+					value.NotMatch(tc.re)
+					value.chain.assertNotFailed(t)
+				} else {
+					value = NewString(reporter, tc.str)
+					value.NotMatch(tc.re)
+					value.chain.assertFailed(t)
+				}
+			})
+		}
+	})
 }
 
 func TestString_IsAscii(t *testing.T) {
 	cases := []struct {
-		str       string
-		wantASCII bool
+		str     string
+		isASCII bool
 	}{
 		{"Ascii", true},
 		{string(rune(127)), true},
@@ -913,21 +714,19 @@ func TestString_IsAscii(t *testing.T) {
 		{string(rune(128)), false},
 	}
 
-	for _, value := range cases {
-		t.Run(value.str, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.str, func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			if value.wantASCII {
-				NewString(reporter, value.str).IsASCII().
+			if tc.isASCII {
+				NewString(reporter, tc.str).IsASCII().
 					chain.assertNotFailed(t)
-
-				NewString(reporter, value.str).NotASCII().
+				NewString(reporter, tc.str).NotASCII().
 					chain.assertFailed(t)
 			} else {
-				NewString(reporter, value.str).IsASCII().
+				NewString(reporter, tc.str).IsASCII().
 					chain.assertFailed(t)
-
-				NewString(reporter, value.str).NotASCII().
+				NewString(reporter, tc.str).NotASCII().
 					chain.assertNotFailed(t)
 			}
 		})
