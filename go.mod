@@ -5,7 +5,7 @@ go 1.16
 require (
 	github.com/ajg/form v1.5.1
 	github.com/fasthttp/websocket v1.4.3-rc.6
-	github.com/fatih/color v1.14.1
+	github.com/fatih/color v1.13.0
 	github.com/fatih/structs v1.1.0
 	github.com/google/go-querystring v1.1.0
 	github.com/gorilla/websocket v1.4.2
@@ -30,6 +30,5 @@ require (
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
 	github.com/yudai/pp v2.0.1+incompatible // indirect
-	golang.org/x/sys v0.6.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
