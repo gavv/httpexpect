@@ -10,7 +10,7 @@ require (
 	github.com/google/go-querystring v1.1.0
 	github.com/gorilla/websocket v1.4.2
 	github.com/imkira/go-interpol v1.1.0
-	github.com/mattn/go-isatty v0.0.17
+	github.com/mattn/go-isatty v0.0.16
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/sanity-io/litter v1.5.5
 	github.com/stretchr/testify v1.5.0
