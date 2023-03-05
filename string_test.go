@@ -212,44 +212,6 @@ func TestString_IsEmpty(t *testing.T) {
 	}
 }
 
-func TestTemplate(t *testing.T) {
-	t.Run("basic", func(t *testing.T) {
-		cases := []struct {
-			name    string
-			str     string
-			value   string
-			isEqual bool
-		}{
-			{
-				name:    "",
-				str:     "",
-				value:   "",
-				isEqual: true,
-			},
-		}
-
-		for _, tc := range cases {
-			reporter := newMockReporter(t)
-
-			if tc.isEqual {
-				NewString(reporter, tc.str).
-					IsEqual(tc.value).
-					chain.assertNotFailed(t)
-				NewString(reporter, tc.str).
-					NotEqual(tc.value).
-					chain.assertFailed(t)
-			} else {
-				NewString(reporter, tc.str).
-					NotEqual(tc.value).
-					chain.assertNotFailed(t)
-				NewString(reporter, tc.str).
-					IsEqual(tc.value).
-					chain.assertFailed(t)
-			}
-		}
-	})
-}
-
 func TestString_IsEqual(t *testing.T) {
 	t.Run("basic", func(t *testing.T) {
 		cases := []struct {
