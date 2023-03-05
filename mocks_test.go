@@ -403,3 +403,9 @@ func (e *mockNetError) Timeout() bool {
 func (e *mockNetError) Temporary() bool {
 	return e.isTemporary
 }
+
+type MockError struct{}
+
+func (e *MockError) Error() string {
+	return ""
+}

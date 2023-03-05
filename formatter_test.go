@@ -473,32 +473,33 @@ func TestFormatter_FailureDelta(t *testing.T) {
 }
 
 func TestFormatter_FailureErrors(t *testing.T) {
-	type caseStructure struct {
+	var mErr *MockError
+	var mErrPtr error = mErr
+
+	cases := []struct {
 		name     string
 		errors   []error
 		expected []string
-	}
-
-	cases := []caseStructure{
+	}{
 		{
 			name:     "nil errors slice",
 			errors:   nil,
-			expected: nil,
+			expected: []string(nil),
 		},
 		{
 			name:     "empty errors slice",
 			errors:   []error{},
-			expected: nil,
+			expected: []string(nil),
 		},
 		{
 			name:     "errors slice with nil error",
 			errors:   []error{nil},
-			expected: nil,
+			expected: []string(nil),
 		},
 		{
 			name:     "errors slice with typed nil error",
-			errors:   []error{fmt.Errorf("error message: %w", nil)},
-			expected: []string{"error message: %!w(<nil>)"},
+			errors:   []error{mErrPtr},
+			expected: []string(nil),
 		},
 		{
 			name:     "errors slice with one error",
