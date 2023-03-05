@@ -126,6 +126,14 @@ func newChainWithConfig(name string, config Config) *chain {
 		c.context.Environment = newEnvironment(c)
 	}
 
+	ah, ok := c.handler.(*DefaultAssertionHandler)
+	if ok {
+		switch ah.Reporter.(type) {
+		case *AssertReporter, *RequireReporter, *FatalReporter, testing.TB:
+			c.context.TestingTB = true
+		}
+	}
+
 	return c
 }
 
@@ -153,6 +161,11 @@ func newChainWithDefaults(name string, reporter Reporter) *chain {
 	}
 
 	c.context.Environment = newEnvironment(c)
+
+	switch reporter.(type) {
+	case *AssertReporter, *RequireReporter, *FatalReporter, testing.TB:
+		c.context.TestingTB = true
+	}
 
 	return c
 }

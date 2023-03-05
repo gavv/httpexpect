@@ -134,6 +134,10 @@ type AssertionContext struct {
 	// Environment shared between tests
 	// Comes from Expect instance
 	Environment *Environment
+
+	// TestingTB is true when reporter is
+	// AssertReporter/RequireReporter/FatalReporter/testing.TB
+	TestingTB bool
 }
 
 // AssertionFailure provides detailed information about failed assertion.

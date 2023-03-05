@@ -819,7 +819,7 @@ func TestFormatter_ColorMode(t *testing.T) {
 				ColorMode: tc.mode,
 			}
 			fd := f.buildFormatData(&AssertionContext{}, &AssertionFailure{})
-			assert.Equal(t, tc.want, fd.EnableColor)
+			assert.Equal(t, tc.want, fd.EnableColors)
 		})
 	}
 }
