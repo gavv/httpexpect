@@ -404,8 +404,8 @@ func (e *mockNetError) Temporary() bool {
 	return e.isTemporary
 }
 
-type MockError struct{}
+type mockError struct{}
 
-func (e *MockError) Error() string {
+func (e *mockError) Error() string {
 	return ""
 }

@@ -244,6 +244,8 @@ func (f *DefaultFormatter) fillDescription(
 func (f *DefaultFormatter) fillErrors(
 	data *FormatData, ctx *AssertionContext, failure *AssertionFailure,
 ) {
+	data.Errors = []string{}
+
 	for _, err := range failure.Errors {
 		if refIsNil(err) {
 			continue

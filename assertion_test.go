@@ -370,11 +370,11 @@ func TestAssertion_ValidateTraits(t *testing.T) {
 }
 
 func TestAssertion_ValidateAssertion(t *testing.T) {
-	var tnil *MockError
-	var tnilPtr error = tnil
+	var mErr *mockError
+	var mErrPtr error = mErr
 
-	assert.Nil(t, tnilPtr)
-	assert.NotEqual(t, nil, tnilPtr)
+	assert.Nil(t, mErrPtr)
+	assert.NotEqual(t, nil, mErrPtr)
 
 	tests := []struct {
 		testName          string
@@ -420,7 +420,7 @@ func TestAssertion_ValidateAssertion(t *testing.T) {
 			errorContainsText: "Errors",
 			input: AssertionFailure{
 				Type:   AssertOperation,
-				Errors: []error{tnilPtr},
+				Errors: []error{mErrPtr},
 			},
 		},
 		{
