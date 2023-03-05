@@ -2053,7 +2053,7 @@ func TestArray_IsOrdered(t *testing.T) {
 		less        []func(x, y *Value) bool
 		chainFailed bool
 	}
-	tests := []struct {
+	cases := []struct {
 		name        string
 		args        args
 		isInvalid   bool
@@ -2273,48 +2273,48 @@ func TestArray_IsOrdered(t *testing.T) {
 			isInvalid: true,
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			if tt.isInvalid {
+			if tc.isInvalid {
 				t.Run("normal", func(t *testing.T) {
-					NewArray(reporter, tt.args.values).IsOrdered(tt.args.less...).
+					NewArray(reporter, tc.args.values).IsOrdered(tc.args.less...).
 						chain.assertFailed(t)
 
-					NewArray(reporter, tt.args.values).NotOrdered(tt.args.less...).
+					NewArray(reporter, tc.args.values).NotOrdered(tc.args.less...).
 						chain.assertFailed(t)
 				})
 
 				t.Run("reversed", func(t *testing.T) {
 					// reverse slice
-					sort.SliceStable(tt.args.values, func(i, j int) bool {
+					sort.SliceStable(tc.args.values, func(i, j int) bool {
 						return i > j
 					})
 
-					NewArray(reporter, tt.args.values).IsOrdered(tt.args.less...).
+					NewArray(reporter, tc.args.values).IsOrdered(tc.args.less...).
 						chain.assertFailed(t)
 
-					NewArray(reporter, tt.args.values).NotOrdered(tt.args.less...).
+					NewArray(reporter, tc.args.values).NotOrdered(tc.args.less...).
 						chain.assertFailed(t)
 				})
 			} else {
 				t.Run("is ordered", func(t *testing.T) {
-					if tt.isOrdered {
-						NewArray(reporter, tt.args.values).IsOrdered(tt.args.less...).
+					if tc.isOrdered {
+						NewArray(reporter, tc.args.values).IsOrdered(tc.args.less...).
 							chain.assertNotFailed(t)
 					} else {
-						NewArray(reporter, tt.args.values).IsOrdered(tt.args.less...).
+						NewArray(reporter, tc.args.values).IsOrdered(tc.args.less...).
 							chain.assertFailed(t)
 					}
 				})
 
 				t.Run("not ordered", func(t *testing.T) {
-					if tt.isUnordered {
-						NewArray(reporter, tt.args.values).NotOrdered(tt.args.less...).
+					if tc.isUnordered {
+						NewArray(reporter, tc.args.values).NotOrdered(tc.args.less...).
 							chain.assertNotFailed(t)
 					} else {
-						NewArray(reporter, tt.args.values).NotOrdered(tt.args.less...).
+						NewArray(reporter, tc.args.values).NotOrdered(tc.args.less...).
 							chain.assertFailed(t)
 					}
 				})

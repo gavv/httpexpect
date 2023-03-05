@@ -132,7 +132,7 @@ func TestWebsocket_Expect(t *testing.T) {
 		wsConn      WebsocketConn
 		wsPreSteps  func(*Websocket)
 	}
-	tests := []struct {
+	cases := []struct {
 		name     string
 		args     args
 		assertOk bool
@@ -191,22 +191,22 @@ func TestWebsocket_Expect(t *testing.T) {
 			assertOk: false,
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 			chain := newChainWithDefaults("test", reporter)
 			config := newMockConfig(reporter)
 
-			if tt.args.failedChain {
+			if tc.args.failedChain {
 				chain.setFailed()
 			}
 
-			ws := newWebsocket(chain, config, tt.args.wsConn)
-			tt.args.wsPreSteps(ws)
+			ws := newWebsocket(chain, config, tc.args.wsConn)
+			tc.args.wsPreSteps(ws)
 
 			ws.Expect()
 
-			if tt.assertOk {
+			if tc.assertOk {
 				ws.chain.assertNotFailed(t)
 			} else {
 				ws.chain.assertFailed(t)
@@ -221,7 +221,7 @@ func TestWebsocket_Close(t *testing.T) {
 		wsPreSteps func(*Websocket)
 		closeCode  []int
 	}
-	tests := []struct {
+	cases := []struct {
 		name     string
 		args     args
 		assertOk bool
@@ -265,19 +265,19 @@ func TestWebsocket_Close(t *testing.T) {
 			assertOk: false,
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 			chain := newChainWithDefaults("test", reporter)
 			config := newMockConfig(reporter)
 
-			ws := newWebsocket(chain, config, tt.args.wsConn)
+			ws := newWebsocket(chain, config, tc.args.wsConn)
 
-			tt.args.wsPreSteps(ws)
+			tc.args.wsPreSteps(ws)
 
-			ws.Close(tt.args.closeCode...)
+			ws.Close(tc.args.closeCode...)
 
-			if tt.assertOk {
+			if tc.assertOk {
 				ws.chain.assertNotFailed(t)
 			} else {
 				ws.chain.assertFailed(t)
@@ -293,7 +293,7 @@ func TestWebsocket_CloseWithBytes(t *testing.T) {
 		content    []byte
 		closeCode  []int
 	}
-	tests := []struct {
+	cases := []struct {
 		name     string
 		args     args
 		assertOk bool
@@ -341,19 +341,19 @@ func TestWebsocket_CloseWithBytes(t *testing.T) {
 			assertOk: false,
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 			chain := newChainWithDefaults("test", reporter)
 			config := newMockConfig(reporter)
 
-			ws := newWebsocket(chain, config, tt.args.wsConn)
+			ws := newWebsocket(chain, config, tc.args.wsConn)
 
-			tt.args.wsPreSteps(ws)
+			tc.args.wsPreSteps(ws)
 
-			ws.CloseWithBytes(tt.args.content, tt.args.closeCode...)
+			ws.CloseWithBytes(tc.args.content, tc.args.closeCode...)
 
-			if tt.assertOk {
+			if tc.assertOk {
 				ws.chain.assertNotFailed(t)
 			} else {
 				ws.chain.assertFailed(t)
@@ -369,7 +369,7 @@ func TestWebsocket_CloseWithText(t *testing.T) {
 		content    string
 		closeCode  []int
 	}
-	tests := []struct {
+	cases := []struct {
 		name     string
 		args     args
 		assertOk bool
@@ -417,19 +417,19 @@ func TestWebsocket_CloseWithText(t *testing.T) {
 			assertOk: false,
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 			chain := newChainWithDefaults("test", reporter)
 			config := newMockConfig(reporter)
 
-			ws := newWebsocket(chain, config, tt.args.wsConn)
+			ws := newWebsocket(chain, config, tc.args.wsConn)
 
-			tt.args.wsPreSteps(ws)
+			tc.args.wsPreSteps(ws)
 
-			ws.CloseWithText(tt.args.content, tt.args.closeCode...)
+			ws.CloseWithText(tc.args.content, tc.args.closeCode...)
 
-			if tt.assertOk {
+			if tc.assertOk {
 				ws.chain.assertNotFailed(t)
 			} else {
 				ws.chain.assertFailed(t)
@@ -445,7 +445,7 @@ func TestWebsocket_CloseWithJSON(t *testing.T) {
 		content    interface{}
 		closeCode  []int
 	}
-	tests := []struct {
+	cases := []struct {
 		name     string
 		args     args
 		assertOk bool
@@ -511,19 +511,19 @@ func TestWebsocket_CloseWithJSON(t *testing.T) {
 			assertOk: false,
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 			chain := newChainWithDefaults("test", reporter)
 			config := newMockConfig(reporter)
 
-			ws := newWebsocket(chain, config, tt.args.wsConn)
+			ws := newWebsocket(chain, config, tc.args.wsConn)
 
-			tt.args.wsPreSteps(ws)
+			tc.args.wsPreSteps(ws)
 
-			ws.CloseWithJSON(tt.args.content, tt.args.closeCode...)
+			ws.CloseWithJSON(tc.args.content, tc.args.closeCode...)
 
-			if tt.assertOk {
+			if tc.assertOk {
 				ws.chain.assertNotFailed(t)
 			} else {
 				ws.chain.assertFailed(t)
@@ -540,7 +540,7 @@ func TestWebsocket_WriteMessage(t *testing.T) {
 		content    []byte
 		closeCode  []int
 	}
-	tests := []struct {
+	cases := []struct {
 		name     string
 		args     args
 		assertOk bool
@@ -652,19 +652,19 @@ func TestWebsocket_WriteMessage(t *testing.T) {
 			assertOk: false,
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 			chain := newChainWithDefaults("test", reporter)
 			config := newMockConfig(reporter)
 
-			ws := newWebsocket(chain, config, tt.args.wsConn)
+			ws := newWebsocket(chain, config, tc.args.wsConn)
 
-			tt.args.wsPreSteps(ws)
+			tc.args.wsPreSteps(ws)
 
-			ws.WriteMessage(tt.args.typ, tt.args.content, tt.args.closeCode...)
+			ws.WriteMessage(tc.args.typ, tc.args.content, tc.args.closeCode...)
 
-			if tt.assertOk {
+			if tc.assertOk {
 				ws.chain.assertNotFailed(t)
 			} else {
 				ws.chain.assertFailed(t)
@@ -679,7 +679,7 @@ func TestWebsocket_WriteBytesBinary(t *testing.T) {
 		wsPreSteps func(*Websocket)
 		content    []byte
 	}
-	tests := []struct {
+	cases := []struct {
 		name     string
 		args     args
 		assertOk bool
@@ -714,19 +714,19 @@ func TestWebsocket_WriteBytesBinary(t *testing.T) {
 			assertOk: false,
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 			chain := newChainWithDefaults("test", reporter)
 			config := newMockConfig(reporter)
 
-			ws := newWebsocket(chain, config, tt.args.wsConn)
+			ws := newWebsocket(chain, config, tc.args.wsConn)
 
-			tt.args.wsPreSteps(ws)
+			tc.args.wsPreSteps(ws)
 
-			ws.WriteBytesBinary(tt.args.content)
+			ws.WriteBytesBinary(tc.args.content)
 
-			if tt.assertOk {
+			if tc.assertOk {
 				ws.chain.assertNotFailed(t)
 			} else {
 				ws.chain.assertFailed(t)
@@ -741,7 +741,7 @@ func TestWebsocket_WriteBytesText(t *testing.T) {
 		wsPreSteps func(*Websocket)
 		content    []byte
 	}
-	tests := []struct {
+	cases := []struct {
 		name     string
 		args     args
 		assertOk bool
@@ -776,19 +776,19 @@ func TestWebsocket_WriteBytesText(t *testing.T) {
 			assertOk: false,
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 			chain := newChainWithDefaults("test", reporter)
 			config := newMockConfig(reporter)
 
-			ws := newWebsocket(chain, config, tt.args.wsConn)
+			ws := newWebsocket(chain, config, tc.args.wsConn)
 
-			tt.args.wsPreSteps(ws)
+			tc.args.wsPreSteps(ws)
 
-			ws.WriteBytesText(tt.args.content)
+			ws.WriteBytesText(tc.args.content)
 
-			if tt.assertOk {
+			if tc.assertOk {
 				ws.chain.assertNotFailed(t)
 			} else {
 				ws.chain.assertFailed(t)
@@ -803,7 +803,7 @@ func TestWebsocket_WriteText(t *testing.T) {
 		wsPreSteps func(*Websocket)
 		content    string
 	}
-	tests := []struct {
+	cases := []struct {
 		name     string
 		args     args
 		assertOk bool
@@ -838,19 +838,19 @@ func TestWebsocket_WriteText(t *testing.T) {
 			assertOk: false,
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 			chain := newChainWithDefaults("test", reporter)
 			config := newMockConfig(reporter)
 
-			ws := newWebsocket(chain, config, tt.args.wsConn)
+			ws := newWebsocket(chain, config, tc.args.wsConn)
 
-			tt.args.wsPreSteps(ws)
+			tc.args.wsPreSteps(ws)
 
-			ws.WriteText(tt.args.content)
+			ws.WriteText(tc.args.content)
 
-			if tt.assertOk {
+			if tc.assertOk {
 				ws.chain.assertNotFailed(t)
 			} else {
 				ws.chain.assertFailed(t)
@@ -865,7 +865,7 @@ func TestWebsocket_WriteJSON(t *testing.T) {
 		wsPreSteps func(*Websocket)
 		content    interface{}
 	}
-	tests := []struct {
+	cases := []struct {
 		name     string
 		args     args
 		assertOk bool
@@ -915,19 +915,19 @@ func TestWebsocket_WriteJSON(t *testing.T) {
 			assertOk: false,
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 			chain := newChainWithDefaults("test", reporter)
 			config := newMockConfig(reporter)
 
-			ws := newWebsocket(chain, config, tt.args.wsConn)
+			ws := newWebsocket(chain, config, tc.args.wsConn)
 
-			tt.args.wsPreSteps(ws)
+			tc.args.wsPreSteps(ws)
 
-			ws.WriteJSON(tt.args.content)
+			ws.WriteJSON(tc.args.content)
 
-			if tt.assertOk {
+			if tc.assertOk {
 				ws.chain.assertNotFailed(t)
 			} else {
 				ws.chain.assertFailed(t)
@@ -953,7 +953,7 @@ func TestWebsocket_SetReadDeadline(t *testing.T) {
 	type args struct {
 		wsConn WebsocketConn
 	}
-	tests := []struct {
+	cases := []struct {
 		name     string
 		args     args
 		assertOk bool
@@ -974,20 +974,20 @@ func TestWebsocket_SetReadDeadline(t *testing.T) {
 			assertOk: false,
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 			chain := newChainWithDefaults("test", reporter)
 			config := newMockConfig(reporter)
 
-			ws := newWebsocket(chain, config, tt.args.wsConn).
+			ws := newWebsocket(chain, config, tc.args.wsConn).
 				WithReadTimeout(time.Second)
 
 			opChain := ws.chain.enter("test")
 			ws.setReadDeadline(opChain)
 			opChain.leave()
 
-			if tt.assertOk {
+			if tc.assertOk {
 				ws.chain.assertNotFailed(t)
 			} else {
 				ws.chain.assertFailed(t)
@@ -1000,7 +1000,7 @@ func TestWebsocket_SetWriteDeadline(t *testing.T) {
 	type args struct {
 		wsConn WebsocketConn
 	}
-	tests := []struct {
+	cases := []struct {
 		name     string
 		args     args
 		assertOk bool
@@ -1021,20 +1021,20 @@ func TestWebsocket_SetWriteDeadline(t *testing.T) {
 			assertOk: false,
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 			chain := newChainWithDefaults("test", reporter)
 			config := newMockConfig(reporter)
 
-			ws := newWebsocket(chain, config, tt.args.wsConn).
+			ws := newWebsocket(chain, config, tc.args.wsConn).
 				WithWriteTimeout(time.Second)
 
 			opChain := ws.chain.enter("test")
 			ws.setWriteDeadline(opChain)
 			opChain.leave()
 
-			if tt.assertOk {
+			if tc.assertOk {
 				ws.chain.assertNotFailed(t)
 			} else {
 				ws.chain.assertFailed(t)
@@ -1047,7 +1047,7 @@ func TestWebsocket_Disconnect(t *testing.T) {
 	type args struct {
 		wsConn WebsocketConn
 	}
-	tests := []struct {
+	cases := []struct {
 		name     string
 		args     args
 		assertOk bool
@@ -1075,17 +1075,17 @@ func TestWebsocket_Disconnect(t *testing.T) {
 			assertOk: false,
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 			chain := newChainWithDefaults("test", reporter)
 			config := newMockConfig(reporter)
 
-			ws := newWebsocket(chain, config, tt.args.wsConn)
+			ws := newWebsocket(chain, config, tc.args.wsConn)
 
 			ws.Disconnect()
 
-			if tt.assertOk {
+			if tc.assertOk {
 				ws.chain.assertNotFailed(t)
 			} else {
 				ws.chain.assertFailed(t)
