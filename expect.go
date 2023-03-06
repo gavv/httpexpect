@@ -285,6 +285,33 @@ type RequestFactory interface {
 	NewRequest(method, url string, body io.Reader) (*http.Request, error)
 }
 
+// RequestFactoryFunc is an adapter that allows a function
+// to be used as the RequestFactory
+//
+// Example:
+//
+//	func TestRequestFactory(m string, u string, b io.Reader) (*http.Request, error) {
+//		// factory code here
+//		return nil, nil
+//	}
+//
+//	func TestSomething(t *testing.T) {
+//		e := WithConfig(Config{
+//			TestName: t.Name(),
+//			BaseURL: "http://example.com/",
+//			RequestFactory: RequestFactoryFunc(TestRequestFactory),
+//		})
+//	}
+type RequestFactoryFunc func(
+	method string, url string, body io.Reader,
+) (*http.Request, error)
+
+func (f RequestFactoryFunc) NewRequest(
+	method string, url string, body io.Reader,
+) (*http.Request, error) {
+	return f(method, url, body)
+}
+
 // Client is used to send http.Request and receive http.Response.
 // http.Client implements this interface.
 //
@@ -301,6 +328,28 @@ type RequestFactory interface {
 type Client interface {
 	// Do sends request and returns response.
 	Do(*http.Request) (*http.Response, error)
+}
+
+// ClientFunc is an adapter that allows a function to be used as the Client
+//
+// Example:
+//
+//	func TestClient(r *http.Request) (*http.Response, error) {
+//		// client code here
+//		return nil, nil
+//	}
+//
+//	func TestSomething(t *testing.T) {
+//		e := WithConfig(Config{
+//			TestName: t.Name(),
+//			BaseURL: "http://example.com/",
+//			Client: ClientFunc(TestClient),
+//		})
+//	}
+type ClientFunc func(r *http.Request) (*http.Response, error)
+
+func (f ClientFunc) Do(r *http.Request) (*http.Response, error) {
+	return f(r)
 }
 
 // WebsocketDialer is used to establish websocket.Conn and receive http.Response
@@ -322,6 +371,33 @@ type WebsocketDialer interface {
 	Dial(url string, reqH http.Header) (*websocket.Conn, *http.Response, error)
 }
 
+// WebsocketDialerFunc is an adapter that allows a function
+// to be used as the WebsocketDialer
+//
+// Example:
+//
+//	func TestDialer(u string, r http.Header) (*websocket.Conn, *http.Response, error) {
+//		// dialer code here
+//		return nil, nil
+//	}
+//
+//	func TestSomething(t *testing.T) {
+//		e := WithConfig(Config{
+//			TestName: t.Name(),
+//			BaseURL: "http://example.com/",
+//			WebsocketDialer: WebsocketDialerFunc(TestDialer),
+//		})
+//	}
+type WebsocketDialerFunc func(
+	url string, reqH http.Header,
+) (*websocket.Conn, *http.Response, error)
+
+func (f WebsocketDialerFunc) Dial(
+	url string, reqH http.Header,
+) (*websocket.Conn, *http.Response, error) {
+	return f(url, reqH)
+}
+
 // Reporter is used to report failures.
 // *testing.T, FatalReporter, AssertReporter, RequireReporter implement it.
 type Reporter interface {
@@ -330,11 +406,57 @@ type Reporter interface {
 	Errorf(message string, args ...interface{})
 }
 
+// ReporterFunc is an adapter that allows a function to be used as the Reporter
+//
+// Example:
+//
+//	func TestReporter(message string, args ...interface{}) {
+//		// reporter code here
+//	}
+//
+//	func TestSomething(t *testing.T) {
+//		e := WithConfig(Config{
+//			TestName: t.Name(),
+//			BaseURL: "http://example.com/",
+//			Reporter: ReporterFunc(TestReporter),
+//		})
+//	}
+type ReporterFunc func(message string, args ...interface{})
+
+func (f ReporterFunc) Errorf(message string, args ...interface{}) {
+	f(message, args)
+}
+
 // Logger is used as output backend for Printer.
 // *testing.T implements this interface.
 type Logger interface {
 	// Logf writes message to test log.
 	Logf(fmt string, args ...interface{})
+}
+
+// LoggerFunc is an adapter that allows a function to be used as the Logger
+//
+// Example:
+//
+//	func TestLogger(fmt string, args ...interface{}) {
+//		// logger code here
+//	}
+//
+//	func TestSomething(t *testing.T) {
+//		l := LoggerFunc(TestLogger)
+//		e := WithConfig(Config{
+//			TestName: t.Name(),
+//			BaseURL:  "http://example.com/",
+//			Reporter: NewAssertReporter(t),
+//			Printers: []Printer{
+//				NewCompactPrinter(l),
+//			},
+//		})
+//	}
+type LoggerFunc func(fmt string, args ...interface{})
+
+func (f LoggerFunc) Logf(fmt string, args ...interface{}) {
+	f(fmt, args)
 }
 
 // TestingTB is a subset of testing.TB interface used by httpexpect.

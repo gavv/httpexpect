@@ -1,6 +1,7 @@
 package httpexpect
 
 import (
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -381,6 +382,25 @@ func TestExpect_RequestFactory(t *testing.T) {
 		req.chain.assertFailed(t)
 
 		assert.Nil(t, factory.lastreq)
+	})
+
+	t.Run("custom factory func implementation", func(t *testing.T) {
+		factory := RequestFactoryFunc(MockRequestFactoryFunc)
+
+		e := WithConfig(Config{
+			BaseURL:        "http://example.com",
+			Reporter:       newMockReporter(t),
+			RequestFactory: factory,
+		})
+
+		req := e.Request("GET", "/")
+		req.chain.assertNotFailed(t)
+
+		defer req.httpReq.Body.Close()
+		body, err := io.ReadAll(req.httpReq.Body)
+
+		assert.NoError(t, err)
+		assert.Equal(t, testRequestString, string(body))
 	})
 }
 

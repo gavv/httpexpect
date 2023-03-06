@@ -8,11 +8,14 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 )
+
+var testRequestString = "test request factory"
 
 type mockRequestFactory struct {
 	lastreq *http.Request
@@ -26,6 +29,12 @@ func (f *mockRequestFactory) NewRequest(
 	}
 	f.lastreq = httptest.NewRequest(method, urlStr, body)
 	return f.lastreq, nil
+}
+
+func MockRequestFactoryFunc(
+	method, urlStr string, body io.Reader) (*http.Request, error) {
+	b := strings.NewReader(testRequestString)
+	return httptest.NewRequest(method, urlStr, b), nil
 }
 
 type mockClient struct {
