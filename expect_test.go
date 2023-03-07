@@ -383,25 +383,6 @@ func TestExpect_RequestFactory(t *testing.T) {
 
 		assert.Nil(t, factory.lastreq)
 	})
-
-	t.Run("custom factory func implementation", func(t *testing.T) {
-		factory := RequestFactoryFunc(MockRequestFactoryFunc)
-
-		e := WithConfig(Config{
-			BaseURL:        "http://example.com",
-			Reporter:       newMockReporter(t),
-			RequestFactory: factory,
-		})
-
-		req := e.Request("GET", "/")
-		req.chain.assertNotFailed(t)
-
-		defer req.httpReq.Body.Close()
-		body, err := io.ReadAll(req.httpReq.Body)
-
-		assert.NoError(t, err)
-		assert.Equal(t, testRequestString, string(body))
-	})
 }
 
 func TestExpect_Panics(t *testing.T) {
@@ -547,5 +528,60 @@ func TestExpect_Config(t *testing.T) {
 			}
 			badConfig.validate()
 		})
+	})
+
+	t.Run("request factory func implementation", func(t *testing.T) {
+		factory := RequestFactoryFunc(mockRequestFactoryFunc)
+
+		e := WithConfig(Config{
+			BaseURL:        "http://example.com",
+			Reporter:       newMockReporter(t),
+			RequestFactory: factory,
+		})
+
+		req := e.Request("GET", "/")
+		req.chain.assertNotFailed(t)
+
+		defer req.httpReq.Body.Close()
+		body, err := io.ReadAll(req.httpReq.Body)
+		assert.NoError(t, err)
+		assert.Equal(t, "http://example.com:GET", string(body))
+
+		req = e.Request("POST", "/")
+		req.chain.assertNotFailed(t)
+
+		defer req.httpReq.Body.Close()
+		body, err = io.ReadAll(req.httpReq.Body)
+		assert.NoError(t, err)
+		assert.Equal(t, "http://example.com:POST", string(body))
+	})
+
+	t.Run("client func implementation", func(t *testing.T) {
+		client := ClientFunc(mockClientFunc)
+
+		e := WithConfig(Config{
+			BaseURL:  "http://example.com",
+			Reporter: newMockReporter(t),
+			Client:   client,
+		})
+
+		statusMsg := "this is my status message"
+		req := e.Request("GET", "/").WithHeader("status-code", "204").WithHeader("status", statusMsg)
+		resp := req.Expect()
+
+		assert.Equal(t, 204, resp.httpResp.StatusCode)
+		assert.Equal(t, statusMsg, resp.httpResp.Status)
+	})
+
+	t.Run("websocket dialer func implementation", func(t *testing.T) {
+
+	})
+
+	t.Run("reporter func implementation", func(t *testing.T) {
+
+	})
+
+	t.Run("logger func implementation", func(t *testing.T) {
+
 	})
 }

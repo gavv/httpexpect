@@ -8,14 +8,13 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 )
-
-var testRequestString = "test request factory"
 
 type mockRequestFactory struct {
 	lastreq *http.Request
@@ -31,9 +30,12 @@ func (f *mockRequestFactory) NewRequest(
 	return f.lastreq, nil
 }
 
-func MockRequestFactoryFunc(
+// mockRequestFactoryFunc mocks the request factory for expect
+//
+// Modifies the request body
+func mockRequestFactoryFunc(
 	method, urlStr string, body io.Reader) (*http.Request, error) {
-	b := strings.NewReader(testRequestString)
+	b := strings.NewReader(urlStr + ":" + method)
 	return httptest.NewRequest(method, urlStr, b), nil
 }
 
@@ -57,6 +59,27 @@ func (c *mockClient) Do(req *http.Request) (*http.Response, error) {
 		return &c.resp, nil
 	}
 	return nil, c.err
+}
+
+// mockClientFunc mocks the client for expect
+//
+// Returns a response with a status and code from
+// the request header. Default 200
+func mockClientFunc(req *http.Request) (*http.Response, error) {
+	errorMsg := req.Header.Get("error")
+	if errorMsg != "" {
+		return nil, errors.New("")
+	}
+	statusCode, err := strconv.Atoi(req.Header.Get("status-code"))
+	if err != nil {
+		statusCode = 200
+	}
+	status := req.Header.Get("status")
+	resp := http.Response{
+		StatusCode: statusCode,
+		Status:     status,
+	}
+	return &resp, nil
 }
 
 // mockTransportRedirect mocks a transport that implements RoundTripper
