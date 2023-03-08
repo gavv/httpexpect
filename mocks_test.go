@@ -35,9 +35,16 @@ func (f *mockRequestFactory) NewRequest(
 //
 // Modifies the request body
 func mockRequestFactoryFunc(
-	method, urlStr string, body io.Reader) (*http.Request, error) {
+	method, urlStr string, body io.Reader,
+) (*http.Request, error) {
 	b := strings.NewReader(urlStr + ":" + method)
 	return httptest.NewRequest(method, urlStr, b), nil
+}
+
+func mockErrorRequestFactoryFunc(
+	method, urlStr string, body io.Reader,
+) (*http.Request, error) {
+	return nil, errors.New("Test error.")
 }
 
 type mockClient struct {
@@ -81,28 +88,6 @@ func mockClientFunc(req *http.Request) (*http.Response, error) {
 		Status:     status,
 	}
 	return &resp, nil
-}
-
-func mockWebsocketDialerFunc(
-	url string, reqH http.Header,
-) (*websocket.Conn, *http.Response, error) {
-	c, resp, err := websocket.DefaultDialer.Dial(url, reqH)
-	if err != nil {
-		return nil, nil, err
-	}
-	defer c.Close()
-	for {
-		mt, message, err := c.ReadMessage()
-		if err != nil {
-			break
-		}
-		messageStr := "mock websocket says: " + string(message)
-		err = c.WriteMessage(mt, []byte(messageStr))
-		if err != nil {
-			break
-		}
-	}
-	return c, resp, err
 }
 
 // mockTransportRedirect mocks a transport that implements RoundTripper
@@ -440,6 +425,31 @@ func (wc *mockWebsocketConn) SetWriteDeadline(t time.Time) error {
 
 func (wc *mockWebsocketConn) Subprotocol() string {
 	return wc.subprotocol
+}
+
+// mockClientFunc mocks the websocket dialer for expect
+//
+// appends a prefix to the written message
+func mockWebsocketDialerFunc(
+	url string, reqH http.Header,
+) (*websocket.Conn, *http.Response, error) {
+	c, resp, err := websocket.DefaultDialer.Dial(url, reqH)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer c.Close()
+	for {
+		mt, message, err := c.ReadMessage()
+		if err != nil {
+			break
+		}
+		messageStr := "mock websocket says: " + string(message)
+		err = c.WriteMessage(mt, []byte(messageStr))
+		if err != nil {
+			break
+		}
+	}
+	return c, resp, err
 }
 
 type mockNetError struct {

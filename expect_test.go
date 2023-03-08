@@ -579,7 +579,7 @@ func TestExpect_Config(t *testing.T) {
 		dialer := WebsocketDialerFunc(mockWebsocketDialerFunc)
 
 		e := WithConfig(Config{
-			BaseURL:         "http://example.com",
+			BaseURL:         "ws://example.com",
 			Reporter:        newMockReporter(t),
 			WebsocketDialer: dialer,
 		})
