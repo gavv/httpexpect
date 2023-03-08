@@ -566,7 +566,9 @@ func TestExpect_Config(t *testing.T) {
 		})
 
 		statusMsg := "this is my status message"
-		req := e.Request("GET", "/").WithHeader("status-code", "204").WithHeader("status", statusMsg)
+		req := e.Request("GET", "/").
+			WithHeader("status-code", "204").
+			WithHeader("status", statusMsg)
 		resp := req.Expect()
 
 		assert.Equal(t, 204, resp.httpResp.StatusCode)
@@ -574,7 +576,21 @@ func TestExpect_Config(t *testing.T) {
 	})
 
 	t.Run("websocket dialer func implementation", func(t *testing.T) {
+		dialer := WebsocketDialerFunc(mockWebsocketDialerFunc)
 
+		e := WithConfig(Config{
+			BaseURL:         "http://example.com",
+			Reporter:        newMockReporter(t),
+			WebsocketDialer: dialer,
+		})
+
+		ws := e.GET("/path").WithWebsocketUpgrade().
+			Expect().
+			Websocket()
+		defer ws.Disconnect()
+		ws.WriteText("hello").
+			Expect().
+			TextMessage().Body().IsEqual("mock websocket says: hello")
 	})
 
 	t.Run("reporter func implementation", func(t *testing.T) {

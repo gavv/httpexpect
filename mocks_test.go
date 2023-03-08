@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -80,6 +81,28 @@ func mockClientFunc(req *http.Request) (*http.Response, error) {
 		Status:     status,
 	}
 	return &resp, nil
+}
+
+func mockWebsocketDialerFunc(
+	url string, reqH http.Header,
+) (*websocket.Conn, *http.Response, error) {
+	c, resp, err := websocket.DefaultDialer.Dial(url, reqH)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer c.Close()
+	for {
+		mt, message, err := c.ReadMessage()
+		if err != nil {
+			break
+		}
+		messageStr := "mock websocket says: " + string(message)
+		err = c.WriteMessage(mt, []byte(messageStr))
+		if err != nil {
+			break
+		}
+	}
+	return c, resp, err
 }
 
 // mockTransportRedirect mocks a transport that implements RoundTripper
