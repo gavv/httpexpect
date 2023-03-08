@@ -701,3 +701,107 @@ func TestChain_Reporting(t *testing.T) {
 	assert.NotNil(t, handler.failure)
 	assert.Equal(t, failure, *handler.failure)
 }
+
+func TestChain_TestingTB(t *testing.T) {
+	type args struct {
+		handler  AssertionHandler
+		reporter Reporter
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "true",
+			args: args{
+				handler: &DefaultAssertionHandler{
+					Formatter: newMockFormatter(t),
+					Reporter:  NewAssertReporter(t),
+					Logger:    newMockLogger(t),
+				},
+				reporter: NewAssertReporter(t),
+			},
+			want: true,
+		},
+		{
+			name: "false",
+			args: args{
+				handler:  &mockAssertionHandler{},
+				reporter: newMockReporter(t),
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			chain := newChainWithConfig(tt.name, Config{
+				AssertionHandler: tt.args.handler,
+			}.withDefaults())
+			assert.Equal(t, tt.want, chain.context.TestingTB)
+
+			chain = newChainWithDefaults(tt.name, tt.args.reporter)
+			assert.Equal(t, tt.want, chain.context.TestingTB)
+		})
+	}
+}
+
+func Test_isTestingTB(t *testing.T) {
+	type args struct {
+		handler interface{}
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "assert reporter",
+			args: args{
+				handler: &DefaultAssertionHandler{
+					Reporter: NewAssertReporter(t),
+				},
+			},
+			want: true,
+		},
+		{
+			name: "require reporter",
+			args: args{
+				handler: &DefaultAssertionHandler{
+					Reporter: NewRequireReporter(t),
+				},
+			},
+			want: true,
+		},
+		{
+			name: "fatal reporter",
+			args: args{
+				handler: &DefaultAssertionHandler{
+					Reporter: NewFatalReporter(t),
+				},
+			},
+			want: true,
+		},
+		{
+			name: "invalid type",
+			args: args{
+				handler: new(Logger),
+			},
+			want: false,
+		},
+		{
+			name: "invalid reporter type",
+			args: args{
+				handler: &DefaultAssertionHandler{
+					Reporter: newMockReporter(t),
+				},
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, isTestingTB(tt.args.handler))
+		})
+	}
+}

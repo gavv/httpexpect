@@ -21,8 +21,8 @@ import (
 )
 
 var (
-	once      sync.Once
-	withColor bool
+	colorsSupportedOnce  sync.Once
+	colorsSupportedGuard bool
 )
 
 // Formatter is used to format assertion messages into strings.
@@ -268,23 +268,21 @@ func (f *DefaultFormatter) fillGeneral(
 		data.LineWidth = defaultLineWidth
 	}
 
-	once.Do(func() {
+	colorsSupportedOnce.Do(func() {
 		fd := os.Stdout.Fd()
-		withColor = (isatty.IsTerminal(fd) || isatty.IsCygwinTerminal(fd)) &&
+		colorsSupportedGuard = (isatty.IsTerminal(fd) || isatty.IsCygwinTerminal(fd)) &&
 			len(os.Getenv("NO_COLOR")) == 0 &&
 			!strings.HasPrefix(os.Getenv("TERM"), "dumb")
 	})
 
-	var enableColors bool
 	switch f.ColorMode {
 	case ColorModeAuto:
-		enableColors = ctx.TestingTB && testing.Verbose() && withColor
+		data.EnableColors = ctx.TestingTB && testing.Verbose() && colorsSupportedGuard
 	case ColorModeAlways:
-		enableColors = true
+		data.EnableColors = true
 	case ColorModeNever:
-		enableColors = false
+		data.EnableColors = false
 	}
-	data.EnableColors = enableColors
 }
 
 func (f *DefaultFormatter) fillErrors(
