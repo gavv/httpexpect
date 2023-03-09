@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"mime"
 	"mime/multipart"
@@ -522,31 +523,117 @@ func TestRequest_URLConcatenate(t *testing.T) {
 		Reporter: reporter,
 	}
 
-	reqs := []*Request{
-		NewRequestC(config2, "GET", "path"),
-		NewRequestC(config2, "GET", "/path"),
-		NewRequestC(config3, "GET", "path"),
-		NewRequestC(config3, "GET", "/path"),
-		NewRequestC(config3, "GET", "{arg}", "/path"),
-		NewRequestC(config3, "GET", "{arg}").WithPath("arg", "/path"),
+	const (
+		pathArgType1 = iota
+		pathArgType2 = iota
+	)
+
+	cases := []struct {
+		name        string
+		config      Config
+		method      string
+		path        string
+		pathArg     string
+		pathArgType int
+		fullURL     string
+	}{
+		{
+			name:    "config1_empty_url_and_empty_path",
+			config:  config1,
+			method:  "GET",
+			path:    "",
+			fullURL: "",
+		},
+		{
+			name:    "config2_empty_path",
+			config:  config2,
+			method:  "GET",
+			path:    "",
+			fullURL: "http://example.com",
+		},
+		{
+			name:    "config3_empty_path",
+			config:  config3,
+			method:  "GET",
+			path:    "",
+			fullURL: "http://example.com/",
+		},
+		{
+			name:    "config2_with_path",
+			config:  config2,
+			method:  "GET",
+			path:    "path",
+			fullURL: "http://example.com/path",
+		},
+		{
+			name:    "config2_with_path_without_slash",
+			config:  config2,
+			method:  "GET",
+			path:    "path",
+			fullURL: "http://example.com/path",
+		},
+		{
+			name:    "config2_with_path_with_slash",
+			config:  config2,
+			method:  "GET",
+			path:    "/path",
+			fullURL: "http://example.com/path",
+		},
+		{
+			name:    "config3_with_path_without_slash",
+			config:  config3,
+			method:  "GET",
+			path:    "path",
+			fullURL: "http://example.com/path",
+		},
+		{
+			name:    "config3_with_path_with_slash",
+			config:  config3,
+			method:  "GET",
+			path:    "/path",
+			fullURL: "http://example.com/path",
+		},
+		{
+			name:        "config3_with_path_arg_and_path_type_1",
+			config:      config3,
+			method:      "GET",
+			path:        "{arg}",
+			pathArg:     "/path",
+			pathArgType: pathArgType1,
+			fullURL:     "http://example.com/path",
+		},
+		{
+			name:        "config3_with_path_arg_and_path_type_2",
+			config:      config3,
+			method:      "GET",
+			path:        "arg",
+			pathArg:     "/path",
+			pathArgType: pathArgType2,
+			fullURL:     "http://example.com/path",
+		},
 	}
 
-	for _, req := range reqs {
-		req.Expect().chain.assertNotFailed(t)
-		assert.Equal(t, "http://example.com/path", client.req.URL.String())
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			var req *Request
+
+			if tt.pathArg != "" && tt.pathArgType == pathArgType1 {
+				req = NewRequestC(tt.config, tt.method, tt.path, tt.pathArg)
+			} else if tt.pathArg != "" && tt.pathArgType == pathArgType2 {
+				req = NewRequestC(
+					tt.config,
+					tt.method,
+					fmt.Sprintf("{%s}", tt.path),
+				).WithPath(tt.path, tt.pathArg)
+			} else {
+				req = NewRequestC(tt.config, tt.method, tt.path)
+			}
+
+			req.Expect().chain.assertNotFailed(t)
+			assert.Equal(t, tt.fullURL, req.httpReq.URL.String())
+
+		})
 	}
-
-	empty1 := NewRequestC(config1, "GET", "")
-	empty2 := NewRequestC(config2, "GET", "")
-	empty3 := NewRequestC(config3, "GET", "")
-
-	empty1.Expect().chain.assertNotFailed(t)
-	empty2.Expect().chain.assertNotFailed(t)
-	empty3.Expect().chain.assertNotFailed(t)
-
-	assert.Equal(t, "", empty1.httpReq.URL.String())
-	assert.Equal(t, "http://example.com", empty2.httpReq.URL.String())
-	assert.Equal(t, "http://example.com/", empty3.httpReq.URL.String())
 }
 
 func TestRequest_URLOverwrite(t *testing.T) {
