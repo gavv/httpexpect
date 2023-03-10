@@ -59,6 +59,10 @@ type DefaultFormatter struct {
 	// Default is FloatFormatAuto.
 	FloatFormat FloatFormat
 
+	// Colorization mode.
+	// Default is ColorModeAuto.
+	ColorMode ColorMode
+
 	// Wrap text to keep lines below given width.
 	// Use zero for default width, and negative value to disable wrapping.
 	LineWidth int
@@ -75,10 +79,6 @@ type DefaultFormatter struct {
 	// defines the function map passed to template engine.
 	// May be nil.
 	TemplateFuncs template.FuncMap
-
-	// Colorization mode.
-	// Default is ColorModeAuto.
-	ColorMode ColorMode
 }
 
 // FormatSuccess implements Formatter.FormatSuccess.
@@ -176,9 +176,9 @@ type FormatData struct {
 	HaveDiff bool
 	Diff     string
 
-	LineWidth int
-
 	EnableColors bool
+
+	LineWidth int
 }
 
 const (
