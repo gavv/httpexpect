@@ -135,7 +135,8 @@ type AssertionContext struct {
 	// Comes from Expect instance
 	Environment *Environment
 
-	// TestingTB is true when reporter is known to output to testing.TB
+	// Whether reporter is known to output to testing.TB
+	// For example, true when reporter is testing.T or testify-based reporter.
 	TestingTB bool
 }
 

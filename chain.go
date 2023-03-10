@@ -491,8 +491,8 @@ func (c *chain) assertFlags(t testing.TB, flags chainFlags) {
 		"expected: chain has specified flags")
 }
 
-// Whether handler output to testing.TB
-func isTestingTB(in interface{}) bool {
+// Whether handler outputs to testing.TB
+func isTestingTB(in AssertionHandler) bool {
 	h, ok := in.(*DefaultAssertionHandler)
 	if !ok {
 		return false

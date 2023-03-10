@@ -21,8 +21,8 @@ import (
 )
 
 var (
-	colorsSupportedOnce  sync.Once
-	colorsSupportedGuard bool
+	colorsSupportedOnce sync.Once
+	colorsSupportedFlag bool
 )
 
 // Formatter is used to format assertion messages into strings.
@@ -76,7 +76,7 @@ type DefaultFormatter struct {
 	// May be nil.
 	TemplateFuncs template.FuncMap
 
-	// Color text.
+	// Colorization mode.
 	// Default is ColorModeAuto.
 	ColorMode ColorMode
 }
@@ -126,6 +126,26 @@ const (
 	FloatFormatScientific
 )
 
+// ColorMode defines how the text color is enabled.
+type ColorMode int
+
+const (
+	// Automatically use colors if ALL of the following is true:
+	//  - stdout is a tty / console
+	//  - AssertionHandler is known to output to testing.T
+	//  - testing.Verbose() is true
+	//
+	// Colors are disabled if TERM is "dumb" or NO_COLOR environment
+	// variable is set.
+	ColorModeAuto ColorMode = iota
+
+	// Always use colors.
+	ColorModeAlways
+
+	// Never use colors.
+	ColorModeNever
+)
+
 // FormatData defines data passed to template engine when DefaultFormatter
 // formats assertion. You can use these fields in your custom templates.
 type FormatData struct {
@@ -173,18 +193,6 @@ const (
 	kindSubset     = "subset"
 	kindValue      = "value"
 	kindValueList  = "values"
-)
-
-// ColorMode defines how the text color is enabled.
-type ColorMode int
-
-const (
-	// Enable colors if testing.Verbose() is true and stdout is a tty / console.
-	ColorModeAuto ColorMode = iota
-	// Always use colors.
-	ColorModeAlways
-	// Never use colors.
-	ColorModeNever
 )
 
 func (f *DefaultFormatter) applyTemplate(
@@ -270,14 +278,14 @@ func (f *DefaultFormatter) fillGeneral(
 
 	colorsSupportedOnce.Do(func() {
 		fd := os.Stdout.Fd()
-		colorsSupportedGuard = (isatty.IsTerminal(fd) || isatty.IsCygwinTerminal(fd)) &&
+		colorsSupportedFlag = (isatty.IsTerminal(fd) || isatty.IsCygwinTerminal(fd)) &&
 			len(os.Getenv("NO_COLOR")) == 0 &&
 			!strings.HasPrefix(os.Getenv("TERM"), "dumb")
 	})
 
 	switch f.ColorMode {
 	case ColorModeAuto:
-		data.EnableColors = ctx.TestingTB && testing.Verbose() && colorsSupportedGuard
+		data.EnableColors = ctx.TestingTB && testing.Verbose() && colorsSupportedFlag
 	case ColorModeAlways:
 		data.EnableColors = true
 	case ColorModeNever:
@@ -660,6 +668,25 @@ const (
 	defaultLineWidth = 60
 )
 
+var defaultColors = map[string]color.Attribute{
+	// regular
+	"Black":   color.FgBlack,
+	"Red":     color.FgRed,
+	"Green":   color.FgGreen,
+	"Yellow":  color.FgYellow,
+	"Magenta": color.FgMagenta,
+	"Cyan":    color.FgCyan,
+	"White":   color.FgWhite,
+	// bright
+	"HiBlack":   color.FgHiBlack,
+	"HiRed":     color.FgHiRed,
+	"HiGreen":   color.FgHiGreen,
+	"HiYellow":  color.FgHiYellow,
+	"HiMagenta": color.FgHiMagenta,
+	"HiCyan":    color.FgHiCyan,
+	"HiWhite":   color.FgHiWhite,
+}
+
 var defaultTemplateFuncs = template.FuncMap{
 	"indent": func(s string) string {
 		var sb strings.Builder
@@ -721,30 +748,15 @@ var defaultTemplateFuncs = template.FuncMap{
 
 		return sb.String()
 	},
-	"color": func(enable bool, c, s string) string {
+	"color": func(enable bool, colorName, s string) string {
 		if !enable {
 			return s
 		}
-		var ca color.Attribute
-		switch c {
-		case "black":
-			ca = color.FgBlack
-		case "red":
-			ca = color.FgRed
-		case "green":
-			ca = color.FgGreen
-		case "yellow":
-			ca = color.FgYellow
-		case "magenta":
-			ca = color.FgMagenta
-		case "cyan":
-			ca = color.FgCyan
-		case "white":
-			ca = color.FgWhite
-		default:
-			ca = color.FgWhite
+		colorAttr := color.Reset
+		if ca, ok := defaultColors[colorName]; ok {
+			colorAttr = ca
 		}
-		return color.New(ca).Sprint(s)
+		return color.New(colorAttr).Sprint(s)
 	},
 }
 
@@ -753,23 +765,23 @@ var defaultSuccessTemplate = `[OK] {{ join .AssertPath .LineWidth }}`
 var defaultFailureTemplate = `
 {{- range $n, $err := .Errors }}
 {{ if eq $n 0 -}}
-{{ wrap $err $.LineWidth | color $.EnableColors "red" }}
+{{ wrap $err $.LineWidth | color $.EnableColors "Red" }}
 {{- else -}}
-{{ wrap $err $.LineWidth | indent | color $.EnableColors "red" }}
+{{ wrap $err $.LineWidth | indent | color $.EnableColors "Red" }}
 {{- end -}}
 {{- end -}}
 {{- if .TestName }}
 
-test name: {{ .TestName | color $.EnableColors "cyan" }}
+test name: {{ .TestName | color $.EnableColors "Cyan" }}
 {{- end -}}
 {{- if .RequestName }}
 
-request name: {{ .RequestName | color $.EnableColors "cyan" }}
+request name: {{ .RequestName | color $.EnableColors "Cyan" }}
 {{- end -}}
 {{- if .AssertPath }}
 
 assertion:
-{{ join .AssertPath .LineWidth | indent | color .EnableColors "yellow" }}
+{{ join .AssertPath .LineWidth | indent | color .EnableColors "Yellow" }}
 {{- end -}}
 {{- if .HaveExpected }}
 
@@ -778,27 +790,27 @@ assertion:
 {{- else }}expected
 {{- end }} {{ .ExpectedKind }}:
 {{- range $n, $exp := .Expected }}
-{{ $exp | indent | color $.EnableColors "red" }}
+{{ $exp | indent | color $.EnableColors "HiMagenta" }}
 {{- end -}}
 {{- end -}}
 {{- if .HaveActual }}
 
 actual value:
-{{ .Actual | indent | color .EnableColors "red" }}
+{{ .Actual | indent | color .EnableColors "HiMagenta" }}
 {{- end -}}
 {{- if .HaveReference }}
 
 reference value:
-{{ .Reference | indent | color .EnableColors "red" }}
+{{ .Reference | indent | color .EnableColors "HiMagenta" }}
 {{- end -}}
 {{- if .HaveDelta }}
 
 allowed delta:
-{{ .Delta | indent | color .EnableColors "red" }}
+{{ .Delta | indent | color .EnableColors "HiMagenta" }}
 {{- end -}}
 {{- if .HaveDiff }}
 
 diff:
-{{ .Diff | indent | color .EnableColors "red" }}
+{{ .Diff | indent }}
 {{- end -}}
 `

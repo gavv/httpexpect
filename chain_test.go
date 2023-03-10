@@ -707,13 +707,61 @@ func TestChain_TestingTB(t *testing.T) {
 		handler  AssertionHandler
 		reporter Reporter
 	}
-	tests := []struct {
+	cases := []struct {
 		name string
 		args args
 		want bool
 	}{
 		{
-			name: "true",
+			name: "testing.T",
+			args: args{
+				handler: &DefaultAssertionHandler{
+					Formatter: newMockFormatter(t),
+					Reporter:  t,
+					Logger:    newMockLogger(t),
+				},
+				reporter: t,
+			},
+			want: true,
+		},
+		{
+			name: "testing.B",
+			args: args{
+				handler: &DefaultAssertionHandler{
+					Formatter: newMockFormatter(t),
+					Reporter:  &testing.B{},
+					Logger:    newMockLogger(t),
+				},
+				reporter: &testing.B{},
+			},
+			want: true,
+		},
+		{
+			name: "testing.TB",
+			args: args{
+				handler: &DefaultAssertionHandler{
+					Formatter: newMockFormatter(t),
+					Reporter:  testing.TB(t),
+					Logger:    newMockLogger(t),
+				},
+				reporter: testing.TB(t),
+			},
+			want: true,
+		},
+		{
+			name: "AssertReporter",
+			args: args{
+				handler: &DefaultAssertionHandler{
+					Formatter: newMockFormatter(t),
+					Reporter:  NewFatalReporter(t),
+					Logger:    newMockLogger(t),
+				},
+				reporter: NewFatalReporter(t),
+			},
+			want: true,
+		},
+		{
+			name: "AssertReporter",
 			args: args{
 				handler: &DefaultAssertionHandler{
 					Formatter: newMockFormatter(t),
@@ -725,7 +773,19 @@ func TestChain_TestingTB(t *testing.T) {
 			want: true,
 		},
 		{
-			name: "false",
+			name: "RequireReporter",
+			args: args{
+				handler: &DefaultAssertionHandler{
+					Formatter: newMockFormatter(t),
+					Reporter:  NewRequireReporter(t),
+					Logger:    newMockLogger(t),
+				},
+				reporter: NewRequireReporter(t),
+			},
+			want: true,
+		},
+		{
+			name: "mockHandler, mockReporter",
 			args: args{
 				handler:  &mockAssertionHandler{},
 				reporter: newMockReporter(t),
@@ -733,75 +793,15 @@ func TestChain_TestingTB(t *testing.T) {
 			want: false,
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			chain := newChainWithConfig(tt.name, Config{
-				AssertionHandler: tt.args.handler,
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			chain := newChainWithConfig(tc.name, Config{
+				AssertionHandler: tc.args.handler,
 			}.withDefaults())
-			assert.Equal(t, tt.want, chain.context.TestingTB)
+			assert.Equal(t, tc.want, chain.context.TestingTB)
 
-			chain = newChainWithDefaults(tt.name, tt.args.reporter)
-			assert.Equal(t, tt.want, chain.context.TestingTB)
-		})
-	}
-}
-
-func Test_isTestingTB(t *testing.T) {
-	type args struct {
-		handler interface{}
-	}
-	tests := []struct {
-		name string
-		args args
-		want bool
-	}{
-		{
-			name: "assert reporter",
-			args: args{
-				handler: &DefaultAssertionHandler{
-					Reporter: NewAssertReporter(t),
-				},
-			},
-			want: true,
-		},
-		{
-			name: "require reporter",
-			args: args{
-				handler: &DefaultAssertionHandler{
-					Reporter: NewRequireReporter(t),
-				},
-			},
-			want: true,
-		},
-		{
-			name: "fatal reporter",
-			args: args{
-				handler: &DefaultAssertionHandler{
-					Reporter: NewFatalReporter(t),
-				},
-			},
-			want: true,
-		},
-		{
-			name: "invalid type",
-			args: args{
-				handler: new(Logger),
-			},
-			want: false,
-		},
-		{
-			name: "invalid reporter type",
-			args: args{
-				handler: &DefaultAssertionHandler{
-					Reporter: newMockReporter(t),
-				},
-			},
-			want: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, isTestingTB(tt.args.handler))
+			chain = newChainWithDefaults(tc.name, tc.args.reporter)
+			assert.Equal(t, tc.want, chain.context.TestingTB)
 		})
 	}
 }

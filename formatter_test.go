@@ -794,13 +794,11 @@ func TestFormatter_FormatDiff(t *testing.T) {
 }
 
 func TestFormatter_ColorMode(t *testing.T) {
-	type testCase struct {
+	cases := []struct {
 		name string
 		mode ColorMode
 		want bool
-	}
-
-	testCases := []testCase{
+	}{
 		{
 			name: "always",
 			mode: ColorModeAlways,
@@ -813,7 +811,7 @@ func TestFormatter_ColorMode(t *testing.T) {
 		},
 	}
 
-	for _, tc := range testCases {
+	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			f := DefaultFormatter{
 				ColorMode: tc.mode,
