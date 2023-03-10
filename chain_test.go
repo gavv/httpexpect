@@ -701,3 +701,107 @@ func TestChain_Reporting(t *testing.T) {
 	assert.NotNil(t, handler.failure)
 	assert.Equal(t, failure, *handler.failure)
 }
+
+func TestChain_TestingTB(t *testing.T) {
+	type args struct {
+		handler  AssertionHandler
+		reporter Reporter
+	}
+	cases := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "testing.T",
+			args: args{
+				handler: &DefaultAssertionHandler{
+					Formatter: newMockFormatter(t),
+					Reporter:  t,
+					Logger:    newMockLogger(t),
+				},
+				reporter: t,
+			},
+			want: true,
+		},
+		{
+			name: "testing.B",
+			args: args{
+				handler: &DefaultAssertionHandler{
+					Formatter: newMockFormatter(t),
+					Reporter:  &testing.B{},
+					Logger:    newMockLogger(t),
+				},
+				reporter: &testing.B{},
+			},
+			want: true,
+		},
+		{
+			name: "testing.TB",
+			args: args{
+				handler: &DefaultAssertionHandler{
+					Formatter: newMockFormatter(t),
+					Reporter:  testing.TB(t),
+					Logger:    newMockLogger(t),
+				},
+				reporter: testing.TB(t),
+			},
+			want: true,
+		},
+		{
+			name: "AssertReporter",
+			args: args{
+				handler: &DefaultAssertionHandler{
+					Formatter: newMockFormatter(t),
+					Reporter:  NewFatalReporter(t),
+					Logger:    newMockLogger(t),
+				},
+				reporter: NewFatalReporter(t),
+			},
+			want: true,
+		},
+		{
+			name: "AssertReporter",
+			args: args{
+				handler: &DefaultAssertionHandler{
+					Formatter: newMockFormatter(t),
+					Reporter:  NewAssertReporter(t),
+					Logger:    newMockLogger(t),
+				},
+				reporter: NewAssertReporter(t),
+			},
+			want: true,
+		},
+		{
+			name: "RequireReporter",
+			args: args{
+				handler: &DefaultAssertionHandler{
+					Formatter: newMockFormatter(t),
+					Reporter:  NewRequireReporter(t),
+					Logger:    newMockLogger(t),
+				},
+				reporter: NewRequireReporter(t),
+			},
+			want: true,
+		},
+		{
+			name: "mockHandler, mockReporter",
+			args: args{
+				handler:  &mockAssertionHandler{},
+				reporter: newMockReporter(t),
+			},
+			want: false,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			chain := newChainWithConfig(tc.name, Config{
+				AssertionHandler: tc.args.handler,
+			}.withDefaults())
+			assert.Equal(t, tc.want, chain.context.TestingTB)
+
+			chain = newChainWithDefaults(tc.name, tc.args.reporter)
+			assert.Equal(t, tc.want, chain.context.TestingTB)
+		})
+	}
+}
