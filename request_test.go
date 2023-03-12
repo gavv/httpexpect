@@ -1444,49 +1444,63 @@ func TestRequest_BodyJSON(t *testing.T) {
 
 func TestRequest_ContentLength(t *testing.T) {
 	client := &mockClient{}
-
 	config := Config{
 		Client:   client,
 		Reporter: newMockReporter(t),
 	}
 
-	req1 := NewRequestC(config, "GET", "url")
-	req1.WithChunked(bytes.NewReader([]byte("12345")))
-	req1.Expect().chain.assertNotFailed(t)
-	assert.Equal(t, int64(-1), client.req.ContentLength)
+	t.Run("chunked", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "url")
+		req.WithChunked(bytes.NewReader([]byte("12345")))
+		req.Expect().chain.assertNotFailed(t)
+		assert.Equal(t, int64(-1), client.req.ContentLength)
+	})
 
-	req2 := NewRequestC(config, "GET", "url")
-	req2.WithBytes([]byte("12345"))
-	req2.Expect().chain.assertNotFailed(t)
-	assert.Equal(t, int64(5), client.req.ContentLength)
+	t.Run("bytes", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "url")
+		req.WithBytes([]byte("12345"))
+		req.Expect().chain.assertNotFailed(t)
+		assert.Equal(t, int64(5), client.req.ContentLength)
+	})
 
-	req3 := NewRequestC(config, "GET", "url")
-	req3.WithText("12345")
-	req3.Expect().chain.assertNotFailed(t)
-	assert.Equal(t, int64(5), client.req.ContentLength)
+	t.Run("text", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "url")
+		req.WithText("12345")
+		req.Expect().chain.assertNotFailed(t)
+		assert.Equal(t, int64(5), client.req.ContentLength)
+	})
 
-	j, _ := json.Marshal(map[string]string{"a": "b"})
-	req4 := NewRequestC(config, "GET", "url")
-	req4.WithJSON(map[string]string{"a": "b"})
-	req4.Expect().chain.assertNotFailed(t)
-	assert.Equal(t, int64(len(j)), client.req.ContentLength)
+	t.Run("json", func(t *testing.T) {
+		j, _ := json.Marshal(map[string]string{"a": "b"})
+		req := NewRequestC(config, "GET", "url")
+		req.WithJSON(map[string]string{"a": "b"})
+		req.Expect().chain.assertNotFailed(t)
+		assert.Equal(t, int64(len(j)), client.req.ContentLength)
+	})
 
-	f := `a=b`
-	req5 := NewRequestC(config, "GET", "url")
-	req5.WithForm(map[string]string{"a": "b"})
-	req5.Expect().chain.assertNotFailed(t)
-	assert.Equal(t, int64(len(f)), client.req.ContentLength)
+	t.Run("form", func(t *testing.T) {
+		f := `a=b`
+		req := NewRequestC(config, "GET", "url")
+		req.WithForm(map[string]string{"a": "b"})
+		req.Expect().chain.assertNotFailed(t)
+		assert.Equal(t, int64(len(f)), client.req.ContentLength)
+	})
 
-	req6 := NewRequestC(config, "GET", "url")
-	req6.WithFormField("a", "b")
-	req6.Expect().chain.assertNotFailed(t)
-	assert.Equal(t, int64(len(f)), client.req.ContentLength)
+	t.Run("form field", func(t *testing.T) {
+		f := `a=b`
+		req := NewRequestC(config, "GET", "url")
+		req.WithFormField("a", "b")
+		req.Expect().chain.assertNotFailed(t)
+		assert.Equal(t, int64(len(f)), client.req.ContentLength)
+	})
 
-	req7 := NewRequestC(config, "GET", "url")
-	req7.WithMultipart()
-	req7.WithFileBytes("a", "b", []byte("12345"))
-	req7.Expect().chain.assertNotFailed(t)
-	assert.True(t, client.req.ContentLength > 0)
+	t.Run("multipart", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "url")
+		req.WithMultipart()
+		req.WithFileBytes("a", "b", []byte("12345"))
+		req.Expect().chain.assertNotFailed(t)
+		assert.True(t, client.req.ContentLength > 0)
+	})
 }
 
 func TestRequest_ContentType(t *testing.T) {
