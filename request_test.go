@@ -528,7 +528,7 @@ func TestRequest_URLConcatenate(t *testing.T) {
 		pathArgType2 = iota
 	)
 
-	cases := []struct {
+	requests := []struct {
 		name        string
 		config      Config
 		method      string
@@ -597,7 +597,7 @@ func TestRequest_URLConcatenate(t *testing.T) {
 			name:        "config3_with_path_arg_and_path_type_1",
 			config:      config3,
 			method:      "GET",
-			path:        "{arg}",
+			path:        "arg",
 			pathArg:     "/path",
 			pathArgType: pathArgType1,
 			fullURL:     "http://example.com/path",
@@ -613,12 +613,17 @@ func TestRequest_URLConcatenate(t *testing.T) {
 		},
 	}
 
-	for _, tt := range cases {
+	for _, tt := range requests {
 		t.Run(tt.name, func(t *testing.T) {
 			var req *Request
 
 			if tt.pathArg != "" && tt.pathArgType == pathArgType1 {
-				req = NewRequestC(tt.config, tt.method, tt.path, tt.pathArg)
+				req = NewRequestC(
+					tt.config, 
+					tt.method, 
+					fmt.Sprintf("{%s}", tt.path), 
+					tt.pathArg,
+				)
 			} else if tt.pathArg != "" && tt.pathArgType == pathArgType2 {
 				req = NewRequestC(
 					tt.config,
@@ -653,19 +658,74 @@ func TestRequest_URLOverwrite(t *testing.T) {
 		Reporter: reporter,
 	}
 
-	reqs := []*Request{
-		NewRequestC(config1, "GET", "/path").WithURL("http://example.com"),
-		NewRequestC(config1, "GET", "path").WithURL("http://example.com"),
-		NewRequestC(config1, "GET", "/path").WithURL("http://example.com/"),
-		NewRequestC(config1, "GET", "path").WithURL("http://example.com/"),
-		NewRequestC(config2, "GET", "/path").WithURL("http://example.com"),
-		NewRequestC(config2, "GET", "path").WithURL("http://example.com"),
-		NewRequestC(config2, "GET", "/path").WithURL("http://example.com/"),
-		NewRequestC(config2, "GET", "path").WithURL("http://example.com/"),
+	requests := []struct {
+		name        string
+		config      Config
+		method      string
+		path        string
+		fullURL     string
+	}{
+		{
+			name: "config1_without_slash_on_url",
+			config: config1,
+			method: "GET",
+			path: "/path",
+			fullURL: "http://example.com",
+		},
+		{
+			name: "config1_without_slash_on_url_and_path",
+			config: config1,
+			method: "GET",
+			path: "path",
+			fullURL: "http://example.com",
+		},
+		{
+			name: "config1_with_slash_on_url_and_path",
+			config: config1,
+			method: "GET",
+			path: "/path",
+			fullURL: "http://example.com/",
+		},
+		{
+			name: "config1_without_slash_on_path",
+			config: config1,
+			method: "GET",
+			path: "path",
+			fullURL: "http://example.com/",
+		},
+		{
+			name: "config2_without_slash_on_url",
+			config: config2,
+			method: "GET",
+			path: "/path",
+			fullURL: "http://example.com",
+		},
+		{
+			name: "config2_without_slash_on_url_and_path",
+			config: config2,
+			method: "GET",
+			path: "path",
+			fullURL: "http://example.com",
+		},
+		{
+			name: "config2_with_slash_on_url_and_path",
+			config: config2,
+			method: "GET",
+			path: "/path",
+			fullURL: "http://example.com/",
+		},
+		{
+			name: "config2_without_slash_on_path",
+			config: config2,
+			method: "GET",
+			path: "path",
+			fullURL: "http://example.com/",
+		},
 	}
 
-	for _, req := range reqs {
-		req.Expect().chain.assertNotFailed(t)
+	for _, tt := range requests {
+		request := NewRequestC(tt.config, tt.method, tt.path).WithURL(tt.fullURL)
+		request.Expect().chain.assertNotFailed(t)
 		assert.Equal(t, "http://example.com/path", client.req.URL.String())
 	}
 }
