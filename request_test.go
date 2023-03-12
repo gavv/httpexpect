@@ -619,9 +619,9 @@ func TestRequest_URLConcatenate(t *testing.T) {
 
 			if tt.pathArg != "" && tt.pathArgType == pathArgType1 {
 				req = NewRequestC(
-					tt.config, 
-					tt.method, 
-					fmt.Sprintf("{%s}", tt.path), 
+					tt.config,
+					tt.method,
+					fmt.Sprintf("{%s}", tt.path),
 					tt.pathArg,
 				)
 			} else if tt.pathArg != "" && tt.pathArgType == pathArgType2 {
@@ -659,74 +659,76 @@ func TestRequest_URLOverwrite(t *testing.T) {
 	}
 
 	requests := []struct {
-		name        string
-		config      Config
-		method      string
-		path        string
-		fullURL     string
+		name    string
+		config  Config
+		method  string
+		path    string
+		fullURL string
 	}{
 		{
-			name: "config1_without_slash_on_url",
-			config: config1,
-			method: "GET",
-			path: "/path",
+			name:    "config1_without_slash_on_url",
+			config:  config1,
+			method:  "GET",
+			path:    "/path",
 			fullURL: "http://example.com",
 		},
 		{
-			name: "config1_without_slash_on_url_and_path",
-			config: config1,
-			method: "GET",
-			path: "path",
+			name:    "config1_without_slash_on_url_and_path",
+			config:  config1,
+			method:  "GET",
+			path:    "path",
 			fullURL: "http://example.com",
 		},
 		{
-			name: "config1_with_slash_on_url_and_path",
-			config: config1,
-			method: "GET",
-			path: "/path",
+			name:    "config1_with_slash_on_url_and_path",
+			config:  config1,
+			method:  "GET",
+			path:    "/path",
 			fullURL: "http://example.com/",
 		},
 		{
-			name: "config1_without_slash_on_path",
-			config: config1,
-			method: "GET",
-			path: "path",
+			name:    "config1_without_slash_on_path",
+			config:  config1,
+			method:  "GET",
+			path:    "path",
 			fullURL: "http://example.com/",
 		},
 		{
-			name: "config2_without_slash_on_url",
-			config: config2,
-			method: "GET",
-			path: "/path",
+			name:    "config2_without_slash_on_url",
+			config:  config2,
+			method:  "GET",
+			path:    "/path",
 			fullURL: "http://example.com",
 		},
 		{
-			name: "config2_without_slash_on_url_and_path",
-			config: config2,
-			method: "GET",
-			path: "path",
+			name:    "config2_without_slash_on_url_and_path",
+			config:  config2,
+			method:  "GET",
+			path:    "path",
 			fullURL: "http://example.com",
 		},
 		{
-			name: "config2_with_slash_on_url_and_path",
-			config: config2,
-			method: "GET",
-			path: "/path",
+			name:    "config2_with_slash_on_url_and_path",
+			config:  config2,
+			method:  "GET",
+			path:    "/path",
 			fullURL: "http://example.com/",
 		},
 		{
-			name: "config2_without_slash_on_path",
-			config: config2,
-			method: "GET",
-			path: "path",
+			name:    "config2_without_slash_on_path",
+			config:  config2,
+			method:  "GET",
+			path:    "path",
 			fullURL: "http://example.com/",
 		},
 	}
 
 	for _, tt := range requests {
-		request := NewRequestC(tt.config, tt.method, tt.path).WithURL(tt.fullURL)
-		request.Expect().chain.assertNotFailed(t)
-		assert.Equal(t, "http://example.com/path", client.req.URL.String())
+		t.Run(tt.name, func(t *testing.T) {
+			request := NewRequestC(tt.config, tt.method, tt.path).WithURL(tt.fullURL)
+			request.Expect().chain.assertNotFailed(t)
+			assert.Equal(t, "http://example.com/path", client.req.URL.String())
+		})
 	}
 }
 
@@ -958,60 +960,69 @@ func TestRequest_BasicAuth(t *testing.T) {
 }
 
 func TestRequest_Host(t *testing.T) {
-	client1 := &mockClient{}
-	reporter1 := newMockReporter(t)
 
-	config1 := Config{
-		Client:   client1,
-		Reporter: reporter1,
+	requests := []struct {
+		name      string
+		method    string
+		path      string
+		url       string
+		secondURL string
+	}{
+		{
+			name:   "with_host_without_host_header",
+			method: "GET",
+			path:   "url",
+			url:    "example.com",
+		},
+		{
+			name:      "with_header_before_with_host",
+			method:    "GET",
+			path:      "url",
+			url:       "example1.com",
+			secondURL: "example2.com",
+		},
+		{
+			name:      "with_host_before_with_header",
+			method:    "GET",
+			path:      "url",
+			url:       "example2.com",
+			secondURL: "example1.com",
+		},
 	}
 
-	req1 := NewRequestC(config1, "GET", "url")
+	for _, tt := range requests {
+		t.Run(tt.name, func(t *testing.T) {
+			client := &mockClient{}
+			reporter := newMockReporter(t)
 
-	req1.WithHost("example.com")
+			config := Config{
+				Client:   client,
+				Reporter: reporter,
+			}
 
-	resp := req1.Expect()
-	resp.chain.assertNotFailed(t)
+			req := NewRequestC(config, tt.method, tt.path)
 
-	assert.Equal(t, "GET", client1.req.Method)
-	assert.Equal(t, "example.com", client1.req.Host)
-	assert.Equal(t, "url", client1.req.URL.String())
+			req.WithHost(tt.url)
 
-	assert.Same(t, &client1.resp, resp.Raw())
+			if tt.secondURL != "" {
+				req.withHeader("HOST", tt.secondURL)
+			}
 
-	client2 := &mockClient{}
-	reporter2 := newMockReporter(t)
+			resp := req.Expect()
+			resp.chain.assertNotFailed(t)
 
-	config2 := Config{
-		Client:   client2,
-		Reporter: reporter2,
+			assert.Equal(t, tt.method, client.req.Method)
+
+			if tt.secondURL != "" {
+				assert.Equal(t, tt.secondURL, client.req.Host)
+			} else {
+				assert.Equal(t, tt.url, client.req.Host)
+			}
+			assert.Equal(t, tt.path, client.req.URL.String())
+
+			assert.Same(t, &client.resp, resp.Raw())
+		})
 	}
-
-	req2 := NewRequestC(config2, "GET", "url")
-
-	req2.WithHeader("HOST", "example1.com")
-	req2.WithHost("example2.com")
-
-	req2.Expect().chain.assertNotFailed(t)
-
-	assert.Equal(t, "example2.com", client2.req.Host)
-
-	client3 := &mockClient{}
-	reporter3 := newMockReporter(t)
-
-	config3 := Config{
-		Client:   client3,
-		Reporter: reporter3,
-	}
-
-	req3 := NewRequestC(config3, "GET", "url")
-
-	req3.WithHost("example2.com")
-	req3.WithHeader("HOST", "example1.com")
-
-	req3.Expect().chain.assertNotFailed(t)
-
-	assert.Equal(t, "example1.com", client3.req.Host)
 }
 
 func TestRequest_BodyChunked(t *testing.T) {
