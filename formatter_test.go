@@ -856,3 +856,32 @@ func TestFormatter_FormatDiff(t *testing.T) {
 		check([]interface{}{}, []interface{}{})
 	})
 }
+
+func TestFormatter_ColorMode(t *testing.T) {
+	cases := []struct {
+		name string
+		mode ColorMode
+		want bool
+	}{
+		{
+			name: "always",
+			mode: ColorModeAlways,
+			want: true,
+		},
+		{
+			name: "never",
+			mode: ColorModeNever,
+			want: false,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			f := DefaultFormatter{
+				ColorMode: tc.mode,
+			}
+			fd := f.buildFormatData(&AssertionContext{}, &AssertionFailure{})
+			assert.Equal(t, tc.want, fd.EnableColors)
+		})
+	}
+}
