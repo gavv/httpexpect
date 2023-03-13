@@ -1511,39 +1511,49 @@ func TestRequest_ContentType(t *testing.T) {
 		Reporter: newMockReporter(t),
 	}
 
-	req1 := NewRequestC(config, "GET", "url")
-	req1.WithText("hello")
-	req1.WithHeader("Content-Type", "foo")
-	req1.Expect().chain.assertNotFailed(t)
-	assert.Equal(t, http.Header{"Content-Type": {"foo"}}, client.req.Header)
+	t.Run("WithText sets Content-Type header", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "url")
+		req.WithText("hello")
+		req.WithHeader("Content-Type", "foo")
+		req.Expect().chain.assertNotFailed(t)
+		assert.Equal(t, http.Header{"Content-Type": {"foo"}}, client.req.Header)
+	})
 
-	req2 := NewRequestC(config, "GET", "url")
-	req2.WithHeader("Content-Type", "foo")
-	req2.WithText("hello")
-	req2.Expect().chain.assertNotFailed(t)
-	assert.Equal(t, http.Header{"Content-Type": {"foo"}}, client.req.Header)
+	t.Run("WithHeader sets Content-Type header", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "url")
+		req.WithHeader("Content-Type", "foo")
+		req.WithText("hello")
+		req.Expect().chain.assertNotFailed(t)
+		assert.Equal(t, http.Header{"Content-Type": {"foo"}}, client.req.Header)
+	})
 
-	req3 := NewRequestC(config, "GET", "url")
-	req3.WithJSON(map[string]interface{}{"a": "b"})
-	req3.WithHeader("Content-Type", "foo")
-	req3.WithHeader("Content-Type", "bar")
-	req3.Expect().chain.assertNotFailed(t)
-	assert.Equal(t, http.Header{"Content-Type": {"foo", "bar"}}, client.req.Header)
+	t.Run("WithJSON overrides Content-Type header", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "url")
+		req.WithJSON(map[string]interface{}{"a": "b"})
+		req.WithHeader("Content-Type", "foo")
+		req.WithHeader("Content-Type", "bar")
+		req.Expect().chain.assertNotFailed(t)
+		assert.Equal(t, http.Header{"Content-Type": {"foo", "bar"}}, client.req.Header)
+	})
 
-	req4 := NewRequestC(config, "GET", "url")
-	req4.WithForm(map[string]interface{}{"a": "b"})
-	req4.WithHeader("Content-Type", "foo")
-	req4.WithHeader("Content-Type", "bar")
-	req4.Expect().chain.assertNotFailed(t)
-	assert.Equal(t, http.Header{"Content-Type": {"foo", "bar"}}, client.req.Header)
+	t.Run("WithForm overrides Content-Type header", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "url")
+		req.WithForm(map[string]interface{}{"a": "b"})
+		req.WithHeader("Content-Type", "foo")
+		req.WithHeader("Content-Type", "bar")
+		req.Expect().chain.assertNotFailed(t)
+		assert.Equal(t, http.Header{"Content-Type": {"foo", "bar"}}, client.req.Header)
+	})
 
-	req5 := NewRequestC(config, "GET", "url")
-	req5.WithMultipart()
-	req5.WithForm(map[string]interface{}{"a": "b"})
-	req5.WithHeader("Content-Type", "foo")
-	req5.WithHeader("Content-Type", "bar")
-	req5.Expect().chain.assertNotFailed(t)
-	assert.Equal(t, http.Header{"Content-Type": {"foo", "bar"}}, client.req.Header)
+	t.Run("WithMultipart overrides Content-Type header", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "url")
+		req.WithMultipart()
+		req.WithForm(map[string]interface{}{"a": "b"})
+		req.WithHeader("Content-Type", "foo")
+		req.WithHeader("Content-Type", "bar")
+		req.Expect().chain.assertNotFailed(t)
+		assert.Equal(t, http.Header{"Content-Type": {"foo", "bar"}}, client.req.Header)
+	})
 }
 
 func TestRequest_Redirects(t *testing.T) {
