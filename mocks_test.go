@@ -8,12 +8,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
-	"strings"
 	"testing"
 	"time"
 
-	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -29,22 +26,6 @@ func (f *mockRequestFactory) NewRequest(
 	}
 	f.lastreq = httptest.NewRequest(method, urlStr, body)
 	return f.lastreq, nil
-}
-
-// mockRequestFactoryFunc mocks the request factory for expect
-//
-// Modifies the request body
-func mockRequestFactoryFunc(
-	method, urlStr string, body io.Reader,
-) (*http.Request, error) {
-	b := strings.NewReader(urlStr + ":" + method)
-	return httptest.NewRequest(method, urlStr, b), nil
-}
-
-func mockErrorRequestFactoryFunc(
-	method, urlStr string, body io.Reader,
-) (*http.Request, error) {
-	return nil, errors.New("Test error.")
 }
 
 type mockClient struct {
@@ -67,27 +48,6 @@ func (c *mockClient) Do(req *http.Request) (*http.Response, error) {
 		return &c.resp, nil
 	}
 	return nil, c.err
-}
-
-// mockClientFunc mocks the client for expect
-//
-// Returns a response with a status and code from
-// the request header. Default 200
-func mockClientFunc(req *http.Request) (*http.Response, error) {
-	errorMsg := req.Header.Get("error")
-	if errorMsg != "" {
-		return nil, errors.New("")
-	}
-	statusCode, err := strconv.Atoi(req.Header.Get("status-code"))
-	if err != nil {
-		statusCode = 200
-	}
-	status := req.Header.Get("status")
-	resp := http.Response{
-		StatusCode: statusCode,
-		Status:     status,
-	}
-	return &resp, nil
 }
 
 // mockTransportRedirect mocks a transport that implements RoundTripper
@@ -425,31 +385,6 @@ func (wc *mockWebsocketConn) SetWriteDeadline(t time.Time) error {
 
 func (wc *mockWebsocketConn) Subprotocol() string {
 	return wc.subprotocol
-}
-
-// mockClientFunc mocks the websocket dialer for expect
-//
-// appends a prefix to the written message
-func mockWebsocketDialerFunc(
-	url string, reqH http.Header,
-) (*websocket.Conn, *http.Response, error) {
-	c, resp, err := websocket.DefaultDialer.Dial(url, reqH)
-	if err != nil {
-		return nil, nil, err
-	}
-	defer c.Close()
-	for {
-		mt, message, err := c.ReadMessage()
-		if err != nil {
-			break
-		}
-		messageStr := "mock websocket says: " + string(message)
-		err = c.WriteMessage(mt, []byte(messageStr))
-		if err != nil {
-			break
-		}
-	}
-	return c, resp, err
 }
 
 type mockNetError struct {

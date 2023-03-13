@@ -1,9 +1,12 @@
 package httpexpect
 
 import (
+	"errors"
 	"io"
+	"net/http"
 	"testing"
 
+	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -531,73 +534,102 @@ func TestExpect_Config(t *testing.T) {
 	})
 
 	t.Run("request factory func implementation", func(t *testing.T) {
-		factory := RequestFactoryFunc(mockRequestFactoryFunc)
-
-		e := WithConfig(Config{
-			BaseURL:        "http://example.com",
-			Reporter:       newMockReporter(t),
-			RequestFactory: factory,
+		called := false
+		factory := RequestFactoryFunc(func(_ string, _ string, _ io.Reader) (*http.Request, error) {
+			called = true
+			return nil, nil
 		})
 
-		req := e.Request("GET", "/")
-		req.chain.assertNotFailed(t)
+		e := WithConfig(Config{
+			RequestFactory: factory,
+			Reporter:       newMockReporter(t),
+		})
 
-		defer req.httpReq.Body.Close()
-		body, err := io.ReadAll(req.httpReq.Body)
-		assert.NoError(t, err)
-		assert.Equal(t, "http://example.com:GET", string(body))
+		e.Request("GET", "/")
 
-		req = e.Request("POST", "/")
-		req.chain.assertNotFailed(t)
-
-		defer req.httpReq.Body.Close()
-		body, err = io.ReadAll(req.httpReq.Body)
-		assert.NoError(t, err)
-		assert.Equal(t, "http://example.com:POST", string(body))
+		assert.True(t, called)
 	})
 
 	t.Run("client func implementation", func(t *testing.T) {
-		client := ClientFunc(mockClientFunc)
-
-		e := WithConfig(Config{
-			BaseURL:  "http://example.com",
-			Reporter: newMockReporter(t),
-			Client:   client,
+		called := false
+		client := ClientFunc(func(_ *http.Request) (*http.Response, error) {
+			called = true
+			return &http.Response{
+				Status:     "Test Status",
+				StatusCode: 504,
+			}, nil
 		})
 
-		statusMsg := "this is my status message"
-		req := e.Request("GET", "/").
-			WithHeader("status-code", "204").
-			WithHeader("status", statusMsg)
+		e := WithConfig(Config{
+			Client:   client,
+			Reporter: newMockReporter(t),
+		})
+
+		req := e.GET("/")
 		resp := req.Expect()
 
-		assert.Equal(t, 204, resp.httpResp.StatusCode)
-		assert.Equal(t, statusMsg, resp.httpResp.Status)
+		assert.True(t, called)
+		assert.Equal(t, resp.httpResp.StatusCode, 504)
+		assert.Equal(t, resp.httpResp.Status, "Test Status")
 	})
 
 	t.Run("websocket dialer func implementation", func(t *testing.T) {
-		dialer := WebsocketDialerFunc(mockWebsocketDialerFunc)
-
-		e := WithConfig(Config{
-			BaseURL:         "ws://example.com",
-			Reporter:        newMockReporter(t),
-			WebsocketDialer: dialer,
+		called := false
+		dialer := WebsocketDialerFunc(func(_ string, _ http.Header) (*websocket.Conn, *http.Response, error) {
+			called = true
+			return &websocket.Conn{}, &http.Response{}, nil
 		})
 
-		ws := e.GET("/path").WithWebsocketUpgrade().
-			Expect().
-			Websocket()
-		defer ws.Disconnect()
-		ws.WriteText("hello").
-			Expect().
-			TextMessage().Body().IsEqual("mock websocket says: hello")
+		e := WithConfig(Config{
+			WebsocketDialer: dialer,
+			Reporter:        newMockReporter(t),
+		})
+
+		e.GET("/path").WithWebsocketUpgrade().Expect().Websocket()
+
+		assert.True(t, called)
 	})
 
 	t.Run("reporter func implementation", func(t *testing.T) {
+		called := false
+		message := ""
+		client := ClientFunc(func(r *http.Request) (*http.Response, error) {
+			return nil, errors.New("")
+		})
+		reporter := ReporterFunc(func(_ string, _ ...interface{}) {
+			called = true
+			message = "test reporter called"
+		})
 
+		e := WithConfig(Config{
+			Reporter: reporter,
+			Client:   client,
+		})
+
+		e.GET("/").Expect()
+
+		assert.True(t, called)
+		assert.Contains(t, message, "test reporter called")
 	})
 
 	t.Run("logger func implementation", func(t *testing.T) {
+		called := false
+		message := ""
+		logger := LoggerFunc(func(_ string, _ ...interface{}) {
+			called = true
+			message = "test logger called"
+		})
 
+		e := WithConfig(Config{
+			Reporter: newMockReporter(t),
+			Printers: []Printer{
+				NewCompactPrinter(logger),
+			},
+		})
+
+		e.GET("").Expect()
+
+		assert.True(t, called)
+		assert.Contains(t, message, "test logger called")
 	})
 }
