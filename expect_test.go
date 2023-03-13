@@ -535,7 +535,9 @@ func TestExpect_Config(t *testing.T) {
 
 	t.Run("request factory func implementation", func(t *testing.T) {
 		called := false
-		factory := RequestFactoryFunc(func(_ string, _ string, _ io.Reader) (*http.Request, error) {
+		factory := RequestFactoryFunc(func(
+			_ string, _ string, _ io.Reader,
+		) (*http.Request, error) {
 			called = true
 			return nil, nil
 		})
@@ -575,7 +577,9 @@ func TestExpect_Config(t *testing.T) {
 
 	t.Run("websocket dialer func implementation", func(t *testing.T) {
 		called := false
-		dialer := WebsocketDialerFunc(func(_ string, _ http.Header) (*websocket.Conn, *http.Response, error) {
+		dialer := WebsocketDialerFunc(func(
+			_ string, _ http.Header,
+		) (*websocket.Conn, *http.Response, error) {
 			called = true
 			return &websocket.Conn{}, &http.Response{}, nil
 		})
