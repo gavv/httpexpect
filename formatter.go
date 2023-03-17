@@ -521,7 +521,11 @@ func (f *DefaultFormatter) fillResponse(
 		if err != nil {
 			panic(err)
 		}
-		data.Response = string(dump)
+
+		text := strings.Replace(string(dump), "\r\n", "\n", -1)
+		lines := strings.SplitN(text, "\n", 2)
+
+		data.Response = fmt.Sprintf("%s %s\n%s", lines[0], ctx.Response.rtt, lines[1])
 	}
 }
 
