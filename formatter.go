@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"net/http/httputil"
 	"os"
 	"strconv"
 	"strings"
@@ -54,6 +55,12 @@ type DefaultFormatter struct {
 
 	// Exclude diff from failure report.
 	DisableDiffs bool
+
+	// Enable printing of request on failure.
+	EnableRequests bool
+
+	// Enable printing of response on failure.
+	EnableResponses bool
 
 	// Float printing format.
 	// Default is FloatFormatAuto.
@@ -167,6 +174,9 @@ type FormatData struct {
 	ExpectedKind string
 	Expected     []string
 
+	Request  string
+	Response string
+
 	HaveReference bool
 	Reference     string
 
@@ -229,6 +239,9 @@ func (f *DefaultFormatter) buildFormatData(
 	if failure != nil {
 		data.AssertType = failure.Type.String()
 		data.AssertSeverity = failure.Severity.String()
+
+		f.fillRequest(&data, ctx, failure)
+		f.fillResponse(&data, ctx, failure)
 
 		f.fillErrors(&data, ctx, failure)
 
@@ -478,6 +491,38 @@ func (f *DefaultFormatter) fillDelta(
 ) {
 	data.HaveDelta = true
 	data.Delta = f.formatValue(failure.Delta.Value)
+}
+
+func (f *DefaultFormatter) fillRequest(
+	data *FormatData, ctx *AssertionContext, failure *AssertionFailure,
+) {
+	if f.EnableRequests {
+		if ctx.Request == nil {
+			return
+		}
+
+		dump, err := httputil.DumpRequest(ctx.Request.httpReq, false)
+		if err != nil {
+			panic(err)
+		}
+		data.Request = string(dump)
+	}
+}
+
+func (f *DefaultFormatter) fillResponse(
+	data *FormatData, ctx *AssertionContext, failure *AssertionFailure,
+) {
+	if f.EnableResponses {
+		if ctx.Response == nil {
+			return
+		}
+
+		dump, err := httputil.DumpResponse(ctx.Response.httpResp, false)
+		if err != nil {
+			panic(err)
+		}
+		data.Response = string(dump)
+	}
 }
 
 func (f *DefaultFormatter) formatValue(value interface{}) string {
@@ -779,6 +824,14 @@ test name: {{ .TestName | color $.EnableColors "Cyan" }}
 {{- if .RequestName }}
 
 request name: {{ .RequestName | color $.EnableColors "Cyan" }}
+{{- end -}}
+{{- if .Request }}
+
+request: {{ .Request | indent | color $.EnableColors "HiMagenta" }}
+{{- end -}}
+{{- if .Response }}
+
+response: {{ .Response | indent | color $.EnableColors "HiMagenta" }}
 {{- end -}}
 {{- if .AssertPath }}
 
