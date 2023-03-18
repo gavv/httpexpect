@@ -9,6 +9,7 @@ import (
 	"mime"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -663,6 +664,17 @@ func TestRequest_URLInterpolate(t *testing.T) {
 	r10.chain.assertFailed(t)
 }
 
+type mockEncodedString string
+
+// EncodeValues implements query.Encoder.EncodeValues.
+func (m mockEncodedString) EncodeValues(key string, v *url.Values) error {
+	if m == "err" {
+		return errors.New("encoding error")
+	}
+	v.Set(key, string(m))
+	return nil
+}
+
 func TestRequest_URLQuery(t *testing.T) {
 	client := &mockClient{}
 
@@ -672,39 +684,7 @@ func TestRequest_URLQuery(t *testing.T) {
 		Reporter: newMockReporter(t),
 	}
 
-	req1 := NewRequestC(config, "GET", "/path").
-		WithQuery("aa", "foo").WithQuery("bb", 123).WithQuery("cc", "*&@")
-
-	q := map[string]interface{}{
-		"bb": 123,
-		"cc": "*&@",
-	}
-
-	req2 := NewRequestC(config, "GET", "/path").
-		WithQuery("aa", "foo").
-		WithQueryObject(q)
-
-	type S struct {
-		Bb int    `url:"bb"`
-		Cc string `url:"cc"`
-		Dd string `url:"-"`
-	}
-
-	req3 := NewRequestC(config, "GET", "/path").
-		WithQueryObject(S{123, "*&@", "dummy"}).WithQuery("aa", "foo")
-
-	req4 := NewRequestC(config, "GET", "/path").
-		WithQueryObject(&S{123, "*&@", "dummy"}).WithQuery("aa", "foo")
-
-	req5 := NewRequestC(config, "GET", "/path").
-		WithQuery("bb", 123).
-		WithQueryString("aa=foo&cc=%2A%26%40")
-
-	req6 := NewRequestC(config, "GET", "/path").
-		WithQueryString("aa=foo&cc=%2A%26%40").
-		WithQuery("bb", 123)
-
-	for _, req := range []*Request{req1, req2, req3, req4, req5, req6} {
+	check := func(req *Request) {
 		client.req = nil
 		req.Expect()
 		req.chain.assertNotFailed(t)
@@ -712,19 +692,83 @@ func TestRequest_URLQuery(t *testing.T) {
 			client.req.URL.String())
 	}
 
-	req7 := NewRequestC(config, "GET", "/path").
-		WithQuery("foo", "bar").
-		WithQueryObject(nil)
+	t.Run("WithQuery", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/path").
+			WithQuery("aa", "foo").WithQuery("bb", 123).WithQuery("cc", "*&@")
+		check(req)
+	})
 
-	req7.Expect()
-	req7.chain.assertNotFailed(t)
-	assert.Equal(t, "http://example.com/path?foo=bar", client.req.URL.String())
+	q := map[string]interface{}{
+		"bb": 123,
+		"cc": "*&@",
+	}
 
-	NewRequestC(config, "GET", "/path").
-		WithQueryObject(func() {}).chain.assertFailed(t)
+	t.Run("WithQueryObject map[string]interface", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/path").
+			WithQuery("aa", "foo").
+			WithQueryObject(q)
+		check(req)
+	})
 
-	NewRequestC(config, "GET", "/path").
-		WithQueryString("%").chain.assertFailed(t)
+	type S struct {
+		Bb int    `url:"bb"`
+		Cc string `url:"cc"`
+		Dd string `url:"-"`
+	}
+
+	t.Run("WithQueryObject struct", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/path").
+			WithQueryObject(S{123, "*&@", "dummy"}).WithQuery("aa", "foo")
+		check(req)
+	})
+
+	t.Run("WithQueryObject pointer to struct", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/path").
+			WithQueryObject(&S{123, "*&@", "dummy"}).WithQuery("aa", "foo")
+		check(req)
+	})
+
+	t.Run("WithQuery and WithQueryString", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/path").
+			WithQuery("bb", 123).
+			WithQueryString("aa=foo&cc=%2A%26%40")
+		check(req)
+	})
+
+	t.Run("WithQueryString and WithQuery", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/path").
+			WithQueryString("aa=foo&cc=%2A%26%40").
+			WithQuery("bb", 123)
+		check(req)
+	})
+
+	t.Run("WithQueryObject nil", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/path").
+			WithQuery("foo", "bar").
+			WithQueryObject(nil)
+		req.Expect()
+		req.chain.assertNotFailed(t)
+		assert.Equal(t, "http://example.com/path?foo=bar", client.req.URL.String())
+	})
+
+	t.Run("WithQueryObject invalid", func(t *testing.T) {
+		NewRequestC(config, "GET", "/path").
+			WithQueryObject(func() {}).chain.assertFailed(t)
+
+		NewRequestC(config, "GET", "/path").
+			WithQueryString("%").chain.assertFailed(t)
+	})
+
+	t.Run("WithQueryObject invalid struct", func(t *testing.T) {
+		type invalidSt struct {
+			Str mockEncodedString
+		}
+		queryObj := invalidSt{
+			Str: mockEncodedString("err"),
+		}
+		NewRequestC(config, "GET", "/path").
+			WithQueryObject(queryObj).chain.assertFailed(t)
+	})
 }
 
 func TestRequest_Headers(t *testing.T) {
