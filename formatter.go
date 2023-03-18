@@ -496,11 +496,7 @@ func (f *DefaultFormatter) fillDelta(
 func (f *DefaultFormatter) fillRequest(
 	data *FormatData, ctx *AssertionContext, failure *AssertionFailure,
 ) {
-	if f.EnableRequests {
-		if ctx.Request == nil {
-			return
-		}
-
+	if f.EnableRequests && !refIsNil(ctx.Request) {
 		dump, err := httputil.DumpRequest(ctx.Request.httpReq, false)
 		if err != nil {
 			panic(err)
@@ -512,11 +508,7 @@ func (f *DefaultFormatter) fillRequest(
 func (f *DefaultFormatter) fillResponse(
 	data *FormatData, ctx *AssertionContext, failure *AssertionFailure,
 ) {
-	if f.EnableResponses {
-		if ctx.Response == nil {
-			return
-		}
-
+	if f.EnableResponses && !refIsNil(ctx.Request) {
 		dump, err := httputil.DumpResponse(ctx.Response.httpResp, false)
 		if err != nil {
 			panic(err)
