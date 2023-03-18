@@ -371,7 +371,6 @@ func TestE2EReport_RequestAndResponse(t *testing.T) {
 				},
 			})
 
-			// Make the HTTP request and capture the log output
 			e.GET("/test").
 				Expect().
 				JSON().
@@ -386,17 +385,27 @@ func TestE2EReport_RequestAndResponse(t *testing.T) {
 
 			logs := rep.recorded
 
-			// Check whether the expected request and response information is included in the log output
 			if tt.formatter.EnableRequests {
-				assert.Contains(t, logs, "GET /test HTTP/1.1", "expected log output to contain request information")
+				assert.Contains(t,
+					logs,
+					"GET /test HTTP/1.1",
+					"expected log output to contain request information")
 			} else {
-				assert.NotContains(t, logs, "GET /test HTTP/1.1", "expected log output not to contain request information")
+				assert.NotContains(t,
+					logs,
+					"GET /test HTTP/1.1",
+					"expected log output not to contain request information")
 			}
 
 			if tt.formatter.EnableResponses {
-				assert.Contains(t, logs, "HTTP/1.1 200 OK", "expected log output to contain response information")
+				assert.Contains(t,
+					logs,
+					"HTTP/1.1 200 OK", "expected log output to contain response information")
 			} else {
-				assert.NotContains(t, logs, "HTTP/1.1 200 OK", "expected log output not to contain response information")
+				assert.NotContains(t,
+					logs,
+					"HTTP/1.1 200 OK",
+					"expected log output not to contain response information")
 			}
 		})
 	}
