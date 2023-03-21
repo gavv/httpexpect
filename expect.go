@@ -162,8 +162,8 @@ type Config struct {
 	//    (non-fatal / fatal failures using testify package)
 	//  - testing.T / FatalReporter
 	//    (non-fatal / fatal failures using standard testing package)
-	//	- PanicReporter
-	//	  (failures that panic to be used in multithreaded tests)
+	//  - PanicReporter
+	//    (failures that panic to be used in multithreaded tests)
 	//  - custom implementation
 	Reporter Reporter
 
