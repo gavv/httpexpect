@@ -729,6 +729,10 @@ func TestObject_ContainsValue(t *testing.T) {
 		value.NotContainsValue("XXX")
 		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
+
+		value.ContainsValue(make(chan int))
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
 	})
 
 	t.Run("struct", func(t *testing.T) {
@@ -1196,6 +1200,13 @@ func TestObject_Every(t *testing.T) {
 		object.chain.assertNotFailed(t)
 	})
 
+	t.Run("nil func", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		object := NewObject(reporter, map[string]interface{}{})
+		object.Every((func(key string, value *Value))(nil))
+		object.chain.assertFailed(t)
+	})
+
 	t.Run("one assertion fails", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{"foo": "", "bar": "bar"})
@@ -1433,6 +1444,13 @@ func TestObject_Filter(t *testing.T) {
 		object.chain.assertNotFailed(t)
 	})
 
+	t.Run("nil func", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		object := NewObject(reporter, map[string]interface{}{})
+		filteredObject := object.Filter((func(key string, value *Value) bool)(nil))
+		object.chain.assertFailed(t)
+		filteredObject.chain.assertFailed(t)
+	})
 	t.Run("no match", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		object := NewObject(reporter, map[string]interface{}{
