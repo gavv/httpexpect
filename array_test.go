@@ -588,6 +588,14 @@ func TestArray_IsEqualUnordered(t *testing.T) {
 		value.NotEqualUnordered([]interface{}{"foo", 123})
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
+
+		value.IsEqualUnordered([]interface{}{"foo", 1234})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.NotEqualUnordered([]interface{}{"foo", 1234})
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 	})
 
 	t.Run("with duplicates", func(t *testing.T) {
@@ -624,6 +632,14 @@ func TestArray_IsEqualUnordered(t *testing.T) {
 		value.chain.clearFailed()
 
 		value.NotEqualUnordered([]interface{}{"foo", 123, "foo"})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.IsEqualUnordered([]interface{}{123})
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.NotEqualUnordered([]interface{}{123})
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 	})
@@ -666,7 +682,11 @@ func TestArray_IsEqualUnordered(t *testing.T) {
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 
-		value.NotEqualUnordered(func() {})
+		value.IsEqualUnordered("123")
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.NotEqualUnordered("123")
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 	})
@@ -872,6 +892,10 @@ func TestArray_ConsistsOf(t *testing.T) {
 		value.chain.clearFailed()
 
 		value.NotConsistsOf(123, "foo")
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.NotConsistsOf(make(chan int)) // bad type make(chan int)
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 	})
@@ -1229,6 +1253,18 @@ func TestArray_ContainsOnly(t *testing.T) {
 		value.NotContainsOnly("foo", 123)
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
+
+		value.ContainsOnly("foo", 123, "bar")
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.NotContainsOnly("foo", 123, "bar")
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
+
+		value.NotContainsOnly(make(chan int)) // bad type make(chan int)
+		value.chain.assertNotFailed(t)
+		value.chain.clearFailed()
 	})
 
 	t.Run("with duplicates", func(t *testing.T) {
@@ -1482,6 +1518,13 @@ func TestArray_Every(t *testing.T) {
 		array.chain.assertNotFailed(t)
 	})
 
+	t.Run("nil func", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		array := NewArray(reporter, []interface{}{1, 2, 3})
+		array.Every((func(index int, value *Value))(nil))
+		array.chain.assertFailed(t)
+	})
+
 	t.Run("check index", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{1, 2, 3})
@@ -1658,6 +1701,14 @@ func TestArray_Filter(t *testing.T) {
 
 		array.chain.assertNotFailed(t)
 		filteredArray.chain.assertNotFailed(t)
+	})
+
+	t.Run("nil func", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		array := NewArray(reporter, []interface{}{"foo", "bar", true, 1.0})
+		filteredArray := array.Filter((func(index int, value *Value) bool)(nil))
+		array.chain.assertFailed(t)
+		filteredArray.chain.assertFailed(t)
 	})
 
 	t.Run("no match", func(t *testing.T) {
