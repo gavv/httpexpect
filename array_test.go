@@ -640,7 +640,7 @@ func TestArray_IsEqualUnordered(t *testing.T) {
 		value.chain.clearFailed()
 
 		value.NotEqualUnordered([]interface{}{123})
-		value.chain.assertFailed(t)
+		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
 	})
 
@@ -1263,7 +1263,7 @@ func TestArray_ContainsOnly(t *testing.T) {
 		value.chain.clearFailed()
 
 		value.NotContainsOnly(make(chan int)) // bad type make(chan int)
-		value.chain.assertNotFailed(t)
+		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 	})
 
