@@ -54,3 +54,19 @@ func NewFatalReporter(t testing.TB) *FatalReporter {
 func (r *FatalReporter) Errorf(message string, args ...interface{}) {
 	r.backend.Fatalf(message, args...)
 }
+
+// PanicReporter is a struct that implements the Reporter interface
+// and panics when a test fails.
+type PanicReporter struct {
+	backend testing.TB
+}
+
+// NewPanicReporter returns a new PanicReporter object.
+func NewPanicReporter(t testing.TB) *PanicReporter {
+	return &PanicReporter{t}
+}
+
+// Errorf implements Reporter.Errorf
+func (r *PanicReporter) Errorf(message string, args ...interface{}) {
+	panic(message)
+}

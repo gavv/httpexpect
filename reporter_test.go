@@ -6,6 +6,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type mockPanicT struct {
+	testing.T
+	panicInvoked bool
+}
+
+func (m *mockPanicT) Errorf(format string, args ...interface{}) {
+	m.panicInvoked = true
+}
+
 type mockT struct {
 	testing.T
 	fatalfInvoked bool
@@ -30,6 +39,19 @@ type mockRequireT struct {
 
 func (m *mockRequireT) FailNow() {
 	m.failNowInvoked = true
+}
+
+func TestReporter_PanicReporter(t *testing.T) {
+	mockBackend := &mockPanicT{}
+	reporter := NewPanicReporter(mockBackend)
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("function should panic")
+		}
+	}()
+	reporter.Errorf("test")
+	assert.True(t, mockBackend.panicInvoked)
 }
 
 func TestReporter_FatalReporter(t *testing.T) {
