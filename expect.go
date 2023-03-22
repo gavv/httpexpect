@@ -162,6 +162,8 @@ type Config struct {
 	//    (non-fatal / fatal failures using testify package)
 	//  - testing.T / FatalReporter
 	//    (non-fatal / fatal failures using standard testing package)
+	//  - PanicReporter
+	//    (failures that panic to be used in multithreaded tests)
 	//  - custom implementation
 	Reporter Reporter
 
@@ -380,7 +382,7 @@ func (f WebsocketDialerFunc) Dial(
 }
 
 // Reporter is used to report failures.
-// *testing.T, FatalReporter, AssertReporter, RequireReporter implement it.
+// *testing.T, FatalReporter, AssertReporter, RequireReporter, PanicReporter implement it.
 type Reporter interface {
 	// Errorf reports failure.
 	// Allowed to return normally or terminate test using t.FailNow().
