@@ -6,15 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type mockPanicT struct {
-	testing.T
-	panicInvoked bool
-}
-
-func (m *mockPanicT) Errorf(format string, args ...interface{}) {
-	m.panicInvoked = true
-}
-
 type mockT struct {
 	testing.T
 	fatalfInvoked bool
@@ -41,27 +32,6 @@ func (m *mockRequireT) FailNow() {
 	m.failNowInvoked = true
 }
 
-func TestReporter_PanicReporter(t *testing.T) {
-	mockBackend := &mockPanicT{}
-	reporter := NewPanicReporter(mockBackend)
-
-	defer func() {
-		if r := recover(); r == nil {
-			t.Errorf("function should panic")
-		}
-	}()
-	reporter.Errorf("test")
-	assert.True(t, mockBackend.panicInvoked)
-}
-
-func TestReporter_FatalReporter(t *testing.T) {
-	mockBackend := &mockT{}
-	reporter := NewFatalReporter(mockBackend)
-
-	reporter.Errorf("test")
-	assert.True(t, mockBackend.fatalfInvoked)
-}
-
 func TestReporter_AssertReporter(t *testing.T) {
 	mockBackend := &mockAssertT{}
 	reporter := NewAssertReporter(mockBackend)
@@ -76,4 +46,20 @@ func TestReporter_RequireReporter(t *testing.T) {
 
 	reporter.Errorf("test")
 	assert.True(t, mockBackend.failNowInvoked)
+}
+
+func TestReporter_FatalReporter(t *testing.T) {
+	mockBackend := &mockT{}
+	reporter := NewFatalReporter(mockBackend)
+
+	reporter.Errorf("test")
+	assert.True(t, mockBackend.fatalfInvoked)
+}
+
+func TestReporter_PanicReporter(t *testing.T) {
+	reporter := NewPanicReporter()
+
+	assert.Panics(t, func() {
+		reporter.Errorf("test")
+	})
 }
