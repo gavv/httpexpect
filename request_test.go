@@ -2849,408 +2849,257 @@ func TestRequest_Usage(t *testing.T) {
 }
 
 func TestRequest_Order(t *testing.T) {
-	tests := []struct {
-		name         string
-		prepFunc     func(req *Request) *Request
-		expectFunc   func(req *Request) *Response
-		reqFunc      func(req *Request)
-		expectSame   bool
-		expectNotNil bool
+	cases := []struct {
+		name       string
+		beforeFunc func(req *Request)
+		afterFunc  func(req *Request)
 	}{
 		{
-			name:     "Expect after Expect",
-			prepFunc: nil,
-			expectFunc: func(req *Request) *Response {
-				return req.Expect()
+			name: "Expect after Expect",
+			afterFunc: func(req *Request) {
+				req.Expect()
 			},
-			reqFunc:      nil,
-			expectSame:   false,
-			expectNotNil: true,
 		},
 		{
 			name: "WithName after Expect",
-			prepFunc: func(req *Request) *Request {
-				return req.WithName("Test")
+			afterFunc: func(req *Request) {
+				req.WithName("Test")
 			},
-			expectFunc:   nil,
-			reqFunc:      nil,
-			expectSame:   true,
-			expectNotNil: false,
 		},
 		{
 			name: "WithMatcher after Expect",
-			prepFunc: func(req *Request) *Request {
-				return req.WithMatcher(func(resp *Response) {
-					resp.Header("API-Version").NotEmpty()
+			afterFunc: func(req *Request) {
+				req.WithMatcher(func(*Response) {
 				})
 			},
-			expectFunc:   nil,
-			reqFunc:      nil,
-			expectSame:   true,
-			expectNotNil: false,
 		},
 		{
 			name: "WithTransformer after Expect",
-			prepFunc: func(req *Request) *Request {
-				return req.WithTransformer(func(r *http.Request) {
-					r.Header.Add("foo", "bar")
+			afterFunc: func(req *Request) {
+				req.WithTransformer(func(*http.Request) {
 				})
 			},
-			expectFunc:   nil,
-			reqFunc:      nil,
-			expectSame:   true,
-			expectNotNil: false,
 		},
 		{
 			name: "WithClient after Expect",
-			prepFunc: func(req *Request) *Request {
-				return req.WithClient(&mockClient{})
+			afterFunc: func(req *Request) {
+				req.WithClient(&mockClient{})
 			},
-			expectFunc:   nil,
-			reqFunc:      nil,
-			expectSame:   true,
-			expectNotNil: false,
 		},
 		{
 			name: "WithHandler after Expect",
-			prepFunc: func(req *Request) *Request {
-				return req.WithHandler(http.NotFoundHandler())
+			afterFunc: func(req *Request) {
+				req.WithHandler(http.NotFoundHandler())
 			},
-			expectFunc:   nil,
-			reqFunc:      nil,
-			expectSame:   true,
-			expectNotNil: false,
 		},
 		{
 			name: "WithContext after Expect",
-			prepFunc: func(req *Request) *Request {
-				return req.WithContext(context.Background())
+			afterFunc: func(req *Request) {
+				req.WithContext(context.Background())
 			},
-			expectFunc:   nil,
-			reqFunc:      nil,
-			expectSame:   true,
-			expectNotNil: false,
 		},
 		{
 			name: "WithTimeout after Expect",
-			prepFunc: func(req *Request) *Request {
-				return req.WithTimeout(3 * time.Second)
+			afterFunc: func(req *Request) {
+				req.WithTimeout(3 * time.Second)
 			},
-			expectFunc:   nil,
-			reqFunc:      nil,
-			expectSame:   true,
-			expectNotNil: false,
 		},
 		{
 			name: "WithRedirectPolicy after Expect",
-			prepFunc: func(req *Request) *Request {
-				return req.WithRedirectPolicy(FollowAllRedirects)
+			afterFunc: func(req *Request) {
+				req.WithRedirectPolicy(FollowAllRedirects)
 			},
-			expectFunc:   nil,
-			reqFunc:      nil,
-			expectSame:   true,
-			expectNotNil: false,
 		},
 		{
 			name: "WithMaxRedirects after Expect",
-			prepFunc: func(req *Request) *Request {
-				return req.WithMaxRedirects(3)
+			afterFunc: func(req *Request) {
+				req.WithMaxRedirects(3)
 			},
-			expectFunc:   nil,
-			reqFunc:      nil,
-			expectSame:   true,
-			expectNotNil: false,
 		},
 		{
 			name: "WithRetryPolicy after Expect",
-			prepFunc: func(req *Request) *Request {
-				return req.WithRetryPolicy(DontRetry)
+			afterFunc: func(req *Request) {
+				req.WithRetryPolicy(DontRetry)
 			},
-			expectFunc:   nil,
-			reqFunc:      nil,
-			expectSame:   true,
-			expectNotNil: false,
 		},
 		{
 			name: "WithMaxRetries after Expect",
-			prepFunc: func(req *Request) *Request {
-				return req.WithMaxRetries(10)
+			afterFunc: func(req *Request) {
+				req.WithMaxRetries(10)
 			},
-			expectFunc:   nil,
-			reqFunc:      nil,
-			expectSame:   true,
-			expectNotNil: false,
 		},
 		{
 			name: "WithRetryDelay after Expect",
-			prepFunc: func(req *Request) *Request {
-				return req.WithRetryDelay(time.Second, 5*time.Second)
+			afterFunc: func(req *Request) {
+				req.WithRetryDelay(time.Second, 5*time.Second)
 			},
-			expectFunc:   nil,
-			reqFunc:      nil,
-			expectSame:   true,
-			expectNotNil: false,
 		},
 		{
 			name: "WithWebsocketUpgrade after Expect",
-			prepFunc: func(req *Request) *Request {
-				return req.WithWebsocketUpgrade()
+			afterFunc: func(req *Request) {
+				req.WithWebsocketUpgrade()
 			},
-			expectFunc:   nil,
-			reqFunc:      nil,
-			expectSame:   true,
-			expectNotNil: false,
 		},
 		{
 			name: "WithWebsocketDialer after Expect",
-			prepFunc: func(req *Request) *Request {
-				return req.WithWebsocketDialer(&websocket.Dialer{})
+			afterFunc: func(req *Request) {
+				req.WithWebsocketDialer(&websocket.Dialer{})
 			},
-			expectFunc:   nil,
-			reqFunc:      nil,
-			expectSame:   true,
-			expectNotNil: false,
 		},
 		{
 			name: "WithPath after Expect",
-			prepFunc: func(req *Request) *Request {
-				return req.WithPath("repo", "repo1")
+			afterFunc: func(req *Request) {
+				req.WithPath("repo", "repo1")
 			},
-			expectFunc:   nil,
-			reqFunc:      nil,
-			expectSame:   true,
-			expectNotNil: false,
 		},
 		{
 			name: "WithPathObject after Expect",
-			prepFunc: func(req *Request) *Request {
-				return req.WithPathObject(map[string]string{
+			afterFunc: func(req *Request) {
+				req.WithPathObject(map[string]string{
 					"repo": "repo1",
 				})
 			},
-			expectFunc:   nil,
-			reqFunc:      nil,
-			expectSame:   true,
-			expectNotNil: false,
 		},
 		{
 			name: "WithQuery after Expect",
-			prepFunc: func(req *Request) *Request {
-				return req.WithQuery("a", 123)
+			afterFunc: func(req *Request) {
+				req.WithQuery("a", 123)
 			},
-			expectFunc:   nil,
-			reqFunc:      nil,
-			expectSame:   true,
-			expectNotNil: false,
 		},
 		{
 			name: "WithQueryObject after Expect",
-			prepFunc: func(req *Request) *Request {
-				return req.WithQueryObject(map[string]string{
+			afterFunc: func(req *Request) {
+				req.WithQueryObject(map[string]string{
 					"a": "val",
 				})
 			},
-			expectFunc:   nil,
-			reqFunc:      nil,
-			expectSame:   true,
-			expectNotNil: false,
 		},
 		{
 			name: "WithQueryString after Expect",
-			prepFunc: func(req *Request) *Request {
-				return req.WithQueryString("a=123&b=hello")
+			afterFunc: func(req *Request) {
+				req.WithQueryString("a=123&b=hello")
 			},
-			expectFunc:   nil,
-			reqFunc:      nil,
-			expectSame:   true,
-			expectNotNil: false,
 		},
 		{
 			name: "WithURL after Expect",
-			prepFunc: func(req *Request) *Request {
-				return req.WithURL("https://www.github.com")
+			afterFunc: func(req *Request) {
+				req.WithURL("https://www.github.com")
 			},
-			expectFunc:   nil,
-			reqFunc:      nil,
-			expectSame:   true,
-			expectNotNil: false,
 		},
 		{
 			name: "WithHeaders after Expect",
-			prepFunc: func(req *Request) *Request {
-				return req.WithHeaders(map[string]string{
+			afterFunc: func(req *Request) {
+				req.WithHeaders(map[string]string{
 					"Content-Type": "application/json",
 				})
 			},
-			expectFunc:   nil,
-			reqFunc:      nil,
-			expectSame:   true,
-			expectNotNil: false,
 		},
 		{
 			name: "WithHeader after Expect",
-			prepFunc: func(req *Request) *Request {
-				return req.WithHeader("Content-Type", "application/json")
+			afterFunc: func(req *Request) {
+				req.WithHeader("Content-Type", "application/json")
 			},
-			expectFunc:   nil,
-			reqFunc:      nil,
-			expectSame:   true,
-			expectNotNil: false,
 		},
 		{
 			name: "WithCookies after Expect",
-			prepFunc: func(req *Request) *Request {
-				return req.WithCookies(map[string]string{
+			afterFunc: func(req *Request) {
+				req.WithCookies(map[string]string{
 					"key1": "val1",
 				})
 			},
-			expectFunc:   nil,
-			reqFunc:      nil,
-			expectSame:   true,
-			expectNotNil: false,
 		},
 		{
 			name: "WithCookie after Expect",
-			prepFunc: func(req *Request) *Request {
-				return req.WithCookie("key1", "val1")
+			afterFunc: func(req *Request) {
+				req.WithCookie("key1", "val1")
 			},
-			expectFunc:   nil,
-			reqFunc:      nil,
-			expectSame:   true,
-			expectNotNil: false,
 		},
 		{
 			name: "WithBasicAuth after Expect",
-			prepFunc: func(req *Request) *Request {
-				return req.WithBasicAuth("user", "pass")
+			afterFunc: func(req *Request) {
+				req.WithBasicAuth("user", "pass")
 			},
-			expectFunc:   nil,
-			reqFunc:      nil,
-			expectSame:   true,
-			expectNotNil: false,
 		},
 		{
 			name: "WithHost after Expect",
-			prepFunc: func(req *Request) *Request {
-				return req.WithHost("localhost")
+			afterFunc: func(req *Request) {
+				req.WithHost("localhost")
 			},
-			expectFunc:   nil,
-			reqFunc:      nil,
-			expectSame:   true,
-			expectNotNil: false,
 		},
 		{
 			name: "WithProto after Expect",
-			prepFunc: func(req *Request) *Request {
-				return req.WithProto("HTTP/1.1")
+			afterFunc: func(req *Request) {
+				req.WithProto("HTTP/1.1")
 			},
-			expectFunc:   nil,
-			reqFunc:      nil,
-			expectSame:   true,
-			expectNotNil: false,
 		},
 		{
 			name: "WithChunked after Expect",
-			prepFunc: func(req *Request) *Request {
-				return req.WithChunked(bytes.NewReader(nil))
+			afterFunc: func(req *Request) {
+				req.WithChunked(bytes.NewReader(nil))
 			},
-			expectFunc:   nil,
-			reqFunc:      nil,
-			expectSame:   true,
-			expectNotNil: false,
 		},
 		{
 			name: "WithBytes after Expect",
-			prepFunc: func(req *Request) *Request {
-				return req.WithBytes(nil)
+			afterFunc: func(req *Request) {
+				req.WithBytes(nil)
 			},
-			expectFunc:   nil,
-			reqFunc:      nil,
-			expectSame:   true,
-			expectNotNil: false,
 		},
 		{
 			name: "WithText after Expect",
-			prepFunc: func(req *Request) *Request {
-				return req.WithText("hello")
+			afterFunc: func(req *Request) {
+				req.WithText("hello")
 			},
-			expectFunc:   nil,
-			reqFunc:      nil,
-			expectSame:   true,
-			expectNotNil: false,
 		},
 		{
 			name: "WithJSON after Expect",
-			prepFunc: func(req *Request) *Request {
-				return req.WithJSON(map[string]string{
+			afterFunc: func(req *Request) {
+				req.WithJSON(map[string]string{
 					"key1": "val1",
 				})
 			},
-			expectFunc:   nil,
-			reqFunc:      nil,
-			expectSame:   true,
-			expectNotNil: false,
 		},
 		{
 			name: "WithForm after Expect",
-			prepFunc: func(req *Request) *Request {
-				return req.WithForm(map[string]string{
+			afterFunc: func(req *Request) {
+				req.WithForm(map[string]string{
 					"key1": "val1",
 				})
 			},
-			expectFunc:   nil,
-			reqFunc:      nil,
-			expectSame:   true,
-			expectNotNil: false,
 		},
 		{
 			name: "WithFormField after Expect",
-			prepFunc: func(req *Request) *Request {
-				return req.WithFormField("key1", 123)
+			afterFunc: func(req *Request) {
+				req.WithFormField("key1", 123)
 			},
-			expectFunc:   nil,
-			reqFunc:      nil,
-			expectSame:   true,
-			expectNotNil: false,
 		},
 		{
 			name: "WithFile after Expect",
-			prepFunc: func(req *Request) *Request {
-				return req.WithFile("foo", "bar", strings.NewReader("baz"))
-			},
-			expectFunc: nil,
-			reqFunc: func(req *Request) {
+			beforeFunc: func(req *Request) {
 				req.WithMultipart()
 			},
-			expectSame:   true,
-			expectNotNil: false,
+			afterFunc: func(req *Request) {
+				req.WithFile("foo", "bar", strings.NewReader("baz"))
+			},
 		},
 		{
 			name: "WithFileBytes after Expect",
-			prepFunc: func(req *Request) *Request {
-				return req.WithFileBytes("foo", "bar", []byte("baz"))
-			},
-			expectFunc: nil,
-			reqFunc: func(req *Request) {
+			beforeFunc: func(req *Request) {
 				req.WithMultipart()
 			},
-			expectSame:   true,
-			expectNotNil: false,
+			afterFunc: func(req *Request) {
+				req.WithFileBytes("foo", "bar", []byte("baz"))
+			},
 		},
 		{
 			name: "WithMultipart after Expect",
-			prepFunc: func(req *Request) *Request {
-				return req.WithMultipart()
+			afterFunc: func(req *Request) {
+				req.WithMultipart()
 			},
-			expectFunc:   nil,
-			reqFunc:      nil,
-			expectSame:   true,
-			expectNotNil: false,
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
 			config := Config{
 				Client:   &mockClient{},
 				Reporter: newMockReporter(t),
@@ -3258,20 +3107,16 @@ func TestRequest_Order(t *testing.T) {
 
 			req := NewRequestC(config, "GET", "/")
 
-			if tt.reqFunc != nil {
-				tt.reqFunc(req)
+			if tc.beforeFunc != nil {
+				tc.beforeFunc(req)
 			}
+			req.chain.assertNotFailed(t)
 
-			req.Expect()
+			resp := req.Expect()
+			req.chain.assertNotFailed(t)
+			resp.chain.assertNotFailed(t)
 
-			if tt.expectSame {
-				assert.Same(t, req, tt.prepFunc(req))
-			}
-
-			if tt.expectNotNil {
-				assert.NotNil(t, tt.expectFunc(req))
-			}
-
+			tc.afterFunc(req)
 			req.chain.assertFailed(t)
 		})
 	}
