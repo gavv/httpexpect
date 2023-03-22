@@ -22,11 +22,6 @@ import (
 	"github.com/yudai/gojsondiff/formatter"
 )
 
-var (
-	colorsSupportedOnce sync.Once
-	colorsSupportedFlag bool
-)
-
 // Formatter is used to format assertion messages into strings.
 type Formatter interface {
 	FormatSuccess(*AssertionContext) string
@@ -313,16 +308,16 @@ func (f *DefaultFormatter) fillGeneral(
 		data.LineWidth = defaultLineWidth
 	}
 
-	colorsSupportedOnce.Do(func() {
-		fd := os.Stdout.Fd()
-		colorsSupportedFlag = (isatty.IsTerminal(fd) || isatty.IsCygwinTerminal(fd)) &&
-			len(os.Getenv("NO_COLOR")) == 0 &&
-			!strings.HasPrefix(os.Getenv("TERM"), "dumb")
-	})
-
 	switch f.ColorMode {
 	case ColorModeAuto:
-		data.EnableColors = ctx.TestingTB && testing.Verbose() && colorsSupportedFlag
+		switch colorMode() {
+		case colorsUnsupported:
+			data.EnableColors = false
+		case colorsForced:
+			data.EnableColors = true
+		case colorsSupported:
+			data.EnableColors = ctx.TestingTB && testing.Verbose()
+		}
 	case ColorModeAlways:
 		data.EnableColors = true
 	case ColorModeNever:
@@ -820,6 +815,40 @@ func extractList(value interface{}) *AssertionList {
 	default:
 		return nil
 	}
+}
+
+var (
+	colorsSupportedOnce sync.Once
+	colorsSupportedMode int
+)
+
+const (
+	colorsUnsupported = iota
+	colorsSupported
+	colorsForced
+)
+
+func colorMode() int {
+	colorsSupportedOnce.Do(func() {
+		if s := os.Getenv("FORCE_COLOR"); len(s) != 0 {
+			if n, err := strconv.Atoi(s); err == nil && n > 0 {
+				colorsSupportedMode = colorsForced
+				return
+			}
+		}
+
+		if (isatty.IsTerminal(os.Stdout.Fd()) || isatty.IsCygwinTerminal(os.Stdout.Fd())) &&
+			len(os.Getenv("NO_COLOR")) == 0 &&
+			!strings.HasPrefix(os.Getenv("TERM"), "dumb") {
+			colorsSupportedMode = colorsSupported
+			return
+		}
+
+		colorsSupportedMode = colorsUnsupported
+		return
+	})
+
+	return colorsSupportedMode
 }
 
 const (
