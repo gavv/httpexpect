@@ -19,7 +19,7 @@ jobs:
 
     strategy:
       matrix:
-        go: [1.14, 1.x]
+        go: [1.16, 1.x]
 
     name: Go ${{ matrix.go }}
     steps:
@@ -90,12 +90,12 @@ jobs:
       - name: Run linters
         uses: golangci/golangci-lint-action@v3
         with:
-          version: v1.50.1
+          version: v1.51.2
 
       - name: Run linters for examples
         uses: golangci/golangci-lint-action@v3
         with:
-          version: v1.50.1
+          version: v1.51.2
           working-directory: _examples
 
   coverage:

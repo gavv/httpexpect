@@ -51,7 +51,7 @@ func TestIrisThings(t *testing.T) {
 	for n, desc := range things.Path("$..description").Array().Iter() {
 		m := desc.String().Match("(.+) (.+)")
 
-		m.Index(1).IsEqual(names.Element(n).String().Raw())
+		m.Index(1).IsEqual(names.Value(n).String().Raw())
 		m.Index(2).IsEqual("thing")
 	}
 }
@@ -65,8 +65,8 @@ func TestIrisRedirect(t *testing.T) {
 
 	things.Length().IsEqual(2)
 
-	things.Element(0).Object().ValueEqual("name", "foo")
-	things.Element(1).Object().ValueEqual("name", "bar")
+	things.Value(0).Object().HasValue("name", "foo")
+	things.Value(1).Object().HasValue("name", "bar")
 }
 
 func TestIrisParams(t *testing.T) {
@@ -90,8 +90,8 @@ func TestIrisParams(t *testing.T) {
 	r.Value("y").IsEqual("yyy")
 	r.Value("q").IsEqual("qqq")
 
-	r.ValueEqual("p1", "P1")
-	r.ValueEqual("p2", "P2")
+	r.HasValue("p1", "P1")
+	r.HasValue("p2", "P2")
 }
 
 func TestIrisAuth(t *testing.T) {

@@ -66,7 +66,7 @@ func TestFruits(t *testing.T) {
 	e.GET("/fruits/orange").
 		Expect().
 		Status(http.StatusOK).
-		JSON().Object().ContainsKey("weight").ValueEqual("weight", 100)
+		JSON().Object().ContainsKey("weight").HasValue("weight", 100)
 
 	fruit := e.GET("/fruits/apple").
 		Expect().
@@ -80,12 +80,12 @@ func TestFruits(t *testing.T) {
 	colors.ConsistsOf("green", "red")
 
 	colors.Length().IsEqual(2)
-	colors.Element(0).String().IsEqual("green")
-	colors.Element(1).String().IsEqual("red")
+	colors.Value(0).String().IsEqual("green")
+	colors.Value(1).String().IsEqual("red")
 
-	colors.Element(0).String().IsASCII()
-	colors.Element(0).String().HasPrefix("gr")
-	colors.Element(0).String().HasSuffix("een")
+	colors.Value(0).String().IsASCII()
+	colors.Value(0).String().HasPrefix("gr")
+	colors.Value(0).String().HasSuffix("een")
 
 	fruit.Value("weight").Number().InList(100, 200, 300)
 	fruit.Value("weight").Number().NotInList(400, 500, 600)

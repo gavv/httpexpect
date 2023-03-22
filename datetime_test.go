@@ -106,6 +106,7 @@ func TestDateTime_Getters(t *testing.T) {
 
 	expectedTime := parsedTime
 	expectedZone, _ := expectedTime.Zone()
+
 	assert.Equal(t, expectedZone, value.Zone().Raw())
 	assert.Equal(t, float64(expectedTime.Year()), value.Year().Raw())
 	assert.Equal(t, float64(expectedTime.Month()), value.Month().Raw())
@@ -118,7 +119,7 @@ func TestDateTime_Getters(t *testing.T) {
 	assert.Equal(t, float64(expectedTime.Nanosecond()), value.Nanosecond().Raw())
 }
 
-func TestDateTime_Equal(t *testing.T) {
+func TestDateTime_IsEqual(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewDateTime(reporter, time.Unix(0, 1234))
@@ -142,7 +143,7 @@ func TestDateTime_Equal(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestDateTime_Greater(t *testing.T) {
+func TestDateTime_IsGreater(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewDateTime(reporter, time.Unix(0, 1234))
@@ -168,7 +169,7 @@ func TestDateTime_Greater(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestDateTime_Lesser(t *testing.T) {
+func TestDateTime_IsLesser(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewDateTime(reporter, time.Unix(0, 1234))
@@ -195,117 +196,143 @@ func TestDateTime_Lesser(t *testing.T) {
 }
 
 func TestDateTime_InRange(t *testing.T) {
-	reporter := newMockReporter(t)
+	cases := []struct {
+		name             string
+		value            time.Time
+		min              time.Time
+		max              time.Time
+		expectInRange    bool
+		expectNotInRange bool
+	}{
+		{
+			name:             "value equal to both min and max",
+			value:            time.Unix(0, 1234),
+			min:              time.Unix(0, 1234),
+			max:              time.Unix(0, 1234),
+			expectInRange:    true,
+			expectNotInRange: false,
+		},
+		{
+			name:             "value after min and equal to max",
+			value:            time.Unix(0, 1234),
+			min:              time.Unix(0, 1234-1),
+			max:              time.Unix(0, 1234),
+			expectInRange:    true,
+			expectNotInRange: false,
+		},
+		{
+			name:             "value equal to min and before max",
+			value:            time.Unix(0, 1234),
+			min:              time.Unix(0, 1234),
+			max:              time.Unix(0, 1234+1),
+			expectInRange:    true,
+			expectNotInRange: false,
+		},
+		{
+			name:             "value before range",
+			value:            time.Unix(0, 1234),
+			min:              time.Unix(0, 1234+1),
+			max:              time.Unix(0, 1234+2),
+			expectInRange:    false,
+			expectNotInRange: true,
+		},
+		{
+			name:             "value after range",
+			value:            time.Unix(0, 1234),
+			min:              time.Unix(0, 1234-2),
+			max:              time.Unix(0, 1234-1),
+			expectInRange:    false,
+			expectNotInRange: true,
+		},
+		{
+			name:             "invalid range",
+			value:            time.Unix(0, 1234),
+			min:              time.Unix(0, 1234+1),
+			max:              time.Unix(0, 1234-1),
+			expectInRange:    false,
+			expectNotInRange: true,
+		},
+	}
 
-	value := NewDateTime(reporter, time.Unix(0, 1234))
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			reporter := newMockReporter(t)
 
-	value.InRange(time.Unix(0, 1234), time.Unix(0, 1234))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInRange(time.Unix(0, 1234), time.Unix(0, 1234))
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.InRange(time.Unix(0, 1234-1), time.Unix(0, 1234))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInRange(time.Unix(0, 1234-1), time.Unix(0, 1234))
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.InRange(time.Unix(0, 1234), time.Unix(0, 1234+1))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInRange(time.Unix(0, 1234), time.Unix(0, 1234+1))
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.InRange(time.Unix(0, 1234+1), time.Unix(0, 1234+2))
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInRange(time.Unix(0, 1234+1), time.Unix(0, 1234+2))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.InRange(time.Unix(0, 1234-2), time.Unix(0, 1234-1))
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInRange(time.Unix(0, 1234-2), time.Unix(0, 1234-1))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.InRange(time.Unix(0, 1234+1), time.Unix(0, 1234-1))
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInRange(time.Unix(0, 1234+1), time.Unix(0, 1234-1))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+			if tc.expectInRange {
+				NewDateTime(reporter, tc.value).
+					InRange(tc.min, tc.max).
+					chain.assertNotFailed(t)
+			} else {
+				NewDateTime(reporter, tc.value).
+					InRange(tc.min, tc.max).
+					chain.assertFailed(t)
+			}
+			if tc.expectNotInRange {
+				NewDateTime(reporter, tc.value).
+					NotInRange(tc.min, tc.max).
+					chain.assertNotFailed(t)
+			} else {
+				NewDateTime(reporter, tc.value).
+					NotInRange(tc.min, tc.max).
+					chain.assertFailed(t)
+			}
+		})
+	}
 }
 
 func TestDateTime_InList(t *testing.T) {
-	reporter := newMockReporter(t)
+	cases := []struct {
+		name            string
+		value           time.Time
+		list            []time.Time
+		expectInList    bool
+		expectNotInList bool
+	}{
+		{
+			name:            "empty list",
+			value:           time.Unix(0, 1234),
+			list:            []time.Time{},
+			expectInList:    false,
+			expectNotInList: false,
+		},
+		{
+			name:            "value present in list",
+			value:           time.Unix(0, 1234),
+			list:            []time.Time{time.Unix(0, 1234), time.Unix(0, 1234+1)},
+			expectInList:    true,
+			expectNotInList: false,
+		},
+		{
+			name:            "value not present in list",
+			value:           time.Unix(0, 1234),
+			list:            []time.Time{time.Unix(0, 1234-1), time.Unix(0, 1234+1)},
+			expectInList:    false,
+			expectNotInList: true,
+		},
+	}
 
-	value := NewDateTime(reporter, time.Unix(0, 1234))
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			reporter := newMockReporter(t)
 
-	value.InList()
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInList()
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.InList(time.Unix(0, 1234), time.Unix(0, 1234))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInList(time.Unix(0, 1234), time.Unix(0, 1234))
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.InList(time.Unix(0, 1234-1), time.Unix(0, 1234))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInList(time.Unix(0, 1234-1), time.Unix(0, 1234))
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.InList(time.Unix(0, 1234), time.Unix(0, 1234+1))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInList(time.Unix(0, 1234), time.Unix(0, 1234+1))
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.InList(time.Unix(0, 1234+1), time.Unix(0, 1234+2))
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInList(time.Unix(0, 1234+1), time.Unix(0, 1234+2))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.InList(time.Unix(0, 1234-2), time.Unix(0, 1234-1))
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInList(time.Unix(0, 1234-2), time.Unix(0, 1234-1))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.InList(time.Unix(0, 1234+1), time.Unix(0, 1234-1))
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInList(time.Unix(0, 1234+1), time.Unix(0, 1234-1))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+			if tc.expectInList {
+				NewDateTime(reporter, tc.value).
+					InList(tc.list...).
+					chain.assertNotFailed(t)
+			} else {
+				NewDateTime(reporter, tc.value).
+					InList(tc.list...).
+					chain.assertFailed(t)
+			}
+			if tc.expectNotInList {
+				NewDateTime(reporter, tc.value).
+					NotInList(tc.list...).
+					chain.assertNotFailed(t)
+			} else {
+				NewDateTime(reporter, tc.value).
+					NotInList(tc.list...).
+					chain.assertFailed(t)
+			}
+		})
+	}
 }

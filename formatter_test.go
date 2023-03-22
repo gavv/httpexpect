@@ -472,6 +472,70 @@ func TestFormatter_FailureDelta(t *testing.T) {
 	}
 }
 
+func TestFormatter_FailureErrors(t *testing.T) {
+	var mErr *mockError
+	var mErrPtr error = mErr
+
+	assert.Nil(t, mErrPtr)
+	assert.NotEqual(t, nil, mErrPtr)
+
+	cases := []struct {
+		name     string
+		errors   []error
+		expected []string
+	}{
+		{
+			name:     "nil errors slice",
+			errors:   nil,
+			expected: []string{},
+		},
+		{
+			name:     "empty errors slice",
+			errors:   []error{},
+			expected: []string{},
+		},
+		{
+			name:     "errors slice with nil error",
+			errors:   []error{nil},
+			expected: []string{},
+		},
+		{
+			name:     "errors slice with typed nil error",
+			errors:   []error{mErrPtr},
+			expected: []string{},
+		},
+		{
+			name:     "errors slice with one error",
+			errors:   []error{fmt.Errorf("error message")},
+			expected: []string{"error message"},
+		},
+		{
+			name: "errors slice with multiple errors",
+			errors: []error{
+				fmt.Errorf("error message 1"),
+				fmt.Errorf("error message 2"),
+			},
+			expected: []string{
+				"error message 1",
+				"error message 2",
+			},
+		},
+	}
+
+	df := &DefaultFormatter{}
+	ctx := &AssertionContext{}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			fl := &AssertionFailure{
+				Errors: tc.errors,
+			}
+			fd := df.buildFormatData(ctx, fl)
+			assert.Equal(t, tc.expected, fd.Errors)
+		})
+	}
+}
+
 func TestFormatter_FloatFormat(t *testing.T) {
 	type testCase struct {
 		name     string
@@ -763,28 +827,61 @@ func TestFormatter_FormatValue(t *testing.T) {
 }
 
 func TestFormatter_FormatDiff(t *testing.T) {
-	var formatter = &DefaultFormatter{}
+	t.Run("success", func(t *testing.T) {
+		check := func(a, b interface{}) {
+			formatter := &DefaultFormatter{}
+			diff, ok := formatter.formatDiff(a, b)
+			assert.True(t, ok)
+			assert.NotEqual(t, "", diff)
+		}
 
-	checkOK := func(a, b interface{}) {
-		s, ok := formatter.formatDiff(a, b)
-		assert.True(t, ok)
-		assert.NotEqual(t, "", s)
+		check(map[string]interface{}{"a": 1}, map[string]interface{}{})
+		check([]interface{}{"a"}, []interface{}{})
+	})
+
+	t.Run("failure", func(t *testing.T) {
+		check := func(a, b interface{}) {
+			formatter := &DefaultFormatter{}
+			diff, ok := formatter.formatDiff(a, b)
+			assert.False(t, ok)
+			assert.Equal(t, "", diff)
+		}
+
+		check(map[string]interface{}{}, []interface{}{})
+		check([]interface{}{}, map[string]interface{}{})
+		check("foo", "bar")
+		check(func() {}, func() {})
+
+		check(map[string]interface{}{}, map[string]interface{}{})
+		check([]interface{}{}, []interface{}{})
+	})
+}
+
+func TestFormatter_ColorMode(t *testing.T) {
+	cases := []struct {
+		name string
+		mode ColorMode
+		want bool
+	}{
+		{
+			name: "always",
+			mode: ColorModeAlways,
+			want: true,
+		},
+		{
+			name: "never",
+			mode: ColorModeNever,
+			want: false,
+		},
 	}
 
-	checkNotOK := func(a, b interface{}) {
-		s, ok := formatter.formatDiff(a, b)
-		assert.False(t, ok)
-		assert.Equal(t, "", s)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			f := DefaultFormatter{
+				ColorMode: tc.mode,
+			}
+			fd := f.buildFormatData(&AssertionContext{}, &AssertionFailure{})
+			assert.Equal(t, tc.want, fd.EnableColors)
+		})
 	}
-
-	checkNotOK(map[string]interface{}{}, []interface{}{})
-	checkNotOK([]interface{}{}, map[string]interface{}{})
-	checkNotOK("foo", "bar")
-	checkNotOK(func() {}, func() {})
-
-	checkNotOK(map[string]interface{}{}, map[string]interface{}{})
-	checkNotOK([]interface{}{}, []interface{}{})
-
-	checkOK(map[string]interface{}{"a": 1}, map[string]interface{}{})
-	checkOK([]interface{}{"a"}, []interface{}{})
 }

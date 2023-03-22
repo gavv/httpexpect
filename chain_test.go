@@ -23,7 +23,7 @@ func TestChain_Basic(t *testing.T) {
 		assert.False(t, chain2.treeFailed())
 	})
 
-	t.Run("enter_leave", func(t *testing.T) {
+	t.Run("enter leave", func(t *testing.T) {
 		chain1 := newMockChain(t)
 		chain2 := chain1.enter("test")
 
@@ -39,7 +39,7 @@ func TestChain_Basic(t *testing.T) {
 		chain2.leave()
 	})
 
-	t.Run("enter_leave_fail", func(t *testing.T) {
+	t.Run("enter leave fail", func(t *testing.T) {
 		chain1 := newMockChain(t)
 		chain2 := chain1.enter("test")
 
@@ -66,7 +66,7 @@ func TestChain_Basic(t *testing.T) {
 		chain2.assertFlags(t, flagFailed)
 	})
 
-	t.Run("clone_enter_leave_fail", func(t *testing.T) {
+	t.Run("clone enter leave fail", func(t *testing.T) {
 		chain1 := newMockChain(t)
 		chain2 := chain1.clone()
 		chain3 := chain2.clone()
@@ -107,7 +107,7 @@ func TestChain_Basic(t *testing.T) {
 		chain3e.assertFlags(t, flagFailed)
 	})
 
-	t.Run("two_branches", func(t *testing.T) {
+	t.Run("two branches", func(t *testing.T) {
 		chain1 := newMockChain(t)
 		chain2 := chain1.clone()
 		chain2e := chain2.enter("test")
@@ -157,7 +157,7 @@ func TestChain_Basic(t *testing.T) {
 		chain3e.assertFlags(t, flagFailed)
 	})
 
-	t.Run("set_root_1", func(t *testing.T) {
+	t.Run("set root 1", func(t *testing.T) {
 		chain1 := newMockChain(t)
 		chain2 := chain1.clone()
 		chain2.setRoot()
@@ -199,7 +199,7 @@ func TestChain_Basic(t *testing.T) {
 		chain3e.assertFlags(t, flagFailed)
 	})
 
-	t.Run("set_root_2", func(t *testing.T) {
+	t.Run("set root 2", func(t *testing.T) {
 		chain1 := newMockChain(t)
 		chain2 := chain1.clone()
 		chain3 := chain2.clone()
@@ -243,13 +243,13 @@ func TestChain_Basic(t *testing.T) {
 }
 
 func TestChain_Panics(t *testing.T) {
-	t.Run("nil_reporter", func(t *testing.T) {
+	t.Run("nil reporter", func(t *testing.T) {
 		assert.Panics(t, func() {
 			_ = newChainWithDefaults("test", nil)
 		})
 	})
 
-	t.Run("set_request_twice", func(t *testing.T) {
+	t.Run("set request twice", func(t *testing.T) {
 		chain := newChainWithDefaults("test", newMockReporter(t))
 
 		opChain := chain.enter("foo")
@@ -260,7 +260,7 @@ func TestChain_Panics(t *testing.T) {
 		})
 	})
 
-	t.Run("set_response_twice", func(t *testing.T) {
+	t.Run("set response twice", func(t *testing.T) {
 		chain := newChainWithDefaults("test", newMockReporter(t))
 
 		opChain := chain.enter("foo")
@@ -271,7 +271,7 @@ func TestChain_Panics(t *testing.T) {
 		})
 	})
 
-	t.Run("leave_without_enter", func(t *testing.T) {
+	t.Run("leave without enter", func(t *testing.T) {
 		chain := newChainWithDefaults("test", newMockReporter(t))
 
 		assert.Panics(t, func() {
@@ -279,7 +279,7 @@ func TestChain_Panics(t *testing.T) {
 		})
 	})
 
-	t.Run("leave_on_parent", func(t *testing.T) {
+	t.Run("leave on parent", func(t *testing.T) {
 		chain := newChainWithDefaults("test", newMockReporter(t))
 
 		_ = chain.enter("foo")
@@ -289,7 +289,7 @@ func TestChain_Panics(t *testing.T) {
 		})
 	})
 
-	t.Run("double_leave", func(t *testing.T) {
+	t.Run("double leave", func(t *testing.T) {
 		chain := newChainWithDefaults("test", newMockReporter(t))
 
 		opChain := chain.enter("foo")
@@ -300,7 +300,7 @@ func TestChain_Panics(t *testing.T) {
 		})
 	})
 
-	t.Run("enter_after_leave", func(t *testing.T) {
+	t.Run("enter after leave", func(t *testing.T) {
 		chain := newChainWithDefaults("test", newMockReporter(t))
 
 		opChain := chain.enter("foo")
@@ -311,7 +311,7 @@ func TestChain_Panics(t *testing.T) {
 		})
 	})
 
-	t.Run("replace_without_enter", func(t *testing.T) {
+	t.Run("replace without enter", func(t *testing.T) {
 		chain := newChainWithDefaults("test", newMockReporter(t))
 
 		assert.Panics(t, func() {
@@ -319,7 +319,7 @@ func TestChain_Panics(t *testing.T) {
 		})
 	})
 
-	t.Run("replace_after_leave", func(t *testing.T) {
+	t.Run("replace after leave", func(t *testing.T) {
 		chain := newChainWithDefaults("test", newMockReporter(t))
 
 		opChain := chain.enter("foo")
@@ -330,7 +330,7 @@ func TestChain_Panics(t *testing.T) {
 		})
 	})
 
-	t.Run("replace_empty_path", func(t *testing.T) {
+	t.Run("replace empty path", func(t *testing.T) {
 		chain := newChainWithDefaults("", newMockReporter(t))
 
 		opChain := chain.enter("")
@@ -340,7 +340,7 @@ func TestChain_Panics(t *testing.T) {
 		})
 	})
 
-	t.Run("replace_empty_aliased_path", func(t *testing.T) {
+	t.Run("replace empty aliased path", func(t *testing.T) {
 		chain := newChainWithDefaults("", newMockReporter(t))
 
 		opChain := chain.enter("foo")
@@ -351,7 +351,7 @@ func TestChain_Panics(t *testing.T) {
 		})
 	})
 
-	t.Run("fail_without_enter", func(t *testing.T) {
+	t.Run("fail without enter", func(t *testing.T) {
 		chain := newChainWithDefaults("test", newMockReporter(t))
 
 		assert.Panics(t, func() {
@@ -359,7 +359,7 @@ func TestChain_Panics(t *testing.T) {
 		})
 	})
 
-	t.Run("fail_after_leave", func(t *testing.T) {
+	t.Run("fail after leave", func(t *testing.T) {
 		chain := newChainWithDefaults("test", newMockReporter(t))
 
 		opChain := chain.enter("foo")
@@ -370,7 +370,7 @@ func TestChain_Panics(t *testing.T) {
 		})
 	})
 
-	t.Run("clone_after_leave", func(t *testing.T) {
+	t.Run("clone after leave", func(t *testing.T) {
 		chain := newChainWithDefaults("test", newMockReporter(t))
 
 		opChain := chain.enter("foo")
@@ -381,7 +381,7 @@ func TestChain_Panics(t *testing.T) {
 		})
 	})
 
-	t.Run("alias_after_leave", func(t *testing.T) {
+	t.Run("alias after leave", func(t *testing.T) {
 		chain := newChainWithDefaults("test", newMockReporter(t))
 
 		opChain := chain.enter("foo")
@@ -392,7 +392,7 @@ func TestChain_Panics(t *testing.T) {
 		})
 	})
 
-	t.Run("setters_after_leave", func(t *testing.T) {
+	t.Run("setters after leave", func(t *testing.T) {
 		setterFuncs := []func(chain *chain){
 			func(chain *chain) {
 				chain.setRoot()
@@ -423,7 +423,7 @@ func TestChain_Panics(t *testing.T) {
 		}
 	})
 
-	t.Run("invalid_assertion", func(t *testing.T) {
+	t.Run("invalid assertion", func(t *testing.T) {
 		chain := newChainWithDefaults("test", newMockReporter(t))
 
 		opChain := chain.enter("foo")
@@ -438,7 +438,7 @@ func TestChain_Panics(t *testing.T) {
 }
 
 func TestChain_Env(t *testing.T) {
-	t.Run("newChainWithConfig_non_nil_env", func(t *testing.T) {
+	t.Run("newChainWithConfig, non-nil env", func(t *testing.T) {
 		env := NewEnvironment(newMockReporter(t))
 
 		chain := newChainWithConfig("root", Config{
@@ -449,7 +449,7 @@ func TestChain_Env(t *testing.T) {
 		assert.Same(t, env, chain.env())
 	})
 
-	t.Run("newChainWithConfig_nil_env", func(t *testing.T) {
+	t.Run("newChainWithConfig, nil env", func(t *testing.T) {
 		chain := newChainWithConfig("root", Config{
 			AssertionHandler: &mockAssertionHandler{},
 			Environment:      nil,
@@ -466,7 +466,7 @@ func TestChain_Env(t *testing.T) {
 }
 
 func TestChain_Root(t *testing.T) {
-	t.Run("newChainWithConfig_non_empty_path", func(t *testing.T) {
+	t.Run("newChainWithConfig, non-empty path", func(t *testing.T) {
 		chain := newChainWithConfig("root", Config{
 			AssertionHandler: &mockAssertionHandler{},
 		}.withDefaults())
@@ -474,7 +474,7 @@ func TestChain_Root(t *testing.T) {
 		assert.Equal(t, []string{"root"}, chain.context.Path)
 	})
 
-	t.Run("newChainWithConfig_empty_path", func(t *testing.T) {
+	t.Run("newChainWithConfig, empty path", func(t *testing.T) {
 		chain := newChainWithConfig("", Config{
 			AssertionHandler: &mockAssertionHandler{},
 		}.withDefaults())
@@ -482,13 +482,13 @@ func TestChain_Root(t *testing.T) {
 		assert.Equal(t, []string{}, chain.context.Path)
 	})
 
-	t.Run("newChainWithDefaults_non_empty_path", func(t *testing.T) {
+	t.Run("newChainWithDefaults, non-empty path", func(t *testing.T) {
 		chain := newChainWithDefaults("root", newMockReporter(t))
 
 		assert.Equal(t, []string{"root"}, chain.context.Path)
 	})
 
-	t.Run("newChainWithDefaults_empty_path", func(t *testing.T) {
+	t.Run("newChainWithDefaults, empty path", func(t *testing.T) {
 		chain := newChainWithDefaults("", newMockReporter(t))
 
 		assert.Equal(t, []string{}, chain.context.Path)
@@ -544,7 +544,7 @@ func TestChain_AliasedPath(t *testing.T) {
 		return strings.Join(c.context.AliasedPath, ".")
 	}
 
-	t.Run("enter_and_leave", func(t *testing.T) {
+	t.Run("enter and leave", func(t *testing.T) {
 		rootChain := newChainWithDefaults("root", newMockReporter(t))
 
 		assert.Equal(t, "root", path(rootChain))
@@ -571,7 +571,7 @@ func TestChain_AliasedPath(t *testing.T) {
 		assert.Equal(t, "alias1.baz", aliasedPath(c3))
 	})
 
-	t.Run("set_empty", func(t *testing.T) {
+	t.Run("set empty", func(t *testing.T) {
 		rootChain := newChainWithDefaults("root", newMockReporter(t))
 
 		assert.Equal(t, "root", path(rootChain))
@@ -700,4 +700,108 @@ func TestChain_Reporting(t *testing.T) {
 	assert.NotNil(t, handler.ctx)    // reported to handler
 	assert.NotNil(t, handler.failure)
 	assert.Equal(t, failure, *handler.failure)
+}
+
+func TestChain_TestingTB(t *testing.T) {
+	type args struct {
+		handler  AssertionHandler
+		reporter Reporter
+	}
+	cases := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "testing.T",
+			args: args{
+				handler: &DefaultAssertionHandler{
+					Formatter: newMockFormatter(t),
+					Reporter:  t,
+					Logger:    newMockLogger(t),
+				},
+				reporter: t,
+			},
+			want: true,
+		},
+		{
+			name: "testing.B",
+			args: args{
+				handler: &DefaultAssertionHandler{
+					Formatter: newMockFormatter(t),
+					Reporter:  &testing.B{},
+					Logger:    newMockLogger(t),
+				},
+				reporter: &testing.B{},
+			},
+			want: true,
+		},
+		{
+			name: "testing.TB",
+			args: args{
+				handler: &DefaultAssertionHandler{
+					Formatter: newMockFormatter(t),
+					Reporter:  testing.TB(t),
+					Logger:    newMockLogger(t),
+				},
+				reporter: testing.TB(t),
+			},
+			want: true,
+		},
+		{
+			name: "AssertReporter",
+			args: args{
+				handler: &DefaultAssertionHandler{
+					Formatter: newMockFormatter(t),
+					Reporter:  NewFatalReporter(t),
+					Logger:    newMockLogger(t),
+				},
+				reporter: NewFatalReporter(t),
+			},
+			want: true,
+		},
+		{
+			name: "AssertReporter",
+			args: args{
+				handler: &DefaultAssertionHandler{
+					Formatter: newMockFormatter(t),
+					Reporter:  NewAssertReporter(t),
+					Logger:    newMockLogger(t),
+				},
+				reporter: NewAssertReporter(t),
+			},
+			want: true,
+		},
+		{
+			name: "RequireReporter",
+			args: args{
+				handler: &DefaultAssertionHandler{
+					Formatter: newMockFormatter(t),
+					Reporter:  NewRequireReporter(t),
+					Logger:    newMockLogger(t),
+				},
+				reporter: NewRequireReporter(t),
+			},
+			want: true,
+		},
+		{
+			name: "mockHandler, mockReporter",
+			args: args{
+				handler:  &mockAssertionHandler{},
+				reporter: newMockReporter(t),
+			},
+			want: false,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			chain := newChainWithConfig(tc.name, Config{
+				AssertionHandler: tc.args.handler,
+			}.withDefaults())
+			assert.Equal(t, tc.want, chain.context.TestingTB)
+
+			chain = newChainWithDefaults(tc.name, tc.args.reporter)
+			assert.Equal(t, tc.want, chain.context.TestingTB)
+		})
+	}
 }

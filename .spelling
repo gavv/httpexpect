@@ -1,5 +1,6 @@
 auth
 chainable
+color
 config
 datetime
 dialer
@@ -11,6 +12,7 @@ gopkg.in
 HACKING.md
 httpexpect
 jsonpath
+liberapay
 linters
 multipart
 oauth2

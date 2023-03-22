@@ -33,14 +33,14 @@ func TestWebsocketMessage_Failed(t *testing.T) {
 }
 
 func TestWebsocketMessage_Constructors(t *testing.T) {
-	t.Run("Constructor without config", func(t *testing.T) {
+	t.Run("reporter", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		msg := NewWebsocketMessage(reporter, websocket.CloseMessage, nil)
 		msg.CloseMessage()
 		msg.chain.assertNotFailed(t)
 	})
 
-	t.Run("Constructor with config", func(t *testing.T) {
+	t.Run("config", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		msg := NewWebsocketMessageC(Config{
 			Reporter: reporter,
@@ -49,7 +49,7 @@ func TestWebsocketMessage_Constructors(t *testing.T) {
 		msg.chain.assertNotFailed(t)
 	})
 
-	t.Run("chain Constructor", func(t *testing.T) {
+	t.Run("chain", func(t *testing.T) {
 		chain := newMockChain(t)
 		value := newWebsocketMessage(chain, 0, nil)
 		assert.NotSame(t, value.chain, chain)
@@ -60,42 +60,18 @@ func TestWebsocketMessage_Constructors(t *testing.T) {
 func TestWebsocketMessage_Alias(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	value1 := NewWebsocketMessage(reporter, websocket.CloseMessage, nil)
-	assert.Equal(t, []string{"WebsocketMessage()"}, value1.chain.context.Path)
-	assert.Equal(t, []string{"WebsocketMessage()"}, value1.chain.context.AliasedPath)
+	value := NewWebsocketMessage(reporter, websocket.CloseMessage, nil)
+	assert.Equal(t, []string{"WebsocketMessage()"}, value.chain.context.Path)
+	assert.Equal(t, []string{"WebsocketMessage()"}, value.chain.context.AliasedPath)
 
-	value2 := value1.Alias("foo")
-	assert.Equal(t, []string{"WebsocketMessage()"}, value2.chain.context.Path)
-	assert.Equal(t, []string{"foo"}, value2.chain.context.AliasedPath)
+	value.Alias("foo")
+	assert.Equal(t, []string{"WebsocketMessage()"}, value.chain.context.Path)
+	assert.Equal(t, []string{"foo"}, value.chain.context.AliasedPath)
 
-	value3 := value2.Body()
+	childValue := value.Body()
 	assert.Equal(t, []string{"WebsocketMessage()", "Body()"},
-		value3.chain.context.Path)
-	assert.Equal(t, []string{"foo", "Body()"}, value3.chain.context.AliasedPath)
-}
-
-func TestWebsocketMessage_UsageChecks(t *testing.T) {
-	chain := newMockChain(t)
-
-	msg := newEmptyWebsocketMessage(chain)
-
-	msg.chain.assertNotFailed(t)
-
-	msg.Type()
-	msg.chain.assertFailed(t)
-	msg.chain.clearFailed()
-
-	msg.NotType()
-	msg.chain.assertFailed(t)
-	msg.chain.clearFailed()
-
-	msg.Code()
-	msg.chain.assertFailed(t)
-	msg.chain.clearFailed()
-
-	msg.NotCode()
-	msg.chain.assertFailed(t)
-	msg.chain.clearFailed()
+		childValue.chain.context.Path)
+	assert.Equal(t, []string{"foo", "Body()"}, childValue.chain.context.AliasedPath)
 }
 
 func TestWebsocketMessage_CloseMessage(t *testing.T) {
@@ -329,59 +305,110 @@ func TestWebsocketMessage_MatchCodes(t *testing.T) {
 }
 
 func TestWebsocketMessage_CodeAndType(t *testing.T) {
-	reporter := newMockReporter(t)
+	cases := []struct {
+		name            string
+		typ             int
+		code            int
+		expectCodeOK    bool
+		expectNotCodeOK bool
+	}{
+		{
+			name:            "text message with close code 10",
+			typ:             websocket.TextMessage,
+			code:            10,
+			expectCodeOK:    false,
+			expectNotCodeOK: false,
+		},
+		{
+			name:            "close message with close code 10",
+			typ:             websocket.CloseMessage,
+			code:            10,
+			expectCodeOK:    true,
+			expectNotCodeOK: false,
+		},
+	}
 
-	m1 := NewWebsocketMessage(reporter, websocket.TextMessage, nil, 10)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			reporter := newMockReporter(t)
 
-	m1.Code(10)
-	m1.chain.assertFailed(t)
-	m1.chain.clearFailed()
+			if tc.expectCodeOK {
+				NewWebsocketMessage(reporter, tc.typ, nil, tc.code).
+					Code(tc.code).chain.assertNotFailed(t)
+			} else {
+				NewWebsocketMessage(reporter, tc.typ, nil, tc.code).
+					Code(tc.code).chain.assertFailed(t)
+			}
 
-	m1.NotCode(10)
-	m1.chain.assertFailed(t)
-	m1.chain.clearFailed()
-
-	m2 := NewWebsocketMessage(reporter, websocket.CloseMessage, nil, 10)
-
-	m2.Code(10)
-	m2.chain.assertNotFailed(t)
-	m2.chain.clearFailed()
-
-	m2.NotCode(10)
-	m2.chain.assertFailed(t)
-	m2.chain.clearFailed()
+			if tc.expectNotCodeOK {
+				NewWebsocketMessage(reporter, tc.typ, nil, tc.code).
+					NotCode(tc.code).chain.assertNotFailed(t)
+			} else {
+				NewWebsocketMessage(reporter, tc.typ, nil, tc.code).
+					NotCode(tc.code).chain.assertFailed(t)
+			}
+		})
+	}
 }
 
 func TestWebsocketMessage_NoContent(t *testing.T) {
-	reporter := newMockReporter(t)
+	cases := []struct {
+		name       string
+		typ        int
+		content    []byte
+		hasContent bool
+	}{
+		{
+			name:       "nil text message",
+			typ:        websocket.TextMessage,
+			content:    nil,
+			hasContent: false,
+		},
+		{
+			name:       "empty text message",
+			typ:        websocket.TextMessage,
+			content:    []byte(""),
+			hasContent: false,
+		},
+		{
+			name:       "text message with content",
+			typ:        websocket.TextMessage,
+			content:    []byte("test"),
+			hasContent: true,
+		},
+		{
+			name:       "nil binary message",
+			typ:        websocket.BinaryMessage,
+			content:    nil,
+			hasContent: false,
+		},
+		{
+			name:       "empty binary message",
+			typ:        websocket.BinaryMessage,
+			content:    []byte(""),
+			hasContent: false,
+		},
+		{
+			name:       "binary message with content",
+			typ:        websocket.BinaryMessage,
+			content:    []byte("test"),
+			hasContent: true,
+		},
+	}
 
-	t.Run("text", func(t *testing.T) {
-		m1 := NewWebsocketMessage(reporter, websocket.TextMessage, nil)
-		m1.NoContent()
-		m1.chain.assertNotFailed(t)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			reporter := newMockReporter(t)
 
-		m2 := NewWebsocketMessage(reporter, websocket.TextMessage, []byte(""))
-		m2.NoContent()
-		m2.chain.assertNotFailed(t)
-
-		m3 := NewWebsocketMessage(reporter, websocket.TextMessage, []byte("test"))
-		m3.NoContent()
-		m3.chain.assertFailed(t)
-	})
-
-	t.Run("binary", func(t *testing.T) {
-		m1 := NewWebsocketMessage(reporter, websocket.BinaryMessage, nil)
-		m1.NoContent()
-		m1.chain.assertNotFailed(t)
-
-		m2 := NewWebsocketMessage(reporter, websocket.BinaryMessage, []byte(""))
-		m2.NoContent()
-		m2.chain.assertNotFailed(t)
-
-		m3 := NewWebsocketMessage(reporter, websocket.BinaryMessage, []byte("test"))
-		m3.NoContent()
-		m3.chain.assertFailed(t)
-	})
+			if tc.hasContent {
+				NewWebsocketMessage(reporter, tc.typ, tc.content).
+					NoContent().chain.assertFailed(t)
+			} else {
+				NewWebsocketMessage(reporter, tc.typ, tc.content).
+					NoContent().chain.assertNotFailed(t)
+			}
+		})
+	}
 }
 
 func TestWebsocketMessage_Body(t *testing.T) {
@@ -423,14 +450,38 @@ func TestWebsocketMessage_JSON(t *testing.T) {
 	})
 }
 
+func TestWebsocketMessage_Usage(t *testing.T) {
+	chain := newMockChain(t)
+
+	msg := newEmptyWebsocketMessage(chain)
+
+	msg.chain.assertNotFailed(t)
+
+	msg.Type()
+	msg.chain.assertFailed(t)
+	msg.chain.clearFailed()
+
+	msg.NotType()
+	msg.chain.assertFailed(t)
+	msg.chain.clearFailed()
+
+	msg.Code()
+	msg.chain.assertFailed(t)
+	msg.chain.clearFailed()
+
+	msg.NotCode()
+	msg.chain.assertFailed(t)
+	msg.chain.clearFailed()
+}
+
 func TestWebsocketMessage_Codes(t *testing.T) {
-	t.Run("message_type", func(t *testing.T) {
+	t.Run("message type", func(t *testing.T) {
 		for n := 0; n < 100; n++ {
 			assert.NotEmpty(t, wsMessageType(n).String())
 		}
 	})
 
-	t.Run("close_code", func(t *testing.T) {
+	t.Run("close code", func(t *testing.T) {
 		for n := 0; n < 2000; n++ {
 			assert.NotEmpty(t, wsCloseCode(n).String())
 		}

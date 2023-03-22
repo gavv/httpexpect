@@ -97,7 +97,7 @@ func TestDuration_Unset(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestDuration_Equal(t *testing.T) {
+func TestDuration_IsEqual(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewDuration(reporter, time.Second)
@@ -121,7 +121,7 @@ func TestDuration_Equal(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestDuration_Greater(t *testing.T) {
+func TestDuration_IsGreater(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewDuration(reporter, time.Second)
@@ -147,7 +147,7 @@ func TestDuration_Greater(t *testing.T) {
 	value.chain.clearFailed()
 }
 
-func TestDuration_Lesser(t *testing.T) {
+func TestDuration_IsLesser(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewDuration(reporter, time.Second)
@@ -174,104 +174,143 @@ func TestDuration_Lesser(t *testing.T) {
 }
 
 func TestDuration_InRange(t *testing.T) {
-	reporter := newMockReporter(t)
+	cases := []struct {
+		name             string
+		value            time.Duration
+		min              time.Duration
+		max              time.Duration
+		expectInRange    bool
+		expectNotInRange bool
+	}{
+		{
+			name:             "value equal to both min and max",
+			value:            time.Second,
+			min:              time.Second,
+			max:              time.Second,
+			expectInRange:    true,
+			expectNotInRange: false,
+		},
+		{
+			name:             "value greater than min and equal to max",
+			value:            time.Second,
+			min:              time.Second - 1,
+			max:              time.Second,
+			expectInRange:    true,
+			expectNotInRange: false,
+		},
+		{
+			name:             "value equal to min and smaller than max",
+			value:            time.Second,
+			min:              time.Second,
+			max:              time.Second + 1,
+			expectInRange:    true,
+			expectNotInRange: false,
+		},
+		{
+			name:             "value smaller than min",
+			value:            time.Second,
+			min:              time.Second + 1,
+			max:              time.Second + 2,
+			expectInRange:    false,
+			expectNotInRange: true,
+		},
+		{
+			name:             "value greater than max",
+			value:            time.Second,
+			min:              time.Second - 2,
+			max:              time.Second - 1,
+			expectInRange:    false,
+			expectNotInRange: true,
+		},
+		{
+			name:             "min smaller than max",
+			value:            time.Second,
+			min:              time.Second + 1,
+			max:              time.Second - 1,
+			expectInRange:    false,
+			expectNotInRange: true,
+		},
+	}
 
-	value := NewDuration(reporter, time.Second)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			reporter := newMockReporter(t)
 
-	value.InRange(time.Second, time.Second)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInRange(time.Second, time.Second)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.InRange(time.Second-1, time.Second)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInRange(time.Second-1, time.Second)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.InRange(time.Second, time.Second+1)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInRange(time.Second, time.Second+1)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.InRange(time.Second+1, time.Second+2)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInRange(time.Second+1, time.Second+2)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.InRange(time.Second-2, time.Second-1)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInRange(time.Second-2, time.Second-1)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.InRange(time.Second+1, time.Second-1)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInRange(time.Second+1, time.Second-1)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+			if tc.expectInRange {
+				NewDuration(reporter, tc.value).
+					InRange(tc.min, tc.max).
+					chain.assertNotFailed(t)
+			} else {
+				NewDuration(reporter, tc.value).
+					InRange(tc.min, tc.max).
+					chain.assertFailed(t)
+			}
+			if tc.expectNotInRange {
+				NewDuration(reporter, tc.value).
+					NotInRange(tc.min, tc.max).
+					chain.assertNotFailed(t)
+			} else {
+				NewDuration(reporter, tc.value).
+					NotInRange(tc.min, tc.max).
+					chain.assertFailed(t)
+			}
+		})
+	}
 }
 
 func TestDuration_InList(t *testing.T) {
-	reporter := newMockReporter(t)
+	cases := []struct {
+		name            string
+		value           time.Duration
+		list            []time.Duration
+		expectInList    bool
+		expectNotInList bool
+	}{
+		{
+			name:            "empty list",
+			value:           time.Second,
+			list:            []time.Duration{},
+			expectInList:    false,
+			expectNotInList: false,
+		},
+		{
+			name:            "value present in list",
+			value:           time.Second,
+			list:            []time.Duration{time.Second, time.Minute},
+			expectInList:    true,
+			expectNotInList: false,
+		},
+		{
+			name:            "value not present in list",
+			value:           time.Second,
+			list:            []time.Duration{time.Second - 1, time.Second + 1},
+			expectInList:    false,
+			expectNotInList: true,
+		},
+	}
 
-	newDuration(newMockChain(t), nil).InList(time.Second).chain.assertFailed(t)
-	newDuration(newMockChain(t), nil).NotInList(time.Second).chain.assertFailed(t)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			reporter := newMockReporter(t)
 
-	value := NewDuration(reporter, time.Second)
-
-	value.InList()
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInList()
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.InList(time.Second, time.Minute)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInList(time.Second, time.Minute)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.InList(time.Second-1, time.Minute)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInList(time.Second-1, time.Minute)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.InList(time.Second, time.Second+1)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInList(time.Second, time.Second+1)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.InList(time.Second+1, time.Second-1)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInList(time.Second+1, time.Second-1)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+			if tc.expectInList {
+				NewDuration(reporter, tc.value).
+					InList(tc.list...).
+					chain.assertNotFailed(t)
+			} else {
+				NewDuration(reporter, tc.value).
+					InList(tc.list...).
+					chain.assertFailed(t)
+			}
+			if tc.expectNotInList {
+				NewDuration(reporter, tc.value).
+					NotInList(tc.list...).
+					chain.assertNotFailed(t)
+			} else {
+				NewDuration(reporter, tc.value).
+					NotInList(tc.list...).
+					chain.assertFailed(t)
+			}
+		})
+	}
 }

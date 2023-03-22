@@ -126,6 +126,8 @@ func newChainWithConfig(name string, config Config) *chain {
 		c.context.Environment = newEnvironment(c)
 	}
 
+	c.context.TestingTB = isTestingTB(c.handler)
+
 	return c
 }
 
@@ -153,6 +155,8 @@ func newChainWithDefaults(name string, reporter Reporter) *chain {
 	}
 
 	c.context.Environment = newEnvironment(c)
+
+	c.context.TestingTB = isTestingTB(c.handler)
 
 	return c
 }
@@ -485,4 +489,17 @@ func (c *chain) assertFlags(t testing.TB, flags chainFlags) {
 
 	assert.Equal(t, flags, c.flags,
 		"expected: chain has specified flags")
+}
+
+// Whether handler outputs to testing.TB
+func isTestingTB(in AssertionHandler) bool {
+	h, ok := in.(*DefaultAssertionHandler)
+	if !ok {
+		return false
+	}
+	switch h.Reporter.(type) {
+	case *AssertReporter, *RequireReporter, *FatalReporter, testing.TB:
+		return true
+	}
+	return false
 }
