@@ -9,7 +9,6 @@ import (
 	"mime"
 	"mime/multipart"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -664,17 +663,6 @@ func TestRequest_URLInterpolate(t *testing.T) {
 	r10.chain.assertFailed(t)
 }
 
-type mockEncodedString string
-
-// EncodeValues implements query.Encoder.EncodeValues.
-func (m mockEncodedString) EncodeValues(key string, v *url.Values) error {
-	if m == "err" {
-		return errors.New("encoding error")
-	}
-	v.Set(key, string(m))
-	return nil
-}
-
 func TestRequest_URLQuery(t *testing.T) {
 	client := &mockClient{}
 
@@ -684,30 +672,33 @@ func TestRequest_URLQuery(t *testing.T) {
 		Reporter: newMockReporter(t),
 	}
 
-	check := func(req *Request) {
+	checkOK := func(req *Request, url string) {
 		client.req = nil
 		req.Expect()
 		req.chain.assertNotFailed(t)
-		assert.Equal(t, "http://example.com/path?aa=foo&bb=123&cc=%2A%26%40",
-			client.req.URL.String())
+		assert.Equal(t, url, client.req.URL.String())
+	}
+
+	checkFailed := func(req *Request) {
+		req.chain.assertFailed(t)
 	}
 
 	t.Run("WithQuery", func(t *testing.T) {
 		req := NewRequestC(config, "GET", "/path").
 			WithQuery("aa", "foo").WithQuery("bb", 123).WithQuery("cc", "*&@")
-		check(req)
+		checkOK(req,
+			"http://example.com/path?aa=foo&bb=123&cc=%2A%26%40")
 	})
-
-	q := map[string]interface{}{
-		"bb": 123,
-		"cc": "*&@",
-	}
 
 	t.Run("WithQueryObject map[string]interface", func(t *testing.T) {
 		req := NewRequestC(config, "GET", "/path").
 			WithQuery("aa", "foo").
-			WithQueryObject(q)
-		check(req)
+			WithQueryObject(map[string]interface{}{
+				"bb": 123,
+				"cc": "*&@",
+			})
+		checkOK(req,
+			"http://example.com/path?aa=foo&bb=123&cc=%2A%26%40")
 	})
 
 	type S struct {
@@ -719,55 +710,63 @@ func TestRequest_URLQuery(t *testing.T) {
 	t.Run("WithQueryObject struct", func(t *testing.T) {
 		req := NewRequestC(config, "GET", "/path").
 			WithQueryObject(S{123, "*&@", "dummy"}).WithQuery("aa", "foo")
-		check(req)
+		checkOK(req,
+			"http://example.com/path?aa=foo&bb=123&cc=%2A%26%40")
 	})
 
 	t.Run("WithQueryObject pointer to struct", func(t *testing.T) {
 		req := NewRequestC(config, "GET", "/path").
 			WithQueryObject(&S{123, "*&@", "dummy"}).WithQuery("aa", "foo")
-		check(req)
+		checkOK(req,
+			"http://example.com/path?aa=foo&bb=123&cc=%2A%26%40")
 	})
 
 	t.Run("WithQuery and WithQueryString", func(t *testing.T) {
 		req := NewRequestC(config, "GET", "/path").
 			WithQuery("bb", 123).
 			WithQueryString("aa=foo&cc=%2A%26%40")
-		check(req)
+		checkOK(req,
+			"http://example.com/path?aa=foo&bb=123&cc=%2A%26%40")
 	})
 
 	t.Run("WithQueryString and WithQuery", func(t *testing.T) {
 		req := NewRequestC(config, "GET", "/path").
 			WithQueryString("aa=foo&cc=%2A%26%40").
 			WithQuery("bb", 123)
-		check(req)
+		checkOK(req,
+			"http://example.com/path?aa=foo&bb=123&cc=%2A%26%40")
 	})
 
 	t.Run("WithQueryObject nil", func(t *testing.T) {
 		req := NewRequestC(config, "GET", "/path").
 			WithQuery("foo", "bar").
 			WithQueryObject(nil)
-		req.Expect()
-		req.chain.assertNotFailed(t)
-		assert.Equal(t, "http://example.com/path?foo=bar", client.req.URL.String())
+		checkOK(req,
+			"http://example.com/path?foo=bar")
+	})
+
+	t.Run("WithQueryString invalid", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/path").
+			WithQueryString("%")
+		checkFailed(req)
 	})
 
 	t.Run("WithQueryObject invalid", func(t *testing.T) {
-		NewRequestC(config, "GET", "/path").
-			WithQueryObject(func() {}).chain.assertFailed(t)
-
-		NewRequestC(config, "GET", "/path").
-			WithQueryString("%").chain.assertFailed(t)
+		req := NewRequestC(config, "GET", "/path").
+			WithQueryObject(func() {})
+		checkFailed(req)
 	})
 
 	t.Run("WithQueryObject invalid struct", func(t *testing.T) {
 		type invalidSt struct {
-			Str mockEncodedString
+			Str mockQueryEncoder
 		}
 		queryObj := invalidSt{
-			Str: mockEncodedString("err"),
+			Str: mockQueryEncoder("err"),
 		}
-		NewRequestC(config, "GET", "/path").
-			WithQueryObject(queryObj).chain.assertFailed(t)
+		req := NewRequestC(config, "GET", "/path").
+			WithQueryObject(queryObj)
+		checkFailed(req)
 	})
 }
 
