@@ -21,7 +21,7 @@ func NewAssertReporter(t assert.TestingT) *AssertReporter {
 
 // Errorf implements Reporter.Errorf.
 func (r *AssertReporter) Errorf(message string, args ...interface{}) {
-	r.backend.Fail(message, args...)
+	r.backend.Fail(fmt.Sprintf(message, args...))
 }
 
 // RequireReporter implements Reporter interface using `testify/require'
@@ -37,7 +37,7 @@ func NewRequireReporter(t require.TestingT) *RequireReporter {
 
 // Errorf implements Reporter.Errorf.
 func (r *RequireReporter) Errorf(message string, args ...interface{}) {
-	r.backend.FailNow(message, args...)
+	r.backend.FailNow(fmt.Sprintf(message, args...))
 }
 
 // FatalReporter is a struct that implements the Reporter interface
@@ -53,7 +53,7 @@ func NewFatalReporter(t testing.TB) *FatalReporter {
 
 // Errorf implements Reporter.Errorf.
 func (r *FatalReporter) Errorf(message string, args ...interface{}) {
-	r.backend.Fatalf(message, args...)
+	r.backend.Fatalf(fmt.Sprintf(message, args...))
 }
 
 // PanicReporter is a struct that implements the Reporter interface
