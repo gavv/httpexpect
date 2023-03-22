@@ -369,4 +369,41 @@ func TestBodyWrapper_InfiniteResponses(t *testing.T) {
 		assert.Equal(t, "_bod", string(b))
 	})
 
+	t.Run("disable storing body into memory", func(t *testing.T) {
+		body := newMockBody("test_body") // 9 characters
+		wrp := newBodyWrapper(body, nil)
+
+		b := make([]byte, 4)
+		var (
+			err    error
+			reader io.ReadCloser
+			n      int
+		)
+		_, _ = wrp.Read(b)
+		assert.NoError(t, wrp.DisableBodyCaching())
+		reader, err = wrp.GetBody()
+		assert.EqualError(t, err, "body caching is disabled, cannot get body contents")
+		assert.Nil(t, reader)
+		assert.EqualError(t, wrp.Rewind(), "body caching is disabled, cannot rewind")
+		assert.False(t, wrp.isFullyRead)
+		assert.Nil(t, wrp.origBytes)
+
+		n, err = wrp.Read(b)
+		assert.Nil(t, err)
+		assert.Equal(t, 4, n)
+		assert.Equal(t, "_bod", string(b))
+
+		n, err = wrp.Read(b)
+		assert.Nil(t, err)
+		assert.Equal(t, 1, n)
+		assert.True(t, wrp.isFullyRead)
+		assert.Equal(t, "y", string(b[:n]))
+
+		n, err = wrp.Read(b)
+		assert.EqualError(t, err, io.EOF.Error())
+		assert.Equal(t, 0, n)
+		assert.True(t, wrp.isFullyRead)
+		assert.Nil(t, wrp.origBytes)
+	})
+
 }
