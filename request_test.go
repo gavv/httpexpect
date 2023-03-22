@@ -2728,7 +2728,7 @@ func TestRequest_Conflicts(t *testing.T) {
 }
 
 func TestRequest_Usage(t *testing.T) {
-	tests := []struct {
+	cases := []struct {
 		name        string
 		client      Client
 		prepFunc    func(req *Request)
@@ -2861,7 +2861,7 @@ func TestRequest_Usage(t *testing.T) {
 		},
 	}
 
-	for _, tc := range tests {
+	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			config := Config{
 				Client:   tc.client,

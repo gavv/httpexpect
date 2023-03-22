@@ -796,7 +796,7 @@ func TestNumber_IsLesser(t *testing.T) {
 
 func TestNumber_IsInt(t *testing.T) {
 	t.Run("values", func(t *testing.T) {
-		tests := []struct {
+		cases := []struct {
 			name    string
 			value   float64
 			isInt16 bool
@@ -903,7 +903,7 @@ func TestNumber_IsInt(t *testing.T) {
 			},
 		}
 
-		for _, tc := range tests {
+		for _, tc := range cases {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
 
@@ -959,7 +959,7 @@ func TestNumber_IsInt(t *testing.T) {
 
 func TestNumber_IsUint(t *testing.T) {
 	t.Run("values", func(t *testing.T) {
-		tests := []struct {
+		cases := []struct {
 			name     string
 			value    float64
 			isUint16 bool
@@ -1045,7 +1045,7 @@ func TestNumber_IsUint(t *testing.T) {
 			},
 		}
 
-		for _, tc := range tests {
+		for _, tc := range cases {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
 
@@ -1100,7 +1100,7 @@ func TestNumber_IsUint(t *testing.T) {
 }
 
 func TestNumber_IsFinite(t *testing.T) {
-	tests := []struct {
+	cases := []struct {
 		name     string
 		value    float64
 		isFinite bool
@@ -1142,7 +1142,7 @@ func TestNumber_IsFinite(t *testing.T) {
 		},
 	}
 
-	for _, tc := range tests {
+	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 

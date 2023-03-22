@@ -17,7 +17,7 @@ func (*typedStingerNil) String() string {
 }
 
 func TestFormatter_FailureActual(t *testing.T) {
-	tests := []struct {
+	cases := []struct {
 		name           string
 		assertionType  AssertionType
 		assertionValue interface{}
@@ -67,7 +67,6 @@ func TestFormatter_FailureActual(t *testing.T) {
 			wantHaveActual: true,
 			wantActual:     "struct { Name string }(struct { Name string }{Name:\"test name\"})",
 		},
-
 		// AssertValid
 		{
 			name:           "AssertValid nil",
@@ -116,7 +115,7 @@ func TestFormatter_FailureActual(t *testing.T) {
 	df := &DefaultFormatter{}
 	ctx := &AssertionContext{}
 
-	for _, tc := range tests {
+	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			fl := &AssertionFailure{
 				Type: tc.assertionType,
@@ -132,7 +131,7 @@ func TestFormatter_FailureActual(t *testing.T) {
 }
 
 func TestFormatter_FailureExpected(t *testing.T) {
-	tests := []struct {
+	cases := []struct {
 		name             string
 		assertionType    AssertionType
 		assertionValue   interface{}
@@ -208,7 +207,6 @@ func TestFormatter_FailureExpected(t *testing.T) {
 			wantExpectedKind: kindRange,
 			wantExpected:     []string{"{test name 1}", "{test name 2}"},
 		},
-
 		// AssertMatchPath
 		{
 			name:             "AssertMatchPath nil",
@@ -258,7 +256,6 @@ func TestFormatter_FailureExpected(t *testing.T) {
 			wantExpectedKind: kindPath,
 			wantExpected:     []string{"{\n  \"Name\": \"test name\"\n}"},
 		},
-
 		// AssertMatchFormat
 		{
 			name:          "AssertMatchFormat nil",
@@ -332,7 +329,7 @@ func TestFormatter_FailureExpected(t *testing.T) {
 
 	ctx := &AssertionContext{}
 
-	for _, tc := range tests {
+	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			fl := &AssertionFailure{
 				Type: tc.assertionType,
@@ -349,7 +346,7 @@ func TestFormatter_FailureExpected(t *testing.T) {
 }
 
 func TestFormatter_FailureReference(t *testing.T) {
-	tests := []struct {
+	cases := []struct {
 		name              string
 		assertionValue    interface{}
 		wantHaveReference bool
@@ -396,7 +393,7 @@ func TestFormatter_FailureReference(t *testing.T) {
 	df := &DefaultFormatter{}
 	ctx := &AssertionContext{}
 
-	for _, tc := range tests {
+	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			fl := &AssertionFailure{
 				Reference: &AssertionValue{
@@ -411,7 +408,7 @@ func TestFormatter_FailureReference(t *testing.T) {
 }
 
 func TestFormatter_FailureDelta(t *testing.T) {
-	tests := []struct {
+	cases := []struct {
 		name           string
 		assertionValue interface{}
 		wantHaveDelta  bool
@@ -458,7 +455,7 @@ func TestFormatter_FailureDelta(t *testing.T) {
 	df := &DefaultFormatter{}
 	ctx := &AssertionContext{}
 
-	for _, tc := range tests {
+	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			fl := &AssertionFailure{
 				Delta: &AssertionValue{
@@ -537,14 +534,12 @@ func TestFormatter_FailureErrors(t *testing.T) {
 }
 
 func TestFormatter_FloatFormat(t *testing.T) {
-	type testCase struct {
+	cases := []struct {
 		name     string
 		format   FloatFormat
 		value    interface{}
 		wantText string
-	}
-
-	testCases := []testCase{
+	}{
 		// float32
 		{
 			name:     "float32 auto small exponent",
@@ -635,7 +630,7 @@ func TestFormatter_FloatFormat(t *testing.T) {
 		},
 	}
 
-	for _, tc := range testCases {
+	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			formatter := DefaultFormatter{
 				FloatFormat: tc.format,
@@ -652,14 +647,12 @@ func TestFormatter_FloatFormat(t *testing.T) {
 }
 
 func TestFormatter_FloatFields(t *testing.T) {
-	type testCase struct {
+	cases := []struct {
 		name     string
 		format   FloatFormat
 		value    float64
 		wantText string
-	}
-
-	testCases := []testCase{
+	}{
 		{
 			name:     "auto",
 			format:   FloatFormatAuto,
@@ -680,7 +673,7 @@ func TestFormatter_FloatFields(t *testing.T) {
 		},
 	}
 
-	for _, tc := range testCases {
+	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			formatter := DefaultFormatter{
 				FloatFormat: tc.format,
@@ -769,15 +762,13 @@ func TestFormatter_FloatFields(t *testing.T) {
 }
 
 func TestFormatter_DigitSeparator(t *testing.T) {
-	type testCase struct {
+	cases := []struct {
 		name      string
 		separator DigitSeparator
 		format    FloatFormat
 		value     interface{}
 		wantText  string
-	}
-
-	testCases := []testCase{
+	}{
 		// types
 		{
 			name:      "float32",
@@ -931,7 +922,7 @@ func TestFormatter_DigitSeparator(t *testing.T) {
 		},
 	}
 
-	for _, tc := range testCases {
+	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			formatter := DefaultFormatter{
 				DigitSeparator: tc.separator,
