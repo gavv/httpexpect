@@ -31,7 +31,7 @@ func TestBodyWrapper_Rewind(t *testing.T) {
 	err = wrp.Close()
 	assert.NoError(t, err)
 
-	wrp.Rewind()
+	assert.NoError(t, wrp.Rewind())
 
 	b, err = ioutil.ReadAll(wrp)
 	assert.NoError(t, err)
@@ -250,7 +250,7 @@ func TestBodyWrapper_ErrorRewind(t *testing.T) {
 		assert.NotNil(t, err)
 	}
 
-	wrp.Rewind()
+	assert.NoError(t, wrp.Rewind())
 
 	body.readErr = nil
 	body.closeErr = nil

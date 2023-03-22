@@ -166,7 +166,7 @@ func (bw *bodyWrapper) readFull() error {
 	if err != nil {
 		bw.readErr = err
 		bw.isFullyRead = true // Prevent further reads
-		bw.closeAndCancel()
+		_ = bw.closeAndCancel()
 		return err
 	}
 	initialBytesLen := len(bw.origBytes)

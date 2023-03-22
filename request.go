@@ -2176,13 +2176,13 @@ func (r *Request) retryRequest(reqFunc func() (*http.Response, error)) (
 	for {
 		for _, printer := range r.config.Printers {
 			if reqBody != nil {
-				reqBody.Rewind()
+				_ = reqBody.Rewind()
 			}
 			printer.Request(r.httpReq)
 		}
 
 		if reqBody != nil {
-			reqBody.Rewind()
+			_ = reqBody.Rewind()
 		}
 
 		var cancelFn context.CancelFunc
@@ -2211,7 +2211,7 @@ func (r *Request) retryRequest(reqFunc func() (*http.Response, error)) (
 		if resp != nil {
 			for _, printer := range r.config.Printers {
 				if resp.Body != nil {
-					resp.Body.(*bodyWrapper).Rewind()
+					_ = resp.Body.(*bodyWrapper).Rewind()
 				}
 				printer.Response(resp, elapsed)
 			}
