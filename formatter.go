@@ -57,11 +57,11 @@ type DefaultFormatter struct {
 	// Exclude diff from failure report.
 	DisableDiffs bool
 
-	// Enable printing of request on failure.
-	EnableRequests bool
+	// Exclude HTTP request from failure report.
+	DisableRequests bool
 
-	// Enable printing of response on failure.
-	EnableResponses bool
+	// Exclude HTTP response from failure report.
+	DisableResponses bool
 
 	// Thousand separator.
 	// Default is DigitSeparatorUnderscore.
@@ -196,9 +196,6 @@ type FormatData struct {
 	ExpectedKind string
 	Expected     []string
 
-	Request  string
-	Response string
-
 	HaveReference bool
 	Reference     string
 
@@ -208,9 +205,14 @@ type FormatData struct {
 	HaveDiff bool
 	Diff     string
 
-	EnableColors bool
+	HaveRequest bool
+	Request     string
 
-	LineWidth int
+	HaveResponse bool
+	Response     string
+
+	EnableColors bool
+	LineWidth    int
 }
 
 const (
@@ -262,9 +264,6 @@ func (f *DefaultFormatter) buildFormatData(
 		data.AssertType = failure.Type.String()
 		data.AssertSeverity = failure.Severity.String()
 
-		f.fillRequest(&data, ctx, failure)
-		f.fillResponse(&data, ctx, failure)
-
 		f.fillErrors(&data, ctx, failure)
 
 		if failure.Actual != nil {
@@ -284,6 +283,9 @@ func (f *DefaultFormatter) buildFormatData(
 		if failure.Delta != nil {
 			f.fillDelta(&data, ctx, failure)
 		}
+
+		f.fillRequest(&data, ctx, failure)
+		f.fillResponse(&data, ctx, failure)
 	}
 
 	return &data
@@ -518,11 +520,13 @@ func (f *DefaultFormatter) fillDelta(
 func (f *DefaultFormatter) fillRequest(
 	data *FormatData, ctx *AssertionContext, failure *AssertionFailure,
 ) {
-	if f.EnableRequests && !refIsNil(ctx.Request) {
+	if !f.DisableRequests && ctx.Request != nil && ctx.Request.httpReq != nil {
 		dump, err := httputil.DumpRequest(ctx.Request.httpReq, false)
 		if err != nil {
-			panic(err)
+			return
 		}
+
+		data.HaveRequest = true
 		data.Request = string(dump)
 	}
 }
@@ -530,15 +534,16 @@ func (f *DefaultFormatter) fillRequest(
 func (f *DefaultFormatter) fillResponse(
 	data *FormatData, ctx *AssertionContext, failure *AssertionFailure,
 ) {
-	if f.EnableResponses && !refIsNil(ctx.Request) {
+	if !f.DisableResponses && ctx.Response != nil && ctx.Response.httpResp != nil {
 		dump, err := httputil.DumpResponse(ctx.Response.httpResp, false)
 		if err != nil {
-			panic(err)
+			return
 		}
 
 		text := strings.Replace(string(dump), "\r\n", "\n", -1)
 		lines := strings.SplitN(text, "\n", 2)
 
+		data.HaveResponse = true
 		data.Response = fmt.Sprintf("%s %s\n%s", lines[0], ctx.Response.rtt, lines[1])
 	}
 }
@@ -842,10 +847,13 @@ var defaultColors = map[string]color.Attribute{
 }
 
 var defaultTemplateFuncs = template.FuncMap{
-	"indent": func(s string) string {
+	"trim": func(input string) string {
+		return strings.TrimSpace(input)
+	},
+	"indent": func(input string) string {
 		var sb strings.Builder
 
-		for _, s := range strings.Split(s, "\n") {
+		for _, s := range strings.Split(input, "\n") {
 			if sb.Len() != 0 {
 				sb.WriteString("\n")
 			}
@@ -855,17 +863,17 @@ var defaultTemplateFuncs = template.FuncMap{
 
 		return sb.String()
 	},
-	"wrap": func(s string, width int) string {
-		s = strings.TrimSpace(s)
+	"wrap": func(width int, input string) string {
+		input = strings.TrimSpace(input)
 
 		width -= len(defaultIndent)
 		if width <= 0 {
-			return s
+			return input
 		}
 
-		return wordwrap.WrapString(s, uint(width))
+		return wordwrap.WrapString(input, uint(width))
 	},
-	"join": func(tokenList []string, width int) string {
+	"join": func(width int, tokenList []string) string {
 		width -= len(defaultIndent)
 		if width <= 0 {
 			return strings.Join(tokenList, ".")
@@ -902,19 +910,19 @@ var defaultTemplateFuncs = template.FuncMap{
 
 		return sb.String()
 	},
-	"color": func(enable bool, colorName, s string) string {
+	"color": func(enable bool, colorName, input string) string {
 		if !enable {
-			return s
+			return input
 		}
 		colorAttr := color.Reset
 		if ca, ok := defaultColors[colorName]; ok {
 			colorAttr = ca
 		}
-		return color.New(colorAttr).Sprint(s)
+		return color.New(colorAttr).Sprint(input)
 	},
-	"colordiff": func(enable bool, s string) string {
+	"colordiff": func(enable bool, input string) string {
 		if !enable {
-			return s
+			return input
 		}
 
 		prefixColor := []struct {
@@ -938,7 +946,7 @@ var defaultTemplateFuncs = template.FuncMap{
 		}
 
 		var sb strings.Builder
-		for _, line := range strings.Split(s, "\n") {
+		for _, line := range strings.Split(input, "\n") {
 			if sb.Len() != 0 {
 				sb.WriteString("\n")
 			}
@@ -950,14 +958,14 @@ var defaultTemplateFuncs = template.FuncMap{
 	},
 }
 
-var defaultSuccessTemplate = `[OK] {{ join .AssertPath .LineWidth }}`
+var defaultSuccessTemplate = `[OK] {{ join .LineWidth .AssertPath }}`
 
 var defaultFailureTemplate = `
 {{- range $n, $err := .Errors }}
 {{ if eq $n 0 -}}
-{{ wrap $err $.LineWidth | color $.EnableColors "Red" }}
+{{ $err | wrap $.LineWidth | color $.EnableColors "Red" }}
 {{- else -}}
-{{ wrap $err $.LineWidth | indent | color $.EnableColors "Red" }}
+{{ $err | wrap $.LineWidth | indent | color $.EnableColors "Red" }}
 {{- end -}}
 {{- end -}}
 {{- if .TestName }}
@@ -968,18 +976,18 @@ test name: {{ .TestName | color $.EnableColors "Cyan" }}
 
 request name: {{ .RequestName | color $.EnableColors "Cyan" }}
 {{- end -}}
-{{- if .Request }}
+{{- if .HaveRequest }}
 
-request: {{ .Request | indent | color $.EnableColors "HiMagenta" }}
+request: {{ .Request | indent | trim | color $.EnableColors "HiMagenta" }}
 {{- end -}}
-{{- if .Response }}
+{{- if .HaveResponse }}
 
-response: {{ .Response | indent | color $.EnableColors "HiMagenta" }}
+response: {{ .Response | indent | trim | color $.EnableColors "HiMagenta" }}
 {{- end -}}
 {{- if .AssertPath }}
 
 assertion:
-{{ join .AssertPath .LineWidth | indent | color .EnableColors "Yellow" }}
+{{ join .LineWidth .AssertPath | indent | color .EnableColors "Yellow" }}
 {{- end -}}
 {{- if .HaveExpected }}
 
