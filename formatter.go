@@ -62,7 +62,7 @@ type DefaultFormatter struct {
 
 	// Enable printing of response on failure.
 	EnableResponses bool
-  
+
 	// Thousand separator.
 	// Default is DigitSeparatorUnderscore.
 	DigitSeparator DigitSeparator
