@@ -285,6 +285,27 @@ type RequestFactory interface {
 	NewRequest(method, url string, body io.Reader) (*http.Request, error)
 }
 
+// RequestFactoryFunc is an adapter that allows a function
+// to be used as the RequestFactory
+//
+// Example:
+//
+//	e := httpexpect.WithConfig(httpexpect.Config{
+//		RequestFactory: httpextect.RequestFactoryFunc(
+//			func(method string, url string, body io.Reader) (*http.Request, error) {
+//				// factory code here
+//			}),
+//	})
+type RequestFactoryFunc func(
+	method string, url string, body io.Reader,
+) (*http.Request, error)
+
+func (f RequestFactoryFunc) NewRequest(
+	method string, url string, body io.Reader,
+) (*http.Request, error) {
+	return f(method, url, body)
+}
+
 // Client is used to send http.Request and receive http.Response.
 // http.Client implements this interface.
 //
@@ -303,6 +324,22 @@ type Client interface {
 	Do(*http.Request) (*http.Response, error)
 }
 
+// ClientFunc is an adapter that allows a function to be used as the Client
+//
+// Example:
+//
+//	e := httpexpect.WithConfig(httpexpect.Config{
+//		Client: httpextect.ClientFunc(
+//			func(req *http.Request) (*http.Response, error) {
+//				// client code here
+//			}),
+//	})
+type ClientFunc func(req *http.Request) (*http.Response, error)
+
+func (f ClientFunc) Do(req *http.Request) (*http.Response, error) {
+	return f(req)
+}
+
 // WebsocketDialer is used to establish websocket.Conn and receive http.Response
 // of handshake result.
 // websocket.Dialer implements this interface.
@@ -313,13 +350,33 @@ type Client interface {
 // Example:
 //
 //	e := httpexpect.WithConfig(httpexpect.Config{
-//	  BaseURL:         "http://example.com",
-//	  WebsocketDialer: httpexpect.NewWebsocketDialer(myHandler),
+//	    WebsocketDialer: httpexpect.NewWebsocketDialer(myHandler),
 //	})
 type WebsocketDialer interface {
 	// Dial establishes new Websocket connection and returns response
 	// of handshake result.
 	Dial(url string, reqH http.Header) (*websocket.Conn, *http.Response, error)
+}
+
+// WebsocketDialerFunc is an adapter that allows a function
+// to be used as the WebsocketDialer
+//
+// Example:
+//
+//	e := httpexpect.WithConfig(httpexpect.Config{
+//		WebsocketDialer: httpextect.WebsocketDialerFunc(
+//			func(url string, reqH http.Header) (*websocket.Conn, *http.Response, error) {
+//				// dialer code here
+//			}),
+//	})
+type WebsocketDialerFunc func(
+	url string, reqH http.Header,
+) (*websocket.Conn, *http.Response, error)
+
+func (f WebsocketDialerFunc) Dial(
+	url string, reqH http.Header,
+) (*websocket.Conn, *http.Response, error) {
+	return f(url, reqH)
 }
 
 // Reporter is used to report failures.
@@ -330,11 +387,46 @@ type Reporter interface {
 	Errorf(message string, args ...interface{})
 }
 
+// ReporterFunc is an adapter that allows a function to be used as the Reporter
+//
+// Example:
+//
+//	e := httpexpect.WithConfig(httpexpect.Config{
+//		Reporter: httpextect.ReporterFunc(
+//			func(message string, args ...interface{}) {
+//				// reporter code here
+//			}),
+//	})
+type ReporterFunc func(message string, args ...interface{})
+
+func (f ReporterFunc) Errorf(message string, args ...interface{}) {
+	f(message, args)
+}
+
 // Logger is used as output backend for Printer.
 // *testing.T implements this interface.
 type Logger interface {
 	// Logf writes message to test log.
 	Logf(fmt string, args ...interface{})
+}
+
+// LoggerFunc is an adapter that allows a function to be used as the Logger
+//
+// Example:
+//
+//	e := httpexpect.WithConfig(httpexpect.Config{
+//		Printers: []httpexpect.Printer{
+//			httpexpect.NewCompactPrinter(
+//				httpextect.LoggerFunc(
+//					func(fmt string, args ...interface{}) {
+//						// logger code here
+//					})),
+//		},
+//	})
+type LoggerFunc func(fmt string, args ...interface{})
+
+func (f LoggerFunc) Logf(fmt string, args ...interface{}) {
+	f(fmt, args)
 }
 
 // TestingTB is a subset of testing.TB interface used by httpexpect.
