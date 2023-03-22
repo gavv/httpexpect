@@ -54,8 +54,8 @@ func (bw *bodyWrapper) Read(p []byte) (n int, err error) {
 		return 0, bw.readErr
 	}
 
-	// Cache bytes in memory
 	if !bw.isFullyRead && !bw.isStoringInMemDisabled {
+		// Cache bytes in memory
 		n, err = bw.origReader.Read(p)
 		bw.origBytes = append(bw.origBytes, p[:n]...)
 	} else {
@@ -109,9 +109,10 @@ func (bw *bodyWrapper) Rewind() error {
 		return errors.New("body caching is disabled, cannot rewind")
 	}
 
-	// Until first read, rewind is no-op
 	if !bw.isFullyRead {
-		_ = bw.readFull()
+		if err := bw.readFull(); err != nil {
+			return err
+		}
 	}
 
 	// Reset reader
@@ -158,15 +159,20 @@ func (bw *bodyWrapper) DisableBodyCaching() error {
 
 // Reads the body fully, then cancels and closes the reader
 func (bw *bodyWrapper) readFull() error {
-	remainingBytes, err := ioutil.ReadAll(bw.currReader)
+	if bw.isFullyRead {
+		return errors.New("body is already fully read")
+	}
+	remainingBytes, err := ioutil.ReadAll(bw.origReader)
 	if err != nil {
 		bw.readErr = err
 		bw.isFullyRead = true // Prevent further reads
 		bw.closeAndCancel()
 		return err
 	}
+	initialBytesLen := len(bw.origBytes)
 	bw.origBytes = append(bw.origBytes, remainingBytes...)
 	bw.isFullyRead = true
+	bw.currReader = bytes.NewReader(bw.origBytes[initialBytesLen:])
 	return bw.closeAndCancel()
 }
 
