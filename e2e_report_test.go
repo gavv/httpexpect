@@ -311,3 +311,102 @@ func TestE2EReport_CustomTemplate(t *testing.T) {
 		})
 	})
 }
+
+func TestE2EReport_RequestAndResponse(t *testing.T) {
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"foo":{"bar":{"baz":[1,2,3]}}}`))
+	})
+
+	server := httptest.NewServer(mux)
+	defer server.Close()
+
+	tests := []struct {
+		name      string
+		formatter *DefaultFormatter
+	}{
+		{
+			name: "request and response enabled",
+			formatter: &DefaultFormatter{
+				EnableRequests:  true,
+				EnableResponses: true,
+			},
+		},
+		{
+			name: "request enabled, response disabled",
+			formatter: &DefaultFormatter{
+				EnableRequests:  true,
+				EnableResponses: false,
+			},
+		},
+		{
+			name: "request disabled, response enabled",
+			formatter: &DefaultFormatter{
+				EnableRequests:  false,
+				EnableResponses: true,
+			},
+		},
+		{
+			name: "request and response disabled",
+			formatter: &DefaultFormatter{
+				EnableRequests:  false,
+				EnableResponses: false,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rep := &recordingReporter{}
+
+			e := WithConfig(Config{
+				TestName: "TestExample",
+				BaseURL:  server.URL,
+				AssertionHandler: &DefaultAssertionHandler{
+					Formatter: tt.formatter,
+					Reporter:  rep,
+				},
+			})
+
+			e.GET("/test").
+				Expect().
+				JSON().
+				Object().
+				Value("foo").
+				Object().
+				Value("bar").
+				Object().
+				Value("baz").
+				Array().
+				NotContains(1)
+
+			logs := rep.recorded
+
+			if tt.formatter.EnableRequests {
+				assert.Contains(t,
+					logs,
+					"GET /test HTTP/1.1",
+					"expected log output to contain request information")
+			} else {
+				assert.NotContains(t,
+					logs,
+					"GET /test HTTP/1.1",
+					"expected log output not to contain request information")
+			}
+
+			if tt.formatter.EnableResponses {
+				assert.Contains(t,
+					logs,
+					"HTTP/1.1 200 OK", "expected log output to contain response information")
+			} else {
+				assert.NotContains(t,
+					logs,
+					"HTTP/1.1 200 OK",
+					"expected log output not to contain response information")
+			}
+		})
+	}
+}
