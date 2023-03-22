@@ -290,18 +290,12 @@ type RequestFactory interface {
 //
 // Example:
 //
-//	func TestRequestFactory(m string, u string, b io.Reader) (*http.Request, error) {
-//		// factory code here
-//		return nil, nil
-//	}
-//
-//	func TestSomething(t *testing.T) {
-//		e := WithConfig(Config{
-//			TestName: t.Name(),
-//			BaseURL: "http://example.com/",
-//			RequestFactory: RequestFactoryFunc(TestRequestFactory),
-//		})
-//	}
+//	e := httpexpect.WithConfig(httpexpect.Config{
+//		RequestFactory: httpextect.RequestFactoryFunc(
+//			func(method string, url string, body io.Reader) (*http.Request, error) {
+//				// factory code here
+//			}),
+//	})
 type RequestFactoryFunc func(
 	method string, url string, body io.Reader,
 ) (*http.Request, error)
@@ -334,22 +328,16 @@ type Client interface {
 //
 // Example:
 //
-//	func TestClient(r *http.Request) (*http.Response, error) {
-//		// client code here
-//		return nil, nil
-//	}
-//
-//	func TestSomething(t *testing.T) {
-//		e := WithConfig(Config{
-//			TestName: t.Name(),
-//			BaseURL: "http://example.com/",
-//			Client: ClientFunc(TestClient),
-//		})
-//	}
-type ClientFunc func(r *http.Request) (*http.Response, error)
+//	e := httpexpect.WithConfig(httpexpect.Config{
+//		Client: httpextect.ClientFunc(
+//			func(req *http.Request) (*http.Response, error) {
+//				// client code here
+//			}),
+//	})
+type ClientFunc func(req *http.Request) (*http.Response, error)
 
-func (f ClientFunc) Do(r *http.Request) (*http.Response, error) {
-	return f(r)
+func (f ClientFunc) Do(req *http.Request) (*http.Response, error) {
+	return f(req)
 }
 
 // WebsocketDialer is used to establish websocket.Conn and receive http.Response
@@ -362,8 +350,7 @@ func (f ClientFunc) Do(r *http.Request) (*http.Response, error) {
 // Example:
 //
 //	e := httpexpect.WithConfig(httpexpect.Config{
-//	  BaseURL:         "http://example.com",
-//	  WebsocketDialer: httpexpect.NewWebsocketDialer(myHandler),
+//	    WebsocketDialer: httpexpect.NewWebsocketDialer(myHandler),
 //	})
 type WebsocketDialer interface {
 	// Dial establishes new Websocket connection and returns response
@@ -376,18 +363,12 @@ type WebsocketDialer interface {
 //
 // Example:
 //
-//	func TestDialer(u string, r http.Header) (*websocket.Conn, *http.Response, error) {
-//		// dialer code here
-//		return nil, nil
-//	}
-//
-//	func TestSomething(t *testing.T) {
-//		e := WithConfig(Config{
-//			TestName: t.Name(),
-//			BaseURL: "http://example.com/",
-//			WebsocketDialer: WebsocketDialerFunc(TestDialer),
-//		})
-//	}
+//	e := httpexpect.WithConfig(httpexpect.Config{
+//		WebsocketDialer: httpextect.WebsocketDialerFunc(
+//			func(url string, reqH http.Header) (*websocket.Conn, *http.Response, error) {
+//				// dialer code here
+//			}),
+//	})
 type WebsocketDialerFunc func(
 	url string, reqH http.Header,
 ) (*websocket.Conn, *http.Response, error)
@@ -410,17 +391,12 @@ type Reporter interface {
 //
 // Example:
 //
-//	func TestReporter(message string, args ...interface{}) {
-//		// reporter code here
-//	}
-//
-//	func TestSomething(t *testing.T) {
-//		e := WithConfig(Config{
-//			TestName: t.Name(),
-//			BaseURL: "http://example.com/",
-//			Reporter: ReporterFunc(TestReporter),
-//		})
-//	}
+//	e := httpexpect.WithConfig(httpexpect.Config{
+//		Reporter: httpextect.ReporterFunc(
+//			func(message string, args ...interface{}) {
+//				// reporter code here
+//			}),
+//	})
 type ReporterFunc func(message string, args ...interface{})
 
 func (f ReporterFunc) Errorf(message string, args ...interface{}) {
@@ -438,21 +414,15 @@ type Logger interface {
 //
 // Example:
 //
-//	func TestLogger(fmt string, args ...interface{}) {
-//		// logger code here
-//	}
-//
-//	func TestSomething(t *testing.T) {
-//		l := LoggerFunc(TestLogger)
-//		e := WithConfig(Config{
-//			TestName: t.Name(),
-//			BaseURL:  "http://example.com/",
-//			Reporter: NewAssertReporter(t),
-//			Printers: []Printer{
-//				NewCompactPrinter(l),
-//			},
-//		})
-//	}
+//	e := httpexpect.WithConfig(httpexpect.Config{
+//		Printers: []httpexpect.Printer{
+//			httpexpect.NewCompactPrinter(
+//				httpextect.LoggerFunc(
+//					func(fmt string, args ...interface{}) {
+//						// logger code here
+//					})),
+//		},
+//	})
 type LoggerFunc func(fmt string, args ...interface{})
 
 func (f LoggerFunc) Logf(fmt string, args ...interface{}) {

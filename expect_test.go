@@ -532,8 +532,10 @@ func TestExpect_Config(t *testing.T) {
 			badConfig.validate()
 		})
 	})
+}
 
-	t.Run("request factory func implementation", func(t *testing.T) {
+func TestExpect_Adapters(t *testing.T) {
+	t.Run("RequestFactoryFunc", func(t *testing.T) {
 		called := false
 		factory := RequestFactoryFunc(func(
 			_ string, _ string, _ io.Reader,
@@ -552,7 +554,7 @@ func TestExpect_Config(t *testing.T) {
 		assert.True(t, called)
 	})
 
-	t.Run("client func implementation", func(t *testing.T) {
+	t.Run("ClientFunc", func(t *testing.T) {
 		called := false
 		client := ClientFunc(func(_ *http.Request) (*http.Response, error) {
 			called = true
@@ -575,7 +577,7 @@ func TestExpect_Config(t *testing.T) {
 		assert.Equal(t, resp.httpResp.Status, "Test Status")
 	})
 
-	t.Run("websocket dialer func implementation", func(t *testing.T) {
+	t.Run("WebsocketDialerFunc", func(t *testing.T) {
 		called := false
 		dialer := WebsocketDialerFunc(func(
 			_ string, _ http.Header,
@@ -594,7 +596,7 @@ func TestExpect_Config(t *testing.T) {
 		assert.True(t, called)
 	})
 
-	t.Run("reporter func implementation", func(t *testing.T) {
+	t.Run("ReporterFunc", func(t *testing.T) {
 		called := false
 		message := ""
 		client := ClientFunc(func(r *http.Request) (*http.Response, error) {
@@ -616,7 +618,7 @@ func TestExpect_Config(t *testing.T) {
 		assert.Contains(t, message, "test reporter called")
 	})
 
-	t.Run("logger func implementation", func(t *testing.T) {
+	t.Run("LoggerFunc", func(t *testing.T) {
 		called := false
 		message := ""
 		logger := LoggerFunc(func(_ string, _ ...interface{}) {
