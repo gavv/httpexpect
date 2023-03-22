@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -55,6 +56,10 @@ type DefaultFormatter struct {
 	// Exclude diff from failure report.
 	DisableDiffs bool
 
+	// Thousand separator.
+	// Default is DigitSeparatorUnderscore.
+	DigitSeparator DigitSeparator
+
 	// Float printing format.
 	// Default is FloatFormatAuto.
 	FloatFormat FloatFormat
@@ -79,10 +84,6 @@ type DefaultFormatter struct {
 	// defines the function map passed to template engine.
 	// May be nil.
 	TemplateFuncs template.FuncMap
-
-	// Digit separator
-	// Default is DigitSeparatorUnderscore
-	DigitSeparator DigitSeparator
 }
 
 // FormatSuccess implements Formatter.FormatSuccess.
@@ -109,7 +110,7 @@ func (f *DefaultFormatter) FormatFailure(
 	}
 }
 
-// DigitSeparator defines the separator used to format integers and float
+// DigitSeparator defines the separator used to format integers and floats.
 type DigitSeparator int
 
 const (
@@ -503,15 +504,15 @@ func (f *DefaultFormatter) fillDelta(
 
 func (f *DefaultFormatter) formatValue(value interface{}) string {
 	if flt := extractFloat32(value); flt != nil {
-		return f.addDigitGrouping(f.formatFloatValue(*flt, 32))
+		return f.reformatNumber(f.formatFloatValue(*flt, 32))
 	}
 
 	if flt := extractFloat64(value); flt != nil {
-		return f.addDigitGrouping(f.formatFloatValue(*flt, 64))
+		return f.reformatNumber(f.formatFloatValue(*flt, 64))
 	}
 
-	if intg := extractInt(value); intg != nil {
-		return f.addDigitGrouping(strconv.Itoa(*intg))
+	if refIsNum(value) {
+		return f.reformatNumber(fmt.Sprintf("%v", value))
 	}
 
 	if !refIsNil(value) && !refIsHTTP(value) {
@@ -549,68 +550,6 @@ func (f *DefaultFormatter) formatFloatValue(value float64, bits int) string {
 	default:
 		return fmt.Sprintf("%v", value)
 	}
-}
-
-func (f *DefaultFormatter) addDigitGrouping(numStr string) string {
-	var sign string
-	if numStr[0] == '-' || numStr[0] == '+' {
-		sign = string(numStr[0])
-		numStr = numStr[1:]
-	}
-
-	parts := strings.SplitN(numStr, ".", 2)
-	intPart := f.groupDigitsInString(parts[0])
-
-	var fracPart string
-	var expPart string
-	if len(parts) == 2 {
-		parts = strings.SplitN(parts[1], "e", 2)
-		// using Reverse(parts[0]) because digit grouping in
-		// fractional part is required from Most Significant Bit
-		fracPart = "." + Reverse(f.groupDigitsInString(Reverse(parts[0])))
-		if len(parts) == 2 {
-			expPart = "e" + parts[1]
-		}
-	}
-
-	return sign + intPart + fracPart + expPart
-}
-
-// Performs digit grouping on a string starting from Least Significant Bit
-// in groups of thousands
-func (f *DefaultFormatter) groupDigitsInString(numStr string) string {
-	var separator string
-	switch f.DigitSeparator {
-	case DigitSeparatorUnderscore:
-		separator = "_"
-		break
-	case DigitSeparatorApostrophe:
-		separator = "'"
-		break
-	case DigitSeparatorComma:
-		separator = ","
-		break
-	case DigitSeparatorNone:
-		return numStr
-	default:
-		separator = "_"
-	}
-	var groupedPart string
-	for i, r := range numStr {
-		groupedPart = string(r) + groupedPart
-		if (len(numStr)-i-1)%3 == 0 && i != len(numStr)-1 {
-			groupedPart = separator + groupedPart
-		}
-	}
-	return Reverse(groupedPart)
-}
-
-func Reverse(s string) string {
-	runes := []rune(s)
-	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {
-		runes[i], runes[j] = runes[j], runes[i]
-	}
-	return string(runes)
 }
 
 func (f *DefaultFormatter) formatTypedValue(value interface{}) string {
@@ -702,6 +641,91 @@ func (f *DefaultFormatter) formatDiff(expected, actual interface{}) (string, boo
 	return diffText, true
 }
 
+func (f *DefaultFormatter) reformatNumber(numStr string) string {
+	signPart, intPart, fracPart, expPart := f.decomposeNumber(numStr)
+	if intPart == "" {
+		return numStr
+	}
+
+	var sb strings.Builder
+
+	sb.WriteString(signPart)
+	sb.WriteString(f.applySeparator(intPart, -1))
+
+	if fracPart != "" {
+		sb.WriteString(".")
+		sb.WriteString(f.applySeparator(fracPart, +1))
+	}
+
+	if expPart != "" {
+		sb.WriteString("e")
+		sb.WriteString(expPart)
+	}
+
+	return sb.String()
+}
+
+var (
+	decomposeRegexp = regexp.MustCompile(`^([+-])?(\d+)([.](\d+))?([eE]([+-]?\d+))?$`)
+)
+
+func (f *DefaultFormatter) decomposeNumber(numStr string) (
+	signPart, intPart, fracPart, expPart string,
+) {
+	parts := decomposeRegexp.FindStringSubmatch(numStr)
+
+	if len(parts) > 1 {
+		signPart = parts[1]
+	}
+	if len(parts) > 2 {
+		intPart = parts[2]
+	}
+	if len(parts) > 4 {
+		fracPart = parts[4]
+	}
+	if len(parts) > 6 {
+		expPart = parts[6]
+	}
+
+	return
+}
+
+func (f *DefaultFormatter) applySeparator(numStr string, dir int) string {
+	var separator string
+	switch f.DigitSeparator {
+	case DigitSeparatorUnderscore:
+		separator = "_"
+		break
+	case DigitSeparatorApostrophe:
+		separator = "'"
+		break
+	case DigitSeparatorComma:
+		separator = ","
+		break
+	case DigitSeparatorNone:
+	default:
+		return numStr
+	}
+
+	var sb strings.Builder
+
+	cnt := 0
+	if dir < 0 {
+		cnt = len(numStr)
+	}
+
+	for i := 0; i != len(numStr); i++ {
+		sb.WriteByte(numStr[i])
+
+		cnt += dir
+		if cnt%3 == 0 && i != len(numStr)-1 {
+			sb.WriteString(separator)
+		}
+	}
+
+	return sb.String()
+}
+
 func extractString(value interface{}) *string {
 	switch s := value.(type) {
 	case string:
@@ -716,15 +740,6 @@ func extractFloat32(value interface{}) *float64 {
 	case float32:
 		ff := float64(f)
 		return &ff
-	default:
-		return nil
-	}
-}
-
-func extractInt(value interface{}) *int {
-	switch i := value.(type) {
-	case int:
-		return &i
 	default:
 		return nil
 	}

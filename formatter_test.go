@@ -651,120 +651,6 @@ func TestFormatter_FloatFormat(t *testing.T) {
 	}
 }
 
-func TestFormatter_DigitSeparator(t *testing.T) {
-	type testCase struct {
-		name      string
-		separator DigitSeparator
-		format    FloatFormat
-		value     interface{}
-		wantText  string
-	}
-
-	testCases := []testCase{
-		{
-			name:      "float no decimal",
-			separator: DigitSeparatorUnderscore,
-			format:    FloatFormatDecimal,
-			value:     float32(12345678),
-			wantText:  "12_345_678",
-		},
-		{
-			name:      "float64 auto small exponent",
-			separator: DigitSeparatorUnderscore,
-			format:    FloatFormatAuto,
-			value:     float64(1.23456789),
-			wantText:  "1.234_567_89",
-		},
-		{
-			name:      "nofrac scientific",
-			separator: DigitSeparatorUnderscore,
-			format:    FloatFormatScientific,
-			value:     float32(12345678),
-			wantText:  "1.234_567_8e+07",
-		},
-		{
-			name:      "integer",
-			separator: DigitSeparatorUnderscore,
-			format:    FloatFormatAuto,
-			value:     int(12345678),
-			wantText:  "12_345_678",
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			formatter := DefaultFormatter{
-				DigitSeparator: tc.separator,
-				FloatFormat:    tc.format,
-			}
-			formatData := formatter.buildFormatData(
-				&AssertionContext{},
-				&AssertionFailure{
-					Type:   AssertValid,
-					Actual: &AssertionValue{tc.value},
-				})
-			assert.Equal(t, tc.wantText, formatData.Actual)
-		})
-	}
-}
-
-func TestFormatter_DigitSeparatorType(t *testing.T) {
-	type testCase struct {
-		name      string
-		separator DigitSeparator
-		format    FloatFormat
-		value     interface{}
-		wantText  string
-	}
-
-	testCases := []testCase{
-		{
-			name:      "Underscore",
-			separator: DigitSeparatorUnderscore,
-			format:    FloatFormatDecimal,
-			value:     float32(12345678),
-			wantText:  "12_345_678",
-		},
-		{
-			name:      "Comma",
-			separator: DigitSeparatorComma,
-			format:    FloatFormatDecimal,
-			value:     float32(12345678),
-			wantText:  "12,345,678",
-		},
-		{
-			name:      "Apostrophe",
-			separator: DigitSeparatorApostrophe,
-			format:    FloatFormatDecimal,
-			value:     float32(12345678),
-			wantText:  "12'345'678",
-		},
-		{
-			name:      "None",
-			separator: DigitSeparatorNone,
-			format:    FloatFormatDecimal,
-			value:     float32(12345678),
-			wantText:  "12345678",
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			formatter := DefaultFormatter{
-				DigitSeparator: tc.separator,
-				FloatFormat:    tc.format,
-			}
-			formatData := formatter.buildFormatData(
-				&AssertionContext{},
-				&AssertionFailure{
-					Type:   AssertValid,
-					Actual: &AssertionValue{tc.value},
-				})
-			assert.Equal(t, tc.wantText, formatData.Actual)
-		})
-	}
-}
-
 func TestFormatter_FloatFields(t *testing.T) {
 	type testCase struct {
 		name     string
@@ -878,6 +764,186 @@ func TestFormatter_FloatFields(t *testing.T) {
 				assert.Equal(t, tc.wantText, formatData.Expected[0])
 				assert.Equal(t, tc.wantText, formatData.Expected[1])
 			})
+		})
+	}
+}
+
+func TestFormatter_DigitSeparator(t *testing.T) {
+	type testCase struct {
+		name      string
+		separator DigitSeparator
+		format    FloatFormat
+		value     interface{}
+		wantText  string
+	}
+
+	testCases := []testCase{
+		// types
+		{
+			name:      "float32",
+			separator: DigitSeparatorUnderscore,
+			format:    FloatFormatAuto,
+			value:     float32(1.23456),
+			wantText:  "1.234_56",
+		},
+		{
+			name:      "float64",
+			separator: DigitSeparatorUnderscore,
+			format:    FloatFormatAuto,
+			value:     float64(1.23456789),
+			wantText:  "1.234_567_89",
+		},
+		{
+			name:      "int32",
+			separator: DigitSeparatorUnderscore,
+			format:    FloatFormatAuto,
+			value:     int32(12345678),
+			wantText:  "12_345_678",
+		},
+		{
+			name:      "int64",
+			separator: DigitSeparatorUnderscore,
+			format:    FloatFormatAuto,
+			value:     int64(12345678),
+			wantText:  "12_345_678",
+		},
+		// components
+		{
+			name:      "int part, decimal",
+			separator: DigitSeparatorUnderscore,
+			format:    FloatFormatDecimal,
+			value:     float64(12345678),
+			wantText:  "12_345_678",
+		},
+		{
+			name:      "int part, scientific",
+			separator: DigitSeparatorUnderscore,
+			format:    FloatFormatScientific,
+			value:     float64(12345678),
+			wantText:  "1.234_567_8e+07",
+		},
+		{
+			name:      "sign part, int part, decimal",
+			separator: DigitSeparatorUnderscore,
+			format:    FloatFormatDecimal,
+			value:     float64(-12345678),
+			wantText:  "-12_345_678",
+		},
+		{
+			name:      "sign part, int part, scientific",
+			separator: DigitSeparatorUnderscore,
+			format:    FloatFormatScientific,
+			value:     float64(-12345678),
+			wantText:  "-1.234_567_8e+07",
+		},
+		{
+			name:      "int part, frac part, decimal",
+			separator: DigitSeparatorUnderscore,
+			format:    FloatFormatDecimal,
+			value:     float64(12345678.12345678),
+			wantText:  "12_345_678.123_456_78",
+		},
+		{
+			name:      "int part, frac part, scientific",
+			separator: DigitSeparatorUnderscore,
+			format:    FloatFormatScientific,
+			value:     float64(12345678.12345678),
+			wantText:  "1.234_567_812_345_678e+07",
+		},
+		{
+			name:      "sign part, int part, frac part, decimal",
+			separator: DigitSeparatorUnderscore,
+			format:    FloatFormatDecimal,
+			value:     float64(-12345678.12345678),
+			wantText:  "-12_345_678.123_456_78",
+		},
+		{
+			name:      "sign part, int part, frac part, scientific",
+			separator: DigitSeparatorUnderscore,
+			format:    FloatFormatScientific,
+			value:     float64(-12345678.12345678),
+			wantText:  "-1.234_567_812_345_678e+07",
+		},
+		// edge cases
+		{
+			name:      "int part, 3 digits",
+			separator: DigitSeparatorUnderscore,
+			format:    FloatFormatDecimal,
+			value:     float64(123),
+			wantText:  "123",
+		},
+		{
+			name:      "int part, multiple of 3",
+			separator: DigitSeparatorUnderscore,
+			format:    FloatFormatDecimal,
+			value:     float64(123456),
+			wantText:  "123_456",
+		},
+		{
+			name:      "frac part, 3 digits",
+			separator: DigitSeparatorUnderscore,
+			format:    FloatFormatDecimal,
+			value:     float64(0.123),
+			wantText:  "0.123",
+		},
+		{
+			name:      "frac part, multiple of 3",
+			separator: DigitSeparatorUnderscore,
+			format:    FloatFormatDecimal,
+			value:     float64(0.123456),
+			wantText:  "0.123_456",
+		},
+		{
+			name:      "int and frac part, multiple of 3",
+			separator: DigitSeparatorUnderscore,
+			format:    FloatFormatDecimal,
+			value:     float64(123456.123456),
+			wantText:  "123_456.123_456",
+		},
+		// separators
+		{
+			name:      "underscore",
+			separator: DigitSeparatorUnderscore,
+			format:    FloatFormatDecimal,
+			value:     float64(12345678),
+			wantText:  "12_345_678",
+		},
+		{
+			name:      "comma",
+			separator: DigitSeparatorComma,
+			format:    FloatFormatDecimal,
+			value:     float64(12345678),
+			wantText:  "12,345,678",
+		},
+		{
+			name:      "apostrophe",
+			separator: DigitSeparatorApostrophe,
+			format:    FloatFormatDecimal,
+			value:     float64(12345678),
+			wantText:  "12'345'678",
+		},
+		{
+			name:      "none",
+			separator: DigitSeparatorNone,
+			format:    FloatFormatDecimal,
+			value:     float64(12345678),
+			wantText:  "12345678",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			formatter := DefaultFormatter{
+				DigitSeparator: tc.separator,
+				FloatFormat:    tc.format,
+			}
+			formatData := formatter.buildFormatData(
+				&AssertionContext{},
+				&AssertionFailure{
+					Type:   AssertValid,
+					Actual: &AssertionValue{tc.value},
+				})
+			assert.Equal(t, tc.wantText, formatData.Actual)
 		})
 	}
 }
