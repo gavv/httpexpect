@@ -11,7 +11,7 @@ require (
 	github.com/gorilla/websocket v1.5.0
 	github.com/kataras/iris/v12 v12.1.8
 	github.com/labstack/echo/v4 v4.10.0
-	github.com/valyala/fasthttp v1.44.0
+	github.com/valyala/fasthttp v1.45.0
 	golang.org/x/oauth2 v0.4.0
 	google.golang.org/appengine v1.6.7
 )
@@ -49,7 +49,7 @@ require (
 	github.com/kataras/golog v0.1.8 // indirect
 	github.com/kataras/pio v0.0.11 // indirect
 	github.com/kataras/sitemap v0.0.6 // indirect
-	github.com/klauspost/compress v1.16.0 // indirect
+	github.com/klauspost/compress v1.16.3 // indirect
 	github.com/labstack/gommon v0.4.0 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
@@ -85,7 +85,7 @@ require (
 	github.com/yalp/jsonpath v0.0.0-20180802001716-5cc68e5049a0 // indirect
 	github.com/yudai/gojsondiff v1.0.0 // indirect
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
-	golang.org/x/crypto v0.3.0 // indirect
+	golang.org/x/crypto v0.7.0 // indirect
 	golang.org/x/net v0.8.0 // indirect
 	golang.org/x/sys v0.6.0 // indirect
 	golang.org/x/text v0.8.0 // indirect

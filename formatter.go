@@ -7,6 +7,7 @@ import (
 	"math"
 	"net/http/httputil"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -61,6 +62,10 @@ type DefaultFormatter struct {
 
 	// Enable printing of response on failure.
 	EnableResponses bool
+  
+	// Thousand separator.
+	// Default is DigitSeparatorUnderscore.
+	DigitSeparator DigitSeparator
 
 	// Float printing format.
 	// Default is FloatFormatAuto.
@@ -111,6 +116,23 @@ func (f *DefaultFormatter) FormatFailure(
 			defaultFailureTemplate, defaultTemplateFuncs, ctx, failure)
 	}
 }
+
+// DigitSeparator defines the separator used to format integers and floats.
+type DigitSeparator int
+
+const (
+	// Separate using underscore
+	DigitSeparatorUnderscore DigitSeparator = iota
+
+	// Separate using comma
+	DigitSeparatorComma
+
+	// Separate using apostrophe
+	DigitSeparatorApostrophe
+
+	// Do not separate
+	DigitSeparatorNone
+)
 
 // FloatFormat defines the format in which all floats are printed.
 type FloatFormat int
@@ -523,11 +545,15 @@ func (f *DefaultFormatter) fillResponse(
 
 func (f *DefaultFormatter) formatValue(value interface{}) string {
 	if flt := extractFloat32(value); flt != nil {
-		return f.formatFloatValue(*flt, 32)
+		return f.reformatNumber(f.formatFloatValue(*flt, 32))
 	}
 
 	if flt := extractFloat64(value); flt != nil {
-		return f.formatFloatValue(*flt, 64)
+		return f.reformatNumber(f.formatFloatValue(*flt, 64))
+	}
+
+	if refIsNum(value) {
+		return f.reformatNumber(fmt.Sprintf("%v", value))
 	}
 
 	if !refIsNil(value) && !refIsHTTP(value) {
@@ -654,6 +680,91 @@ func (f *DefaultFormatter) formatDiff(expected, actual interface{}) (string, boo
 	diffText := "--- expected\n+++ actual\n" + str
 
 	return diffText, true
+}
+
+func (f *DefaultFormatter) reformatNumber(numStr string) string {
+	signPart, intPart, fracPart, expPart := f.decomposeNumber(numStr)
+	if intPart == "" {
+		return numStr
+	}
+
+	var sb strings.Builder
+
+	sb.WriteString(signPart)
+	sb.WriteString(f.applySeparator(intPart, -1))
+
+	if fracPart != "" {
+		sb.WriteString(".")
+		sb.WriteString(f.applySeparator(fracPart, +1))
+	}
+
+	if expPart != "" {
+		sb.WriteString("e")
+		sb.WriteString(expPart)
+	}
+
+	return sb.String()
+}
+
+var (
+	decomposeRegexp = regexp.MustCompile(`^([+-])?(\d+)([.](\d+))?([eE]([+-]?\d+))?$`)
+)
+
+func (f *DefaultFormatter) decomposeNumber(numStr string) (
+	signPart, intPart, fracPart, expPart string,
+) {
+	parts := decomposeRegexp.FindStringSubmatch(numStr)
+
+	if len(parts) > 1 {
+		signPart = parts[1]
+	}
+	if len(parts) > 2 {
+		intPart = parts[2]
+	}
+	if len(parts) > 4 {
+		fracPart = parts[4]
+	}
+	if len(parts) > 6 {
+		expPart = parts[6]
+	}
+
+	return
+}
+
+func (f *DefaultFormatter) applySeparator(numStr string, dir int) string {
+	var separator string
+	switch f.DigitSeparator {
+	case DigitSeparatorUnderscore:
+		separator = "_"
+		break
+	case DigitSeparatorApostrophe:
+		separator = "'"
+		break
+	case DigitSeparatorComma:
+		separator = ","
+		break
+	case DigitSeparatorNone:
+	default:
+		return numStr
+	}
+
+	var sb strings.Builder
+
+	cnt := 0
+	if dir < 0 {
+		cnt = len(numStr)
+	}
+
+	for i := 0; i != len(numStr); i++ {
+		sb.WriteByte(numStr[i])
+
+		cnt += dir
+		if cnt%3 == 0 && i != len(numStr)-1 {
+			sb.WriteString(separator)
+		}
+	}
+
+	return sb.String()
 }
 
 func extractString(value interface{}) *string {
@@ -801,6 +912,42 @@ var defaultTemplateFuncs = template.FuncMap{
 		}
 		return color.New(colorAttr).Sprint(s)
 	},
+	"colordiff": func(enable bool, s string) string {
+		if !enable {
+			return s
+		}
+
+		prefixColor := []struct {
+			prefix string
+			color  color.Attribute
+		}{
+			{"---", color.FgWhite},
+			{"+++", color.FgWhite},
+			{"-", color.FgRed},
+			{"+", color.FgGreen},
+		}
+
+		lineColor := func(s string) color.Attribute {
+			for _, pc := range prefixColor {
+				if strings.HasPrefix(s, pc.prefix) {
+					return pc.color
+				}
+			}
+
+			return color.Reset
+		}
+
+		var sb strings.Builder
+		for _, line := range strings.Split(s, "\n") {
+			if sb.Len() != 0 {
+				sb.WriteString("\n")
+			}
+
+			sb.WriteString(color.New(lineColor(line)).Sprint(line))
+		}
+
+		return sb.String()
+	},
 }
 
 var defaultSuccessTemplate = `[OK] {{ join .AssertPath .LineWidth }}`
@@ -862,6 +1009,6 @@ allowed delta:
 {{- if .HaveDiff }}
 
 diff:
-{{ .Diff | indent }}
+{{ .Diff | colordiff .EnableColors | indent }}
 {{- end -}}
 `

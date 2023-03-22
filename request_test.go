@@ -672,17 +672,34 @@ func TestRequest_URLQuery(t *testing.T) {
 		Reporter: newMockReporter(t),
 	}
 
-	req1 := NewRequestC(config, "GET", "/path").
-		WithQuery("aa", "foo").WithQuery("bb", 123).WithQuery("cc", "*&@")
-
-	q := map[string]interface{}{
-		"bb": 123,
-		"cc": "*&@",
+	checkOK := func(req *Request, url string) {
+		client.req = nil
+		req.Expect()
+		req.chain.assertNotFailed(t)
+		assert.Equal(t, url, client.req.URL.String())
 	}
 
-	req2 := NewRequestC(config, "GET", "/path").
-		WithQuery("aa", "foo").
-		WithQueryObject(q)
+	checkFailed := func(req *Request) {
+		req.chain.assertFailed(t)
+	}
+
+	t.Run("WithQuery", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/path").
+			WithQuery("aa", "foo").WithQuery("bb", 123).WithQuery("cc", "*&@")
+		checkOK(req,
+			"http://example.com/path?aa=foo&bb=123&cc=%2A%26%40")
+	})
+
+	t.Run("WithQueryObject map[string]interface", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/path").
+			WithQuery("aa", "foo").
+			WithQueryObject(map[string]interface{}{
+				"bb": 123,
+				"cc": "*&@",
+			})
+		checkOK(req,
+			"http://example.com/path?aa=foo&bb=123&cc=%2A%26%40")
+	})
 
 	type S struct {
 		Bb int    `url:"bb"`
@@ -690,41 +707,67 @@ func TestRequest_URLQuery(t *testing.T) {
 		Dd string `url:"-"`
 	}
 
-	req3 := NewRequestC(config, "GET", "/path").
-		WithQueryObject(S{123, "*&@", "dummy"}).WithQuery("aa", "foo")
+	t.Run("WithQueryObject struct", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/path").
+			WithQueryObject(S{123, "*&@", "dummy"}).WithQuery("aa", "foo")
+		checkOK(req,
+			"http://example.com/path?aa=foo&bb=123&cc=%2A%26%40")
+	})
 
-	req4 := NewRequestC(config, "GET", "/path").
-		WithQueryObject(&S{123, "*&@", "dummy"}).WithQuery("aa", "foo")
+	t.Run("WithQueryObject pointer to struct", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/path").
+			WithQueryObject(&S{123, "*&@", "dummy"}).WithQuery("aa", "foo")
+		checkOK(req,
+			"http://example.com/path?aa=foo&bb=123&cc=%2A%26%40")
+	})
 
-	req5 := NewRequestC(config, "GET", "/path").
-		WithQuery("bb", 123).
-		WithQueryString("aa=foo&cc=%2A%26%40")
+	t.Run("WithQuery and WithQueryString", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/path").
+			WithQuery("bb", 123).
+			WithQueryString("aa=foo&cc=%2A%26%40")
+		checkOK(req,
+			"http://example.com/path?aa=foo&bb=123&cc=%2A%26%40")
+	})
 
-	req6 := NewRequestC(config, "GET", "/path").
-		WithQueryString("aa=foo&cc=%2A%26%40").
-		WithQuery("bb", 123)
+	t.Run("WithQueryString and WithQuery", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/path").
+			WithQueryString("aa=foo&cc=%2A%26%40").
+			WithQuery("bb", 123)
+		checkOK(req,
+			"http://example.com/path?aa=foo&bb=123&cc=%2A%26%40")
+	})
 
-	for _, req := range []*Request{req1, req2, req3, req4, req5, req6} {
-		client.req = nil
-		req.Expect()
-		req.chain.assertNotFailed(t)
-		assert.Equal(t, "http://example.com/path?aa=foo&bb=123&cc=%2A%26%40",
-			client.req.URL.String())
-	}
+	t.Run("WithQueryObject nil", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/path").
+			WithQuery("foo", "bar").
+			WithQueryObject(nil)
+		checkOK(req,
+			"http://example.com/path?foo=bar")
+	})
 
-	req7 := NewRequestC(config, "GET", "/path").
-		WithQuery("foo", "bar").
-		WithQueryObject(nil)
+	t.Run("WithQueryString invalid", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/path").
+			WithQueryString("%")
+		checkFailed(req)
+	})
 
-	req7.Expect()
-	req7.chain.assertNotFailed(t)
-	assert.Equal(t, "http://example.com/path?foo=bar", client.req.URL.String())
+	t.Run("WithQueryObject invalid", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/path").
+			WithQueryObject(func() {})
+		checkFailed(req)
+	})
 
-	NewRequestC(config, "GET", "/path").
-		WithQueryObject(func() {}).chain.assertFailed(t)
-
-	NewRequestC(config, "GET", "/path").
-		WithQueryString("%").chain.assertFailed(t)
+	t.Run("WithQueryObject invalid struct", func(t *testing.T) {
+		type invalidSt struct {
+			Str mockQueryEncoder
+		}
+		queryObj := invalidSt{
+			Str: mockQueryEncoder("err"),
+		}
+		req := NewRequestC(config, "GET", "/path").
+			WithQueryObject(queryObj)
+		checkFailed(req)
+	})
 }
 
 func TestRequest_Headers(t *testing.T) {
@@ -2849,276 +2892,277 @@ func TestRequest_Usage(t *testing.T) {
 }
 
 func TestRequest_Order(t *testing.T) {
-	client := &mockClient{}
-
-	config := Config{
-		Client:   client,
-		Reporter: newMockReporter(t),
+	cases := []struct {
+		name       string
+		beforeFunc func(req *Request)
+		afterFunc  func(req *Request)
+	}{
+		{
+			name: "Expect after Expect",
+			afterFunc: func(req *Request) {
+				req.Expect()
+			},
+		},
+		{
+			name: "WithName after Expect",
+			afterFunc: func(req *Request) {
+				req.WithName("Test")
+			},
+		},
+		{
+			name: "WithMatcher after Expect",
+			afterFunc: func(req *Request) {
+				req.WithMatcher(func(*Response) {
+				})
+			},
+		},
+		{
+			name: "WithTransformer after Expect",
+			afterFunc: func(req *Request) {
+				req.WithTransformer(func(*http.Request) {
+				})
+			},
+		},
+		{
+			name: "WithClient after Expect",
+			afterFunc: func(req *Request) {
+				req.WithClient(&mockClient{})
+			},
+		},
+		{
+			name: "WithHandler after Expect",
+			afterFunc: func(req *Request) {
+				req.WithHandler(http.NotFoundHandler())
+			},
+		},
+		{
+			name: "WithContext after Expect",
+			afterFunc: func(req *Request) {
+				req.WithContext(context.Background())
+			},
+		},
+		{
+			name: "WithTimeout after Expect",
+			afterFunc: func(req *Request) {
+				req.WithTimeout(3 * time.Second)
+			},
+		},
+		{
+			name: "WithRedirectPolicy after Expect",
+			afterFunc: func(req *Request) {
+				req.WithRedirectPolicy(FollowAllRedirects)
+			},
+		},
+		{
+			name: "WithMaxRedirects after Expect",
+			afterFunc: func(req *Request) {
+				req.WithMaxRedirects(3)
+			},
+		},
+		{
+			name: "WithRetryPolicy after Expect",
+			afterFunc: func(req *Request) {
+				req.WithRetryPolicy(DontRetry)
+			},
+		},
+		{
+			name: "WithMaxRetries after Expect",
+			afterFunc: func(req *Request) {
+				req.WithMaxRetries(10)
+			},
+		},
+		{
+			name: "WithRetryDelay after Expect",
+			afterFunc: func(req *Request) {
+				req.WithRetryDelay(time.Second, 5*time.Second)
+			},
+		},
+		{
+			name: "WithWebsocketUpgrade after Expect",
+			afterFunc: func(req *Request) {
+				req.WithWebsocketUpgrade()
+			},
+		},
+		{
+			name: "WithWebsocketDialer after Expect",
+			afterFunc: func(req *Request) {
+				req.WithWebsocketDialer(&websocket.Dialer{})
+			},
+		},
+		{
+			name: "WithPath after Expect",
+			afterFunc: func(req *Request) {
+				req.WithPath("repo", "repo1")
+			},
+		},
+		{
+			name: "WithPathObject after Expect",
+			afterFunc: func(req *Request) {
+				req.WithPathObject(map[string]string{
+					"repo": "repo1",
+				})
+			},
+		},
+		{
+			name: "WithQuery after Expect",
+			afterFunc: func(req *Request) {
+				req.WithQuery("a", 123)
+			},
+		},
+		{
+			name: "WithQueryObject after Expect",
+			afterFunc: func(req *Request) {
+				req.WithQueryObject(map[string]string{
+					"a": "val",
+				})
+			},
+		},
+		{
+			name: "WithQueryString after Expect",
+			afterFunc: func(req *Request) {
+				req.WithQueryString("a=123&b=hello")
+			},
+		},
+		{
+			name: "WithURL after Expect",
+			afterFunc: func(req *Request) {
+				req.WithURL("https://www.github.com")
+			},
+		},
+		{
+			name: "WithHeaders after Expect",
+			afterFunc: func(req *Request) {
+				req.WithHeaders(map[string]string{
+					"Content-Type": "application/json",
+				})
+			},
+		},
+		{
+			name: "WithHeader after Expect",
+			afterFunc: func(req *Request) {
+				req.WithHeader("Content-Type", "application/json")
+			},
+		},
+		{
+			name: "WithCookies after Expect",
+			afterFunc: func(req *Request) {
+				req.WithCookies(map[string]string{
+					"key1": "val1",
+				})
+			},
+		},
+		{
+			name: "WithCookie after Expect",
+			afterFunc: func(req *Request) {
+				req.WithCookie("key1", "val1")
+			},
+		},
+		{
+			name: "WithBasicAuth after Expect",
+			afterFunc: func(req *Request) {
+				req.WithBasicAuth("user", "pass")
+			},
+		},
+		{
+			name: "WithHost after Expect",
+			afterFunc: func(req *Request) {
+				req.WithHost("localhost")
+			},
+		},
+		{
+			name: "WithProto after Expect",
+			afterFunc: func(req *Request) {
+				req.WithProto("HTTP/1.1")
+			},
+		},
+		{
+			name: "WithChunked after Expect",
+			afterFunc: func(req *Request) {
+				req.WithChunked(bytes.NewReader(nil))
+			},
+		},
+		{
+			name: "WithBytes after Expect",
+			afterFunc: func(req *Request) {
+				req.WithBytes(nil)
+			},
+		},
+		{
+			name: "WithText after Expect",
+			afterFunc: func(req *Request) {
+				req.WithText("hello")
+			},
+		},
+		{
+			name: "WithJSON after Expect",
+			afterFunc: func(req *Request) {
+				req.WithJSON(map[string]string{
+					"key1": "val1",
+				})
+			},
+		},
+		{
+			name: "WithForm after Expect",
+			afterFunc: func(req *Request) {
+				req.WithForm(map[string]string{
+					"key1": "val1",
+				})
+			},
+		},
+		{
+			name: "WithFormField after Expect",
+			afterFunc: func(req *Request) {
+				req.WithFormField("key1", 123)
+			},
+		},
+		{
+			name: "WithFile after Expect",
+			beforeFunc: func(req *Request) {
+				req.WithMultipart()
+			},
+			afterFunc: func(req *Request) {
+				req.WithFile("foo", "bar", strings.NewReader("baz"))
+			},
+		},
+		{
+			name: "WithFileBytes after Expect",
+			beforeFunc: func(req *Request) {
+				req.WithMultipart()
+			},
+			afterFunc: func(req *Request) {
+				req.WithFileBytes("foo", "bar", []byte("baz"))
+			},
+		},
+		{
+			name: "WithMultipart after Expect",
+			afterFunc: func(req *Request) {
+				req.WithMultipart()
+			},
+		},
 	}
 
-	t.Run("Expect after Expect", func(t *testing.T) {
-		req := NewRequestC(config, "GET", "/")
-		req.Expect()
-		assert.NotNil(t, req.Expect())
-		req.chain.assertFailed(t)
-	})
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			config := Config{
+				Client:   &mockClient{},
+				Reporter: newMockReporter(t),
+			}
 
-	t.Run("WithName after Expect", func(t *testing.T) {
-		req := NewRequestC(config, "GET", "/")
-		req.Expect()
-		assert.Same(t, req, req.WithName("Test"))
-		req.chain.assertFailed(t)
-	})
+			req := NewRequestC(config, "GET", "/")
 
-	t.Run("WithMatcher after Expect", func(t *testing.T) {
-		req := NewRequestC(config, "GET", "/")
-		req.Expect()
-		assert.Same(t, req, req.WithMatcher(func(resp *Response) {
-			resp.Header("API-Version").NotEmpty()
-		}))
-		req.chain.assertFailed(t)
-	})
+			if tc.beforeFunc != nil {
+				tc.beforeFunc(req)
+			}
+			req.chain.assertNotFailed(t)
 
-	t.Run("WithTransformer after Expect", func(t *testing.T) {
-		req := NewRequestC(config, "GET", "/")
-		req.Expect()
-		assert.Same(t, req, req.WithTransformer(func(r *http.Request) {
-			r.Header.Add("foo", "bar")
-		}))
-		req.chain.assertFailed(t)
-	})
+			resp := req.Expect()
+			req.chain.assertNotFailed(t)
+			resp.chain.assertNotFailed(t)
 
-	t.Run("WithClient after Expect", func(t *testing.T) {
-		req := NewRequestC(config, "GET", "/")
-		req.Expect()
-		assert.Same(t, req, req.WithClient(&mockClient{}))
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithHandler after Expect", func(t *testing.T) {
-		req := NewRequestC(config, "GET", "/")
-		req.Expect()
-		assert.Same(t, req, req.WithHandler(http.NotFoundHandler()))
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithContext after Expect", func(t *testing.T) {
-		req := NewRequestC(config, "GET", "/")
-		req.Expect()
-		assert.Same(t, req, req.WithContext(context.Background()))
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithTimeout after Expect", func(t *testing.T) {
-		req := NewRequestC(config, "GET", "/")
-		req.Expect()
-		assert.Same(t, req, req.WithTimeout(3*time.Second))
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithRedirectPolicy after Expect", func(t *testing.T) {
-		req := NewRequestC(config, "GET", "/")
-		req.Expect()
-		assert.Same(t, req, req.WithRedirectPolicy(FollowAllRedirects))
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithMaxRedirects after Expect", func(t *testing.T) {
-		req := NewRequestC(config, "GET", "/")
-		req.Expect()
-		assert.Same(t, req, req.WithMaxRedirects(3))
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithRetryPolicy after Expect", func(t *testing.T) {
-		req := NewRequestC(config, "GET", "/")
-		req.Expect()
-		assert.Same(t, req, req.WithRetryPolicy(DontRetry))
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithMaxRetries after Expect", func(t *testing.T) {
-		req := NewRequestC(config, "GET", "/")
-		req.Expect()
-		assert.Same(t, req, req.WithMaxRetries(10))
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithRetryDelay after Expect", func(t *testing.T) {
-		req := NewRequestC(config, "GET", "/")
-		req.Expect()
-		assert.Same(t, req, req.WithRetryDelay(time.Second, 5*time.Second))
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithWebsocketUpgrade after Expect", func(t *testing.T) {
-		req := NewRequestC(config, "GET", "/")
-		req.Expect()
-		assert.Same(t, req, req.WithWebsocketUpgrade())
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithWebsocketDialer after Expect", func(t *testing.T) {
-		req := NewRequestC(config, "GET", "/")
-		req.Expect()
-		assert.Same(t, req, req.WithWebsocketDialer(&websocket.Dialer{}))
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithPath after Expect", func(t *testing.T) {
-		req := NewRequestC(config, "GET", "/{repo}")
-		req.Expect()
-		assert.Same(t, req, req.WithPath("repo", "repo1"))
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithPathObject after Expect", func(t *testing.T) {
-		req := NewRequestC(config, "GET", "/{repo}")
-		req.Expect()
-		assert.Same(t, req, req.WithPathObject(map[string]string{"repo": "repo1"}))
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithQuery after Expect", func(t *testing.T) {
-		req := NewRequestC(config, "GET", "/")
-		req.Expect()
-		assert.Same(t, req, req.WithQuery("a", 123))
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithQueryObject after Expect", func(t *testing.T) {
-		req := NewRequestC(config, "GET", "/")
-		req.Expect()
-		assert.Same(t, req, req.WithQueryObject(map[string]string{"a": "val"}))
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithQueryString after Expect", func(t *testing.T) {
-		req := NewRequestC(config, "GET", "/")
-		req.Expect()
-		assert.Same(t, req, req.WithQueryString("a=123&b=hello"))
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithURL after Expect", func(t *testing.T) {
-		req := NewRequestC(config, "GET", "/")
-		req.Expect()
-		assert.Same(t, req, req.WithURL("https://www.github.com"))
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithHeaders after Expect", func(t *testing.T) {
-		req := NewRequestC(config, "GET", "/")
-		req.Expect()
-		assert.Same(t, req, req.WithHeaders(
-			map[string]string{"Content-Type": "application/json"}))
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithHeader after Expect", func(t *testing.T) {
-		req := NewRequestC(config, "GET", "/")
-		req.Expect()
-		assert.Same(t, req, req.WithHeader("Content-Type", "application/json"))
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithCookies after Expect", func(t *testing.T) {
-		req := NewRequestC(config, "GET", "/")
-		req.Expect()
-		assert.Same(t, req, req.WithCookies(map[string]string{"key1": "val1"}))
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithCookie after Expect", func(t *testing.T) {
-		req := NewRequestC(config, "GET", "/")
-		req.Expect()
-		assert.Same(t, req, req.WithCookie("key1", "val1"))
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithBasicAuth after Expect", func(t *testing.T) {
-		req := NewRequestC(config, "GET", "/")
-		req.Expect()
-		assert.Same(t, req, req.WithBasicAuth("user", "pass"))
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithHost after Expect", func(t *testing.T) {
-		req := NewRequestC(config, "GET", "/")
-		req.Expect()
-		assert.Same(t, req, req.WithHost("localhost"))
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithProto after Expect", func(t *testing.T) {
-		req := NewRequestC(config, "GET", "/")
-		req.Expect()
-		assert.Same(t, req, req.WithProto("HTTP/1.1"))
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithChunked after Expect", func(t *testing.T) {
-		req := NewRequestC(config, "GET", "/")
-		req.Expect()
-		assert.Same(t, req, req.WithChunked(bytes.NewReader(nil)))
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithBytes after Expect", func(t *testing.T) {
-		req := NewRequestC(config, "GET", "/")
-		req.Expect()
-		assert.Same(t, req, req.WithBytes(nil))
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithText after Expect", func(t *testing.T) {
-		req := NewRequestC(config, "GET", "/")
-		req.Expect()
-		assert.Same(t, req, req.WithText("hello"))
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithJSON after Expect", func(t *testing.T) {
-		req := NewRequestC(config, "GET", "/")
-		req.Expect()
-		assert.Same(t, req, req.WithJSON(map[string]string{"key1": "val1"}))
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithForm after Expect", func(t *testing.T) {
-		req := NewRequestC(config, "GET", "/")
-		req.Expect()
-		assert.Same(t, req, req.WithForm(map[string]string{"key1": "val1"}))
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithFormField after Expect", func(t *testing.T) {
-		req := NewRequestC(config, "GET", "/")
-		req.Expect()
-		assert.Same(t, req, req.WithFormField("key1", 123))
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithFile after Expect", func(t *testing.T) {
-		req := NewRequestC(config, "GET", "/").WithMultipart()
-		req.Expect()
-		assert.Same(t, req, req.WithFile("foo", "bar", strings.NewReader("baz")))
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithFileBytes after Expect", func(t *testing.T) {
-		req := NewRequestC(config, "GET", "/").WithMultipart()
-		req.Expect()
-		assert.Same(t, req, req.WithFileBytes("foo", "bar", []byte("baz")))
-		req.chain.assertFailed(t)
-	})
-
-	t.Run("WithMultipart after Expect", func(t *testing.T) {
-		req := NewRequestC(config, "GET", "/")
-		req.Expect()
-		assert.Same(t, req, req.WithMultipart())
-		req.chain.assertFailed(t)
-	})
+			tc.afterFunc(req)
+			req.chain.assertFailed(t)
+		})
+	}
 }
 
 func TestRequest_Panics(t *testing.T) {

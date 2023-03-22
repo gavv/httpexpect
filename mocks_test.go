@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 	"time"
 
@@ -136,6 +137,17 @@ func (mt *mockTransportRedirect) WithMaxRedirect(
 	mt.maxRedirect = maxRedirect
 
 	return mt
+}
+
+type mockQueryEncoder string
+
+// EncodeValues implements query.Encoder.EncodeValues
+func (m mockQueryEncoder) EncodeValues(key string, v *url.Values) error {
+	if m == "err" {
+		return errors.New("encoding error")
+	}
+	v.Set(key, string(m))
+	return nil
 }
 
 type mockBody struct {
