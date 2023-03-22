@@ -760,6 +760,42 @@ var defaultTemplateFuncs = template.FuncMap{
 		}
 		return color.New(colorAttr).Sprint(s)
 	},
+	"colordiff": func(enable bool, s string) string {
+		if !enable {
+			return s
+		}
+
+		prefixColor := []struct {
+			prefix string
+			color  color.Attribute
+		}{
+			{"---", color.FgWhite},
+			{"+++", color.FgWhite},
+			{"-", color.FgRed},
+			{"+", color.FgGreen},
+		}
+
+		lineColor := func(s string) color.Attribute {
+			for _, pc := range prefixColor {
+				if strings.HasPrefix(s, pc.prefix) {
+					return pc.color
+				}
+			}
+
+			return color.Reset
+		}
+
+		var sb strings.Builder
+		for _, line := range strings.Split(s, "\n") {
+			if sb.Len() != 0 {
+				sb.WriteString("\n")
+			}
+
+			sb.WriteString(color.New(lineColor(line)).Sprint(line))
+		}
+
+		return sb.String()
+	},
 }
 
 var defaultSuccessTemplate = `[OK] {{ join .AssertPath .LineWidth }}`
@@ -813,6 +849,6 @@ allowed delta:
 {{- if .HaveDiff }}
 
 diff:
-{{ .Diff | indent }}
+{{ .Diff | colordiff .EnableColors | indent }}
 {{- end -}}
 `
