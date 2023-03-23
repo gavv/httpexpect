@@ -154,19 +154,22 @@ const (
 type ColorMode int
 
 const (
-	// Automatically use colors if ALL of the following is true:
+	// Automatically enable colors if ALL of the following is true:
 	//  - stdout is a tty / console
 	//  - AssertionHandler is known to output to testing.T
 	//  - testing.Verbose() is true
 	//
-	// Colors are disabled if TERM is "dumb" or NO_COLOR environment
-	// variable is set.
+	// Colors are forcibly enabled if FORCE_COLOR environment variable
+	// is set to a positive integer.
+	//
+	// Colors are forcibly disabled if TERM is "dumb" or NO_COLOR
+	// environment variable is set to non-empty string.
 	ColorModeAuto ColorMode = iota
 
-	// Always use colors.
+	// Unconditionally enable colors.
 	ColorModeAlways
 
-	// Never use colors.
+	// Unconditionally disable colors.
 	ColorModeNever
 )
 
