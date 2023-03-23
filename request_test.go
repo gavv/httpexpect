@@ -598,14 +598,14 @@ func TestRequest_URLConcatenate(t *testing.T) {
 				},
 				tc.method,
 				tc.path,
-				tc.pathArgs...,
-			)
+				tc.pathArgs...)
 
 			if tc.setupFunc != nil {
 				tc.setupFunc(req)
 			}
 
 			req.Expect().chain.assertNotFailed(t)
+			req.chain.assertNotFailed(t)
 			assert.Equal(t, tc.expectedURL, req.httpReq.URL.String())
 
 		})
@@ -614,82 +614,98 @@ func TestRequest_URLConcatenate(t *testing.T) {
 
 func TestRequest_URLOverwrite(t *testing.T) {
 	cases := []struct {
-		name        string
-		baseURL     string
-		method      string
-		path        string
-		expectedURL string
+		name         string
+		baseURL      string
+		method       string
+		path         string
+		overwriteURL string
+		expectedURL  string
 	}{
 		{
-			name:        "without slash on url",
-			baseURL:     "",
-			method:      "GET",
-			path:        "/path",
-			expectedURL: "http://example.com",
+			name:         "without slash on url",
+			baseURL:      "",
+			method:       "GET",
+			path:         "/path",
+			overwriteURL: "http://example.com",
+			expectedURL:  "http://example.com/path",
 		},
 		{
-			name:        "without slash on url and path",
-			baseURL:     "",
-			method:      "GET",
-			path:        "path",
-			expectedURL: "http://example.com",
+			name:         "without slash on url and path",
+			baseURL:      "",
+			method:       "GET",
+			path:         "path",
+			overwriteURL: "http://example.com",
+			expectedURL:  "http://example.com/path",
 		},
 		{
-			name:        "with slash on url and path",
-			baseURL:     "",
-			method:      "GET",
-			path:        "/path",
-			expectedURL: "http://example.com/",
+			name:         "with slash on url and path",
+			baseURL:      "",
+			method:       "GET",
+			path:         "/path",
+			overwriteURL: "http://example.com/",
+			expectedURL:  "http://example.com/path",
 		},
 		{
-			name:        "without slash on path",
-			baseURL:     "",
-			method:      "GET",
-			path:        "path",
-			expectedURL: "http://example.com/",
+			name:         "without slash on path",
+			baseURL:      "",
+			method:       "GET",
+			path:         "path",
+			overwriteURL: "http://example.com/",
+			expectedURL:  "http://example.com/path",
 		},
 		{
-			name:        "without slash on url",
-			baseURL:     "http://foobar.com",
-			method:      "GET",
-			path:        "/path",
-			expectedURL: "http://example.com",
+			name:         "without slash on url",
+			baseURL:      "http://foobar.com",
+			method:       "GET",
+			path:         "/path",
+			overwriteURL: "http://example.com",
+			expectedURL:  "http://example.com/path",
 		},
 		{
-			name:        "without slash on url and path",
-			baseURL:     "http://foobar.com",
-			method:      "GET",
-			path:        "path",
-			expectedURL: "http://example.com",
+			name:         "without slash on url and path",
+			baseURL:      "http://foobar.com",
+			method:       "GET",
+			path:         "path",
+			overwriteURL: "http://example.com",
+			expectedURL:  "http://example.com/path",
 		},
 		{
-			name:        "with slash on url and path",
-			baseURL:     "http://foobar.com",
-			method:      "GET",
-			path:        "/path",
-			expectedURL: "http://example.com/",
+			name:         "with slash on url and path",
+			baseURL:      "http://foobar.com",
+			method:       "GET",
+			path:         "/path",
+			overwriteURL: "http://example.com/",
+			expectedURL:  "http://example.com/path",
 		},
 		{
-			name:        "without slash on path",
-			baseURL:     "http://foobar.com",
-			method:      "GET",
-			path:        "path",
-			expectedURL: "http://example.com/",
+			name:         "without slash on path",
+			baseURL:      "http://foobar.com",
+			method:       "GET",
+			path:         "path",
+			overwriteURL: "http://example.com/",
+			expectedURL:  "http://example.com/path",
 		},
 	}
 
-	for _, tt := range cases {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
 			client := &mockClient{}
 			reporter := NewAssertReporter(t)
 
-			request := NewRequestC(Config{
-				BaseURL:  tt.baseURL,
-				Client:   client,
-				Reporter: reporter,
-			}, tt.method, tt.path).WithURL(tt.expectedURL)
-			request.Expect().chain.assertNotFailed(t)
-			assert.Equal(t, "http://example.com/path", client.req.URL.String())
+			req := NewRequestC(
+				Config{
+					BaseURL:  tc.baseURL,
+					Client:   client,
+					Reporter: reporter,
+				},
+				tc.method,
+				tc.path)
+
+			req.WithURL(tc.overwriteURL)
+
+			req.Expect().chain.assertNotFailed(t)
+			req.chain.assertNotFailed(t)
+			assert.Equal(t, tc.expectedURL, client.req.URL.String())
 		})
 	}
 }
@@ -1008,24 +1024,24 @@ func TestRequest_Host(t *testing.T) {
 			client := &mockClient{}
 			reporter := newMockReporter(t)
 
-			config := Config{
-				Client:   client,
-				Reporter: reporter,
-			}
-
-			req := NewRequestC(config, tc.method, tc.path)
+			req := NewRequestC(
+				Config{
+					Client:   client,
+					Reporter: reporter,
+				},
+				tc.method,
+				tc.path)
 
 			if tc.setupFunc != nil {
 				tc.setupFunc(req)
 			}
 
 			resp := req.Expect()
+			req.chain.assertNotFailed(t)
 			resp.chain.assertNotFailed(t)
 
 			assert.Equal(t, tc.method, client.req.Method)
-
 			assert.Equal(t, tc.expectedHost, client.req.Host)
-
 			assert.Equal(t, tc.path, client.req.URL.String())
 
 			assert.Same(t, &client.resp, resp.Raw())
