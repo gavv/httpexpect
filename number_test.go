@@ -442,27 +442,27 @@ func TestNumber_InDeltaRelative(t *testing.T) {
 		},
 	}
 
-	for name, instance := range cases {
-		t.Run(name, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			if instance.expectInDelta {
-				NewNumber(reporter, instance.number).
-					InDeltaRelative(instance.value, instance.delta).
+			if tc.expectInDelta {
+				NewNumber(reporter, tc.number).
+					InDeltaRelative(tc.value, tc.delta).
 					chain.assertNotFailed(t)
 			} else {
-				NewNumber(reporter, instance.number).
-					InDeltaRelative(instance.value, instance.delta).
+				NewNumber(reporter, tc.number).
+					InDeltaRelative(tc.value, tc.delta).
 					chain.assertFailed(t)
 			}
 
-			if instance.expectNotInDelta {
-				NewNumber(reporter, instance.number).
-					NotInDeltaRelative(instance.value, instance.delta).
+			if tc.expectNotInDelta {
+				NewNumber(reporter, tc.number).
+					NotInDeltaRelative(tc.value, tc.delta).
 					chain.assertNotFailed(t)
 			} else {
-				NewNumber(reporter, instance.number).
-					NotInDeltaRelative(instance.value, instance.delta).
+				NewNumber(reporter, tc.number).
+					NotInDeltaRelative(tc.value, tc.delta).
 					chain.assertFailed(t)
 			}
 		})
