@@ -320,105 +320,120 @@ func TestNumber_InDelta(t *testing.T) {
 }
 
 func TestNumber_InDeltaRelative(t *testing.T) {
-	cases := map[string]struct {
+	cases := []struct {
+		name             string
 		number           float64
 		value            float64
 		delta            float64
 		expectInDelta    bool
 		expectNotInDelta bool
 	}{
-		"larger value in delta range": {
+		{
+			name:             "larger value in delta range",
 			number:           1234.5,
 			value:            1271.5,
 			delta:            0.03,
 			expectInDelta:    true,
 			expectNotInDelta: false,
 		},
-		"smaller value in delta range": {
+		{
+			name:             "smaller value in delta range",
 			number:           1234.5,
 			value:            1221.1,
 			delta:            0.03,
 			expectInDelta:    true,
 			expectNotInDelta: false,
 		},
-		"larger value not in delta range": {
+		{
+			name:             "larger value not in delta range",
 			number:           1234.5,
 			value:            1259.1,
 			delta:            0.01,
 			expectInDelta:    false,
 			expectNotInDelta: true,
 		},
-		"smaller value not in delta range": {
+		{
+			name:             "smaller value not in delta range",
 			number:           1234.5,
 			value:            1209.8,
 			delta:            0.01,
 			expectInDelta:    false,
 			expectNotInDelta: true,
 		},
-		"delta is negative": {
+		{
+			name:             "delta is negative",
 			number:           1234.5,
 			value:            1234.0,
 			delta:            -0.01,
 			expectInDelta:    false,
 			expectNotInDelta: false,
 		},
-		"target is NaN": {
+		{
+			name:             "target is NaN",
 			number:           math.NaN(),
 			value:            1234.0,
 			delta:            0.01,
 			expectInDelta:    false,
 			expectNotInDelta: false,
 		},
-		"value is NaN": {
+		{
+			name:             "value is NaN",
 			number:           1234.5,
 			value:            math.NaN(),
 			delta:            0.01,
 			expectInDelta:    false,
 			expectNotInDelta: false,
 		},
-		"delta is NaN": {
+		{
+			name:             "delta is NaN",
 			number:           1234.5,
 			value:            1234.0,
 			delta:            math.NaN(),
 			expectInDelta:    false,
 			expectNotInDelta: false,
 		},
-		"+Inf delta in range": {
+		{
+			name:             "+Inf delta in range",
 			number:           1234.5,
 			value:            1234.0,
 			delta:            math.Inf(1),
 			expectInDelta:    true,
 			expectNotInDelta: false,
 		},
-		"+Inf target": {
+		{
+			name:             "+Inf target",
 			number:           math.Inf(1),
 			value:            1234.0,
 			delta:            0,
 			expectInDelta:    false,
 			expectNotInDelta: false,
 		},
-		"-Inf value": {
+		{
+			name:             "-Inf value",
 			number:           1234.5,
 			value:            math.Inf(-1),
 			delta:            0.01,
 			expectInDelta:    false,
 			expectNotInDelta: true,
 		},
-		"target is 0 in delta range": {
+		{
+			name:             "target is 0 in delta range",
 			number:           0,
 			value:            0,
 			delta:            0,
 			expectInDelta:    true,
 			expectNotInDelta: false,
 		},
-		"value is 0 in delta range": {
+		{
+			name:             "value is 0 in delta range",
 			number:           0.05,
 			value:            0,
 			delta:            1.0,
 			expectInDelta:    true,
 			expectNotInDelta: false,
 		},
-		"value is 0 not in delta range": {
+		{
+			name:             "value is 0 not in delta range",
 			number:           0.01,
 			value:            0,
 			delta:            0.01,
