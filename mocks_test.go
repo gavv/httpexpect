@@ -224,15 +224,6 @@ func (h *mockAssertionHandler) Failure(
 	h.failure = failure
 }
 
-func mockFailure() AssertionFailure {
-	return AssertionFailure{
-		Type: AssertOperation,
-		Errors: []error{
-			errors.New("test_error"),
-		},
-	}
-}
-
 type mockPrinter struct {
 	reqBody  []byte
 	respBody []byte
@@ -281,67 +272,18 @@ func (p *mockWebsocketPrinter) WebsocketRead(typ int, content []byte, closeCode 
 }
 
 type mockWebsocketConn struct {
-	msgType      int
+	subprotocol  string
+	closeError   error
 	readMsgErr   error
 	writeMsgErr  error
-	closeError   error
 	readDlError  error
 	writeDlError error
+	msgType      int
 	msg          []byte
-	subprotocol  string
 }
 
-func newMockWebsocketConn() *mockWebsocketConn {
-	return &mockWebsocketConn{}
-}
-
-func (wc *mockWebsocketConn) WithWriteMsgError(retError error) *mockWebsocketConn {
-	wc.writeMsgErr = retError
-	return wc
-}
-
-func (wc *mockWebsocketConn) WithReadMsgError(retError error) *mockWebsocketConn {
-	wc.readMsgErr = retError
-	return wc
-}
-
-func (wc *mockWebsocketConn) WithWriteDlError(retError error) *mockWebsocketConn {
-	wc.writeDlError = retError
-	return wc
-}
-
-func (wc *mockWebsocketConn) WithReadDlError(retError error) *mockWebsocketConn {
-	wc.readDlError = retError
-	return wc
-}
-
-func (wc *mockWebsocketConn) WithCloseError(retError error) *mockWebsocketConn {
-	wc.closeError = retError
-	return wc
-}
-
-func (wc *mockWebsocketConn) WithMsgType(msgType int) *mockWebsocketConn {
-	wc.msgType = msgType
-	return wc
-}
-
-func (wc *mockWebsocketConn) WithSubprotocol(subprotocol string) *mockWebsocketConn {
-	wc.subprotocol = subprotocol
-	return wc
-}
-
-func (wc *mockWebsocketConn) WithMessage(msg []byte) *mockWebsocketConn {
-	wc.msg = msg
-	return wc
-}
-
-func (wc *mockWebsocketConn) ReadMessage() (messageType int, p []byte, err error) {
-	return wc.msgType, []byte{}, wc.readMsgErr
-}
-
-func (wc *mockWebsocketConn) WriteMessage(messageType int, data []byte) error {
-	return wc.writeMsgErr
-
+func (wc *mockWebsocketConn) Subprotocol() string {
+	return wc.subprotocol
 }
 
 func (wc *mockWebsocketConn) Close() error {
@@ -356,8 +298,12 @@ func (wc *mockWebsocketConn) SetWriteDeadline(t time.Time) error {
 	return wc.writeDlError
 }
 
-func (wc *mockWebsocketConn) Subprotocol() string {
-	return wc.subprotocol
+func (wc *mockWebsocketConn) ReadMessage() (messageType int, p []byte, err error) {
+	return wc.msgType, []byte{}, wc.readMsgErr
+}
+
+func (wc *mockWebsocketConn) WriteMessage(messageType int, data []byte) error {
+	return wc.writeMsgErr
 }
 
 type mockNetError struct {
