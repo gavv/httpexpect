@@ -196,23 +196,11 @@ func TestNumber_IsEqual(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
 
-				if tc.isEqual {
-					NewNumber(reporter, tc.number).
-						IsEqual(tc.value).
-						chain.assertNotFailed(t)
+				NewNumber(reporter, tc.number).IsEqual(tc.value).
+					chain.assertOK(t, tc.isEqual)
 
-					NewNumber(reporter, tc.number).
-						NotEqual(tc.value).
-						chain.assertFailed(t)
-				} else {
-					NewNumber(reporter, tc.number).
-						NotEqual(tc.value).
-						chain.assertNotFailed(t)
-
-					NewNumber(reporter, tc.number).
-						IsEqual(tc.value).
-						chain.assertFailed(t)
-				}
+				NewNumber(reporter, tc.number).NotEqual(tc.value).
+					chain.assertOK(t, !tc.isEqual)
 			})
 		}
 	})
@@ -315,25 +303,13 @@ func TestNumber_InDelta(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			if tc.isInDelta {
-				NewNumber(reporter, tc.number).
-					InDelta(tc.value, tc.delta).
-					chain.assertNotFailed(t)
-			} else {
-				NewNumber(reporter, tc.number).
-					InDelta(tc.value, tc.delta).
-					chain.assertFailed(t)
-			}
+			NewNumber(reporter, tc.number).
+				InDelta(tc.value, tc.delta).
+				chain.assertOK(t, tc.isInDelta)
 
-			if tc.isNotInDelta {
-				NewNumber(reporter, tc.number).
-					NotInDelta(tc.value, tc.delta).
-					chain.assertNotFailed(t)
-			} else {
-				NewNumber(reporter, tc.number).
-					NotInDelta(tc.value, tc.delta).
-					chain.assertFailed(t)
-			}
+			NewNumber(reporter, tc.number).
+				NotInDelta(tc.value, tc.delta).
+				chain.assertOK(t, tc.isNotInDelta)
 		})
 	}
 }
@@ -402,25 +378,13 @@ func TestNumber_InRange(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
 
-				if tc.isInRange {
-					NewNumber(reporter, tc.number).
-						InRange(tc.min, tc.max).
-						chain.assertNotFailed(t)
-				} else {
-					NewNumber(reporter, tc.number).
-						InRange(tc.min, tc.max).
-						chain.assertFailed(t)
-				}
+				NewNumber(reporter, tc.number).
+					InRange(tc.min, tc.max).
+					chain.assertOK(t, tc.isInRange)
 
-				if tc.isNotInRange {
-					NewNumber(reporter, tc.number).
-						NotInRange(tc.min, tc.max).
-						chain.assertNotFailed(t)
-				} else {
-					NewNumber(reporter, tc.number).
-						NotInRange(tc.min, tc.max).
-						chain.assertFailed(t)
-				}
+				NewNumber(reporter, tc.number).
+					NotInRange(tc.min, tc.max).
+					chain.assertOK(t, tc.isNotInRange)
 			})
 		}
 	})
@@ -449,23 +413,12 @@ func TestNumber_InRange(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		for _, tc := range cases {
-			if tc.isInRange {
-				NewNumber(reporter, tc.number).
-					InRange(tc.min, tc.max).
-					chain.assertNotFailed(t)
-
-				NewNumber(reporter, tc.number).
-					NotInRange(tc.min, tc.max).
-					chain.assertFailed(t)
-			} else {
-				NewNumber(reporter, tc.number).
-					NotInRange(tc.min, tc.max).
-					chain.assertNotFailed(t)
-
-				NewNumber(reporter, tc.number).
-					InRange(tc.min, tc.max).
-					chain.assertFailed(t)
-			}
+			NewNumber(reporter, tc.number).
+				InRange(tc.min, tc.max).
+				chain.assertOK(t, tc.isInRange)
+			NewNumber(reporter, tc.number).
+				NotInRange(tc.min, tc.max).
+				chain.assertOK(t, !tc.isInRange)
 		}
 	})
 
@@ -536,25 +489,13 @@ func TestNumber_InList(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
 
-				if tc.isInList {
-					NewNumber(reporter, tc.number).
-						InList(tc.list...).
-						chain.assertNotFailed(t)
-				} else {
-					NewNumber(reporter, tc.number).
-						InList(tc.list...).
-						chain.assertFailed(t)
-				}
+				NewNumber(reporter, tc.number).
+					InList(tc.list...).
+					chain.assertOK(t, tc.isInList)
 
-				if tc.isNotInList {
-					NewNumber(reporter, tc.number).
-						NotInList(tc.list...).
-						chain.assertNotFailed(t)
-				} else {
-					NewNumber(reporter, tc.number).
-						NotInList(tc.list...).
-						chain.assertFailed(t)
-				}
+				NewNumber(reporter, tc.number).
+					NotInList(tc.list...).
+					chain.assertOK(t, tc.isNotInList)
 			})
 		}
 	})
@@ -585,23 +526,12 @@ func TestNumber_InList(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		for _, tc := range cases {
-			if tc.isInList {
-				NewNumber(reporter, tc.number).
-					InList(tc.list...).
-					chain.assertNotFailed(t)
-
-				NewNumber(reporter, tc.number).
-					NotInList(tc.list...).
-					chain.assertFailed(t)
-			} else {
-				NewNumber(reporter, tc.number).
-					NotInList(tc.list...).
-					chain.assertNotFailed(t)
-
-				NewNumber(reporter, tc.number).
-					InList(tc.list...).
-					chain.assertFailed(t)
-			}
+			NewNumber(reporter, tc.number).
+				InList(tc.list...).
+				chain.assertOK(t, tc.isInList)
+			NewNumber(reporter, tc.number).
+				NotInList(tc.list...).
+				chain.assertOK(t, !tc.isInList)
 		}
 	})
 
@@ -658,25 +588,12 @@ func TestNumber_IsGreater(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
 
-				if tc.isGt {
-					NewNumber(reporter, tc.number).
-						Gt(tc.value).
-						chain.assertNotFailed(t)
-				} else {
-					NewNumber(reporter, tc.number).
-						Gt(tc.value).
-						chain.assertFailed(t)
-				}
-
-				if tc.isGe {
-					NewNumber(reporter, tc.number).
-						Ge(tc.value).
-						chain.assertNotFailed(t)
-				} else {
-					NewNumber(reporter, tc.number).
-						Ge(tc.value).
-						chain.assertFailed(t)
-				}
+				NewNumber(reporter, tc.number).
+					Gt(tc.value).
+					chain.assertOK(t, tc.isGt)
+				NewNumber(reporter, tc.number).
+					Ge(tc.value).
+					chain.assertOK(t, tc.isGe)
 			})
 		}
 	})
@@ -744,25 +661,13 @@ func TestNumber_IsLesser(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
 
-				if tc.isLt {
-					NewNumber(reporter, tc.number).
-						Lt(tc.value).
-						chain.assertNotFailed(t)
-				} else {
-					NewNumber(reporter, tc.number).
-						Lt(tc.value).
-						chain.assertFailed(t)
-				}
+				NewNumber(reporter, tc.number).
+					Lt(tc.value).
+					chain.assertOK(t, tc.isLt)
 
-				if tc.isLe {
-					NewNumber(reporter, tc.number).
-						Le(tc.value).
-						chain.assertNotFailed(t)
-				} else {
-					NewNumber(reporter, tc.number).
-						Le(tc.value).
-						chain.assertFailed(t)
-				}
+				NewNumber(reporter, tc.number).
+					Le(tc.value).
+					chain.assertOK(t, tc.isLe)
 			})
 		}
 	})
@@ -907,29 +812,14 @@ func TestNumber_IsInt(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
 
-				if tc.isInt {
-					NewNumber(reporter, tc.value).IsInt().chain.assertNotFailed(t)
-					NewNumber(reporter, tc.value).NotInt().chain.assertFailed(t)
-				} else {
-					NewNumber(reporter, tc.value).IsInt().chain.assertFailed(t)
-					NewNumber(reporter, tc.value).NotInt().chain.assertNotFailed(t)
-				}
+				NewNumber(reporter, tc.value).IsInt().chain.assertOK(t, tc.isInt)
+				NewNumber(reporter, tc.value).NotInt().chain.assertOK(t, !tc.isInt)
 
-				if tc.isInt32 {
-					NewNumber(reporter, tc.value).IsInt(32).chain.assertNotFailed(t)
-					NewNumber(reporter, tc.value).NotInt(32).chain.assertFailed(t)
-				} else {
-					NewNumber(reporter, tc.value).IsInt(32).chain.assertFailed(t)
-					NewNumber(reporter, tc.value).NotInt(32).chain.assertNotFailed(t)
-				}
+				NewNumber(reporter, tc.value).IsInt(32).chain.assertOK(t, tc.isInt32)
+				NewNumber(reporter, tc.value).NotInt(32).chain.assertOK(t, !tc.isInt32)
 
-				if tc.isInt16 {
-					NewNumber(reporter, tc.value).IsInt(16).chain.assertNotFailed(t)
-					NewNumber(reporter, tc.value).NotInt(16).chain.assertFailed(t)
-				} else {
-					NewNumber(reporter, tc.value).IsInt(16).chain.assertFailed(t)
-					NewNumber(reporter, tc.value).NotInt(16).chain.assertNotFailed(t)
-				}
+				NewNumber(reporter, tc.value).IsInt(16).chain.assertOK(t, tc.isInt16)
+				NewNumber(reporter, tc.value).NotInt(16).chain.assertOK(t, !tc.isInt16)
 			})
 		}
 	})
@@ -1049,29 +939,14 @@ func TestNumber_IsUint(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
 
-				if tc.isUint {
-					NewNumber(reporter, tc.value).IsUint().chain.assertNotFailed(t)
-					NewNumber(reporter, tc.value).NotUint().chain.assertFailed(t)
-				} else {
-					NewNumber(reporter, tc.value).IsUint().chain.assertFailed(t)
-					NewNumber(reporter, tc.value).NotUint().chain.assertNotFailed(t)
-				}
+				NewNumber(reporter, tc.value).IsUint().chain.assertOK(t, tc.isUint)
+				NewNumber(reporter, tc.value).NotUint().chain.assertOK(t, !tc.isUint)
 
-				if tc.isUint32 {
-					NewNumber(reporter, tc.value).IsUint(32).chain.assertNotFailed(t)
-					NewNumber(reporter, tc.value).NotUint(32).chain.assertFailed(t)
-				} else {
-					NewNumber(reporter, tc.value).IsUint(32).chain.assertFailed(t)
-					NewNumber(reporter, tc.value).NotUint(32).chain.assertNotFailed(t)
-				}
+				NewNumber(reporter, tc.value).IsUint(32).chain.assertOK(t, tc.isUint32)
+				NewNumber(reporter, tc.value).NotUint(32).chain.assertOK(t, !tc.isUint32)
 
-				if tc.isUint16 {
-					NewNumber(reporter, tc.value).IsUint(16).chain.assertNotFailed(t)
-					NewNumber(reporter, tc.value).NotUint(16).chain.assertFailed(t)
-				} else {
-					NewNumber(reporter, tc.value).IsUint(16).chain.assertFailed(t)
-					NewNumber(reporter, tc.value).NotUint(16).chain.assertNotFailed(t)
-				}
+				NewNumber(reporter, tc.value).IsUint(16).chain.assertOK(t, tc.isUint16)
+				NewNumber(reporter, tc.value).NotUint(16).chain.assertOK(t, !tc.isUint16)
 			})
 		}
 	})
@@ -1146,13 +1021,8 @@ func TestNumber_IsFinite(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			if tc.isFinite {
-				NewNumber(reporter, tc.value).IsFinite().chain.assertNotFailed(t)
-				NewNumber(reporter, tc.value).NotFinite().chain.assertFailed(t)
-			} else {
-				NewNumber(reporter, tc.value).IsFinite().chain.assertFailed(t)
-				NewNumber(reporter, tc.value).NotFinite().chain.assertNotFailed(t)
-			}
+			NewNumber(reporter, tc.value).IsFinite().chain.assertOK(t, tc.isFinite)
+			NewNumber(reporter, tc.value).NotFinite().chain.assertOK(t, !tc.isFinite)
 		})
 	}
 }
