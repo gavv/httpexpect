@@ -1417,519 +1417,483 @@ func TestRequest_ContentType(t *testing.T) {
 	assert.Equal(t, http.Header{"Content-Type": {"foo", "bar"}}, client.req.Header)
 }
 
-func TestRequest_Redirects(t *testing.T) {
-	reporter := newMockReporter(t)
+func TestRequest_RedirectsDontFollow(t *testing.T) {
+	t.Run("no body", func(t *testing.T) {
+		reporter := newMockReporter(t)
 
-	t.Run("DontFollowRedirects", func(t *testing.T) {
-		t.Run("no body", func(t *testing.T) {
-			tp := newMockTransportRedirect()
-			tp.assertFn = func(r *http.Request) {
-				assert.Equal(t, http.NoBody, r.Body)
-			}
+		tp := newMockTransportRedirect()
+		tp.assertFn = func(r *http.Request) {
+			assert.Equal(t, http.NoBody, r.Body)
+		}
 
-			client := &http.Client{
-				Transport: tp,
-			}
+		config := Config{
+			Client:   &http.Client{Transport: tp},
+			Reporter: reporter,
+		}
 
-			config := Config{
-				Client:   client,
-				Reporter: reporter,
-			}
+		req := NewRequestC(config, http.MethodPut, "/url").
+			WithRedirectPolicy(DontFollowRedirects)
+		req.chain.assertNotFailed(t)
 
-			req := NewRequestC(config, http.MethodPut, "/url").
-				WithRedirectPolicy(DontFollowRedirects)
-			req.chain.assertNotFailed(t)
+		// Should return redirection response
+		resp := req.Expect().
+			Status(tp.redirectHTTPStatusCode).
+			Header("Location").
+			IsEqual("/redirect")
+		resp.chain.assertNotFailed(t)
 
-			// Should return redirection response
-			resp := req.Expect().
-				Status(tp.redirectHTTPStatusCode).
-				Header("Location").
-				IsEqual("/redirect")
-			resp.chain.assertNotFailed(t)
+		// Should set GetBody
+		assert.Nil(t, req.httpReq.GetBody)
 
-			// Should set GetBody
-			assert.Nil(t, req.httpReq.GetBody)
+		// Should set CheckRedirect
+		httpClient, _ := req.config.Client.(*http.Client)
+		assert.NotNil(t, httpClient.CheckRedirect)
+		assert.Equal(t, http.ErrUseLastResponse, httpClient.CheckRedirect(req.httpReq, nil))
 
-			// Should set CheckRedirect
-			httpClient, _ := req.config.Client.(*http.Client)
-			assert.NotNil(t, httpClient.CheckRedirect)
-			assert.Equal(t, http.ErrUseLastResponse, httpClient.CheckRedirect(req.httpReq, nil))
-
-			// Should do round trip
-			assert.Equal(t, 1, tp.tripCount)
-		})
-
-		t.Run("has body", func(t *testing.T) {
-			tp := newMockTransportRedirect()
-			tp.assertFn = func(r *http.Request) {
-				b, err := ioutil.ReadAll(r.Body)
-				assert.NoError(t, err)
-				assert.Equal(t, "test body", string(b))
-			}
-
-			client := &http.Client{
-				Transport: tp,
-			}
-
-			config := Config{
-				Client:   client,
-				Reporter: reporter,
-			}
-
-			req := NewRequestC(config, http.MethodPut, "/url").
-				WithRedirectPolicy(DontFollowRedirects).
-				WithText("test body")
-			req.chain.assertNotFailed(t)
-
-			// Should return redirection response
-			resp := req.Expect().
-				Status(tp.redirectHTTPStatusCode).
-				Header("Location").
-				IsEqual("/redirect")
-			resp.chain.assertNotFailed(t)
-
-			// Should set GetBody
-			assert.Nil(t, req.httpReq.GetBody)
-
-			// Should set CheckRedirect
-			httpClient, _ := req.config.Client.(*http.Client)
-			assert.NotNil(t, httpClient.CheckRedirect)
-			assert.Equal(t, http.ErrUseLastResponse, httpClient.CheckRedirect(req.httpReq, nil))
-
-			// Should do round trip
-			assert.Equal(t, 1, tp.tripCount)
-		})
+		// Should do round trip
+		assert.Equal(t, 1, tp.tripCount)
 	})
 
-	t.Run("FollowAllRedirects", func(t *testing.T) {
-		t.Run("no body", func(t *testing.T) {
-			tp := newMockTransportRedirect()
-			tp.maxRedirect = 1
-			tp.assertFn = func(r *http.Request) {
-				assert.Equal(t, http.NoBody, r.Body)
-			}
+	t.Run("has body", func(t *testing.T) {
+		reporter := newMockReporter(t)
 
-			client := &http.Client{
-				Transport: tp,
-			}
-
-			config := Config{
-				Client:   client,
-				Reporter: reporter,
-			}
-
-			req := NewRequestC(config, http.MethodPut, "/url").
-				WithRedirectPolicy(FollowAllRedirects).
-				WithMaxRedirects(1)
-			req.chain.assertNotFailed(t)
-
-			// Should return OK response
-			resp := req.Expect().
-				Status(http.StatusOK)
-			resp.chain.assertNotFailed(t)
-
-			// Should set GetBody
-			gb, err := req.httpReq.GetBody()
-			assert.NoError(t, err)
-			assert.Equal(t, http.NoBody, gb)
-
-			// Should set CheckRedirect
-			httpClient, _ := req.config.Client.(*http.Client)
-			assert.NotNil(t, httpClient.CheckRedirect)
-			assert.Nil(t, httpClient.CheckRedirect(req.httpReq, nil))
-			assert.Nil(t, httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 1)))
-			assert.Equal(t,
-				errors.New("stopped after 1 redirects"),
-				httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 2)),
-			)
-
-			// Should do round trip
-			assert.Equal(t, 2, tp.tripCount)
-		})
-
-		t.Run("no body, too many redirects", func(t *testing.T) {
-			tp := newMockTransportRedirect()
-			tp.assertFn = func(r *http.Request) {
-				assert.Equal(t, http.NoBody, r.Body)
-			}
-
-			client := &http.Client{
-				Transport: tp,
-			}
-
-			config := Config{
-				Client:   client,
-				Reporter: reporter,
-			}
-
-			req := NewRequestC(config, http.MethodPut, "/url").
-				WithRedirectPolicy(FollowAllRedirects).
-				WithMaxRedirects(1)
-			req.chain.assertNotFailed(t)
-
-			// Should error
-			resp := req.Expect()
-			resp.chain.assertFailed(t)
-
-			// Should set GetBody
-			gb, err := req.httpReq.GetBody()
-			assert.NoError(t, err)
-			assert.Equal(t, http.NoBody, gb)
-
-			// Should set CheckRedirect
-			httpClient, _ := req.config.Client.(*http.Client)
-			assert.NotNil(t, httpClient.CheckRedirect)
-			assert.Nil(t, httpClient.CheckRedirect(req.httpReq, nil))
-			assert.Nil(t, httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 1)))
-			assert.Equal(t,
-				errors.New("stopped after 1 redirects"),
-				httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 2)),
-			)
-
-			// Should do round trip
-			assert.Equal(t, 2, tp.tripCount)
-		})
-
-		t.Run("has body", func(t *testing.T) {
-			tp := newMockTransportRedirect()
-			tp.maxRedirect = 1
-			tp.assertFn = func(r *http.Request) {
-				b, err := ioutil.ReadAll(r.Body)
-				assert.NoError(t, err)
-				assert.Equal(t, "test body", string(b))
-			}
-
-			client := &http.Client{
-				Transport: tp,
-			}
-
-			config := Config{
-				Client:   client,
-				Reporter: reporter,
-			}
-
-			req := NewRequestC(config, http.MethodPut, "/url").
-				WithRedirectPolicy(FollowAllRedirects).
-				WithMaxRedirects(1).
-				WithText("test body")
-			req.chain.assertNotFailed(t)
-
-			// Should return OK response
-			resp := req.Expect().
-				Status(http.StatusOK)
-			resp.chain.assertNotFailed(t)
-
-			// Should set GetBody
-			gb, err := req.httpReq.GetBody()
-			assert.NoError(t, err)
-			b, err := ioutil.ReadAll(gb)
+		tp := newMockTransportRedirect()
+		tp.assertFn = func(r *http.Request) {
+			b, err := ioutil.ReadAll(r.Body)
 			assert.NoError(t, err)
 			assert.Equal(t, "test body", string(b))
+		}
 
-			// Should set CheckRedirect
-			httpClient, _ := req.config.Client.(*http.Client)
-			assert.NotNil(t, httpClient.CheckRedirect)
-			assert.Nil(t, httpClient.CheckRedirect(req.httpReq, nil))
-			assert.Nil(t, httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 1)))
-			assert.Equal(t,
-				errors.New("stopped after 1 redirects"),
-				httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 2)),
-			)
+		config := Config{
+			Client:   &http.Client{Transport: tp},
+			Reporter: reporter,
+		}
 
-			// Should do round trip
-			assert.Equal(t, 2, tp.tripCount)
-		})
+		req := NewRequestC(config, http.MethodPut, "/url").
+			WithRedirectPolicy(DontFollowRedirects).
+			WithText("test body")
+		req.chain.assertNotFailed(t)
 
-		t.Run("has body, too many redirects", func(t *testing.T) {
-			tp := newMockTransportRedirect()
-			tp.assertFn = func(r *http.Request) {
-				b, err := ioutil.ReadAll(r.Body)
-				assert.NoError(t, err)
-				assert.Equal(t, "test body", string(b))
-			}
+		// Should return redirection response
+		resp := req.Expect().
+			Status(tp.redirectHTTPStatusCode).
+			Header("Location").
+			IsEqual("/redirect")
+		resp.chain.assertNotFailed(t)
 
-			client := &http.Client{
-				Transport: tp,
-			}
+		// Should set GetBody
+		assert.Nil(t, req.httpReq.GetBody)
 
-			config := Config{
-				Client:   client,
-				Reporter: reporter,
-			}
+		// Should set CheckRedirect
+		httpClient, _ := req.config.Client.(*http.Client)
+		assert.NotNil(t, httpClient.CheckRedirect)
+		assert.Equal(t, http.ErrUseLastResponse, httpClient.CheckRedirect(req.httpReq, nil))
 
-			req := NewRequestC(config, http.MethodPut, "/url").
-				WithRedirectPolicy(FollowAllRedirects).
-				WithMaxRedirects(1).
-				WithText("test body")
-			req.chain.assertNotFailed(t)
+		// Should do round trip
+		assert.Equal(t, 1, tp.tripCount)
+	})
+}
 
-			// Should error
-			resp := req.Expect()
-			resp.chain.assertFailed(t)
+func TestRequest_RedirectsFollowAll(t *testing.T) {
+	t.Run("no body", func(t *testing.T) {
+		reporter := newMockReporter(t)
 
-			// Should set GetBody
-			gb, err := req.httpReq.GetBody()
-			assert.NoError(t, err)
-			b, err := ioutil.ReadAll(gb)
-			assert.NoError(t, err)
-			assert.Equal(t, "test body", string(b))
+		tp := newMockTransportRedirect()
+		tp.maxRedirect = 1
+		tp.assertFn = func(r *http.Request) {
+			assert.Equal(t, http.NoBody, r.Body)
+		}
 
-			// Should set CheckRedirect
-			httpClient, _ := req.config.Client.(*http.Client)
-			assert.NotNil(t, httpClient.CheckRedirect)
-			assert.Nil(t, httpClient.CheckRedirect(req.httpReq, nil))
-			assert.Nil(t, httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 1)))
-			assert.Equal(t,
-				errors.New("stopped after 1 redirects"),
-				httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 2)),
-			)
+		config := Config{
+			Client:   &http.Client{Transport: tp},
+			Reporter: reporter,
+		}
 
-			// Should do round trip
-			assert.Equal(t, 2, tp.tripCount)
-		})
+		req := NewRequestC(config, http.MethodPut, "/url").
+			WithRedirectPolicy(FollowAllRedirects).
+			WithMaxRedirects(1)
+		req.chain.assertNotFailed(t)
+
+		// Should return OK response
+		resp := req.Expect().
+			Status(http.StatusOK)
+		resp.chain.assertNotFailed(t)
+
+		// Should set GetBody
+		gb, err := req.httpReq.GetBody()
+		assert.NoError(t, err)
+		assert.Equal(t, http.NoBody, gb)
+
+		// Should set CheckRedirect
+		httpClient, _ := req.config.Client.(*http.Client)
+		assert.NotNil(t, httpClient.CheckRedirect)
+		assert.Nil(t, httpClient.CheckRedirect(req.httpReq, nil))
+		assert.Nil(t, httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 1)))
+		assert.Equal(t,
+			errors.New("stopped after 1 redirects"),
+			httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 2)))
+
+		// Should do round trip
+		assert.Equal(t, 2, tp.tripCount)
 	})
 
-	t.Run("FollowRedirectsWithoutBody", func(t *testing.T) {
-		t.Run("no body", func(t *testing.T) {
-			tp := newMockTransportRedirect()
-			tp.maxRedirect = 1
-			tp.assertFn = func(r *http.Request) {
-				assert.Contains(t, []interface{}{nil, http.NoBody}, r.Body)
-			}
+	t.Run("no body, too many redirects", func(t *testing.T) {
+		reporter := newMockReporter(t)
 
-			client := &http.Client{
-				Transport: tp,
-			}
+		tp := newMockTransportRedirect()
+		tp.assertFn = func(r *http.Request) {
+			assert.Equal(t, http.NoBody, r.Body)
+		}
 
-			config := Config{
-				Client:   client,
-				Reporter: reporter,
-			}
+		config := Config{
+			Client:   &http.Client{Transport: tp},
+			Reporter: reporter,
+		}
 
-			req := NewRequestC(config, http.MethodPut, "/url").
-				WithRedirectPolicy(FollowRedirectsWithoutBody).
-				WithMaxRedirects(1)
-			req.chain.assertNotFailed(t)
+		req := NewRequestC(config, http.MethodPut, "/url").
+			WithRedirectPolicy(FollowAllRedirects).
+			WithMaxRedirects(1)
+		req.chain.assertNotFailed(t)
 
-			// Should return OK response
-			resp := req.Expect().
-				Status(http.StatusOK)
-			resp.chain.assertNotFailed(t)
+		// Should error
+		resp := req.Expect()
+		resp.chain.assertFailed(t)
 
-			// Should set GetBody
-			assert.Nil(t, req.httpReq.GetBody)
+		// Should set GetBody
+		gb, err := req.httpReq.GetBody()
+		assert.NoError(t, err)
+		assert.Equal(t, http.NoBody, gb)
 
-			// Should set CheckRedirect
-			httpClient, _ := req.config.Client.(*http.Client)
-			assert.NotNil(t, httpClient.CheckRedirect)
-			assert.Nil(t, httpClient.CheckRedirect(req.httpReq, nil))
-			assert.Nil(t, httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 1)))
-			assert.Equal(t,
-				errors.New("stopped after 1 redirects"),
-				httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 2)),
-			)
+		// Should set CheckRedirect
+		httpClient, _ := req.config.Client.(*http.Client)
+		assert.NotNil(t, httpClient.CheckRedirect)
+		assert.Nil(t, httpClient.CheckRedirect(req.httpReq, nil))
+		assert.Nil(t, httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 1)))
+		assert.Equal(t,
+			errors.New("stopped after 1 redirects"),
+			httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 2)))
 
-			// Should do round trip
-			assert.Equal(t, 2, tp.tripCount)
-		})
+		// Should do round trip
+		assert.Equal(t, 2, tp.tripCount)
+	})
 
-		t.Run("no body, too many redirects", func(t *testing.T) {
-			tp := newMockTransportRedirect()
-			tp.assertFn = func(r *http.Request) {
-				assert.Contains(t, []interface{}{nil, http.NoBody}, r.Body)
-			}
+	t.Run("has body", func(t *testing.T) {
+		reporter := newMockReporter(t)
 
-			client := &http.Client{
-				Transport: tp,
-			}
+		tp := newMockTransportRedirect()
+		tp.maxRedirect = 1
+		tp.assertFn = func(r *http.Request) {
+			b, err := ioutil.ReadAll(r.Body)
+			assert.NoError(t, err)
+			assert.Equal(t, "test body", string(b))
+		}
 
-			config := Config{
-				Client:   client,
-				Reporter: reporter,
-			}
+		config := Config{
+			Client:   &http.Client{Transport: tp},
+			Reporter: reporter,
+		}
 
-			req := NewRequestC(config, http.MethodPut, "/url").
-				WithRedirectPolicy(FollowRedirectsWithoutBody).
-				WithMaxRedirects(1)
-			req.chain.assertNotFailed(t)
+		req := NewRequestC(config, http.MethodPut, "/url").
+			WithRedirectPolicy(FollowAllRedirects).
+			WithMaxRedirects(1).
+			WithText("test body")
+		req.chain.assertNotFailed(t)
 
-			// Should error
-			resp := req.Expect()
-			resp.chain.assertFailed(t)
+		// Should return OK response
+		resp := req.Expect().
+			Status(http.StatusOK)
+		resp.chain.assertNotFailed(t)
 
-			// Should set GetBody
-			assert.Nil(t, req.httpReq.GetBody)
+		// Should set GetBody
+		gb, err := req.httpReq.GetBody()
+		assert.NoError(t, err)
+		b, err := ioutil.ReadAll(gb)
+		assert.NoError(t, err)
+		assert.Equal(t, "test body", string(b))
 
-			// Should set CheckRedirect
-			httpClient, _ := req.config.Client.(*http.Client)
-			assert.NotNil(t, httpClient.CheckRedirect)
-			assert.Nil(t, httpClient.CheckRedirect(req.httpReq, nil))
-			assert.Nil(t, httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 1)))
-			assert.Equal(t,
-				errors.New("stopped after 1 redirects"),
-				httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 2)),
-			)
+		// Should set CheckRedirect
+		httpClient, _ := req.config.Client.(*http.Client)
+		assert.NotNil(t, httpClient.CheckRedirect)
+		assert.Nil(t, httpClient.CheckRedirect(req.httpReq, nil))
+		assert.Nil(t, httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 1)))
+		assert.Equal(t,
+			errors.New("stopped after 1 redirects"),
+			httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 2)))
 
-			// Should do round trip
-			assert.Equal(t, 2, tp.tripCount)
-		})
+		// Should do round trip
+		assert.Equal(t, 2, tp.tripCount)
+	})
 
-		t.Run("has body, status permanent redirect", func(t *testing.T) {
-			tp := newMockTransportRedirect()
-			tp.maxRedirect = 1
-			tp.assertFn = func(r *http.Request) {
+	t.Run("has body, too many redirects", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		tp := newMockTransportRedirect()
+		tp.assertFn = func(r *http.Request) {
+			b, err := ioutil.ReadAll(r.Body)
+			assert.NoError(t, err)
+			assert.Equal(t, "test body", string(b))
+		}
+
+		config := Config{
+			Client:   &http.Client{Transport: tp},
+			Reporter: reporter,
+		}
+
+		req := NewRequestC(config, http.MethodPut, "/url").
+			WithRedirectPolicy(FollowAllRedirects).
+			WithMaxRedirects(1).
+			WithText("test body")
+		req.chain.assertNotFailed(t)
+
+		// Should error
+		resp := req.Expect()
+		resp.chain.assertFailed(t)
+
+		// Should set GetBody
+		gb, err := req.httpReq.GetBody()
+		assert.NoError(t, err)
+		b, err := ioutil.ReadAll(gb)
+		assert.NoError(t, err)
+		assert.Equal(t, "test body", string(b))
+
+		// Should set CheckRedirect
+		httpClient, _ := req.config.Client.(*http.Client)
+		assert.NotNil(t, httpClient.CheckRedirect)
+		assert.Nil(t, httpClient.CheckRedirect(req.httpReq, nil))
+		assert.Nil(t, httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 1)))
+		assert.Equal(t,
+			errors.New("stopped after 1 redirects"),
+			httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 2)))
+
+		// Should do round trip
+		assert.Equal(t, 2, tp.tripCount)
+	})
+}
+
+func TestRequest_RedirectsFollowWithoutBody(t *testing.T) {
+	t.Run("no body", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		tp := newMockTransportRedirect()
+		tp.maxRedirect = 1
+		tp.assertFn = func(r *http.Request) {
+			assert.Contains(t, []interface{}{nil, http.NoBody}, r.Body)
+		}
+
+		config := Config{
+			Client:   &http.Client{Transport: tp},
+			Reporter: reporter,
+		}
+
+		req := NewRequestC(config, http.MethodPut, "/url").
+			WithRedirectPolicy(FollowRedirectsWithoutBody).
+			WithMaxRedirects(1)
+		req.chain.assertNotFailed(t)
+
+		// Should return OK response
+		resp := req.Expect().
+			Status(http.StatusOK)
+		resp.chain.assertNotFailed(t)
+
+		// Should set GetBody
+		assert.Nil(t, req.httpReq.GetBody)
+
+		// Should set CheckRedirect
+		httpClient, _ := req.config.Client.(*http.Client)
+		assert.NotNil(t, httpClient.CheckRedirect)
+		assert.Nil(t, httpClient.CheckRedirect(req.httpReq, nil))
+		assert.Nil(t, httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 1)))
+		assert.Equal(t,
+			errors.New("stopped after 1 redirects"),
+			httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 2)))
+
+		// Should do round trip
+		assert.Equal(t, 2, tp.tripCount)
+	})
+
+	t.Run("no body, too many redirects", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		tp := newMockTransportRedirect()
+		tp.assertFn = func(r *http.Request) {
+			assert.Contains(t, []interface{}{nil, http.NoBody}, r.Body)
+		}
+
+		config := Config{
+			Client:   &http.Client{Transport: tp},
+			Reporter: reporter,
+		}
+
+		req := NewRequestC(config, http.MethodPut, "/url").
+			WithRedirectPolicy(FollowRedirectsWithoutBody).
+			WithMaxRedirects(1)
+		req.chain.assertNotFailed(t)
+
+		// Should error
+		resp := req.Expect()
+		resp.chain.assertFailed(t)
+
+		// Should set GetBody
+		assert.Nil(t, req.httpReq.GetBody)
+
+		// Should set CheckRedirect
+		httpClient, _ := req.config.Client.(*http.Client)
+		assert.NotNil(t, httpClient.CheckRedirect)
+		assert.Nil(t, httpClient.CheckRedirect(req.httpReq, nil))
+		assert.Nil(t, httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 1)))
+		assert.Equal(t,
+			errors.New("stopped after 1 redirects"),
+			httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 2)))
+
+		// Should do round trip
+		assert.Equal(t, 2, tp.tripCount)
+	})
+
+	t.Run("has body, status permanent redirect", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		tp := newMockTransportRedirect()
+		tp.maxRedirect = 1
+		tp.assertFn = func(r *http.Request) {
+			b, err := ioutil.ReadAll(r.Body)
+			assert.NoError(t, err)
+			assert.Equal(t, "test body", string(b))
+		}
+
+		config := Config{
+			Client:   &http.Client{Transport: tp},
+			Reporter: reporter,
+		}
+
+		req := NewRequestC(config, http.MethodPut, "/url").
+			WithRedirectPolicy(FollowRedirectsWithoutBody).
+			WithMaxRedirects(1).
+			WithText("test body")
+		req.chain.assertNotFailed(t)
+
+		// Should return redirection response
+		resp := req.Expect().
+			Status(tp.redirectHTTPStatusCode)
+		resp.chain.assertNotFailed(t)
+
+		// Should set GetBody
+		assert.Nil(t, req.httpReq.GetBody)
+
+		// Should set CheckRedirect
+		httpClient, _ := req.config.Client.(*http.Client)
+		assert.NotNil(t, httpClient.CheckRedirect)
+		assert.Nil(t, httpClient.CheckRedirect(req.httpReq, nil))
+		assert.Nil(t, httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 1)))
+		assert.Equal(t,
+			errors.New("stopped after 1 redirects"),
+			httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 2)))
+
+		// Should do round trip
+		assert.Equal(t, 1, tp.tripCount)
+	})
+
+	t.Run("has body, status moved permanently", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		tp := newMockTransportRedirect()
+		tp.maxRedirect = 1
+		tp.redirectHTTPStatusCode = http.StatusMovedPermanently
+		tp.assertFn = func(r *http.Request) {
+			if r.URL.String() == "/url" {
+				assert.Equal(t, r.Method, http.MethodPut)
+
 				b, err := ioutil.ReadAll(r.Body)
 				assert.NoError(t, err)
 				assert.Equal(t, "test body", string(b))
+			} else if r.URL.String() == "/redirect" {
+				assert.Equal(t, r.Method, http.MethodGet)
+				assert.Nil(t, r.Body)
+			} else {
+				t.Fatalf("invalid request URL")
 			}
+		}
 
-			client := &http.Client{
-				Transport: tp,
+		config := Config{
+			Client:   &http.Client{Transport: tp},
+			Reporter: reporter,
+		}
+
+		req := NewRequestC(config, http.MethodPut, "/url").
+			WithRedirectPolicy(FollowRedirectsWithoutBody).
+			WithMaxRedirects(1).
+			WithText("test body")
+		req.chain.assertNotFailed(t)
+
+		// Should return OK response
+		resp := req.Expect().
+			Status(http.StatusOK)
+		resp.chain.assertNotFailed(t)
+
+		// Should set GetBody
+		assert.Nil(t, req.httpReq.GetBody)
+
+		// Should set CheckRedirect
+		httpClient, _ := req.config.Client.(*http.Client)
+		assert.NotNil(t, httpClient.CheckRedirect)
+		assert.Nil(t, httpClient.CheckRedirect(req.httpReq, nil))
+		assert.Nil(t, httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 1)))
+		assert.Equal(t,
+			errors.New("stopped after 1 redirects"),
+			httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 2)))
+
+		// Should do round trip
+		assert.Equal(t, 2, tp.tripCount)
+	})
+
+	t.Run("has body, status moved permanently, too many redirects", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		tp := newMockTransportRedirect()
+		tp.redirectHTTPStatusCode = http.StatusMovedPermanently
+		tp.assertFn = func(r *http.Request) {
+			if r.URL.String() == "/url" {
+				assert.Equal(t, r.Method, http.MethodPut)
+
+				b, err := ioutil.ReadAll(r.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			} else if r.URL.String() == "/redirect" {
+				assert.Equal(t, r.Method, http.MethodGet)
+				assert.Nil(t, r.Body)
+			} else {
+				t.Fatalf("invalid request URL")
 			}
+		}
 
-			config := Config{
-				Client:   client,
-				Reporter: reporter,
-			}
+		config := Config{
+			Client:   &http.Client{Transport: tp},
+			Reporter: reporter,
+		}
 
-			req := NewRequestC(config, http.MethodPut, "/url").
-				WithRedirectPolicy(FollowRedirectsWithoutBody).
-				WithMaxRedirects(1).
-				WithText("test body")
-			req.chain.assertNotFailed(t)
+		req := NewRequestC(config, http.MethodPut, "/url").
+			WithRedirectPolicy(FollowRedirectsWithoutBody).
+			WithMaxRedirects(1).
+			WithText("test body")
+		req.chain.assertNotFailed(t)
 
-			// Should return redirection response
-			resp := req.Expect().
-				Status(tp.redirectHTTPStatusCode)
-			resp.chain.assertNotFailed(t)
+		// Should error
+		resp := req.Expect()
+		resp.chain.assertFailed(t)
 
-			// Should set GetBody
-			assert.Nil(t, req.httpReq.GetBody)
+		// Should set GetBody
+		assert.Nil(t, req.httpReq.GetBody)
 
-			// Should set CheckRedirect
-			httpClient, _ := req.config.Client.(*http.Client)
-			assert.NotNil(t, httpClient.CheckRedirect)
-			assert.Nil(t, httpClient.CheckRedirect(req.httpReq, nil))
-			assert.Nil(t, httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 1)))
-			assert.Equal(t,
-				errors.New("stopped after 1 redirects"),
-				httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 2)),
-			)
+		// Should set CheckRedirect
+		httpClient, _ := req.config.Client.(*http.Client)
+		assert.NotNil(t, httpClient.CheckRedirect)
+		assert.Nil(t, httpClient.CheckRedirect(req.httpReq, nil))
+		assert.Nil(t, httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 1)))
+		assert.Equal(t,
+			errors.New("stopped after 1 redirects"),
+			httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 2)))
 
-			// Should do round trip
-			assert.Equal(t, 1, tp.tripCount)
-		})
-
-		t.Run("has body, status moved permanently",
-			func(t *testing.T) {
-				tp := newMockTransportRedirect()
-				tp.maxRedirect = 1
-				tp.redirectHTTPStatusCode = http.StatusMovedPermanently
-				tp.assertFn = func(r *http.Request) {
-					if r.URL.String() == "/url" {
-						assert.Equal(t, r.Method, http.MethodPut)
-
-						b, err := ioutil.ReadAll(r.Body)
-						assert.NoError(t, err)
-						assert.Equal(t, "test body", string(b))
-					} else if r.URL.String() == "/redirect" {
-						assert.Equal(t, r.Method, http.MethodGet)
-						assert.Nil(t, r.Body)
-					} else {
-						t.Fatalf("invalid request URL")
-					}
-				}
-
-				client := &http.Client{
-					Transport: tp,
-				}
-
-				config := Config{
-					Client:   client,
-					Reporter: reporter,
-				}
-
-				req := NewRequestC(config, http.MethodPut, "/url").
-					WithRedirectPolicy(FollowRedirectsWithoutBody).
-					WithMaxRedirects(1).
-					WithText("test body")
-				req.chain.assertNotFailed(t)
-
-				// Should return OK response
-				resp := req.Expect().
-					Status(http.StatusOK)
-				resp.chain.assertNotFailed(t)
-
-				// Should set GetBody
-				assert.Nil(t, req.httpReq.GetBody)
-
-				// Should set CheckRedirect
-				httpClient, _ := req.config.Client.(*http.Client)
-				assert.NotNil(t, httpClient.CheckRedirect)
-				assert.Nil(t, httpClient.CheckRedirect(req.httpReq, nil))
-				assert.Nil(t, httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 1)))
-				assert.Equal(t,
-					errors.New("stopped after 1 redirects"),
-					httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 2)),
-				)
-
-				// Should do round trip
-				assert.Equal(t, 2, tp.tripCount)
-			})
-
-		t.Run("has body, status moved permanently, too many redirects", func(t *testing.T) {
-			tp := newMockTransportRedirect()
-			tp.redirectHTTPStatusCode = http.StatusMovedPermanently
-			tp.assertFn = func(r *http.Request) {
-				if r.URL.String() == "/url" {
-					assert.Equal(t, r.Method, http.MethodPut)
-
-					b, err := ioutil.ReadAll(r.Body)
-					assert.NoError(t, err)
-					assert.Equal(t, "test body", string(b))
-				} else if r.URL.String() == "/redirect" {
-					assert.Equal(t, r.Method, http.MethodGet)
-					assert.Nil(t, r.Body)
-				} else {
-					t.Fatalf("invalid request URL")
-				}
-			}
-
-			client := &http.Client{
-				Transport: tp,
-			}
-
-			config := Config{
-				Client:   client,
-				Reporter: reporter,
-			}
-
-			req := NewRequestC(config, http.MethodPut, "/url").
-				WithRedirectPolicy(FollowRedirectsWithoutBody).
-				WithMaxRedirects(1).
-				WithText("test body")
-			req.chain.assertNotFailed(t)
-
-			// Should error
-			resp := req.Expect()
-			resp.chain.assertFailed(t)
-
-			// Should set GetBody
-			assert.Nil(t, req.httpReq.GetBody)
-
-			// Should set CheckRedirect
-			httpClient, _ := req.config.Client.(*http.Client)
-			assert.NotNil(t, httpClient.CheckRedirect)
-			assert.Nil(t, httpClient.CheckRedirect(req.httpReq, nil))
-			assert.Nil(t, httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 1)))
-			assert.Equal(t,
-				errors.New("stopped after 1 redirects"),
-				httpClient.CheckRedirect(req.httpReq, make([]*http.Request, 2)),
-			)
-
-			// Should do round trip
-			assert.Equal(t, 2, tp.tripCount)
-		})
+		// Should do round trip
+		assert.Equal(t, 2, tp.tripCount)
 	})
 }
 
