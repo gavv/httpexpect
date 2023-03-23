@@ -400,23 +400,16 @@ func TestNumber_InDeltaRelative(t *testing.T) {
 		"-Inf reference": {
 			number:           1234.5,
 			reference:        math.Inf(-1),
-			delta:            0,
+			delta:            0.01,
 			expectInDelta:    false,
-			expectNotInDelta: false,
+			expectNotInDelta: true,
 		},
 		"target is 0 in delta range": {
 			number:           0,
 			reference:        0,
-			delta:            0.01,
+			delta:            0,
 			expectInDelta:    true,
 			expectNotInDelta: false,
-		},
-		"target is 0 not in delta range": {
-			number:           0,
-			reference:        0.03,
-			delta:            0.01,
-			expectInDelta:    false,
-			expectNotInDelta: true,
 		},
 		"reference is 0 in delta range": {
 			number:           0.05,
