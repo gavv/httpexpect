@@ -798,6 +798,20 @@ func TestObject_ContainsValue(t *testing.T) {
 		value.chain.assertFailed(t)
 		value.chain.clearFailed()
 	})
+
+	t.Run("invalid argument", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewObject(reporter, map[string]interface{}{"foo": 123, "bar": "xxx"})
+
+		value.ContainsValue(make(chan int))
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+
+		value.NotContainsValue(make(chan int))
+		value.chain.assertFailed(t)
+		value.chain.clearFailed()
+	})
 }
 
 func TestObject_ContainsSubset(t *testing.T) {
@@ -1243,6 +1257,13 @@ func TestObject_Every(t *testing.T) {
 		expectedOrder := []string{"b", "bar", "baz", "c", "foo", "foz"}
 		assert.Equal(t, expectedOrder, actualOrder)
 	})
+
+	t.Run("invalid argument", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		object := NewObject(reporter, map[string]interface{}{})
+		object.Every((func(key string, value *Value))(nil))
+		object.chain.assertFailed(t)
+	})
 }
 
 func TestObject_Transform(t *testing.T) {
@@ -1494,6 +1515,14 @@ func TestObject_Filter(t *testing.T) {
 
 		expectedOrder := []string{"b", "bar", "baz", "foo", "quux"}
 		assert.Equal(t, expectedOrder, actualOrder)
+	})
+
+	t.Run("invalid argument", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		object := NewObject(reporter, map[string]interface{}{})
+		filteredObject := object.Filter((func(key string, value *Value) bool)(nil))
+		object.chain.assertFailed(t)
+		filteredObject.chain.assertFailed(t)
 	})
 }
 
