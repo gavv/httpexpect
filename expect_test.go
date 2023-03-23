@@ -1,8 +1,12 @@
 package httpexpect
 
 import (
+	"errors"
+	"io"
+	"net/http"
 	"testing"
 
+	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -527,5 +531,111 @@ func TestExpect_Config(t *testing.T) {
 			}
 			badConfig.validate()
 		})
+	})
+}
+
+func TestExpect_Adapters(t *testing.T) {
+	t.Run("RequestFactoryFunc", func(t *testing.T) {
+		called := false
+		factory := RequestFactoryFunc(func(
+			_ string, _ string, _ io.Reader,
+		) (*http.Request, error) {
+			called = true
+			return nil, nil
+		})
+
+		e := WithConfig(Config{
+			RequestFactory: factory,
+			Reporter:       newMockReporter(t),
+		})
+
+		e.Request("GET", "/")
+
+		assert.True(t, called)
+	})
+
+	t.Run("ClientFunc", func(t *testing.T) {
+		called := false
+		client := ClientFunc(func(_ *http.Request) (*http.Response, error) {
+			called = true
+			return &http.Response{
+				Status:     "Test Status",
+				StatusCode: 504,
+			}, nil
+		})
+
+		e := WithConfig(Config{
+			Client:   client,
+			Reporter: newMockReporter(t),
+		})
+
+		req := e.GET("/")
+		resp := req.Expect()
+
+		assert.True(t, called)
+		assert.Equal(t, resp.httpResp.StatusCode, 504)
+		assert.Equal(t, resp.httpResp.Status, "Test Status")
+	})
+
+	t.Run("WebsocketDialerFunc", func(t *testing.T) {
+		called := false
+		dialer := WebsocketDialerFunc(func(
+			_ string, _ http.Header,
+		) (*websocket.Conn, *http.Response, error) {
+			called = true
+			return &websocket.Conn{}, &http.Response{}, nil
+		})
+
+		e := WithConfig(Config{
+			WebsocketDialer: dialer,
+			Reporter:        newMockReporter(t),
+		})
+
+		e.GET("/path").WithWebsocketUpgrade().Expect().Websocket()
+
+		assert.True(t, called)
+	})
+
+	t.Run("ReporterFunc", func(t *testing.T) {
+		called := false
+		message := ""
+		client := ClientFunc(func(r *http.Request) (*http.Response, error) {
+			return nil, errors.New("")
+		})
+		reporter := ReporterFunc(func(_ string, _ ...interface{}) {
+			called = true
+			message = "test reporter called"
+		})
+
+		e := WithConfig(Config{
+			Reporter: reporter,
+			Client:   client,
+		})
+
+		e.GET("/").Expect()
+
+		assert.True(t, called)
+		assert.Contains(t, message, "test reporter called")
+	})
+
+	t.Run("LoggerFunc", func(t *testing.T) {
+		called := false
+		message := ""
+		logger := LoggerFunc(func(_ string, _ ...interface{}) {
+			called = true
+			message = "test logger called"
+		})
+
+		e := WithConfig(Config{
+			Reporter: newMockReporter(t),
+			Printers: []Printer{
+				NewCompactPrinter(logger),
+			},
+		})
+
+		e.GET("").Expect()
+
+		assert.True(t, called)
+		assert.Contains(t, message, "test logger called")
 	})
 }
