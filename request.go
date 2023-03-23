@@ -243,7 +243,7 @@ func (r *Request) WithName(name string) *Request {
 //
 //	req := NewRequestC(config, "GET", "/path")
 //	req.WithMatcher(func (resp *httpexpect.Response) {
-//	    resp.Header("API-Version").NotEmpty()
+//		resp.Header("API-Version").NotEmpty()
 //	})
 func (r *Request) WithMatcher(matcher func(*Response)) *Request {
 	opChain := r.chain.enter("WithMatcher()")
@@ -322,7 +322,7 @@ func (r *Request) WithTransformer(transformer func(*http.Request)) *Request {
 //	req := NewRequestC(config, "GET", "/path")
 //	req.WithClient(&http.Client{
 //	  Transport: &http.Transport{
-//	    DisableCompression: true,
+//		DisableCompression: true,
 //	  },
 //	})
 func (r *Request) WithClient(client Client) *Request {
@@ -900,8 +900,8 @@ func (r *Request) WithPath(key string, value interface{}) *Request {
 // Example:
 //
 //	type MyPath struct {
-//	    Login string `path:"user"`
-//	    Repo  string
+//		Login string `path:"user"`
+//		Repo  string
 //	}
 //
 //	req := NewRequestC(config, "POST", "/repos/{user}/{repo}")
@@ -1055,8 +1055,8 @@ func (r *Request) WithQuery(key string, value interface{}) *Request {
 // Example:
 //
 //	type MyURL struct {
-//	    A int    `url:"a"`
-//	    B string `url:"b"`
+//		A int    `url:"a"`
+//		B string `url:"b"`
 //	}
 //
 //	req := NewRequestC(config, "PUT", "http://example.com/path")
@@ -1223,7 +1223,7 @@ func (r *Request) WithURL(urlStr string) *Request {
 //
 //	req := NewRequestC(config, "PUT", "http://example.com/path")
 //	req.WithHeaders(map[string]string{
-//	    "Content-Type": "application/json",
+//		"Content-Type": "application/json",
 //	})
 func (r *Request) WithHeaders(headers map[string]string) *Request {
 	opChain := r.chain.enter("WithHeaders()")
@@ -1297,8 +1297,8 @@ func (r *Request) withHeader(k, v string) {
 //
 //	req := NewRequestC(config, "PUT", "http://example.com/path")
 //	req.WithCookies(map[string]string{
-//	    "foo": "aa",
-//	    "bar": "bb",
+//		"foo": "aa",
+//		"bar": "bb",
 //	})
 func (r *Request) WithCookies(cookies map[string]string) *Request {
 	opChain := r.chain.enter("WithCookies()")
@@ -1565,7 +1565,7 @@ func (r *Request) WithText(s string) *Request {
 // Example:
 //
 //	type MyJSON struct {
-//	    Foo int `json:"foo"`
+//		Foo int `json:"foo"`
 //	}
 //
 //	req := NewRequestC(config, "PUT", "http://example.com/path")
@@ -1622,7 +1622,7 @@ func (r *Request) WithJSON(object interface{}) *Request {
 // Example:
 //
 //	type MyForm struct {
-//	    Foo int `form:"foo"`
+//		Foo int `form:"foo"`
 //	}
 //
 //	req := NewRequestC(config, "PUT", "http://example.com/path")
@@ -1705,7 +1705,7 @@ func (r *Request) WithForm(object interface{}) *Request {
 //
 //	req := NewRequestC(config, "PUT", "http://example.com/path")
 //	req.WithFormField("foo", 123).
-//	    WithFormField("bar", 456)
+//		WithFormField("bar", 456)
 func (r *Request) WithFormField(key string, value interface{}) *Request {
 	opChain := r.chain.enter("WithFormField()")
 	defer opChain.leave()
@@ -1765,7 +1765,7 @@ func (r *Request) WithFormField(key string, value interface{}) *Request {
 //	req := NewRequestC(config, "PUT", "http://example.com/path")
 //	fh, _ := os.Open("./john.png")
 //	req.WithMultipart().
-//	    WithFile("avatar", "john.png", fh)
+//		WithFile("avatar", "john.png", fh)
 //	fh.Close()
 func (r *Request) WithFile(key, path string, reader ...io.Reader) *Request {
 	opChain := r.chain.enter("WithFile()")
@@ -1806,7 +1806,7 @@ func (r *Request) WithFile(key, path string, reader ...io.Reader) *Request {
 //	fh, _ := os.Open("./john.png")
 //	b, _ := ioutil.ReadAll(fh)
 //	req.WithMultipart().
-//	    WithFileBytes("avatar", "john.png", b)
+//		WithFileBytes("avatar", "john.png", b)
 //	fh.Close()
 func (r *Request) WithFileBytes(key, path string, data []byte) *Request {
 	opChain := r.chain.enter("WithFileBytes()")
@@ -1902,7 +1902,7 @@ func (r *Request) withFile(
 //
 //	req := NewRequestC(config, "PUT", "http://example.com/path")
 //	req.WithMultipart().
-//	    WithForm(map[string]interface{}{"foo": 123})
+//		WithForm(map[string]interface{}{"foo": 123})
 func (r *Request) WithMultipart() *Request {
 	opChain := r.chain.enter("WithMultipart()")
 	defer opChain.leave()

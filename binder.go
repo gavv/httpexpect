@@ -32,7 +32,7 @@ type Binder struct {
 // Example:
 //
 //	client := &http.Client{
-//	    Transport: NewBinder(handler),
+//		Transport: NewBinder(handler),
 //	}
 func NewBinder(handler http.Handler) Binder {
 	return Binder{Handler: handler}
@@ -104,7 +104,7 @@ type FastBinder struct {
 // Example:
 //
 //	client := &http.Client{
-//	    Transport: NewFastBinder(fasthandler),
+//		Transport: NewFastBinder(fasthandler),
 //	}
 func NewFastBinder(handler fasthttp.RequestHandler) FastBinder {
 	return FastBinder{Handler: handler}
