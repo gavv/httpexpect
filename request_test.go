@@ -1422,10 +1422,10 @@ func TestRequest_Redirects(t *testing.T) {
 
 	t.Run("DontFollowRedirects", func(t *testing.T) {
 		t.Run("no body", func(t *testing.T) {
-			tp := newMockTransportRedirect(t).
-				WithAssertFn(func(r *http.Request) bool {
-					return assert.Equal(t, http.NoBody, r.Body)
-				})
+			tp := newMockTransportRedirect()
+			tp.assertFn = func(r *http.Request) {
+				assert.Equal(t, http.NoBody, r.Body)
+			}
 
 			client := &http.Client{
 				Transport: tp,
@@ -1460,14 +1460,12 @@ func TestRequest_Redirects(t *testing.T) {
 		})
 
 		t.Run("has body", func(t *testing.T) {
-			tp := newMockTransportRedirect(t).
-				WithAssertFn(func(r *http.Request) bool {
-					b, err := ioutil.ReadAll(r.Body)
-					assert.NoError(t, err)
-					assert.Equal(t, "test body", string(b))
-
-					return true
-				})
+			tp := newMockTransportRedirect()
+			tp.assertFn = func(r *http.Request) {
+				b, err := ioutil.ReadAll(r.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			}
 
 			client := &http.Client{
 				Transport: tp,
@@ -1505,10 +1503,11 @@ func TestRequest_Redirects(t *testing.T) {
 
 	t.Run("FollowAllRedirects", func(t *testing.T) {
 		t.Run("no body", func(t *testing.T) {
-			tp := newMockTransportRedirect(t).
-				WithAssertFn(func(r *http.Request) bool {
-					return assert.Equal(t, http.NoBody, r.Body)
-				}).WithMaxRedirect(1)
+			tp := newMockTransportRedirect()
+			tp.maxRedirect = 1
+			tp.assertFn = func(r *http.Request) {
+				assert.Equal(t, http.NoBody, r.Body)
+			}
 
 			client := &http.Client{
 				Transport: tp,
@@ -1549,10 +1548,10 @@ func TestRequest_Redirects(t *testing.T) {
 		})
 
 		t.Run("no body, too many redirects", func(t *testing.T) {
-			tp := newMockTransportRedirect(t).
-				WithAssertFn(func(r *http.Request) bool {
-					return assert.Equal(t, http.NoBody, r.Body)
-				})
+			tp := newMockTransportRedirect()
+			tp.assertFn = func(r *http.Request) {
+				assert.Equal(t, http.NoBody, r.Body)
+			}
 
 			client := &http.Client{
 				Transport: tp,
@@ -1592,14 +1591,13 @@ func TestRequest_Redirects(t *testing.T) {
 		})
 
 		t.Run("has body", func(t *testing.T) {
-			tp := newMockTransportRedirect(t).
-				WithAssertFn(func(r *http.Request) bool {
-					b, err := ioutil.ReadAll(r.Body)
-					assert.NoError(t, err)
-					assert.Equal(t, "test body", string(b))
-
-					return true
-				}).WithMaxRedirect(1)
+			tp := newMockTransportRedirect()
+			tp.maxRedirect = 1
+			tp.assertFn = func(r *http.Request) {
+				b, err := ioutil.ReadAll(r.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			}
 
 			client := &http.Client{
 				Transport: tp,
@@ -1643,14 +1641,12 @@ func TestRequest_Redirects(t *testing.T) {
 		})
 
 		t.Run("has body, too many redirects", func(t *testing.T) {
-			tp := newMockTransportRedirect(t).
-				WithAssertFn(func(r *http.Request) bool {
-					b, err := ioutil.ReadAll(r.Body)
-					assert.NoError(t, err)
-					assert.Equal(t, "test body", string(b))
-
-					return true
-				})
+			tp := newMockTransportRedirect()
+			tp.assertFn = func(r *http.Request) {
+				b, err := ioutil.ReadAll(r.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			}
 
 			client := &http.Client{
 				Transport: tp,
@@ -1695,10 +1691,11 @@ func TestRequest_Redirects(t *testing.T) {
 
 	t.Run("FollowRedirectsWithoutBody", func(t *testing.T) {
 		t.Run("no body", func(t *testing.T) {
-			tp := newMockTransportRedirect(t).
-				WithAssertFn(func(r *http.Request) bool {
-					return assert.Contains(t, []interface{}{nil, http.NoBody}, r.Body)
-				}).WithMaxRedirect(1)
+			tp := newMockTransportRedirect()
+			tp.maxRedirect = 1
+			tp.assertFn = func(r *http.Request) {
+				assert.Contains(t, []interface{}{nil, http.NoBody}, r.Body)
+			}
 
 			client := &http.Client{
 				Transport: tp,
@@ -1737,10 +1734,10 @@ func TestRequest_Redirects(t *testing.T) {
 		})
 
 		t.Run("no body, too many redirects", func(t *testing.T) {
-			tp := newMockTransportRedirect(t).
-				WithAssertFn(func(r *http.Request) bool {
-					return assert.Contains(t, []interface{}{nil, http.NoBody}, r.Body)
-				})
+			tp := newMockTransportRedirect()
+			tp.assertFn = func(r *http.Request) {
+				assert.Contains(t, []interface{}{nil, http.NoBody}, r.Body)
+			}
 
 			client := &http.Client{
 				Transport: tp,
@@ -1778,14 +1775,13 @@ func TestRequest_Redirects(t *testing.T) {
 		})
 
 		t.Run("has body, status permanent redirect", func(t *testing.T) {
-			tp := newMockTransportRedirect(t).
-				WithAssertFn(func(r *http.Request) bool {
-					b, err := ioutil.ReadAll(r.Body)
-					assert.NoError(t, err)
-					assert.Equal(t, "test body", string(b))
-
-					return true
-				}).WithMaxRedirect(1)
+			tp := newMockTransportRedirect()
+			tp.maxRedirect = 1
+			tp.assertFn = func(r *http.Request) {
+				b, err := ioutil.ReadAll(r.Body)
+				assert.NoError(t, err)
+				assert.Equal(t, "test body", string(b))
+			}
 
 			client := &http.Client{
 				Transport: tp,
@@ -1826,25 +1822,23 @@ func TestRequest_Redirects(t *testing.T) {
 
 		t.Run("has body, status moved permanently",
 			func(t *testing.T) {
-				tp := newMockTransportRedirect(t).
-					WithAssertFn(func(r *http.Request) bool {
-						if r.URL.String() == "/url" {
-							assert.Equal(t, r.Method, http.MethodPut)
+				tp := newMockTransportRedirect()
+				tp.maxRedirect = 1
+				tp.redirectHTTPStatusCode = http.StatusMovedPermanently
+				tp.assertFn = func(r *http.Request) {
+					if r.URL.String() == "/url" {
+						assert.Equal(t, r.Method, http.MethodPut)
 
-							b, err := ioutil.ReadAll(r.Body)
-							assert.NoError(t, err)
-							assert.Equal(t, "test body", string(b))
-						} else if r.URL.String() == "/redirect" {
-							assert.Equal(t, r.Method, http.MethodGet)
-							assert.Nil(t, r.Body)
-						} else {
-							t.Fatalf("invalid request URL")
-						}
-
-						return true
-					}).
-					WithRedirectHTTPStatusCode(http.StatusMovedPermanently).
-					WithMaxRedirect(1)
+						b, err := ioutil.ReadAll(r.Body)
+						assert.NoError(t, err)
+						assert.Equal(t, "test body", string(b))
+					} else if r.URL.String() == "/redirect" {
+						assert.Equal(t, r.Method, http.MethodGet)
+						assert.Nil(t, r.Body)
+					} else {
+						t.Fatalf("invalid request URL")
+					}
+				}
 
 				client := &http.Client{
 					Transport: tp,
@@ -1884,23 +1878,22 @@ func TestRequest_Redirects(t *testing.T) {
 			})
 
 		t.Run("has body, status moved permanently, too many redirects", func(t *testing.T) {
-			tp := newMockTransportRedirect(t).
-				WithAssertFn(func(r *http.Request) bool {
-					if r.URL.String() == "/url" {
-						assert.Equal(t, r.Method, http.MethodPut)
+			tp := newMockTransportRedirect()
+			tp.redirectHTTPStatusCode = http.StatusMovedPermanently
+			tp.assertFn = func(r *http.Request) {
+				if r.URL.String() == "/url" {
+					assert.Equal(t, r.Method, http.MethodPut)
 
-						b, err := ioutil.ReadAll(r.Body)
-						assert.NoError(t, err)
-						assert.Equal(t, "test body", string(b))
-					} else if r.URL.String() == "/redirect" {
-						assert.Equal(t, r.Method, http.MethodGet)
-						assert.Nil(t, r.Body)
-					} else {
-						t.Fatalf("invalid request URL")
-					}
-
-					return true
-				}).WithRedirectHTTPStatusCode(http.StatusMovedPermanently)
+					b, err := ioutil.ReadAll(r.Body)
+					assert.NoError(t, err)
+					assert.Equal(t, "test body", string(b))
+				} else if r.URL.String() == "/redirect" {
+					assert.Equal(t, r.Method, http.MethodGet)
+					assert.Nil(t, r.Body)
+				} else {
+					t.Fatalf("invalid request URL")
+				}
+			}
 
 			client := &http.Client{
 				Transport: tp,
