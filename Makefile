@@ -10,6 +10,9 @@ gen:
 
 fmt:
 	gofmt -s -w . ./_examples
+ifneq (,$(findstring GNU,$(shell sed --version)))
+	sed -r -e ':loop' -e 's,^(//\t+)    ,\1\t,g' -e 't loop' -i *.go _examples/*.go
+endif
 
 build:
 	go build

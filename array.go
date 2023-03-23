@@ -353,7 +353,7 @@ func (a *Array) Last() *Value {
 //	array := NewArray(t, strings)
 //
 //	for index, value := range array.Iter() {
-//	    value.String().IsEqual(strings[index])
+//		value.String().IsEqual(strings[index])
 //	}
 func (a *Array) Iter() []Value {
 	opChain := a.chain.enter("Iter()")

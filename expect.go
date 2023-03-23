@@ -352,7 +352,7 @@ func (f ClientFunc) Do(req *http.Request) (*http.Response, error) {
 // Example:
 //
 //	e := httpexpect.WithConfig(httpexpect.Config{
-//	    WebsocketDialer: httpexpect.NewWebsocketDialer(myHandler),
+//		WebsocketDialer: httpexpect.NewWebsocketDialer(myHandler),
 //	})
 type WebsocketDialer interface {
 	// Dial establishes new Websocket connection and returns response
@@ -472,11 +472,11 @@ func New(t LoggerReporter, baseURL string) *Expect {
 // Example:
 //
 //	func TestSomething(t *testing.T) {
-//	    e := httpexpect.Default(t, "http://example.com/")
+//		e := httpexpect.Default(t, "http://example.com/")
 //
-//	    e.GET("/path").
-//	        Expect().
-//	        Status(http.StatusOK)
+//		e.GET("/path").
+//			Expect().
+//			Status(http.StatusOK)
 //	}
 func Default(t TestingTB, baseURL string) *Expect {
 	return WithConfig(Config{
@@ -497,23 +497,23 @@ func Default(t TestingTB, baseURL string) *Expect {
 // Example:
 //
 //	func TestSomething(t *testing.T) {
-//	    e := httpexpect.WithConfig(httpexpect.Config{
-//	        TestName: t.Name(),
-//	        BaseURL:  "http://example.com/",
-//	        Client:   &http.Client{
-//	            Transport: httpexpect.NewBinder(myHandler()),
-//	            Jar:       httpexpect.NewCookieJar(),
-//	        },
-//	        Reporter: httpexpect.NewAssertReporter(t),
-//	        Printers: []httpexpect.Printer{
-//	            httpexpect.NewCurlPrinter(t),
-//	            httpexpect.NewDebugPrinter(t, true)
-//	        },
-//	    })
+//		e := httpexpect.WithConfig(httpexpect.Config{
+//			TestName: t.Name(),
+//			BaseURL:  "http://example.com/",
+//			Client:   &http.Client{
+//				Transport: httpexpect.NewBinder(myHandler()),
+//				Jar:       httpexpect.NewCookieJar(),
+//			},
+//			Reporter: httpexpect.NewAssertReporter(t),
+//			Printers: []httpexpect.Printer{
+//				httpexpect.NewCurlPrinter(t),
+//				httpexpect.NewDebugPrinter(t, true)
+//			},
+//		})
 //
-//	    e.GET("/path").
-//	        Expect().
-//	        Status(http.StatusOK)
+//		e.GET("/path").
+//			Expect().
+//			Status(http.StatusOK)
 //	}
 func WithConfig(config Config) *Expect {
 	config = config.withDefaults()
@@ -557,11 +557,11 @@ func (e *Expect) clone() *Expect {
 //	e := httpexpect.Default(t, "http://example.com")
 //
 //	token := e.POST("/login").WithForm(Login{"ford", "betelgeuse7"}).
-//	    Expect().
-//	    Status(http.StatusOK).JSON().Object().Value("token").String().Raw()
+//		Expect().
+//		Status(http.StatusOK).JSON().Object().Value("token").String().Raw()
 //
 //	auth := e.Builder(func (req *httpexpect.Request) {
-//	    req.WithHeader("Authorization", "Bearer "+token)
+//		req.WithHeader("Authorization", "Bearer "+token)
 //	})
 //
 //	auth.GET("/restricted").
@@ -583,16 +583,16 @@ func (e *Expect) Builder(builder func(*Request)) *Expect {
 //	 e := httpexpect.Default(t, "http://example.com")
 //
 //	 m := e.Matcher(func (resp *httpexpect.Response) {
-//	     resp.Header("API-Version").NotEmpty()
+//		 resp.Header("API-Version").NotEmpty()
 //	 })
 //
 //	 m.GET("/some-path").
-//		    Expect().
-//		    Status(http.StatusOK)
+//			Expect().
+//			Status(http.StatusOK)
 //
 //	 m.GET("/bad-path").
-//		    Expect().
-//		    Status(http.StatusNotFound)
+//			Expect().
+//			Status(http.StatusNotFound)
 func (e *Expect) Matcher(matcher func(*Response)) *Expect {
 	ret := e.clone()
 
