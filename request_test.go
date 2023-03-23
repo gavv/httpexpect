@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"mime"
 	"mime/multipart"
@@ -505,137 +504,127 @@ func TestRequest_URLConcatenate(t *testing.T) {
 
 	reporter := NewAssertReporter(t)
 
-	config1 := Config{
-		BaseURL:  "",
-		Client:   client,
-		Reporter: reporter,
-	}
-
-	config2 := Config{
-		BaseURL:  "http://example.com",
-		Client:   client,
-		Reporter: reporter,
-	}
-
-	config3 := Config{
-		BaseURL:  "http://example.com/",
-		Client:   client,
-		Reporter: reporter,
-	}
-
-	const (
-		pathArgType1 = iota
-		pathArgType2 = iota
-	)
-
-	requests := []struct {
-		name        string
-		config      Config
-		method      string
-		path        string
-		pathArg     string
-		pathArgType int
-		fullURL     string
+	cases := []struct {
+		name      string
+		baseURL   string
+		method    string
+		path      string
+		pathArgs  []interface{}
+		setupFunc func(request *Request)
+		fullURL   string
 	}{
 		{
-			name:    "config1_empty_url_and_empty_path",
-			config:  config1,
+			name:    "empty url, empty path",
+			baseURL: "",
 			method:  "GET",
 			path:    "",
 			fullURL: "",
 		},
 		{
-			name:    "config2_empty_path",
-			config:  config2,
+			name:    "empty path",
+			baseURL: "http://example.com",
 			method:  "GET",
 			path:    "",
 			fullURL: "http://example.com",
 		},
 		{
-			name:    "config3_empty_path",
-			config:  config3,
+			name:    "slash empty path",
+			baseURL: "http://example.com/",
 			method:  "GET",
 			path:    "",
 			fullURL: "http://example.com/",
 		},
 		{
-			name:    "config2_with_path",
-			config:  config2,
+			name:    "with path",
+			baseURL: "http://example.com",
 			method:  "GET",
 			path:    "path",
 			fullURL: "http://example.com/path",
 		},
 		{
-			name:    "config2_with_path_without_slash",
-			config:  config2,
+			name:    "with path, without slash",
+			baseURL: "http://example.com",
 			method:  "GET",
 			path:    "path",
 			fullURL: "http://example.com/path",
 		},
 		{
-			name:    "config2_with_path_with_slash",
-			config:  config2,
+			name:    "with path, with slash",
+			baseURL: "http://example.com",
 			method:  "GET",
 			path:    "/path",
 			fullURL: "http://example.com/path",
 		},
 		{
-			name:    "config3_with_path_without_slash",
-			config:  config3,
+			name:    "with path, without slash",
+			baseURL: "http://example.com/",
 			method:  "GET",
 			path:    "path",
 			fullURL: "http://example.com/path",
 		},
 		{
-			name:    "config3_with_path_with_slash",
-			config:  config3,
+			name:    "with path, with slash",
+			baseURL: "http://example.com/",
 			method:  "GET",
 			path:    "/path",
 			fullURL: "http://example.com/path",
 		},
 		{
-			name:        "config3_with_path_arg_and_path_type_1",
-			config:      config3,
-			method:      "GET",
-			path:        "arg",
-			pathArg:     "/path",
-			pathArgType: pathArgType1,
-			fullURL:     "http://example.com/path",
+			name:     "with path arg",
+			baseURL:  "http://example.com/",
+			method:   "GET",
+			path:     "{arg}",
+			pathArgs: []interface{}{"/path"},
+			fullURL:  "http://example.com/path",
 		},
 		{
-			name:        "config3_with_path_arg_and_path_type_2",
-			config:      config3,
-			method:      "GET",
-			path:        "arg",
-			pathArg:     "/path",
-			pathArgType: pathArgType2,
-			fullURL:     "http://example.com/path",
+			name:    "with setup func",
+			baseURL: "http://example.com/",
+			method:  "GET",
+			path:    "{arg}",
+			setupFunc: func(req *Request) {
+				req.WithPath("arg", "/path")
+			},
+			fullURL: "http://example.com/path",
 		},
 	}
 
-	for _, tt := range requests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
 			var req *Request
 
-			if tt.pathArg != "" && tt.pathArgType == pathArgType1 {
+			if tc.pathArgs != nil {
 				req = NewRequestC(
-					tt.config,
-					tt.method,
-					fmt.Sprintf("{%s}", tt.path),
-					tt.pathArg,
+					Config{
+						BaseURL:  tc.baseURL,
+						Client:   client,
+						Reporter: reporter,
+					},
+					tc.method,
+					tc.path,
+					tc.pathArgs...,
 				)
-			} else if tt.pathArg != "" && tt.pathArgType == pathArgType2 {
+			} else if tc.setupFunc != nil {
 				req = NewRequestC(
-					tt.config,
-					tt.method,
-					fmt.Sprintf("{%s}", tt.path),
-				).WithPath(tt.path, tt.pathArg)
+					Config{
+						BaseURL:  tc.baseURL,
+						Client:   client,
+						Reporter: reporter,
+					},
+					tc.method,
+					tc.path,
+				)
+				tc.setupFunc(req)
 			} else {
-				req = NewRequestC(tt.config, tt.method, tt.path)
+				req = NewRequestC(Config{
+					BaseURL:  tc.baseURL,
+					Client:   client,
+					Reporter: reporter,
+				}, tc.method, tc.path)
 			}
 
 			req.Expect().chain.assertNotFailed(t)
-			assert.Equal(t, tt.fullURL, req.httpReq.URL.String())
+			assert.Equal(t, tc.fullURL, req.httpReq.URL.String())
 
 		})
 	}
@@ -646,86 +635,78 @@ func TestRequest_URLOverwrite(t *testing.T) {
 
 	reporter := NewAssertReporter(t)
 
-	config1 := Config{
-		BaseURL:  "",
-		Client:   client,
-		Reporter: reporter,
-	}
-
-	config2 := Config{
-		BaseURL:  "http://foobar.com",
-		Client:   client,
-		Reporter: reporter,
-	}
-
-	requests := []struct {
+	cases := []struct {
 		name    string
-		config  Config
+		baseURL string
 		method  string
 		path    string
 		fullURL string
 	}{
 		{
-			name:    "config1_without_slash_on_url",
-			config:  config1,
+			name:    "without slash on url",
+			baseURL: "",
 			method:  "GET",
 			path:    "/path",
 			fullURL: "http://example.com",
 		},
 		{
-			name:    "config1_without_slash_on_url_and_path",
-			config:  config1,
+			name:    "without slash on url and path",
+			baseURL: "",
 			method:  "GET",
 			path:    "path",
 			fullURL: "http://example.com",
 		},
 		{
-			name:    "config1_with_slash_on_url_and_path",
-			config:  config1,
+			name:    "with slash on url and path",
+			baseURL: "",
 			method:  "GET",
 			path:    "/path",
 			fullURL: "http://example.com/",
 		},
 		{
-			name:    "config1_without_slash_on_path",
-			config:  config1,
+			name:    "without slash on path",
+			baseURL: "",
 			method:  "GET",
 			path:    "path",
 			fullURL: "http://example.com/",
 		},
 		{
-			name:    "config2_without_slash_on_url",
-			config:  config2,
+			name:    "without slash on url",
+			baseURL: "http://foobar.com",
 			method:  "GET",
 			path:    "/path",
 			fullURL: "http://example.com",
 		},
 		{
-			name:    "config2_without_slash_on_url_and_path",
-			config:  config2,
+			name:    "without slash on url and path",
+			baseURL: "http://foobar.com",
 			method:  "GET",
 			path:    "path",
 			fullURL: "http://example.com",
 		},
 		{
-			name:    "config2_with_slash_on_url_and_path",
-			config:  config2,
+			name:    "with slash on url and path",
+			baseURL: "http://foobar.com",
 			method:  "GET",
 			path:    "/path",
 			fullURL: "http://example.com/",
 		},
 		{
-			name:    "config2_without_slash_on_path",
-			config:  config2,
+			name:    "without slash on path",
+			baseURL: "http://foobar.com",
 			method:  "GET",
 			path:    "path",
 			fullURL: "http://example.com/",
 		},
 	}
 
-	for _, tt := range requests {
+	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			request := NewRequestC(tt.config, tt.method, tt.path).WithURL(tt.fullURL)
+			request := NewRequestC(Config{
+				BaseURL:  tt.baseURL,
+				Client:   client,
+				Reporter: reporter,
+			}, tt.method, tt.path).WithURL(tt.fullURL)
 			request.Expect().chain.assertNotFailed(t)
 			assert.Equal(t, "http://example.com/path", client.req.URL.String())
 		})
@@ -960,8 +941,7 @@ func TestRequest_BasicAuth(t *testing.T) {
 }
 
 func TestRequest_Host(t *testing.T) {
-
-	requests := []struct {
+	cases := []struct {
 		name      string
 		method    string
 		path      string
@@ -969,20 +949,20 @@ func TestRequest_Host(t *testing.T) {
 		secondURL string
 	}{
 		{
-			name:   "with_host_without_host_header",
+			name:   "with host, without host header",
 			method: "GET",
 			path:   "url",
 			url:    "example.com",
 		},
 		{
-			name:      "with_header_before_with_host",
+			name:      "with header before with host",
 			method:    "GET",
 			path:      "url",
 			url:       "example1.com",
 			secondURL: "example2.com",
 		},
 		{
-			name:      "with_host_before_with_header",
+			name:      "with host before with header",
 			method:    "GET",
 			path:      "url",
 			url:       "example2.com",
@@ -990,7 +970,7 @@ func TestRequest_Host(t *testing.T) {
 		},
 	}
 
-	for _, tt := range requests {
+	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
 			client := &mockClient{}
 			reporter := newMockReporter(t)
@@ -1005,7 +985,7 @@ func TestRequest_Host(t *testing.T) {
 			req.WithHost(tt.url)
 
 			if tt.secondURL != "" {
-				req.withHeader("HOST", tt.secondURL)
+				req.WithHeader("HOST", tt.secondURL)
 			}
 
 			resp := req.Expect()
