@@ -641,7 +641,7 @@ func TestArray_IsEqualUnordered(t *testing.T) {
 		value.chain.clearFailed()
 
 		value.NotEqualUnordered([]interface{}{123})
-		value.chain.assertFailed(t)
+		value.chain.assertNotFailed(t)
 		value.chain.clearFailed()
 	})
 
