@@ -322,105 +322,105 @@ func TestNumber_InDelta(t *testing.T) {
 func TestNumber_InDeltaRelative(t *testing.T) {
 	cases := map[string]struct {
 		number           float64
-		reference        float64
+		value            float64
 		delta            float64
 		expectInDelta    bool
 		expectNotInDelta bool
 	}{
-		"larger reference in delta range": {
+		"larger value in delta range": {
 			number:           1234.5,
-			reference:        1271.5,
+			value:            1271.5,
 			delta:            0.03,
 			expectInDelta:    true,
 			expectNotInDelta: false,
 		},
-		"smaller reference in delta range": {
+		"smaller value in delta range": {
 			number:           1234.5,
-			reference:        1221.1,
+			value:            1221.1,
 			delta:            0.03,
 			expectInDelta:    true,
 			expectNotInDelta: false,
 		},
-		"larger reference not in delta range": {
+		"larger value not in delta range": {
 			number:           1234.5,
-			reference:        1259.1,
+			value:            1259.1,
 			delta:            0.01,
 			expectInDelta:    false,
 			expectNotInDelta: true,
 		},
-		"smaller reference not in delta range": {
+		"smaller value not in delta range": {
 			number:           1234.5,
-			reference:        1209.8,
+			value:            1209.8,
 			delta:            0.01,
 			expectInDelta:    false,
 			expectNotInDelta: true,
 		},
 		"delta is negative": {
 			number:           1234.5,
-			reference:        1234.0,
+			value:            1234.0,
 			delta:            -0.01,
 			expectInDelta:    false,
 			expectNotInDelta: false,
 		},
 		"target is NaN": {
 			number:           math.NaN(),
-			reference:        1234.0,
+			value:            1234.0,
 			delta:            0.01,
 			expectInDelta:    false,
 			expectNotInDelta: false,
 		},
-		"reference is NaN": {
+		"value is NaN": {
 			number:           1234.5,
-			reference:        math.NaN(),
+			value:            math.NaN(),
 			delta:            0.01,
 			expectInDelta:    false,
 			expectNotInDelta: false,
 		},
 		"delta is NaN": {
 			number:           1234.5,
-			reference:        1234.0,
+			value:            1234.0,
 			delta:            math.NaN(),
 			expectInDelta:    false,
 			expectNotInDelta: false,
 		},
 		"+Inf delta in range": {
 			number:           1234.5,
-			reference:        1234.0,
+			value:            1234.0,
 			delta:            math.Inf(1),
 			expectInDelta:    true,
 			expectNotInDelta: false,
 		},
 		"+Inf target": {
 			number:           math.Inf(1),
-			reference:        1234.0,
+			value:            1234.0,
 			delta:            0,
 			expectInDelta:    false,
 			expectNotInDelta: false,
 		},
-		"-Inf reference": {
+		"-Inf value": {
 			number:           1234.5,
-			reference:        math.Inf(-1),
+			value:            math.Inf(-1),
 			delta:            0.01,
 			expectInDelta:    false,
 			expectNotInDelta: true,
 		},
 		"target is 0 in delta range": {
 			number:           0,
-			reference:        0,
+			value:            0,
 			delta:            0,
 			expectInDelta:    true,
 			expectNotInDelta: false,
 		},
-		"reference is 0 in delta range": {
+		"value is 0 in delta range": {
 			number:           0.05,
-			reference:        0,
+			value:            0,
 			delta:            1.0,
 			expectInDelta:    true,
 			expectNotInDelta: false,
 		},
-		"reference is 0 not in delta range": {
+		"value is 0 not in delta range": {
 			number:           0.01,
-			reference:        0,
+			value:            0,
 			delta:            0.01,
 			expectInDelta:    false,
 			expectNotInDelta: true,
@@ -433,21 +433,21 @@ func TestNumber_InDeltaRelative(t *testing.T) {
 
 			if instance.expectInDelta {
 				NewNumber(reporter, instance.number).
-					InDeltaRelative(instance.reference, instance.delta).
+					InDeltaRelative(instance.value, instance.delta).
 					chain.assertNotFailed(t)
 			} else {
 				NewNumber(reporter, instance.number).
-					InDeltaRelative(instance.reference, instance.delta).
+					InDeltaRelative(instance.value, instance.delta).
 					chain.assertFailed(t)
 			}
 
 			if instance.expectNotInDelta {
 				NewNumber(reporter, instance.number).
-					NotInDeltaRelative(instance.reference, instance.delta).
+					NotInDeltaRelative(instance.value, instance.delta).
 					chain.assertNotFailed(t)
 			} else {
 				NewNumber(reporter, instance.number).
-					NotInDeltaRelative(instance.reference, instance.delta).
+					NotInDeltaRelative(instance.value, instance.delta).
 					chain.assertFailed(t)
 			}
 		})
