@@ -103,7 +103,7 @@ func TestE2EReport_LineWidth(t *testing.T) {
 		below int
 	}
 
-	tests := []struct {
+	cases := []struct {
 		name        string
 		formatter   *DefaultFormatter
 		longestLine widthRange
@@ -146,15 +146,19 @@ func TestE2EReport_LineWidth(t *testing.T) {
 			},
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
 			rep := &recordingReporter{}
+
+			fmt := tc.formatter
+			fmt.DisableRequests = true
+			fmt.DisableResponses = true
 
 			e := WithConfig(Config{
 				TestName: "TestExample",
 				BaseURL:  server.URL,
 				AssertionHandler: &DefaultAssertionHandler{
-					Formatter: tt.formatter,
+					Formatter: fmt,
 					Reporter:  rep,
 				},
 			})
@@ -181,11 +185,11 @@ func TestE2EReport_LineWidth(t *testing.T) {
 				}
 			}
 
-			if tt.longestLine.above != 0 {
-				assert.GreaterOrEqual(t, len(actualLongestLine), tt.longestLine.above)
+			if tc.longestLine.above != 0 {
+				assert.GreaterOrEqual(t, len(actualLongestLine), tc.longestLine.above)
 			}
-			if tt.longestLine.below != 0 {
-				assert.LessOrEqual(t, len(actualLongestLine), tt.longestLine.below)
+			if tc.longestLine.below != 0 {
+				assert.LessOrEqual(t, len(actualLongestLine), tc.longestLine.below)
 			}
 		})
 	}
@@ -310,4 +314,103 @@ func TestE2EReport_CustomTemplate(t *testing.T) {
 				Expect()
 		})
 	})
+}
+
+func TestE2EReport_RequestResponse(t *testing.T) {
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"foo":{"bar":{"baz":[1,2,3]}}}`))
+	})
+
+	server := httptest.NewServer(mux)
+	defer server.Close()
+
+	cases := []struct {
+		name      string
+		formatter *DefaultFormatter
+	}{
+		{
+			name: "request and response enabled",
+			formatter: &DefaultFormatter{
+				DisableRequests:  false,
+				DisableResponses: false,
+			},
+		},
+		{
+			name: "request enabled, response disabled",
+			formatter: &DefaultFormatter{
+				DisableRequests:  false,
+				DisableResponses: true,
+			},
+		},
+		{
+			name: "request disabled, response enabled",
+			formatter: &DefaultFormatter{
+				DisableRequests:  true,
+				DisableResponses: false,
+			},
+		},
+		{
+			name: "request and response disabled",
+			formatter: &DefaultFormatter{
+				DisableRequests:  true,
+				DisableResponses: true,
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			rep := &recordingReporter{}
+
+			e := WithConfig(Config{
+				TestName: "TestExample",
+				BaseURL:  server.URL,
+				AssertionHandler: &DefaultAssertionHandler{
+					Formatter: tc.formatter,
+					Reporter:  rep,
+				},
+			})
+
+			e.GET("/test").
+				Expect().
+				JSON().
+				Object().
+				Value("foo").
+				Object().
+				Value("bar").
+				Object().
+				Value("baz").
+				Array().
+				NotContains(1)
+
+			logs := rep.recorded
+
+			if tc.formatter.DisableRequests {
+				assert.NotContains(t,
+					logs,
+					"GET /test HTTP/1.1",
+					"expected log output not to contain request information")
+			} else {
+				assert.Contains(t,
+					logs,
+					"GET /test HTTP/1.1",
+					"expected log output to contain request information")
+			}
+
+			if tc.formatter.DisableResponses {
+				assert.NotContains(t,
+					logs,
+					"HTTP/1.1 200 OK",
+					"expected log output not to contain response information")
+			} else {
+				assert.Contains(t,
+					logs,
+					"HTTP/1.1 200 OK", "expected log output to contain response information")
+			}
+		})
+	}
 }
