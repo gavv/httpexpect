@@ -464,21 +464,28 @@ func (c *chain) clearFailed() {
 // Report failure unless chain is not failed.
 // For tests.
 func (c *chain) assertNotFailed(t testing.TB) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	assert.Equal(t, chainFlags(0), c.flags&flagFailed,
-		"expected: chain is not failed")
+	c.assertOK(t, true)
 }
 
 // Report failure unless chain is failed.
 // For tests.
 func (c *chain) assertFailed(t testing.TB) {
+	c.assertOK(t, false)
+}
+
+// Report failure unless chain has specified state.
+// For tests.
+func (c *chain) assertOK(t testing.TB, expectOK bool) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	assert.NotEqual(t, chainFlags(0), c.flags&flagFailed,
-		"expected: chain is failed")
+	if expectOK {
+		assert.Equal(t, chainFlags(0), c.flags&flagFailed,
+			"expected: chain is ok")
+	} else {
+		assert.NotEqual(t, chainFlags(0), c.flags&flagFailed,
+			"expected: chain is not ok")
+	}
 }
 
 // Report failure unless chain has specified flags.
