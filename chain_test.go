@@ -8,6 +8,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func testFailure() AssertionFailure {
+	return AssertionFailure{
+		Type: AssertOperation,
+		Errors: []error{
+			errors.New("test_error"),
+		},
+	}
+}
+
 func TestChain_Basic(t *testing.T) {
 	t.Run("clone", func(t *testing.T) {
 		chain1 := newMockChain(t)
@@ -43,7 +52,7 @@ func TestChain_Basic(t *testing.T) {
 		chain1 := newMockChain(t)
 		chain2 := chain1.enter("test")
 
-		chain2.fail(mockFailure())
+		chain2.fail(testFailure())
 
 		assert.False(t, chain1.failed())
 		assert.True(t, chain2.failed())
@@ -72,7 +81,7 @@ func TestChain_Basic(t *testing.T) {
 		chain3 := chain2.clone()
 		chain3e := chain3.enter("test")
 
-		chain3e.fail(mockFailure())
+		chain3e.fail(testFailure())
 
 		assert.False(t, chain1.failed())
 		assert.False(t, chain2.failed())
@@ -114,8 +123,8 @@ func TestChain_Basic(t *testing.T) {
 		chain3 := chain2.clone()
 		chain3e := chain3.enter("test")
 
-		chain2e.fail(mockFailure())
-		chain3e.fail(mockFailure())
+		chain2e.fail(testFailure())
+		chain3e.fail(testFailure())
 
 		assert.False(t, chain1.failed())
 		assert.False(t, chain2.failed())
@@ -164,7 +173,7 @@ func TestChain_Basic(t *testing.T) {
 		chain3 := chain2.clone()
 		chain3e := chain3.enter("test")
 
-		chain3e.fail(mockFailure())
+		chain3e.fail(testFailure())
 
 		assert.False(t, chain1.failed())
 		assert.False(t, chain2.failed())
@@ -206,7 +215,7 @@ func TestChain_Basic(t *testing.T) {
 		chain3.setRoot()
 		chain3e := chain3.enter("test")
 
-		chain3e.fail(mockFailure())
+		chain3e.fail(testFailure())
 
 		assert.False(t, chain1.failed())
 		assert.False(t, chain2.failed())
@@ -355,7 +364,7 @@ func TestChain_Panics(t *testing.T) {
 		chain := newChainWithDefaults("test", newMockReporter(t))
 
 		assert.Panics(t, func() {
-			chain.fail(mockFailure())
+			chain.fail(testFailure())
 		})
 	})
 
@@ -366,7 +375,7 @@ func TestChain_Panics(t *testing.T) {
 		opChain.leave()
 
 		assert.Panics(t, func() {
-			opChain.fail(mockFailure())
+			opChain.fail(testFailure())
 		})
 	})
 
@@ -606,7 +615,7 @@ func TestChain_Handler(t *testing.T) {
 		}.withDefaults())
 
 		opChain := chain.enter("test")
-		opChain.fail(mockFailure())
+		opChain.fail(testFailure())
 		opChain.leave()
 
 		assert.NotNil(t, handler.ctx)
@@ -623,7 +632,7 @@ func TestChain_Severity(t *testing.T) {
 		}.withDefaults())
 
 		opChain := chain.enter("test")
-		opChain.fail(mockFailure())
+		opChain.fail(testFailure())
 		opChain.leave()
 
 		assert.NotNil(t, handler.failure)
@@ -640,7 +649,7 @@ func TestChain_Severity(t *testing.T) {
 		chain.setSeverity(SeverityError)
 
 		opChain := chain.enter("test")
-		opChain.fail(mockFailure())
+		opChain.fail(testFailure())
 		opChain.leave()
 
 		assert.NotNil(t, handler.failure)
@@ -657,7 +666,7 @@ func TestChain_Severity(t *testing.T) {
 		chain.setSeverity(SeverityLog)
 
 		opChain := chain.enter("test")
-		opChain.fail(mockFailure())
+		opChain.fail(testFailure())
 		opChain.leave()
 
 		assert.NotNil(t, handler.failure)

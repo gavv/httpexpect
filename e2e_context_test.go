@@ -91,35 +91,32 @@ func (h *waitHandler) waitForRetries() {
 	<-h.retriesDone
 }
 
-// the expErrorSuppressor is used as a Reporter to suppress an expected error
-type expErrorSuppressor struct {
-	backend          *assert.Assertions
-	formatter        Formatter
-	isExpError       isExpErrorFunc
-	expErrorOccurred bool
+type errorSuppressor struct {
+	backend               *assert.Assertions
+	formatter             Formatter
+	isExpectedError       func(err error) bool
+	expectedErrorOccurred bool
 }
 
-type isExpErrorFunc func(err error) bool
-
-func newExpErrorSuppressor(
-	t assert.TestingT, isExpectedErr isExpErrorFunc,
-) *expErrorSuppressor {
-	return &expErrorSuppressor{
-		backend:    assert.New(t),
-		formatter:  &DefaultFormatter{},
-		isExpError: isExpectedErr,
+func newErrorSuppressor(
+	t assert.TestingT, isExpectedError func(err error) bool,
+) *errorSuppressor {
+	return &errorSuppressor{
+		backend:         assert.New(t),
+		formatter:       &DefaultFormatter{},
+		isExpectedError: isExpectedError,
 	}
 }
 
-func (h *expErrorSuppressor) Success(ctx *AssertionContext) {
+func (h *errorSuppressor) Success(ctx *AssertionContext) {
 }
 
-func (h *expErrorSuppressor) Failure(
+func (h *errorSuppressor) Failure(
 	ctx *AssertionContext, failure *AssertionFailure,
 ) {
 	for _, e := range failure.Errors {
-		if h.isExpError(e) {
-			h.expErrorOccurred = true
+		if h.isExpectedError(e) {
+			h.expectedErrorOccurred = true
 			return
 		}
 	}
@@ -136,7 +133,7 @@ func TestE2EContext_GlobalCancel(t *testing.T) {
 	defer cancel()
 
 	// config with context cancel suppression
-	suppressor := newExpErrorSuppressor(t,
+	suppressor := newErrorSuppressor(t,
 		func(err error) bool {
 			return errors.Is(err, context.Canceled)
 		})
@@ -159,7 +156,7 @@ func TestE2EContext_GlobalCancel(t *testing.T) {
 	<-done
 
 	// expected error should occur
-	assert.True(t, suppressor.expErrorOccurred)
+	assert.True(t, suppressor.expectedErrorOccurred)
 }
 
 func TestE2EContext_GlobalWithRetries(t *testing.T) {
@@ -178,7 +175,7 @@ func TestE2EContext_GlobalWithRetries(t *testing.T) {
 	defer cancel()
 
 	// config with context cancel suppression
-	suppressor := newExpErrorSuppressor(t,
+	suppressor := newErrorSuppressor(t,
 		func(err error) bool {
 			return errors.Is(err, context.Canceled)
 		})
@@ -203,7 +200,7 @@ func TestE2EContext_GlobalWithRetries(t *testing.T) {
 	<-done
 
 	// expected error should occur
-	assert.True(t, suppressor.expErrorOccurred)
+	assert.True(t, suppressor.expectedErrorOccurred)
 	// first call + retries to fail should be the call count
 	assert.Equal(t, retriesToFail+1, handler.getCallCount())
 }
@@ -218,7 +215,7 @@ func TestE2EContext_PerRequest(t *testing.T) {
 	defer cancel()
 
 	// config with context cancel suppression
-	suppressor := newExpErrorSuppressor(t,
+	suppressor := newErrorSuppressor(t,
 		func(err error) bool {
 			return errors.Is(err, context.Canceled)
 		})
@@ -241,7 +238,7 @@ func TestE2EContext_PerRequest(t *testing.T) {
 	<-done
 
 	// expected error should occur
-	assert.True(t, suppressor.expErrorOccurred)
+	assert.True(t, suppressor.expectedErrorOccurred)
 }
 
 func TestE2EContext_PerRequestWithRetries(t *testing.T) {
@@ -260,7 +257,7 @@ func TestE2EContext_PerRequestWithRetries(t *testing.T) {
 	defer cancel()
 
 	// config with context cancel suppression
-	suppressor := newExpErrorSuppressor(t,
+	suppressor := newErrorSuppressor(t,
 		func(err error) bool {
 			return errors.Is(err, context.Canceled)
 		})
@@ -285,7 +282,7 @@ func TestE2EContext_PerRequestWithRetries(t *testing.T) {
 	<-done
 
 	// expected error should occur
-	assert.True(t, suppressor.expErrorOccurred)
+	assert.True(t, suppressor.expectedErrorOccurred)
 	// first call + retries to fail should be the call count
 	assert.Equal(t, retriesToFail+1, handler.getCallCount())
 }
@@ -301,7 +298,7 @@ func TestE2EContext_PerRequestWithTimeout(t *testing.T) {
 	defer server.Close()
 
 	// config with context deadline expected error
-	suppressor := newExpErrorSuppressor(t,
+	suppressor := newErrorSuppressor(t,
 		func(err error) bool {
 			return strings.Contains(err.Error(), "context deadline exceeded")
 		})
@@ -315,7 +312,7 @@ func TestE2EContext_PerRequestWithTimeout(t *testing.T) {
 		Expect()
 
 	// expected error should occur
-	assert.True(t, suppressor.expErrorOccurred)
+	assert.True(t, suppressor.expectedErrorOccurred)
 }
 
 func TestE2EContext_PerRequestWithTimeoutAndRetries(t *testing.T) {
@@ -360,7 +357,7 @@ func TestE2EContext_PerRequestWithTimeoutCancelledByTimeout(t *testing.T) {
 	defer cancel()
 
 	// config with context deadline expected error
-	suppressor := newExpErrorSuppressor(t,
+	suppressor := newErrorSuppressor(t,
 		func(err error) bool {
 			return strings.Contains(err.Error(), "context deadline exceeded")
 		})
@@ -375,7 +372,7 @@ func TestE2EContext_PerRequestWithTimeoutCancelledByTimeout(t *testing.T) {
 		Expect()
 
 	// expected error should occur
-	assert.True(t, suppressor.expErrorOccurred)
+	assert.True(t, suppressor.expectedErrorOccurred)
 }
 
 func TestE2EContext_PerRequestWithTimeoutCancelledByContext(t *testing.T) {
@@ -388,7 +385,7 @@ func TestE2EContext_PerRequestWithTimeoutCancelledByContext(t *testing.T) {
 	defer cancel()
 
 	// config with context deadline expected error
-	suppressor := newExpErrorSuppressor(t,
+	suppressor := newErrorSuppressor(t,
 		func(err error) bool {
 			return errors.Is(err, context.Canceled)
 		})
@@ -412,7 +409,7 @@ func TestE2EContext_PerRequestWithTimeoutCancelledByContext(t *testing.T) {
 	<-done
 
 	// expected error should occur
-	assert.True(t, suppressor.expErrorOccurred)
+	assert.True(t, suppressor.expectedErrorOccurred)
 }
 
 func TestE2EContext_PerRequestRetry(t *testing.T) {
@@ -480,7 +477,7 @@ func TestE2EContext_PerRequestRetry(t *testing.T) {
 		}()
 
 		// Config with context cancelled error
-		suppressor := newExpErrorSuppressor(t,
+		suppressor := newErrorSuppressor(t,
 			func(err error) bool {
 				return errors.Is(err, context.Canceled)
 			})
@@ -500,6 +497,6 @@ func TestE2EContext_PerRequestRetry(t *testing.T) {
 		<-isCtxCancelled
 
 		assert.GreaterOrEqual(t, callCount, 2)
-		assert.True(t, suppressor.expErrorOccurred)
+		assert.True(t, suppressor.expectedErrorOccurred)
 	})
 }

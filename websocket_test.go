@@ -1,7 +1,7 @@
 package httpexpect
 
 import (
-	"fmt"
+	"errors"
 	"testing"
 	"time"
 
@@ -49,7 +49,7 @@ func TestWebsocket_FailedChain(t *testing.T) {
 func TestWebsocket_Alias(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	value := NewWebsocketC(Config{Reporter: reporter}, newMockWebsocketConn())
+	value := NewWebsocketC(Config{Reporter: reporter}, &mockWebsocketConn{})
 	assert.Equal(t, []string{"Websocket()"}, value.chain.context.Path)
 	assert.Equal(t, []string{"Websocket()"}, value.chain.context.AliasedPath)
 
@@ -99,7 +99,7 @@ func TestWebsocket_MockConn(t *testing.T) {
 	}
 
 	t.Run("getters", func(t *testing.T) {
-		ws := NewWebsocketC(config, newMockWebsocketConn())
+		ws := NewWebsocketC(config, &mockWebsocketConn{})
 
 		if ws.Conn() == nil {
 			t.Fatal("Conn returned nil")
@@ -117,7 +117,7 @@ func TestWebsocket_MockConn(t *testing.T) {
 	})
 
 	t.Run("expect", func(t *testing.T) {
-		ws := NewWebsocketC(config, newMockWebsocketConn())
+		ws := NewWebsocketC(config, &mockWebsocketConn{})
 
 		msg := ws.Expect()
 		msg.chain.assertNotFailed(t)
@@ -141,7 +141,7 @@ func TestWebsocket_Expect(t *testing.T) {
 			name: "success",
 			args: args{
 				wsPreSteps: noWsPreSteps,
-				wsConn:     newMockWebsocketConn(),
+				wsConn:     &mockWebsocketConn{},
 			},
 			assertOk: true,
 		},
@@ -149,8 +149,9 @@ func TestWebsocket_Expect(t *testing.T) {
 			name: "fail to read message from conn",
 			args: args{
 				wsPreSteps: noWsPreSteps,
-				wsConn: newMockWebsocketConn().WithReadMsgError(
-					fmt.Errorf("failed to read message")),
+				wsConn: &mockWebsocketConn{
+					readMsgErr: errors.New("failed to read message"),
+				},
 			},
 			assertOk: false,
 		},
@@ -159,7 +160,7 @@ func TestWebsocket_Expect(t *testing.T) {
 			args: args{
 				failedChain: true,
 				wsPreSteps:  noWsPreSteps,
-				wsConn:      newMockWebsocketConn(),
+				wsConn:      &mockWebsocketConn{},
 			},
 			assertOk: false,
 		},
@@ -177,7 +178,7 @@ func TestWebsocket_Expect(t *testing.T) {
 				wsPreSteps: func(ws *Websocket) {
 					ws.Disconnect()
 				},
-				wsConn: newMockWebsocketConn(),
+				wsConn: &mockWebsocketConn{},
 			},
 			assertOk: false,
 		},
@@ -185,8 +186,9 @@ func TestWebsocket_Expect(t *testing.T) {
 			name: "failed to set read deadline",
 			args: args{
 				wsPreSteps: noWsPreSteps,
-				wsConn: newMockWebsocketConn().WithReadDlError(
-					fmt.Errorf("failed to set read deadline")),
+				wsConn: &mockWebsocketConn{
+					readDlError: errors.New("failed to set read deadline"),
+				},
 			},
 			assertOk: false,
 		},
@@ -230,7 +232,7 @@ func TestWebsocket_Close(t *testing.T) {
 			name: "success",
 			args: args{
 				wsPreSteps: noWsPreSteps,
-				wsConn:     newMockWebsocketConn(),
+				wsConn:     &mockWebsocketConn{},
 				closeCode:  []int{websocket.CloseNormalClosure},
 			},
 			assertOk: true,
@@ -250,7 +252,7 @@ func TestWebsocket_Close(t *testing.T) {
 				wsPreSteps: func(ws *Websocket) {
 					ws.Disconnect()
 				},
-				wsConn:    newMockWebsocketConn(),
+				wsConn:    &mockWebsocketConn{},
 				closeCode: []int{websocket.CloseNormalClosure},
 			},
 			assertOk: false,
@@ -259,7 +261,7 @@ func TestWebsocket_Close(t *testing.T) {
 			name: "too many close codes",
 			args: args{
 				wsPreSteps: noWsPreSteps,
-				wsConn:     newMockWebsocketConn(),
+				wsConn:     &mockWebsocketConn{},
 				closeCode:  []int{websocket.CloseNormalClosure, websocket.CloseAbnormalClosure},
 			},
 			assertOk: false,
@@ -302,7 +304,7 @@ func TestWebsocket_CloseWithBytes(t *testing.T) {
 			name: "success",
 			args: args{
 				wsPreSteps: noWsPreSteps,
-				wsConn:     newMockWebsocketConn(),
+				wsConn:     &mockWebsocketConn{},
 				content:    []byte("connection closed..."),
 				closeCode:  []int{websocket.CloseNormalClosure},
 			},
@@ -324,7 +326,7 @@ func TestWebsocket_CloseWithBytes(t *testing.T) {
 				wsPreSteps: func(ws *Websocket) {
 					ws.Disconnect()
 				},
-				wsConn:    newMockWebsocketConn(),
+				wsConn:    &mockWebsocketConn{},
 				content:   []byte("connection closed..."),
 				closeCode: []int{websocket.CloseNormalClosure},
 			},
@@ -334,7 +336,7 @@ func TestWebsocket_CloseWithBytes(t *testing.T) {
 			name: "too many close codes",
 			args: args{
 				wsPreSteps: noWsPreSteps,
-				wsConn:     newMockWebsocketConn(),
+				wsConn:     &mockWebsocketConn{},
 				content:    []byte("connection closed..."),
 				closeCode:  []int{websocket.CloseNormalClosure, websocket.CloseAbnormalClosure},
 			},
@@ -378,7 +380,7 @@ func TestWebsocket_CloseWithText(t *testing.T) {
 			name: "success",
 			args: args{
 				wsPreSteps: noWsPreSteps,
-				wsConn:     newMockWebsocketConn(),
+				wsConn:     &mockWebsocketConn{},
 				content:    "connection closed...",
 				closeCode:  []int{websocket.CloseNormalClosure},
 			},
@@ -400,7 +402,7 @@ func TestWebsocket_CloseWithText(t *testing.T) {
 				wsPreSteps: func(ws *Websocket) {
 					ws.Disconnect()
 				},
-				wsConn:    newMockWebsocketConn(),
+				wsConn:    &mockWebsocketConn{},
 				content:   "connection closed...",
 				closeCode: []int{websocket.CloseNormalClosure},
 			},
@@ -410,7 +412,7 @@ func TestWebsocket_CloseWithText(t *testing.T) {
 			name: "too many close codes",
 			args: args{
 				wsPreSteps: noWsPreSteps,
-				wsConn:     newMockWebsocketConn(),
+				wsConn:     &mockWebsocketConn{},
 				content:    "connection closed...",
 				closeCode:  []int{websocket.CloseNormalClosure, websocket.CloseAbnormalClosure},
 			},
@@ -454,7 +456,7 @@ func TestWebsocket_CloseWithJSON(t *testing.T) {
 			name: "success",
 			args: args{
 				wsPreSteps: noWsPreSteps,
-				wsConn:     newMockWebsocketConn(),
+				wsConn:     &mockWebsocketConn{},
 				content: map[string]string{
 					"msg": "connection closing...",
 				},
@@ -480,7 +482,7 @@ func TestWebsocket_CloseWithJSON(t *testing.T) {
 				wsPreSteps: func(ws *Websocket) {
 					ws.Disconnect()
 				},
-				wsConn: newMockWebsocketConn(),
+				wsConn: &mockWebsocketConn{},
 				content: map[string]string{
 					"msg": "connection closing...",
 				},
@@ -492,7 +494,7 @@ func TestWebsocket_CloseWithJSON(t *testing.T) {
 			name: "too many close codes",
 			args: args{
 				wsPreSteps: noWsPreSteps,
-				wsConn:     newMockWebsocketConn(),
+				wsConn:     &mockWebsocketConn{},
 				content: map[string]string{
 					"msg": "connection closing...",
 				},
@@ -504,7 +506,7 @@ func TestWebsocket_CloseWithJSON(t *testing.T) {
 			name: "marshall failed",
 			args: args{
 				wsPreSteps: noWsPreSteps,
-				wsConn:     newMockWebsocketConn(),
+				wsConn:     &mockWebsocketConn{},
 				content:    make(chan int),
 				closeCode:  []int{websocket.CloseNormalClosure},
 			},
@@ -549,7 +551,7 @@ func TestWebsocket_WriteMessage(t *testing.T) {
 			name: "text message success",
 			args: args{
 				wsPreSteps: noWsPreSteps,
-				wsConn:     newMockWebsocketConn(),
+				wsConn:     &mockWebsocketConn{},
 				typ:        websocket.TextMessage,
 				content:    []byte("random message..."),
 				closeCode:  []int{},
@@ -570,7 +572,7 @@ func TestWebsocket_WriteMessage(t *testing.T) {
 		{
 			name: "text message fail unusable",
 			args: args{
-				wsConn: newMockWebsocketConn(),
+				wsConn: &mockWebsocketConn{},
 				wsPreSteps: func(ws *Websocket) {
 					ws.Disconnect()
 				},
@@ -583,8 +585,9 @@ func TestWebsocket_WriteMessage(t *testing.T) {
 		{
 			name: "text message failed to set write deadline",
 			args: args{
-				wsConn: newMockWebsocketConn().WithWriteDlError(
-					fmt.Errorf("failed to set write deadline")),
+				wsConn: &mockWebsocketConn{
+					writeDlError: errors.New("failed to set write deadline"),
+				},
 				wsPreSteps: noWsPreSteps,
 				typ:        websocket.TextMessage,
 				content:    []byte("random message..."),
@@ -595,8 +598,9 @@ func TestWebsocket_WriteMessage(t *testing.T) {
 		{
 			name: "text message failed to write to conn",
 			args: args{
-				wsConn: newMockWebsocketConn().WithWriteMsgError(
-					fmt.Errorf("failed to write message to conn")),
+				wsConn: &mockWebsocketConn{
+					writeMsgErr: errors.New("failed to write message to conn"),
+				},
 				wsPreSteps: noWsPreSteps,
 				typ:        websocket.TextMessage,
 				content:    []byte("random message..."),
@@ -608,7 +612,7 @@ func TestWebsocket_WriteMessage(t *testing.T) {
 			name: "text binary message success",
 			args: args{
 				wsPreSteps: noWsPreSteps,
-				wsConn:     newMockWebsocketConn(),
+				wsConn:     &mockWebsocketConn{},
 				typ:        websocket.BinaryMessage,
 				content:    []byte("random message..."),
 				closeCode:  []int{},
@@ -618,7 +622,7 @@ func TestWebsocket_WriteMessage(t *testing.T) {
 		{
 			name: "close message success",
 			args: args{
-				wsConn:     newMockWebsocketConn(),
+				wsConn:     &mockWebsocketConn{},
 				wsPreSteps: noWsPreSteps,
 				typ:        websocket.CloseMessage,
 				content:    []byte("closing message..."),
@@ -629,7 +633,7 @@ func TestWebsocket_WriteMessage(t *testing.T) {
 		{
 			name: "close message too many close codes",
 			args: args{
-				wsConn:     newMockWebsocketConn(),
+				wsConn:     &mockWebsocketConn{},
 				wsPreSteps: noWsPreSteps,
 				typ:        websocket.CloseMessage,
 				content:    []byte("closing message..."),
@@ -643,7 +647,7 @@ func TestWebsocket_WriteMessage(t *testing.T) {
 		{
 			name: "unsupported message type",
 			args: args{
-				wsConn:     newMockWebsocketConn(),
+				wsConn:     &mockWebsocketConn{},
 				wsPreSteps: noWsPreSteps,
 				typ:        websocket.CloseMandatoryExtension,
 				content:    []byte("unsupported message..."),
@@ -688,7 +692,7 @@ func TestWebsocket_WriteBytesBinary(t *testing.T) {
 			name: "success",
 			args: args{
 				wsPreSteps: noWsPreSteps,
-				wsConn:     newMockWebsocketConn(),
+				wsConn:     &mockWebsocketConn{},
 				content:    []byte("random message..."),
 			},
 			assertOk: true,
@@ -705,7 +709,7 @@ func TestWebsocket_WriteBytesBinary(t *testing.T) {
 		{
 			name: "websocket unusable",
 			args: args{
-				wsConn: newMockWebsocketConn(),
+				wsConn: &mockWebsocketConn{},
 				wsPreSteps: func(ws *Websocket) {
 					ws.Disconnect()
 				},
@@ -750,7 +754,7 @@ func TestWebsocket_WriteBytesText(t *testing.T) {
 			name: "success",
 			args: args{
 				wsPreSteps: noWsPreSteps,
-				wsConn:     newMockWebsocketConn(),
+				wsConn:     &mockWebsocketConn{},
 				content:    []byte("random message..."),
 			},
 			assertOk: true,
@@ -767,7 +771,7 @@ func TestWebsocket_WriteBytesText(t *testing.T) {
 		{
 			name: "websocket unusable",
 			args: args{
-				wsConn: newMockWebsocketConn(),
+				wsConn: &mockWebsocketConn{},
 				wsPreSteps: func(ws *Websocket) {
 					ws.Disconnect()
 				},
@@ -812,7 +816,7 @@ func TestWebsocket_WriteText(t *testing.T) {
 			name: "success",
 			args: args{
 				wsPreSteps: noWsPreSteps,
-				wsConn:     newMockWebsocketConn(),
+				wsConn:     &mockWebsocketConn{},
 				content:    "random message...",
 			},
 			assertOk: true,
@@ -829,7 +833,7 @@ func TestWebsocket_WriteText(t *testing.T) {
 		{
 			name: "websocket unusable",
 			args: args{
-				wsConn: newMockWebsocketConn(),
+				wsConn: &mockWebsocketConn{},
 				wsPreSteps: func(ws *Websocket) {
 					ws.Disconnect()
 				},
@@ -874,7 +878,7 @@ func TestWebsocket_WriteJSON(t *testing.T) {
 			name: "success",
 			args: args{
 				wsPreSteps: noWsPreSteps,
-				wsConn:     newMockWebsocketConn(),
+				wsConn:     &mockWebsocketConn{},
 				content: map[string]string{
 					"msg": "random message",
 				},
@@ -895,7 +899,7 @@ func TestWebsocket_WriteJSON(t *testing.T) {
 		{
 			name: "websocket unusable",
 			args: args{
-				wsConn: newMockWebsocketConn(),
+				wsConn: &mockWebsocketConn{},
 				wsPreSteps: func(ws *Websocket) {
 					ws.Disconnect()
 				},
@@ -908,7 +912,7 @@ func TestWebsocket_WriteJSON(t *testing.T) {
 		{
 			name: "JSON marshal failed",
 			args: args{
-				wsConn:     newMockWebsocketConn(),
+				wsConn:     &mockWebsocketConn{},
 				wsPreSteps: noWsPreSteps,
 				content:    make(chan int),
 			},
@@ -938,9 +942,13 @@ func TestWebsocket_WriteJSON(t *testing.T) {
 
 func TestWebsocket_Subprotocol(t *testing.T) {
 	subproto := "soap"
-	ws := NewWebsocketC(Config{
-		Reporter: NewAssertReporter(t),
-	}, newMockWebsocketConn().WithSubprotocol(subproto))
+	ws := NewWebsocketC(
+		Config{
+			Reporter: NewAssertReporter(t),
+		},
+		&mockWebsocketConn{
+			subprotocol: subproto,
+		})
 
 	ws.Subprotocol()
 
@@ -961,15 +969,16 @@ func TestWebsocket_SetReadDeadline(t *testing.T) {
 		{
 			name: "success",
 			args: args{
-				wsConn: newMockWebsocketConn(),
+				wsConn: &mockWebsocketConn{},
 			},
 			assertOk: true,
 		},
 		{
 			name: "conn.SetReadDeadline error",
 			args: args{
-				wsConn: newMockWebsocketConn().WithReadDlError(
-					fmt.Errorf("Failed to set read deadline")),
+				wsConn: &mockWebsocketConn{
+					readDlError: errors.New("Failed to set read deadline"),
+				},
 			},
 			assertOk: false,
 		},
@@ -1008,15 +1017,16 @@ func TestWebsocket_SetWriteDeadline(t *testing.T) {
 		{
 			name: "success",
 			args: args{
-				wsConn: newMockWebsocketConn(),
+				wsConn: &mockWebsocketConn{},
 			},
 			assertOk: true,
 		},
 		{
 			name: "conn.SetReadDeadline error",
 			args: args{
-				wsConn: newMockWebsocketConn().WithWriteDlError(
-					fmt.Errorf("Failed to set read deadline")),
+				wsConn: &mockWebsocketConn{
+					writeDlError: errors.New("Failed to set read deadline"),
+				},
 			},
 			assertOk: false,
 		},
@@ -1055,7 +1065,7 @@ func TestWebsocket_Disconnect(t *testing.T) {
 		{
 			name: "success",
 			args: args{
-				wsConn: newMockWebsocketConn(),
+				wsConn: &mockWebsocketConn{},
 			},
 			assertOk: true,
 		},
@@ -1069,8 +1079,9 @@ func TestWebsocket_Disconnect(t *testing.T) {
 		{
 			name: "conn close failed",
 			args: args{
-				wsConn: newMockWebsocketConn().WithCloseError(
-					fmt.Errorf("failed to close ws conn")),
+				wsConn: &mockWebsocketConn{
+					closeError: errors.New("failed to close ws conn"),
+				},
 			},
 			assertOk: false,
 		},
@@ -1101,7 +1112,7 @@ func TestWebsocket_PrintRead(t *testing.T) {
 		Reporter: reporter,
 		Printers: []Printer{printer},
 	}.withDefaults()
-	ws := newWebsocket(newMockChain(t), config, newMockWebsocketConn())
+	ws := newWebsocket(newMockChain(t), config, &mockWebsocketConn{})
 
 	ws.printRead(websocket.CloseMessage,
 		[]byte("random message"),
@@ -1119,7 +1130,7 @@ func TestWebsocket_PrintWrite(t *testing.T) {
 		Reporter: reporter,
 		Printers: []Printer{printer},
 	}.withDefaults()
-	ws := newWebsocket(newMockChain(t), config, newMockWebsocketConn())
+	ws := newWebsocket(newMockChain(t), config, &mockWebsocketConn{})
 
 	ws.printWrite(websocket.CloseMessage,
 		[]byte("random message"),
