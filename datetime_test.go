@@ -258,24 +258,14 @@ func TestDateTime_InRange(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			if tc.expectInRange {
-				NewDateTime(reporter, tc.value).
-					InRange(tc.min, tc.max).
-					chain.assertNotFailed(t)
-			} else {
-				NewDateTime(reporter, tc.value).
-					InRange(tc.min, tc.max).
-					chain.assertFailed(t)
-			}
-			if tc.expectNotInRange {
-				NewDateTime(reporter, tc.value).
-					NotInRange(tc.min, tc.max).
-					chain.assertNotFailed(t)
-			} else {
-				NewDateTime(reporter, tc.value).
-					NotInRange(tc.min, tc.max).
-					chain.assertFailed(t)
-			}
+			NewDateTime(reporter, tc.value).
+				InRange(tc.min, tc.max).
+				chain.assertOK(t, tc.expectInRange)
+
+			NewDateTime(reporter, tc.value).
+				NotInRange(tc.min, tc.max).
+				chain.assertOK(t, tc.expectNotInRange)
+
 		})
 	}
 }
@@ -315,24 +305,14 @@ func TestDateTime_InList(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			if tc.expectInList {
-				NewDateTime(reporter, tc.value).
-					InList(tc.list...).
-					chain.assertNotFailed(t)
-			} else {
-				NewDateTime(reporter, tc.value).
-					InList(tc.list...).
-					chain.assertFailed(t)
-			}
-			if tc.expectNotInList {
-				NewDateTime(reporter, tc.value).
-					NotInList(tc.list...).
-					chain.assertNotFailed(t)
-			} else {
-				NewDateTime(reporter, tc.value).
-					NotInList(tc.list...).
-					chain.assertFailed(t)
-			}
+			NewDateTime(reporter, tc.value).
+				InList(tc.list...).
+				chain.assertOK(t, tc.expectInList)
+
+			NewDateTime(reporter, tc.value).
+				NotInList(tc.list...).
+				chain.assertOK(t, tc.expectNotInList)
+
 		})
 	}
 }

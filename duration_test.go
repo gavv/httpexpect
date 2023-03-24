@@ -236,24 +236,14 @@ func TestDuration_InRange(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			if tc.expectInRange {
-				NewDuration(reporter, tc.value).
-					InRange(tc.min, tc.max).
-					chain.assertNotFailed(t)
-			} else {
-				NewDuration(reporter, tc.value).
-					InRange(tc.min, tc.max).
-					chain.assertFailed(t)
-			}
-			if tc.expectNotInRange {
-				NewDuration(reporter, tc.value).
-					NotInRange(tc.min, tc.max).
-					chain.assertNotFailed(t)
-			} else {
-				NewDuration(reporter, tc.value).
-					NotInRange(tc.min, tc.max).
-					chain.assertFailed(t)
-			}
+			NewDuration(reporter, tc.value).
+				InRange(tc.min, tc.max).
+				chain.assertOK(t, tc.expectInRange)
+
+			NewDuration(reporter, tc.value).
+				NotInRange(tc.min, tc.max).
+				chain.assertOK(t, tc.expectNotInRange)
+
 		})
 	}
 }
@@ -293,24 +283,14 @@ func TestDuration_InList(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			if tc.expectInList {
-				NewDuration(reporter, tc.value).
-					InList(tc.list...).
-					chain.assertNotFailed(t)
-			} else {
-				NewDuration(reporter, tc.value).
-					InList(tc.list...).
-					chain.assertFailed(t)
-			}
-			if tc.expectNotInList {
-				NewDuration(reporter, tc.value).
-					NotInList(tc.list...).
-					chain.assertNotFailed(t)
-			} else {
-				NewDuration(reporter, tc.value).
-					NotInList(tc.list...).
-					chain.assertFailed(t)
-			}
+			NewDuration(reporter, tc.value).
+				InList(tc.list...).
+				chain.assertOK(t, tc.expectInList)
+
+			NewDuration(reporter, tc.value).
+				NotInList(tc.list...).
+				chain.assertOK(t, tc.expectNotInList)
+
 		})
 	}
 }
