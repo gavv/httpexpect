@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"io/ioutil"
 	"mime"
 	"mime/multipart"
@@ -1237,6 +1238,74 @@ func TestRequest_BodyMultipart(t *testing.T) {
 		eof, _ := reader.NextPart()
 		assert.Nil(t, eof)
 	})
+
+	t.Run("multipart writer error", func(t *testing.T) {
+		cases := []struct {
+			name     string
+			reqFn    func() *Request
+			assertFn func(t *testing.T, req *Request)
+		}{
+			{
+				name: "with form",
+				reqFn: func() *Request {
+					req := NewRequestC(config, "POST", "url")
+					req.multipartFn = func(w io.Writer) *multipart.Writer {
+						return multipart.NewWriter(&failureWriter{})
+					}
+					req.WithMultipart()
+					req.WithForm(map[string]string{"foo": "bar"})
+					return req
+				},
+				assertFn: func(t *testing.T, req *Request) {
+					req.chain.assertFailed(t)
+				},
+			},
+			{
+				name: "with form field",
+				reqFn: func() *Request {
+					req := NewRequestC(config, "POST", "url")
+					req.multipartFn = func(w io.Writer) *multipart.Writer {
+						return multipart.NewWriter(&failureWriter{})
+					}
+					req.WithMultipart()
+					req.WithFormField("foo", "bar")
+					return req
+				},
+				assertFn: func(t *testing.T, req *Request) {
+					req.chain.assertFailed(t)
+				},
+			},
+			{
+				name: "with file",
+				reqFn: func() *Request {
+					req := NewRequestC(config, "POST", "url")
+					req.multipartFn = func(w io.Writer) *multipart.Writer {
+						return multipart.NewWriter(&failureWriter{})
+					}
+					req.WithMultipart()
+					req.WithFile("foo", "bar", strings.NewReader("baz"))
+					return req
+				},
+				assertFn: func(t *testing.T, req *Request) {
+					req.chain.assertFailed(t)
+				},
+			},
+		}
+
+		for _, tc := range cases {
+			req := tc.reqFn()
+			tc.assertFn(t, req)
+		}
+	})
+}
+
+// failureWriter is a writer that returns error.
+type failureWriter struct {
+	io.Writer
+}
+
+func (fw *failureWriter) Write(p []byte) (n int, err error) {
+	return 0, errors.New("failed to write")
 }
 
 func TestRequest_BodyJSON(t *testing.T) {
