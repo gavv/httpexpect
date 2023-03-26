@@ -1293,8 +1293,10 @@ func TestRequest_BodyMultipart(t *testing.T) {
 		}
 
 		for _, tc := range cases {
-			req := tc.reqFn()
-			tc.assertFn(t, req)
+			t.Run(tc.name, func(t *testing.T) {
+				req := tc.reqFn()
+				tc.assertFn(t, req)
+			})
 		}
 	})
 }
