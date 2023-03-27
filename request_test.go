@@ -1641,7 +1641,9 @@ func TestRequest_Websocket(t *testing.T) {
 			Reporter:        newMockReporter(t),
 			WebsocketDialer: dialer,
 		}
-		req := NewRequestC(config, "GET", "url").WithJSON("").WithWebsocketUpgrade()
+		req := NewRequestC(config, "GET", "url").
+			WithJSON("").
+			WithWebsocketUpgrade()
 		req.Expect().chain.assertFailed(t)
 	})
 }
