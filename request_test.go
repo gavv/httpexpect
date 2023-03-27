@@ -1583,7 +1583,9 @@ func TestRequest_ContentType(t *testing.T) {
 
 func TestRequest_Websocket(t *testing.T) {
 	t.Run("ws successful", func(t *testing.T) {
-		dialer := WebsocketDialerFunc(func(url string, _ http.Header) (*websocket.Conn, *http.Response, error) {
+		dialer := WebsocketDialerFunc(func(
+			url string, _ http.Header,
+		) (*websocket.Conn, *http.Response, error) {
 			u, err := neturl.Parse(url)
 			if err != nil || u.Scheme != "ws" {
 				return nil, nil, err
@@ -1599,7 +1601,9 @@ func TestRequest_Websocket(t *testing.T) {
 		req.Expect().chain.assertNotFailed(t)
 	})
 	t.Run("wss successful", func(t *testing.T) {
-		dialer := WebsocketDialerFunc(func(url string, _ http.Header) (*websocket.Conn, *http.Response, error) {
+		dialer := WebsocketDialerFunc(func(
+			url string, _ http.Header,
+		) (*websocket.Conn, *http.Response, error) {
 			u, err := neturl.Parse(url)
 			if err != nil || u.Scheme != "wss" {
 				return nil, nil, err
@@ -1615,7 +1619,9 @@ func TestRequest_Websocket(t *testing.T) {
 		req.Expect().chain.assertNotFailed(t)
 	})
 	t.Run("bad handshake", func(t *testing.T) {
-		dialer := WebsocketDialerFunc(func(_ string, _ http.Header) (*websocket.Conn, *http.Response, error) {
+		dialer := WebsocketDialerFunc(func(
+			_ string, _ http.Header,
+		) (*websocket.Conn, *http.Response, error) {
 			return &websocket.Conn{}, &http.Response{}, websocket.ErrBadHandshake
 		})
 		config := Config{
@@ -1626,7 +1632,9 @@ func TestRequest_Websocket(t *testing.T) {
 		req.Expect().chain.assertNotFailed(t)
 	})
 	t.Run("handle empty body", func(t *testing.T) {
-		dialer := WebsocketDialerFunc(func(_ string, _ http.Header) (*websocket.Conn, *http.Response, error) {
+		dialer := WebsocketDialerFunc(func(
+			_ string, _ http.Header,
+		) (*websocket.Conn, *http.Response, error) {
 			return &websocket.Conn{}, &http.Response{}, nil
 		})
 		config := Config{
