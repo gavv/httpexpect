@@ -151,6 +151,12 @@ func newMockChain(t *testing.T) *chain {
 	return newChainWithDefaults("test", newMockReporter(t))
 }
 
+func newFailedChain(t *testing.T) *chain {
+	chain := newMockChain(t)
+	chain.setFlags(flagFailed)
+	return chain
+}
+
 type mockLogger struct {
 	testing     *testing.T
 	logged      bool

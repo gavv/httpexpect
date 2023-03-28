@@ -8,12 +8,11 @@ import (
 )
 
 func TestDateTime_FailedChain(t *testing.T) {
-	chain := newMockChain(t)
-	chain.setFailed()
+	chain := newFailedChain(t)
 
 	tm := time.Unix(0, 0)
 	value := newDateTime(chain, tm)
-	value.chain.assertFailed(t)
+	value.chain.assert(t, failure)
 
 	value.Alias("foo")
 
@@ -28,19 +27,19 @@ func TestDateTime_FailedChain(t *testing.T) {
 	value.Lt(tm)
 	value.Le(tm)
 
-	value.Zone().chain.assertFailed(t)
-	value.Year().chain.assertFailed(t)
-	value.Month().chain.assertFailed(t)
-	value.Day().chain.assertFailed(t)
-	value.WeekDay().chain.assertFailed(t)
-	value.YearDay().chain.assertFailed(t)
-	value.Hour().chain.assertFailed(t)
-	value.Minute().chain.assertFailed(t)
-	value.Second().chain.assertFailed(t)
-	value.Nanosecond().chain.assertFailed(t)
+	value.Zone().chain.assert(t, failure)
+	value.Year().chain.assert(t, failure)
+	value.Month().chain.assert(t, failure)
+	value.Day().chain.assert(t, failure)
+	value.WeekDay().chain.assert(t, failure)
+	value.YearDay().chain.assert(t, failure)
+	value.Hour().chain.assert(t, failure)
+	value.Minute().chain.assert(t, failure)
+	value.Second().chain.assert(t, failure)
+	value.Nanosecond().chain.assert(t, failure)
 
-	value.AsUTC().chain.assertFailed(t)
-	value.AsLocal().chain.assertFailed(t)
+	value.AsUTC().chain.assert(t, failure)
+	value.AsLocal().chain.assert(t, failure)
 }
 
 func TestDateTime_Constructors(t *testing.T) {
@@ -50,7 +49,7 @@ func TestDateTime_Constructors(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewDateTime(reporter, time)
 		value.IsEqual(time)
-		value.chain.assertNotFailed(t)
+		value.chain.assert(t, success)
 	})
 
 	t.Run("config", func(t *testing.T) {
@@ -59,7 +58,7 @@ func TestDateTime_Constructors(t *testing.T) {
 			Reporter: reporter,
 		}, time)
 		value.IsEqual(time)
-		value.chain.assertNotFailed(t)
+		value.chain.assert(t, success)
 	})
 
 	t.Run("chain", func(t *testing.T) {
@@ -89,20 +88,20 @@ func TestDateTime_Getters(t *testing.T) {
 
 	value := NewDateTime(reporter, parsedTime)
 
-	value.chain.assertNotFailed(t)
+	value.chain.assert(t, success)
 
-	value.Zone().chain.assertNotFailed(t)
-	value.Year().chain.assertNotFailed(t)
-	value.Month().chain.assertNotFailed(t)
-	value.Day().chain.assertNotFailed(t)
-	value.WeekDay().chain.assertNotFailed(t)
-	value.YearDay().chain.assertNotFailed(t)
-	value.Hour().chain.assertNotFailed(t)
-	value.Minute().chain.assertNotFailed(t)
-	value.Second().chain.assertNotFailed(t)
-	value.Nanosecond().chain.assertNotFailed(t)
-	value.AsUTC().chain.assertNotFailed(t)
-	value.AsLocal().chain.assertNotFailed(t)
+	value.Zone().chain.assert(t, success)
+	value.Year().chain.assert(t, success)
+	value.Month().chain.assert(t, success)
+	value.Day().chain.assert(t, success)
+	value.WeekDay().chain.assert(t, success)
+	value.YearDay().chain.assert(t, success)
+	value.Hour().chain.assert(t, success)
+	value.Minute().chain.assert(t, success)
+	value.Second().chain.assert(t, success)
+	value.Nanosecond().chain.assert(t, success)
+	value.AsUTC().chain.assert(t, success)
+	value.AsLocal().chain.assert(t, success)
 
 	expectedTime := parsedTime
 	expectedZone, _ := expectedTime.Zone()
@@ -127,20 +126,20 @@ func TestDateTime_IsEqual(t *testing.T) {
 	assert.True(t, time.Unix(0, 1234).Equal(value.Raw()))
 
 	value.IsEqual(time.Unix(0, 1234))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, success)
+	value.chain.clear()
 
 	value.IsEqual(time.Unix(0, 4321))
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, failure)
+	value.chain.clear()
 
 	value.NotEqual(time.Unix(0, 4321))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, success)
+	value.chain.clear()
 
 	value.NotEqual(time.Unix(0, 1234))
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, failure)
+	value.chain.clear()
 }
 
 func TestDateTime_IsGreater(t *testing.T) {
@@ -149,24 +148,24 @@ func TestDateTime_IsGreater(t *testing.T) {
 	value := NewDateTime(reporter, time.Unix(0, 1234))
 
 	value.Gt(time.Unix(0, 1234-1))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, success)
+	value.chain.clear()
 
 	value.Gt(time.Unix(0, 1234))
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, failure)
+	value.chain.clear()
 
 	value.Ge(time.Unix(0, 1234-1))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, success)
+	value.chain.clear()
 
 	value.Ge(time.Unix(0, 1234))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, success)
+	value.chain.clear()
 
 	value.Ge(time.Unix(0, 1234+1))
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, failure)
+	value.chain.clear()
 }
 
 func TestDateTime_IsLesser(t *testing.T) {
@@ -175,82 +174,82 @@ func TestDateTime_IsLesser(t *testing.T) {
 	value := NewDateTime(reporter, time.Unix(0, 1234))
 
 	value.Lt(time.Unix(0, 1234+1))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, success)
+	value.chain.clear()
 
 	value.Lt(time.Unix(0, 1234))
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, failure)
+	value.chain.clear()
 
 	value.Le(time.Unix(0, 1234+1))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, success)
+	value.chain.clear()
 
 	value.Le(time.Unix(0, 1234))
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, success)
+	value.chain.clear()
 
 	value.Le(time.Unix(0, 1234-1))
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, failure)
+	value.chain.clear()
 }
 
 func TestDateTime_InRange(t *testing.T) {
 	cases := []struct {
-		name             string
-		value            time.Time
-		min              time.Time
-		max              time.Time
-		expectInRange    bool
-		expectNotInRange bool
+		name           string
+		value          time.Time
+		min            time.Time
+		max            time.Time
+		wantInRange    chainResult
+		wantNotInRange chainResult
 	}{
 		{
-			name:             "value equal to both min and max",
-			value:            time.Unix(0, 1234),
-			min:              time.Unix(0, 1234),
-			max:              time.Unix(0, 1234),
-			expectInRange:    true,
-			expectNotInRange: false,
+			name:           "value equal to both min and max",
+			value:          time.Unix(0, 1234),
+			min:            time.Unix(0, 1234),
+			max:            time.Unix(0, 1234),
+			wantInRange:    success,
+			wantNotInRange: failure,
 		},
 		{
-			name:             "value after min and equal to max",
-			value:            time.Unix(0, 1234),
-			min:              time.Unix(0, 1234-1),
-			max:              time.Unix(0, 1234),
-			expectInRange:    true,
-			expectNotInRange: false,
+			name:           "value after min and equal to max",
+			value:          time.Unix(0, 1234),
+			min:            time.Unix(0, 1234-1),
+			max:            time.Unix(0, 1234),
+			wantInRange:    success,
+			wantNotInRange: failure,
 		},
 		{
-			name:             "value equal to min and before max",
-			value:            time.Unix(0, 1234),
-			min:              time.Unix(0, 1234),
-			max:              time.Unix(0, 1234+1),
-			expectInRange:    true,
-			expectNotInRange: false,
+			name:           "value equal to min and before max",
+			value:          time.Unix(0, 1234),
+			min:            time.Unix(0, 1234),
+			max:            time.Unix(0, 1234+1),
+			wantInRange:    success,
+			wantNotInRange: failure,
 		},
 		{
-			name:             "value before range",
-			value:            time.Unix(0, 1234),
-			min:              time.Unix(0, 1234+1),
-			max:              time.Unix(0, 1234+2),
-			expectInRange:    false,
-			expectNotInRange: true,
+			name:           "value before range",
+			value:          time.Unix(0, 1234),
+			min:            time.Unix(0, 1234+1),
+			max:            time.Unix(0, 1234+2),
+			wantInRange:    failure,
+			wantNotInRange: success,
 		},
 		{
-			name:             "value after range",
-			value:            time.Unix(0, 1234),
-			min:              time.Unix(0, 1234-2),
-			max:              time.Unix(0, 1234-1),
-			expectInRange:    false,
-			expectNotInRange: true,
+			name:           "value after range",
+			value:          time.Unix(0, 1234),
+			min:            time.Unix(0, 1234-2),
+			max:            time.Unix(0, 1234-1),
+			wantInRange:    failure,
+			wantNotInRange: success,
 		},
 		{
-			name:             "invalid range",
-			value:            time.Unix(0, 1234),
-			min:              time.Unix(0, 1234+1),
-			max:              time.Unix(0, 1234-1),
-			expectInRange:    false,
-			expectNotInRange: true,
+			name:           "invalid range",
+			value:          time.Unix(0, 1234),
+			min:            time.Unix(0, 1234+1),
+			max:            time.Unix(0, 1234-1),
+			wantInRange:    failure,
+			wantNotInRange: success,
 		},
 	}
 
@@ -258,56 +257,43 @@ func TestDateTime_InRange(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			if tc.expectInRange {
-				NewDateTime(reporter, tc.value).
-					InRange(tc.min, tc.max).
-					chain.assertNotFailed(t)
-			} else {
-				NewDateTime(reporter, tc.value).
-					InRange(tc.min, tc.max).
-					chain.assertFailed(t)
-			}
-			if tc.expectNotInRange {
-				NewDateTime(reporter, tc.value).
-					NotInRange(tc.min, tc.max).
-					chain.assertNotFailed(t)
-			} else {
-				NewDateTime(reporter, tc.value).
-					NotInRange(tc.min, tc.max).
-					chain.assertFailed(t)
-			}
+			NewDateTime(reporter, tc.value).InRange(tc.min, tc.max).
+				chain.assert(t, tc.wantInRange)
+
+			NewDateTime(reporter, tc.value).NotInRange(tc.min, tc.max).
+				chain.assert(t, tc.wantNotInRange)
 		})
 	}
 }
 
 func TestDateTime_InList(t *testing.T) {
 	cases := []struct {
-		name            string
-		value           time.Time
-		list            []time.Time
-		expectInList    bool
-		expectNotInList bool
+		name          string
+		value         time.Time
+		list          []time.Time
+		wantInList    chainResult
+		wantNotInList chainResult
 	}{
 		{
-			name:            "empty list",
-			value:           time.Unix(0, 1234),
-			list:            []time.Time{},
-			expectInList:    false,
-			expectNotInList: false,
+			name:          "empty list",
+			value:         time.Unix(0, 1234),
+			list:          []time.Time{},
+			wantInList:    failure,
+			wantNotInList: failure,
 		},
 		{
-			name:            "value present in list",
-			value:           time.Unix(0, 1234),
-			list:            []time.Time{time.Unix(0, 1234), time.Unix(0, 1234+1)},
-			expectInList:    true,
-			expectNotInList: false,
+			name:          "value present in list",
+			value:         time.Unix(0, 1234),
+			list:          []time.Time{time.Unix(0, 1234), time.Unix(0, 1234+1)},
+			wantInList:    success,
+			wantNotInList: failure,
 		},
 		{
-			name:            "value not present in list",
-			value:           time.Unix(0, 1234),
-			list:            []time.Time{time.Unix(0, 1234-1), time.Unix(0, 1234+1)},
-			expectInList:    false,
-			expectNotInList: true,
+			name:          "value not present in list",
+			value:         time.Unix(0, 1234),
+			list:          []time.Time{time.Unix(0, 1234-1), time.Unix(0, 1234+1)},
+			wantInList:    failure,
+			wantNotInList: success,
 		},
 	}
 
@@ -315,24 +301,11 @@ func TestDateTime_InList(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			if tc.expectInList {
-				NewDateTime(reporter, tc.value).
-					InList(tc.list...).
-					chain.assertNotFailed(t)
-			} else {
-				NewDateTime(reporter, tc.value).
-					InList(tc.list...).
-					chain.assertFailed(t)
-			}
-			if tc.expectNotInList {
-				NewDateTime(reporter, tc.value).
-					NotInList(tc.list...).
-					chain.assertNotFailed(t)
-			} else {
-				NewDateTime(reporter, tc.value).
-					NotInList(tc.list...).
-					chain.assertFailed(t)
-			}
+			NewDateTime(reporter, tc.value).InList(tc.list...).
+				chain.assert(t, tc.wantInList)
+
+			NewDateTime(reporter, tc.value).NotInList(tc.list...).
+				chain.assert(t, tc.wantNotInList)
 		})
 	}
 }
