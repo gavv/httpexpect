@@ -236,12 +236,10 @@ func TestDuration_InRange(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			NewDuration(reporter, tc.value).
-				InRange(tc.min, tc.max).
+			NewDuration(reporter, tc.value).InRange(tc.min, tc.max).
 				chain.assertOK(t, tc.expectInRange)
 
-			NewDuration(reporter, tc.value).
-				NotInRange(tc.min, tc.max).
+			NewDuration(reporter, tc.value).NotInRange(tc.min, tc.max).
 				chain.assertOK(t, tc.expectNotInRange)
 
 		})
@@ -283,12 +281,10 @@ func TestDuration_InList(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			NewDuration(reporter, tc.value).
-				InList(tc.list...).
+			NewDuration(reporter, tc.value).InList(tc.list...).
 				chain.assertOK(t, tc.expectInList)
 
-			NewDuration(reporter, tc.value).
-				NotInList(tc.list...).
+			NewDuration(reporter, tc.value).NotInList(tc.list...).
 				chain.assertOK(t, tc.expectNotInList)
 
 		})
