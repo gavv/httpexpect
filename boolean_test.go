@@ -7,13 +7,12 @@ import (
 )
 
 func TestBoolean_FailedChain(t *testing.T) {
-	chain := newMockChain(t)
-	chain.setFailed()
+	chain := newFailedChain(t)
 
 	value := newBoolean(chain, false)
-	value.chain.assertFailed(t)
+	value.chain.assert(t, failure)
 
-	value.Path("$").chain.assertFailed(t)
+	value.Path("$").chain.assert(t, failure)
 	value.Schema("")
 	value.Alias("foo")
 
@@ -33,7 +32,7 @@ func TestBoolean_Constructors(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewBoolean(reporter, true)
 		value.IsEqual(true)
-		value.chain.assertNotFailed(t)
+		value.chain.assert(t, success)
 	})
 
 	t.Run("config", func(t *testing.T) {
@@ -42,7 +41,7 @@ func TestBoolean_Constructors(t *testing.T) {
 			Reporter: reporter,
 		}, true)
 		value.IsEqual(true)
-		value.chain.assertNotFailed(t)
+		value.chain.assert(t, success)
 	})
 
 	t.Run("chain", func(t *testing.T) {
@@ -62,7 +61,7 @@ func TestBoolean_Decode(t *testing.T) {
 		var target interface{}
 		value.Decode(&target)
 
-		value.chain.assertNotFailed(t)
+		value.chain.assert(t, success)
 		assert.Equal(t, true, target)
 	})
 
@@ -74,7 +73,7 @@ func TestBoolean_Decode(t *testing.T) {
 		var target bool
 		value.Decode(&target)
 
-		value.chain.assertNotFailed(t)
+		value.chain.assert(t, success)
 		assert.Equal(t, true, target)
 	})
 
@@ -85,7 +84,7 @@ func TestBoolean_Decode(t *testing.T) {
 
 		value.Decode(nil)
 
-		value.chain.assertFailed(t)
+		value.chain.assert(t, failure)
 	})
 
 	t.Run("target is unmarshable", func(t *testing.T) {
@@ -95,7 +94,7 @@ func TestBoolean_Decode(t *testing.T) {
 
 		value.Decode(123)
 
-		value.chain.assertFailed(t)
+		value.chain.assert(t, failure)
 	})
 }
 
@@ -117,20 +116,20 @@ func TestBoolean_Getters(t *testing.T) {
 	value := NewBoolean(reporter, true)
 
 	assert.Equal(t, true, value.Raw())
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, success)
+	value.chain.clear()
 
 	assert.Equal(t, true, value.Path("$").Raw())
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, success)
+	value.chain.clear()
 
 	value.Schema(`{"type": "boolean"}`)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, success)
+	value.chain.clear()
 
 	value.Schema(`{"type": "object"}`)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, failure)
+	value.chain.clear()
 }
 
 func TestBoolean_True(t *testing.T) {
@@ -141,36 +140,36 @@ func TestBoolean_True(t *testing.T) {
 	assert.Equal(t, true, value.Raw())
 
 	value.IsEqual(true)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, success)
+	value.chain.clear()
 
 	value.IsEqual(false)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, failure)
+	value.chain.clear()
 
 	value.NotEqual(false)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, success)
+	value.chain.clear()
 
 	value.NotEqual(true)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, failure)
+	value.chain.clear()
 
 	value.IsTrue()
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, success)
+	value.chain.clear()
 
 	value.IsFalse()
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, failure)
+	value.chain.clear()
 
 	value.InList(true, true)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, success)
+	value.chain.clear()
 
 	value.NotInList(true, false)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, failure)
+	value.chain.clear()
 }
 
 func TestBoolean_False(t *testing.T) {
@@ -181,36 +180,36 @@ func TestBoolean_False(t *testing.T) {
 	assert.Equal(t, false, value.Raw())
 
 	value.IsEqual(true)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, failure)
+	value.chain.clear()
 
 	value.IsEqual(false)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, success)
+	value.chain.clear()
 
 	value.NotEqual(false)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, failure)
+	value.chain.clear()
 
 	value.NotEqual(true)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, success)
+	value.chain.clear()
 
 	value.IsTrue()
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, failure)
+	value.chain.clear()
 
 	value.IsFalse()
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, success)
+	value.chain.clear()
 
 	value.InList(true, true)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, failure)
+	value.chain.clear()
 
 	value.NotInList(true, true)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, success)
+	value.chain.clear()
 }
 
 func TestBoolean_Usage(t *testing.T) {
@@ -219,10 +218,10 @@ func TestBoolean_Usage(t *testing.T) {
 	value := NewBoolean(reporter, true)
 
 	value.InList()
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, failure)
+	value.chain.clear()
 
 	value.NotInList()
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, failure)
+	value.chain.clear()
 }

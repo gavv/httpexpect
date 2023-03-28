@@ -100,6 +100,13 @@ const (
 	flagFailedChildren                          // fail() was called on any child
 )
 
+type chainResult bool
+
+const (
+	success chainResult = true
+	failure chainResult = false
+)
+
 // Construct chain using config.
 func newChainWithConfig(name string, config Config) *chain {
 	config.validate()
@@ -443,8 +450,7 @@ func (c *chain) treeFailed() bool {
 	return c.flags&(flagFailed|flagFailedChildren) != 0
 }
 
-// Set failure flag.
-// For tests.
+// DEPRECATED: use setFlags
 func (c *chain) setFailed() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -452,8 +458,16 @@ func (c *chain) setFailed() {
 	c.flags |= flagFailed
 }
 
-// Clear failure flags.
+// Set chain flags.
 // For tests.
+func (c *chain) setFlags(flags chainFlags) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.flags = flags
+}
+
+// DEPRECATED: use clear
 func (c *chain) clearFailed() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -461,20 +475,26 @@ func (c *chain) clearFailed() {
 	c.flags &= ^(flagFailed | flagFailedChildren)
 }
 
-// Report failure unless chain is not failed.
+// Clear failure flags.
 // For tests.
+func (c *chain) clear() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.flags &= ^(flagFailed | flagFailedChildren)
+}
+
+// DEPRECATED: use assert
 func (c *chain) assertNotFailed(t testing.TB) {
 	c.assertOK(t, true)
 }
 
-// Report failure unless chain is failed.
-// For tests.
+// DEPRECATED: use assert
 func (c *chain) assertFailed(t testing.TB) {
 	c.assertOK(t, false)
 }
 
-// Report failure unless chain has specified state.
-// For tests.
+// DEPRECATED: use assert
 func (c *chain) assertOK(t testing.TB, expectOK bool) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -483,6 +503,23 @@ func (c *chain) assertOK(t testing.TB, expectOK bool) {
 		assert.Equal(t, chainFlags(0), c.flags&flagFailed,
 			"expected: chain is ok")
 	} else {
+		assert.NotEqual(t, chainFlags(0), c.flags&flagFailed,
+			"expected: chain is not ok")
+	}
+}
+
+// Report failure unless chain has specified state.
+// For tests.
+func (c *chain) assert(t testing.TB, result chainResult) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	switch result {
+	case success:
+		assert.Equal(t, chainFlags(0), c.flags&flagFailed,
+			"expected: chain is ok")
+
+	case failure:
 		assert.NotEqual(t, chainFlags(0), c.flags&flagFailed,
 			"expected: chain is not ok")
 	}
