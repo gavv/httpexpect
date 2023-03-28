@@ -1272,7 +1272,9 @@ func TestRequest_BodyMultipart(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				req := NewRequestC(config, "POST", "url")
 				req.multipartFn = func(w io.Writer) *multipart.Writer {
-					return multipart.NewWriter(&failureWriter{})
+					return multipart.NewWriter(&mockWriter{
+						err: errors.New("mock writer error"),
+					})
 				}
 				req.WithMultipart()
 
@@ -1286,15 +1288,6 @@ func TestRequest_BodyMultipart(t *testing.T) {
 			})
 		}
 	})
-}
-
-// failureWriter is a writer that returns error.
-type failureWriter struct {
-	io.Writer
-}
-
-func (fw *failureWriter) Write(p []byte) (n int, err error) {
-	return 0, errors.New("failed to write")
 }
 
 func TestRequest_BodyJSON(t *testing.T) {
