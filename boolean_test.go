@@ -1,6 +1,7 @@
 package httpexpect
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -132,96 +133,84 @@ func TestBoolean_Getters(t *testing.T) {
 	value.chain.clear()
 }
 
-func TestBoolean_True(t *testing.T) {
-	reporter := newMockReporter(t)
+func TestBoolean_IsEqual(t *testing.T) {
+	for _, value := range []bool{true, false} {
+		t.Run(fmt.Sprintf("%v", value), func(t *testing.T) {
+			reporter := newMockReporter(t)
 
-	value := NewBoolean(reporter, true)
+			NewBoolean(reporter, value).IsEqual(value).
+				chain.assert(t, success)
 
-	assert.Equal(t, true, value.Raw())
+			NewBoolean(reporter, value).IsEqual(!value).
+				chain.assert(t, failure)
 
-	value.IsEqual(true)
-	value.chain.assert(t, success)
-	value.chain.clear()
+			NewBoolean(reporter, value).NotEqual(value).
+				chain.assert(t, failure)
 
-	value.IsEqual(false)
-	value.chain.assert(t, failure)
-	value.chain.clear()
-
-	value.NotEqual(false)
-	value.chain.assert(t, success)
-	value.chain.clear()
-
-	value.NotEqual(true)
-	value.chain.assert(t, failure)
-	value.chain.clear()
-
-	value.IsTrue()
-	value.chain.assert(t, success)
-	value.chain.clear()
-
-	value.IsFalse()
-	value.chain.assert(t, failure)
-	value.chain.clear()
-
-	value.InList(true, true)
-	value.chain.assert(t, success)
-	value.chain.clear()
-
-	value.NotInList(true, false)
-	value.chain.assert(t, failure)
-	value.chain.clear()
+			NewBoolean(reporter, value).NotEqual(!value).
+				chain.assert(t, success)
+		})
+	}
 }
 
-func TestBoolean_False(t *testing.T) {
-	reporter := newMockReporter(t)
+func TestBoolean_IsValue(t *testing.T) {
+	for _, value := range []bool{true, false} {
+		t.Run(fmt.Sprintf("%v", value), func(t *testing.T) {
+			reporter := newMockReporter(t)
 
-	value := NewBoolean(reporter, false)
+			if value {
+				NewBoolean(reporter, value).IsTrue().
+					chain.assert(t, success)
 
-	assert.Equal(t, false, value.Raw())
+				NewBoolean(reporter, value).IsFalse().
+					chain.assert(t, failure)
+			} else {
+				NewBoolean(reporter, value).IsTrue().
+					chain.assert(t, failure)
 
-	value.IsEqual(true)
-	value.chain.assert(t, failure)
-	value.chain.clear()
-
-	value.IsEqual(false)
-	value.chain.assert(t, success)
-	value.chain.clear()
-
-	value.NotEqual(false)
-	value.chain.assert(t, failure)
-	value.chain.clear()
-
-	value.NotEqual(true)
-	value.chain.assert(t, success)
-	value.chain.clear()
-
-	value.IsTrue()
-	value.chain.assert(t, failure)
-	value.chain.clear()
-
-	value.IsFalse()
-	value.chain.assert(t, success)
-	value.chain.clear()
-
-	value.InList(true, true)
-	value.chain.assert(t, failure)
-	value.chain.clear()
-
-	value.NotInList(true, true)
-	value.chain.assert(t, success)
-	value.chain.clear()
+				NewBoolean(reporter, value).IsFalse().
+					chain.assert(t, success)
+			}
+		})
+	}
 }
 
-func TestBoolean_Usage(t *testing.T) {
-	reporter := newMockReporter(t)
+func TestBoolean_InList(t *testing.T) {
+	t.Run("basic", func(t *testing.T) {
+		for _, value := range []bool{true, false} {
+			t.Run(fmt.Sprintf("%v", value), func(t *testing.T) {
+				reporter := newMockReporter(t)
 
-	value := NewBoolean(reporter, true)
+				NewBoolean(reporter, value).InList(value).
+					chain.assert(t, success)
 
-	value.InList()
-	value.chain.assert(t, failure)
-	value.chain.clear()
+				NewBoolean(reporter, value).InList(!value, value).
+					chain.assert(t, success)
 
-	value.NotInList()
-	value.chain.assert(t, failure)
-	value.chain.clear()
+				NewBoolean(reporter, value).InList(!value, !value).
+					chain.assert(t, failure)
+
+				NewBoolean(reporter, value).NotInList(value).
+					chain.assert(t, failure)
+
+				NewBoolean(reporter, value).NotInList(!value, value).
+					chain.assert(t, failure)
+
+				NewBoolean(reporter, value).NotInList(!value, !value).
+					chain.assert(t, success)
+			})
+		}
+	})
+
+	t.Run("invalid argument", func(t *testing.T) {
+		for _, value := range []bool{true, false} {
+			reporter := newMockReporter(t)
+
+			NewBoolean(reporter, value).InList().
+				chain.assert(t, failure)
+
+			NewBoolean(reporter, value).NotInList().
+				chain.assert(t, failure)
+		}
+	})
 }
