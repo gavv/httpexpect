@@ -196,10 +196,12 @@ func TestNumber_IsEqual(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
 
-				NewNumber(reporter, tc.number).IsEqual(tc.value).
+				NewNumber(reporter, tc.number).
+					IsEqual(tc.value).
 					chain.assertOK(t, tc.isEqual)
 
-				NewNumber(reporter, tc.number).NotEqual(tc.value).
+				NewNumber(reporter, tc.number).
+					NotEqual(tc.value).
 					chain.assertOK(t, !tc.isEqual)
 			})
 		}
@@ -812,14 +814,26 @@ func TestNumber_IsInt(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
 
-				NewNumber(reporter, tc.value).IsInt().chain.assertOK(t, tc.isInt)
-				NewNumber(reporter, tc.value).NotInt().chain.assertOK(t, !tc.isInt)
+				NewNumber(reporter, tc.value).
+					IsInt().
+					chain.assertOK(t, tc.isInt)
+				NewNumber(reporter, tc.value).
+					NotInt().
+					chain.assertOK(t, !tc.isInt)
 
-				NewNumber(reporter, tc.value).IsInt(32).chain.assertOK(t, tc.isInt32)
-				NewNumber(reporter, tc.value).NotInt(32).chain.assertOK(t, !tc.isInt32)
+				NewNumber(reporter, tc.value).
+					IsInt(32).
+					chain.assertOK(t, tc.isInt32)
+				NewNumber(reporter, tc.value).
+					NotInt(32).
+					chain.assertOK(t, !tc.isInt32)
 
-				NewNumber(reporter, tc.value).IsInt(16).chain.assertOK(t, tc.isInt16)
-				NewNumber(reporter, tc.value).NotInt(16).chain.assertOK(t, !tc.isInt16)
+				NewNumber(reporter, tc.value).
+					IsInt(16).
+					chain.assertOK(t, tc.isInt16)
+				NewNumber(reporter, tc.value).
+					NotInt(16).
+					chain.assertOK(t, !tc.isInt16)
 			})
 		}
 	})
@@ -939,14 +953,26 @@ func TestNumber_IsUint(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
 
-				NewNumber(reporter, tc.value).IsUint().chain.assertOK(t, tc.isUint)
-				NewNumber(reporter, tc.value).NotUint().chain.assertOK(t, !tc.isUint)
+				NewNumber(reporter, tc.value).
+					IsUint().
+					chain.assertOK(t, tc.isUint)
+				NewNumber(reporter, tc.value).
+					NotUint().
+					chain.assertOK(t, !tc.isUint)
 
-				NewNumber(reporter, tc.value).IsUint(32).chain.assertOK(t, tc.isUint32)
-				NewNumber(reporter, tc.value).NotUint(32).chain.assertOK(t, !tc.isUint32)
+				NewNumber(reporter, tc.value).
+					IsUint(32).
+					chain.assertOK(t, tc.isUint32)
+				NewNumber(reporter, tc.value).
+					NotUint(32).
+					chain.assertOK(t, !tc.isUint32)
 
-				NewNumber(reporter, tc.value).IsUint(16).chain.assertOK(t, tc.isUint16)
-				NewNumber(reporter, tc.value).NotUint(16).chain.assertOK(t, !tc.isUint16)
+				NewNumber(reporter, tc.value).
+					IsUint(16).
+					chain.assertOK(t, tc.isUint16)
+				NewNumber(reporter, tc.value).
+					NotUint(16).
+					chain.assertOK(t, !tc.isUint16)
 			})
 		}
 	})
@@ -1021,8 +1047,12 @@ func TestNumber_IsFinite(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			NewNumber(reporter, tc.value).IsFinite().chain.assertOK(t, tc.isFinite)
-			NewNumber(reporter, tc.value).NotFinite().chain.assertOK(t, !tc.isFinite)
+			NewNumber(reporter, tc.value).
+				IsFinite().
+				chain.assertOK(t, tc.isFinite)
+			NewNumber(reporter, tc.value).
+				NotFinite().
+				chain.assertOK(t, !tc.isFinite)
 		})
 	}
 }
