@@ -210,7 +210,6 @@ func TestDuration_InRange(t *testing.T) {
 
 			NewDuration(reporter, tc.value).NotInRange(tc.min, tc.max).
 				chain.assert(t, tc.wantNotInRange)
-
 		})
 	}
 }
