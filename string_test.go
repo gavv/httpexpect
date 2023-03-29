@@ -195,11 +195,10 @@ func TestString_IsEmpty(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			NewString(reporter, tc.str).
-				IsEmpty().
+			NewString(reporter, tc.str).IsEmpty().
 				chain.assertOK(t, tc.isEmpty)
-			NewString(reporter, tc.str).
-				NotEmpty().
+
+			NewString(reporter, tc.str).NotEmpty().
 				chain.assertOK(t, !tc.isEmpty)
 		})
 	}
@@ -239,11 +238,9 @@ func TestString_IsEqual(t *testing.T) {
 	for _, tc := range cases {
 		reporter := newMockReporter(t)
 
-		NewString(reporter, tc.str).
-			IsEqual(tc.value).
+		NewString(reporter, tc.str).IsEqual(tc.value).
 			chain.assertOK(t, tc.isEqual)
-		NewString(reporter, tc.str).
-			NotEqual(tc.value).
+		NewString(reporter, tc.str).NotEqual(tc.value).
 			chain.assertOK(t, !tc.isEqual)
 
 		NewString(reporter, tc.str).IsEqualFold(tc.value).
@@ -288,18 +285,14 @@ func TestString_InList(t *testing.T) {
 		for _, tc := range cases {
 			reporter := newMockReporter(t)
 
-			NewString(reporter, tc.str).
-				InList(tc.value...).
+			NewString(reporter, tc.str).InList(tc.value...).
 				chain.assertOK(t, tc.inList)
-			NewString(reporter, tc.str).
-				NotInList(tc.value...).
+			NewString(reporter, tc.str).NotInList(tc.value...).
 				chain.assertOK(t, !tc.inList)
 
-			NewString(reporter, tc.str).
-				InListFold(tc.value...).
+			NewString(reporter, tc.str).InListFold(tc.value...).
 				chain.assertOK(t, tc.inListFold)
-			NewString(reporter, tc.str).
-				NotInListFold(tc.value...).
+			NewString(reporter, tc.str).NotInListFold(tc.value...).
 				chain.assertOK(t, !tc.inListFold)
 		}
 	})
@@ -307,20 +300,14 @@ func TestString_InList(t *testing.T) {
 	t.Run("invalid argument", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
-		NewString(reporter, "foo").
-			InList(). // empty list
+		NewString(reporter, "foo").InList().
+			chain.assertFailed(t)
+		NewString(reporter, "foo").NotInList().
 			chain.assertFailed(t)
 
-		NewString(reporter, "foo").
-			NotInList(). // empty list
+		NewString(reporter, "foo").InListFold().
 			chain.assertFailed(t)
-
-		NewString(reporter, "foo").
-			InListFold(). // empty list
-			chain.assertFailed(t)
-
-		NewString(reporter, "foo").
-			NotInListFold(). // empty list
+		NewString(reporter, "foo").NotInListFold().
 			chain.assertFailed(t)
 	})
 }
@@ -359,18 +346,14 @@ func TestString_Contains(t *testing.T) {
 	for _, tc := range cases {
 		reporter := newMockReporter(t)
 
-		NewString(reporter, tc.str).
-			Contains(tc.value).
+		NewString(reporter, tc.str).Contains(tc.value).
 			chain.assertOK(t, tc.contains)
-		NewString(reporter, tc.str).
-			NotContains(tc.value).
+		NewString(reporter, tc.str).NotContains(tc.value).
 			chain.assertOK(t, !tc.contains)
 
-		NewString(reporter, tc.str).
-			ContainsFold(tc.value).
+		NewString(reporter, tc.str).ContainsFold(tc.value).
 			chain.assertOK(t, tc.containsFold)
-		NewString(reporter, tc.str).
-			NotContainsFold(tc.value).
+		NewString(reporter, tc.str).NotContainsFold(tc.value).
 			chain.assertOK(t, !tc.containsFold)
 	}
 }
@@ -437,18 +420,14 @@ func TestString_HasPrefix(t *testing.T) {
 	for _, tc := range cases {
 		reporter := newMockReporter(t)
 
-		NewString(reporter, tc.str).
-			HasPrefix(tc.value).
+		NewString(reporter, tc.str).HasPrefix(tc.value).
 			chain.assertOK(t, tc.hasPrefix)
-		NewString(reporter, tc.str).
-			NotHasPrefix(tc.value).
+		NewString(reporter, tc.str).NotHasPrefix(tc.value).
 			chain.assertOK(t, !tc.hasPrefix)
 
-		NewString(reporter, tc.str).
-			HasPrefixFold(tc.value).
+		NewString(reporter, tc.str).HasPrefixFold(tc.value).
 			chain.assertOK(t, tc.hasPrefixFold)
-		NewString(reporter, tc.str).
-			NotHasPrefixFold(tc.value).
+		NewString(reporter, tc.str).NotHasPrefixFold(tc.value).
 			chain.assertOK(t, !tc.hasPrefixFold)
 	}
 }
@@ -515,18 +494,14 @@ func TestString_HasSuffix(t *testing.T) {
 	for _, tc := range cases {
 		reporter := newMockReporter(t)
 
-		NewString(reporter, tc.str).
-			HasSuffix(tc.value).
+		NewString(reporter, tc.str).HasSuffix(tc.value).
 			chain.assertOK(t, tc.hasSuffix)
-		NewString(reporter, tc.str).
-			NotHasSuffix(tc.value).
+		NewString(reporter, tc.str).NotHasSuffix(tc.value).
 			chain.assertOK(t, !tc.hasSuffix)
 
-		NewString(reporter, tc.str).
-			HasSuffixFold(tc.value).
+		NewString(reporter, tc.str).HasSuffixFold(tc.value).
 			chain.assertOK(t, tc.hasSuffixFold)
-		NewString(reporter, tc.str).
-			NotHasSuffixFold(tc.value).
+		NewString(reporter, tc.str).NotHasSuffixFold(tc.value).
 			chain.assertOK(t, !tc.hasSuffixFold)
 	}
 }
@@ -645,11 +620,10 @@ func TestString_IsAscii(t *testing.T) {
 		t.Run(tc.str, func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			NewString(reporter, tc.str).
-				IsASCII().
+			NewString(reporter, tc.str).IsASCII().
 				chain.assertOK(t, tc.isASCII)
-			NewString(reporter, tc.str).
-				NotASCII().
+
+			NewString(reporter, tc.str).NotASCII().
 				chain.assertOK(t, !tc.isASCII)
 		})
 	}
