@@ -10,6 +10,7 @@ import (
 	"mime"
 	"mime/multipart"
 	"net/http"
+	neturl "net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -1626,6 +1627,73 @@ func TestRequest_ContentType(t *testing.T) {
 		req.WithHeader("Content-Type", "bar")
 		req.Expect().chain.assertNotFailed(t)
 		assert.Equal(t, http.Header{"Content-Type": {"foo", "bar"}}, client.req.Header)
+	})
+}
+
+func TestRequest_Websocket(t *testing.T) {
+	t.Run("ws successful", func(t *testing.T) {
+		scheme := ""
+		dialer := WebsocketDialerFunc(func(
+			url string, _ http.Header,
+		) (*websocket.Conn, *http.Response, error) {
+			u, _ := neturl.Parse(url)
+			scheme = u.Scheme
+			return &websocket.Conn{}, &http.Response{}, nil
+		})
+		config := Config{
+			Reporter:        newMockReporter(t),
+			WebsocketDialer: dialer,
+			BaseURL:         "http://example.com",
+		}
+		req := NewRequestC(config, "GET", "url").WithWebsocketUpgrade()
+		req.Expect().chain.assertNotFailed(t)
+		assert.Equal(t, "ws", scheme)
+	})
+	t.Run("wss successful", func(t *testing.T) {
+		scheme := ""
+		dialer := WebsocketDialerFunc(func(
+			url string, _ http.Header,
+		) (*websocket.Conn, *http.Response, error) {
+			u, _ := neturl.Parse(url)
+			scheme = u.Scheme
+			return &websocket.Conn{}, &http.Response{}, nil
+		})
+		config := Config{
+			Reporter:        newMockReporter(t),
+			WebsocketDialer: dialer,
+			BaseURL:         "https://example.com",
+		}
+		req := NewRequestC(config, "GET", "url").WithWebsocketUpgrade()
+		req.Expect().chain.assertNotFailed(t)
+		assert.Equal(t, "wss", scheme)
+	})
+	t.Run("bad handshake", func(t *testing.T) {
+		dialer := WebsocketDialerFunc(func(
+			_ string, _ http.Header,
+		) (*websocket.Conn, *http.Response, error) {
+			return &websocket.Conn{}, &http.Response{}, websocket.ErrBadHandshake
+		})
+		config := Config{
+			Reporter:        newMockReporter(t),
+			WebsocketDialer: dialer,
+		}
+		req := NewRequestC(config, "GET", "url").WithWebsocketUpgrade()
+		req.Expect().chain.assertNotFailed(t)
+	})
+	t.Run("request body not allowed", func(t *testing.T) {
+		dialer := WebsocketDialerFunc(func(
+			_ string, _ http.Header,
+		) (*websocket.Conn, *http.Response, error) {
+			return &websocket.Conn{}, &http.Response{}, nil
+		})
+		config := Config{
+			Reporter:        newMockReporter(t),
+			WebsocketDialer: dialer,
+		}
+		req := NewRequestC(config, "GET", "url").
+			WithJSON("").
+			WithWebsocketUpgrade()
+		req.Expect().chain.assertFailed(t)
 	})
 }
 
