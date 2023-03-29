@@ -27,8 +27,8 @@ func TestWebsocketMessage_Failed(t *testing.T) {
 	msg.NoContent()
 	msg.Alias("foo")
 
-	msg.Body().chain.assertFailed(t)
-	msg.JSON().chain.assertFailed(t)
+	msg.Body().chain.assert(t, failure)
+	msg.JSON().chain.assert(t, failure)
 }
 
 func TestWebsocketMessage_Constructors(t *testing.T) {
@@ -36,7 +36,7 @@ func TestWebsocketMessage_Constructors(t *testing.T) {
 		reporter := newMockReporter(t)
 		msg := NewWebsocketMessage(reporter, websocket.CloseMessage, nil)
 		msg.CloseMessage()
-		msg.chain.assertNotFailed(t)
+		msg.chain.assert(t, success)
 	})
 
 	t.Run("config", func(t *testing.T) {
@@ -45,7 +45,7 @@ func TestWebsocketMessage_Constructors(t *testing.T) {
 			Reporter: reporter,
 		}, websocket.CloseMessage, nil)
 		msg.CloseMessage()
-		msg.chain.assertNotFailed(t)
+		msg.chain.assert(t, success)
 	})
 
 	t.Run("chain", func(t *testing.T) {
@@ -79,60 +79,60 @@ func TestWebsocketMessage_CloseMessage(t *testing.T) {
 	msg := NewWebsocketMessage(reporter, websocket.CloseMessage, nil, 1000)
 
 	msg.CloseMessage()
-	msg.chain.assertNotFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, success)
+	msg.chain.clear()
 
 	msg.NotCloseMessage()
-	msg.chain.assertFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, failure)
+	msg.chain.clear()
 
 	msg.BinaryMessage()
-	msg.chain.assertFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, failure)
+	msg.chain.clear()
 
 	msg.NotBinaryMessage()
-	msg.chain.assertNotFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, success)
+	msg.chain.clear()
 
 	msg.TextMessage()
-	msg.chain.assertFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, failure)
+	msg.chain.clear()
 
 	msg.NotTextMessage()
-	msg.chain.assertNotFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, success)
+	msg.chain.clear()
 
 	msg.Type(websocket.CloseMessage)
-	msg.chain.assertNotFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, success)
+	msg.chain.clear()
 
 	msg.NotType(websocket.CloseMessage)
-	msg.chain.assertFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, failure)
+	msg.chain.clear()
 
 	msg.Type(websocket.TextMessage)
-	msg.chain.assertFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, failure)
+	msg.chain.clear()
 
 	msg.NotType(websocket.TextMessage)
-	msg.chain.assertNotFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, success)
+	msg.chain.clear()
 
 	msg.Code(1000)
-	msg.chain.assertNotFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, success)
+	msg.chain.clear()
 
 	msg.NotCode(1000)
-	msg.chain.assertFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, failure)
+	msg.chain.clear()
 
 	msg.Code(1001)
-	msg.chain.assertFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, failure)
+	msg.chain.clear()
 
 	msg.NotCode(1001)
-	msg.chain.assertNotFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, success)
+	msg.chain.clear()
 }
 
 func TestWebsocketMessage_TextMessage(t *testing.T) {
@@ -141,44 +141,44 @@ func TestWebsocketMessage_TextMessage(t *testing.T) {
 	msg := NewWebsocketMessage(reporter, websocket.TextMessage, nil, 0)
 
 	msg.CloseMessage()
-	msg.chain.assertFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, failure)
+	msg.chain.clear()
 
 	msg.NotCloseMessage()
-	msg.chain.assertNotFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, success)
+	msg.chain.clear()
 
 	msg.BinaryMessage()
-	msg.chain.assertFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, failure)
+	msg.chain.clear()
 
 	msg.NotBinaryMessage()
-	msg.chain.assertNotFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, success)
+	msg.chain.clear()
 
 	msg.TextMessage()
-	msg.chain.assertNotFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, success)
+	msg.chain.clear()
 
 	msg.NotTextMessage()
-	msg.chain.assertFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, failure)
+	msg.chain.clear()
 
 	msg.Type(websocket.CloseMessage)
-	msg.chain.assertFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, failure)
+	msg.chain.clear()
 
 	msg.NotType(websocket.CloseMessage)
-	msg.chain.assertNotFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, success)
+	msg.chain.clear()
 
 	msg.Type(websocket.TextMessage)
-	msg.chain.assertNotFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, success)
+	msg.chain.clear()
 
 	msg.NotType(websocket.TextMessage)
-	msg.chain.assertFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, failure)
+	msg.chain.clear()
 }
 
 func TestWebsocketMessage_BinaryMessage(t *testing.T) {
@@ -187,44 +187,44 @@ func TestWebsocketMessage_BinaryMessage(t *testing.T) {
 	msg := NewWebsocketMessage(reporter, websocket.BinaryMessage, nil, 0)
 
 	msg.CloseMessage()
-	msg.chain.assertFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, failure)
+	msg.chain.clear()
 
 	msg.NotCloseMessage()
-	msg.chain.assertNotFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, success)
+	msg.chain.clear()
 
 	msg.BinaryMessage()
-	msg.chain.assertNotFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, success)
+	msg.chain.clear()
 
 	msg.NotBinaryMessage()
-	msg.chain.assertFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, failure)
+	msg.chain.clear()
 
 	msg.TextMessage()
-	msg.chain.assertFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, failure)
+	msg.chain.clear()
 
 	msg.NotTextMessage()
-	msg.chain.assertNotFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, success)
+	msg.chain.clear()
 
 	msg.Type(websocket.BinaryMessage)
-	msg.chain.assertNotFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, success)
+	msg.chain.clear()
 
 	msg.NotType(websocket.BinaryMessage)
-	msg.chain.assertFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, failure)
+	msg.chain.clear()
 
 	msg.Type(websocket.TextMessage)
-	msg.chain.assertFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, failure)
+	msg.chain.clear()
 
 	msg.NotType(websocket.TextMessage)
-	msg.chain.assertNotFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, success)
+	msg.chain.clear()
 }
 
 func TestWebsocketMessage_MatchTypes(t *testing.T) {
@@ -233,36 +233,36 @@ func TestWebsocketMessage_MatchTypes(t *testing.T) {
 	msg := NewWebsocketMessage(reporter, websocket.TextMessage, nil, 0)
 
 	msg.Type(websocket.TextMessage, websocket.BinaryMessage)
-	msg.chain.assertNotFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, success)
+	msg.chain.clear()
 
 	msg.Type(websocket.BinaryMessage, websocket.TextMessage)
-	msg.chain.assertNotFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, success)
+	msg.chain.clear()
 
 	msg.Type(websocket.CloseMessage, websocket.BinaryMessage)
-	msg.chain.assertFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, failure)
+	msg.chain.clear()
 
 	msg.Type(websocket.BinaryMessage, websocket.CloseMessage)
-	msg.chain.assertFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, failure)
+	msg.chain.clear()
 
 	msg.NotType(websocket.TextMessage, websocket.BinaryMessage)
-	msg.chain.assertFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, failure)
+	msg.chain.clear()
 
 	msg.NotType(websocket.BinaryMessage, websocket.TextMessage)
-	msg.chain.assertFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, failure)
+	msg.chain.clear()
 
 	msg.NotType(websocket.CloseMessage, websocket.BinaryMessage)
-	msg.chain.assertNotFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, success)
+	msg.chain.clear()
 
 	msg.NotType(websocket.BinaryMessage, websocket.CloseMessage)
-	msg.chain.assertNotFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, success)
+	msg.chain.clear()
 }
 
 func TestWebsocketMessage_MatchCodes(t *testing.T) {
@@ -271,36 +271,36 @@ func TestWebsocketMessage_MatchCodes(t *testing.T) {
 	msg := NewWebsocketMessage(reporter, websocket.CloseMessage, nil, 10)
 
 	msg.Code(10, 20)
-	msg.chain.assertNotFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, success)
+	msg.chain.clear()
 
 	msg.Code(20, 10)
-	msg.chain.assertNotFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, success)
+	msg.chain.clear()
 
 	msg.Code(30, 20)
-	msg.chain.assertFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, failure)
+	msg.chain.clear()
 
 	msg.Code(20, 30)
-	msg.chain.assertFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, failure)
+	msg.chain.clear()
 
 	msg.NotCode(10, 20)
-	msg.chain.assertFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, failure)
+	msg.chain.clear()
 
 	msg.NotCode(20, 10)
-	msg.chain.assertFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, failure)
+	msg.chain.clear()
 
 	msg.NotCode(30, 20)
-	msg.chain.assertNotFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, success)
+	msg.chain.clear()
 
 	msg.NotCode(20, 30)
-	msg.chain.assertNotFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, success)
+	msg.chain.clear()
 }
 
 func TestWebsocketMessage_CodeAndType(t *testing.T) {
@@ -333,18 +333,18 @@ func TestWebsocketMessage_CodeAndType(t *testing.T) {
 
 			if tc.expectCodeOK {
 				NewWebsocketMessage(reporter, tc.typ, nil, tc.code).
-					Code(tc.code).chain.assertNotFailed(t)
+					Code(tc.code).chain.assert(t, success)
 			} else {
 				NewWebsocketMessage(reporter, tc.typ, nil, tc.code).
-					Code(tc.code).chain.assertFailed(t)
+					Code(tc.code).chain.assert(t, failure)
 			}
 
 			if tc.expectNotCodeOK {
 				NewWebsocketMessage(reporter, tc.typ, nil, tc.code).
-					NotCode(tc.code).chain.assertNotFailed(t)
+					NotCode(tc.code).chain.assert(t, success)
 			} else {
 				NewWebsocketMessage(reporter, tc.typ, nil, tc.code).
-					NotCode(tc.code).chain.assertFailed(t)
+					NotCode(tc.code).chain.assert(t, failure)
 			}
 		})
 	}
@@ -401,10 +401,10 @@ func TestWebsocketMessage_NoContent(t *testing.T) {
 
 			if tc.hasContent {
 				NewWebsocketMessage(reporter, tc.typ, tc.content).
-					NoContent().chain.assertFailed(t)
+					NoContent().chain.assert(t, failure)
 			} else {
 				NewWebsocketMessage(reporter, tc.typ, tc.content).
-					NoContent().chain.assertNotFailed(t)
+					NoContent().chain.assert(t, success)
 			}
 		})
 	}
@@ -418,7 +418,7 @@ func TestWebsocketMessage_Body(t *testing.T) {
 	msg := NewWebsocketMessage(reporter, websocket.TextMessage, body)
 
 	s := msg.Body()
-	s.chain.assertNotFailed(t)
+	s.chain.assert(t, success)
 
 	require.Equal(t, "test", s.Raw())
 }
@@ -432,7 +432,7 @@ func TestWebsocketMessage_JSON(t *testing.T) {
 		msg := NewWebsocketMessage(reporter, websocket.TextMessage, body)
 
 		j := msg.JSON()
-		j.chain.assertNotFailed(t)
+		j.chain.assert(t, success)
 
 		require.Equal(t, "bar", j.Object().Value("foo").Raw())
 	})
@@ -443,9 +443,9 @@ func TestWebsocketMessage_JSON(t *testing.T) {
 		msg := NewWebsocketMessage(reporter, websocket.TextMessage, body)
 
 		j := msg.JSON()
-		j.chain.assertFailed(t)
+		j.chain.assert(t, failure)
 
-		msg.chain.assertFailed(t)
+		msg.chain.assert(t, failure)
 	})
 }
 
@@ -454,23 +454,23 @@ func TestWebsocketMessage_Usage(t *testing.T) {
 
 	msg := newEmptyWebsocketMessage(chain)
 
-	msg.chain.assertNotFailed(t)
+	msg.chain.assert(t, success)
 
 	msg.Type()
-	msg.chain.assertFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, failure)
+	msg.chain.clear()
 
 	msg.NotType()
-	msg.chain.assertFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, failure)
+	msg.chain.clear()
 
 	msg.Code()
-	msg.chain.assertFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, failure)
+	msg.chain.clear()
 
 	msg.NotCode()
-	msg.chain.assertFailed(t)
-	msg.chain.clearFailed()
+	msg.chain.assert(t, failure)
+	msg.chain.clear()
 }
 
 func TestWebsocketMessage_Codes(t *testing.T) {

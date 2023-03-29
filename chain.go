@@ -454,30 +454,6 @@ func (c *chain) treeFailed() bool {
 	return c.flags&(flagFailed|flagFailedChildren) != 0
 }
 
-// DEPRECATED: use clear
-func (c *chain) clearFailed() {
-	c.clear()
-}
-
-// Clear failure flags.
-// For tests.
-func (c *chain) clear() {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	c.flags &= ^(flagFailed | flagFailedChildren)
-}
-
-// DEPRECATED: use assert
-func (c *chain) assertNotFailed(t testing.TB) {
-	c.assert(t, success)
-}
-
-// DEPRECATED: use assert
-func (c *chain) assertFailed(t testing.TB) {
-	c.assert(t, failure)
-}
-
 // Report failure unless chain has specified state.
 // For tests.
 func (c *chain) assert(t testing.TB, result chainResult) {
@@ -487,11 +463,11 @@ func (c *chain) assert(t testing.TB, result chainResult) {
 	switch result {
 	case success:
 		assert.Equal(t, chainFlags(0), c.flags&flagFailed,
-			"expected: chain is ok")
+			"expected: chain is in success state")
 
 	case failure:
 		assert.NotEqual(t, chainFlags(0), c.flags&flagFailed,
-			"expected: chain is not ok")
+			"expected: chain is in failure state")
 	}
 }
 
@@ -503,6 +479,15 @@ func (c *chain) assertFlags(t testing.TB, flags chainFlags) {
 
 	assert.Equal(t, flags, c.flags,
 		"expected: chain has specified flags")
+}
+
+// Clear failure flags.
+// For tests.
+func (c *chain) clear() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.flags &= ^(flagFailed | flagFailedChildren)
 }
 
 // Whether handler outputs to testing.TB

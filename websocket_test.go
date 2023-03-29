@@ -26,8 +26,8 @@ func TestWebsocket_FailedChain(t *testing.T) {
 	ws.WithWriteTimeout(0)
 	ws.WithoutWriteTimeout()
 
-	ws.Subprotocol().chain.assertFailed(t)
-	ws.Expect().chain.assertFailed(t)
+	ws.Subprotocol().chain.assert(t, failure)
+	ws.Expect().chain.assert(t, failure)
 
 	ws.WriteMessage(websocket.TextMessage, []byte("a"))
 	ws.WriteBytesBinary([]byte("a"))
@@ -76,16 +76,16 @@ func TestWebsocket_NilConn(t *testing.T) {
 			t.Fatal("Subprotocol returned nil")
 		}
 
-		ws.chain.assertNotFailed(t)
+		ws.chain.assert(t, success)
 	})
 
 	t.Run("expect", func(t *testing.T) {
 		ws := NewWebsocketC(config, nil)
 
 		msg := ws.Expect()
-		msg.chain.assertFailed(t)
+		msg.chain.assert(t, failure)
 
-		ws.chain.assertFailed(t)
+		ws.chain.assert(t, failure)
 	})
 }
 
@@ -111,16 +111,16 @@ func TestWebsocket_MockConn(t *testing.T) {
 			t.Fatal("Subprotocol returned nil")
 		}
 
-		ws.chain.assertNotFailed(t)
+		ws.chain.assert(t, success)
 	})
 
 	t.Run("expect", func(t *testing.T) {
 		ws := NewWebsocketC(config, &mockWebsocketConn{})
 
 		msg := ws.Expect()
-		msg.chain.assertNotFailed(t)
+		msg.chain.assert(t, success)
 
-		ws.chain.assertNotFailed(t)
+		ws.chain.assert(t, success)
 	})
 }
 
@@ -203,9 +203,9 @@ func TestWebsocket_Expect(t *testing.T) {
 			ws.Expect()
 
 			if tc.assertOk {
-				ws.chain.assertNotFailed(t)
+				ws.chain.assert(t, success)
 			} else {
-				ws.chain.assertFailed(t)
+				ws.chain.assert(t, failure)
 			}
 		})
 	}
@@ -274,9 +274,9 @@ func TestWebsocket_Close(t *testing.T) {
 			ws.Close(tc.args.closeCode...)
 
 			if tc.assertOk {
-				ws.chain.assertNotFailed(t)
+				ws.chain.assert(t, success)
 			} else {
-				ws.chain.assertFailed(t)
+				ws.chain.assert(t, failure)
 			}
 		})
 	}
@@ -350,9 +350,9 @@ func TestWebsocket_CloseWithBytes(t *testing.T) {
 			ws.CloseWithBytes(tc.args.content, tc.args.closeCode...)
 
 			if tc.assertOk {
-				ws.chain.assertNotFailed(t)
+				ws.chain.assert(t, success)
 			} else {
-				ws.chain.assertFailed(t)
+				ws.chain.assert(t, failure)
 			}
 		})
 	}
@@ -426,9 +426,9 @@ func TestWebsocket_CloseWithText(t *testing.T) {
 			ws.CloseWithText(tc.args.content, tc.args.closeCode...)
 
 			if tc.assertOk {
-				ws.chain.assertNotFailed(t)
+				ws.chain.assert(t, success)
 			} else {
-				ws.chain.assertFailed(t)
+				ws.chain.assert(t, failure)
 			}
 		})
 	}
@@ -520,9 +520,9 @@ func TestWebsocket_CloseWithJSON(t *testing.T) {
 			ws.CloseWithJSON(tc.args.content, tc.args.closeCode...)
 
 			if tc.assertOk {
-				ws.chain.assertNotFailed(t)
+				ws.chain.assert(t, success)
 			} else {
-				ws.chain.assertFailed(t)
+				ws.chain.assert(t, failure)
 			}
 		})
 	}
@@ -663,9 +663,9 @@ func TestWebsocket_WriteMessage(t *testing.T) {
 			ws.WriteMessage(tc.args.typ, tc.args.content, tc.args.closeCode...)
 
 			if tc.assertOk {
-				ws.chain.assertNotFailed(t)
+				ws.chain.assert(t, success)
 			} else {
-				ws.chain.assertFailed(t)
+				ws.chain.assert(t, failure)
 			}
 		})
 	}
@@ -725,9 +725,9 @@ func TestWebsocket_WriteBytesBinary(t *testing.T) {
 			ws.WriteBytesBinary(tc.args.content)
 
 			if tc.assertOk {
-				ws.chain.assertNotFailed(t)
+				ws.chain.assert(t, success)
 			} else {
-				ws.chain.assertFailed(t)
+				ws.chain.assert(t, failure)
 			}
 		})
 	}
@@ -787,9 +787,9 @@ func TestWebsocket_WriteBytesText(t *testing.T) {
 			ws.WriteBytesText(tc.args.content)
 
 			if tc.assertOk {
-				ws.chain.assertNotFailed(t)
+				ws.chain.assert(t, success)
 			} else {
-				ws.chain.assertFailed(t)
+				ws.chain.assert(t, failure)
 			}
 		})
 	}
@@ -849,9 +849,9 @@ func TestWebsocket_WriteText(t *testing.T) {
 			ws.WriteText(tc.args.content)
 
 			if tc.assertOk {
-				ws.chain.assertNotFailed(t)
+				ws.chain.assert(t, success)
 			} else {
-				ws.chain.assertFailed(t)
+				ws.chain.assert(t, failure)
 			}
 		})
 	}
@@ -926,9 +926,9 @@ func TestWebsocket_WriteJSON(t *testing.T) {
 			ws.WriteJSON(tc.args.content)
 
 			if tc.assertOk {
-				ws.chain.assertNotFailed(t)
+				ws.chain.assert(t, success)
 			} else {
-				ws.chain.assertFailed(t)
+				ws.chain.assert(t, failure)
 			}
 		})
 	}
@@ -991,9 +991,9 @@ func TestWebsocket_SetReadDeadline(t *testing.T) {
 			opChain.leave()
 
 			if tc.assertOk {
-				ws.chain.assertNotFailed(t)
+				ws.chain.assert(t, success)
 			} else {
-				ws.chain.assertFailed(t)
+				ws.chain.assert(t, failure)
 			}
 		})
 	}
@@ -1039,9 +1039,9 @@ func TestWebsocket_SetWriteDeadline(t *testing.T) {
 			opChain.leave()
 
 			if tc.assertOk {
-				ws.chain.assertNotFailed(t)
+				ws.chain.assert(t, success)
 			} else {
-				ws.chain.assertFailed(t)
+				ws.chain.assert(t, failure)
 			}
 		})
 	}
@@ -1091,9 +1091,9 @@ func TestWebsocket_Disconnect(t *testing.T) {
 			ws.Disconnect()
 
 			if tc.assertOk {
-				ws.chain.assertNotFailed(t)
+				ws.chain.assert(t, success)
 			} else {
-				ws.chain.assertFailed(t)
+				ws.chain.assert(t, failure)
 			}
 		})
 	}
