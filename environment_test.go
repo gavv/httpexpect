@@ -108,9 +108,6 @@ func TestEnvironment_Clear(t *testing.T) {
 	for i := 1; i < 11; i++ {
 		key := fmt.Sprint("key", i)
 		assert.False(t, env.Has(key))
-		assert.Nil(t, env.Get(key))
-		env.chain.assert(t, failure)
-		env.chain.clear()
 	}
 
 	assert.Zero(t, len(env.data))

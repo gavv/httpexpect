@@ -126,7 +126,6 @@ func TestObject_Constructors(t *testing.T) {
 		value := NewObject(reporter, nil)
 
 		value.chain.assert(t, failure)
-		value.chain.clear()
 	})
 }
 

@@ -131,7 +131,6 @@ func TestArray_Constructors(t *testing.T) {
 		value := NewArray(reporter, nil)
 
 		value.chain.assert(t, failure)
-		value.chain.clear()
 	})
 }
 

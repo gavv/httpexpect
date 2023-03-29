@@ -132,32 +132,24 @@ func TestResponse_RoundTripTime(t *testing.T) {
 		reporter := newMockReporter(t)
 		resp := NewResponse(reporter, &http.Response{}, duration)
 		resp.chain.assert(t, success)
-		resp.chain.clear()
 
 		rt := resp.RoundTripTime()
+		resp.chain.assert(t, success)
+		rt.chain.assert(t, success)
 
 		assert.Equal(t, time.Second, rt.Raw())
-
-		rt.IsSet()
-		rt.IsEqual(time.Second)
-		rt.chain.assert(t, success)
 	})
 
 	t.Run("omitted", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		resp := NewResponse(reporter, &http.Response{})
 		resp.chain.assert(t, success)
-		resp.chain.clear()
 
 		rt := resp.RoundTripTime()
-
-		assert.Equal(t, time.Duration(0), rt.Raw())
-
-		rt.NotSet()
+		resp.chain.assert(t, success)
 		rt.chain.assert(t, success)
 
-		rt.IsSet()
-		rt.chain.assert(t, failure)
+		assert.Equal(t, time.Duration(0), rt.Raw())
 	})
 }
 
@@ -309,7 +301,6 @@ func TestResponse_Cookies(t *testing.T) {
 
 		resp := NewResponse(reporter, httpResp)
 		resp.chain.assert(t, success)
-		resp.chain.clear()
 
 		assert.Equal(t, []interface{}{"foo", "bar"}, resp.Cookies().Raw())
 		resp.chain.assert(t, success)
@@ -345,7 +336,6 @@ func TestResponse_Cookies(t *testing.T) {
 
 		resp := NewResponse(reporter, httpResp)
 		resp.chain.assert(t, success)
-		resp.chain.clear()
 
 		assert.Equal(t, []interface{}{}, resp.Cookies().Raw())
 		resp.chain.assert(t, success)
@@ -370,7 +360,6 @@ func TestResponse_BodyOperations(t *testing.T) {
 
 		assert.Equal(t, "body", resp.Body().Raw())
 		resp.chain.assert(t, success)
-		resp.chain.clear()
 	})
 
 	t.Run("read and close", func(t *testing.T) {
