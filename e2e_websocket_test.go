@@ -267,7 +267,7 @@ func testWebsocketTimeout(
 	blockCh <- struct{}{}
 
 	ws.WriteText("test").Expect()
-	ws.chain.assertNotFailed(t)
+	ws.chain.assert(t, success)
 
 	go func() {
 		time.Sleep(time.Millisecond * 100)
@@ -276,9 +276,9 @@ func testWebsocketTimeout(
 
 	ws.WriteText("test").Expect()
 	if timeout {
-		ws.chain.assertFailed(t)
+		ws.chain.assert(t, failure)
 	} else {
-		ws.chain.assertNotFailed(t)
+		ws.chain.assert(t, success)
 	}
 }
 
@@ -349,10 +349,10 @@ func TestE2EWebsocket_Closed(t *testing.T) {
 		defer ws.Disconnect()
 
 		ws.CloseWithText("bye")
-		ws.chain.assertNotFailed(t)
+		ws.chain.assert(t, success)
 
 		ws.WriteText("test")
-		ws.chain.assertFailed(t)
+		ws.chain.assert(t, failure)
 	})
 
 	t.Run("close-close", func(t *testing.T) {
@@ -373,10 +373,10 @@ func TestE2EWebsocket_Closed(t *testing.T) {
 		defer ws.Disconnect()
 
 		ws.CloseWithText("bye")
-		ws.chain.assertNotFailed(t)
+		ws.chain.assert(t, success)
 
 		ws.CloseWithText("bye")
-		ws.chain.assertFailed(t)
+		ws.chain.assert(t, failure)
 	})
 }
 
@@ -398,10 +398,10 @@ func TestE2EWebsocket_Disconnected(t *testing.T) {
 			Websocket()
 
 		ws.Disconnect()
-		ws.chain.assertNotFailed(t)
+		ws.chain.assert(t, success)
 
 		ws.WriteText("test")
-		ws.chain.assertFailed(t)
+		ws.chain.assert(t, failure)
 	})
 
 	t.Run("disconnect-close", func(t *testing.T) {
@@ -421,10 +421,10 @@ func TestE2EWebsocket_Disconnected(t *testing.T) {
 			Websocket()
 
 		ws.Disconnect()
-		ws.chain.assertNotFailed(t)
+		ws.chain.assert(t, success)
 
 		ws.CloseWithText("test")
-		ws.chain.assertFailed(t)
+		ws.chain.assert(t, failure)
 	})
 
 	t.Run("disconnect-disconnect", func(t *testing.T) {
@@ -444,10 +444,10 @@ func TestE2EWebsocket_Disconnected(t *testing.T) {
 			Websocket()
 
 		ws.Disconnect()
-		ws.chain.assertNotFailed(t)
+		ws.chain.assert(t, success)
 
 		ws.Disconnect()
-		ws.chain.assertNotFailed(t)
+		ws.chain.assert(t, success)
 	})
 }
 
@@ -471,8 +471,8 @@ func TestE2EWebsocket_Invalid(t *testing.T) {
 		ws := resp.Websocket()
 		defer ws.Disconnect()
 
-		resp.chain.assertFailed(t)
-		ws.chain.assertFailed(t)
+		resp.chain.assert(t, failure)
+		ws.chain.assert(t, failure)
 	})
 
 	t.Run("no_upgrade_on_server", func(t *testing.T) {
@@ -484,6 +484,6 @@ func TestE2EWebsocket_Invalid(t *testing.T) {
 		resp := e.GET("/empty").WithWebsocketUpgrade().
 			Expect()
 
-		resp.chain.assertFailed(t)
+		resp.chain.assert(t, failure)
 	})
 }

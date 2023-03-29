@@ -349,7 +349,7 @@ func TestExpect_RequestFactory(t *testing.T) {
 		})
 
 		req := e.Request("GET", "/")
-		req.chain.assertNotFailed(t)
+		req.chain.assert(t, success)
 
 		assert.NotNil(t, req.httpReq)
 	})
@@ -364,7 +364,7 @@ func TestExpect_RequestFactory(t *testing.T) {
 		})
 
 		req := e.Request("GET", "/")
-		req.chain.assertNotFailed(t)
+		req.chain.assert(t, success)
 
 		assert.NotNil(t, factory.lastreq)
 		assert.Same(t, req.httpReq, factory.lastreq)
@@ -382,7 +382,7 @@ func TestExpect_RequestFactory(t *testing.T) {
 		})
 
 		req := e.Request("GET", "/")
-		req.chain.assertFailed(t)
+		req.chain.assert(t, failure)
 
 		assert.Nil(t, factory.lastreq)
 	})
