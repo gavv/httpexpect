@@ -1,6 +1,7 @@
 package httpexpect
 
 import (
+	"bytes"
 	"errors"
 	"io"
 	"io/ioutil"
@@ -94,6 +95,14 @@ func TestBodyWrapper_OneError(t *testing.T) {
 		assert.Equal(t, 0, n)
 	}
 
+	checkReadNoErr := func(t *testing.T, wrp *bodyWrapper) {
+		b := make([]byte, 10)
+		n, err := wrp.Read(b)
+
+		assert.Nil(t, err)
+		assert.Equal(t, 9, n)
+	}
+
 	checkCloseErr := func(t *testing.T, wrp *bodyWrapper) {
 		err := wrp.Close()
 
@@ -145,7 +154,7 @@ func TestBodyWrapper_OneError(t *testing.T) {
 
 		wrp := newBodyWrapper(body, nil)
 
-		checkReadErr(t, wrp)
+		checkReadNoErr(t, wrp)
 		checkCloseErr(t, wrp)
 
 		checkReadErr(t, wrp)
@@ -291,7 +300,7 @@ func TestBodyWrapper_InfiniteResponses(t *testing.T) {
 		n, err = wrp.Read(b)
 		assert.Nil(t, err)
 		assert.Equal(t, 1, n)
-		assert.True(t, wrp.isFullyRead)
+		assert.False(t, wrp.isFullyRead) // Won't be fully read until the next Read
 		assert.Equal(t, slicedBody[2], string(b[:n]))
 
 		n, err = wrp.Read(b)
@@ -396,7 +405,7 @@ func TestBodyWrapper_InfiniteResponses(t *testing.T) {
 		n, err = wrp.Read(b)
 		assert.Nil(t, err)
 		assert.Equal(t, 1, n)
-		assert.True(t, wrp.isFullyRead)
+		assert.False(t, wrp.isFullyRead) // Won't be fully read until the next Read
 		assert.Equal(t, "y", string(b[:n]))
 
 		n, err = wrp.Read(b)
@@ -406,4 +415,23 @@ func TestBodyWrapper_InfiniteResponses(t *testing.T) {
 		assert.Nil(t, wrp.origBytes)
 	})
 
+}
+
+func TestBodyWrapperPartialRead(t *testing.T) {
+	buffer := bytes.NewBufferString("test")
+	body := &mockBody{
+		reader: buffer,
+	}
+	wrp := newBodyWrapper(body, nil)
+	b := make([]byte, 4)
+	n, err := wrp.Read(b)
+	assert.Nil(t, err)
+	assert.Equal(t, 4, n)
+
+	buffer.Write([]byte("body"))
+	n, err = wrp.Read(b)
+	assert.Nil(t, err)
+	assert.Equal(t, 4, n)
+	assert.Equal(t, "testbody", string(wrp.origBytes))
+	assert.Equal(t, "body", string(b))
 }

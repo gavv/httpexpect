@@ -57,12 +57,14 @@ func (bw *bodyWrapper) Read(p []byte) (n int, err error) {
 	if !bw.isFullyRead && !bw.isStoringInMemDisabled {
 		// Cache bytes in memory
 		n, err = bw.origReader.Read(p)
-		bw.origBytes = append(bw.origBytes, p[:n]...)
+		if err == nil && n > 0 {
+			bw.origBytes = append(bw.origBytes, p[:n]...)
+		}
 	} else {
 		n, err = bw.currReader.Read(p)
 	}
 
-	if err != nil || n < len(p) {
+	if err != nil {
 		bw.isFullyRead = true // prevent further reads
 		if err != nil && err != io.EOF {
 			bw.readErr = err
