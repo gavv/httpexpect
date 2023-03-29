@@ -65,7 +65,7 @@ func TestObject_FailedChain(t *testing.T) {
 	}
 
 	t.Run("failed chain", func(t *testing.T) {
-		chain := newFailedChain(t)
+		chain := newMockChain(t, flagFailed)
 		value := newObject(chain, map[string]interface{}{})
 
 		check(value)
@@ -79,7 +79,7 @@ func TestObject_FailedChain(t *testing.T) {
 	})
 
 	t.Run("failed chain, nil value", func(t *testing.T) {
-		chain := newFailedChain(t)
+		chain := newMockChain(t, flagFailed)
 		value := newObject(chain, nil)
 
 		check(value)

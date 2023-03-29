@@ -7,7 +7,7 @@ import (
 )
 
 func TestMatch_FailedChain(t *testing.T) {
-	chain := newFailedChain(t)
+	chain := newMockChain(t, flagFailed)
 
 	value := newMatch(chain, nil, nil)
 	value.chain.assert(t, failure)

@@ -139,7 +139,7 @@ func newChainWithConfig(name string, config Config) *chain {
 }
 
 // Construct chain using DefaultAssertionHandler and provided Reporter.
-func newChainWithDefaults(name string, reporter Reporter) *chain {
+func newChainWithDefaults(name string, reporter Reporter, flag ...chainFlags) *chain {
 	if reporter == nil {
 		panic("Reporter is nil")
 	}
@@ -164,6 +164,10 @@ func newChainWithDefaults(name string, reporter Reporter) *chain {
 	c.context.Environment = newEnvironment(c)
 
 	c.context.TestingTB = isTestingTB(c.handler)
+
+	for _, f := range flag {
+		c.flags |= f
+	}
 
 	return c
 }
@@ -450,29 +454,9 @@ func (c *chain) treeFailed() bool {
 	return c.flags&(flagFailed|flagFailedChildren) != 0
 }
 
-// DEPRECATED: use setFlags
-func (c *chain) setFailed() {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	c.flags |= flagFailed
-}
-
-// Set chain flags.
-// For tests.
-func (c *chain) setFlags(flags chainFlags) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	c.flags = flags
-}
-
 // DEPRECATED: use clear
 func (c *chain) clearFailed() {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	c.flags &= ^(flagFailed | flagFailedChildren)
+	c.clear()
 }
 
 // Clear failure flags.
@@ -486,26 +470,12 @@ func (c *chain) clear() {
 
 // DEPRECATED: use assert
 func (c *chain) assertNotFailed(t testing.TB) {
-	c.assertOK(t, true)
+	c.assert(t, success)
 }
 
 // DEPRECATED: use assert
 func (c *chain) assertFailed(t testing.TB) {
-	c.assertOK(t, false)
-}
-
-// DEPRECATED: use assert
-func (c *chain) assertOK(t testing.TB, expectOK bool) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	if expectOK {
-		assert.Equal(t, chainFlags(0), c.flags&flagFailed,
-			"expected: chain is ok")
-	} else {
-		assert.NotEqual(t, chainFlags(0), c.flags&flagFailed,
-			"expected: chain is not ok")
-	}
+	c.assert(t, failure)
 }
 
 // Report failure unless chain has specified state.

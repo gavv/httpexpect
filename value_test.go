@@ -11,7 +11,7 @@ import (
 )
 
 func TestValue_FailedChain(t *testing.T) {
-	chain := newFailedChain(t)
+	chain := newMockChain(t, flagFailed)
 
 	value := newValue(chain, nil)
 	value.chain.assert(t, failure)

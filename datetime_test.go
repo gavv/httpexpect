@@ -8,7 +8,7 @@ import (
 )
 
 func TestDateTime_FailedChain(t *testing.T) {
-	chain := newFailedChain(t)
+	chain := newMockChain(t, flagFailed)
 
 	tm := time.Unix(0, 0)
 	value := newDateTime(chain, tm)

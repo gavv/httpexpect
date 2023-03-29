@@ -147,14 +147,8 @@ func newMockConfig(r Reporter) Config {
 	return Config{Reporter: r}.withDefaults()
 }
 
-func newMockChain(t *testing.T) *chain {
-	return newChainWithDefaults("test", newMockReporter(t))
-}
-
-func newFailedChain(t *testing.T) *chain {
-	chain := newMockChain(t)
-	chain.setFlags(flagFailed)
-	return chain
+func newMockChain(t *testing.T, flag ...chainFlags) *chain {
+	return newChainWithDefaults("test", newMockReporter(t), flag...)
 }
 
 type mockLogger struct {

@@ -22,10 +22,8 @@ import (
 
 func TestRequest_FailedChain(t *testing.T) {
 	reporter := newMockReporter(t)
-	chain := newChainWithDefaults("test", reporter)
 	config := newMockConfig(reporter)
-
-	chain.setFailed()
+	chain := newChainWithDefaults("test", reporter, flagFailed)
 
 	req := newRequest(chain, config, "GET", "")
 	req.chain.assertFailed(t)

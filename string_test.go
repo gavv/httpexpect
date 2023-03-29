@@ -9,20 +9,19 @@ import (
 )
 
 func TestString_FailedChain(t *testing.T) {
-	chain := newMockChain(t)
-	chain.setFailed()
+	chain := newMockChain(t, flagFailed)
 
 	value := newString(chain, "")
-	value.chain.assertFailed(t)
+	value.chain.assert(t, failure)
 
-	value.Path("$").chain.assertFailed(t)
+	value.Path("$").chain.assert(t, failure)
 	value.Schema("")
 	value.Alias("foo")
 
 	var target interface{}
 	value.Decode(target)
 
-	value.Length().chain.assertFailed(t)
+	value.Length().chain.assert(t, failure)
 
 	value.IsEmpty()
 	value.NotEmpty()
@@ -49,14 +48,14 @@ func TestString_FailedChain(t *testing.T) {
 	value.IsASCII()
 	value.NotASCII()
 
-	value.Match("").chain.assertFailed(t)
+	value.Match("").chain.assert(t, failure)
 	value.NotMatch("")
 	assert.NotNil(t, value.MatchAll(""))
 	assert.Equal(t, 0, len(value.MatchAll("")))
 
-	value.AsBoolean().chain.assertFailed(t)
-	value.AsNumber().chain.assertFailed(t)
-	value.AsDateTime().chain.assertFailed(t)
+	value.AsBoolean().chain.assert(t, failure)
+	value.AsNumber().chain.assert(t, failure)
+	value.AsDateTime().chain.assert(t, failure)
 }
 
 func TestString_Constructors(t *testing.T) {
@@ -64,7 +63,7 @@ func TestString_Constructors(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewString(reporter, "Hello")
 		value.IsEqual("Hello")
-		value.chain.assertNotFailed(t)
+		value.chain.assert(t, success)
 	})
 
 	t.Run("config", func(t *testing.T) {
@@ -73,7 +72,7 @@ func TestString_Constructors(t *testing.T) {
 			Reporter: reporter,
 		}, "Hello")
 		value.IsEqual("Hello")
-		value.chain.assertNotFailed(t)
+		value.chain.assert(t, success)
 	})
 
 	t.Run("chain", func(t *testing.T) {
@@ -93,7 +92,7 @@ func TestString_Decode(t *testing.T) {
 		var target interface{}
 		value.Decode(&target)
 
-		value.chain.assertNotFailed(t)
+		value.chain.assert(t, success)
 		assert.Equal(t, "foo", target)
 	})
 
@@ -105,7 +104,7 @@ func TestString_Decode(t *testing.T) {
 		var target string
 		value.Decode(&target)
 
-		value.chain.assertNotFailed(t)
+		value.chain.assert(t, success)
 		assert.Equal(t, "foo", target)
 	})
 
@@ -116,7 +115,7 @@ func TestString_Decode(t *testing.T) {
 
 		value.Decode(123)
 
-		value.chain.assertFailed(t)
+		value.chain.assert(t, failure)
 	})
 
 	t.Run("target is nil", func(t *testing.T) {
@@ -126,7 +125,7 @@ func TestString_Decode(t *testing.T) {
 
 		value.Decode(nil)
 
-		value.chain.assertFailed(t)
+		value.chain.assert(t, failure)
 	})
 }
 
@@ -152,42 +151,42 @@ func TestString_Getters(t *testing.T) {
 	value := NewString(reporter, "foo")
 
 	assert.Equal(t, "foo", value.Raw())
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, success)
+	value.chain.clear()
 
 	assert.Equal(t, "foo", value.Path("$").Raw())
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, success)
+	value.chain.clear()
 
 	value.Schema(`{"type": "string"}`)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, success)
+	value.chain.clear()
 
 	value.Schema(`{"type": "object"}`)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, failure)
+	value.chain.clear()
 
 	num := value.Length()
-	value.chain.assertNotFailed(t)
-	num.chain.assertNotFailed(t)
+	value.chain.assert(t, success)
+	num.chain.assert(t, success)
 	assert.Equal(t, 3.0, num.Raw())
 }
 
 func TestString_IsEmpty(t *testing.T) {
 	cases := []struct {
-		name    string
-		str     string
-		isEmpty bool
+		name      string
+		str       string
+		wantEmpty chainResult
 	}{
 		{
-			name:    "empty string",
-			str:     "",
-			isEmpty: true,
+			name:      "empty string",
+			str:       "",
+			wantEmpty: success,
 		},
 		{
-			name:    "non-empty string",
-			str:     "foo",
-			isEmpty: false,
+			name:      "non-empty string",
+			str:       "foo",
+			wantEmpty: failure,
 		},
 	}
 
@@ -196,42 +195,42 @@ func TestString_IsEmpty(t *testing.T) {
 			reporter := newMockReporter(t)
 
 			NewString(reporter, tc.str).IsEmpty().
-				chain.assertOK(t, tc.isEmpty)
+				chain.assert(t, tc.wantEmpty)
 
 			NewString(reporter, tc.str).NotEmpty().
-				chain.assertOK(t, !tc.isEmpty)
+				chain.assert(t, !tc.wantEmpty)
 		})
 	}
 }
 
 func TestString_IsEqual(t *testing.T) {
 	cases := []struct {
-		name        string
-		str         string
-		value       string
-		isEqual     bool
-		isEqualFold bool
+		name          string
+		str           string
+		value         string
+		wantEqual     chainResult
+		wantEqualFold chainResult
 	}{
 		{
-			name:        "equivalent string",
-			str:         "foo",
-			value:       "foo",
-			isEqual:     true,
-			isEqualFold: true,
+			name:          "equivalent string",
+			str:           "foo",
+			value:         "foo",
+			wantEqual:     success,
+			wantEqualFold: success,
 		},
 		{
-			name:        "non-equivalent string",
-			str:         "foo",
-			value:       "bar",
-			isEqual:     false,
-			isEqualFold: false,
+			name:          "non-equivalent string",
+			str:           "foo",
+			value:         "bar",
+			wantEqual:     failure,
+			wantEqualFold: failure,
 		},
 		{
-			name:        "different case",
-			str:         "foo",
-			value:       "FOO",
-			isEqual:     false,
-			isEqualFold: true,
+			name:          "different case",
+			str:           "foo",
+			value:         "FOO",
+			wantEqual:     failure,
+			wantEqualFold: success,
 		},
 	}
 
@@ -239,46 +238,46 @@ func TestString_IsEqual(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		NewString(reporter, tc.str).IsEqual(tc.value).
-			chain.assertOK(t, tc.isEqual)
+			chain.assert(t, tc.wantEqual)
 		NewString(reporter, tc.str).NotEqual(tc.value).
-			chain.assertOK(t, !tc.isEqual)
+			chain.assert(t, !tc.wantEqual)
 
 		NewString(reporter, tc.str).IsEqualFold(tc.value).
-			chain.assertOK(t, tc.isEqualFold)
+			chain.assert(t, tc.wantEqualFold)
 		NewString(reporter, tc.str).NotEqualFold(tc.value).
-			chain.assertOK(t, !tc.isEqualFold)
+			chain.assert(t, !tc.wantEqualFold)
 	}
 }
 
 func TestString_InList(t *testing.T) {
 	t.Run("basic", func(t *testing.T) {
 		cases := []struct {
-			name       string
-			str        string
-			value      []string
-			inList     bool
-			inListFold bool
+			name           string
+			str            string
+			value          []string
+			wantInList     chainResult
+			wantInListFold chainResult
 		}{
 			{
-				name:       "in list",
-				str:        "foo",
-				value:      []string{"foo", "bar"},
-				inList:     true,
-				inListFold: true,
+				name:           "in list",
+				str:            "foo",
+				value:          []string{"foo", "bar"},
+				wantInList:     success,
+				wantInListFold: success,
 			},
 			{
-				name:       "not in list",
-				str:        "baz",
-				value:      []string{"foo", "bar"},
-				inList:     false,
-				inListFold: false,
+				name:           "not in list",
+				str:            "baz",
+				value:          []string{"foo", "bar"},
+				wantInList:     failure,
+				wantInListFold: failure,
 			},
 			{
-				name:       "different case",
-				str:        "FOO",
-				value:      []string{"foo", "bar"},
-				inList:     false,
-				inListFold: true,
+				name:           "different case",
+				str:            "FOO",
+				value:          []string{"foo", "bar"},
+				wantInList:     failure,
+				wantInListFold: success,
 			},
 		}
 
@@ -286,14 +285,14 @@ func TestString_InList(t *testing.T) {
 			reporter := newMockReporter(t)
 
 			NewString(reporter, tc.str).InList(tc.value...).
-				chain.assertOK(t, tc.inList)
+				chain.assert(t, tc.wantInList)
 			NewString(reporter, tc.str).NotInList(tc.value...).
-				chain.assertOK(t, !tc.inList)
+				chain.assert(t, !tc.wantInList)
 
 			NewString(reporter, tc.str).InListFold(tc.value...).
-				chain.assertOK(t, tc.inListFold)
+				chain.assert(t, tc.wantInListFold)
 			NewString(reporter, tc.str).NotInListFold(tc.value...).
-				chain.assertOK(t, !tc.inListFold)
+				chain.assert(t, !tc.wantInListFold)
 		}
 	})
 
@@ -301,45 +300,45 @@ func TestString_InList(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		NewString(reporter, "foo").InList().
-			chain.assertFailed(t)
+			chain.assert(t, failure)
 		NewString(reporter, "foo").NotInList().
-			chain.assertFailed(t)
+			chain.assert(t, failure)
 
 		NewString(reporter, "foo").InListFold().
-			chain.assertFailed(t)
+			chain.assert(t, failure)
 		NewString(reporter, "foo").NotInListFold().
-			chain.assertFailed(t)
+			chain.assert(t, failure)
 	})
 }
 
 func TestString_Contains(t *testing.T) {
 	cases := []struct {
-		name         string
-		str          string
-		value        string
-		contains     bool
-		containsFold bool
+		name             string
+		str              string
+		value            string
+		wantContains     chainResult
+		wantContainsFold chainResult
 	}{
 		{
-			name:         "contains",
-			str:          "11-foo-22",
-			value:        "foo",
-			contains:     true,
-			containsFold: true,
+			name:             "contains",
+			str:              "11-foo-22",
+			value:            "foo",
+			wantContains:     success,
+			wantContainsFold: success,
 		},
 		{
-			name:         "not contains",
-			str:          "11-foo-22",
-			value:        "bar",
-			contains:     false,
-			containsFold: false,
+			name:             "not contains",
+			str:              "11-foo-22",
+			value:            "bar",
+			wantContains:     failure,
+			wantContainsFold: failure,
 		},
 		{
-			name:         "different case",
-			str:          "11-foo-22",
-			value:        "FOO",
-			contains:     false,
-			containsFold: true,
+			name:             "different case",
+			str:              "11-foo-22",
+			value:            "FOO",
+			wantContains:     failure,
+			wantContainsFold: success,
 		},
 	}
 
@@ -347,73 +346,73 @@ func TestString_Contains(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		NewString(reporter, tc.str).Contains(tc.value).
-			chain.assertOK(t, tc.contains)
+			chain.assert(t, tc.wantContains)
 		NewString(reporter, tc.str).NotContains(tc.value).
-			chain.assertOK(t, !tc.contains)
+			chain.assert(t, !tc.wantContains)
 
 		NewString(reporter, tc.str).ContainsFold(tc.value).
-			chain.assertOK(t, tc.containsFold)
+			chain.assert(t, tc.wantContainsFold)
 		NewString(reporter, tc.str).NotContainsFold(tc.value).
-			chain.assertOK(t, !tc.containsFold)
+			chain.assert(t, !tc.wantContainsFold)
 	}
 }
 
 func TestString_HasPrefix(t *testing.T) {
 	cases := []struct {
-		name          string
-		str           string
-		value         string
-		hasPrefix     bool
-		hasPrefixFold bool
+		name              string
+		str               string
+		value             string
+		wantHasPrefix     chainResult
+		wantHasPrefixFold chainResult
 	}{
 		{
-			name:          "has prefix",
-			str:           "Hello World",
-			value:         "Hello",
-			hasPrefix:     true,
-			hasPrefixFold: true,
+			name:              "has prefix",
+			str:               "Hello World",
+			value:             "Hello",
+			wantHasPrefix:     success,
+			wantHasPrefixFold: success,
 		},
 		{
-			name:          "full match",
-			str:           "Hello World",
-			value:         "Hello World",
-			hasPrefix:     true,
-			hasPrefixFold: true,
+			name:              "full match",
+			str:               "Hello World",
+			value:             "Hello World",
+			wantHasPrefix:     success,
+			wantHasPrefixFold: success,
 		},
 		{
-			name:          "empty string",
-			str:           "Hello World",
-			value:         "",
-			hasPrefix:     true,
-			hasPrefixFold: true,
+			name:              "empty string",
+			str:               "Hello World",
+			value:             "",
+			wantHasPrefix:     success,
+			wantHasPrefixFold: success,
 		},
 		{
-			name:          "extra char",
-			str:           "Hello World",
-			value:         "Hello!",
-			hasPrefix:     false,
-			hasPrefixFold: false,
+			name:              "extra char",
+			str:               "Hello World",
+			value:             "Hello!",
+			wantHasPrefix:     failure,
+			wantHasPrefixFold: failure,
 		},
 		{
-			name:          "different case",
-			str:           "Hello World",
-			value:         "hell",
-			hasPrefix:     false,
-			hasPrefixFold: true,
+			name:              "different case",
+			str:               "Hello World",
+			value:             "hell",
+			wantHasPrefix:     failure,
+			wantHasPrefixFold: success,
 		},
 		{
-			name:          "different case extra char",
-			str:           "Hello World",
-			value:         "hella",
-			hasPrefix:     false,
-			hasPrefixFold: false,
+			name:              "different case extra char",
+			str:               "Hello World",
+			value:             "hella",
+			wantHasPrefix:     failure,
+			wantHasPrefixFold: failure,
 		},
 		{
-			name:          "different case full match",
-			str:           "Hello World",
-			value:         "hELLO wORLD",
-			hasPrefix:     false,
-			hasPrefixFold: true,
+			name:              "different case full match",
+			str:               "Hello World",
+			value:             "hELLO wORLD",
+			wantHasPrefix:     failure,
+			wantHasPrefixFold: success,
 		},
 	}
 
@@ -421,73 +420,73 @@ func TestString_HasPrefix(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		NewString(reporter, tc.str).HasPrefix(tc.value).
-			chain.assertOK(t, tc.hasPrefix)
+			chain.assert(t, tc.wantHasPrefix)
 		NewString(reporter, tc.str).NotHasPrefix(tc.value).
-			chain.assertOK(t, !tc.hasPrefix)
+			chain.assert(t, !tc.wantHasPrefix)
 
 		NewString(reporter, tc.str).HasPrefixFold(tc.value).
-			chain.assertOK(t, tc.hasPrefixFold)
+			chain.assert(t, tc.wantHasPrefixFold)
 		NewString(reporter, tc.str).NotHasPrefixFold(tc.value).
-			chain.assertOK(t, !tc.hasPrefixFold)
+			chain.assert(t, !tc.wantHasPrefixFold)
 	}
 }
 
 func TestString_HasSuffix(t *testing.T) {
 	cases := []struct {
-		name          string
-		str           string
-		value         string
-		hasSuffix     bool
-		hasSuffixFold bool
+		name              string
+		str               string
+		value             string
+		wantHasSuffix     chainResult
+		wantHasSuffixFold chainResult
 	}{
 		{
-			name:          "has suffix",
-			str:           "Hello World",
-			value:         "World",
-			hasSuffix:     true,
-			hasSuffixFold: true,
+			name:              "has suffix",
+			str:               "Hello World",
+			value:             "World",
+			wantHasSuffix:     success,
+			wantHasSuffixFold: success,
 		},
 		{
-			name:          "full match",
-			str:           "Hello World",
-			value:         "Hello World",
-			hasSuffix:     true,
-			hasSuffixFold: true,
+			name:              "full match",
+			str:               "Hello World",
+			value:             "Hello World",
+			wantHasSuffix:     success,
+			wantHasSuffixFold: success,
 		},
 		{
-			name:          "empty string",
-			str:           "Hello World",
-			value:         "",
-			hasSuffix:     true,
-			hasSuffixFold: true,
+			name:              "empty string",
+			str:               "Hello World",
+			value:             "",
+			wantHasSuffix:     success,
+			wantHasSuffixFold: success,
 		},
 		{
-			name:          "extra char",
-			str:           "Hello World",
-			value:         "!World",
-			hasSuffix:     false,
-			hasSuffixFold: false,
+			name:              "extra char",
+			str:               "Hello World",
+			value:             "!World",
+			wantHasSuffix:     failure,
+			wantHasSuffixFold: failure,
 		},
 		{
-			name:          "different case",
-			str:           "Hello World",
-			value:         "WORLD",
-			hasSuffix:     false,
-			hasSuffixFold: true,
+			name:              "different case",
+			str:               "Hello World",
+			value:             "WORLD",
+			wantHasSuffix:     failure,
+			wantHasSuffixFold: success,
 		},
 		{
-			name:          "different case extra char",
-			str:           "Hello World",
-			value:         "!WORLD",
-			hasSuffix:     false,
-			hasSuffixFold: false,
+			name:              "different case extra char",
+			str:               "Hello World",
+			value:             "!WORLD",
+			wantHasSuffix:     failure,
+			wantHasSuffixFold: failure,
 		},
 		{
-			name:          "different case full match",
-			str:           "Hello World",
-			value:         "hELLO wORLD",
-			hasSuffix:     false,
-			hasSuffixFold: true,
+			name:              "different case full match",
+			str:               "Hello World",
+			value:             "hELLO wORLD",
+			wantHasSuffix:     failure,
+			wantHasSuffixFold: success,
 		},
 	}
 
@@ -495,14 +494,14 @@ func TestString_HasSuffix(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		NewString(reporter, tc.str).HasSuffix(tc.value).
-			chain.assertOK(t, tc.hasSuffix)
+			chain.assert(t, tc.wantHasSuffix)
 		NewString(reporter, tc.str).NotHasSuffix(tc.value).
-			chain.assertOK(t, !tc.hasSuffix)
+			chain.assert(t, !tc.wantHasSuffix)
 
 		NewString(reporter, tc.str).HasSuffixFold(tc.value).
-			chain.assertOK(t, tc.hasSuffixFold)
+			chain.assert(t, tc.wantHasSuffixFold)
 		NewString(reporter, tc.str).NotHasSuffixFold(tc.value).
-			chain.assertOK(t, !tc.hasSuffixFold)
+			chain.assert(t, !tc.wantHasSuffixFold)
 	}
 }
 
@@ -513,7 +512,7 @@ func TestString_Match(t *testing.T) {
 		value := NewString(reporter, "http://example.com/users/john")
 
 		m := value.Match(`http://(?P<host>.+)/users/(?P<user>.+)`)
-		m.chain.assertNotFailed(t)
+		m.chain.assert(t, success)
 
 		assert.Equal(t,
 			[]string{"http://example.com/users/john", "example.com", "john"},
@@ -526,7 +525,7 @@ func TestString_Match(t *testing.T) {
 		value := NewString(reporter, "http://example.com/users/john")
 
 		m := value.Match(`http://(.+)/users/(.+)`)
-		m.chain.assertNotFailed(t)
+		m.chain.assert(t, success)
 
 		assert.Equal(t,
 			[]string{"http://example.com/users/john", "example.com", "john"},
@@ -543,8 +542,8 @@ func TestString_Match(t *testing.T) {
 
 		assert.Equal(t, 2, len(m))
 
-		m[0].chain.assertNotFailed(t)
-		m[1].chain.assertNotFailed(t)
+		m[0].chain.assert(t, success)
+		m[1].chain.assert(t, success)
 
 		assert.Equal(t,
 			[]string{"http://example.com/users/john", "example.com", "john"},
@@ -557,28 +556,28 @@ func TestString_Match(t *testing.T) {
 
 	t.Run("status", func(t *testing.T) {
 		cases := []struct {
-			str      string
-			re       string
-			match    bool
-			notMatch bool
+			str          string
+			re           string
+			wantMatch    chainResult
+			wantNotMatch chainResult
 		}{
 			{
-				str:      `a`,
-				re:       `a`,
-				match:    true,
-				notMatch: false,
+				str:          `a`,
+				re:           `a`,
+				wantMatch:    success,
+				wantNotMatch: failure,
 			},
 			{
-				str:      `a`,
-				re:       `[^a]`,
-				match:    false,
-				notMatch: true,
+				str:          `a`,
+				re:           `[^a]`,
+				wantMatch:    failure,
+				wantNotMatch: success,
 			},
 			{
-				str:      `a`,
-				re:       `[`,
-				match:    false,
-				notMatch: false,
+				str:          `a`,
+				re:           `[`,
+				wantMatch:    failure,
+				wantNotMatch: failure,
 			},
 		}
 
@@ -589,16 +588,16 @@ func TestString_Match(t *testing.T) {
 				var value *String
 
 				value = NewString(reporter, tc.str)
-				value.Match(tc.re).chain.assertOK(t, tc.match)
-				value.chain.assertOK(t, tc.match)
+				value.Match(tc.re).chain.assert(t, tc.wantMatch)
+				value.chain.assert(t, tc.wantMatch)
 
 				value = NewString(reporter, tc.str)
 				value.MatchAll(tc.re)
-				value.chain.assertOK(t, tc.match)
+				value.chain.assert(t, tc.wantMatch)
 
 				value = NewString(reporter, tc.str)
 				value.NotMatch(tc.re)
-				value.chain.assertOK(t, tc.notMatch)
+				value.chain.assert(t, tc.wantNotMatch)
 			})
 		}
 	})
@@ -606,14 +605,14 @@ func TestString_Match(t *testing.T) {
 
 func TestString_IsAscii(t *testing.T) {
 	cases := []struct {
-		str     string
-		isASCII bool
+		str         string
+		wantIsASCII chainResult
 	}{
-		{"Ascii", true},
-		{string(rune(127)), true},
-		{"Ascii is アスキー", false},
-		{"アスキー", false},
-		{string(rune(128)), false},
+		{"Ascii", success},
+		{string(rune(127)), success},
+		{"Ascii is アスキー", failure},
+		{"アスキー", failure},
+		{string(rune(128)), failure},
 	}
 
 	for _, tc := range cases {
@@ -621,10 +620,10 @@ func TestString_IsAscii(t *testing.T) {
 			reporter := newMockReporter(t)
 
 			NewString(reporter, tc.str).IsASCII().
-				chain.assertOK(t, tc.isASCII)
+				chain.assert(t, tc.wantIsASCII)
 
 			NewString(reporter, tc.str).NotASCII().
-				chain.assertOK(t, !tc.isASCII)
+				chain.assert(t, !tc.wantIsASCII)
 		})
 	}
 }
@@ -634,90 +633,88 @@ func TestString_AsNumber(t *testing.T) {
 		name        string
 		str         string
 		base        []int
-		fail        bool
+		result      chainResult
 		expectedNum float64
 	}{
 		{
-			name:        "default_base_integer",
+			name:        "default base integer",
 			str:         "1234567",
-			fail:        false,
+			result:      success,
 			expectedNum: float64(1234567),
 		},
 		{
-			name:        "default_base_float",
+			name:        "default base float",
 			str:         "11.22",
-			fail:        false,
+			result:      success,
 			expectedNum: float64(11.22),
 		},
 		{
-			name:        "default_base_bad",
-			str:         "a1",
-			fail:        true,
-			expectedNum: 0,
+			name:   "default base bad",
+			str:    "a1",
+			result: failure,
 		},
 		{
-			name:        "base10_integer",
+			name:        "base10 integer",
 			str:         "100",
 			base:        []int{10},
-			fail:        false,
+			result:      success,
 			expectedNum: float64(100),
 		},
 		{
-			name:        "base10_float",
+			name:        "base10 float",
 			str:         "11.22",
 			base:        []int{10},
-			fail:        false,
+			result:      success,
 			expectedNum: float64(11.22),
 		},
 		{
-			name:        "base16_integer",
+			name:        "base16 integer",
 			str:         "100",
 			base:        []int{16},
-			fail:        false,
+			result:      success,
 			expectedNum: float64(0x100),
 		},
 		{
-			name:        "base16_float",
-			str:         "11.22",
-			base:        []int{16},
-			fail:        true,
-			expectedNum: 0,
+			name:   "base16 float",
+			str:    "11.22",
+			base:   []int{16},
+			result: failure,
 		},
 		{
-			name:        "base16_large_integer",
+			name:        "base16 large integer",
 			str:         "4000000000000000",
 			base:        []int{16},
-			fail:        false,
+			result:      success,
 			expectedNum: float64(0x4000000000000000),
 		},
 		{
-			name: "default_float_precision_max",
-			str:  "4611686018427387905",
-			fail: true,
+			name:   "default float precision max",
+			str:    "4611686018427387905",
+			result: failure,
 		},
 		{
-			name: "base10_float_precision_max",
-			str:  "4611686018427387905",
-			base: []int{10},
-			fail: true,
+			name:   "base10 float precision max",
+			str:    "4611686018427387905",
+			base:   []int{10},
+			result: failure,
 		},
 		{
-			name: "base16_float_precision_max",
-			str:  "8000000000000001",
-			base: []int{16},
-			fail: true,
+			name:   "base16 float precision max",
+			str:    "8000000000000001",
+			base:   []int{16},
+			result: failure,
 		},
 		{
-			name: "base16_float_precision_min",
-			str:  "-4000000000000001",
-			base: []int{16},
-			fail: true,
+			name:   "base16 float precision min",
+			str:    "-4000000000000001",
+			base:   []int{16},
+			result: failure,
 		},
 		{
-			name: "multiple_base",
-			str:  "100",
-			base: []int{10, 16},
-			fail: true,
+			name:   "multiple bases",
+			str:    "100",
+			base:   []int{10, 16},
+			result: failure,
 		},
 	}
 
@@ -728,12 +725,13 @@ func TestString_AsNumber(t *testing.T) {
 			str := NewString(reporter, tc.str)
 			num := str.AsNumber(tc.base...)
 
-			str.chain.assertOK(t, !tc.fail)
-			num.chain.assertOK(t, !tc.fail)
-			if tc.fail {
-				assert.Equal(t, float64(0), num.Raw())
-			} else {
+			str.chain.assert(t, tc.result)
+			num.chain.assert(t, tc.result)
+
+			if tc.result {
 				assert.Equal(t, tc.expectedNum, num.Raw())
+			} else {
+				assert.Equal(t, float64(0), num.Raw())
 			}
 		})
 	}
@@ -750,7 +748,7 @@ func TestString_AsBoolean(t *testing.T) {
 			value := NewString(reporter, str)
 
 			b := value.AsBoolean()
-			b.chain.assertNotFailed(t)
+			b.chain.assert(t, success)
 
 			assert.True(t, b.Raw())
 		})
@@ -762,7 +760,7 @@ func TestString_AsBoolean(t *testing.T) {
 			value := NewString(reporter, str)
 
 			b := value.AsBoolean()
-			b.chain.assertNotFailed(t)
+			b.chain.assert(t, success)
 
 			assert.False(t, b.Raw())
 		})
@@ -774,19 +772,19 @@ func TestString_AsBoolean(t *testing.T) {
 			value := NewString(reporter, str)
 
 			b := value.AsBoolean()
-			b.chain.assertFailed(t)
+			b.chain.assert(t, failure)
 		})
 	}
 }
 
 func TestString_AsDateTime(t *testing.T) {
-	t.Run("default_formats_RFC1123+GMT", func(t *testing.T) {
+	t.Run("default formats - RFC1123+GMT", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewString(reporter, "Tue, 15 Nov 1994 08:12:31 GMT")
 
 		dt := value.AsDateTime()
-		value.chain.assertNotFailed(t)
-		dt.chain.assertNotFailed(t)
+		value.chain.assert(t, success)
+		dt.chain.assert(t, success)
 
 		assert.True(t, time.Date(1994, 11, 15, 8, 12, 31, 0, time.UTC).Equal(dt.Raw()))
 	})
@@ -796,19 +794,19 @@ func TestString_AsDateTime(t *testing.T) {
 		value := NewString(reporter, "15 Nov 94 08:12 GMT")
 
 		dt := value.AsDateTime(time.RFC822)
-		value.chain.assertNotFailed(t)
-		dt.chain.assertNotFailed(t)
+		value.chain.assert(t, success)
+		dt.chain.assert(t, success)
 
 		assert.True(t, time.Date(1994, 11, 15, 8, 12, 0, 0, time.UTC).Equal(dt.Raw()))
 	})
 
-	t.Run("bad_input", func(t *testing.T) {
+	t.Run("bad input", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewString(reporter, "bad")
 
 		dt := value.AsDateTime()
-		value.chain.assertFailed(t)
-		dt.chain.assertFailed(t)
+		value.chain.assert(t, failure)
+		dt.chain.assert(t, failure)
 
 		assert.True(t, time.Unix(0, 0).Equal(dt.Raw()))
 	})
@@ -828,45 +826,45 @@ func TestString_AsDateTime(t *testing.T) {
 	}
 
 	for n, f := range formats {
-		t.Run("default_formats_"+f, func(t *testing.T) {
+		t.Run("default formats - "+f, func(t *testing.T) {
 			str := time.Now().Format(f)
 
 			reporter := newMockReporter(t)
 			value := NewString(reporter, str)
 
 			dt := value.AsDateTime()
-			dt.chain.assertNotFailed(t)
+			dt.chain.assert(t, success)
 		})
 
-		t.Run("all_formats_"+f, func(t *testing.T) {
+		t.Run("all formats - "+f, func(t *testing.T) {
 			str := time.Now().Format(f)
 
 			reporter := newMockReporter(t)
 			value := NewString(reporter, str)
 
 			dt := value.AsDateTime(formats...)
-			dt.chain.assertNotFailed(t)
+			dt.chain.assert(t, success)
 		})
 
-		t.Run("same_format_"+f, func(t *testing.T) {
+		t.Run("same format - "+f, func(t *testing.T) {
 			str := time.Now().Format(f)
 
 			reporter := newMockReporter(t)
 			value := NewString(reporter, str)
 
 			dt := value.AsDateTime(f)
-			dt.chain.assertNotFailed(t)
+			dt.chain.assert(t, success)
 		})
 
 		if n != 0 {
-			t.Run("different_format_"+f, func(t *testing.T) {
+			t.Run("different format - "+f, func(t *testing.T) {
 				str := time.Now().Format(f)
 
 				reporter := newMockReporter(t)
 				value := NewString(reporter, str)
 
 				dt := value.AsDateTime(formats[0])
-				dt.chain.assertFailed(t)
+				dt.chain.assert(t, failure)
 			})
 		}
 	}

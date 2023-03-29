@@ -13,10 +13,8 @@ func noWsPreSteps(ws *Websocket) {}
 
 func TestWebsocket_FailedChain(t *testing.T) {
 	reporter := newMockReporter(t)
-	chain := newChainWithDefaults("test", reporter)
 	config := newMockConfig(reporter)
-
-	chain.setFailed()
+	chain := newChainWithDefaults("test", reporter, flagFailed)
 
 	ws := newWebsocket(chain, config, nil)
 
@@ -128,9 +126,9 @@ func TestWebsocket_MockConn(t *testing.T) {
 
 func TestWebsocket_Expect(t *testing.T) {
 	type args struct {
-		failedChain bool
-		wsConn      WebsocketConn
-		wsPreSteps  func(*Websocket)
+		chainFlags chainFlags
+		wsConn     WebsocketConn
+		wsPreSteps func(*Websocket)
 	}
 	cases := []struct {
 		name     string
@@ -158,9 +156,9 @@ func TestWebsocket_Expect(t *testing.T) {
 		{
 			name: "chain already failed",
 			args: args{
-				failedChain: true,
-				wsPreSteps:  noWsPreSteps,
-				wsConn:      &mockWebsocketConn{},
+				chainFlags: flagFailed,
+				wsPreSteps: noWsPreSteps,
+				wsConn:     &mockWebsocketConn{},
 			},
 			assertOk: false,
 		},
@@ -196,12 +194,8 @@ func TestWebsocket_Expect(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
-			chain := newChainWithDefaults("test", reporter)
 			config := newMockConfig(reporter)
-
-			if tc.args.failedChain {
-				chain.setFailed()
-			}
+			chain := newChainWithDefaults("test", reporter, tc.args.chainFlags)
 
 			ws := newWebsocket(chain, config, tc.args.wsConn)
 			tc.args.wsPreSteps(ws)
