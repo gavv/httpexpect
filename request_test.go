@@ -1714,7 +1714,7 @@ func TestRequest_RedirectsDontFollow(t *testing.T) {
 	t.Run("no body", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
-		tp := newMockTransportRedirect()
+		tp := newMockRedirectTransport()
 		tp.assertFn = func(r *http.Request) {
 			assert.Equal(t, http.NoBody, r.Body)
 		}
@@ -1750,7 +1750,7 @@ func TestRequest_RedirectsDontFollow(t *testing.T) {
 	t.Run("has body", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
-		tp := newMockTransportRedirect()
+		tp := newMockRedirectTransport()
 		tp.assertFn = func(r *http.Request) {
 			b, err := ioutil.ReadAll(r.Body)
 			assert.NoError(t, err)
@@ -1791,8 +1791,8 @@ func TestRequest_RedirectsFollowAll(t *testing.T) {
 	t.Run("no body", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
-		tp := newMockTransportRedirect()
-		tp.maxRedirect = 1
+		tp := newMockRedirectTransport()
+		tp.maxRedirects = 1
 		tp.assertFn = func(r *http.Request) {
 			assert.Equal(t, http.NoBody, r.Body)
 		}
@@ -1833,7 +1833,7 @@ func TestRequest_RedirectsFollowAll(t *testing.T) {
 	t.Run("no body, too many redirects", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
-		tp := newMockTransportRedirect()
+		tp := newMockRedirectTransport()
 		tp.assertFn = func(r *http.Request) {
 			assert.Equal(t, http.NoBody, r.Body)
 		}
@@ -1873,8 +1873,8 @@ func TestRequest_RedirectsFollowAll(t *testing.T) {
 	t.Run("has body", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
-		tp := newMockTransportRedirect()
-		tp.maxRedirect = 1
+		tp := newMockRedirectTransport()
+		tp.maxRedirects = 1
 		tp.assertFn = func(r *http.Request) {
 			b, err := ioutil.ReadAll(r.Body)
 			assert.NoError(t, err)
@@ -1920,7 +1920,7 @@ func TestRequest_RedirectsFollowAll(t *testing.T) {
 	t.Run("has body, too many redirects", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
-		tp := newMockTransportRedirect()
+		tp := newMockRedirectTransport()
 		tp.assertFn = func(r *http.Request) {
 			b, err := ioutil.ReadAll(r.Body)
 			assert.NoError(t, err)
@@ -1967,8 +1967,8 @@ func TestRequest_RedirectsFollowWithoutBody(t *testing.T) {
 	t.Run("no body", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
-		tp := newMockTransportRedirect()
-		tp.maxRedirect = 1
+		tp := newMockRedirectTransport()
+		tp.maxRedirects = 1
 		tp.assertFn = func(r *http.Request) {
 			assert.Contains(t, []interface{}{nil, http.NoBody}, r.Body)
 		}
@@ -2007,7 +2007,7 @@ func TestRequest_RedirectsFollowWithoutBody(t *testing.T) {
 	t.Run("no body, too many redirects", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
-		tp := newMockTransportRedirect()
+		tp := newMockRedirectTransport()
 		tp.assertFn = func(r *http.Request) {
 			assert.Contains(t, []interface{}{nil, http.NoBody}, r.Body)
 		}
@@ -2045,8 +2045,8 @@ func TestRequest_RedirectsFollowWithoutBody(t *testing.T) {
 	t.Run("has body, status permanent redirect", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
-		tp := newMockTransportRedirect()
-		tp.maxRedirect = 1
+		tp := newMockRedirectTransport()
+		tp.maxRedirects = 1
 		tp.assertFn = func(r *http.Request) {
 			b, err := ioutil.ReadAll(r.Body)
 			assert.NoError(t, err)
@@ -2088,8 +2088,8 @@ func TestRequest_RedirectsFollowWithoutBody(t *testing.T) {
 	t.Run("has body, status moved permanently", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
-		tp := newMockTransportRedirect()
-		tp.maxRedirect = 1
+		tp := newMockRedirectTransport()
+		tp.maxRedirects = 1
 		tp.redirectHTTPStatusCode = http.StatusMovedPermanently
 		tp.assertFn = func(r *http.Request) {
 			if r.URL.String() == "/url" {
@@ -2141,7 +2141,7 @@ func TestRequest_RedirectsFollowWithoutBody(t *testing.T) {
 	t.Run("has body, status moved permanently, too many redirects", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
-		tp := newMockTransportRedirect()
+		tp := newMockRedirectTransport()
 		tp.redirectHTTPStatusCode = http.StatusMovedPermanently
 		tp.assertFn = func(r *http.Request) {
 			if r.URL.String() == "/url" {

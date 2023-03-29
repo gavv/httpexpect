@@ -1101,7 +1101,7 @@ func TestWebsocket_Disconnect(t *testing.T) {
 
 func TestWebsocket_PrintRead(t *testing.T) {
 	reporter := newMockReporter(t)
-	printer := newMockWsPrinter()
+	printer := &mockWebsocketPrinter{}
 	config := Config{
 		Reporter: reporter,
 		Printers: []Printer{printer},
@@ -1119,7 +1119,7 @@ func TestWebsocket_PrintRead(t *testing.T) {
 
 func TestWebsocket_PrintWrite(t *testing.T) {
 	reporter := newMockReporter(t)
-	printer := newMockWsPrinter()
+	printer := &mockWebsocketPrinter{}
 	config := Config{
 		Reporter: reporter,
 		Printers: []Printer{printer},

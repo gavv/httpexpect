@@ -13,25 +13,177 @@ import (
 	"time"
 )
 
-type mockRequestFactory struct {
-	lastreq *http.Request
-	fail    bool
+// mock config
+func newMockConfig(r Reporter) Config {
+	return Config{Reporter: r}.withDefaults()
 }
 
-func (f *mockRequestFactory) NewRequest(
-	method, urlStr string, body io.Reader) (*http.Request, error) {
-	if f.fail {
-		return nil, errors.New("testRequestFactory")
+// mock chain
+func newMockChain(t *testing.T, flag ...chainFlags) *chain {
+	return newChainWithDefaults("test", newMockReporter(t), flag...)
+}
+
+// mock logger
+type mockLogger struct {
+	testing     *testing.T
+	logged      bool
+	lastMessage string
+}
+
+func newMockLogger(t *testing.T) *mockLogger {
+	return &mockLogger{testing: t}
+}
+
+func (ml *mockLogger) Logf(message string, args ...interface{}) {
+	ml.testing.Logf(message, args...)
+	ml.lastMessage = fmt.Sprintf(message, args...)
+	ml.logged = true
+}
+
+// mock reporter
+type mockReporter struct {
+	testing  *testing.T
+	reported bool
+	reportCb func()
+}
+
+func newMockReporter(t *testing.T) *mockReporter {
+	return &mockReporter{testing: t}
+}
+
+func (mr *mockReporter) Errorf(message string, args ...interface{}) {
+	mr.testing.Logf("Fail: "+message, args...)
+	mr.reported = true
+
+	if mr.reportCb != nil {
+		mr.reportCb()
 	}
-	f.lastreq = httptest.NewRequest(method, urlStr, body)
-	return f.lastreq, nil
 }
 
+// mock formatter
+type mockFormatter struct {
+	testing          *testing.T
+	formattedSuccess int
+	formattedFailure int
+}
+
+func newMockFormatter(t *testing.T) *mockFormatter {
+	return &mockFormatter{testing: t}
+}
+
+func (mf *mockFormatter) FormatSuccess(ctx *AssertionContext) string {
+	mf.formattedSuccess++
+	return ctx.TestName
+}
+
+func (mf *mockFormatter) FormatFailure(
+	ctx *AssertionContext, failure *AssertionFailure,
+) string {
+	mf.formattedFailure++
+	return ctx.TestName
+}
+
+// mock assertion handler
+type mockAssertionHandler struct {
+	ctx     *AssertionContext
+	failure *AssertionFailure
+}
+
+func (mh *mockAssertionHandler) Success(ctx *AssertionContext) {
+	mh.ctx = ctx
+}
+
+func (mh *mockAssertionHandler) Failure(
+	ctx *AssertionContext, failure *AssertionFailure,
+) {
+	mh.ctx = ctx
+	mh.failure = failure
+}
+
+// mock printer
+type mockPrinter struct {
+	reqBody  []byte
+	respBody []byte
+	rtt      time.Duration
+}
+
+func (mp *mockPrinter) Request(req *http.Request) {
+	if req.Body != nil {
+		mp.reqBody, _ = ioutil.ReadAll(req.Body)
+		req.Body.Close()
+	}
+}
+
+func (mp *mockPrinter) Response(resp *http.Response, rtt time.Duration) {
+	if resp.Body != nil {
+		mp.respBody, _ = ioutil.ReadAll(resp.Body)
+		resp.Body.Close()
+	}
+	mp.rtt = rtt
+}
+
+// mock websocket printer
+type mockWebsocketPrinter struct {
+	isWrittenTo bool
+	isReadFrom  bool
+}
+
+func (mp *mockWebsocketPrinter) Request(*http.Request) {
+}
+
+func (mp *mockWebsocketPrinter) Response(*http.Response, time.Duration) {
+}
+
+func (mp *mockWebsocketPrinter) WebsocketWrite(typ int, content []byte, closeCode int) {
+	mp.isWrittenTo = true
+}
+
+func (mp *mockWebsocketPrinter) WebsocketRead(typ int, content []byte, closeCode int) {
+	mp.isReadFrom = true
+}
+
+// mock websocket connection
+type mockWebsocketConn struct {
+	subprotocol  string
+	closeError   error
+	readMsgErr   error
+	writeMsgErr  error
+	readDlError  error
+	writeDlError error
+	msgType      int
+	msg          []byte
+}
+
+func (mc *mockWebsocketConn) Subprotocol() string {
+	return mc.subprotocol
+}
+
+func (mc *mockWebsocketConn) Close() error {
+	return mc.closeError
+}
+
+func (mc *mockWebsocketConn) SetReadDeadline(t time.Time) error {
+	return mc.readDlError
+}
+
+func (mc *mockWebsocketConn) SetWriteDeadline(t time.Time) error {
+	return mc.writeDlError
+}
+
+func (mc *mockWebsocketConn) ReadMessage() (messageType int, p []byte, err error) {
+	return mc.msgType, []byte{}, mc.readMsgErr
+}
+
+func (mc *mockWebsocketConn) WriteMessage(messageType int, data []byte) error {
+	return mc.writeMsgErr
+}
+
+// mock http client
 type mockClient struct {
 	req  *http.Request
 	resp http.Response
 	err  error
-	cb   func(req *http.Request) // callback in .Do
+	cb   func(req *http.Request)
 }
 
 func (c *mockClient) Do(req *http.Request) (*http.Response, error) {
@@ -49,14 +201,8 @@ func (c *mockClient) Do(req *http.Request) (*http.Response, error) {
 	return nil, c.err
 }
 
-// mockTransportRedirect mocks a transport that implements RoundTripper
-//
-// When tripCount < maxRedirect,
-// mockTransportRedirect responses with redirectHTTPStatusCode
-//
-// When tripCount = maxRedirect,
-// mockTransportRedirect responses with HTTP 200 OK
-type mockTransportRedirect struct {
+// mock http redirecting transport
+type mockRedirectTransport struct {
 	// assertFn asserts the HTTP request
 	assertFn func(*http.Request)
 
@@ -64,22 +210,27 @@ type mockTransportRedirect struct {
 	redirectHTTPStatusCode int
 
 	// tripCount tracks the number of trip that has been done
+	//
+	// When tripCount < maxRedirect,
+	// mockTransportRedirect responses with redirectHTTPStatusCode
+	//
+	// When tripCount = maxRedirect,
+	// mockTransportRedirect responses with HTTP 200 OK
 	tripCount int
 
-	// maxRedirect indicates the number of trip that can be done for redirection.
+	// maxRedirects indicates the number of trip that can be done for redirection.
 	// -1 means always redirect.
-	maxRedirect int
+	maxRedirects int
 }
 
-func newMockTransportRedirect() *mockTransportRedirect {
-	return &mockTransportRedirect{
-		assertFn:               nil,
+func newMockRedirectTransport() *mockRedirectTransport {
+	return &mockRedirectTransport{
 		redirectHTTPStatusCode: http.StatusPermanentRedirect,
-		maxRedirect:            -1,
+		maxRedirects:           -1,
 	}
 }
 
-func (mt *mockTransportRedirect) RoundTrip(origReq *http.Request) (
+func (mt *mockRedirectTransport) RoundTrip(origReq *http.Request) (
 	*http.Response, error,
 ) {
 	mt.tripCount++
@@ -90,7 +241,7 @@ func (mt *mockTransportRedirect) RoundTrip(origReq *http.Request) (
 
 	res := httptest.NewRecorder()
 
-	if mt.maxRedirect == -1 || mt.tripCount <= mt.maxRedirect {
+	if mt.maxRedirects == -1 || mt.tripCount <= mt.maxRedirects {
 		res.Result().StatusCode = mt.redirectHTTPStatusCode
 		res.Result().Header.Set("Location", "/redirect")
 	} else {
@@ -100,17 +251,22 @@ func (mt *mockTransportRedirect) RoundTrip(origReq *http.Request) (
 	return res.Result(), nil
 }
 
-type mockQueryEncoder string
-
-// EncodeValues implements query.Encoder.EncodeValues
-func (m mockQueryEncoder) EncodeValues(key string, v *url.Values) error {
-	if m == "err" {
-		return errors.New("encoding error")
-	}
-	v.Set(key, string(m))
-	return nil
+// mock http request factory
+type mockRequestFactory struct {
+	lastreq *http.Request
+	fail    bool
 }
 
+func (mf *mockRequestFactory) NewRequest(
+	method, urlStr string, body io.Reader) (*http.Request, error) {
+	if mf.fail {
+		return nil, errors.New("testRequestFactory")
+	}
+	mf.lastreq = httptest.NewRequest(method, urlStr, body)
+	return mf.lastreq, nil
+}
+
+// mock http request or response body
 type mockBody struct {
 	reader io.Reader
 
@@ -127,217 +283,68 @@ func newMockBody(body string) *mockBody {
 	}
 }
 
-func (b *mockBody) Read(p []byte) (int, error) {
-	b.readCount++
-	if b.readErr != nil {
-		return 0, b.readErr
+func (mb *mockBody) Read(p []byte) (int, error) {
+	mb.readCount++
+	if mb.readErr != nil {
+		return 0, mb.readErr
 	}
-	return b.reader.Read(p)
+	return mb.reader.Read(p)
 }
 
-func (b *mockBody) Close() error {
-	b.closeCount++
-	if b.closeErr != nil {
-		return b.closeErr
+func (mb *mockBody) Close() error {
+	mb.closeCount++
+	if mb.closeErr != nil {
+		return mb.closeErr
 	}
 	return nil
 }
 
-func newMockConfig(r Reporter) Config {
-	return Config{Reporter: r}.withDefaults()
-}
+// mock query string encoder (query.Encoder.EncodeValues)
+type mockQueryEncoder string
 
-func newMockChain(t *testing.T, flag ...chainFlags) *chain {
-	return newChainWithDefaults("test", newMockReporter(t), flag...)
-}
-
-type mockLogger struct {
-	testing     *testing.T
-	logged      bool
-	lastMessage string
-}
-
-func newMockLogger(t *testing.T) *mockLogger {
-	return &mockLogger{testing: t}
-}
-
-func (l *mockLogger) Logf(message string, args ...interface{}) {
-	l.testing.Logf(message, args...)
-	l.lastMessage = fmt.Sprintf(message, args...)
-	l.logged = true
-}
-
-type mockReporter struct {
-	testing  *testing.T
-	reported bool
-	reportCb func()
-}
-
-func newMockReporter(t *testing.T) *mockReporter {
-	return &mockReporter{testing: t}
-}
-
-func (r *mockReporter) Errorf(message string, args ...interface{}) {
-	r.testing.Logf("Fail: "+message, args...)
-	r.reported = true
-
-	if r.reportCb != nil {
-		r.reportCb()
+func (mq mockQueryEncoder) EncodeValues(key string, v *url.Values) error {
+	if mq == "err" {
+		return errors.New("encoding error")
 	}
+	v.Set(key, string(mq))
+	return nil
 }
 
-type mockFormatter struct {
-	testing          *testing.T
-	formattedSuccess int
-	formattedFailure int
-}
-
-func newMockFormatter(t *testing.T) *mockFormatter {
-	return &mockFormatter{testing: t}
-}
-
-func (f *mockFormatter) FormatSuccess(ctx *AssertionContext) string {
-	f.formattedSuccess++
-	return ctx.TestName
-}
-
-func (f *mockFormatter) FormatFailure(
-	ctx *AssertionContext, failure *AssertionFailure,
-) string {
-	f.formattedFailure++
-	return ctx.TestName
-}
-
-type mockAssertionHandler struct {
-	ctx     *AssertionContext
-	failure *AssertionFailure
-}
-
-func (h *mockAssertionHandler) Success(ctx *AssertionContext) {
-	h.ctx = ctx
-}
-
-func (h *mockAssertionHandler) Failure(
-	ctx *AssertionContext, failure *AssertionFailure,
-) {
-	h.ctx = ctx
-	h.failure = failure
-}
-
-type mockPrinter struct {
-	reqBody  []byte
-	respBody []byte
-	rtt      time.Duration
-}
-
-func (p *mockPrinter) Request(req *http.Request) {
-	if req.Body != nil {
-		p.reqBody, _ = ioutil.ReadAll(req.Body)
-		req.Body.Close()
-	}
-}
-
-func (p *mockPrinter) Response(resp *http.Response, rtt time.Duration) {
-	if resp.Body != nil {
-		p.respBody, _ = ioutil.ReadAll(resp.Body)
-		resp.Body.Close()
-	}
-	p.rtt = rtt
-}
-
-type mockWebsocketPrinter struct {
-	isWrittenTo bool
-	isReadFrom  bool
-}
-
-func newMockWsPrinter() *mockWebsocketPrinter {
-	return &mockWebsocketPrinter{
-		isWrittenTo: false,
-		isReadFrom:  false,
-	}
-}
-
-func (p *mockWebsocketPrinter) Request(*http.Request) {
-}
-
-func (p *mockWebsocketPrinter) Response(*http.Response, time.Duration) {
-}
-
-func (p *mockWebsocketPrinter) WebsocketWrite(typ int, content []byte, closeCode int) {
-	p.isWrittenTo = true
-}
-
-func (p *mockWebsocketPrinter) WebsocketRead(typ int, content []byte, closeCode int) {
-	p.isReadFrom = true
-}
-
-type mockWebsocketConn struct {
-	subprotocol  string
-	closeError   error
-	readMsgErr   error
-	writeMsgErr  error
-	readDlError  error
-	writeDlError error
-	msgType      int
-	msg          []byte
-}
-
-func (wc *mockWebsocketConn) Subprotocol() string {
-	return wc.subprotocol
-}
-
-func (wc *mockWebsocketConn) Close() error {
-	return wc.closeError
-}
-
-func (wc *mockWebsocketConn) SetReadDeadline(t time.Time) error {
-	return wc.readDlError
-}
-
-func (wc *mockWebsocketConn) SetWriteDeadline(t time.Time) error {
-	return wc.writeDlError
-}
-
-func (wc *mockWebsocketConn) ReadMessage() (messageType int, p []byte, err error) {
-	return wc.msgType, []byte{}, wc.readMsgErr
-}
-
-func (wc *mockWebsocketConn) WriteMessage(messageType int, data []byte) error {
-	return wc.writeMsgErr
-}
-
-type mockNetError struct {
-	isTimeout   bool
-	isTemporary bool
-}
-
-func (e *mockNetError) Error() string {
-	return "mock net error"
-}
-
-func (e *mockNetError) Timeout() bool {
-	return e.isTimeout
-}
-
-func (e *mockNetError) Temporary() bool {
-	return e.isTemporary
-}
-
-type mockError struct{}
-
-func (e *mockError) Error() string {
-	return ""
-}
-
+// mock io.Writer
 type mockWriter struct {
 	io.Writer
 	err error
 }
 
-func (w *mockWriter) Write(p []byte) (n int, err error) {
-	if w.err != nil {
+func (mw *mockWriter) Write(p []byte) (n int, err error) {
+	if mw.err != nil {
 		return 0, err
 	}
 
-	return w.Writer.Write(p)
+	return mw.Writer.Write(p)
+}
+
+// mock network error
+type mockNetError struct {
+	isTimeout   bool
+	isTemporary bool
+}
+
+func (me *mockNetError) Error() string {
+	return "mock net error"
+}
+
+func (me *mockNetError) Timeout() bool {
+	return me.isTimeout
+}
+
+func (me *mockNetError) Temporary() bool {
+	return me.isTemporary
+}
+
+// // mock custom error
+type mockError struct{}
+
+func (me *mockError) Error() string {
+	return "mock error"
 }
