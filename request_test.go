@@ -1679,6 +1679,20 @@ func TestRequest_Websocket(t *testing.T) {
 		req.Expect().chain.assert(t, success)
 	})
 
+	t.Run("custom error", func(t *testing.T) {
+		dialer := WebsocketDialerFunc(func(
+			_ string, _ http.Header,
+		) (*websocket.Conn, *http.Response, error) {
+			return &websocket.Conn{}, &http.Response{}, errors.New("custom error")
+		})
+		config := Config{
+			Reporter:        newMockReporter(t),
+			WebsocketDialer: dialer,
+		}
+		req := NewRequestC(config, "GET", "url").WithWebsocketUpgrade()
+		req.Expect().chain.assert(t, failure)
+	})
+
 	t.Run("request body not allowed", func(t *testing.T) {
 		dialer := WebsocketDialerFunc(func(
 			_ string, _ http.Header,
