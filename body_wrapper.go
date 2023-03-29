@@ -71,7 +71,6 @@ func (bw *bodyWrapper) Read(p []byte) (n int, err error) {
 		}
 		if closeErr := bw.closeAndCancel(); closeErr != nil && (err == nil || err == io.EOF) {
 			err = closeErr
-			n = 0
 		}
 	}
 
