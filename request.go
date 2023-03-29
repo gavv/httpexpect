@@ -49,9 +49,10 @@ type Request struct {
 	path    string
 	query   url.Values
 
-	form      url.Values
-	formbuf   *bytes.Buffer
-	multipart *multipart.Writer
+	form        url.Values
+	formbuf     *bytes.Buffer
+	multipart   *multipart.Writer
+	multipartFn func(w io.Writer) *multipart.Writer
 
 	bodySetter   string
 	typeSetter   string
@@ -126,6 +127,9 @@ func newRequest(
 		maxRetryDelay: time.Second * 5,
 		sleepFn: func(d time.Duration) <-chan time.Time {
 			return time.After(d)
+		},
+		multipartFn: func(w io.Writer) *multipart.Writer {
+			return multipart.NewWriter(w)
 		},
 	}
 
@@ -1922,7 +1926,7 @@ func (r *Request) WithMultipart() *Request {
 
 	if r.multipart == nil {
 		r.formbuf = &bytes.Buffer{}
-		r.multipart = multipart.NewWriter(r.formbuf)
+		r.multipart = r.multipartFn(r.formbuf)
 		r.setBody(opChain, "WithMultipart()", r.formbuf, 0, false)
 	}
 

@@ -328,3 +328,16 @@ type mockError struct{}
 func (e *mockError) Error() string {
 	return ""
 }
+
+type mockWriter struct {
+	io.Writer
+	err error
+}
+
+func (w *mockWriter) Write(p []byte) (n int, err error) {
+	if w.err != nil {
+		return 0, err
+	}
+
+	return w.Writer.Write(p)
+}

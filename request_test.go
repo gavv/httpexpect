@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"io/ioutil"
 	"mime"
 	"mime/multipart"
@@ -1416,6 +1417,56 @@ func TestRequest_BodyMultipart(t *testing.T) {
 
 		eof, _ := reader.NextPart()
 		assert.Nil(t, eof)
+	})
+
+	t.Run("multipart writer error", func(t *testing.T) {
+		cases := []struct {
+			name     string
+			reqFn    func(*Request)
+			assertOk bool
+		}{
+			{
+				name: "with form",
+				reqFn: func(req *Request) {
+					req.WithForm(map[string]string{"foo": "bar"})
+				},
+				assertOk: false,
+			},
+			{
+				name: "with form field",
+				reqFn: func(req *Request) {
+					req.WithFormField("foo", "bar")
+				},
+				assertOk: false,
+			},
+			{
+				name: "with file",
+				reqFn: func(req *Request) {
+					req.WithFile("foo", "bar", strings.NewReader("baz"))
+				},
+				assertOk: false,
+			},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				req := NewRequestC(config, "POST", "url")
+				req.multipartFn = func(w io.Writer) *multipart.Writer {
+					return multipart.NewWriter(&mockWriter{
+						err: errors.New("mock writer error"),
+					})
+				}
+				req.WithMultipart()
+
+				tc.reqFn(req)
+
+				if tc.assertOk {
+					req.chain.assertNotFailed(t)
+				} else {
+					req.chain.assertFailed(t)
+				}
+			})
+		}
 	})
 }
 
