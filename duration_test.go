@@ -67,79 +67,131 @@ func TestDuration_Alias(t *testing.T) {
 }
 
 func TestDuration_IsEqual(t *testing.T) {
-	reporter := newMockReporter(t)
+	t.Run("basic", func(t *testing.T) {
+		cases := []struct {
+			name      string
+			duration  time.Duration
+			value     time.Duration
+			wantEqual chainResult
+		}{
+			{
+				name:      "compare equivalent durations",
+				duration:  time.Second,
+				value:     time.Second,
+				wantEqual: success,
+			},
+			{
+				name:      "compare non-equivalent durations",
+				duration:  time.Second,
+				value:     time.Minute,
+				wantEqual: failure,
+			},
+		}
 
-	value := NewDuration(reporter, time.Second)
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				reporter := newMockReporter(t)
 
-	assert.Equal(t, time.Second, value.Raw())
+				NewDuration(reporter, tc.duration).IsEqual(tc.value).
+					chain.assert(t, tc.wantEqual)
 
-	value.IsEqual(time.Second)
-	value.chain.assert(t, success)
-	value.chain.clear()
-
-	value.IsEqual(time.Minute)
-	value.chain.assert(t, failure)
-	value.chain.clear()
-
-	value.NotEqual(time.Minute)
-	value.chain.assert(t, success)
-	value.chain.clear()
-
-	value.NotEqual(time.Second)
-	value.chain.assert(t, failure)
-	value.chain.clear()
+				NewDuration(reporter, tc.duration).NotEqual(tc.value).
+					chain.assert(t, !tc.wantEqual)
+			})
+		}
+	})
 }
 
 func TestDuration_IsGreater(t *testing.T) {
-	reporter := newMockReporter(t)
+	t.Run("basic", func(t *testing.T) {
+		cases := []struct {
+			name     string
+			duration time.Duration
+			value    time.Duration
+			wantGt   chainResult
+			wantGe   chainResult
+		}{
+			{
+				name:     "duration is lesser",
+				duration: time.Second,
+				value:    time.Second + 1,
+				wantGt:   failure,
+				wantGe:   failure,
+			},
+			{
+				name:     "duration is equal",
+				duration: time.Second,
+				value:    time.Second,
+				wantGt:   failure,
+				wantGe:   success,
+			},
+			{
+				name:     "duration is greater",
+				duration: time.Second,
+				value:    time.Second - 1,
+				wantGt:   success,
+				wantGe:   success,
+			},
+		}
 
-	value := NewDuration(reporter, time.Second)
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				reporter := newMockReporter(t)
 
-	value.Gt(time.Second - 1)
-	value.chain.assert(t, success)
-	value.chain.clear()
+				NewDuration(reporter, tc.duration).Gt(tc.value).
+					chain.assert(t, tc.wantGt)
 
-	value.Gt(time.Second)
-	value.chain.assert(t, failure)
-	value.chain.clear()
-
-	value.Ge(time.Second - 1)
-	value.chain.assert(t, success)
-	value.chain.clear()
-
-	value.Ge(time.Second)
-	value.chain.assert(t, success)
-	value.chain.clear()
-
-	value.Ge(time.Second + 1)
-	value.chain.assert(t, failure)
-	value.chain.clear()
+				NewDuration(reporter, tc.duration).Ge(tc.value).
+					chain.assert(t, tc.wantGe)
+			})
+		}
+	})
 }
 
 func TestDuration_IsLesser(t *testing.T) {
-	reporter := newMockReporter(t)
+	t.Run("basic", func(t *testing.T) {
+		cases := []struct {
+			name     string
+			duration time.Duration
+			value    time.Duration
+			wantLt   chainResult
+			wantLe   chainResult
+		}{
+			{
+				name:     "duration is lesser",
+				duration: time.Second,
+				value:    time.Second + 1,
+				wantLt:   success,
+				wantLe:   success,
+			},
+			{
+				name:     "duration is equal",
+				duration: time.Second,
+				value:    time.Second,
+				wantLt:   failure,
+				wantLe:   success,
+			},
+			{
+				name:     "duration is greater",
+				duration: time.Second,
+				value:    time.Second - 1,
+				wantLt:   failure,
+				wantLe:   failure,
+			},
+		}
 
-	value := NewDuration(reporter, time.Second)
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				reporter := newMockReporter(t)
 
-	value.Lt(time.Second + 1)
-	value.chain.assert(t, success)
-	value.chain.clear()
+				NewDuration(reporter, tc.duration).Lt(tc.value).
+					chain.assert(t, tc.wantLt)
 
-	value.Lt(time.Second)
-	value.chain.assert(t, failure)
-	value.chain.clear()
-
-	value.Le(time.Second + 1)
-	value.chain.assert(t, success)
-	value.chain.clear()
-
-	value.Le(time.Second)
-	value.chain.assert(t, success)
-	value.chain.clear()
-
-	value.Le(time.Second - 1)
-	value.chain.assert(t, failure)
-	value.chain.clear()
+				NewDuration(reporter, tc.duration).Le(tc.value).
+					chain.assert(t, tc.wantLe)
+			})
+		}
+	})
 }
 
 func TestDuration_InRange(t *testing.T) {
