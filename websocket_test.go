@@ -131,8 +131,8 @@ func TestWebsocket_Expect(t *testing.T) {
 		wsPreSteps func(*Websocket)
 	}
 	cases := []struct {
-		name     string
-		args     args
+		name   string
+		args   args
 		result chainResult
 	}{
 		{
@@ -214,8 +214,8 @@ func TestWebsocket_Close(t *testing.T) {
 		closeCode  []int
 	}
 	cases := []struct {
-		name     string
-		args     args
+		name   string
+		args   args
 		result chainResult
 	}{
 		{
@@ -282,8 +282,8 @@ func TestWebsocket_CloseWithBytes(t *testing.T) {
 		closeCode  []int
 	}
 	cases := []struct {
-		name     string
-		args     args
+		name   string
+		args   args
 		result chainResult
 	}{
 		{
@@ -354,8 +354,8 @@ func TestWebsocket_CloseWithText(t *testing.T) {
 		closeCode  []int
 	}
 	cases := []struct {
-		name     string
-		args     args
+		name   string
+		args   args
 		result chainResult
 	}{
 		{
@@ -426,8 +426,8 @@ func TestWebsocket_CloseWithJSON(t *testing.T) {
 		closeCode  []int
 	}
 	cases := []struct {
-		name     string
-		args     args
+		name   string
+		args   args
 		result chainResult
 	}{
 		{
@@ -517,8 +517,8 @@ func TestWebsocket_WriteMessage(t *testing.T) {
 		closeCode  []int
 	}
 	cases := []struct {
-		name     string
-		args     args
+		name   string
+		args   args
 		result chainResult
 	}{
 		{
@@ -654,8 +654,8 @@ func TestWebsocket_WriteBytesBinary(t *testing.T) {
 		content    []byte
 	}
 	cases := []struct {
-		name     string
-		args     args
+		name   string
+		args   args
 		result chainResult
 	}{
 		{
@@ -712,8 +712,8 @@ func TestWebsocket_WriteBytesText(t *testing.T) {
 		content    []byte
 	}
 	cases := []struct {
-		name     string
-		args     args
+		name   string
+		args   args
 		result chainResult
 	}{
 		{
@@ -770,8 +770,8 @@ func TestWebsocket_WriteText(t *testing.T) {
 		content    string
 	}
 	cases := []struct {
-		name     string
-		args     args
+		name   string
+		args   args
 		result chainResult
 	}{
 		{
@@ -828,8 +828,8 @@ func TestWebsocket_WriteJSON(t *testing.T) {
 		content    interface{}
 	}
 	cases := []struct {
-		name     string
-		args     args
+		name   string
+		args   args
 		result chainResult
 	}{
 		{
@@ -916,8 +916,8 @@ func TestWebsocket_SetReadDeadline(t *testing.T) {
 		wsConn WebsocketConn
 	}
 	cases := []struct {
-		name     string
-		args     args
+		name   string
+		args   args
 		result chainResult
 	}{
 		{
@@ -960,8 +960,8 @@ func TestWebsocket_SetWriteDeadline(t *testing.T) {
 		wsConn WebsocketConn
 	}
 	cases := []struct {
-		name     string
-		args     args
+		name   string
+		args   args
 		result chainResult
 	}{
 		{
@@ -1004,8 +1004,8 @@ func TestWebsocket_Disconnect(t *testing.T) {
 		wsConn WebsocketConn
 	}
 	cases := []struct {
-		name     string
-		args     args
+		name   string
+		args   args
 		result chainResult
 	}{
 		{
