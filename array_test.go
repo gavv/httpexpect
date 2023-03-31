@@ -892,7 +892,8 @@ func TestArray_ConsistsOf(t *testing.T) {
 		)
 		reporter := newMockReporter(t)
 
-		assert.Equal(t, []interface{}{123.0, 456.0}, NewArray(reporter, []interface{}{123, 456}).Raw())
+		assert.Equal(t, []interface{}{123.0, 456.0},
+			NewArray(reporter, []interface{}{123, 456}).Raw())
 
 		NewArray(reporter, []interface{}{123, 456}).ConsistsOf(myInt(123), 456.0).
 			chain.assert(t, success)
@@ -1007,7 +1008,8 @@ func TestArray_Contains(t *testing.T) {
 			})
 		}
 		reporter := newMockReporter(t)
-		assert.Equal(t, []interface{}{123.0, 456.0}, NewArray(reporter, []interface{}{123, 456}).Raw())
+		assert.Equal(t, []interface{}{123.0, 456.0}, NewArray(reporter,
+			[]interface{}{123, 456}).Raw())
 
 	})
 
@@ -1080,7 +1082,8 @@ func TestArray_ContainsAll(t *testing.T) {
 
 		reporter := newMockReporter(t)
 
-		assert.Equal(t, []interface{}{123.0, 456.0}, NewArray(reporter, []interface{}{123, 456}).Raw())
+		assert.Equal(t, []interface{}{123.0, 456.0},
+			NewArray(reporter, []interface{}{123, 456}).Raw())
 
 		NewArray(reporter, []interface{}{123, 456}).ContainsAll(myInt(123), 456.0).
 			chain.assert(t, success)
@@ -1170,10 +1173,10 @@ func TestArray_ContainsAny(t *testing.T) {
 		for _, tc := range cases {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
-				NewArray(reporter, []interface{}{123, 789, "foo", []interface{}{567, 456}}).ContainsAny(tc.value...).
-					chain.assert(t, tc.wantContainsAny)
-				NewArray(reporter, []interface{}{123, 789, "foo", []interface{}{567, 456}}).NotContainsAny(tc.value...).
-					chain.assert(t, !tc.wantContainsAny)
+				NewArray(reporter, []interface{}{123, 789, "foo", []interface{}{567, 456}}).
+					ContainsAny(tc.value...).chain.assert(t, tc.wantContainsAny)
+				NewArray(reporter, []interface{}{123, 789, "foo", []interface{}{567, 456}}).
+					NotContainsAny(tc.value...).chain.assert(t, !tc.wantContainsAny)
 			})
 		}
 	})
