@@ -842,35 +842,40 @@ func TestArray_InList(t *testing.T) {
 
 func TestArray_ConsistsOf(t *testing.T) {
 	t.Run("basic", func(t *testing.T) {
-
 		cases := []struct {
 			name           string
 			value          []interface{}
+			testArray      []interface{}
 			wantConsistsOf chainResult
 		}{
 			{
 				name:           "first value (int) in array",
 				value:          []interface{}{123},
+				testArray:      []interface{}{123, "foo"},
 				wantConsistsOf: failure,
 			},
 			{
 				name:           "second value (string) in array",
 				value:          []interface{}{"foo"},
+				testArray:      []interface{}{123, "foo"},
 				wantConsistsOf: failure,
 			},
 			{
 				name:           "reversed order",
 				value:          []interface{}{"foo", 123},
+				testArray:      []interface{}{123, "foo"},
 				wantConsistsOf: failure,
 			},
 			{
-				name:           "added element to test edge case",
+				name:           "duplicate element",
 				value:          []interface{}{"foo", "foo", 123},
+				testArray:      []interface{}{123, "foo"},
 				wantConsistsOf: failure,
 			},
 			{
 				name:           "copy of array",
 				value:          []interface{}{123, "foo"},
+				testArray:      []interface{}{123, "foo"},
 				wantConsistsOf: success,
 			},
 		}
@@ -878,9 +883,9 @@ func TestArray_ConsistsOf(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
 
-				NewArray(reporter, []interface{}{123, "foo"}).ConsistsOf(tc.value...).
+				NewArray(reporter, tc.testArray).ConsistsOf(tc.value...).
 					chain.assert(t, tc.wantConsistsOf)
-				NewArray(reporter, []interface{}{123, "foo"}).NotConsistsOf(tc.value...).
+				NewArray(reporter, tc.testArray).NotConsistsOf(tc.value...).
 					chain.assert(t, !tc.wantConsistsOf)
 			})
 		}
@@ -901,7 +906,6 @@ func TestArray_ConsistsOf(t *testing.T) {
 		NewArray(reporter, []interface{}{123, 456}).NotConsistsOf(myInt(123), 456.0).
 			chain.assert(t, failure)
 	})
-
 	t.Run("invalid argument", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
@@ -915,46 +919,38 @@ func TestArray_ConsistsOf(t *testing.T) {
 
 func TestArray_Contains(t *testing.T) {
 	t.Run("basic", func(t *testing.T) {
-
 		cases := []struct {
 			name            string
-			value           []interface{}
+			value           interface{}
+			testArray       []interface{}
 			wantContains    chainResult
 			wantNotContains chainResult
 		}{
 			{
-				name:            "first value (int) in array",
-				value:           []interface{}{123},
+				name:            "first value in array",
+				value:           123,
+				testArray:       []interface{}{123, "foo"},
 				wantContains:    success,
 				wantNotContains: failure,
 			},
 			{
-				name:            "reversed order",
-				value:           []interface{}{"foo", 123},
+				name:            "second value in array",
+				value:           "foo",
+				testArray:       []interface{}{123, "foo"},
 				wantContains:    success,
 				wantNotContains: failure,
 			},
 			{
-				name:            "two of the same elements",
-				value:           []interface{}{"foo", "foo"},
-				wantContains:    success,
-				wantNotContains: failure,
-			},
-			{
-				name:            "array with different element",
-				value:           []interface{}{123, "foo", "FOO"},
-				wantContains:    failure,
-				wantNotContains: failure,
-			},
-			{
-				name:            "different value by itself",
-				value:           []interface{}{"FOO"},
+				name:            "value not in array",
+				value:           "FOO",
+				testArray:       []interface{}{123, "foo"},
 				wantContains:    failure,
 				wantNotContains: success,
 			},
 			{
-				name:            "passing in an interface",
-				value:           []interface{}{[]interface{}{123, "foo"}},
+				name:            "array ",
+				value:           []interface{}{123, "foo"},
+				testArray:       []interface{}{123, "foo"},
 				wantContains:    failure,
 				wantNotContains: success,
 			},
@@ -964,9 +960,10 @@ func TestArray_Contains(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
 
-				NewArray(reporter, []interface{}{123, "foo"}).Contains(tc.value...).
+				NewArray(reporter, tc.testArray).Contains(tc.value).
 					chain.assert(t, tc.wantContains)
-				NewArray(reporter, []interface{}{123, "foo"}).NotContains(tc.value...).
+
+				NewArray(reporter, tc.testArray).NotContains(tc.value).
 					chain.assert(t, tc.wantNotContains)
 			})
 		}
@@ -977,22 +974,24 @@ func TestArray_Contains(t *testing.T) {
 		type (
 			myInt int
 		)
-
 		cases := []struct {
 			name            string
-			value           []interface{}
+			value           interface{}
+			testArray       []interface{}
 			wantContains    chainResult
 			wantNotContains chainResult
 		}{
 			{
 				name:            "myInt check",
-				value:           []interface{}{myInt(123)},
+				value:           myInt(123),
+				testArray:       []interface{}{123, 456},
 				wantContains:    success,
 				wantNotContains: failure,
 			},
 			{
 				name:            "float to int check",
-				value:           []interface{}{456.0},
+				value:           456.0,
+				testArray:       []interface{}{123, 456},
 				wantContains:    success,
 				wantNotContains: failure,
 			},
@@ -1001,9 +1000,9 @@ func TestArray_Contains(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
 
-				NewArray(reporter, []interface{}{123, 456}).Contains(tc.value...).
+				NewArray(reporter, tc.testArray).Contains(tc.value).
 					chain.assert(t, tc.wantContains)
-				NewArray(reporter, []interface{}{123, 456}).NotContains(tc.value...).
+				NewArray(reporter, tc.testArray).NotContains(tc.value).
 					chain.assert(t, tc.wantNotContains)
 			})
 		}
@@ -1026,50 +1025,62 @@ func TestArray_Contains(t *testing.T) {
 
 func TestArray_ContainsAll(t *testing.T) {
 	t.Run("basic", func(t *testing.T) {
-
 		cases := []struct {
 			name            string
 			value           []interface{}
+			testArray       []interface{}
 			wantContainsAll chainResult
 		}{
 			{
 				name:            "first element",
 				value:           []interface{}{123},
+				testArray:       []interface{}{123, "foo"},
 				wantContainsAll: success,
 			},
 			{
 				name:            "second element",
 				value:           []interface{}{"foo"},
+				testArray:       []interface{}{123, "foo"},
 				wantContainsAll: success,
 			},
 			{
 				name:            "element not in array",
 				value:           []interface{}{"FOO"},
+				testArray:       []interface{}{123, "foo"},
 				wantContainsAll: failure,
 			},
 			{
 				name:            "array copy",
 				value:           []interface{}{123, "foo"},
+				testArray:       []interface{}{123, "foo"},
 				wantContainsAll: success,
 			},
 			{
 				name:            "double valid elements",
 				value:           []interface{}{"foo", "foo"},
+				testArray:       []interface{}{123, "foo"},
 				wantContainsAll: success,
 			},
 			{
 				name:            "array with one invalid element",
 				value:           []interface{}{123, "foo", "FOO"},
+				testArray:       []interface{}{123, "foo"},
 				wantContainsAll: failure,
+			},
+			{
+				name:            "subset of array",
+				value:           []interface{}{"bar", "foo"},
+				testArray:       []interface{}{123, "foo", "bar"},
+				wantContainsAll: success,
 			},
 		}
 
 		for _, tc := range cases {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
-				NewArray(reporter, []interface{}{123, "foo"}).ContainsAll(tc.value...).
+				NewArray(reporter, tc.testArray).ContainsAll(tc.value...).
 					chain.assert(t, tc.wantContainsAll)
-				NewArray(reporter, []interface{}{123, "foo"}).NotContainsAll(tc.value...).
+				NewArray(reporter, tc.testArray).NotContainsAll(tc.value...).
 					chain.assert(t, !tc.wantContainsAll)
 			})
 		}
@@ -1108,40 +1119,52 @@ func TestArray_ContainsAny(t *testing.T) {
 		cases := []struct {
 			name            string
 			value           []interface{}
+			testArray       []interface{}
 			wantContainsAny chainResult
 		}{
 			{
 				name:            "first element",
 				value:           []interface{}{123},
+				testArray:       []interface{}{123, "foo"},
 				wantContainsAny: success,
 			},
 			{
 				name:            "copy of array",
 				value:           []interface{}{"foo", 123},
+				testArray:       []interface{}{123, "foo"},
 				wantContainsAny: success,
 			},
 			{
 				name:            "double valid elements",
 				value:           []interface{}{"foo", "foo"},
+				testArray:       []interface{}{123, "foo"},
 				wantContainsAny: success,
 			},
 			{
 				name:            "array with one invalid element",
 				value:           []interface{}{123, "foo", "FOO"},
+				testArray:       []interface{}{123, "foo"},
 				wantContainsAny: success,
 			},
 			{
 				name:            "invalid element",
 				value:           []interface{}{"FOO"},
+				testArray:       []interface{}{123, "foo"},
 				wantContainsAny: failure,
+			},
+			{
+				name:            "subset of array",
+				value:           []interface{}{"bar", "foo"},
+				testArray:       []interface{}{123, "foo", "bar"},
+				wantContainsAny: success,
 			},
 		}
 		for _, tc := range cases {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
-				NewArray(reporter, []interface{}{123, "foo"}).ContainsAny(tc.value...).
+				NewArray(reporter, tc.testArray).ContainsAny(tc.value...).
 					chain.assert(t, tc.wantContainsAny)
-				NewArray(reporter, []interface{}{123, "foo"}).NotContainsAny(tc.value...).
+				NewArray(reporter, tc.testArray).NotContainsAny(tc.value...).
 					chain.assert(t, !tc.wantContainsAny)
 			})
 		}
@@ -1156,16 +1179,19 @@ func TestArray_ContainsAny(t *testing.T) {
 		cases := []struct {
 			name            string
 			value           []interface{}
+			testArray       []interface{}
 			wantContainsAny chainResult
 		}{
 			{
 				name:            "int float check",
 				value:           []interface{}{myInt(123), 789.0},
+				testArray:       []interface{}{123, 789, "foo", []interface{}{567, 456}},
 				wantContainsAny: success,
 			},
 			{
 				name:            "array check",
 				value:           []interface{}{myArray{567.0, 456.0}},
+				testArray:       []interface{}{123, 789, "foo", []interface{}{567, 456}},
 				wantContainsAny: success,
 			},
 		}
@@ -1173,9 +1199,9 @@ func TestArray_ContainsAny(t *testing.T) {
 		for _, tc := range cases {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
-				NewArray(reporter, []interface{}{123, 789, "foo", []interface{}{567, 456}}).
+				NewArray(reporter, tc.testArray).
 					ContainsAny(tc.value...).chain.assert(t, tc.wantContainsAny)
-				NewArray(reporter, []interface{}{123, 789, "foo", []interface{}{567, 456}}).
+				NewArray(reporter, tc.testArray).
 					NotContainsAny(tc.value...).chain.assert(t, !tc.wantContainsAny)
 			})
 		}
@@ -1195,49 +1221,55 @@ func TestArray_ContainsAny(t *testing.T) {
 
 func TestArray_ContainsOnly(t *testing.T) {
 	t.Run("without duplicates", func(t *testing.T) {
-
 		cases := []struct {
 			name             string
 			value            []interface{}
+			testArray        []interface{}
 			wantContainsOnly chainResult
 		}{
 			{
 				name:             "first element",
 				value:            []interface{}{123},
+				testArray:        []interface{}{123, "foo"},
 				wantContainsOnly: failure,
 			},
 			{
 				name:             "second element",
 				value:            []interface{}{"foo"},
+				testArray:        []interface{}{123, "foo"},
 				wantContainsOnly: failure,
 			},
 			{
 				name:             "copy of array",
 				value:            []interface{}{123, "foo"},
+				testArray:        []interface{}{123, "foo"},
 				wantContainsOnly: success,
 			},
 			{
 				name:             "copy of array with one valid value added",
 				value:            []interface{}{123, "foo", "foo"},
+				testArray:        []interface{}{123, "foo"},
 				wantContainsOnly: success,
 			},
 			{
 				name:             "different order of array",
 				value:            []interface{}{"foo", 123},
+				testArray:        []interface{}{123, "foo"},
 				wantContainsOnly: success,
 			},
 			{
 				name:             "copy of array with one invalid value added",
 				value:            []interface{}{"foo", 123, "bar"},
+				testArray:        []interface{}{123, "foo"},
 				wantContainsOnly: failure,
 			},
 		}
 		for _, tc := range cases {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
-				NewArray(reporter, []interface{}{123, "foo"}).ContainsOnly(tc.value...).
+				NewArray(reporter, tc.testArray).ContainsOnly(tc.value...).
 					chain.assert(t, tc.wantContainsOnly)
-				NewArray(reporter, []interface{}{123, "foo"}).NotContainsOnly(tc.value...).
+				NewArray(reporter, tc.testArray).NotContainsOnly(tc.value...).
 					chain.assert(t, !tc.wantContainsOnly)
 			})
 		}
@@ -1247,35 +1279,40 @@ func TestArray_ContainsOnly(t *testing.T) {
 		cases := []struct {
 			name             string
 			value            []interface{}
+			testArray        []interface{}
 			wantContainsOnly chainResult
 		}{
 			{
 				name:             "copy of array with no duplicates",
 				value:            []interface{}{123, "foo"},
+				testArray:        []interface{}{123, "foo", "foo"},
 				wantContainsOnly: success,
 			},
 			{
 				name:             "copy of no duplicates array with other element duplciated",
 				value:            []interface{}{123, 123, "foo"},
+				testArray:        []interface{}{123, "foo", "foo"},
 				wantContainsOnly: success,
 			},
 			{
 				name:             "copy of array",
 				value:            []interface{}{123, "foo", "foo"},
+				testArray:        []interface{}{123, "foo", "foo"},
 				wantContainsOnly: success,
 			},
 			{
 				name:             "copy of array reordered",
 				value:            []interface{}{"foo", 123, "foo"},
+				testArray:        []interface{}{123, "foo", "foo"},
 				wantContainsOnly: success,
 			},
 		}
 		for _, tc := range cases {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
-				NewArray(reporter, []interface{}{123, "foo", "foo"}).ContainsOnly(tc.value...).
+				NewArray(reporter, tc.testArray).ContainsOnly(tc.value...).
 					chain.assert(t, tc.wantContainsOnly)
-				NewArray(reporter, []interface{}{123, "foo", "foo"}).NotContainsOnly(tc.value...).
+				NewArray(reporter, tc.testArray).NotContainsOnly(tc.value...).
 					chain.assert(t, !tc.wantContainsOnly)
 			})
 		}
@@ -1288,25 +1325,28 @@ func TestArray_ContainsOnly(t *testing.T) {
 		cases := []struct {
 			name             string
 			value            []interface{}
+			testArray        []interface{}
 			wantContainsOnly chainResult
 		}{
 			{
 				name:             "float variable",
 				value:            []interface{}{456.0},
+				testArray:        []interface{}{123, 456, 456},
 				wantContainsOnly: failure,
 			},
 			{
 				name:             "myInt and float variable",
 				value:            []interface{}{myInt(123), 456.0},
+				testArray:        []interface{}{123, 456, 456},
 				wantContainsOnly: success,
 			},
 		}
 		for _, tc := range cases {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
-				NewArray(reporter, []interface{}{123, 456, 456}).ContainsOnly(tc.value...).
+				NewArray(reporter, tc.testArray).ContainsOnly(tc.value...).
 					chain.assert(t, tc.wantContainsOnly)
-				NewArray(reporter, []interface{}{123, 456, 456}).NotContainsOnly(tc.value...).
+				NewArray(reporter, tc.testArray).NotContainsOnly(tc.value...).
 					chain.assert(t, !tc.wantContainsOnly)
 			})
 		}
@@ -1331,57 +1371,88 @@ func TestArray_HasValue(t *testing.T) {
 			name            string
 			index           int
 			value           interface{}
+			testArray       []interface{}
 			wantHasValue    chainResult
 			wantNotHasValue chainResult
 		}{
 			{
-				name:            "zeroth element check",
-				index:           0,
-				value:           123,
+				name:  "index zero check",
+				index: 0,
+				value: 123,
+				testArray: []interface{}{
+					123,
+					[]interface{}{"456", 789},
+					map[string]interface{}{
+						"a": "b",
+					},
+				},
 				wantHasValue:    success,
 				wantNotHasValue: failure,
 			},
 			{
-				name:            "first element check",
-				index:           1,
-				value:           []interface{}{"456", 789},
+				name:  "index one check",
+				index: 1,
+				value: []interface{}{"456", 789},
+				testArray: []interface{}{
+					123,
+					[]interface{}{"456", 789},
+					map[string]interface{}{
+						"a": "b",
+					},
+				},
 				wantHasValue:    success,
 				wantNotHasValue: failure,
 			},
 			{
-				name:            "second element check",
-				index:           2,
-				value:           map[string]interface{}{"a": "b"},
+				name:  "index two check",
+				index: 2,
+				value: map[string]interface{}{"a": "b"},
+				testArray: []interface{}{
+					123,
+					[]interface{}{"456", 789},
+					map[string]interface{}{
+						"a": "b",
+					},
+				},
 				wantHasValue:    success,
 				wantNotHasValue: failure,
 			},
 			{
-				name:            "out of bounds check",
-				index:           3,
-				value:           777,
+				name:  "out of bounds check",
+				index: 3,
+				value: 777,
+				testArray: []interface{}{
+					123,
+					[]interface{}{"456", 789},
+					map[string]interface{}{
+						"a": "b",
+					},
+				},
 				wantHasValue:    failure,
 				wantNotHasValue: failure,
+			},
+			{
+				name:  "wrong value check",
+				index: 0,
+				value: 777,
+				testArray: []interface{}{
+					123,
+					[]interface{}{"456", 789},
+					map[string]interface{}{
+						"a": "b",
+					},
+				},
+				wantHasValue:    failure,
+				wantNotHasValue: success,
 			},
 		}
 
 		for _, tc := range cases {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
-				NewArray(reporter, []interface{}{
-					123,
-					[]interface{}{"456", 789},
-					map[string]interface{}{
-						"a": "b",
-					},
-				}).HasValue(tc.index, tc.value).
+				NewArray(reporter, tc.testArray).HasValue(tc.index, tc.value).
 					chain.assert(t, tc.wantHasValue)
-				NewArray(reporter, []interface{}{
-					123,
-					[]interface{}{"456", 789},
-					map[string]interface{}{
-						"a": "b",
-					},
-				}).NotHasValue(tc.index, tc.value).
+				NewArray(reporter, tc.testArray).NotHasValue(tc.index, tc.value).
 					chain.assert(t, tc.wantNotHasValue)
 			})
 		}
@@ -1389,7 +1460,6 @@ func TestArray_HasValue(t *testing.T) {
 	})
 
 	t.Run("struct", func(t *testing.T) {
-
 		type (
 			A struct {
 				B int `json:"b"`
@@ -1400,11 +1470,11 @@ func TestArray_HasValue(t *testing.T) {
 				A A `json:"a"`
 			}
 		)
-
 		cases := []struct {
 			name            string
 			index           int
 			value           interface{}
+			testArray       []interface{}
 			wantHasValue    chainResult
 			wantNotHasValue chainResult
 		}{
@@ -1417,13 +1487,29 @@ func TestArray_HasValue(t *testing.T) {
 						C: 444,
 					},
 				},
+				testArray: []interface{}{
+					map[string]interface{}{
+						"a": map[string]interface{}{
+							"b": 333,
+							"c": 444,
+						},
+					},
+				},
 				wantHasValue:    success,
 				wantNotHasValue: failure,
 			},
 			{
-				name:            "empty struct comparison",
-				index:           0,
-				value:           Baz{},
+				name:  "empty struct comparison",
+				index: 0,
+				value: Baz{},
+				testArray: []interface{}{
+					map[string]interface{}{
+						"a": map[string]interface{}{
+							"b": 333,
+							"c": 444,
+						},
+					},
+				},
 				wantHasValue:    failure,
 				wantNotHasValue: success,
 			},
@@ -1431,23 +1517,9 @@ func TestArray_HasValue(t *testing.T) {
 		for _, tc := range cases {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
-				NewArray(reporter, []interface{}{
-					map[string]interface{}{
-						"a": map[string]interface{}{
-							"b": 333,
-							"c": 444,
-						},
-					},
-				}).HasValue(tc.index, tc.value).
+				NewArray(reporter, tc.testArray).HasValue(tc.index, tc.value).
 					chain.assert(t, tc.wantHasValue)
-				NewArray(reporter, []interface{}{
-					map[string]interface{}{
-						"a": map[string]interface{}{
-							"b": 333,
-							"c": 444,
-						},
-					},
-				}).NotHasValue(tc.index, tc.value).
+				NewArray(reporter, tc.testArray).NotHasValue(tc.index, tc.value).
 					chain.assert(t, tc.wantNotHasValue)
 			})
 		}
@@ -1463,19 +1535,34 @@ func TestArray_HasValue(t *testing.T) {
 			name            string
 			index           int
 			value           interface{}
+			testArray       []interface{}
 			wantHasValue    chainResult
 			wantNotHasValue chainResult
 		}{
 			{
-				name:            "myArray and myInt testing",
-				index:           1,
-				value:           myArray{"456", myInt(789)},
+				name:  "myArray and myInt testing",
+				index: 1,
+				value: myArray{"456", myInt(789)},
+				testArray: []interface{}{
+					123,
+					[]interface{}{"456", 789},
+					map[string]interface{}{
+						"a": "b",
+					},
+				},
 				wantHasValue:    success,
 				wantNotHasValue: failure,
 			},
 			{
-				name:            "myMap testing",
-				index:           2,
+				name:  "myMap testing",
+				index: 2,
+				testArray: []interface{}{
+					123,
+					[]interface{}{"456", 789},
+					map[string]interface{}{
+						"a": "b",
+					},
+				},
 				value:           myMap{"a": "b"},
 				wantHasValue:    success,
 				wantNotHasValue: failure,
