@@ -264,6 +264,9 @@ func convertJsonNumberToFloatOrBigFloat(data interface{}) interface{} {
 		return v.Interface()
 	case reflect.Slice, reflect.Array:
 		for i := 0; i < v.Len(); i++ {
+			if v.Index(i).IsNil() {
+				continue
+			}
 			newVal := convertJsonNumberToFloatOrBigFloat(v.Index(i).Interface())
 			v.Index(i).Set(reflect.ValueOf(newVal))
 		}
