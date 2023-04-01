@@ -55,6 +55,78 @@ func TestE2EReport_Names(t *testing.T) {
 	assert.Contains(t, reporter.recorded, "RequestExample")
 }
 
+func TestE2EReport_Formatting(t *testing.T) {
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/example-path", func(w http.ResponseWriter, r *http.Request) {
+	})
+	mux.HandleFunc("/number", func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte("8"))
+	})
+	mux.HandleFunc("/array", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "application/json")
+		_, _ = w.Write([]byte("[7, 3, 9, 12, 4]"))
+	})
+
+	server := httptest.NewServer(mux)
+	defer server.Close()
+
+	reporter := &recordingReporter{}
+
+	e := WithConfig(Config{
+		BaseURL:  server.URL,
+		Reporter: reporter,
+	})
+
+	e.GET("/example-path").
+		Expect().
+		Status(400)
+
+	t.Logf("%s", reporter.recorded)
+
+	assert.Contains(t, reporter.recorded, "/example-path")
+
+	assert.Contains(t, reporter.recorded, "unexpected http status value")
+	assert.Contains(t, reporter.recorded, "400 Bad Request")
+	assert.Contains(t, reporter.recorded, "200 OK")
+
+	reporter.recorded = ""
+
+	e.GET("/number").
+		Expect().
+		Body().
+		AsNumber().
+		InRange(1, 5)
+
+	assert.Contains(t, reporter.recorded, "expected: number is within given range")
+	assert.Contains(t, reporter.recorded, "expected range")
+	assert.Contains(t, reporter.recorded, "[1; 5]")
+
+	reporter.recorded = ""
+
+	e.GET("/number").
+		Expect().
+		Body().
+		AsNumber().
+		InDelta(123.0, 0.1)
+
+	assert.Contains(t, reporter.recorded, "allowed delta")
+	assert.Contains(t, reporter.recorded, "0.1")
+
+	reporter.recorded = ""
+
+	e.GET("/array").
+		Expect().
+		JSON().
+		Array().
+		IsOrdered()
+	t.Logf("%s", reporter.recorded)
+
+	assert.Contains(t, reporter.recorded, "compared value")
+	assert.Contains(t, reporter.recorded, "reference value")
+	assert.Contains(t, reporter.recorded, "12,")
+}
+
 func TestE2EReport_Aliases(t *testing.T) {
 	mux := http.NewServeMux()
 
