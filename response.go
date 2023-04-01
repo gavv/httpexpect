@@ -166,7 +166,7 @@ func (r *Response) getContent(opChain *chain) ([]byte, bool) {
 	}
 
 	if bw, ok := resp.Body.(*bodyWrapper); ok {
-		_ = bw.Rewind()
+		bw.Rewind()
 	}
 
 	content, err := ioutil.ReadAll(resp.Body)

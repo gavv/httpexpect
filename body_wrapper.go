@@ -27,6 +27,7 @@ type bodyWrapper struct {
 
 	isFullyRead            bool
 	isStoringInMemDisabled bool
+	isReadBefore           bool
 
 	mu sync.Mutex
 }
@@ -49,6 +50,8 @@ func (bw *bodyWrapper) Read(p []byte) (n int, err error) {
 	bw.mu.Lock()
 	defer bw.mu.Unlock()
 
+	bw.isReadBefore = true
+
 	// Preserve original reader error
 	if bw.readErr != nil {
 		return 0, bw.readErr
@@ -57,7 +60,7 @@ func (bw *bodyWrapper) Read(p []byte) (n int, err error) {
 	if !bw.isFullyRead && !bw.isStoringInMemDisabled {
 		// Cache bytes in memory
 		n, err = bw.origReader.Read(p)
-		if err == nil && n > 0 {
+		if (err == nil || err == io.EOF) && n > 0 {
 			bw.origBytes = append(bw.origBytes, p[:n]...)
 		}
 	} else {
@@ -66,10 +69,10 @@ func (bw *bodyWrapper) Read(p []byte) (n int, err error) {
 
 	if err != nil {
 		bw.isFullyRead = true // prevent further reads
-		if err != nil && err != io.EOF {
+		if err != io.EOF {
 			bw.readErr = err
 		}
-		if closeErr := bw.closeAndCancel(); closeErr != nil && (err == nil || err == io.EOF) {
+		if closeErr := bw.closeAndCancel(); closeErr != nil && err == io.EOF {
 			err = closeErr
 		}
 	}
@@ -102,24 +105,21 @@ func (bw *bodyWrapper) Close() error {
 }
 
 // Rewind reading to the beginning
-func (bw *bodyWrapper) Rewind() error {
+func (bw *bodyWrapper) Rewind() {
 	bw.mu.Lock()
 	defer bw.mu.Unlock()
 
 	if bw.isStoringInMemDisabled {
-		return errors.New("body caching is disabled, cannot rewind")
+		return
 	}
 
-	if !bw.isFullyRead {
-		if err := bw.readFull(); err != nil {
-			return err
-		}
+	// Until first read, rewind is no-op
+	if bw.isReadBefore && !bw.isFullyRead {
+		_ = bw.readFull()
 	}
 
 	// Reset reader
 	bw.currReader = bytes.NewReader(bw.origBytes)
-
-	return nil
 }
 
 // Create new reader to retrieve body contents
@@ -128,6 +128,8 @@ func (bw *bodyWrapper) Rewind() error {
 func (bw *bodyWrapper) GetBody() (io.ReadCloser, error) {
 	bw.mu.Lock()
 	defer bw.mu.Unlock()
+
+	bw.isReadBefore = true
 
 	// Preserve original reader error
 	if bw.readErr != nil {
@@ -173,6 +175,7 @@ func (bw *bodyWrapper) readFull() error {
 	initialBytesLen := len(bw.origBytes)
 	bw.origBytes = append(bw.origBytes, remainingBytes...)
 	bw.isFullyRead = true
+	// Restore the current reader back to the same position as before.
 	bw.currReader = bytes.NewReader(bw.origBytes[initialBytesLen:])
 	return bw.closeAndCancel()
 }

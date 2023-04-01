@@ -32,7 +32,42 @@ func TestBodyWrapper_Rewind(t *testing.T) {
 	err = wrp.Close()
 	assert.NoError(t, err)
 
-	assert.NoError(t, wrp.Rewind())
+	wrp.Rewind()
+
+	b, err = ioutil.ReadAll(wrp)
+	assert.NoError(t, err)
+	assert.Equal(t, "test_body", string(b))
+
+	assert.Equal(t, readCount, body.readCount)
+	assert.Equal(t, 1, body.closeCount)
+	assert.Equal(t, 1, cancelCount)
+}
+
+func TestBodyWrapper_RewindBeforeRead(t *testing.T) {
+	body := newMockBody("test_body")
+
+	cancelCount := 0
+	cancelFn := func() {
+		cancelCount++
+	}
+
+	wrp := newBodyWrapper(body, cancelFn)
+
+	wrp.Rewind()
+
+	b, err := ioutil.ReadAll(wrp)
+	assert.NoError(t, err)
+	assert.Equal(t, "test_body", string(b))
+
+	readCount := body.readCount
+	assert.NotEqual(t, 0, body.readCount)
+	assert.Equal(t, 1, body.closeCount)
+	assert.Equal(t, 1, cancelCount)
+
+	err = wrp.Close()
+	assert.NoError(t, err)
+
+	wrp.Rewind()
 
 	b, err = ioutil.ReadAll(wrp)
 	assert.NoError(t, err)
@@ -48,11 +83,14 @@ func TestBodyWrapper_GetBody(t *testing.T) {
 
 	wrp := newBodyWrapper(body, nil)
 
+	assert.False(t, wrp.isReadBefore)
 	rd1, err := wrp.GetBody()
 	assert.NoError(t, err)
+	assert.True(t, wrp.isReadBefore)
 
 	rd2, err := wrp.GetBody()
 	assert.NoError(t, err)
+	assert.True(t, wrp.isReadBefore)
 
 	b, err := ioutil.ReadAll(rd1)
 	assert.NoError(t, err)
@@ -259,7 +297,7 @@ func TestBodyWrapper_ErrorRewind(t *testing.T) {
 		assert.NotNil(t, err)
 	}
 
-	assert.NoError(t, wrp.Rewind())
+	wrp.Rewind()
 
 	body.readErr = nil
 	body.closeErr = nil
@@ -345,7 +383,7 @@ func TestBodyWrapper_InfiniteResponses(t *testing.T) {
 			n   int
 		)
 		_, _ = wrp.Read(b)
-		assert.NoError(t, wrp.Rewind())
+		wrp.Rewind()
 		assert.True(t, wrp.isFullyRead)
 		assert.Equal(t, "test_body", string(wrp.origBytes))
 		n, err = wrp.Read(b)
@@ -393,8 +431,9 @@ func TestBodyWrapper_InfiniteResponses(t *testing.T) {
 		reader, err = wrp.GetBody()
 		assert.EqualError(t, err, "body caching is disabled, cannot get body contents")
 		assert.Nil(t, reader)
-		assert.EqualError(t, wrp.Rewind(), "body caching is disabled, cannot rewind")
+		wrp.Rewind() // Should be no-op
 		assert.False(t, wrp.isFullyRead)
+		assert.True(t, wrp.isReadBefore)
 		assert.Nil(t, wrp.origBytes)
 
 		n, err = wrp.Read(b)
