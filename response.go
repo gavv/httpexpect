@@ -834,29 +834,9 @@ func (r *Response) getJSON(opChain *chain, options ...ContentOpts) interface{} {
 		return nil
 	}
 
-	reader := bytes.NewReader(content)
-	dec := json.NewDecoder(reader)
-	dec.UseNumber()
-
 	var value interface{}
 
-	for {
-		if err := dec.Decode(&value); err == io.EOF {
-			break
-		} else if err != nil {
-			opChain.fail(AssertionFailure{
-				Type: AssertValid,
-				Actual: &AssertionValue{
-					string(r.content),
-				},
-				Errors: []error{
-					errors.New("failed to decode json"),
-					err,
-				},
-			})
-			return nil
-		}
-	}
+	jsonDecode(opChain, content, value)
 
 	return value
 }

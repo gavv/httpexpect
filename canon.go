@@ -8,6 +8,7 @@ import (
 	"io"
 	"math/big"
 	"reflect"
+	"strconv"
 )
 
 func canonNumber(opChain *chain, in interface{}) (out *big.Float, ok bool) {
@@ -151,6 +152,7 @@ func canonValue(opChain *chain, in interface{}) (interface{}, bool) {
 	var out interface{}
 
 	jsonDecode(opChain, b, &out)
+	out = convertJsonNumberToFloatOrBigFloat(out)
 
 	return out, true
 }
@@ -179,6 +181,10 @@ func canonDecode(opChain *chain, value interface{}, target interface{}) {
 	}
 
 	jsonDecode(opChain, b, target)
+	switch t := target.(type) {
+	case *interface{}:
+		*t = convertJsonNumberToFloatOrBigFloat(*t)
+	}
 }
 
 func jsonDecode(opChain *chain, b []byte, target interface{}) {
@@ -243,5 +249,48 @@ func canonNumberDecode(opChain *chain, value big.Float, target interface{}) {
 		canonDecode(opChain, value, target)
 	default:
 		canonDecode(opChain, value, target)
+	}
+}
+
+func convertJsonNumberToFloatOrBigFloat(data interface{}) interface{} {
+	v := reflect.ValueOf(data)
+	switch v.Kind() {
+	case reflect.Map:
+		for _, key := range v.MapKeys() {
+			val := v.MapIndex(key)
+			newVal := convertJsonNumberToFloatOrBigFloat(val.Interface())
+			v.SetMapIndex(key, reflect.ValueOf(newVal))
+		}
+		return v.Interface()
+	case reflect.Slice, reflect.Array:
+		for i := 0; i < v.Len(); i++ {
+			newVal := convertJsonNumberToFloatOrBigFloat(v.Index(i).Interface())
+			v.Index(i).Set(reflect.ValueOf(newVal))
+		}
+		return v.Interface()
+	case reflect.Ptr:
+		if v.IsNil() {
+			return nil
+		}
+		newVal := convertJsonNumberToFloatOrBigFloat(v.Elem().Interface())
+		newV := reflect.New(v.Type().Elem())
+		newV.Elem().Set(reflect.ValueOf(newVal))
+		return newV.Interface()
+	case reflect.Interface:
+		newVal := convertJsonNumberToFloatOrBigFloat(v.Elem().Interface())
+		return reflect.ValueOf(newVal).Interface()
+	case reflect.String:
+		if _, err := strconv.ParseFloat(v.String(), 64); err == nil {
+			newVal, _ := strconv.ParseFloat(v.String(), 64)
+			if hasPrecisionLoss(newVal) {
+				newVal := big.NewFloat(0)
+				newVal, _ = newVal.SetString(v.String())
+				return newVal
+			}
+			return newVal
+		}
+		return data
+	default:
+		return data
 	}
 }
