@@ -553,54 +553,70 @@ func TestValue_IsBoolean(t *testing.T) {
 func TestValue_IsEqual(t *testing.T) {
 	t.Run("basic", func(t *testing.T) {
 		cases := []struct {
+			name      string
+			value1    interface{}
+			value2    interface{}
+			wantEqual chainResult
+		}{
+			{
+				name:      "compare equivalent values (strings)",
+				value1:    "baz",
+				value2:    "baz",
+				wantEqual: success,
+			},
+			{
+				name:      "compare equivalent values (maps)",
+				value1:    map[string]interface{}{"foo": "bar"},
+				value2:    map[string]interface{}{"foo": "bar"},
+				wantEqual: success,
+			},
+			{
+				name:      "compare non-equivalent values",
+				value1:    map[string]interface{}{"foo": "bar"},
+				value2:    "baz",
+				wantEqual: failure,
+			},
+			{
+				name:      "compare nil values",
+				value1:    nil,
+				value2:    nil,
+				wantEqual: success,
+			},
+			{
+				name:      "compare nil and nil-value",
+				value1:    nil,
+				value2:    map[string]interface{}(nil),
+				wantEqual: success,
+			},
+			{
+				name:      "compare nil and value",
+				value1:    nil,
+				value2:    map[string]interface{}{},
+				wantEqual: failure,
+			},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				reporter := newMockReporter(t)
+
+				NewValue(reporter, tc.value1).IsEqual(tc.value2).
+					chain.assert(t, tc.wantEqual)
+
+				NewValue(reporter, tc.value1).NotEqual(tc.value2).
+					chain.assert(t, !tc.wantEqual)
+			})
+		}
+	})
+
+	t.Run("invalid argument", func(t *testing.T) {
+		cases := []struct {
 			name         string
 			value1       interface{}
 			value2       interface{}
 			wantEqual    chainResult
 			wantNotEqual chainResult
 		}{
-			{
-				name:         "compare equivalent values (strings)",
-				value1:       "baz",
-				value2:       "baz",
-				wantEqual:    success,
-				wantNotEqual: failure,
-			},
-			{
-				name:         "compare equivalent values (maps)",
-				value1:       map[string]interface{}{"foo": "bar"},
-				value2:       map[string]interface{}{"foo": "bar"},
-				wantEqual:    success,
-				wantNotEqual: failure,
-			},
-			{
-				name:         "compare non-equivalent values",
-				value1:       map[string]interface{}{"foo": "bar"},
-				value2:       "baz",
-				wantEqual:    failure,
-				wantNotEqual: success,
-			},
-			{
-				name:         "compare nil values",
-				value1:       nil,
-				value2:       nil,
-				wantEqual:    success,
-				wantNotEqual: failure,
-			},
-			{
-				name:         "compare nil and nil-value",
-				value1:       nil,
-				value2:       map[string]interface{}(nil),
-				wantEqual:    success,
-				wantNotEqual: failure,
-			},
-			{
-				name:         "compare nil and value",
-				value1:       nil,
-				value2:       map[string]interface{}{},
-				wantEqual:    failure,
-				wantNotEqual: success,
-			},
 			{
 				name:         "compare value and func",
 				value1:       map[string]interface{}{"foo": "bar"},
@@ -625,15 +641,73 @@ func TestValue_IsEqual(t *testing.T) {
 }
 
 func TestValue_InList(t *testing.T) {
-	data1 := map[string]interface{}{"foo": "bar"}
-	data2 := "baz"
-	data3 := struct {
+	type dataStruct struct {
 		Data []int `json:"data"`
-	}{
-		Data: []int{1, 2, 3, 4},
 	}
 
 	t.Run("basic", func(t *testing.T) {
+		cases := []struct {
+			name       string
+			value      interface{}
+			list       []interface{}
+			wantInList chainResult
+		}{
+			{
+				name:  "in list",
+				value: map[string]interface{}{"foo": "bar"},
+				list: []interface{}{map[string]interface{}{"foo": "bar"}, dataStruct{
+					Data: []int{1, 2, 3, 4},
+				}},
+				wantInList: success,
+			},
+			{
+				name:  "not in list",
+				value: "baz",
+				list: []interface{}{map[string]interface{}{"foo": "bar"}, dataStruct{
+					Data: []int{1, 2, 3, 4},
+				}},
+				wantInList: failure,
+			},
+			{
+				name:       "map not in list of string",
+				value:      map[string]interface{}{"foo": "bar"},
+				list:       []interface{}{"baz"},
+				wantInList: failure,
+			},
+			{
+				name:       "map in list of map",
+				value:      map[string]interface{}{"foo": "bar"},
+				list:       []interface{}{map[string]interface{}{"foo": "bar"}},
+				wantInList: success,
+			},
+			{
+				name:       "nil in list of nil-map",
+				value:      nil,
+				list:       []interface{}{map[string]interface{}(nil)},
+				wantInList: success,
+			},
+			{
+				name:       "nil not in list of empty map",
+				value:      nil,
+				list:       []interface{}{map[string]interface{}{}},
+				wantInList: failure,
+			},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				reporter := newMockReporter(t)
+
+				NewValue(reporter, tc.value).InList(tc.list...).
+					chain.assert(t, tc.wantInList)
+
+				NewValue(reporter, tc.value).NotInList(tc.list...).
+					chain.assert(t, !tc.wantInList)
+			})
+		}
+	})
+
+	t.Run("invalid argument", func(t *testing.T) {
 		cases := []struct {
 			name          string
 			value         interface{}
@@ -642,79 +716,37 @@ func TestValue_InList(t *testing.T) {
 			wantNotInList chainResult
 		}{
 			{
-				name:          "no list",
-				value:         data1,
+				name:          "nil list",
+				value:         map[string]interface{}{"foo": "bar"},
 				list:          nil,
 				wantInList:    failure,
 				wantNotInList: failure,
 			},
 			{
 				name:          "empty list",
-				value:         data1,
+				value:         map[string]interface{}{"foo": "bar"},
 				list:          []interface{}{},
 				wantInList:    failure,
 				wantNotInList: failure,
 			},
 			{
-				name:          "in list",
-				value:         data1,
-				list:          []interface{}{data1, data3},
-				wantInList:    success,
-				wantNotInList: failure,
-			},
-			{
-				name:          "not in list",
-				value:         data2,
-				list:          []interface{}{data1, data3},
-				wantInList:    failure,
-				wantNotInList: success,
-			},
-			{
-				name:          "map not in list of string",
-				value:         data1,
-				list:          []interface{}{data2},
-				wantInList:    failure,
-				wantNotInList: success,
-			},
-			{
-				name:          "map in list of map",
-				value:         data1,
-				list:          []interface{}{data1},
-				wantInList:    success,
-				wantNotInList: failure,
-			},
-			{
-				name:          "nil in list of nil-map",
-				value:         nil,
-				list:          []interface{}{map[string]interface{}(nil)},
-				wantInList:    success,
-				wantNotInList: failure,
-			},
-			{
-				name:          "nil not in list of empty map",
-				value:         nil,
-				list:          []interface{}{map[string]interface{}{}},
-				wantInList:    failure,
-				wantNotInList: success,
-			},
-			{
 				name:          "list of a func",
-				value:         data1,
+				value:         map[string]interface{}{"foo": "bar"},
 				list:          []interface{}{func() {}},
 				wantInList:    failure,
 				wantNotInList: failure,
 			},
 			{
 				name:          "list of map and func",
-				value:         data1,
-				list:          []interface{}{data1, func() {}},
+				value:         map[string]interface{}{"foo": "bar"},
+				list:          []interface{}{map[string]interface{}{"foo": "bar"}, func() {}},
 				wantInList:    failure,
 				wantNotInList: failure,
 			},
 			{
 				name:          "list of string and func",
-				value:         data1,
-				list:          []interface{}{data2, func() {}},
+				value:         map[string]interface{}{"foo": "bar"},
+				list:          []interface{}{"baz", func() {}},
 				wantInList:    failure,
 				wantNotInList: failure,
 			},
