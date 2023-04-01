@@ -60,26 +60,35 @@ func (bw *bodyWrapper) Read(p []byte) (n int, err error) {
 	}
 
 	if !bw.isFullyRead && !bw.isRewindDisabled {
-		// Cache bytes in memory
-		n, err = bw.origReader.Read(p)
-		if (err == nil || err == io.EOF) && n > 0 {
-			bw.origBytes = append(bw.origBytes, p[:n]...)
-		}
+		n, err = bw.readNext(p)
 	} else {
 		n, err = bw.currReader.Read(p)
 	}
 
 	if err != nil {
-		bw.isFullyRead = true // prevent further reads
-		if err != io.EOF {
-			bw.readErr = err
-		}
-		if closeErr := bw.closeAndCancel(); closeErr != nil && err == io.EOF {
-			err = closeErr
-		}
+		err = bw.handleReadErr(err)
 	}
 
 	return
+}
+
+func (bw *bodyWrapper) readNext(p []byte) (n int, err error) {
+	n, err = bw.origReader.Read(p)
+	if (err == nil || err == io.EOF) && n > 0 {
+		bw.origBytes = append(bw.origBytes, p[:n]...)
+	}
+	return
+}
+
+func (bw *bodyWrapper) handleReadErr(err error) error {
+	bw.isFullyRead = true // prevent further reads
+	if err != io.EOF {
+		bw.readErr = err
+	}
+	if closeErr := bw.closeAndCancel(); closeErr != nil && err == io.EOF {
+		err = closeErr
+	}
+	return err
 }
 
 // Close body
