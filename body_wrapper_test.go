@@ -427,7 +427,7 @@ func TestBodyWrapper_InfiniteResponses(t *testing.T) {
 			n      int
 		)
 		_, _ = wrp.Read(b)
-		assert.NoError(t, wrp.DisableBodyCaching())
+		assert.NoError(t, wrp.DisableRewinds())
 		reader, err = wrp.GetBody()
 		assert.EqualError(t, err, "body caching is disabled, cannot get body contents")
 		assert.Nil(t, reader)

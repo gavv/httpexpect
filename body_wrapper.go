@@ -25,9 +25,11 @@ type bodyWrapper struct {
 
 	cancelFunc context.CancelFunc
 
-	isFullyRead            bool
-	isStoringInMemDisabled bool
-	isReadBefore           bool
+	isFullyRead bool
+	// If isRewindDisabled is true, Read will not store bytes in memory.
+	// origBytes will be empty.
+	isRewindDisabled bool
+	isReadBefore     bool
 
 	mu sync.Mutex
 }
@@ -57,7 +59,7 @@ func (bw *bodyWrapper) Read(p []byte) (n int, err error) {
 		return 0, bw.readErr
 	}
 
-	if !bw.isFullyRead && !bw.isStoringInMemDisabled {
+	if !bw.isFullyRead && !bw.isRewindDisabled {
 		// Cache bytes in memory
 		n, err = bw.origReader.Read(p)
 		if (err == nil || err == io.EOF) && n > 0 {
@@ -89,7 +91,7 @@ func (bw *bodyWrapper) Close() error {
 
 	// Rewind or GetBody may be called later, so be sure to
 	// read body into memory before closing
-	if !bw.isFullyRead && !bw.isStoringInMemDisabled {
+	if !bw.isFullyRead && !bw.isRewindDisabled {
 		if readFullErr := bw.readFull(); readFullErr != nil {
 			err = readFullErr
 		}
@@ -109,7 +111,7 @@ func (bw *bodyWrapper) Rewind() {
 	bw.mu.Lock()
 	defer bw.mu.Unlock()
 
-	if bw.isStoringInMemDisabled {
+	if bw.isRewindDisabled {
 		return
 	}
 
@@ -136,7 +138,7 @@ func (bw *bodyWrapper) GetBody() (io.ReadCloser, error) {
 		return nil, bw.readErr
 	}
 
-	if bw.isStoringInMemDisabled {
+	if bw.isRewindDisabled {
 		return nil, errors.New("body caching is disabled, cannot get body contents")
 	}
 
@@ -150,11 +152,11 @@ func (bw *bodyWrapper) GetBody() (io.ReadCloser, error) {
 }
 
 // Disables storing body contents in memory and clears the cache
-func (bw *bodyWrapper) DisableBodyCaching() error {
+func (bw *bodyWrapper) DisableRewinds() error {
 	bw.mu.Lock()
 	defer bw.mu.Unlock()
 
-	bw.isStoringInMemDisabled = true
+	bw.isRewindDisabled = true
 	bw.origBytes = nil
 
 	return nil
