@@ -719,36 +719,43 @@ func TestRequest_URLInterpolate(t *testing.T) {
 		Reporter: newMockReporter(t),
 	}
 
-	var reqs [3]*Request
+	t.Run("basic", func(t *testing.T) {
+		var reqs [3]*Request
 
-	reqs[0] = NewRequestC(config, "GET", "/foo/{arg}", "bar")
-	reqs[1] = NewRequestC(config, "GET", "{arg}foo{arg}", "/", "/bar")
-	reqs[2] = NewRequestC(config, "GET", "{arg}", "/foo/bar")
+		reqs[0] = NewRequestC(config, "GET", "/foo/{arg}", "bar")
+		reqs[1] = NewRequestC(config, "GET", "{arg}foo{arg}", "/", "/bar")
+		reqs[2] = NewRequestC(config, "GET", "{arg}", "/foo/bar")
 
-	for _, req := range reqs {
+		for _, req := range reqs {
+			req.Expect().chain.assert(t, success)
+			assert.Equal(t, "http://example.com/foo/bar", client.req.URL.String())
+		}
+	})
+
+	t.Run("basic", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/{arg1}/{arg2}", "foo")
 		req.Expect().chain.assert(t, success)
-		assert.Equal(t, "http://example.com/foo/bar", client.req.URL.String())
-	}
+		assert.Equal(t, "http://example.com/foo/%7Barg2%7D",
+			client.req.URL.String())
+	})
 
-	r1 := NewRequestC(config, "GET", "/{arg1}/{arg2}", "foo")
-	r1.Expect().chain.assert(t, success)
-	assert.Equal(t, "http://example.com/foo/%7Barg2%7D",
-		client.req.URL.String())
+	t.Run("WithPath", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/{arg1}/{arg2}/{arg3}")
+		req.WithPath("ARG3", "foo")
+		req.WithPath("arg2", "bar")
+		req.Expect().chain.assert(t, success)
+		assert.Equal(t, "http://example.com/%7Barg1%7D/bar/foo",
+			client.req.URL.String())
+	})
 
-	r2 := NewRequestC(config, "GET", "/{arg1}/{arg2}/{arg3}")
-	r2.WithPath("ARG3", "foo")
-	r2.WithPath("arg2", "bar")
-	r2.Expect().chain.assert(t, success)
-	assert.Equal(t, "http://example.com/%7Barg1%7D/bar/foo",
-		client.req.URL.String())
-
-	r3 := NewRequestC(config, "GET", "/{arg1}.{arg2}.{arg3}")
-	r3.WithPath("arg2", "bar")
-	r3.WithPathObject(map[string]string{"ARG1": "foo", "arg3": "baz"})
-	r3.WithPathObject(nil)
-	r3.Expect().chain.assert(t, success)
-	assert.Equal(t, "http://example.com/foo.bar.baz",
-		client.req.URL.String())
+	t.Run("WithPathObject map[string]interface{}", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/{arg1}.{arg2}.{arg3}")
+		req.WithPathObject(map[string]string{"ARG1": "foo", "arg2": "bar", "arg3": "baz"})
+		req.WithPathObject(nil)
+		req.Expect().chain.assert(t, success)
+		assert.Equal(t, "http://example.com/foo.bar.baz",
+			client.req.URL.String())
+	})
 
 	type S struct {
 		Arg1 string
@@ -756,38 +763,63 @@ func TestRequest_URLInterpolate(t *testing.T) {
 		A3   int `path:"-"`
 	}
 
-	r4 := NewRequestC(config, "GET", "/{arg1}{arg2}")
-	r4.WithPathObject(S{"foo", 1, 2})
-	r4.Expect().chain.assert(t, success)
-	assert.Equal(t, "http://example.com/foo1", client.req.URL.String())
+	t.Run("WithPathObject struct", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/{arg1}{arg2}")
+		req.WithPathObject(S{"foo", 1, 2})
+		req.Expect().chain.assert(t, success)
+		assert.Equal(t, "http://example.com/foo1", client.req.URL.String())
+	})
 
-	r5 := NewRequestC(config, "GET", "/{arg1}{arg2}")
-	r5.WithPathObject(&S{"foo", 1, 2})
-	r5.Expect().chain.assert(t, success)
-	assert.Equal(t, "http://example.com/foo1", client.req.URL.String())
+	t.Run("WithPathObject pointer to struct", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/{arg1}{arg2}")
+		req.WithPathObject(&S{"foo", 1, 2})
+		req.Expect().chain.assert(t, success)
+		assert.Equal(t, "http://example.com/foo1", client.req.URL.String())
+	})
 
-	r6 := NewRequestC(config, "GET", "{arg}", nil)
-	r6.chain.assert(t, failure)
+	t.Run("WithPath and WithPathObject", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/{arg1}{arg2}")
+		req.WithPathObject(map[string]string{"arg1": "foo"})
+		req.WithPath("arg2", 1)
+		req.Expect().chain.assert(t, success)
+		assert.Equal(t, "http://example.com/foo1", client.req.URL.String())
+	})
 
-	r7 := NewRequestC(config, "GET", "{arg}")
-	r7.chain.assert(t, success)
-	r7.WithPath("arg", nil)
-	r7.chain.assert(t, failure)
+	t.Run("WithPath nil", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "{arg}")
+		req.WithPath("arg", nil)
+		req.chain.assert(t, failure)
+	})
 
-	r8 := NewRequestC(config, "GET", "{arg}")
-	r8.chain.assert(t, success)
-	r8.WithPath("bad", "value")
-	r8.chain.assert(t, failure)
+	t.Run("WithPathObject nil", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "{arg}")
+		req.chain.assert(t, success)
+		req.WithPath("arg", "foo")
+		req.WithPathObject(nil)
+		req.Expect().chain.assert(t, success)
+		assert.Equal(t, "http://example.com/foo", client.req.URL.String())
+	})
 
-	r9 := NewRequestC(config, "GET", "{arg")
-	r9.chain.assert(t, failure)
-	r9.WithPath("arg", "foo")
-	r9.chain.assert(t, failure)
+	t.Run("WithPath invalid key", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "{arg}")
+		req.chain.assert(t, success)
+		req.WithPath("bad", "value")
+		req.chain.assert(t, failure)
+	})
 
-	r10 := NewRequestC(config, "GET", "{arg}")
-	r10.chain.assert(t, success)
-	r10.WithPathObject(func() {})
-	r10.chain.assert(t, failure)
+	t.Run("WithPath invalid path", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "{arg")
+		req.chain.assert(t, failure)
+		req.WithPath("arg", "foo")
+		req.chain.assert(t, failure)
+	})
+
+	t.Run("WithPathObject invalid object", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "{arg}")
+		req.chain.assert(t, success)
+		req.WithPathObject(func() {})
+		req.chain.assert(t, failure)
+	})
 }
 
 func TestRequest_URLQuery(t *testing.T) {

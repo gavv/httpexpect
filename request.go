@@ -874,16 +874,6 @@ func (r *Request) WithPath(key string, value interface{}) *Request {
 		return r
 	}
 
-	if value == nil {
-		opChain.fail(AssertionFailure{
-			Type: AssertUsage,
-			Errors: []error{
-				errors.New("unexpected nil argument"),
-			},
-		})
-		return r
-	}
-
 	r.withPath(opChain, key, value)
 
 	return r
