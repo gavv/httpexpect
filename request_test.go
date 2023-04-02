@@ -719,24 +719,50 @@ func TestRequest_URLInterpolate(t *testing.T) {
 		Reporter: newMockReporter(t),
 	}
 
-	t.Run("basic", func(t *testing.T) {
-		var reqs [3]*Request
-
-		reqs[0] = NewRequestC(config, "GET", "/foo/{arg}", "bar")
-		reqs[1] = NewRequestC(config, "GET", "{arg}foo{arg}", "/", "/bar")
-		reqs[2] = NewRequestC(config, "GET", "{arg}", "/foo/bar")
-
-		for _, req := range reqs {
-			req.Expect().chain.assert(t, success)
-			assert.Equal(t, "http://example.com/foo/bar", client.req.URL.String())
+	t.Run("constructor", func(t *testing.T) {
+		cases := []struct {
+			path        string
+			pathArgs    []interface{}
+			expectedURL string
+			want        chainResult
+		}{
+			{
+				"/foo/{arg}",
+				[]interface{}{"bar"},
+				"http://example.com/foo/bar",
+				success,
+			},
+			{
+				"{arg}foo{arg}",
+				[]interface{}{"/", "/bar"},
+				"http://example.com/foo/bar",
+				success,
+			},
+			{
+				"{arg}",
+				[]interface{}{"/foo/bar"},
+				"http://example.com/foo/bar",
+				success,
+			},
+			{
+				"/{arg1}/{arg2}",
+				[]interface{}{"foo"},
+				"http://example.com/foo/%7Barg2%7D",
+				success,
+			},
+			{
+				"/{arg1}",
+				[]interface{}{nil},
+				"http://example.com/foo/%7Barg2%7D",
+				failure,
+			},
 		}
-	})
 
-	t.Run("basic", func(t *testing.T) {
-		req := NewRequestC(config, "GET", "/{arg1}/{arg2}", "foo")
-		req.Expect().chain.assert(t, success)
-		assert.Equal(t, "http://example.com/foo/%7Barg2%7D",
-			client.req.URL.String())
+		for _, tc := range cases {
+			req := NewRequestC(config, "GET", tc.path, tc.pathArgs...)
+			req.Expect().chain.assert(t, tc.want)
+			assert.Equal(t, tc.expectedURL, client.req.URL.String())
+		}
 	})
 
 	t.Run("WithPath", func(t *testing.T) {
@@ -809,7 +835,7 @@ func TestRequest_URLInterpolate(t *testing.T) {
 
 	t.Run("WithPath invalid path", func(t *testing.T) {
 		req := NewRequestC(config, "GET", "{arg")
-		req.chain.assert(t, failure)
+		req.chain.assert(t, success)
 		req.WithPath("arg", "foo")
 		req.chain.assert(t, failure)
 	})
