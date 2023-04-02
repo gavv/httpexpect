@@ -55,11 +55,39 @@ func TestE2EReport_Names(t *testing.T) {
 	assert.Contains(t, reporter.recorded, "RequestExample")
 }
 
-func TestE2EReport_Values(t *testing.T) {
+func TestE2EReport_Path(t *testing.T) {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
 	})
+
+	server := httptest.NewServer(mux)
+	defer server.Close()
+
+	reporter := &recordingReporter{}
+
+	e := WithConfig(Config{
+		BaseURL:  server.URL,
+		Reporter: reporter,
+	})
+
+	e.GET("/test").
+		Expect().
+		JSON()
+
+	t.Logf("%s", reporter.recorded)
+
+	assert.Contains(
+		t,
+		reporter.recorded,
+		"Request(\"GET\").Expect().JSON()",
+		"cannot find Path value in report",
+	)
+}
+
+func TestE2EReport_Values(t *testing.T) {
+	mux := http.NewServeMux()
+
 	mux.HandleFunc("/text", func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte("test text"))
 	})
@@ -73,25 +101,6 @@ func TestE2EReport_Values(t *testing.T) {
 
 	server := httptest.NewServer(mux)
 	defer server.Close()
-
-	t.Run("path", func(t *testing.T) {
-		reporter := &recordingReporter{}
-
-		e := WithConfig(Config{
-			BaseURL:  server.URL,
-			Reporter: reporter,
-		})
-
-		e.GET("/test").Expect().JSON()
-		t.Logf("%s", reporter.recorded)
-
-		assert.Contains(
-			t,
-			reporter.recorded,
-			"Request(\"GET\").Expect().JSON()",
-			"cannot find Path value in report",
-		)
-	})
 
 	t.Run("actual vs expected", func(t *testing.T) {
 		reporter := &recordingReporter{}
