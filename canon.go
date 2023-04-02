@@ -184,6 +184,10 @@ func canonDecode(opChain *chain, value interface{}, target interface{}) {
 	switch t := target.(type) {
 	case *interface{}:
 		*t = convertJsonNumberToFloatOrBigFloat(*t)
+	case *[]interface{}:
+		for i, val := range *t {
+			(*t)[i] = convertJsonNumberToFloatOrBigFloat(val)
+		}
 	}
 }
 
