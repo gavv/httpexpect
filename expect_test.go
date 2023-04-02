@@ -341,6 +341,46 @@ func TestExpect_Branches(t *testing.T) {
 	e5.chain.assertFlags(t, 0)
 }
 
+func TestExpect_ErrorPropagation(t *testing.T) {
+	t.Run("subsequent operations", func(t *testing.T) {
+		ctr := 0
+		reporter := newMockReporter(t)
+		reporter.reportCb = func() {
+			ctr++
+		}
+
+		arr := NewArray(reporter, []interface{}{"foo"})
+		op1 := arr.IsEmpty()
+		op2 := op1.IsEmpty() // Does not report failure
+
+		arr.chain.assertFlags(t, flagFailed)
+		op1.chain.assertFlags(t, flagFailed)
+		op2.chain.assertFlags(t, flagFailed)
+		assert.Equal(t, true, reporter.reported)
+		assert.Equal(t, 1, ctr)
+	})
+
+	t.Run("newly created child objects", func(t *testing.T) {
+		ctr := 0
+		reporter := newMockReporter(t)
+		reporter.reportCb = func() {
+			ctr++
+		}
+
+		arr := NewArray(reporter, []interface{}{"foo"})
+		arrOp := arr.IsEmpty()
+		val := arr.Value(0)
+		valOp := val.IsEqual("bar") // Does not report failure
+
+		arr.chain.assertFlags(t, (flagFailed | flagFailedChildren))
+		arrOp.chain.assertFlags(t, (flagFailed | flagFailedChildren))
+		val.chain.assertFlags(t, flagFailed)
+		valOp.chain.assertFlags(t, flagFailed)
+		assert.Equal(t, true, reporter.reported)
+		assert.Equal(t, 1, ctr)
+	})
+}
+
 func TestExpect_RequestFactory(t *testing.T) {
 	t.Run("default factory", func(t *testing.T) {
 		e := WithConfig(Config{
