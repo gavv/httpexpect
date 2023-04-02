@@ -55,13 +55,16 @@ func TestE2EReport_Names(t *testing.T) {
 	assert.Contains(t, reporter.recorded, "RequestExample")
 }
 
-func TestE2EReport_Formatting(t *testing.T) {
+func TestE2EReport_Values(t *testing.T) {
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/example-path", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
+	})
+	mux.HandleFunc("/text", func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte("test text"))
 	})
 	mux.HandleFunc("/number", func(w http.ResponseWriter, r *http.Request) {
-		_, _ = w.Write([]byte("8"))
+		_, _ = w.Write([]byte("8282828282"))
 	})
 	mux.HandleFunc("/array", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "application/json")
@@ -71,60 +74,102 @@ func TestE2EReport_Formatting(t *testing.T) {
 	server := httptest.NewServer(mux)
 	defer server.Close()
 
-	reporter := &recordingReporter{}
+	t.Run("path", func(t *testing.T) {
+		reporter := &recordingReporter{}
 
-	e := WithConfig(Config{
-		BaseURL:  server.URL,
-		Reporter: reporter,
+		e := WithConfig(Config{
+			BaseURL:  server.URL,
+			Reporter: reporter,
+		})
+
+		e.GET("/test").Expect().JSON()
+		t.Logf("%s", reporter.recorded)
+
+		assert.Contains(
+			t,
+			reporter.recorded,
+			"Request(\"GET\").Expect().JSON()",
+			"cannot find Path value in report",
+		)
 	})
 
-	e.GET("/example-path").
-		Expect().
-		Status(400)
+	t.Run("actual vs expected", func(t *testing.T) {
+		reporter := &recordingReporter{}
 
-	t.Logf("%s", reporter.recorded)
+		e := WithConfig(Config{
+			BaseURL:  server.URL,
+			Reporter: reporter,
+		})
 
-	assert.Contains(t, reporter.recorded, "/example-path")
+		e.GET("/text").
+			Expect().
+			Body().
+			IsEqual("example text")
+		t.Logf("%s", reporter.recorded)
 
-	assert.Contains(t, reporter.recorded, "unexpected http status value")
-	assert.Contains(t, reporter.recorded, "400 Bad Request")
-	assert.Contains(t, reporter.recorded, "200 OK")
+		assert.Contains(
+			t,
+			reporter.recorded,
+			"expected: strings are equal",
+			"cannot find Errors value in report",
+		)
+		assert.Contains(
+			t, reporter.recorded, "example text", "cannot find Actual value in report",
+		)
+		assert.Contains(
+			t, reporter.recorded, "test text", "cannot find Expected value in report",
+		)
+	})
 
-	reporter.recorded = ""
+	t.Run("reference", func(t *testing.T) {
+		reporter := &recordingReporter{}
 
-	e.GET("/number").
-		Expect().
-		Body().
-		AsNumber().
-		InRange(1, 5)
+		e := WithConfig(Config{
+			BaseURL:  server.URL,
+			Reporter: reporter,
+		})
 
-	assert.Contains(t, reporter.recorded, "expected: number is within given range")
-	assert.Contains(t, reporter.recorded, "expected range")
-	assert.Contains(t, reporter.recorded, "[1; 5]")
+		e.GET("/array").
+			Expect().
+			JSON().
+			Array().
+			IsOrdered()
+		t.Logf("%s", reporter.recorded)
 
-	reporter.recorded = ""
+		trimmed := strings.ReplaceAll(strings.ReplaceAll(reporter.recorded, "\n", ""), " ", "")
+		assert.Contains(
+			t, trimmed, "[7,3,9,12,4]", "cannot find Reference value in report",
+		)
+	})
 
-	e.GET("/number").
-		Expect().
-		Body().
-		AsNumber().
-		InDelta(123.0, 0.1)
+	t.Run("delta", func(t *testing.T) {
+		reporter := &recordingReporter{}
+		formatter := &DefaultFormatter{}
+		formatter.DigitSeparator = DigitSeparatorNone
 
-	assert.Contains(t, reporter.recorded, "allowed delta")
-	assert.Contains(t, reporter.recorded, "0.1")
+		e := WithConfig(Config{
+			BaseURL:   server.URL,
+			Reporter:  reporter,
+			Formatter: formatter,
+		})
 
-	reporter.recorded = ""
+		e.GET("/number").
+			Expect().
+			Body().
+			AsNumber().
+			InDelta(8383838383.0, 0.8888888888888)
+		t.Logf("%s", reporter.recorded)
 
-	e.GET("/array").
-		Expect().
-		JSON().
-		Array().
-		IsOrdered()
-	t.Logf("%s", reporter.recorded)
-
-	assert.Contains(t, reporter.recorded, "compared value")
-	assert.Contains(t, reporter.recorded, "reference value")
-	assert.Contains(t, reporter.recorded, "12,")
+		assert.Contains(
+			t, reporter.recorded, "8282828282", "cannot find Actual value in report",
+		)
+		assert.Contains(
+			t, reporter.recorded, "8383838383", "cannot find Expected value in report",
+		)
+		assert.Contains(
+			t, reporter.recorded, "0.8888888888888", "cannot find Delta value in report",
+		)
+	})
 }
 
 func TestE2EReport_Aliases(t *testing.T) {
