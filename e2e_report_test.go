@@ -55,10 +55,177 @@ func TestE2EReport_Names(t *testing.T) {
 	assert.Contains(t, reporter.recorded, "RequestExample")
 }
 
+func TestE2EReport_Values(t *testing.T) {
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/text", func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte("ACTUAL TEXT"))
+	})
+	mux.HandleFunc("/number", func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte("88888888"))
+	})
+	mux.HandleFunc("/array", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "application/json")
+		_, _ = w.Write([]byte("[111, 222, 444, 333]"))
+	})
+
+	server := httptest.NewServer(mux)
+	defer server.Close()
+
+	formatter := &DefaultFormatter{
+		DigitSeparator: DigitSeparatorNone,
+	}
+
+	t.Run("actual vs expected", func(t *testing.T) {
+		reporter := &recordingReporter{}
+
+		e := WithConfig(Config{
+			BaseURL:   server.URL,
+			Reporter:  reporter,
+			Formatter: formatter,
+		})
+
+		e.GET("/text").
+			Expect().
+			Body().
+			IsEqual("EXPECTED TEXT")
+		t.Logf("%s", reporter.recorded)
+
+		assert.Contains(
+			t, reporter.recorded, "expected: strings are equal",
+			"missing Errors",
+		)
+		assert.Contains(
+			t, reporter.recorded, "ACTUAL TEXT", "missing Actual",
+		)
+		assert.Contains(
+			t, reporter.recorded, "EXPECTED TEXT", "missing Expected",
+		)
+	})
+
+	t.Run("reference", func(t *testing.T) {
+		reporter := &recordingReporter{}
+
+		e := WithConfig(Config{
+			BaseURL:   server.URL,
+			Reporter:  reporter,
+			Formatter: formatter,
+		})
+
+		e.GET("/array").
+			Expect().
+			JSON().
+			Array().
+			IsOrdered()
+		t.Logf("%s", reporter.recorded)
+
+		trimmed := strings.Join(strings.Fields(reporter.recorded), "")
+
+		assert.Contains(
+			t, reporter.recorded, "expected: reference array is ordered",
+			"missing Errors",
+		)
+		assert.Contains(
+			t, trimmed, "[111,222,444,333]", "missing Reference",
+		)
+	})
+
+	t.Run("delta", func(t *testing.T) {
+		reporter := &recordingReporter{}
+
+		e := WithConfig(Config{
+			BaseURL:   server.URL,
+			Reporter:  reporter,
+			Formatter: formatter,
+		})
+
+		e.GET("/number").
+			Expect().
+			Body().
+			AsNumber().
+			InDelta(9999999, 0.55555555)
+		t.Logf("%s", reporter.recorded)
+
+		assert.Contains(
+			t, reporter.recorded, "expected: numbers lie within delta",
+			"missing Errors",
+		)
+		assert.Contains(
+			t, reporter.recorded, "8888888", "missing Actual",
+		)
+		assert.Contains(
+			t, reporter.recorded, "9999999", "missing Expected",
+		)
+		assert.Contains(
+			t, reporter.recorded, "0.55555555", "missing Delta",
+		)
+	})
+
+	t.Run("range", func(t *testing.T) {
+		reporter := &recordingReporter{}
+
+		e := WithConfig(Config{
+			BaseURL:   server.URL,
+			Reporter:  reporter,
+			Formatter: formatter,
+		})
+
+		e.GET("/number").
+			Expect().
+			Body().
+			AsNumber().
+			InRange(333333, 444444)
+		t.Logf("%s", reporter.recorded)
+
+		assert.Contains(
+			t, reporter.recorded, "expected: number is within given range",
+			"missing Errors",
+		)
+		assert.Contains(
+			t, reporter.recorded, "8888888", "missing Actual",
+		)
+		assert.Contains(
+			t, reporter.recorded, "[333333; 444444]", "missing Expected",
+		)
+	})
+
+	t.Run("list", func(t *testing.T) {
+		reporter := &recordingReporter{}
+
+		e := WithConfig(Config{
+			BaseURL:   server.URL,
+			Reporter:  reporter,
+			Formatter: formatter,
+		})
+
+		e.GET("/number").
+			Expect().
+			Body().
+			AsNumber().
+			InList(333333, 444444)
+		t.Logf("%s", reporter.recorded)
+
+		trimmed := strings.Join(strings.Fields(reporter.recorded), " ")
+
+		assert.Contains(
+			t, reporter.recorded, "expected: number is equal to one of the values",
+			"missing Errors",
+		)
+		assert.Contains(
+			t, reporter.recorded, "8888888", "missing Actual",
+		)
+		assert.Contains(
+			t, trimmed, "333333 444444", "missing Expected",
+		)
+	})
+}
+
 func TestE2EReport_Path(t *testing.T) {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"foo":123}`))
 	})
 
 	server := httptest.NewServer(mux)
@@ -73,115 +240,21 @@ func TestE2EReport_Path(t *testing.T) {
 
 	e.GET("/test").
 		Expect().
-		JSON()
+		JSON().
+		Object().
+		ContainsKey("bar") // will fail
 
 	t.Logf("%s", reporter.recorded)
 
 	assert.Contains(
 		t,
 		reporter.recorded,
-		"Request(\"GET\").Expect().JSON()",
+		`Request("GET").Expect().JSON().Object()`,
 		"cannot find Path value in report",
 	)
 }
 
-func TestE2EReport_Values(t *testing.T) {
-	mux := http.NewServeMux()
-
-	mux.HandleFunc("/text", func(w http.ResponseWriter, r *http.Request) {
-		_, _ = w.Write([]byte("test text"))
-	})
-	mux.HandleFunc("/number", func(w http.ResponseWriter, r *http.Request) {
-		_, _ = w.Write([]byte("8282828282"))
-	})
-	mux.HandleFunc("/array", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Content-Type", "application/json")
-		_, _ = w.Write([]byte("[7, 3, 9, 12, 4]"))
-	})
-
-	server := httptest.NewServer(mux)
-	defer server.Close()
-
-	t.Run("actual vs expected", func(t *testing.T) {
-		reporter := &recordingReporter{}
-
-		e := WithConfig(Config{
-			BaseURL:  server.URL,
-			Reporter: reporter,
-		})
-
-		e.GET("/text").
-			Expect().
-			Body().
-			IsEqual("example text")
-		t.Logf("%s", reporter.recorded)
-
-		assert.Contains(
-			t,
-			reporter.recorded,
-			"expected: strings are equal",
-			"cannot find Errors value in report",
-		)
-		assert.Contains(
-			t, reporter.recorded, "example text", "cannot find Actual value in report",
-		)
-		assert.Contains(
-			t, reporter.recorded, "test text", "cannot find Expected value in report",
-		)
-	})
-
-	t.Run("reference", func(t *testing.T) {
-		reporter := &recordingReporter{}
-
-		e := WithConfig(Config{
-			BaseURL:  server.URL,
-			Reporter: reporter,
-		})
-
-		e.GET("/array").
-			Expect().
-			JSON().
-			Array().
-			IsOrdered()
-		t.Logf("%s", reporter.recorded)
-
-		trimmed := strings.ReplaceAll(strings.ReplaceAll(reporter.recorded, "\n", ""), " ", "")
-		assert.Contains(
-			t, trimmed, "[7,3,9,12,4]", "cannot find Reference value in report",
-		)
-	})
-
-	t.Run("delta", func(t *testing.T) {
-		reporter := &recordingReporter{}
-		formatter := &DefaultFormatter{}
-		formatter.DigitSeparator = DigitSeparatorNone
-
-		e := WithConfig(Config{
-			BaseURL:   server.URL,
-			Reporter:  reporter,
-			Formatter: formatter,
-		})
-
-		e.GET("/number").
-			Expect().
-			Body().
-			AsNumber().
-			InDelta(8383838383.0, 0.8888888888888)
-		t.Logf("%s", reporter.recorded)
-
-		assert.Contains(
-			t, reporter.recorded, "8282828282", "cannot find Actual value in report",
-		)
-		assert.Contains(
-			t, reporter.recorded, "8383838383", "cannot find Expected value in report",
-		)
-		assert.Contains(
-			t, reporter.recorded, "0.8888888888888", "cannot find Delta value in report",
-		)
-	})
-}
-
-func TestE2EReport_Aliases(t *testing.T) {
+func TestE2EReport_Alias(t *testing.T) {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
@@ -209,7 +282,11 @@ func TestE2EReport_Aliases(t *testing.T) {
 
 	t.Logf("%s", reporter.recorded)
 
-	assert.Contains(t, reporter.recorded, "foo.Object().ContainsKey()")
+	assert.Contains(
+		t,
+		reporter.recorded,
+		"foo.Object().ContainsKey()",
+		"cannot find AliasedPath value in report")
 }
 
 func TestE2EReport_LineWidth(t *testing.T) {
