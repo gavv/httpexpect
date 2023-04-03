@@ -367,7 +367,7 @@ func TestExpect_ErrorPropagation(t *testing.T) {
 		arr := NewArray(reporter, []interface{}{"foo"})
 		arr.IsEmpty()
 		val := arr.Value(0)
-		val.IsEqual("bar") // Does not report failure
+		val.IsEqual("bar") // Child does not report failure
 
 		arr.chain.assertFlags(t, (flagFailed | flagFailedChildren))
 		val.chain.assertFlags(t, flagFailed)
