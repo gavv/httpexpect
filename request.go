@@ -145,39 +145,42 @@ func newRequest(
 }
 
 func (r *Request) initPath(opChain *chain, path string, pathargs ...interface{}) {
-	var n int
+	if len(pathargs) != 0 {
+		var n int
 
-	path, err := interpol.WithFunc(path, func(k string, w io.Writer) error {
-		if n < len(pathargs) {
-			if pathargs[n] == nil {
-				opChain.fail(AssertionFailure{
-					Type:   AssertValid,
-					Actual: &AssertionValue{pathargs},
-					Errors: []error{
-						fmt.Errorf("unexpected nil argument at index %d", n),
-					},
-				})
+		var err error
+		path, err = interpol.WithFunc(path, func(k string, w io.Writer) error {
+			if n < len(pathargs) {
+				if pathargs[n] == nil {
+					opChain.fail(AssertionFailure{
+						Type:   AssertValid,
+						Actual: &AssertionValue{pathargs},
+						Errors: []error{
+							fmt.Errorf("unexpected nil argument at index %d", n),
+						},
+					})
+				} else {
+					mustWrite(w, fmt.Sprint(pathargs[n]))
+				}
 			} else {
-				mustWrite(w, fmt.Sprint(pathargs[n]))
+				mustWrite(w, "{")
+				mustWrite(w, k)
+				mustWrite(w, "}")
 			}
-		} else {
-			mustWrite(w, "{")
-			mustWrite(w, k)
-			mustWrite(w, "}")
-		}
-		n++
-		return nil
-	})
-
-	if err != nil {
-		opChain.fail(AssertionFailure{
-			Type:   AssertValid,
-			Actual: &AssertionValue{path},
-			Errors: []error{
-				errors.New("invalid interpol string"),
-				err,
-			},
+			n++
+			return nil
 		})
+
+		if err != nil {
+			opChain.fail(AssertionFailure{
+				Type:   AssertValid,
+				Actual: &AssertionValue{path},
+				Errors: []error{
+					errors.New("invalid interpol string"),
+					err,
+				},
+			})
+		}
 	}
 
 	r.path = path
@@ -871,16 +874,6 @@ func (r *Request) WithPath(key string, value interface{}) *Request {
 	}
 
 	if !r.checkOrder(opChain, "WithPath()") {
-		return r
-	}
-
-	if value == nil {
-		opChain.fail(AssertionFailure{
-			Type: AssertUsage,
-			Errors: []error{
-				errors.New("unexpected nil argument"),
-			},
-		})
 		return r
 	}
 
