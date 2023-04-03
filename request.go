@@ -958,7 +958,7 @@ func (r *Request) withPath(opChain *chain, key string, value interface{}) {
 				opChain.fail(AssertionFailure{
 					Type: AssertUsage,
 					Errors: []error{
-						errors.New("unexpected nil interpol argument"),
+						fmt.Errorf("unexpected nil interpol argument %q", k),
 					},
 				})
 			} else {
