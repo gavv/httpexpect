@@ -61,8 +61,8 @@ func testChunkedHandler(e *httpexpect.Expect) {
 		WithChunked(strings.NewReader("key=value")).
 		Expect().
 		Status(http.StatusOK).
-		ContentType("application/json").
-		TransferEncoding("chunked").
+		HasContentType("application/json").
+		HasTransferEncoding("chunked").
 		JSON().Array().ConsistsOf(1, 2)
 }
 
