@@ -1,4 +1,4 @@
-package httpexpect
+package e2e
 
 import (
 	"io/ioutil"
@@ -6,6 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/gavv/httpexpect/v2"
+	"github.com/stretchr/testify/assert"
 	"github.com/valyala/fasthttp"
 )
 
@@ -58,114 +60,160 @@ func createRedirectFastHandler() fasthttp.RequestHandler {
 	}
 }
 
-func testRedirects(t *testing.T, createFn func(Reporter) *Expect) {
+func testRedirects(t *testing.T, createFn func(httpexpect.Reporter) *httpexpect.Expect) {
 	t.Run("get301", func(t *testing.T) {
-		e := createFn(NewAssertReporter(t))
+		e := createFn(httpexpect.NewAssertReporter(t))
 
 		e.GET("/redirect301").
-			WithRedirectPolicy(DontFollowRedirects).
+			WithRedirectPolicy(httpexpect.DontFollowRedirects).
 			Expect().
 			Status(http.StatusMovedPermanently)
 
 		e.GET("/redirect301").
-			WithRedirectPolicy(FollowAllRedirects).
+			WithRedirectPolicy(httpexpect.FollowAllRedirects).
 			Expect().
 			Status(http.StatusOK).Body().IsEqual(`default_response`)
 
 		e.GET("/redirect301").
-			WithRedirectPolicy(FollowRedirectsWithoutBody).
+			WithRedirectPolicy(httpexpect.FollowRedirectsWithoutBody).
 			Expect().
 			Status(http.StatusOK).Body().IsEqual(`default_response`)
 	})
 
 	t.Run("post301", func(t *testing.T) {
-		e := createFn(NewAssertReporter(t))
+		e := createFn(httpexpect.NewAssertReporter(t))
 
 		e.POST("/redirect301").
 			WithText(`custom_response`).
-			WithRedirectPolicy(DontFollowRedirects).
+			WithRedirectPolicy(httpexpect.DontFollowRedirects).
 			Expect().
 			Status(http.StatusMovedPermanently)
 
 		e.POST("/redirect301").
 			WithText(`custom_response`).
-			WithRedirectPolicy(FollowAllRedirects).
+			WithRedirectPolicy(httpexpect.FollowAllRedirects).
 			Expect().
 			Status(http.StatusOK).Body().IsEqual(`default_response`)
 
 		e.POST("/redirect301").
 			WithText(`custom_response`).
-			WithRedirectPolicy(FollowRedirectsWithoutBody).
+			WithRedirectPolicy(httpexpect.FollowRedirectsWithoutBody).
 			Expect().
 			Status(http.StatusOK).Body().IsEqual(`default_response`)
 	})
 
 	t.Run("get308", func(t *testing.T) {
-		e := createFn(NewAssertReporter(t))
+		e := createFn(httpexpect.NewAssertReporter(t))
 
 		e.GET("/redirect308").
-			WithRedirectPolicy(DontFollowRedirects).
+			WithRedirectPolicy(httpexpect.DontFollowRedirects).
 			Expect().
 			Status(http.StatusPermanentRedirect)
 
 		e.GET("/redirect308").
-			WithRedirectPolicy(FollowAllRedirects).
+			WithRedirectPolicy(httpexpect.FollowAllRedirects).
 			Expect().
 			Status(http.StatusOK).Body().IsEqual(`default_response`)
 
 		e.GET("/redirect308").
-			WithRedirectPolicy(FollowRedirectsWithoutBody).
+			WithRedirectPolicy(httpexpect.FollowRedirectsWithoutBody).
 			Expect().
 			Status(http.StatusOK).Body().IsEqual(`default_response`)
 	})
 
 	t.Run("post308", func(t *testing.T) {
-		e := createFn(NewAssertReporter(t))
+		e := createFn(httpexpect.NewAssertReporter(t))
 
 		e.POST("/redirect308").
 			WithText(`custom_response`).
-			WithRedirectPolicy(DontFollowRedirects).
+			WithRedirectPolicy(httpexpect.DontFollowRedirects).
 			Expect().
 			Status(http.StatusPermanentRedirect)
 
 		e.POST("/redirect308").
 			WithText(`custom_response`).
-			WithRedirectPolicy(FollowAllRedirects).
+			WithRedirectPolicy(httpexpect.FollowAllRedirects).
 			Expect().
 			Status(http.StatusOK).Body().IsEqual(`custom_response`)
 
 		e.POST("/redirect308").
 			WithText(`custom_response`).
-			WithRedirectPolicy(FollowRedirectsWithoutBody).
+			WithRedirectPolicy(httpexpect.FollowRedirectsWithoutBody).
 			Expect().
 			Status(http.StatusPermanentRedirect)
 	})
 
-	t.Run("max-redirects", func(t *testing.T) {
-		e := createFn(newMockReporter(t))
+	t.Run("max redirects", func(t *testing.T) {
+		t.Run("no max redirects set", func(t *testing.T) {
+			reporter := &mockReporter{}
+			e := createFn(reporter)
 
-		e.POST("/double_redirect").
-			Expect().chain.assert(t, success)
+			e.POST("/double_redirect").
+				Expect().
+				Status(http.StatusOK)
 
-		e.POST("/double_redirect").
-			WithMaxRedirects(2).
-			Expect().chain.assert(t, success)
+			assert.False(t, reporter.failed)
+		})
 
-		e.POST("/double_redirect").
-			WithMaxRedirects(1).
-			Expect().chain.assert(t, failure)
+		t.Run("max redirects above actual", func(t *testing.T) {
+			reporter := &mockReporter{}
+			e := createFn(reporter)
 
-		e.POST("/redirect308").
-			WithMaxRedirects(1).
-			Expect().chain.assert(t, success)
+			e.POST("/double_redirect").
+				WithMaxRedirects(2).
+				Expect().
+				Status(http.StatusOK)
 
-		e.POST("/redirect308").
-			WithMaxRedirects(0).
-			Expect().chain.assert(t, failure)
+			assert.False(t, reporter.failed)
+		})
 
-		e.POST("/content").
-			WithMaxRedirects(0).
-			Expect().chain.assert(t, success)
+		t.Run("max redirects below actual", func(t *testing.T) {
+			reporter := &mockReporter{}
+			e := createFn(reporter)
+
+			e.POST("/double_redirect").
+				WithMaxRedirects(1).
+				Expect().
+				Status(http.StatusOK)
+
+			assert.True(t, reporter.failed)
+		})
+
+		t.Run("max redirects equal to actual", func(t *testing.T) {
+			reporter := &mockReporter{}
+			e := createFn(reporter)
+
+			e.POST("/redirect308").
+				WithMaxRedirects(1).
+				Expect().
+				Status(http.StatusOK)
+
+			assert.False(t, reporter.failed)
+		})
+
+		t.Run("max redirects zero with redirect", func(t *testing.T) {
+			reporter := &mockReporter{}
+			e := createFn(reporter)
+
+			e.POST("/redirect308").
+				WithMaxRedirects(0).
+				Expect().
+				Status(http.StatusOK)
+
+			assert.True(t, reporter.failed)
+		})
+
+		t.Run("max redirects zero without redirect", func(t *testing.T) {
+			reporter := &mockReporter{}
+			e := createFn(reporter)
+
+			e.POST("/content").
+				WithMaxRedirects(0).
+				Expect().
+				Status(http.StatusOK)
+
+			assert.False(t, reporter.failed)
+		})
 	})
 }
 
@@ -175,8 +223,8 @@ func TestE2ERedirect_Live(t *testing.T) {
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
-	testRedirects(t, func(rep Reporter) *Expect {
-		return WithConfig(Config{
+	testRedirects(t, func(rep httpexpect.Reporter) *httpexpect.Expect {
+		return httpexpect.WithConfig(httpexpect.Config{
 			BaseURL:  server.URL,
 			Reporter: rep,
 		})
@@ -186,12 +234,12 @@ func TestE2ERedirect_Live(t *testing.T) {
 func TestE2ERedirect_BinderStandard(t *testing.T) {
 	handler := createRedirectHandler()
 
-	testRedirects(t, func(rep Reporter) *Expect {
-		return WithConfig(Config{
+	testRedirects(t, func(rep httpexpect.Reporter) *httpexpect.Expect {
+		return httpexpect.WithConfig(httpexpect.Config{
 			BaseURL:  "http://example.com",
 			Reporter: rep,
 			Client: &http.Client{
-				Transport: NewBinder(handler),
+				Transport: httpexpect.NewBinder(handler),
 			},
 		})
 	})
@@ -200,12 +248,12 @@ func TestE2ERedirect_BinderStandard(t *testing.T) {
 func TestE2ERedirect_BinderFast(t *testing.T) {
 	handler := createRedirectFastHandler()
 
-	testRedirects(t, func(rep Reporter) *Expect {
-		return WithConfig(Config{
+	testRedirects(t, func(rep httpexpect.Reporter) *httpexpect.Expect {
+		return httpexpect.WithConfig(httpexpect.Config{
 			BaseURL:  "http://example.com",
 			Reporter: rep,
 			Client: &http.Client{
-				Transport: NewFastBinder(handler),
+				Transport: httpexpect.NewFastBinder(handler),
 			},
 		})
 	})

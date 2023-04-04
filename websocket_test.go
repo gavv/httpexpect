@@ -131,9 +131,9 @@ func TestWebsocket_Expect(t *testing.T) {
 		wsPreSteps func(*Websocket)
 	}
 	cases := []struct {
-		name     string
-		args     args
-		assertOk bool
+		name   string
+		args   args
+		result chainResult
 	}{
 		{
 			name: "success",
@@ -141,7 +141,7 @@ func TestWebsocket_Expect(t *testing.T) {
 				wsPreSteps: noWsPreSteps,
 				wsConn:     &mockWebsocketConn{},
 			},
-			assertOk: true,
+			result: success,
 		},
 		{
 			name: "fail to read message from conn",
@@ -151,7 +151,7 @@ func TestWebsocket_Expect(t *testing.T) {
 					readMsgErr: errors.New("failed to read message"),
 				},
 			},
-			assertOk: false,
+			result: failure,
 		},
 		{
 			name: "chain already failed",
@@ -160,7 +160,7 @@ func TestWebsocket_Expect(t *testing.T) {
 				wsPreSteps: noWsPreSteps,
 				wsConn:     &mockWebsocketConn{},
 			},
-			assertOk: false,
+			result: failure,
 		},
 		{
 			name: "conn is nil",
@@ -168,7 +168,7 @@ func TestWebsocket_Expect(t *testing.T) {
 				wsPreSteps: noWsPreSteps,
 				wsConn:     nil,
 			},
-			assertOk: false,
+			result: failure,
 		},
 		{
 			name: "connection closed",
@@ -178,7 +178,7 @@ func TestWebsocket_Expect(t *testing.T) {
 				},
 				wsConn: &mockWebsocketConn{},
 			},
-			assertOk: false,
+			result: failure,
 		},
 		{
 			name: "failed to set read deadline",
@@ -188,7 +188,7 @@ func TestWebsocket_Expect(t *testing.T) {
 					readDlError: errors.New("failed to set read deadline"),
 				},
 			},
-			assertOk: false,
+			result: failure,
 		},
 	}
 	for _, tc := range cases {
@@ -202,11 +202,7 @@ func TestWebsocket_Expect(t *testing.T) {
 
 			ws.Expect()
 
-			if tc.assertOk {
-				ws.chain.assert(t, success)
-			} else {
-				ws.chain.assert(t, failure)
-			}
+			ws.chain.assert(t, tc.result)
 		})
 	}
 }
@@ -218,9 +214,9 @@ func TestWebsocket_Close(t *testing.T) {
 		closeCode  []int
 	}
 	cases := []struct {
-		name     string
-		args     args
-		assertOk bool
+		name   string
+		args   args
+		result chainResult
 	}{
 		{
 			name: "success",
@@ -229,7 +225,7 @@ func TestWebsocket_Close(t *testing.T) {
 				wsConn:     &mockWebsocketConn{},
 				closeCode:  []int{websocket.CloseNormalClosure},
 			},
-			assertOk: true,
+			result: success,
 		},
 		{
 			name: "conn is nil",
@@ -238,7 +234,7 @@ func TestWebsocket_Close(t *testing.T) {
 				wsConn:     nil,
 				closeCode:  []int{websocket.CloseNormalClosure},
 			},
-			assertOk: false,
+			result: failure,
 		},
 		{
 			name: "websocket unusable",
@@ -249,7 +245,7 @@ func TestWebsocket_Close(t *testing.T) {
 				wsConn:    &mockWebsocketConn{},
 				closeCode: []int{websocket.CloseNormalClosure},
 			},
-			assertOk: false,
+			result: failure,
 		},
 		{
 			name: "too many close codes",
@@ -258,7 +254,7 @@ func TestWebsocket_Close(t *testing.T) {
 				wsConn:     &mockWebsocketConn{},
 				closeCode:  []int{websocket.CloseNormalClosure, websocket.CloseAbnormalClosure},
 			},
-			assertOk: false,
+			result: failure,
 		},
 	}
 	for _, tc := range cases {
@@ -273,11 +269,7 @@ func TestWebsocket_Close(t *testing.T) {
 
 			ws.Close(tc.args.closeCode...)
 
-			if tc.assertOk {
-				ws.chain.assert(t, success)
-			} else {
-				ws.chain.assert(t, failure)
-			}
+			ws.chain.assert(t, tc.result)
 		})
 	}
 }
@@ -290,9 +282,9 @@ func TestWebsocket_CloseWithBytes(t *testing.T) {
 		closeCode  []int
 	}
 	cases := []struct {
-		name     string
-		args     args
-		assertOk bool
+		name   string
+		args   args
+		result chainResult
 	}{
 		{
 			name: "success",
@@ -302,7 +294,7 @@ func TestWebsocket_CloseWithBytes(t *testing.T) {
 				content:    []byte("connection closed..."),
 				closeCode:  []int{websocket.CloseNormalClosure},
 			},
-			assertOk: true,
+			result: success,
 		},
 		{
 			name: "conn is nil",
@@ -312,7 +304,7 @@ func TestWebsocket_CloseWithBytes(t *testing.T) {
 				content:    []byte("connection closed..."),
 				closeCode:  []int{websocket.CloseNormalClosure},
 			},
-			assertOk: false,
+			result: failure,
 		},
 		{
 			name: "websocket unusable",
@@ -324,7 +316,7 @@ func TestWebsocket_CloseWithBytes(t *testing.T) {
 				content:   []byte("connection closed..."),
 				closeCode: []int{websocket.CloseNormalClosure},
 			},
-			assertOk: false,
+			result: failure,
 		},
 		{
 			name: "too many close codes",
@@ -334,7 +326,7 @@ func TestWebsocket_CloseWithBytes(t *testing.T) {
 				content:    []byte("connection closed..."),
 				closeCode:  []int{websocket.CloseNormalClosure, websocket.CloseAbnormalClosure},
 			},
-			assertOk: false,
+			result: failure,
 		},
 	}
 	for _, tc := range cases {
@@ -349,11 +341,7 @@ func TestWebsocket_CloseWithBytes(t *testing.T) {
 
 			ws.CloseWithBytes(tc.args.content, tc.args.closeCode...)
 
-			if tc.assertOk {
-				ws.chain.assert(t, success)
-			} else {
-				ws.chain.assert(t, failure)
-			}
+			ws.chain.assert(t, tc.result)
 		})
 	}
 }
@@ -366,9 +354,9 @@ func TestWebsocket_CloseWithText(t *testing.T) {
 		closeCode  []int
 	}
 	cases := []struct {
-		name     string
-		args     args
-		assertOk bool
+		name   string
+		args   args
+		result chainResult
 	}{
 		{
 			name: "success",
@@ -378,7 +366,7 @@ func TestWebsocket_CloseWithText(t *testing.T) {
 				content:    "connection closed...",
 				closeCode:  []int{websocket.CloseNormalClosure},
 			},
-			assertOk: true,
+			result: success,
 		},
 		{
 			name: "conn is nil",
@@ -388,7 +376,7 @@ func TestWebsocket_CloseWithText(t *testing.T) {
 				content:    "connection closed...",
 				closeCode:  []int{websocket.CloseNormalClosure},
 			},
-			assertOk: false,
+			result: failure,
 		},
 		{
 			name: "websocket unusable",
@@ -400,7 +388,7 @@ func TestWebsocket_CloseWithText(t *testing.T) {
 				content:   "connection closed...",
 				closeCode: []int{websocket.CloseNormalClosure},
 			},
-			assertOk: false,
+			result: failure,
 		},
 		{
 			name: "too many close codes",
@@ -410,7 +398,7 @@ func TestWebsocket_CloseWithText(t *testing.T) {
 				content:    "connection closed...",
 				closeCode:  []int{websocket.CloseNormalClosure, websocket.CloseAbnormalClosure},
 			},
-			assertOk: false,
+			result: failure,
 		},
 	}
 	for _, tc := range cases {
@@ -425,11 +413,7 @@ func TestWebsocket_CloseWithText(t *testing.T) {
 
 			ws.CloseWithText(tc.args.content, tc.args.closeCode...)
 
-			if tc.assertOk {
-				ws.chain.assert(t, success)
-			} else {
-				ws.chain.assert(t, failure)
-			}
+			ws.chain.assert(t, tc.result)
 		})
 	}
 }
@@ -442,9 +426,9 @@ func TestWebsocket_CloseWithJSON(t *testing.T) {
 		closeCode  []int
 	}
 	cases := []struct {
-		name     string
-		args     args
-		assertOk bool
+		name   string
+		args   args
+		result chainResult
 	}{
 		{
 			name: "success",
@@ -456,7 +440,7 @@ func TestWebsocket_CloseWithJSON(t *testing.T) {
 				},
 				closeCode: []int{websocket.CloseNormalClosure},
 			},
-			assertOk: true,
+			result: success,
 		},
 		{
 			name: "conn is nil",
@@ -468,7 +452,7 @@ func TestWebsocket_CloseWithJSON(t *testing.T) {
 				},
 				closeCode: []int{websocket.CloseNormalClosure},
 			},
-			assertOk: false,
+			result: failure,
 		},
 		{
 			name: "websocket unusable",
@@ -482,7 +466,7 @@ func TestWebsocket_CloseWithJSON(t *testing.T) {
 				},
 				closeCode: []int{websocket.CloseNormalClosure},
 			},
-			assertOk: false,
+			result: failure,
 		},
 		{
 			name: "too many close codes",
@@ -494,7 +478,7 @@ func TestWebsocket_CloseWithJSON(t *testing.T) {
 				},
 				closeCode: []int{websocket.CloseNormalClosure, websocket.CloseAbnormalClosure},
 			},
-			assertOk: false,
+			result: failure,
 		},
 		{
 			name: "marshall failed",
@@ -504,7 +488,7 @@ func TestWebsocket_CloseWithJSON(t *testing.T) {
 				content:    make(chan int),
 				closeCode:  []int{websocket.CloseNormalClosure},
 			},
-			assertOk: false,
+			result: failure,
 		},
 	}
 	for _, tc := range cases {
@@ -519,11 +503,7 @@ func TestWebsocket_CloseWithJSON(t *testing.T) {
 
 			ws.CloseWithJSON(tc.args.content, tc.args.closeCode...)
 
-			if tc.assertOk {
-				ws.chain.assert(t, success)
-			} else {
-				ws.chain.assert(t, failure)
-			}
+			ws.chain.assert(t, tc.result)
 		})
 	}
 }
@@ -537,9 +517,9 @@ func TestWebsocket_WriteMessage(t *testing.T) {
 		closeCode  []int
 	}
 	cases := []struct {
-		name     string
-		args     args
-		assertOk bool
+		name   string
+		args   args
+		result chainResult
 	}{
 		{
 			name: "text message success",
@@ -550,7 +530,7 @@ func TestWebsocket_WriteMessage(t *testing.T) {
 				content:    []byte("random message..."),
 				closeCode:  []int{},
 			},
-			assertOk: true,
+			result: success,
 		},
 		{
 			name: "text message fail nil conn",
@@ -561,7 +541,7 @@ func TestWebsocket_WriteMessage(t *testing.T) {
 				content:    []byte("random message..."),
 				closeCode:  []int{},
 			},
-			assertOk: false,
+			result: failure,
 		},
 		{
 			name: "text message fail unusable",
@@ -574,7 +554,7 @@ func TestWebsocket_WriteMessage(t *testing.T) {
 				content:   []byte("random message..."),
 				closeCode: []int{},
 			},
-			assertOk: false,
+			result: failure,
 		},
 		{
 			name: "text message failed to set write deadline",
@@ -587,7 +567,7 @@ func TestWebsocket_WriteMessage(t *testing.T) {
 				content:    []byte("random message..."),
 				closeCode:  []int{},
 			},
-			assertOk: false,
+			result: failure,
 		},
 		{
 			name: "text message failed to write to conn",
@@ -600,7 +580,7 @@ func TestWebsocket_WriteMessage(t *testing.T) {
 				content:    []byte("random message..."),
 				closeCode:  []int{},
 			},
-			assertOk: false,
+			result: failure,
 		},
 		{
 			name: "text binary message success",
@@ -611,7 +591,7 @@ func TestWebsocket_WriteMessage(t *testing.T) {
 				content:    []byte("random message..."),
 				closeCode:  []int{},
 			},
-			assertOk: true,
+			result: success,
 		},
 		{
 			name: "close message success",
@@ -622,7 +602,7 @@ func TestWebsocket_WriteMessage(t *testing.T) {
 				content:    []byte("closing message..."),
 				closeCode:  []int{websocket.CloseNormalClosure},
 			},
-			assertOk: true,
+			result: success,
 		},
 		{
 			name: "close message too many close codes",
@@ -636,7 +616,7 @@ func TestWebsocket_WriteMessage(t *testing.T) {
 					websocket.CloseAbnormalClosure,
 				},
 			},
-			assertOk: false,
+			result: failure,
 		},
 		{
 			name: "unsupported message type",
@@ -647,7 +627,7 @@ func TestWebsocket_WriteMessage(t *testing.T) {
 				content:    []byte("unsupported message..."),
 				closeCode:  []int{},
 			},
-			assertOk: false,
+			result: failure,
 		},
 	}
 	for _, tc := range cases {
@@ -662,11 +642,7 @@ func TestWebsocket_WriteMessage(t *testing.T) {
 
 			ws.WriteMessage(tc.args.typ, tc.args.content, tc.args.closeCode...)
 
-			if tc.assertOk {
-				ws.chain.assert(t, success)
-			} else {
-				ws.chain.assert(t, failure)
-			}
+			ws.chain.assert(t, tc.result)
 		})
 	}
 }
@@ -678,9 +654,9 @@ func TestWebsocket_WriteBytesBinary(t *testing.T) {
 		content    []byte
 	}
 	cases := []struct {
-		name     string
-		args     args
-		assertOk bool
+		name   string
+		args   args
+		result chainResult
 	}{
 		{
 			name: "success",
@@ -689,7 +665,7 @@ func TestWebsocket_WriteBytesBinary(t *testing.T) {
 				wsConn:     &mockWebsocketConn{},
 				content:    []byte("random message..."),
 			},
-			assertOk: true,
+			result: success,
 		},
 		{
 			name: "conn is nil",
@@ -698,7 +674,7 @@ func TestWebsocket_WriteBytesBinary(t *testing.T) {
 				wsPreSteps: noWsPreSteps,
 				content:    []byte("random message..."),
 			},
-			assertOk: false,
+			result: failure,
 		},
 		{
 			name: "websocket unusable",
@@ -709,7 +685,7 @@ func TestWebsocket_WriteBytesBinary(t *testing.T) {
 				},
 				content: []byte("random message..."),
 			},
-			assertOk: false,
+			result: failure,
 		},
 	}
 	for _, tc := range cases {
@@ -724,11 +700,7 @@ func TestWebsocket_WriteBytesBinary(t *testing.T) {
 
 			ws.WriteBytesBinary(tc.args.content)
 
-			if tc.assertOk {
-				ws.chain.assert(t, success)
-			} else {
-				ws.chain.assert(t, failure)
-			}
+			ws.chain.assert(t, tc.result)
 		})
 	}
 }
@@ -740,9 +712,9 @@ func TestWebsocket_WriteBytesText(t *testing.T) {
 		content    []byte
 	}
 	cases := []struct {
-		name     string
-		args     args
-		assertOk bool
+		name   string
+		args   args
+		result chainResult
 	}{
 		{
 			name: "success",
@@ -751,7 +723,7 @@ func TestWebsocket_WriteBytesText(t *testing.T) {
 				wsConn:     &mockWebsocketConn{},
 				content:    []byte("random message..."),
 			},
-			assertOk: true,
+			result: success,
 		},
 		{
 			name: "conn is nil",
@@ -760,7 +732,7 @@ func TestWebsocket_WriteBytesText(t *testing.T) {
 				wsPreSteps: noWsPreSteps,
 				content:    []byte("random message..."),
 			},
-			assertOk: false,
+			result: failure,
 		},
 		{
 			name: "websocket unusable",
@@ -771,7 +743,7 @@ func TestWebsocket_WriteBytesText(t *testing.T) {
 				},
 				content: []byte("random message..."),
 			},
-			assertOk: false,
+			result: failure,
 		},
 	}
 	for _, tc := range cases {
@@ -786,11 +758,7 @@ func TestWebsocket_WriteBytesText(t *testing.T) {
 
 			ws.WriteBytesText(tc.args.content)
 
-			if tc.assertOk {
-				ws.chain.assert(t, success)
-			} else {
-				ws.chain.assert(t, failure)
-			}
+			ws.chain.assert(t, tc.result)
 		})
 	}
 }
@@ -802,9 +770,9 @@ func TestWebsocket_WriteText(t *testing.T) {
 		content    string
 	}
 	cases := []struct {
-		name     string
-		args     args
-		assertOk bool
+		name   string
+		args   args
+		result chainResult
 	}{
 		{
 			name: "success",
@@ -813,7 +781,7 @@ func TestWebsocket_WriteText(t *testing.T) {
 				wsConn:     &mockWebsocketConn{},
 				content:    "random message...",
 			},
-			assertOk: true,
+			result: success,
 		},
 		{
 			name: "conn is nil",
@@ -822,7 +790,7 @@ func TestWebsocket_WriteText(t *testing.T) {
 				wsPreSteps: noWsPreSteps,
 				content:    "random message...",
 			},
-			assertOk: false,
+			result: failure,
 		},
 		{
 			name: "websocket unusable",
@@ -833,7 +801,7 @@ func TestWebsocket_WriteText(t *testing.T) {
 				},
 				content: "random message...",
 			},
-			assertOk: false,
+			result: failure,
 		},
 	}
 	for _, tc := range cases {
@@ -848,11 +816,7 @@ func TestWebsocket_WriteText(t *testing.T) {
 
 			ws.WriteText(tc.args.content)
 
-			if tc.assertOk {
-				ws.chain.assert(t, success)
-			} else {
-				ws.chain.assert(t, failure)
-			}
+			ws.chain.assert(t, tc.result)
 		})
 	}
 }
@@ -864,9 +828,9 @@ func TestWebsocket_WriteJSON(t *testing.T) {
 		content    interface{}
 	}
 	cases := []struct {
-		name     string
-		args     args
-		assertOk bool
+		name   string
+		args   args
+		result chainResult
 	}{
 		{
 			name: "success",
@@ -877,7 +841,7 @@ func TestWebsocket_WriteJSON(t *testing.T) {
 					"msg": "random message",
 				},
 			},
-			assertOk: true,
+			result: success,
 		},
 		{
 			name: "conn is nil",
@@ -888,7 +852,7 @@ func TestWebsocket_WriteJSON(t *testing.T) {
 					"msg": "random message",
 				},
 			},
-			assertOk: false,
+			result: failure,
 		},
 		{
 			name: "websocket unusable",
@@ -901,7 +865,7 @@ func TestWebsocket_WriteJSON(t *testing.T) {
 					"msg": "random message",
 				},
 			},
-			assertOk: false,
+			result: failure,
 		},
 		{
 			name: "JSON marshal failed",
@@ -910,7 +874,7 @@ func TestWebsocket_WriteJSON(t *testing.T) {
 				wsPreSteps: noWsPreSteps,
 				content:    make(chan int),
 			},
-			assertOk: false,
+			result: failure,
 		},
 	}
 	for _, tc := range cases {
@@ -925,11 +889,7 @@ func TestWebsocket_WriteJSON(t *testing.T) {
 
 			ws.WriteJSON(tc.args.content)
 
-			if tc.assertOk {
-				ws.chain.assert(t, success)
-			} else {
-				ws.chain.assert(t, failure)
-			}
+			ws.chain.assert(t, tc.result)
 		})
 	}
 }
@@ -956,16 +916,16 @@ func TestWebsocket_SetReadDeadline(t *testing.T) {
 		wsConn WebsocketConn
 	}
 	cases := []struct {
-		name     string
-		args     args
-		assertOk bool
+		name   string
+		args   args
+		result chainResult
 	}{
 		{
 			name: "success",
 			args: args{
 				wsConn: &mockWebsocketConn{},
 			},
-			assertOk: true,
+			result: success,
 		},
 		{
 			name: "conn.SetReadDeadline error",
@@ -974,7 +934,7 @@ func TestWebsocket_SetReadDeadline(t *testing.T) {
 					readDlError: errors.New("Failed to set read deadline"),
 				},
 			},
-			assertOk: false,
+			result: failure,
 		},
 	}
 	for _, tc := range cases {
@@ -990,11 +950,7 @@ func TestWebsocket_SetReadDeadline(t *testing.T) {
 			ws.setReadDeadline(opChain)
 			opChain.leave()
 
-			if tc.assertOk {
-				ws.chain.assert(t, success)
-			} else {
-				ws.chain.assert(t, failure)
-			}
+			ws.chain.assert(t, tc.result)
 		})
 	}
 }
@@ -1004,16 +960,16 @@ func TestWebsocket_SetWriteDeadline(t *testing.T) {
 		wsConn WebsocketConn
 	}
 	cases := []struct {
-		name     string
-		args     args
-		assertOk bool
+		name   string
+		args   args
+		result chainResult
 	}{
 		{
 			name: "success",
 			args: args{
 				wsConn: &mockWebsocketConn{},
 			},
-			assertOk: true,
+			result: success,
 		},
 		{
 			name: "conn.SetReadDeadline error",
@@ -1022,7 +978,7 @@ func TestWebsocket_SetWriteDeadline(t *testing.T) {
 					writeDlError: errors.New("Failed to set read deadline"),
 				},
 			},
-			assertOk: false,
+			result: failure,
 		},
 	}
 	for _, tc := range cases {
@@ -1038,11 +994,7 @@ func TestWebsocket_SetWriteDeadline(t *testing.T) {
 			ws.setWriteDeadline(opChain)
 			opChain.leave()
 
-			if tc.assertOk {
-				ws.chain.assert(t, success)
-			} else {
-				ws.chain.assert(t, failure)
-			}
+			ws.chain.assert(t, tc.result)
 		})
 	}
 }
@@ -1052,23 +1004,23 @@ func TestWebsocket_Disconnect(t *testing.T) {
 		wsConn WebsocketConn
 	}
 	cases := []struct {
-		name     string
-		args     args
-		assertOk bool
+		name   string
+		args   args
+		result chainResult
 	}{
 		{
 			name: "success",
 			args: args{
 				wsConn: &mockWebsocketConn{},
 			},
-			assertOk: true,
+			result: success,
 		},
 		{
 			name: "success even if conn is nil",
 			args: args{
 				wsConn: nil,
 			},
-			assertOk: true,
+			result: success,
 		},
 		{
 			name: "conn close failed",
@@ -1077,7 +1029,7 @@ func TestWebsocket_Disconnect(t *testing.T) {
 					closeError: errors.New("failed to close ws conn"),
 				},
 			},
-			assertOk: false,
+			result: failure,
 		},
 	}
 	for _, tc := range cases {
@@ -1090,47 +1042,45 @@ func TestWebsocket_Disconnect(t *testing.T) {
 
 			ws.Disconnect()
 
-			if tc.assertOk {
-				ws.chain.assert(t, success)
-			} else {
-				ws.chain.assert(t, failure)
-			}
+			ws.chain.assert(t, tc.result)
 		})
 	}
 }
 
-func TestWebsocket_PrintRead(t *testing.T) {
-	reporter := newMockReporter(t)
-	printer := &mockWebsocketPrinter{}
-	config := Config{
-		Reporter: reporter,
-		Printers: []Printer{printer},
-	}.withDefaults()
-	ws := newWebsocket(newMockChain(t), config, &mockWebsocketConn{})
+func TestWebsocket_Printer(t *testing.T) {
+	t.Run("print read", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		printer := &mockWebsocketPrinter{}
+		config := Config{
+			Reporter: reporter,
+			Printers: []Printer{printer},
+		}.withDefaults()
+		ws := newWebsocket(newMockChain(t), config, &mockWebsocketConn{})
 
-	ws.printRead(websocket.CloseMessage,
-		[]byte("random message"),
-		websocket.CloseNormalClosure)
+		ws.printRead(websocket.CloseMessage,
+			[]byte("random message"),
+			websocket.CloseNormalClosure)
 
-	if !printer.isReadFrom {
-		t.Errorf("Websocket.printRead() failed to read from printer")
-	}
-}
+		if !printer.isReadFrom {
+			t.Errorf("Websocket.printRead() failed to read from printer")
+		}
+	})
 
-func TestWebsocket_PrintWrite(t *testing.T) {
-	reporter := newMockReporter(t)
-	printer := &mockWebsocketPrinter{}
-	config := Config{
-		Reporter: reporter,
-		Printers: []Printer{printer},
-	}.withDefaults()
-	ws := newWebsocket(newMockChain(t), config, &mockWebsocketConn{})
+	t.Run("print write", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		printer := &mockWebsocketPrinter{}
+		config := Config{
+			Reporter: reporter,
+			Printers: []Printer{printer},
+		}.withDefaults()
+		ws := newWebsocket(newMockChain(t), config, &mockWebsocketConn{})
 
-	ws.printWrite(websocket.CloseMessage,
-		[]byte("random message"),
-		websocket.CloseNormalClosure)
+		ws.printWrite(websocket.CloseMessage,
+			[]byte("random message"),
+			websocket.CloseNormalClosure)
 
-	if !printer.isWrittenTo {
-		t.Errorf("Websocket.printWrite() failed to write to printer")
-	}
+		if !printer.isWrittenTo {
+			t.Errorf("Websocket.printWrite() failed to write to printer")
+		}
+	})
 }

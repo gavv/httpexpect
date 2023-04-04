@@ -1,4 +1,4 @@
-package httpexpect
+package e2e
 
 import (
 	"crypto/tls"
@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gavv/httpexpect/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/valyala/fasthttp"
 )
@@ -53,8 +54,8 @@ func createAutoTLSFastHandler(https string) fasthttp.RequestHandler {
 	}
 }
 
-func testAutoTLSHandler(config Config) {
-	e := WithConfig(config)
+func testAutoTLSHandler(config httpexpect.Config) {
+	e := httpexpect.WithConfig(config)
 
 	tls := e.POST("/tls").
 		Expect().
@@ -82,11 +83,11 @@ func TestE2EAutoTLS_Live(t *testing.T) {
 	assert.True(t, strings.HasPrefix(httpServ.URL, "http://"))
 
 	for _, url := range []string{httpsServ.URL, httpServ.URL} {
-		testAutoTLSHandler(Config{
+		testAutoTLSHandler(httpexpect.Config{
 			BaseURL:  url,
-			Reporter: NewRequireReporter(t),
-			Printers: []Printer{
-				NewDebugPrinter(t, true),
+			Reporter: httpexpect.NewRequireReporter(t),
+			Printers: []httpexpect.Printer{
+				httpexpect.NewDebugPrinter(t, true),
 			},
 			Client: &http.Client{
 				Transport: &http.Transport{
@@ -103,14 +104,14 @@ func TestE2EAutoTLS_BinderStandard(t *testing.T) {
 	handler := createAutoTLSHandler("https://example.com")
 
 	for _, url := range []string{"https://example.com", "http://example.com"} {
-		testAutoTLSHandler(Config{
+		testAutoTLSHandler(httpexpect.Config{
 			BaseURL:  url,
-			Reporter: NewRequireReporter(t),
-			Printers: []Printer{
-				NewDebugPrinter(t, true),
+			Reporter: httpexpect.NewRequireReporter(t),
+			Printers: []httpexpect.Printer{
+				httpexpect.NewDebugPrinter(t, true),
 			},
 			Client: &http.Client{
-				Transport: &Binder{
+				Transport: &httpexpect.Binder{
 					Handler: handler,
 					TLS:     &tls.ConnectionState{},
 				},
@@ -123,14 +124,14 @@ func TestE2EAutoTLS_BinderFast(t *testing.T) {
 	handler := createAutoTLSFastHandler("https://example.com")
 
 	for _, url := range []string{"https://example.com", "http://example.com"} {
-		testAutoTLSHandler(Config{
+		testAutoTLSHandler(httpexpect.Config{
 			BaseURL:  url,
-			Reporter: NewRequireReporter(t),
-			Printers: []Printer{
-				NewDebugPrinter(t, true),
+			Reporter: httpexpect.NewRequireReporter(t),
+			Printers: []httpexpect.Printer{
+				httpexpect.NewDebugPrinter(t, true),
 			},
 			Client: &http.Client{
-				Transport: &FastBinder{
+				Transport: &httpexpect.FastBinder{
 					Handler: handler,
 					TLS:     &tls.ConnectionState{},
 				},

@@ -710,86 +710,6 @@ func TestRequest_URLOverwrite(t *testing.T) {
 	}
 }
 
-func TestRequest_URLInterpolate(t *testing.T) {
-	client := &mockClient{}
-
-	config := Config{
-		BaseURL:  "http://example.com/",
-		Client:   client,
-		Reporter: newMockReporter(t),
-	}
-
-	var reqs [3]*Request
-
-	reqs[0] = NewRequestC(config, "GET", "/foo/{arg}", "bar")
-	reqs[1] = NewRequestC(config, "GET", "{arg}foo{arg}", "/", "/bar")
-	reqs[2] = NewRequestC(config, "GET", "{arg}", "/foo/bar")
-
-	for _, req := range reqs {
-		req.Expect().chain.assert(t, success)
-		assert.Equal(t, "http://example.com/foo/bar", client.req.URL.String())
-	}
-
-	r1 := NewRequestC(config, "GET", "/{arg1}/{arg2}", "foo")
-	r1.Expect().chain.assert(t, success)
-	assert.Equal(t, "http://example.com/foo/%7Barg2%7D",
-		client.req.URL.String())
-
-	r2 := NewRequestC(config, "GET", "/{arg1}/{arg2}/{arg3}")
-	r2.WithPath("ARG3", "foo")
-	r2.WithPath("arg2", "bar")
-	r2.Expect().chain.assert(t, success)
-	assert.Equal(t, "http://example.com/%7Barg1%7D/bar/foo",
-		client.req.URL.String())
-
-	r3 := NewRequestC(config, "GET", "/{arg1}.{arg2}.{arg3}")
-	r3.WithPath("arg2", "bar")
-	r3.WithPathObject(map[string]string{"ARG1": "foo", "arg3": "baz"})
-	r3.WithPathObject(nil)
-	r3.Expect().chain.assert(t, success)
-	assert.Equal(t, "http://example.com/foo.bar.baz",
-		client.req.URL.String())
-
-	type S struct {
-		Arg1 string
-		A2   int `path:"arg2"`
-		A3   int `path:"-"`
-	}
-
-	r4 := NewRequestC(config, "GET", "/{arg1}{arg2}")
-	r4.WithPathObject(S{"foo", 1, 2})
-	r4.Expect().chain.assert(t, success)
-	assert.Equal(t, "http://example.com/foo1", client.req.URL.String())
-
-	r5 := NewRequestC(config, "GET", "/{arg1}{arg2}")
-	r5.WithPathObject(&S{"foo", 1, 2})
-	r5.Expect().chain.assert(t, success)
-	assert.Equal(t, "http://example.com/foo1", client.req.URL.String())
-
-	r6 := NewRequestC(config, "GET", "{arg}", nil)
-	r6.chain.assert(t, failure)
-
-	r7 := NewRequestC(config, "GET", "{arg}")
-	r7.chain.assert(t, success)
-	r7.WithPath("arg", nil)
-	r7.chain.assert(t, failure)
-
-	r8 := NewRequestC(config, "GET", "{arg}")
-	r8.chain.assert(t, success)
-	r8.WithPath("bad", "value")
-	r8.chain.assert(t, failure)
-
-	r9 := NewRequestC(config, "GET", "{arg")
-	r9.chain.assert(t, failure)
-	r9.WithPath("arg", "foo")
-	r9.chain.assert(t, failure)
-
-	r10 := NewRequestC(config, "GET", "{arg}")
-	r10.chain.assert(t, success)
-	r10.WithPathObject(func() {})
-	r10.chain.assert(t, failure)
-}
-
 func TestRequest_URLQuery(t *testing.T) {
 	client := &mockClient{}
 
@@ -817,7 +737,7 @@ func TestRequest_URLQuery(t *testing.T) {
 			"http://example.com/path?aa=foo&bb=123&cc=%2A%26%40")
 	})
 
-	t.Run("WithQueryObject map[string]interface", func(t *testing.T) {
+	t.Run("WithQueryObject map", func(t *testing.T) {
 		req := NewRequestC(config, "GET", "/path").
 			WithQuery("aa", "foo").
 			WithQueryObject(map[string]interface{}{
@@ -894,6 +814,360 @@ func TestRequest_URLQuery(t *testing.T) {
 		req := NewRequestC(config, "GET", "/path").
 			WithQueryObject(queryObj)
 		checkFailed(req)
+	})
+}
+
+func TestRequest_PathConstruct(t *testing.T) {
+	cases := []struct {
+		name        string
+		path        string
+		pathArgs    []interface{}
+		expectedURL string
+		result      chainResult
+	}{
+		{
+			name:        "nil args slice",
+			path:        "/foo/{arg}",
+			pathArgs:    nil,
+			expectedURL: "http://example.com/foo/%7Barg%7D",
+			result:      success,
+		},
+		{
+			name:        "empty args slice",
+			path:        "/foo/{arg}",
+			pathArgs:    []interface{}{},
+			expectedURL: "http://example.com/foo/%7Barg%7D",
+			result:      success,
+		},
+		{
+			name:        "missing braсe, empty args slice",
+			path:        "/foo/{arg",
+			pathArgs:    []interface{}{},
+			expectedURL: "http://example.com/foo/%7Barg",
+			result:      success,
+		},
+		{
+			name:        "unmatched brace, empty args slice",
+			path:        "/foo/{arg}}",
+			pathArgs:    []interface{}{},
+			expectedURL: "http://example.com/foo/%7Barg%7D%7D",
+			result:      success,
+		},
+		{
+			name:        "one arg",
+			path:        "/foo/{arg}",
+			pathArgs:    []interface{}{"bar"},
+			expectedURL: "http://example.com/foo/bar",
+			result:      success,
+		},
+		{
+			name:        "two args",
+			path:        "{arg}foo{arg}",
+			pathArgs:    []interface{}{"/", "/bar"},
+			expectedURL: "http://example.com/foo/bar",
+			result:      success,
+		},
+		{
+			name:        "one arg with slashes",
+			path:        "{arg}",
+			pathArgs:    []interface{}{"/foo/bar"},
+			expectedURL: "http://example.com/foo/bar",
+			result:      success,
+		},
+		{
+			name:        "incomplete",
+			path:        "/{arg1}/{arg2}",
+			pathArgs:    []interface{}{"foo"},
+			expectedURL: "http://example.com/foo/%7Barg2%7D",
+			result:      success,
+		},
+		{
+			name:     "nil arg",
+			path:     "/{arg1}",
+			pathArgs: []interface{}{nil},
+			result:   failure,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			client := &mockClient{}
+
+			config := Config{
+				BaseURL:  "http://example.com/",
+				Client:   client,
+				Reporter: newMockReporter(t),
+			}
+
+			req := NewRequestC(config, "GET", tc.path, tc.pathArgs...)
+
+			if tc.result {
+				req.chain.assert(t, success)
+				req.Expect().chain.assert(t, success)
+
+				assert.Equal(t, tc.expectedURL,
+					client.req.URL.String())
+			} else {
+				req.chain.assert(t, failure)
+			}
+		})
+	}
+}
+
+func TestRequest_Path(t *testing.T) {
+	client := &mockClient{}
+
+	config := Config{
+		BaseURL:  "http://example.com/",
+		Client:   client,
+		Reporter: newMockReporter(t),
+	}
+
+	t.Run("complete", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/{arg1}/{arg2}/{arg3}")
+		req.WithPath("ARG3", "baz")
+		req.WithPath("arg2", "bar")
+		req.WithPath("arg1", "foo")
+		req.Expect().chain.assert(t, success)
+		require.NotNil(t, client.req)
+		assert.Equal(t, "http://example.com/foo/bar/baz",
+			client.req.URL.String())
+	})
+
+	t.Run("incomplete", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/{arg1}/{arg2}/{arg3}")
+		req.WithPath("ARG3", "baz")
+		req.WithPath("arg2", "bar")
+		req.Expect().chain.assert(t, success)
+		require.NotNil(t, client.req)
+		assert.Equal(t, "http://example.com/%7Barg1%7D/bar/baz",
+			client.req.URL.String())
+	})
+
+	t.Run("invalid path", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "{arg")
+		req.chain.assert(t, success)
+		req.WithPath("arg", "foo")
+		req.chain.assert(t, failure)
+	})
+
+	t.Run("invalid key", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "{arg}")
+		req.WithPath("BAD", "value")
+		req.chain.assert(t, failure)
+	})
+
+	t.Run("invalid value", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "{arg}")
+		req.WithPath("arg", nil)
+		req.chain.assert(t, failure)
+	})
+}
+
+func TestRequest_PathObject(t *testing.T) {
+	client := &mockClient{}
+
+	config := Config{
+		BaseURL:  "http://example.com/",
+		Client:   client,
+		Reporter: newMockReporter(t),
+	}
+
+	t.Run("map string", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/{arg1}/{arg2}/{arg3}")
+		req.WithPathObject(map[string]string{
+			"arg1": "foo",
+			"arg2": "bar",
+			"ARG3": "baz",
+		})
+		req.Expect().chain.assert(t, success)
+		require.NotNil(t, client.req)
+		assert.Equal(t, "http://example.com/foo/bar/baz",
+			client.req.URL.String())
+	})
+
+	t.Run("map any", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/{arg1}/{arg2}/{arg3}")
+		req.WithPathObject(map[string]interface{}{
+			"arg1": "foo",
+			"arg2": 222,
+			"ARG3": 333,
+		})
+		req.Expect().chain.assert(t, success)
+		require.NotNil(t, client.req)
+		assert.Equal(t, "http://example.com/foo/222/333",
+			client.req.URL.String())
+	})
+
+	t.Run("map incomplete", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/{arg1}/{arg2}/{arg3}")
+		req.WithPathObject(map[string]string{
+			"arg2": "bar",
+			"ARG3": "baz",
+		})
+		req.Expect().chain.assert(t, success)
+		require.NotNil(t, client.req)
+		assert.Equal(t, "http://example.com/%7Barg1%7D/bar/baz",
+			client.req.URL.String())
+	})
+
+	t.Run("struct", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/{arg1}/{arg2}/{arg3}")
+		req.WithPathObject(struct {
+			Arg1 string
+			Arg2 interface{}
+			Arg3 int
+		}{
+			Arg1: "foo",
+			Arg2: "bar",
+			Arg3: 333,
+		})
+		req.Expect().chain.assert(t, success)
+		require.NotNil(t, client.req)
+		assert.Equal(t, "http://example.com/foo/bar/333",
+			client.req.URL.String())
+	})
+
+	t.Run("struct incomplete", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/{arg1}/{arg2}/{arg3}")
+		req.WithPathObject(struct {
+			Arg2 string
+			Arg3 string
+		}{
+			Arg2: "bar",
+			Arg3: "baz",
+		})
+		req.Expect().chain.assert(t, success)
+		require.NotNil(t, client.req)
+		assert.Equal(t, "http://example.com/%7Barg1%7D/bar/baz",
+			client.req.URL.String())
+	})
+
+	t.Run("struct tags", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/{arg1}/{arg2}/{arg3}")
+		req.WithPathObject(struct {
+			Arg1 string
+			A2   string `path:"arg2"`
+			Arg3 string `path:"-"`
+		}{
+			Arg1: "foo",
+			A2:   "bar",
+			Arg3: "baz",
+		})
+		req.Expect().chain.assert(t, success)
+		require.NotNil(t, client.req)
+		assert.Equal(t, "http://example.com/foo/bar/%7Barg3%7D",
+			client.req.URL.String())
+	})
+
+	t.Run("struct pointer", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/{arg1}/{arg2}/{arg3}")
+		req.WithPathObject(&struct {
+			Arg1 string
+			Arg2 string
+			Arg3 string
+		}{
+			Arg1: "foo",
+			Arg2: "bar",
+			Arg3: "baz",
+		})
+		req.Expect().chain.assert(t, success)
+		require.NotNil(t, client.req)
+		assert.Equal(t, "http://example.com/foo/bar/baz",
+			client.req.URL.String())
+	})
+
+	t.Run("nil argument", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "{arg}")
+		req.WithPathObject(nil)
+		req.Expect().chain.assert(t, success)
+		require.NotNil(t, client.req)
+		assert.Equal(t, "http://example.com/%7Barg%7D",
+			client.req.URL.String())
+	})
+
+	t.Run("empty argument", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "{arg}")
+		req.WithPathObject(map[string]string{})
+		req.Expect().chain.assert(t, success)
+		require.NotNil(t, client.req)
+		assert.Equal(t, "http://example.com/%7Barg%7D",
+			client.req.URL.String())
+	})
+
+	t.Run("invalid argument", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "{arg}")
+		req.chain.assert(t, success)
+		req.WithPathObject(func() {})
+		req.chain.assert(t, failure)
+	})
+
+	t.Run("nil value", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "{arg}")
+		req.WithPathObject(map[string]interface{}{
+			"arg": nil,
+		})
+		req.chain.assert(t, failure)
+	})
+
+	t.Run("invalid value", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "{arg}")
+		req.WithPathObject(map[string]interface{}{
+			"arg": func() {},
+		})
+		req.chain.assert(t, failure)
+	})
+
+	t.Run("invalid key", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "{arg}")
+		req.WithPathObject(map[string]interface{}{
+			"BAD": nil,
+		})
+		req.chain.assert(t, failure)
+	})
+
+	t.Run("invalid path", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "{arg")
+		req.chain.assert(t, success)
+		req.WithPathObject(map[string]interface{}{
+			"arg": "foo",
+		})
+		req.chain.assert(t, failure)
+	})
+}
+
+func TestRequest_PathCombined(t *testing.T) {
+	client := &mockClient{}
+
+	config := Config{
+		BaseURL:  "http://example.com/",
+		Client:   client,
+		Reporter: newMockReporter(t),
+	}
+
+	t.Run("constructor and WithPath", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/{arg1}/{arg2}", "foo")
+		req.WithPath("arg2", "bar")
+		req.Expect().chain.assert(t, success)
+		assert.Equal(t, "http://example.com/foo/bar",
+			client.req.URL.String())
+	})
+
+	t.Run("constructor and WithPathObject", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/{arg1}/{arg2}", "foo")
+		req.WithPathObject(map[string]string{"arg2": "bar"})
+		req.Expect().chain.assert(t, success)
+		assert.Equal(t, "http://example.com/foo/bar",
+			client.req.URL.String())
+	})
+
+	t.Run("WithPath and WithPathObject", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/{arg1}/{arg2}")
+		req.WithPathObject(map[string]string{"arg1": "foo"})
+		req.WithPath("arg2", "bar")
+		req.Expect().chain.assert(t, success)
+		assert.Equal(t, "http://example.com/foo/bar",
+			client.req.URL.String())
 	})
 }
 

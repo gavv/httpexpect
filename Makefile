@@ -6,36 +6,36 @@ tidy:
 	cd _examples && go mod tidy -v
 
 gen:
-	go generate
+	go generate ./...
 
 fmt:
-	gofmt -s -w . ./_examples
+	gofmt -s -w . ./e2e ./_examples
 ifneq (,$(findstring GNU,$(shell sed --version)))
-	sed -r -e ':loop' -e 's,^(//\t+)    ,\1\t,g' -e 't loop' -i *.go _examples/*.go
+	sed -r -e ':loop' -e 's,^(//\t+)    ,\1\t,g' -e 't loop' -i *.go e2e/*.go _examples/*.go
 endif
 
 build:
-	go build
+	go build ./...
 	cd _examples && go build
 
 lint:
-	golangci-lint run .
+	golangci-lint run ./...
 	cd _examples && golangci-lint run .
 
 test:
 ifneq ($(shell which gotest),)
-	gotest
+	gotest ./...
 	cd _examples && gotest
 else
-	go test
+	go test ./...
 	cd _examples && go test
 endif
 
 short:
 ifneq ($(shell which gotest),)
-	gotest -short
+	gotest -short ./...
 else
-	go test -short
+	go test -short ./...
 endif
 
 spell:
