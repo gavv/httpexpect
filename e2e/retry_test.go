@@ -18,14 +18,7 @@ type retryController struct {
 	statuscode int
 }
 
-func (rc *retryController) Reset(countback, statuscode int) {
-	rc.mu.Lock()
-	defer rc.mu.Unlock()
-	rc.countback = countback
-	rc.statuscode = statuscode
-}
-
-func (rc *retryController) GetStatusCode() int {
+func (rc *retryController) getStatus() int {
 	rc.mu.Lock()
 	defer rc.mu.Unlock()
 	if rc.countback > 0 {
@@ -35,18 +28,17 @@ func (rc *retryController) GetStatusCode() int {
 	return http.StatusOK
 }
 
-type transportController struct {
-	http.RoundTripper
-
-	mu        sync.Mutex
-	countback int
+func (rc *retryController) reset(countback, statuscode int) {
+	rc.mu.Lock()
+	defer rc.mu.Unlock()
+	rc.countback = countback
+	rc.statuscode = statuscode
 }
 
-func (tc *transportController) Reset(countback int) {
-	tc.mu.Lock()
-	defer tc.mu.Unlock()
-
-	tc.countback = countback
+type transportController struct {
+	http.RoundTripper
+	mu        sync.Mutex
+	countback int
 }
 
 func (tc *transportController) RoundTrip(req *http.Request) (*http.Response, error) {
@@ -59,6 +51,12 @@ func (tc *transportController) RoundTrip(req *http.Request) (*http.Response, err
 	}
 
 	return tc.RoundTripper.RoundTrip(req)
+}
+
+func (tc *transportController) reset(countback int) {
+	tc.mu.Lock()
+	defer tc.mu.Unlock()
+	tc.countback = countback
 }
 
 type timeoutNetworkErr struct {
@@ -79,7 +77,7 @@ func createRetryHandler(rc *retryController) http.Handler {
 	mux.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
 		b, _ := ioutil.ReadAll(r.Body)
 
-		w.WriteHeader(rc.GetStatusCode())
+		w.WriteHeader(rc.getStatus())
 		_, _ = w.Write(b)
 	})
 
@@ -90,7 +88,7 @@ func createRetryFastHandler(rc *retryController) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		switch string(ctx.Path()) {
 		case "/test":
-			ctx.SetStatusCode(rc.GetStatusCode())
+			ctx.SetStatusCode(rc.getStatus())
 			ctx.SetBody(ctx.Request.Body())
 		}
 	}
@@ -105,27 +103,27 @@ func testRetries(
 	t.Run("MaxRetries", func(t *testing.T) {
 		e := createFn(httpexpect.NewAssertReporter(t))
 
-		rc.Reset(2, http.StatusInternalServerError)
+		rc.reset(2, http.StatusInternalServerError)
 		e.POST("/test").
 			WithText(`test`).
 			Expect().
 			Status(http.StatusInternalServerError).Body().IsEqual(`test`)
 
-		rc.Reset(2, http.StatusInternalServerError)
+		rc.reset(2, http.StatusInternalServerError)
 		e.POST("/test").
 			WithText(`test`).
 			WithMaxRetries(0).
 			Expect().
 			Status(http.StatusInternalServerError).Body().IsEqual(`test`)
 
-		rc.Reset(2, http.StatusInternalServerError)
+		rc.reset(2, http.StatusInternalServerError)
 		e.POST("/test").
 			WithText(`test`).
 			WithMaxRetries(1).
 			Expect().
 			Status(http.StatusInternalServerError).Body().IsEqual(`test`)
 
-		rc.Reset(2, http.StatusInternalServerError)
+		rc.reset(2, http.StatusInternalServerError)
 		e.POST("/test").
 			WithText(`test`).
 			WithMaxRetries(2).
@@ -134,12 +132,12 @@ func testRetries(
 	})
 
 	t.Run("DontRetry", func(t *testing.T) {
-		t.Run("Don't retry internal server error", func(t *testing.T) {
+		t.Run("dont retry internal server error", func(t *testing.T) {
 			reporter := &mockReporter{}
 			e := createFn(reporter)
 
-			rc.Reset(1, http.StatusInternalServerError)
-			tc.Reset(0)
+			rc.reset(1, http.StatusInternalServerError)
+			tc.reset(0)
 			e.POST("/test").
 				WithMaxRetries(1).WithRetryPolicy(httpexpect.DontRetry).
 				Expect().
@@ -148,12 +146,12 @@ func testRetries(
 			assert.False(t, reporter.failed)
 		})
 
-		t.Run("Don't retry bad request", func(t *testing.T) {
+		t.Run("dont retry bad request", func(t *testing.T) {
 			reporter := &mockReporter{}
 			e := createFn(reporter)
 
-			rc.Reset(1, http.StatusBadRequest)
-			tc.Reset(0)
+			rc.reset(1, http.StatusBadRequest)
+			tc.reset(0)
 			e.POST("/test").
 				WithMaxRetries(1).WithRetryPolicy(httpexpect.DontRetry).
 				Expect().
@@ -162,12 +160,12 @@ func testRetries(
 			assert.False(t, reporter.failed)
 		})
 
-		t.Run("Don't retry timeout error", func(t *testing.T) {
+		t.Run("dont retry timeout error", func(t *testing.T) {
 			reporter := &mockReporter{}
 			e := createFn(reporter)
 
-			rc.Reset(0, http.StatusOK)
-			tc.Reset(1)
+			rc.reset(0, http.StatusOK)
+			tc.reset(1)
 			e.POST("/test").
 				WithMaxRetries(1).WithRetryPolicy(httpexpect.DontRetry).
 				Expect()
@@ -177,12 +175,12 @@ func testRetries(
 	})
 
 	t.Run("RetryTimeoutErrors", func(t *testing.T) {
-		t.Run("Don't retry internal server error", func(t *testing.T) {
+		t.Run("dont retry internal server error", func(t *testing.T) {
 			reporter := &mockReporter{}
 			e := createFn(reporter)
 
-			rc.Reset(1, http.StatusInternalServerError)
-			tc.Reset(0)
+			rc.reset(1, http.StatusInternalServerError)
+			tc.reset(0)
 			e.POST("/test").
 				WithMaxRetries(1).WithRetryPolicy(httpexpect.RetryTimeoutErrors).
 				Expect().
@@ -191,12 +189,12 @@ func testRetries(
 			assert.False(t, reporter.failed)
 		})
 
-		t.Run("Don't retry bad request", func(t *testing.T) {
+		t.Run("dont retry bad request", func(t *testing.T) {
 			reporter := &mockReporter{}
 			e := createFn(reporter)
 
-			rc.Reset(1, http.StatusBadRequest)
-			tc.Reset(0)
+			rc.reset(1, http.StatusBadRequest)
+			tc.reset(0)
 			e.POST("/test").
 				WithMaxRetries(1).WithRetryPolicy(httpexpect.RetryTimeoutErrors).
 				Expect().
@@ -205,12 +203,12 @@ func testRetries(
 			assert.False(t, reporter.failed)
 		})
 
-		t.Run("Retry timeout error", func(t *testing.T) {
+		t.Run("retry timeout error", func(t *testing.T) {
 			reporter := &mockReporter{}
 			e := createFn(reporter)
 
-			rc.Reset(0, http.StatusOK)
-			tc.Reset(1)
+			rc.reset(0, http.StatusOK)
+			tc.reset(1)
 			e.POST("/test").
 				WithMaxRetries(1).WithRetryPolicy(httpexpect.RetryTimeoutErrors).
 				Expect().
@@ -221,12 +219,12 @@ func testRetries(
 	})
 
 	t.Run("RetryTimeoutAndServerErrors", func(t *testing.T) {
-		t.Run("Retry internal server", func(t *testing.T) {
+		t.Run("retry internal server", func(t *testing.T) {
 			reporter := &mockReporter{}
 			e := createFn(reporter)
 
-			rc.Reset(1, http.StatusInternalServerError)
-			tc.Reset(0)
+			rc.reset(1, http.StatusInternalServerError)
+			tc.reset(0)
 			e.POST("/test").
 				WithMaxRetries(1).WithRetryPolicy(httpexpect.RetryTimeoutAndServerErrors).
 				Expect().
@@ -235,12 +233,12 @@ func testRetries(
 			assert.False(t, reporter.failed)
 		})
 
-		t.Run("Retry bad request", func(t *testing.T) {
+		t.Run("retry bad request", func(t *testing.T) {
 			reporter := &mockReporter{}
 			e := createFn(reporter)
 
-			rc.Reset(1, http.StatusBadRequest)
-			tc.Reset(0)
+			rc.reset(1, http.StatusBadRequest)
+			tc.reset(0)
 			e.POST("/test").
 				WithMaxRetries(1).WithRetryPolicy(httpexpect.RetryTimeoutAndServerErrors).
 				Expect().
@@ -249,12 +247,12 @@ func testRetries(
 			assert.False(t, reporter.failed)
 		})
 
-		t.Run("Retry timeout error", func(t *testing.T) {
+		t.Run("retry timeout error", func(t *testing.T) {
 			reporter := &mockReporter{}
 			e := createFn(reporter)
 
-			rc.Reset(0, http.StatusOK)
-			tc.Reset(1)
+			rc.reset(0, http.StatusOK)
+			tc.reset(1)
 			e.POST("/test").
 				WithMaxRetries(1).WithRetryPolicy(httpexpect.RetryTimeoutAndServerErrors).
 				Expect().
@@ -265,12 +263,12 @@ func testRetries(
 	})
 
 	t.Run("RetryAllErrors", func(t *testing.T) {
-		t.Run("Retry internal server error", func(t *testing.T) {
+		t.Run("retry internal server error", func(t *testing.T) {
 			reporter := &mockReporter{}
 			e := createFn(reporter)
 
-			rc.Reset(1, http.StatusInternalServerError)
-			tc.Reset(0)
+			rc.reset(1, http.StatusInternalServerError)
+			tc.reset(0)
 			e.POST("/test").
 				WithMaxRetries(1).WithRetryPolicy(httpexpect.RetryAllErrors).
 				Expect().
@@ -279,12 +277,12 @@ func testRetries(
 			assert.False(t, reporter.failed)
 		})
 
-		t.Run("Retry bad request", func(t *testing.T) {
+		t.Run("retry bad request", func(t *testing.T) {
 			reporter := &mockReporter{}
 			e := createFn(reporter)
 
-			rc.Reset(1, http.StatusBadRequest)
-			tc.Reset(0)
+			rc.reset(1, http.StatusBadRequest)
+			tc.reset(0)
 			e.POST("/test").
 				WithMaxRetries(1).WithRetryPolicy(httpexpect.RetryAllErrors).
 				Expect().
@@ -293,12 +291,12 @@ func testRetries(
 			assert.False(t, reporter.failed)
 		})
 
-		t.Run("Retry timeout errors", func(t *testing.T) {
+		t.Run("retry timeout error", func(t *testing.T) {
 			reporter := &mockReporter{}
 			e := createFn(reporter)
 
-			rc.Reset(0, http.StatusOK)
-			tc.Reset(1)
+			rc.reset(0, http.StatusOK)
+			tc.reset(1)
 			e.POST("/test").
 				WithMaxRetries(1).WithRetryPolicy(httpexpect.RetryAllErrors).
 				Expect().

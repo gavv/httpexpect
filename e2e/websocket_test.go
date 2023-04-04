@@ -182,7 +182,7 @@ func TestE2EWebsocket_Live(t *testing.T) {
 }
 
 func TestE2EWebsocket_HandlerStandard(t *testing.T) {
-	t.Run("dialer-config", func(t *testing.T) {
+	t.Run("dialer config", func(t *testing.T) {
 		handler := createWebsocketHandler(wsHandlerOpts{})
 
 		e := httpexpect.WithConfig(httpexpect.Config{
@@ -196,7 +196,7 @@ func TestE2EWebsocket_HandlerStandard(t *testing.T) {
 		testWebsocket(e)
 	})
 
-	t.Run("dialer-method", func(t *testing.T) {
+	t.Run("dialer method", func(t *testing.T) {
 		handler := createWebsocketHandler(wsHandlerOpts{})
 
 		e := httpexpect.WithConfig(httpexpect.Config{
@@ -213,7 +213,7 @@ func TestE2EWebsocket_HandlerStandard(t *testing.T) {
 }
 
 func TestE2EWebsocket_HandlerFast(t *testing.T) {
-	t.Run("dialer-config", func(t *testing.T) {
+	t.Run("dialer config", func(t *testing.T) {
 		e := httpexpect.WithConfig(httpexpect.Config{
 			Reporter:        httpexpect.NewAssertReporter(t),
 			WebsocketDialer: httpexpect.NewFastWebsocketDialer(websocketFastHandler),
@@ -225,7 +225,7 @@ func TestE2EWebsocket_HandlerFast(t *testing.T) {
 		testWebsocket(e)
 	})
 
-	t.Run("dialer-method", func(t *testing.T) {
+	t.Run("dialer method", func(t *testing.T) {
 		e := httpexpect.WithConfig(httpexpect.Config{
 			Reporter: httpexpect.NewAssertReporter(t),
 			Printers: []httpexpect.Printer{
@@ -288,7 +288,7 @@ func TestE2EWebsocket_Timeouts(t *testing.T) {
 		t.Skip()
 	}
 
-	t.Run("with-read-timeout", func(t *testing.T) {
+	t.Run("with read timeout", func(t *testing.T) {
 		blockCh := make(chan struct{}, 1)
 
 		handler := createWebsocketHandler(wsHandlerOpts{
@@ -302,7 +302,7 @@ func TestE2EWebsocket_Timeouts(t *testing.T) {
 		})
 	})
 
-	t.Run("without-read-timeout", func(t *testing.T) {
+	t.Run("without read timeout", func(t *testing.T) {
 		blockCh := make(chan struct{}, 1)
 
 		handler := createWebsocketHandler(wsHandlerOpts{
@@ -316,7 +316,7 @@ func TestE2EWebsocket_Timeouts(t *testing.T) {
 		})
 	})
 
-	t.Run("without-write-timeout", func(t *testing.T) {
+	t.Run("without write timeout", func(t *testing.T) {
 		blockCh := make(chan struct{}, 1)
 
 		handler := createWebsocketHandler(wsHandlerOpts{
@@ -332,7 +332,7 @@ func TestE2EWebsocket_Timeouts(t *testing.T) {
 }
 
 func TestE2EWebsocket_Closed(t *testing.T) {
-	t.Run("close-write", func(t *testing.T) {
+	t.Run("close - write", func(t *testing.T) {
 		handler := createWebsocketHandler(wsHandlerOpts{})
 
 		server := httptest.NewServer(handler)
@@ -358,7 +358,7 @@ func TestE2EWebsocket_Closed(t *testing.T) {
 		assert.True(t, reporter.failed)
 	})
 
-	t.Run("close-close", func(t *testing.T) {
+	t.Run("close - close", func(t *testing.T) {
 		handler := createWebsocketHandler(wsHandlerOpts{})
 
 		server := httptest.NewServer(handler)
@@ -386,7 +386,7 @@ func TestE2EWebsocket_Closed(t *testing.T) {
 }
 
 func TestE2EWebsocket_Disconnected(t *testing.T) {
-	t.Run("disconnect-write", func(t *testing.T) {
+	t.Run("disconnect - write", func(t *testing.T) {
 		handler := createWebsocketHandler(wsHandlerOpts{})
 
 		server := httptest.NewServer(handler)
@@ -411,7 +411,7 @@ func TestE2EWebsocket_Disconnected(t *testing.T) {
 		assert.True(t, reporter.failed)
 	})
 
-	t.Run("disconnect-close", func(t *testing.T) {
+	t.Run("disconnect - close", func(t *testing.T) {
 		handler := createWebsocketHandler(wsHandlerOpts{})
 
 		server := httptest.NewServer(handler)
@@ -436,7 +436,7 @@ func TestE2EWebsocket_Disconnected(t *testing.T) {
 		assert.True(t, reporter.failed)
 	})
 
-	t.Run("disconnect-disconnect", func(t *testing.T) {
+	t.Run("disconnect - disconnect", func(t *testing.T) {
 		handler := createWebsocketHandler(wsHandlerOpts{})
 
 		server := httptest.NewServer(handler)
@@ -470,7 +470,7 @@ func TestE2EWebsocket_Invalid(t *testing.T) {
 
 	reporter := &mockReporter{}
 
-	t.Run("no_upgrade_on_client", func(t *testing.T) {
+	t.Run("no upgrade on client", func(t *testing.T) {
 		e := httpexpect.WithConfig(httpexpect.Config{
 			BaseURL:  server.URL,
 			Reporter: reporter,
@@ -487,7 +487,7 @@ func TestE2EWebsocket_Invalid(t *testing.T) {
 		assert.True(t, reporter.failed)
 	})
 
-	t.Run("no_upgrade_on_server", func(t *testing.T) {
+	t.Run("no upgrade on server", func(t *testing.T) {
 		reporter := &mockReporter{}
 
 		e := httpexpect.WithConfig(httpexpect.Config{

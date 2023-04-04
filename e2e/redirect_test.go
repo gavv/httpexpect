@@ -143,7 +143,7 @@ func testRedirects(t *testing.T, createFn func(httpexpect.Reporter) *httpexpect.
 			Status(http.StatusPermanentRedirect)
 	})
 
-	t.Run("max-redirects", func(t *testing.T) {
+	t.Run("max redirects", func(t *testing.T) {
 		t.Run("no max redirects set", func(t *testing.T) {
 			reporter := &mockReporter{}
 			e := createFn(reporter)
