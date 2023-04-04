@@ -1047,38 +1047,40 @@ func TestWebsocket_Disconnect(t *testing.T) {
 	}
 }
 
-func TestWebsocket_PrintRead(t *testing.T) {
-	reporter := newMockReporter(t)
-	printer := &mockWebsocketPrinter{}
-	config := Config{
-		Reporter: reporter,
-		Printers: []Printer{printer},
-	}.withDefaults()
-	ws := newWebsocket(newMockChain(t), config, &mockWebsocketConn{})
+func TestWebsocket_Printer(t *testing.T) {
+	t.Run("print read", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		printer := &mockWebsocketPrinter{}
+		config := Config{
+			Reporter: reporter,
+			Printers: []Printer{printer},
+		}.withDefaults()
+		ws := newWebsocket(newMockChain(t), config, &mockWebsocketConn{})
 
-	ws.printRead(websocket.CloseMessage,
-		[]byte("random message"),
-		websocket.CloseNormalClosure)
+		ws.printRead(websocket.CloseMessage,
+			[]byte("random message"),
+			websocket.CloseNormalClosure)
 
-	if !printer.isReadFrom {
-		t.Errorf("Websocket.printRead() failed to read from printer")
-	}
-}
+		if !printer.isReadFrom {
+			t.Errorf("Websocket.printRead() failed to read from printer")
+		}
+	})
 
-func TestWebsocket_PrintWrite(t *testing.T) {
-	reporter := newMockReporter(t)
-	printer := &mockWebsocketPrinter{}
-	config := Config{
-		Reporter: reporter,
-		Printers: []Printer{printer},
-	}.withDefaults()
-	ws := newWebsocket(newMockChain(t), config, &mockWebsocketConn{})
+	t.Run("print write", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		printer := &mockWebsocketPrinter{}
+		config := Config{
+			Reporter: reporter,
+			Printers: []Printer{printer},
+		}.withDefaults()
+		ws := newWebsocket(newMockChain(t), config, &mockWebsocketConn{})
 
-	ws.printWrite(websocket.CloseMessage,
-		[]byte("random message"),
-		websocket.CloseNormalClosure)
+		ws.printWrite(websocket.CloseMessage,
+			[]byte("random message"),
+			websocket.CloseNormalClosure)
 
-	if !printer.isWrittenTo {
-		t.Errorf("Websocket.printWrite() failed to write to printer")
-	}
+		if !printer.isWrittenTo {
+			t.Errorf("Websocket.printWrite() failed to write to printer")
+		}
+	})
 }
