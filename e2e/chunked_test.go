@@ -1,4 +1,4 @@
-package httpexpect
+package e2e
 
 import (
 	"bufio"
@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/gavv/httpexpect/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/valyala/fasthttp"
 )
@@ -54,7 +55,7 @@ func createChunkedFastHandler(t *testing.T) fasthttp.RequestHandler {
 	}
 }
 
-func testChunkedHandler(e *Expect) {
+func testChunkedHandler(e *httpexpect.Expect) {
 	e.PUT("/").
 		WithHeader("Content-Type", "application/x-www-form-urlencoded").
 		WithChunked(strings.NewReader("key=value")).
@@ -71,17 +72,17 @@ func TestE2EChunked_Live(t *testing.T) {
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
-	testChunkedHandler(Default(t, server.URL))
+	testChunkedHandler(httpexpect.Default(t, server.URL))
 }
 
 func TestE2EChunked_BinderStandard(t *testing.T) {
 	handler := createChunkedHandler()
 
-	testChunkedHandler(WithConfig(Config{
+	testChunkedHandler(httpexpect.WithConfig(httpexpect.Config{
 		BaseURL:  "http://example.com",
-		Reporter: NewAssertReporter(t),
+		Reporter: httpexpect.NewAssertReporter(t),
 		Client: &http.Client{
-			Transport: NewBinder(handler),
+			Transport: httpexpect.NewBinder(handler),
 		},
 	}))
 }
@@ -89,11 +90,11 @@ func TestE2EChunked_BinderStandard(t *testing.T) {
 func TestE2EChunked_BinderFast(t *testing.T) {
 	handler := createChunkedFastHandler(t)
 
-	testChunkedHandler(WithConfig(Config{
+	testChunkedHandler(httpexpect.WithConfig(httpexpect.Config{
 		BaseURL:  "http://example.com",
-		Reporter: NewAssertReporter(t),
+		Reporter: httpexpect.NewAssertReporter(t),
 		Client: &http.Client{
-			Transport: NewFastBinder(handler),
+			Transport: httpexpect.NewFastBinder(handler),
 		},
 	}))
 }

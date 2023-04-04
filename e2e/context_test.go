@@ -1,4 +1,4 @@
-package httpexpect
+package e2e
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gavv/httpexpect/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -93,7 +94,7 @@ func (h *waitHandler) waitForRetries() {
 
 type errorSuppressor struct {
 	backend               *assert.Assertions
-	formatter             Formatter
+	formatter             httpexpect.Formatter
 	isExpectedError       func(err error) bool
 	expectedErrorOccurred bool
 }
@@ -103,16 +104,16 @@ func newErrorSuppressor(
 ) *errorSuppressor {
 	return &errorSuppressor{
 		backend:         assert.New(t),
-		formatter:       &DefaultFormatter{},
+		formatter:       &httpexpect.DefaultFormatter{},
 		isExpectedError: isExpectedError,
 	}
 }
 
-func (h *errorSuppressor) Success(ctx *AssertionContext) {
+func (h *errorSuppressor) Success(ctx *httpexpect.AssertionContext) {
 }
 
 func (h *errorSuppressor) Failure(
-	ctx *AssertionContext, failure *AssertionFailure,
+	ctx *httpexpect.AssertionContext, failure *httpexpect.AssertionFailure,
 ) {
 	for _, e := range failure.Errors {
 		if h.isExpectedError(e) {
@@ -137,7 +138,7 @@ func TestE2EContext_GlobalCancel(t *testing.T) {
 		func(err error) bool {
 			return errors.Is(err, context.Canceled)
 		})
-	e := WithConfig(Config{
+	e := httpexpect.WithConfig(httpexpect.Config{
 		BaseURL:          server.URL,
 		Context:          ctx,
 		AssertionHandler: suppressor,
@@ -179,7 +180,7 @@ func TestE2EContext_GlobalWithRetries(t *testing.T) {
 		func(err error) bool {
 			return errors.Is(err, context.Canceled)
 		})
-	e := WithConfig(Config{
+	e := httpexpect.WithConfig(httpexpect.Config{
 		BaseURL:          server.URL,
 		Context:          ctx,
 		AssertionHandler: suppressor,
@@ -219,7 +220,7 @@ func TestE2EContext_PerRequest(t *testing.T) {
 		func(err error) bool {
 			return errors.Is(err, context.Canceled)
 		})
-	e := WithConfig(Config{
+	e := httpexpect.WithConfig(httpexpect.Config{
 		BaseURL:          server.URL,
 		AssertionHandler: suppressor,
 	})
@@ -261,7 +262,7 @@ func TestE2EContext_PerRequestWithRetries(t *testing.T) {
 		func(err error) bool {
 			return errors.Is(err, context.Canceled)
 		})
-	e := WithConfig(Config{
+	e := httpexpect.WithConfig(httpexpect.Config{
 		BaseURL:          server.URL,
 		AssertionHandler: suppressor,
 	})
@@ -302,7 +303,7 @@ func TestE2EContext_PerRequestWithTimeout(t *testing.T) {
 		func(err error) bool {
 			return strings.Contains(err.Error(), "context deadline exceeded")
 		})
-	e := WithConfig(Config{
+	e := httpexpect.WithConfig(httpexpect.Config{
 		BaseURL:          server.URL,
 		AssertionHandler: suppressor,
 	})
@@ -328,9 +329,9 @@ func TestE2EContext_PerRequestWithTimeoutAndRetries(t *testing.T) {
 	defer server.Close()
 
 	// this call will terminate with success
-	e := WithConfig(Config{
+	e := httpexpect.WithConfig(httpexpect.Config{
 		BaseURL:  server.URL,
-		Reporter: NewAssertReporter(t),
+		Reporter: httpexpect.NewAssertReporter(t),
 	})
 
 	e.GET("/waitForPerRequestTimeout").
@@ -361,7 +362,7 @@ func TestE2EContext_PerRequestWithTimeoutCancelledByTimeout(t *testing.T) {
 		func(err error) bool {
 			return strings.Contains(err.Error(), "context deadline exceeded")
 		})
-	e := WithConfig(Config{
+	e := httpexpect.WithConfig(httpexpect.Config{
 		BaseURL:          server.URL,
 		AssertionHandler: suppressor,
 	})
@@ -389,7 +390,7 @@ func TestE2EContext_PerRequestWithTimeoutCancelledByContext(t *testing.T) {
 		func(err error) bool {
 			return errors.Is(err, context.Canceled)
 		})
-	e := WithConfig(Config{
+	e := httpexpect.WithConfig(httpexpect.Config{
 		BaseURL:          server.URL,
 		AssertionHandler: suppressor,
 	})
@@ -435,15 +436,15 @@ func TestE2EContext_PerRequestRetry(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		e := WithConfig(Config{
-			BaseURL:          ts.URL,
-			AssertionHandler: &mockAssertionHandler{},
+		e := httpexpect.WithConfig(httpexpect.Config{
+			BaseURL:  ts.URL,
+			Reporter: t,
 		})
 
 		e.GET("/").
 			WithContext(ctx).
 			WithMaxRetries(1).
-			WithRetryPolicy(RetryAllErrors).
+			WithRetryPolicy(httpexpect.RetryAllErrors).
 			WithRetryDelay(time.Millisecond, time.Millisecond).
 			Expect()
 
@@ -482,7 +483,7 @@ func TestE2EContext_PerRequestRetry(t *testing.T) {
 				return errors.Is(err, context.Canceled)
 			})
 
-		e := WithConfig(Config{
+		e := httpexpect.WithConfig(httpexpect.Config{
 			BaseURL:          ts.URL,
 			AssertionHandler: suppressor,
 		})
@@ -490,7 +491,7 @@ func TestE2EContext_PerRequestRetry(t *testing.T) {
 		e.GET("/").
 			WithContext(ctx).
 			WithMaxRetries(100).
-			WithRetryPolicy(RetryAllErrors).
+			WithRetryPolicy(httpexpect.RetryAllErrors).
 			WithRetryDelay(10*time.Millisecond, 10*time.Millisecond).
 			Expect()
 
