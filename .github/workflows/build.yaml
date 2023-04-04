@@ -32,10 +32,10 @@ jobs:
           go-version: ${{ matrix.go }}
 
       - name: Build
-        run: go get -v .
+        run: go get -v ./...
 
       - name: Run tests
-        run: go test
+        run: go test ./...
 
   examples:
     runs-on: ubuntu-latest
@@ -69,9 +69,22 @@ jobs:
         with:
           go-version: 1.x
 
-      - name: Check formatting
+      - name: Check root
         uses: Jerome1337/gofmt-action@v1.0.5
         with:
+          gofmt-path: .
+          gofmt-flags: '-s -l'
+
+      - name: Check e2e
+        uses: Jerome1337/gofmt-action@v1.0.5
+        with:
+          gofmt-path: e2e
+          gofmt-flags: '-s -l'
+
+      - name: Check examples
+        uses: Jerome1337/gofmt-action@v1.0.5
+        with:
+          gofmt-path: _examples
           gofmt-flags: '-s -l'
 
   linters:
@@ -91,6 +104,7 @@ jobs:
         uses: golangci/golangci-lint-action@v3
         with:
           version: v1.51.2
+          args: ./...
 
       - name: Run linters for examples
         uses: golangci/golangci-lint-action@v3
