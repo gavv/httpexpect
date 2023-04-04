@@ -375,6 +375,24 @@ func TestExpect_ErrorPropagation(t *testing.T) {
 		assert.Equal(t, 1, ctr)
 	})
 
+	t.Run("previously created nested object", func(t *testing.T) {
+		ctr := 0
+		reporter := newMockReporter(t)
+		reporter.reportCb = func() {
+			ctr++
+		}
+
+		arr := NewArray(reporter, []interface{}{"foo"})
+		val := arr.Value(0)
+		arr.IsEmpty()
+		val.IsEqual("bar") // Child reports failure
+
+		arr.chain.assertFlags(t, (flagFailed | flagFailedChildren))
+		val.chain.assertFlags(t, flagFailed)
+		assert.Equal(t, true, reporter.reported)
+		assert.Equal(t, 2, ctr)
+	})
+
 	t.Run("newly created child objects of object's parent", func(t *testing.T) {
 		ctr := 0
 		reporter := newMockReporter(t)
@@ -386,7 +404,7 @@ func TestExpect_ErrorPropagation(t *testing.T) {
 		val1 := arr.Value(0)
 		val1.IsEqual("bar")
 		val2 := arr.Value(0)
-		val2.IsEqual("bar") // Newly created child reports failure
+		val2.IsEqual("bar") // Child reports failure
 
 		arr.chain.assertFlags(t, flagFailedChildren)
 		val1.chain.assertFlags(t, flagFailed)
@@ -406,7 +424,7 @@ func TestExpect_ErrorPropagation(t *testing.T) {
 		val1 := arr.Value(0)
 		val2 := arr.Value(0)
 		val2.IsEqual("bar")
-		val1.IsEqual("bar") // Previously created child reports failure
+		val1.IsEqual("bar") // Child reports failure
 
 		arr.chain.assertFlags(t, flagFailedChildren)
 		val1.chain.assertFlags(t, flagFailed)
