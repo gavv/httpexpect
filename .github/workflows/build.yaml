@@ -50,10 +50,10 @@ jobs:
         with:
           go-version: 1.x
 
-      - name: Build examples
+      - name: Build
         run: cd _examples && go get -v .
 
-      - name: Run examples tests
+      - name: Run tests
         run: cd _examples && go test
 
   formatting:
@@ -90,7 +90,15 @@ jobs:
   linters:
     runs-on: ubuntu-latest
 
-    name: Linters
+    strategy:
+      matrix:
+        include:
+          - name: root
+            dir: .
+          - name: examples
+            dir: _examples
+
+    name: Linters for ${{ matrix.name }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -104,13 +112,7 @@ jobs:
         uses: golangci/golangci-lint-action@v3
         with:
           version: v1.51.2
-          args: ./...
-
-      - name: Run linters for examples
-        uses: golangci/golangci-lint-action@v3
-        with:
-          version: v1.51.2
-          working-directory: _examples
+          working-directory: ${{ matrix.dir }}
 
   coverage:
     runs-on: ubuntu-latest
