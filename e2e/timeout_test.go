@@ -1,4 +1,4 @@
-package httpexpect
+package e2e
 
 import (
 	"math/rand"
@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gavv/httpexpect/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -56,18 +57,18 @@ func TestE2ETimeout_DeadlineExpired(t *testing.T) {
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
-	r := newMockReporter(t)
+	reporter := &mockReporter{}
 
-	e := WithConfig(Config{
+	e := httpexpect.WithConfig(httpexpect.Config{
 		BaseURL:  server.URL,
-		Reporter: r,
+		Reporter: reporter,
 	})
 
 	e.GET("/sleep").
 		WithTimeout(10 * time.Millisecond).
 		Expect()
 
-	assert.True(t, r.reported)
+	assert.True(t, reporter.failed)
 }
 
 func TestE2ETimeout_SmallBody(t *testing.T) {
@@ -80,7 +81,7 @@ func TestE2ETimeout_SmallBody(t *testing.T) {
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
-	e := Default(t, server.URL)
+	e := httpexpect.Default(t, server.URL)
 
 	for i := 0; i < 100; i++ {
 		e.GET("/small").
@@ -102,7 +103,7 @@ func TestE2ETimeout_LargeBody(t *testing.T) {
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
-	e := Default(t, server.URL)
+	e := httpexpect.Default(t, server.URL)
 
 	for i := 0; i < 100; i++ {
 		e.GET("/large").

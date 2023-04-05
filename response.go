@@ -604,7 +604,7 @@ func (r *Response) NoContent() *Response {
 	return r
 }
 
-// ContentType succeeds if response contains Content-Type header with given
+// HasContentType succeeds if response contains Content-Type header with given
 // media type and charset.
 //
 // If charset is omitted, and mediaType is non-empty, Content-Type header
@@ -612,8 +612,8 @@ func (r *Response) NoContent() *Response {
 //
 // If charset is omitted, and mediaType is also empty, Content-Type header
 // should contain no charset.
-func (r *Response) ContentType(mediaType string, charset ...string) *Response {
-	opChain := r.chain.enter("ContentType()")
+func (r *Response) HasContentType(mediaType string, charset ...string) *Response {
+	opChain := r.chain.enter("HasContentType()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -635,10 +635,10 @@ func (r *Response) ContentType(mediaType string, charset ...string) *Response {
 	return r
 }
 
-// ContentEncoding succeeds if response has exactly given Content-Encoding list.
+// HasContentEncoding succeeds if response has exactly given Content-Encoding list.
 // Common values are empty, "gzip", "compress", "deflate", "identity" and "br".
-func (r *Response) ContentEncoding(encoding ...string) *Response {
-	opChain := r.chain.enter("ContentEncoding()")
+func (r *Response) HasContentEncoding(encoding ...string) *Response {
+	opChain := r.chain.enter("HasContentEncoding()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -652,10 +652,10 @@ func (r *Response) ContentEncoding(encoding ...string) *Response {
 	return r
 }
 
-// TransferEncoding succeeds if response contains given Transfer-Encoding list.
+// HasTransferEncoding succeeds if response contains given Transfer-Encoding list.
 // Common values are empty, "chunked" and "identity".
-func (r *Response) TransferEncoding(encoding ...string) *Response {
-	opChain := r.chain.enter("TransferEncoding()")
+func (r *Response) HasTransferEncoding(encoding ...string) *Response {
+	opChain := r.chain.enter("HasTransferEncoding()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -667,6 +667,21 @@ func (r *Response) TransferEncoding(encoding ...string) *Response {
 		r.httpResp.TransferEncoding)
 
 	return r
+}
+
+// Deprecated: use HasContentType instead.
+func (r *Response) ContentType(mediaType string, charset ...string) *Response {
+	return r.HasContentType(mediaType, charset...)
+}
+
+// Deprecated: use HasContentEncoding instead.
+func (r *Response) ContentEncoding(encoding ...string) *Response {
+	return r.HasContentEncoding(encoding...)
+}
+
+// Deprecated: use HasTransferEncoding instead.
+func (r *Response) TransferEncoding(encoding ...string) *Response {
+	return r.HasTransferEncoding(encoding...)
 }
 
 // ContentOpts define parameters for matching the response content parameters.

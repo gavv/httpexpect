@@ -32,10 +32,10 @@ jobs:
           go-version: ${{ matrix.go }}
 
       - name: Build
-        run: go get -v .
+        run: go get -v ./...
 
       - name: Run tests
-        run: go test
+        run: go test ./...
 
   examples:
     runs-on: ubuntu-latest
@@ -50,10 +50,10 @@ jobs:
         with:
           go-version: 1.x
 
-      - name: Build examples
+      - name: Build
         run: cd _examples && go get -v .
 
-      - name: Run examples tests
+      - name: Run tests
         run: cd _examples && go test
 
   formatting:
@@ -69,15 +69,36 @@ jobs:
         with:
           go-version: 1.x
 
-      - name: Check formatting
+      - name: Check root
         uses: Jerome1337/gofmt-action@v1.0.5
         with:
+          gofmt-path: .
+          gofmt-flags: '-s -l'
+
+      - name: Check e2e
+        uses: Jerome1337/gofmt-action@v1.0.5
+        with:
+          gofmt-path: e2e
+          gofmt-flags: '-s -l'
+
+      - name: Check examples
+        uses: Jerome1337/gofmt-action@v1.0.5
+        with:
+          gofmt-path: _examples
           gofmt-flags: '-s -l'
 
   linters:
     runs-on: ubuntu-latest
 
-    name: Linters
+    strategy:
+      matrix:
+        include:
+          - name: root
+            dir: .
+          - name: examples
+            dir: _examples
+
+    name: Linters for ${{ matrix.name }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -91,12 +112,7 @@ jobs:
         uses: golangci/golangci-lint-action@v3
         with:
           version: v1.51.2
-
-      - name: Run linters for examples
-        uses: golangci/golangci-lint-action@v3
-        with:
-          version: v1.51.2
-          working-directory: _examples
+          working-directory: ${{ matrix.dir }}
 
   coverage:
     runs-on: ubuntu-latest
@@ -113,7 +129,7 @@ jobs:
           go-version: 1.x
 
       - name: Run tests
-        run: go test -covermode=count -coverprofile=coverage.out
+        run: go test -covermode=count -coverprofile=coverage.out -coverpkg=. ./...
 
       - name: Prepare coverage report
         uses: jandelgado/gcov2lcov-action@v1.0.9

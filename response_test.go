@@ -36,9 +36,9 @@ func TestResponse_FailedChain(t *testing.T) {
 		resp.StatusRange(Status2xx)
 		resp.StatusList(http.StatusOK, http.StatusBadGateway)
 		resp.NoContent()
-		resp.ContentType("", "")
-		resp.ContentEncoding("")
-		resp.TransferEncoding("")
+		resp.HasContentType("", "")
+		resp.HasContentEncoding("")
+		resp.HasTransferEncoding("")
 	}
 
 	t.Run("failed chain", func(t *testing.T) {
@@ -611,7 +611,7 @@ func TestResponse_NoContent(t *testing.T) {
 		resp.chain.assert(t, success)
 		resp.chain.clear()
 
-		resp.ContentType("")
+		resp.HasContentType("")
 		resp.chain.assert(t, success)
 		resp.chain.clear()
 
@@ -655,7 +655,7 @@ func TestResponse_NoContent(t *testing.T) {
 		resp.chain.assert(t, success)
 		resp.chain.clear()
 
-		resp.ContentType("")
+		resp.HasContentType("")
 		resp.chain.assert(t, success)
 		resp.chain.clear()
 
@@ -759,31 +759,31 @@ func TestResponse_ContentType(t *testing.T) {
 			Header: http.Header(headers),
 		})
 
-		resp.ContentType("text/plain")
+		resp.HasContentType("text/plain")
 		resp.chain.assert(t, success)
 		resp.chain.clear()
 
-		resp.ContentType("text/plain", "utf-8")
+		resp.HasContentType("text/plain", "utf-8")
 		resp.chain.assert(t, success)
 		resp.chain.clear()
 
-		resp.ContentType("text/plain", "UTF-8")
+		resp.HasContentType("text/plain", "UTF-8")
 		resp.chain.assert(t, success)
 		resp.chain.clear()
 
-		resp.ContentType("bad")
+		resp.HasContentType("bad")
 		resp.chain.assert(t, failure)
 		resp.chain.clear()
 
-		resp.ContentType("text/plain", "bad")
+		resp.HasContentType("text/plain", "bad")
 		resp.chain.assert(t, failure)
 		resp.chain.clear()
 
-		resp.ContentType("")
+		resp.HasContentType("")
 		resp.chain.assert(t, failure)
 		resp.chain.clear()
 
-		resp.ContentType("text/plain", "")
+		resp.HasContentType("text/plain", "")
 		resp.chain.assert(t, failure)
 		resp.chain.clear()
 	})
@@ -799,11 +799,11 @@ func TestResponse_ContentType(t *testing.T) {
 			Header: http.Header(headers),
 		})
 
-		resp.ContentType("")
+		resp.HasContentType("")
 		resp.chain.assert(t, failure)
 		resp.chain.clear()
 
-		resp.ContentType("", "")
+		resp.HasContentType("", "")
 		resp.chain.assert(t, failure)
 		resp.chain.clear()
 	})
@@ -819,15 +819,15 @@ func TestResponse_ContentType(t *testing.T) {
 			Header: http.Header(headers),
 		})
 
-		resp.ContentType("text/plain")
+		resp.HasContentType("text/plain")
 		resp.chain.assert(t, success)
 		resp.chain.clear()
 
-		resp.ContentType("text/plain", "")
+		resp.HasContentType("text/plain", "")
 		resp.chain.assert(t, success)
 		resp.chain.clear()
 
-		resp.ContentType("text/plain", "utf-8")
+		resp.HasContentType("text/plain", "utf-8")
 		resp.chain.assert(t, failure)
 		resp.chain.clear()
 	})
@@ -843,11 +843,11 @@ func TestResponse_ContentType(t *testing.T) {
 			Header: http.Header(headers),
 		})
 
-		resp.ContentType("")
+		resp.HasContentType("")
 		resp.chain.assert(t, failure)
 		resp.chain.clear()
 
-		resp.ContentType("", "")
+		resp.HasContentType("", "")
 		resp.chain.assert(t, failure)
 		resp.chain.clear()
 	})
@@ -864,19 +864,19 @@ func TestResponse_ContentEncoding(t *testing.T) {
 		Header: http.Header(headers),
 	})
 
-	resp.ContentEncoding("gzip", "deflate")
+	resp.HasContentEncoding("gzip", "deflate")
 	resp.chain.assert(t, success)
 	resp.chain.clear()
 
-	resp.ContentEncoding("deflate", "gzip")
+	resp.HasContentEncoding("deflate", "gzip")
 	resp.chain.assert(t, failure)
 	resp.chain.clear()
 
-	resp.ContentEncoding("gzip")
+	resp.HasContentEncoding("gzip")
 	resp.chain.assert(t, failure)
 	resp.chain.clear()
 
-	resp.ContentEncoding()
+	resp.HasContentEncoding()
 	resp.chain.assert(t, failure)
 	resp.chain.clear()
 }
@@ -888,15 +888,15 @@ func TestResponse_TransferEncoding(t *testing.T) {
 		TransferEncoding: []string{"foo", "bar"},
 	})
 
-	resp.TransferEncoding("foo", "bar")
+	resp.HasTransferEncoding("foo", "bar")
 	resp.chain.assert(t, success)
 	resp.chain.clear()
 
-	resp.TransferEncoding("foo")
+	resp.HasTransferEncoding("foo")
 	resp.chain.assert(t, failure)
 	resp.chain.clear()
 
-	resp.TransferEncoding()
+	resp.HasTransferEncoding()
 	resp.chain.assert(t, failure)
 	resp.chain.clear()
 }
@@ -923,15 +923,15 @@ func TestResponse_Text(t *testing.T) {
 		resp.chain.assert(t, success)
 		resp.chain.clear()
 
-		resp.ContentType("text/plain")
+		resp.HasContentType("text/plain")
 		resp.chain.assert(t, success)
 		resp.chain.clear()
 
-		resp.ContentType("text/plain", "utf-8")
+		resp.HasContentType("text/plain", "utf-8")
 		resp.chain.assert(t, success)
 		resp.chain.clear()
 
-		resp.ContentType("application/json")
+		resp.HasContentType("application/json")
 		resp.chain.assert(t, failure)
 		resp.chain.clear()
 
@@ -990,15 +990,15 @@ func TestResponse_Form(t *testing.T) {
 		resp.chain.assert(t, success)
 		resp.chain.clear()
 
-		resp.ContentType("application/x-www-form-urlencoded")
+		resp.HasContentType("application/x-www-form-urlencoded")
 		resp.chain.assert(t, success)
 		resp.chain.clear()
 
-		resp.ContentType("application/x-www-form-urlencoded", "")
+		resp.HasContentType("application/x-www-form-urlencoded", "")
 		resp.chain.assert(t, success)
 		resp.chain.clear()
 
-		resp.ContentType("text/plain")
+		resp.HasContentType("text/plain")
 		resp.chain.assert(t, failure)
 		resp.chain.clear()
 
@@ -1111,15 +1111,15 @@ func TestResponse_JSON(t *testing.T) {
 		resp.chain.assert(t, success)
 		resp.chain.clear()
 
-		resp.ContentType("application/json")
+		resp.HasContentType("application/json")
 		resp.chain.assert(t, success)
 		resp.chain.clear()
 
-		resp.ContentType("application/json", "utf-8")
+		resp.HasContentType("application/json", "utf-8")
 		resp.chain.assert(t, success)
 		resp.chain.clear()
 
-		resp.ContentType("text/plain")
+		resp.HasContentType("text/plain")
 		resp.chain.assert(t, failure)
 		resp.chain.clear()
 
@@ -1257,15 +1257,15 @@ func TestResponse_JSONP(t *testing.T) {
 					resp.chain.assert(t, success)
 					resp.chain.clear()
 
-					resp.ContentType("application/javascript")
+					resp.HasContentType("application/javascript")
 					resp.chain.assert(t, success)
 					resp.chain.clear()
 
-					resp.ContentType("application/javascript", "utf-8")
+					resp.HasContentType("application/javascript", "utf-8")
 					resp.chain.assert(t, success)
 					resp.chain.clear()
 
-					resp.ContentType("text/plain")
+					resp.HasContentType("text/plain")
 					resp.chain.assert(t, failure)
 					resp.chain.clear()
 
@@ -1558,7 +1558,7 @@ func TestResponse_Usage(t *testing.T) {
 		resp := NewResponse(reporter, &http.Response{
 			Header: headers,
 		})
-		resp.ContentType("text/plain", "utf-8", "US-ASCII")
+		resp.HasContentType("text/plain", "utf-8", "US-ASCII")
 		resp.chain.assert(t, failure)
 	})
 
