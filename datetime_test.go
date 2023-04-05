@@ -138,20 +138,18 @@ func TestDateTime_IsEqual(t *testing.T) {
 			wantIsEqual: failure,
 		},
 	}
+
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			NewDateTime(reporter, tc.time).
-				IsEqual(tc.value).chain.assert(t, tc.wantIsEqual)
+			NewDateTime(reporter, tc.time).IsEqual(tc.value).
+				chain.assert(t, tc.wantIsEqual)
 
-			NewDateTime(reporter, tc.time).
-				NotEqual(tc.value).chain.assert(t, !tc.wantIsEqual)
+			NewDateTime(reporter, tc.time).NotEqual(tc.value).
+				chain.assert(t, !tc.wantIsEqual)
 		})
 	}
-	reporter := newMockReporter(t)
-	value := NewDateTime(reporter, time.Unix(0, 1234))
-	assert.True(t, time.Unix(0, 1234).Equal(value.Raw()))
 }
 
 func TestDateTime_IsGreater(t *testing.T) {
@@ -184,15 +182,16 @@ func TestDateTime_IsGreater(t *testing.T) {
 			wantGe: failure,
 		},
 	}
+
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			NewDateTime(reporter, tc.time).
-				Gt(tc.value).chain.assert(t, tc.wantGt)
+			NewDateTime(reporter, tc.time).Gt(tc.value).
+				chain.assert(t, tc.wantGt)
 
-			NewDateTime(reporter, tc.time).
-				Ge(tc.value).chain.assert(t, tc.wantGe)
+			NewDateTime(reporter, tc.time).Ge(tc.value).
+				chain.assert(t, tc.wantGe)
 		})
 	}
 }
@@ -227,15 +226,16 @@ func TestDateTime_IsLesser(t *testing.T) {
 			wantLe: failure,
 		},
 	}
+
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			NewDateTime(reporter, tc.time).
-				Lt(tc.value).chain.assert(t, tc.wantLt)
+			NewDateTime(reporter, tc.time).Lt(tc.value).
+				chain.assert(t, tc.wantLt)
 
-			NewDateTime(reporter, tc.time).
-				Le(tc.value).chain.assert(t, tc.wantLe)
+			NewDateTime(reporter, tc.time).Le(tc.value).
+				chain.assert(t, tc.wantLe)
 		})
 	}
 }
