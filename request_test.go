@@ -3887,3 +3887,40 @@ func TestRequest_Panics(t *testing.T) {
 		assert.Panics(t, func() { newRequest(newMockChain(t), config, "GET", "") })
 	})
 }
+
+func TestRequest_Reporter(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	config := Config{
+		RequestFactory: DefaultRequestFactory{},
+		Client:         &mockClient{},
+		Reporter:       reporter,
+	}
+
+	req := NewRequestC(config, "GET", "/")
+	req.WithReporter(reporter)
+	req.WithClient(nil)
+	req.chain.assert(t, failure)
+
+	assert.True(t, reporter.reported)
+}
+
+func TestRequest_AssertionHandler(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	config := Config{
+		RequestFactory: DefaultRequestFactory{},
+		Client:         &mockClient{},
+		Reporter:       reporter,
+	}
+
+	req := NewRequestC(config, "GET", "/")
+	req.WithAssertionHandler(&DefaultAssertionHandler{
+		Reporter:  reporter,
+		Formatter: req.config.Formatter,
+	})
+	req.WithClient(nil)
+	req.chain.assert(t, failure)
+
+	assert.True(t, reporter.reported)
+}

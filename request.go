@@ -1926,6 +1926,62 @@ func (r *Request) WithMultipart() *Request {
 	return r
 }
 
+//	req := NewRequestC(config, "GET", "/path")
+//	req.WithClient(&http.Client{
+//	  Transport: &http.Transport{
+//		DisableCompression: true,
+//	  },
+//	})
+
+// WithReporter sets reporter.
+//
+// The new reporter overwrites AssertionHandler.Reporter. It will be used to
+// report formatted fatal failure messages
+//
+// Example:
+//
+//	req := NewRequestC(config, "GET", "http://example.com/path")
+//	reporter := httpextect.ReporterFunc(
+//		func(message string, args ...interface{}) {
+//			// reporter code here
+//		}),
+//	req.WithReporter(reporter)
+func (r *Request) WithReporter(reporter Reporter) *Request {
+	return r.WithAssertionHandler(&DefaultAssertionHandler{
+		Reporter:  reporter,
+		Formatter: r.config.Formatter,
+	})
+}
+
+// WithAssertionHandler sets assertion handler.
+//
+// The new handler overwrites assertion handler. It will be used to
+// format and report test Failure or Success.
+//
+// Example:
+//
+//	req := NewRequestC(config, "GET", "http://example.com/path")
+//	req.WithAssertionHandler(DefaultAssertionHandler)
+func (r *Request) WithAssertionHandler(handler AssertionHandler) *Request {
+	opChain := r.chain.enter("WithAssertionHandler()")
+	defer opChain.leave()
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if opChain.failed() {
+		return r
+	}
+
+	if !r.checkOrder(opChain, "WithAssertionHandler()") {
+		return r
+	}
+
+	r.chain.setHandler(handler)
+
+	return r
+}
+
 // Expect constructs http.Request, sends it, receives http.Response, and
 // returns a new Response instance.
 //
