@@ -11,9 +11,27 @@ import (
 )
 
 // Wrapper for request or response body reader.
+//
 // Allows to read body multiple times using two approaches:
 //   - use Read to read body contents and Rewind to restart reading from beginning
 //   - use GetBody to get new reader for body contents
+//
+// When bodyWrapper is created, it does not read anything. Also, until anything is
+// read, rewind operations are no-op.
+//
+// When the user starts reading body, bodyWrapper automatically copies retrieved
+// content in memory. Then, when the body is fully read and Rewind is requested,
+// it will close original body and switch to reading body from memory.
+//
+// If Rewind, GetBody, or Close is invoked before the body is fully read first time,
+// bodyWrapper automatically performs full read.
+//
+// At any moment, the user can call DisableRewinds. In this case, Rewind and GetBody
+// functionality is disabled, memory cache is cleared, and bodyWrapper switches to
+// reading original body (if it's not fully read yet).
+//
+// bodyWrapper automatically creates finalizer that will close original body if the
+// user never reads it fully or calls Closes.
 type bodyWrapper struct {
 	// Protects all operations.
 	mu sync.Mutex
