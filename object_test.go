@@ -742,33 +742,79 @@ func TestObject_ContainsKey(t *testing.T) {
 
 func TestObject_ContainsValue(t *testing.T) {
 	t.Run("basic", func(t *testing.T) {
-		reporter := newMockReporter(t)
+		testObj := map[string]interface{}{"foo": 123, "bar": "xxx"}
+		const (
+			containsValue = iota
+			notContainsValue = iota
+		)
 
-		value := NewObject(reporter, map[string]interface{}{"foo": 123, "bar": "xxx"})
+		cases := []struct{
+			name string
+			object map[string]interface{}
+			value interface{}
+			assertion uint
+			wantEqual chainResult
+		} {
+			{
+				name: "1. correct value, contains value assertion",
+				object: testObj,
+				value: 123,
+				assertion: containsValue,
+				wantEqual: success,
+			},
+			{
+				name: "1. correct value, not contains value assertion",
+				object: testObj,
+				value: 123,
+				assertion: notContainsValue,
+				wantEqual: failure,
+			},
+			{
+				name: "2. correct value, contains value assertion",
+				object: testObj,
+				value: "xxx",
+				assertion: containsValue,
+				wantEqual: success,
+			},
+			{
+				name: "2. correct value, not contains value assertion",
+				object: testObj,
+				value: "xxx",
+				assertion: notContainsValue,
+				wantEqual: failure,
+			},
+			{
+				name: "3. wrong value, contains value assertion",
+				object: testObj,
+				value: "XXX",
+				assertion: containsValue,
+				wantEqual: failure,
+			},
+			{
+				name: "3. wrong value, not contains value assertion",
+				object: testObj,
+				value: "XXX",
+				assertion: notContainsValue,
+				wantEqual: success,
+			},
+		}
 
-		value.ContainsValue(123)
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		value.NotContainsValue(123)
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.ContainsValue("xxx")
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		value.NotContainsValue("xxx")
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.ContainsValue("XXX")
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.NotContainsValue("XXX")
-		value.chain.assert(t, success)
-		value.chain.clear()
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				reporter := newMockReporter(t)
+				value := NewObject(reporter, tc.object)
+	
+				if tc.assertion == containsValue {
+					value.ContainsValue(tc.value)
+					value.chain.assert(t, tc.wantEqual)
+					value.chain.clear()
+				} else if tc.assertion == notContainsValue {
+					value.NotContainsValue(tc.value)
+					value.chain.assert(t, tc.wantEqual)
+					value.chain.clear()
+				}
+			})
+		}
 	})
 
 	t.Run("struct", func(t *testing.T) {
