@@ -706,7 +706,6 @@ func TestObject_ContainsKey(t *testing.T) {
 
 			NewObject(reporter, tc.object).NotContainsKey(tc.key).
 				chain.assert(t, tc.wantNotContainsKey)
-
 		})
 	}
 }
@@ -754,7 +753,6 @@ func TestObject_ContainsValue(t *testing.T) {
 
 				NewObject(reporter, tc.object).NotContainsValue(tc.value).
 					chain.assert(t, tc.wantNotContainsKey)
-
 			})
 		}
 	})
@@ -819,10 +817,8 @@ func TestObject_ContainsValue(t *testing.T) {
 
 				NewObject(reporter, tc.object).NotContainsValue(tc.value).
 					chain.assert(t, tc.wantNotContainsKey)
-
 			})
 		}
-
 	})
 
 	t.Run("canonization", func(t *testing.T) {
@@ -857,7 +853,6 @@ func TestObject_ContainsValue(t *testing.T) {
 
 				NewObject(reporter, tc.object).NotContainsValue(tc.value).
 					chain.assert(t, tc.wantNotContainsKey)
-
 			})
 		}
 	})
@@ -890,7 +885,6 @@ func TestObject_ContainsValue(t *testing.T) {
 
 				NewObject(reporter, tc.object).NotContainsValue(tc.value).
 					chain.assert(t, tc.wantNotContainsKey)
-
 			})
 		}
 	})
@@ -951,7 +945,6 @@ func TestObject_ContainsSubset(t *testing.T) {
 
 				NewObject(reporter, tc.object).NotContainsSubset(tc.subset).
 					chain.assert(t, tc.wantNotContainsKey)
-
 			})
 		}
 	})
@@ -1018,7 +1011,6 @@ func TestObject_ContainsSubset(t *testing.T) {
 
 				NewObject(reporter, tc.object).NotContainsSubset(tc.subset).
 					chain.assert(t, tc.wantNotContainsKey)
-
 			})
 		}
 	})
@@ -1089,7 +1081,6 @@ func TestObject_ContainsSubset(t *testing.T) {
 
 				NewObject(reporter, tc.object).NotContainsSubset(tc.value).
 					chain.assert(t, tc.wantNotContainsKey)
-
 			})
 		}
 	})
@@ -1140,7 +1131,6 @@ func TestObject_ContainsSubset(t *testing.T) {
 
 				NewObject(reporter, tc.object).NotContainsSubset(tc.value).
 					chain.assert(t, tc.wantNotContainsKey)
-
 			})
 		}
 	})
@@ -1219,13 +1209,11 @@ func TestObject_HasValue(t *testing.T) {
 
 				NewObject(reporter, tc.object).NotHasValue(tc.key, tc.value).
 					chain.assert(t, tc.wantNotContainsKey)
-
 			})
 		}
 	})
 
 	t.Run("struct", func(t *testing.T) {
-
 		testObj := map[string]interface{}{
 			"foo": 123,
 			"bar": []interface{}{"456", 789},
@@ -1288,7 +1276,6 @@ func TestObject_HasValue(t *testing.T) {
 
 				NewObject(reporter, tc.object).NotHasValue(tc.key, tc.value).
 					chain.assert(t, tc.wantNotContainsKey)
-
 			})
 		}
 	})
@@ -1343,7 +1330,6 @@ func TestObject_HasValue(t *testing.T) {
 
 				NewObject(reporter, tc.object).NotHasValue(tc.key, tc.value).
 					chain.assert(t, tc.wantNotContainsKey)
-
 			})
 		}
 	})

@@ -289,6 +289,7 @@ func TestWebsocketMessage_TextMessage(t *testing.T) {
 				wantNotCode: failure,
 			},
 		}
+
 		for _, tc := range cases {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
@@ -611,9 +612,9 @@ func TestWebsocketMessage_Body(t *testing.T) {
 }
 
 func TestWebsocketMessage_JSON(t *testing.T) {
-	reporter := newMockReporter(t)
-
 	t.Run("good", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
 		body := []byte(`{"foo":"bar"}`)
 
 		msg := NewWebsocketMessage(reporter, websocket.TextMessage, body)
@@ -625,6 +626,8 @@ func TestWebsocketMessage_JSON(t *testing.T) {
 	})
 
 	t.Run("bad", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
 		body := []byte(`{`)
 
 		msg := NewWebsocketMessage(reporter, websocket.TextMessage, body)
@@ -637,27 +640,25 @@ func TestWebsocketMessage_JSON(t *testing.T) {
 }
 
 func TestWebsocketMessage_Usage(t *testing.T) {
-	chain := newMockChain(t)
+	t.Run("type", func(t *testing.T) {
+		reporter := newMockReporter(t)
 
-	msg := newEmptyWebsocketMessage(chain)
+		NewWebsocketMessage(reporter, websocket.TextMessage, nil).Type().
+			chain.assert(t, failure)
 
-	msg.chain.assert(t, success)
+		NewWebsocketMessage(reporter, websocket.TextMessage, nil).NotType().
+			chain.assert(t, failure)
+	})
 
-	msg.Type()
-	msg.chain.assert(t, failure)
-	msg.chain.clear()
+	t.Run("code", func(t *testing.T) {
+		reporter := newMockReporter(t)
 
-	msg.NotType()
-	msg.chain.assert(t, failure)
-	msg.chain.clear()
+		NewWebsocketMessage(reporter, websocket.TextMessage, nil).Code().
+			chain.assert(t, failure)
 
-	msg.Code()
-	msg.chain.assert(t, failure)
-	msg.chain.clear()
-
-	msg.NotCode()
-	msg.chain.assert(t, failure)
-	msg.chain.clear()
+		NewWebsocketMessage(reporter, websocket.TextMessage, nil).NotCode().
+			chain.assert(t, failure)
+	})
 }
 
 func TestWebsocketMessage_Codes(t *testing.T) {
