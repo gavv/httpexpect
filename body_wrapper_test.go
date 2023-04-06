@@ -640,8 +640,7 @@ func TestBodyWrapper_DisableRewinds(t *testing.T) {
 		)
 
 		// disable rewinds
-		err = wrp.DisableRewinds()
-		assert.NoError(t, err)
+		wrp.DisableRewinds()
 
 		assert.False(t, wrp.isFullyRead)
 		assert.Nil(t, wrp.memBytes)
@@ -740,11 +739,10 @@ func TestBodyWrapper_DisableRewinds(t *testing.T) {
 		assert.Equal(t, 0, body.eofCount)
 
 		// disable rewinds
-		err = wrp.DisableRewinds()
-		assert.NoError(t, err)
+		wrp.DisableRewinds()
 
 		assert.False(t, wrp.isFullyRead)
-		assert.Nil(t, wrp.memBytes)
+		assert.Equal(t, "1234", string(wrp.memBytes))
 
 		assert.Equal(t, 1, body.readCount)
 		assert.Equal(t, 0, body.closeCount)
@@ -759,7 +757,7 @@ func TestBodyWrapper_DisableRewinds(t *testing.T) {
 		wrp.Rewind()
 
 		assert.False(t, wrp.isFullyRead)
-		assert.Nil(t, wrp.memBytes)
+		assert.Equal(t, "1234", string(wrp.memBytes))
 
 		assert.Equal(t, 1, body.readCount)
 		assert.Equal(t, 0, body.closeCount)
@@ -771,6 +769,9 @@ func TestBodyWrapper_DisableRewinds(t *testing.T) {
 		assert.Equal(t, 4, n)
 		assert.Equal(t, "5678", string(b))
 
+		assert.False(t, wrp.isFullyRead)
+		assert.Equal(t, "1234", string(wrp.memBytes))
+
 		assert.Equal(t, 2, body.readCount)
 		assert.Equal(t, 0, body.closeCount)
 		assert.Equal(t, 0, body.eofCount)
@@ -781,7 +782,7 @@ func TestBodyWrapper_DisableRewinds(t *testing.T) {
 		assert.Equal(t, 0, n)
 
 		assert.False(t, wrp.isFullyRead)
-		assert.Nil(t, wrp.memBytes)
+		assert.Equal(t, "1234", string(wrp.memBytes))
 
 		assert.Equal(t, 3, body.readCount)
 		assert.Equal(t, 0, body.closeCount)
@@ -792,7 +793,7 @@ func TestBodyWrapper_DisableRewinds(t *testing.T) {
 		assert.NoError(t, err)
 
 		assert.False(t, wrp.isFullyRead)
-		assert.Nil(t, wrp.memBytes)
+		assert.Equal(t, "1234", string(wrp.memBytes))
 
 		assert.Equal(t, 3, body.readCount)
 		assert.Equal(t, 1, body.closeCount)
