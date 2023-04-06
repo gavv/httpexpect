@@ -10,35 +10,47 @@ import (
 	"sync"
 )
 
-// Wrapper for request or response body reader
+// Wrapper for request or response body reader.
 // Allows to read body multiple times using two approaches:
 //   - use Read to read body contents and Rewind to restart reading from beginning
 //   - use GetBody to get new reader for body contents
 type bodyWrapper struct {
-	currReader io.Reader
+	// Protects all operations.
+	mu sync.Mutex
 
-	origReader io.ReadCloser
-	origBytes  []byte
+	// Original reader of HTTP response body.
+	httpReader io.ReadCloser
 
+	// Cancellation function for original HTTP response.
+	// If set, called after HTTP response is fully read into memory.
+	httpCancelFunc context.CancelFunc
+
+	// Reader for HTTP response body stored in memory.
+	// Rewind() resets this reader to start from the beginning.
+	memReader io.Reader
+
+	// HTTP response body stored in memory.
+	memBytes []byte
+
+	// Cached read and close errors.
 	readErr  error
 	closeErr error
 
-	cancelFunc context.CancelFunc
-
-	isFullyRead bool
-	// If isRewindDisabled is true, Read will not store bytes in memory.
-	// origBytes will be empty.
+	// If true, Read will not store bytes in memory, and memBytes and memReader
+	// won't be used.
 	isRewindDisabled bool
-	isReadBefore     bool
 
-	mu sync.Mutex
+	// True means that HTTP response was fully read into memory already.
+	isFullyRead bool
+
+	// True means that a read operation of any type was called at least once.
+	isReadBefore bool
 }
 
 func newBodyWrapper(reader io.ReadCloser, cancelFunc context.CancelFunc) *bodyWrapper {
 	bw := &bodyWrapper{
-		origReader: reader,
-		currReader: reader,
-		cancelFunc: cancelFunc,
+		httpReader:     reader,
+		httpCancelFunc: cancelFunc,
 	}
 
 	// Finalizer will close body if closeAndCancel was never called.
@@ -47,158 +59,181 @@ func newBodyWrapper(reader io.ReadCloser, cancelFunc context.CancelFunc) *bodyWr
 	return bw
 }
 
-// Read body contents
-func (bw *bodyWrapper) Read(p []byte) (n int, err error) {
+// Read body contents.
+func (bw *bodyWrapper) Read(p []byte) (int, error) {
 	bw.mu.Lock()
 	defer bw.mu.Unlock()
 
 	bw.isReadBefore = true
 
-	// Preserve original reader error
-	if bw.readErr != nil {
-		return 0, bw.readErr
-	}
-
-	if !bw.isFullyRead && !bw.isRewindDisabled {
-		n, err = bw.readNext(p)
+	if bw.isRewindDisabled && !bw.isFullyRead {
+		// Regular read from original HTTP response.
+		if bw.readErr != nil {
+			return 0, bw.readErr
+		}
+		return bw.httpReader.Read(p)
+	} else if !bw.isFullyRead {
+		// Read from original HTTP response + store into memory.
+		if bw.readErr != nil {
+			return 0, bw.readErr
+		}
+		return bw.httpReadNext(p)
 	} else {
-		n, err = bw.currReader.Read(p)
+		// Read from memory.
+		n, err := bw.memReader.Read(p)
+		if err == io.EOF && bw.readErr != nil {
+			err = bw.readErr
+		}
+		return n, err
 	}
-
-	if err != nil {
-		err = bw.handleReadErr(err)
-	}
-
-	return
 }
 
-func (bw *bodyWrapper) readNext(p []byte) (n int, err error) {
-	n, err = bw.origReader.Read(p)
-	if (err == nil || err == io.EOF) && n > 0 {
-		bw.origBytes = append(bw.origBytes, p[:n]...)
-	}
-	return
-}
-
-func (bw *bodyWrapper) handleReadErr(err error) error {
-	bw.isFullyRead = true // prevent further reads
-	if err != io.EOF {
-		bw.readErr = err
-	}
-	if closeErr := bw.closeAndCancel(); closeErr != nil && err == io.EOF {
-		err = closeErr
-	}
-	return err
-}
-
-// Close body
+// Close body.
 func (bw *bodyWrapper) Close() error {
 	bw.mu.Lock()
 	defer bw.mu.Unlock()
 
+	// Preserve original reader error.
 	err := bw.closeErr
 
 	// Rewind or GetBody may be called later, so be sure to
-	// read body into memory before closing
-	if !bw.isFullyRead && !bw.isRewindDisabled {
-		if readFullErr := bw.readFull(); readFullErr != nil {
-			err = readFullErr
+	// read body into memory before closing.
+	if !bw.isRewindDisabled && !bw.isFullyRead {
+		bw.isReadBefore = true
+
+		if readErr := bw.httpReadFull(); readErr != nil {
+			err = readErr
 		}
 	}
 
-	// Close original reader
+	// Close original reader.
 	closeErr := bw.closeAndCancel()
 	if closeErr != nil {
 		err = closeErr
 	}
 
+	// Reset memory reader.
+	bw.memReader = bytes.NewReader(nil)
+
 	return err
 }
 
-// Rewind reading to the beginning
+// Rewind reading to the beginning.
 func (bw *bodyWrapper) Rewind() {
 	bw.mu.Lock()
 	defer bw.mu.Unlock()
 
+	// Rewind is no-op if disabled.
 	if bw.isRewindDisabled {
 		return
 	}
 
-	// Until first read, rewind is no-op
-	if bw.isReadBefore && !bw.isFullyRead {
-		_ = bw.readFull()
+	// Rewind is no-op until first read operation.
+	if !bw.isReadBefore {
+		return
 	}
 
-	// Reset reader
-	bw.currReader = bytes.NewReader(bw.origBytes)
+	// If HTTP response is not fully read yet, do it now.
+	// If error occurs, it will be reported next read operation.
+	if !bw.isFullyRead {
+		_ = bw.httpReadFull()
+	}
+
+	// Reset reader to the beginning of memory chunk.
+	bw.memReader = bytes.NewReader(bw.memBytes)
 }
 
-// Create new reader to retrieve body contents
-// New reader always reads body from the beginning
-// Does not affected by Rewind()
+// Create new reader to retrieve body contents.
+// New reader always reads body from the beginning.
+// Does not affected by Rewind().
 func (bw *bodyWrapper) GetBody() (io.ReadCloser, error) {
 	bw.mu.Lock()
 	defer bw.mu.Unlock()
 
 	bw.isReadBefore = true
 
-	// Preserve original reader error
+	// Preserve original reader error.
 	if bw.readErr != nil {
 		return nil, bw.readErr
 	}
 
+	// GetBody() requires rewinds to be enabled.
 	if bw.isRewindDisabled {
-		return nil, errors.New("body caching is disabled, cannot get body contents")
+		return nil, errors.New("rewinds are disabled, cannot get body")
 	}
 
+	// If HTTP response is not fully read yet, do it now.
 	if !bw.isFullyRead {
-		if err := bw.readFull(); err != nil {
+		if err := bw.httpReadFull(); err != nil {
 			return nil, err
 		}
 	}
 
-	return ioutil.NopCloser(bytes.NewReader(bw.origBytes)), nil
+	// Return fresh reader for memory chunk.
+	return ioutil.NopCloser(bytes.NewReader(bw.memBytes)), nil
 }
 
-// Disables storing body contents in memory and clears the cache
+// Disables storing body contents in memory and clears the cache.
 func (bw *bodyWrapper) DisableRewinds() error {
 	bw.mu.Lock()
 	defer bw.mu.Unlock()
 
 	bw.isRewindDisabled = true
-	bw.origBytes = nil
+
+	bw.memReader = nil
+	bw.memBytes = nil
 
 	return nil
 }
 
-// Reads the body fully, then cancels and closes the reader
-func (bw *bodyWrapper) readFull() error {
-	if bw.isFullyRead {
-		return errors.New("body is already fully read")
+func (bw *bodyWrapper) httpReadNext(p []byte) (n int, err error) {
+	n, err = bw.httpReader.Read(p)
+
+	if n > 0 {
+		bw.memBytes = append(bw.memBytes, p[:n]...)
 	}
-	remainingBytes, err := ioutil.ReadAll(bw.origReader)
+
+	if err != nil {
+		if err != io.EOF {
+			bw.readErr = err
+		}
+		if closeErr := bw.closeAndCancel(); closeErr != nil && err == io.EOF {
+			err = closeErr
+		}
+
+		bw.isFullyRead = true
+		bw.memReader = bytes.NewReader(nil)
+	}
+
+	return
+}
+
+func (bw *bodyWrapper) httpReadFull() error {
+	b, err := ioutil.ReadAll(bw.httpReader)
+
+	bw.isFullyRead = true
+	bw.memBytes = append(bw.memBytes, b...)
+	bw.memReader = bytes.NewReader(bw.memBytes[len(bw.memBytes)-len(b):])
+
 	if err != nil {
 		bw.readErr = err
-		bw.isFullyRead = true // Prevent further reads
-		_ = bw.closeAndCancel()
-		return err
 	}
-	initialBytesLen := len(bw.origBytes)
-	bw.origBytes = append(bw.origBytes, remainingBytes...)
-	bw.isFullyRead = true
-	// Restore the current reader back to the same position as before.
-	bw.currReader = bytes.NewReader(bw.origBytes[initialBytesLen:])
-	return bw.closeAndCancel()
+
+	if closeErr := bw.closeAndCancel(); closeErr != nil && err == nil {
+		err = closeErr
+	}
+
+	return err
 }
 
 func (bw *bodyWrapper) closeAndCancel() error {
-	if bw.origReader == nil && bw.cancelFunc == nil {
+	if bw.httpReader == nil && bw.httpCancelFunc == nil {
 		return bw.closeErr
 	}
 
-	if bw.origReader != nil {
-		err := bw.origReader.Close()
-		bw.origReader = nil
+	if bw.httpReader != nil {
+		err := bw.httpReader.Close()
+		bw.httpReader = nil
 
 		if bw.readErr == nil {
 			bw.readErr = err
@@ -209,9 +244,9 @@ func (bw *bodyWrapper) closeAndCancel() error {
 		}
 	}
 
-	if bw.cancelFunc != nil {
-		bw.cancelFunc()
-		bw.cancelFunc = nil
+	if bw.httpCancelFunc != nil {
+		bw.httpCancelFunc()
+		bw.httpCancelFunc = nil
 	}
 
 	// Finalizer is not needed anymore.

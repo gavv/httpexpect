@@ -314,9 +314,8 @@ func TestBodyWrapper_ErrorRewind(t *testing.T) {
 	}
 }
 
-func TestBodyWrapper_InfiniteResponses(t *testing.T) {
-
-	t.Run("finite body", func(t *testing.T) {
+func TestBodyWrapper_Memory(t *testing.T) {
+	t.Run("read eof", func(t *testing.T) {
 		body := newMockBody("test_body") // 9 characters
 		wrp := newBodyWrapper(body, nil)
 		slicedBody := []string{"test", "_bod", "y"}
@@ -331,7 +330,7 @@ func TestBodyWrapper_InfiniteResponses(t *testing.T) {
 			n, err = wrp.Read(b)
 			assert.Nil(t, err)
 			assert.Equal(t, 4, n)
-			assert.Equal(t, (1+i)*4, len(wrp.origBytes))
+			assert.Equal(t, (1+i)*4, len(wrp.memBytes))
 			assert.False(t, wrp.isFullyRead)
 			assert.Equal(t, slicedBody[i], string(b))
 		}
@@ -347,7 +346,7 @@ func TestBodyWrapper_InfiniteResponses(t *testing.T) {
 		assert.True(t, wrp.isFullyRead)
 	})
 
-	t.Run("finite body with perfect fit", func(t *testing.T) {
+	t.Run("perfect fit", func(t *testing.T) {
 		body := newMockBody("testbody") // 8 characters
 		wrp := newBodyWrapper(body, nil)
 		slicedBody := []string{"test", "body"}
@@ -362,7 +361,7 @@ func TestBodyWrapper_InfiniteResponses(t *testing.T) {
 			n, err = wrp.Read(b)
 			assert.Nil(t, err)
 			assert.Equal(t, 4, n)
-			assert.Equal(t, (1+i)*4, len(wrp.origBytes))
+			assert.Equal(t, (1+i)*4, len(wrp.memBytes))
 			assert.False(t, wrp.isFullyRead)
 			assert.Equal(t, slicedBody[i], string(b))
 		}
@@ -385,14 +384,14 @@ func TestBodyWrapper_InfiniteResponses(t *testing.T) {
 		_, _ = wrp.Read(b)
 		wrp.Rewind()
 		assert.True(t, wrp.isFullyRead)
-		assert.Equal(t, "test_body", string(wrp.origBytes))
+		assert.Equal(t, "test_body", string(wrp.memBytes))
 		n, err = wrp.Read(b)
 		assert.Nil(t, err)
 		assert.Equal(t, 4, n)
 		assert.Equal(t, "test", string(b))
 	})
 
-	t.Run("getbody", func(t *testing.T) {
+	t.Run("get body", func(t *testing.T) {
 		body := newMockBody("test_body") // 9 characters
 		wrp := newBodyWrapper(body, nil)
 
@@ -406,7 +405,7 @@ func TestBodyWrapper_InfiniteResponses(t *testing.T) {
 		reader, err = wrp.GetBody()
 		assert.NoError(t, err)
 		assert.True(t, wrp.isFullyRead)
-		assert.Equal(t, "test_body", string(wrp.origBytes))
+		assert.Equal(t, "test_body", string(wrp.memBytes))
 		c, _ := ioutil.ReadAll(reader)
 		assert.Equal(t, "test_body", string(c))
 
@@ -416,7 +415,7 @@ func TestBodyWrapper_InfiniteResponses(t *testing.T) {
 		assert.Equal(t, "_bod", string(b))
 	})
 
-	t.Run("disable storing body into memory", func(t *testing.T) {
+	t.Run("disable rewinds", func(t *testing.T) {
 		body := newMockBody("test_body") // 9 characters
 		wrp := newBodyWrapper(body, nil)
 
@@ -429,12 +428,12 @@ func TestBodyWrapper_InfiniteResponses(t *testing.T) {
 		_, _ = wrp.Read(b)
 		assert.NoError(t, wrp.DisableRewinds())
 		reader, err = wrp.GetBody()
-		assert.EqualError(t, err, "body caching is disabled, cannot get body contents")
+		assert.EqualError(t, err, "rewinds are disabled, cannot get body")
 		assert.Nil(t, reader)
 		wrp.Rewind() // Should be no-op
 		assert.False(t, wrp.isFullyRead)
 		assert.True(t, wrp.isReadBefore)
-		assert.Nil(t, wrp.origBytes)
+		assert.Nil(t, wrp.memBytes)
 
 		n, err = wrp.Read(b)
 		assert.Nil(t, err)
@@ -444,33 +443,40 @@ func TestBodyWrapper_InfiniteResponses(t *testing.T) {
 		n, err = wrp.Read(b)
 		assert.Nil(t, err)
 		assert.Equal(t, 1, n)
-		assert.False(t, wrp.isFullyRead) // Won't be fully read until the next Read
+		assert.False(t, wrp.isFullyRead)
 		assert.Equal(t, "y", string(b[:n]))
 
 		n, err = wrp.Read(b)
 		assert.EqualError(t, err, io.EOF.Error())
 		assert.Equal(t, 0, n)
-		assert.True(t, wrp.isFullyRead)
-		assert.Nil(t, wrp.origBytes)
+		assert.False(t, wrp.isFullyRead)
+		assert.Nil(t, wrp.memBytes)
 	})
-
 }
 
-func TestBodyWrapperPartialRead(t *testing.T) {
+func TestBodyWrapper_PartialRead(t *testing.T) {
 	buffer := bytes.NewBufferString("test")
 	body := &mockBody{
 		reader: buffer,
 	}
+
 	wrp := newBodyWrapper(body, nil)
-	b := make([]byte, 4)
+	b := make([]byte, 10)
 	n, err := wrp.Read(b)
 	assert.Nil(t, err)
 	assert.Equal(t, 4, n)
+	assert.Equal(t, "test", string(b[:4]))
 
 	buffer.Write([]byte("body"))
 	n, err = wrp.Read(b)
 	assert.Nil(t, err)
 	assert.Equal(t, 4, n)
-	assert.Equal(t, "testbody", string(wrp.origBytes))
-	assert.Equal(t, "body", string(b))
+	assert.Equal(t, "body", string(b[:4]))
+
+	n, err = wrp.Read(b)
+	assert.Equal(t, io.EOF, err)
+	assert.Equal(t, 0, n)
+
+	assert.True(t, wrp.isFullyRead)
+	assert.Equal(t, "testbody", string(wrp.memBytes))
 }
