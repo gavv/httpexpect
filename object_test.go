@@ -665,33 +665,79 @@ func TestObject_InList(t *testing.T) {
 }
 
 func TestObject_ContainsKey(t *testing.T) {
-	reporter := newMockReporter(t)
+	testObj := map[string]interface{}{"foo": 123, "bar": ""}
+	const (
+		contains = iota
+		notContains = iota
+	)
+	
+	cases := []struct{
+		name string
+		object map[string]interface{}
+		key string
+		assertion uint
+		wantEqual chainResult
+	} {
+		{
+			name: "1. correct key value, contains assertion",
+			object: testObj,
+			key: "foo",
+			assertion: contains,
+			wantEqual: success,
+		},
+		{
+			name: "1. correct key value, not contains assertion",
+			object: testObj,
+			key: "foo",
+			assertion: notContains,
+			wantEqual: failure,
+		},
+		{
+			name: "2. correct key value, contains assertion",
+			object: testObj,
+			key: "bar",
+			assertion: contains,
+			wantEqual: success,
+		},
+		{
+			name: "2. correct key value, not contains assertion",
+			object: testObj,
+			key: "bar",
+			assertion: notContains,
+			wantEqual: failure,
+		},
+		{
+			name: "3. wrong key value, contains assertion",
+			object: testObj,
+			key: "BAR",
+			assertion: contains,
+			wantEqual: failure,
+		},
+		{
+			name: "3. wrong key value, not contains assertion",
+			object: testObj,
+			key: "BAR",
+			assertion: notContains,
+			wantEqual: success,
+		},
+	}
 
-	value := NewObject(reporter, map[string]interface{}{"foo": 123, "bar": ""})
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			reporter := newMockReporter(t)
+			value := NewObject(reporter, tc.object)
 
-	value.ContainsKey("foo")
-	value.chain.assert(t, success)
-	value.chain.clear()
-
-	value.NotContainsKey("foo")
-	value.chain.assert(t, failure)
-	value.chain.clear()
-
-	value.ContainsKey("bar")
-	value.chain.assert(t, success)
-	value.chain.clear()
-
-	value.NotContainsKey("bar")
-	value.chain.assert(t, failure)
-	value.chain.clear()
-
-	value.ContainsKey("BAR")
-	value.chain.assert(t, failure)
-	value.chain.clear()
-
-	value.NotContainsKey("BAR")
-	value.chain.assert(t, success)
-	value.chain.clear()
+			if tc.assertion == contains {
+				value.ContainsKey(tc.key)
+				value.chain.assert(t, tc.wantEqual)
+				value.chain.clear()
+			} else if tc.assertion == notContains {
+				value.NotContainsKey(tc.key)
+				value.chain.assert(t, tc.wantEqual)
+				value.chain.clear()
+			}
+		})
+	}
 }
 
 func TestObject_ContainsValue(t *testing.T) {
