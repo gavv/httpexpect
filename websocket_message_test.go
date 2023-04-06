@@ -104,7 +104,7 @@ func TestWebsocketMessage_CloseMessage(t *testing.T) {
 			chain.assert(t, want)
 	})
 
-	t.Run("CloseMessage type with NotBinary function", func(t *testing.T) {
+	t.Run("CloseMessage type with NotBinaryMessage function", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		typ := websocket.CloseMessage
@@ -120,7 +120,7 @@ func TestWebsocketMessage_CloseMessage(t *testing.T) {
 		typ := websocket.CloseMessage
 		want := failure
 
-		NewWebsocketMessage(reporter, typ, nil, 0).BinaryMessage().
+		NewWebsocketMessage(reporter, typ, nil, 0).TextMessage().
 			chain.assert(t, want)
 	})
 
@@ -135,6 +135,46 @@ func TestWebsocketMessage_CloseMessage(t *testing.T) {
 	})
 
 	t.Run("CloseMessage type with codes", func(t *testing.T) {
+		cases := []struct {
+			name        string
+			typ         int
+			code        int
+			testCode    int
+			wantCode    chainResult
+			wantNotCode chainResult
+		}{
+			{
+				name:        "CloseMessage type with code 1000 and test code 1000",
+				typ:         websocket.CloseMessage,
+				code:        1000,
+				testCode:    1000,
+				wantCode:    success,
+				wantNotCode: failure,
+			},
+			{
+				name:        "CloseMessage type with code 1000 and test code 1001",
+				typ:         websocket.CloseMessage,
+				code:        1000,
+				testCode:    1001,
+				wantCode:    failure,
+				wantNotCode: success,
+			},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				reporter := newMockReporter(t)
+
+				NewWebsocketMessage(reporter, tc.typ, nil, tc.code).Code(tc.testCode).
+					chain.assert(t, tc.wantCode)
+
+				NewWebsocketMessage(reporter, tc.typ, nil, tc.code).NotCode(tc.testCode).
+					chain.assert(t, tc.wantNotCode)
+			})
+		}
+	})
+
+	t.Run("CloseMessage type with types", func(t *testing.T) {
 		cases := []struct {
 			name        string
 			typ         int
@@ -236,7 +276,7 @@ func TestWebsocketMessage_TextMessage(t *testing.T) {
 			chain.assert(t, want)
 	})
 
-	t.Run("TextMessage type with CloseMessage and TextMessage types ", func(t *testing.T) {
+	t.Run("TextMessage type with types", func(t *testing.T) {
 		cases := []struct {
 			name        string
 			typ         int
@@ -336,7 +376,7 @@ func TestWebsocketMessage_BinaryMessage(t *testing.T) {
 			chain.assert(t, want)
 	})
 
-	t.Run("BinaryMessage with BinaryMessage and TextMessage types ", func(t *testing.T) {
+	t.Run("BinaryMessage with types ", func(t *testing.T) {
 		cases := []struct {
 			name        string
 			typ         int
