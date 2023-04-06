@@ -3,6 +3,7 @@ package httpexpect
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"io/ioutil"
 	"runtime"
@@ -24,7 +25,11 @@ type bodyWrapper struct {
 
 	cancelFunc context.CancelFunc
 
-	isInitialized bool
+	isFullyRead bool
+	// If isRewindDisabled is true, Read will not store bytes in memory.
+	// origBytes will be empty.
+	isRewindDisabled bool
+	isReadBefore     bool
 
 	mu sync.Mutex
 }
@@ -32,6 +37,7 @@ type bodyWrapper struct {
 func newBodyWrapper(reader io.ReadCloser, cancelFunc context.CancelFunc) *bodyWrapper {
 	bw := &bodyWrapper{
 		origReader: reader,
+		currReader: reader,
 		cancelFunc: cancelFunc,
 	}
 
@@ -46,22 +52,43 @@ func (bw *bodyWrapper) Read(p []byte) (n int, err error) {
 	bw.mu.Lock()
 	defer bw.mu.Unlock()
 
+	bw.isReadBefore = true
+
 	// Preserve original reader error
 	if bw.readErr != nil {
 		return 0, bw.readErr
 	}
 
-	// Lazy initialization
-	if !bw.isInitialized {
-		if initErr := bw.initialize(); initErr != nil {
-			return 0, initErr
-		}
+	if !bw.isFullyRead && !bw.isRewindDisabled {
+		n, err = bw.readNext(p)
+	} else {
+		n, err = bw.currReader.Read(p)
 	}
 
-	if bw.currReader == nil {
-		bw.currReader = bytes.NewReader(bw.origBytes)
+	if err != nil {
+		err = bw.handleReadErr(err)
 	}
-	return bw.currReader.Read(p)
+
+	return
+}
+
+func (bw *bodyWrapper) readNext(p []byte) (n int, err error) {
+	n, err = bw.origReader.Read(p)
+	if (err == nil || err == io.EOF) && n > 0 {
+		bw.origBytes = append(bw.origBytes, p[:n]...)
+	}
+	return
+}
+
+func (bw *bodyWrapper) handleReadErr(err error) error {
+	bw.isFullyRead = true // prevent further reads
+	if err != io.EOF {
+		bw.readErr = err
+	}
+	if closeErr := bw.closeAndCancel(); closeErr != nil && err == io.EOF {
+		err = closeErr
+	}
+	return err
 }
 
 // Close body
@@ -73,10 +100,9 @@ func (bw *bodyWrapper) Close() error {
 
 	// Rewind or GetBody may be called later, so be sure to
 	// read body into memory before closing
-	if !bw.isInitialized {
-		initErr := bw.initialize()
-		if initErr != nil {
-			err = initErr
+	if !bw.isFullyRead && !bw.isRewindDisabled {
+		if readFullErr := bw.readFull(); readFullErr != nil {
+			err = readFullErr
 		}
 	}
 
@@ -94,9 +120,13 @@ func (bw *bodyWrapper) Rewind() {
 	bw.mu.Lock()
 	defer bw.mu.Unlock()
 
-	// Until first read, rewind is no-op
-	if !bw.isInitialized {
+	if bw.isRewindDisabled {
 		return
+	}
+
+	// Until first read, rewind is no-op
+	if bw.isReadBefore && !bw.isFullyRead {
+		_ = bw.readFull()
 	}
 
 	// Reset reader
@@ -110,33 +140,55 @@ func (bw *bodyWrapper) GetBody() (io.ReadCloser, error) {
 	bw.mu.Lock()
 	defer bw.mu.Unlock()
 
+	bw.isReadBefore = true
+
 	// Preserve original reader error
 	if bw.readErr != nil {
 		return nil, bw.readErr
 	}
 
-	// Lazy initialization
-	if !bw.isInitialized {
-		if initErr := bw.initialize(); initErr != nil {
-			return nil, initErr
+	if bw.isRewindDisabled {
+		return nil, errors.New("body caching is disabled, cannot get body contents")
+	}
+
+	if !bw.isFullyRead {
+		if err := bw.readFull(); err != nil {
+			return nil, err
 		}
 	}
 
 	return ioutil.NopCloser(bytes.NewReader(bw.origBytes)), nil
 }
 
-func (bw *bodyWrapper) initialize() error {
-	if !bw.isInitialized {
-		bw.isInitialized = true
+// Disables storing body contents in memory and clears the cache
+func (bw *bodyWrapper) DisableRewinds() error {
+	bw.mu.Lock()
+	defer bw.mu.Unlock()
 
-		if bw.origReader != nil {
-			bw.origBytes, bw.readErr = ioutil.ReadAll(bw.origReader)
+	bw.isRewindDisabled = true
+	bw.origBytes = nil
 
-			_ = bw.closeAndCancel()
-		}
+	return nil
+}
+
+// Reads the body fully, then cancels and closes the reader
+func (bw *bodyWrapper) readFull() error {
+	if bw.isFullyRead {
+		return errors.New("body is already fully read")
 	}
-
-	return bw.readErr
+	remainingBytes, err := ioutil.ReadAll(bw.origReader)
+	if err != nil {
+		bw.readErr = err
+		bw.isFullyRead = true // Prevent further reads
+		_ = bw.closeAndCancel()
+		return err
+	}
+	initialBytesLen := len(bw.origBytes)
+	bw.origBytes = append(bw.origBytes, remainingBytes...)
+	bw.isFullyRead = true
+	// Restore the current reader back to the same position as before.
+	bw.currReader = bytes.NewReader(bw.origBytes[initialBytesLen:])
+	return bw.closeAndCancel()
 }
 
 func (bw *bodyWrapper) closeAndCancel() error {

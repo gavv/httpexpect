@@ -1,7 +1,9 @@
 package httpexpect
 
 import (
+	"bytes"
 	"errors"
+	"io"
 	"io/ioutil"
 	"testing"
 
@@ -41,16 +43,54 @@ func TestBodyWrapper_Rewind(t *testing.T) {
 	assert.Equal(t, 1, cancelCount)
 }
 
+func TestBodyWrapper_RewindBeforeRead(t *testing.T) {
+	body := newMockBody("test_body")
+
+	cancelCount := 0
+	cancelFn := func() {
+		cancelCount++
+	}
+
+	wrp := newBodyWrapper(body, cancelFn)
+
+	wrp.Rewind()
+
+	b, err := ioutil.ReadAll(wrp)
+	assert.NoError(t, err)
+	assert.Equal(t, "test_body", string(b))
+
+	readCount := body.readCount
+	assert.NotEqual(t, 0, body.readCount)
+	assert.Equal(t, 1, body.closeCount)
+	assert.Equal(t, 1, cancelCount)
+
+	err = wrp.Close()
+	assert.NoError(t, err)
+
+	wrp.Rewind()
+
+	b, err = ioutil.ReadAll(wrp)
+	assert.NoError(t, err)
+	assert.Equal(t, "test_body", string(b))
+
+	assert.Equal(t, readCount, body.readCount)
+	assert.Equal(t, 1, body.closeCount)
+	assert.Equal(t, 1, cancelCount)
+}
+
 func TestBodyWrapper_GetBody(t *testing.T) {
 	body := newMockBody("test_body")
 
 	wrp := newBodyWrapper(body, nil)
 
+	assert.False(t, wrp.isReadBefore)
 	rd1, err := wrp.GetBody()
 	assert.NoError(t, err)
+	assert.True(t, wrp.isReadBefore)
 
 	rd2, err := wrp.GetBody()
 	assert.NoError(t, err)
+	assert.True(t, wrp.isReadBefore)
 
 	b, err := ioutil.ReadAll(rd1)
 	assert.NoError(t, err)
@@ -91,6 +131,14 @@ func TestBodyWrapper_OneError(t *testing.T) {
 
 		assert.Equal(t, bodyErr, err)
 		assert.Equal(t, 0, n)
+	}
+
+	checkReadNoErr := func(t *testing.T, wrp *bodyWrapper) {
+		b := make([]byte, 10)
+		n, err := wrp.Read(b)
+
+		assert.Nil(t, err)
+		assert.Equal(t, 9, n)
 	}
 
 	checkCloseErr := func(t *testing.T, wrp *bodyWrapper) {
@@ -144,7 +192,7 @@ func TestBodyWrapper_OneError(t *testing.T) {
 
 		wrp := newBodyWrapper(body, nil)
 
-		checkReadErr(t, wrp)
+		checkReadNoErr(t, wrp)
 		checkCloseErr(t, wrp)
 
 		checkReadErr(t, wrp)
@@ -264,4 +312,165 @@ func TestBodyWrapper_ErrorRewind(t *testing.T) {
 		_, err = wrp.GetBody()
 		assert.NotNil(t, err)
 	}
+}
+
+func TestBodyWrapper_InfiniteResponses(t *testing.T) {
+
+	t.Run("finite body", func(t *testing.T) {
+		body := newMockBody("test_body") // 9 characters
+		wrp := newBodyWrapper(body, nil)
+		slicedBody := []string{"test", "_bod", "y"}
+
+		b := make([]byte, 4)
+		var (
+			err error
+			n   int
+		)
+
+		for i := 0; i < 2; i++ {
+			n, err = wrp.Read(b)
+			assert.Nil(t, err)
+			assert.Equal(t, 4, n)
+			assert.Equal(t, (1+i)*4, len(wrp.origBytes))
+			assert.False(t, wrp.isFullyRead)
+			assert.Equal(t, slicedBody[i], string(b))
+		}
+		n, err = wrp.Read(b)
+		assert.Nil(t, err)
+		assert.Equal(t, 1, n)
+		assert.False(t, wrp.isFullyRead) // Won't be fully read until the next Read
+		assert.Equal(t, slicedBody[2], string(b[:n]))
+
+		n, err = wrp.Read(b)
+		assert.EqualError(t, err, io.EOF.Error())
+		assert.Equal(t, 0, n)
+		assert.True(t, wrp.isFullyRead)
+	})
+
+	t.Run("finite body with perfect fit", func(t *testing.T) {
+		body := newMockBody("testbody") // 8 characters
+		wrp := newBodyWrapper(body, nil)
+		slicedBody := []string{"test", "body"}
+
+		b := make([]byte, 4)
+		var (
+			err error
+			n   int
+		)
+
+		for i := 0; i < 2; i++ {
+			n, err = wrp.Read(b)
+			assert.Nil(t, err)
+			assert.Equal(t, 4, n)
+			assert.Equal(t, (1+i)*4, len(wrp.origBytes))
+			assert.False(t, wrp.isFullyRead)
+			assert.Equal(t, slicedBody[i], string(b))
+		}
+
+		n, err = wrp.Read(b)
+		assert.EqualError(t, err, io.EOF.Error())
+		assert.Equal(t, 0, n)
+		assert.True(t, wrp.isFullyRead)
+	})
+
+	t.Run("rewind", func(t *testing.T) {
+		body := newMockBody("test_body") // 9 characters
+		wrp := newBodyWrapper(body, nil)
+
+		b := make([]byte, 4)
+		var (
+			err error
+			n   int
+		)
+		_, _ = wrp.Read(b)
+		wrp.Rewind()
+		assert.True(t, wrp.isFullyRead)
+		assert.Equal(t, "test_body", string(wrp.origBytes))
+		n, err = wrp.Read(b)
+		assert.Nil(t, err)
+		assert.Equal(t, 4, n)
+		assert.Equal(t, "test", string(b))
+	})
+
+	t.Run("getbody", func(t *testing.T) {
+		body := newMockBody("test_body") // 9 characters
+		wrp := newBodyWrapper(body, nil)
+
+		b := make([]byte, 4)
+		var (
+			err    error
+			reader io.ReadCloser
+			n      int
+		)
+		_, _ = wrp.Read(b)
+		reader, err = wrp.GetBody()
+		assert.NoError(t, err)
+		assert.True(t, wrp.isFullyRead)
+		assert.Equal(t, "test_body", string(wrp.origBytes))
+		c, _ := ioutil.ReadAll(reader)
+		assert.Equal(t, "test_body", string(c))
+
+		n, err = wrp.Read(b)
+		assert.Nil(t, err)
+		assert.Equal(t, 4, n)
+		assert.Equal(t, "_bod", string(b))
+	})
+
+	t.Run("disable storing body into memory", func(t *testing.T) {
+		body := newMockBody("test_body") // 9 characters
+		wrp := newBodyWrapper(body, nil)
+
+		b := make([]byte, 4)
+		var (
+			err    error
+			reader io.ReadCloser
+			n      int
+		)
+		_, _ = wrp.Read(b)
+		assert.NoError(t, wrp.DisableRewinds())
+		reader, err = wrp.GetBody()
+		assert.EqualError(t, err, "body caching is disabled, cannot get body contents")
+		assert.Nil(t, reader)
+		wrp.Rewind() // Should be no-op
+		assert.False(t, wrp.isFullyRead)
+		assert.True(t, wrp.isReadBefore)
+		assert.Nil(t, wrp.origBytes)
+
+		n, err = wrp.Read(b)
+		assert.Nil(t, err)
+		assert.Equal(t, 4, n)
+		assert.Equal(t, "_bod", string(b))
+
+		n, err = wrp.Read(b)
+		assert.Nil(t, err)
+		assert.Equal(t, 1, n)
+		assert.False(t, wrp.isFullyRead) // Won't be fully read until the next Read
+		assert.Equal(t, "y", string(b[:n]))
+
+		n, err = wrp.Read(b)
+		assert.EqualError(t, err, io.EOF.Error())
+		assert.Equal(t, 0, n)
+		assert.True(t, wrp.isFullyRead)
+		assert.Nil(t, wrp.origBytes)
+	})
+
+}
+
+func TestBodyWrapperPartialRead(t *testing.T) {
+	buffer := bytes.NewBufferString("test")
+	body := &mockBody{
+		reader: buffer,
+	}
+	wrp := newBodyWrapper(body, nil)
+	b := make([]byte, 4)
+	n, err := wrp.Read(b)
+	assert.Nil(t, err)
+	assert.Equal(t, 4, n)
+
+	buffer.Write([]byte("body"))
+	n, err = wrp.Read(b)
+	assert.Nil(t, err)
+	assert.Equal(t, 4, n)
+	assert.Equal(t, "testbody", string(wrp.origBytes))
+	assert.Equal(t, "body", string(b))
 }
