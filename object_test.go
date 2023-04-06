@@ -666,59 +666,34 @@ func TestObject_InList(t *testing.T) {
 
 func TestObject_ContainsKey(t *testing.T) {
 	testObj := map[string]interface{}{"foo": 123, "bar": ""}
-	const (
-		contains    = iota
-		notContains = iota
-	)
 
 	cases := []struct {
-		name      string
-		object    map[string]interface{}
-		key       string
-		assertion uint
-		wantEqual chainResult
+		name               string
+		object             map[string]interface{}
+		key                string
+		wantContainsKey    chainResult
+		wantNotContainsKey chainResult
 	}{
 		{
-			name:      "1. correct key value, contains assertion",
-			object:    testObj,
-			key:       "foo",
-			assertion: contains,
-			wantEqual: success,
+			name:               "1. correct key value, contains assertion",
+			object:             testObj,
+			key:                "foo",
+			wantContainsKey:    success,
+			wantNotContainsKey: failure,
 		},
 		{
-			name:      "1. correct key value, not contains assertion",
-			object:    testObj,
-			key:       "foo",
-			assertion: notContains,
-			wantEqual: failure,
+			name:               "2. correct key value, contains assertion",
+			object:             testObj,
+			key:                "bar",
+			wantContainsKey:    success,
+			wantNotContainsKey: failure,
 		},
 		{
-			name:      "2. correct key value, contains assertion",
-			object:    testObj,
-			key:       "bar",
-			assertion: contains,
-			wantEqual: success,
-		},
-		{
-			name:      "2. correct key value, not contains assertion",
-			object:    testObj,
-			key:       "bar",
-			assertion: notContains,
-			wantEqual: failure,
-		},
-		{
-			name:      "3. wrong key value, contains assertion",
-			object:    testObj,
-			key:       "BAR",
-			assertion: contains,
-			wantEqual: failure,
-		},
-		{
-			name:      "3. wrong key value, not contains assertion",
-			object:    testObj,
-			key:       "BAR",
-			assertion: notContains,
-			wantEqual: success,
+			name:               "3. wrong key value, contains assertion",
+			object:             testObj,
+			key:                "BAR",
+			wantContainsKey:    failure,
+			wantNotContainsKey: success,
 		},
 	}
 
@@ -727,15 +702,14 @@ func TestObject_ContainsKey(t *testing.T) {
 			reporter := newMockReporter(t)
 			value := NewObject(reporter, tc.object)
 
-			if tc.assertion == contains {
-				value.ContainsKey(tc.key)
-				value.chain.assert(t, tc.wantEqual)
-				value.chain.clear()
-			} else if tc.assertion == notContains {
-				value.NotContainsKey(tc.key)
-				value.chain.assert(t, tc.wantEqual)
-				value.chain.clear()
-			}
+			value.ContainsKey(tc.key)
+			value.chain.assert(t, tc.wantContainsKey)
+			value.chain.clear()
+
+			value.NotContainsKey(tc.key)
+			value.chain.assert(t, tc.wantNotContainsKey)
+			value.chain.clear()
+
 		})
 	}
 }
@@ -743,59 +717,34 @@ func TestObject_ContainsKey(t *testing.T) {
 func TestObject_ContainsValue(t *testing.T) {
 	t.Run("basic", func(t *testing.T) {
 		testObj := map[string]interface{}{"foo": 123, "bar": "xxx"}
-		const (
-			containsValue    = iota
-			notContainsValue = iota
-		)
 
 		cases := []struct {
-			name      string
-			object    map[string]interface{}
-			value     interface{}
-			assertion uint
-			wantEqual chainResult
+			name               string
+			object             map[string]interface{}
+			value              interface{}
+			wantContainsKey    chainResult
+			wantNotContainsKey chainResult
 		}{
 			{
-				name:      "1. correct value, contains value assertion",
-				object:    testObj,
-				value:     123,
-				assertion: containsValue,
-				wantEqual: success,
+				name:               "1. correct value, contains value assertion",
+				object:             testObj,
+				value:              123,
+				wantContainsKey:    success,
+				wantNotContainsKey: failure,
 			},
 			{
-				name:      "1. correct value, not contains value assertion",
-				object:    testObj,
-				value:     123,
-				assertion: notContainsValue,
-				wantEqual: failure,
+				name:               "2. correct value, contains value assertion",
+				object:             testObj,
+				value:              "xxx",
+				wantContainsKey:    success,
+				wantNotContainsKey: failure,
 			},
 			{
-				name:      "2. correct value, contains value assertion",
-				object:    testObj,
-				value:     "xxx",
-				assertion: containsValue,
-				wantEqual: success,
-			},
-			{
-				name:      "2. correct value, not contains value assertion",
-				object:    testObj,
-				value:     "xxx",
-				assertion: notContainsValue,
-				wantEqual: failure,
-			},
-			{
-				name:      "3. wrong value, contains value assertion",
-				object:    testObj,
-				value:     "XXX",
-				assertion: containsValue,
-				wantEqual: failure,
-			},
-			{
-				name:      "3. wrong value, not contains value assertion",
-				object:    testObj,
-				value:     "XXX",
-				assertion: notContainsValue,
-				wantEqual: success,
+				name:               "3. wrong value, contains value assertion",
+				object:             testObj,
+				value:              "XXX",
+				wantContainsKey:    failure,
+				wantNotContainsKey: success,
 			},
 		}
 
@@ -804,15 +753,14 @@ func TestObject_ContainsValue(t *testing.T) {
 				reporter := newMockReporter(t)
 				value := NewObject(reporter, tc.object)
 
-				if tc.assertion == containsValue {
-					value.ContainsValue(tc.value)
-					value.chain.assert(t, tc.wantEqual)
-					value.chain.clear()
-				} else if tc.assertion == notContainsValue {
-					value.NotContainsValue(tc.value)
-					value.chain.assert(t, tc.wantEqual)
-					value.chain.clear()
-				}
+				value.ContainsValue(tc.value)
+				value.chain.assert(t, tc.wantContainsKey)
+				value.chain.clear()
+
+				value.NotContainsValue(tc.value)
+				value.chain.assert(t, tc.wantNotContainsKey)
+				value.chain.clear()
+
 			})
 		}
 	})
@@ -920,11 +868,11 @@ func TestObject_ContainsSubset(t *testing.T) {
 		}
 
 		cases := []struct {
-			name      string
-			object    map[string]interface{}
-			subset    map[string]interface{}
-			assertion uint
-			wantEqual chainResult
+			name               string
+			object             map[string]interface{}
+			subset             map[string]interface{}
+			wantContainsKey    chainResult
+			wantNotContainsKey chainResult
 		}{
 			{
 				name:   "1. correct subset, contains subset assertion",
@@ -933,18 +881,8 @@ func TestObject_ContainsSubset(t *testing.T) {
 					"foo": 123,
 					"bar": []interface{}{"456", 789},
 				},
-				assertion: containsSubset,
-				wantEqual: success,
-			},
-			{
-				name:   "1. correct subset, not contains subset assertion",
-				object: testObj,
-				subset: map[string]interface{}{
-					"foo": 123,
-					"bar": []interface{}{"456", 789},
-				},
-				assertion: notContainsSubset,
-				wantEqual: failure,
+				wantContainsKey:    success,
+				wantNotContainsKey: failure,
 			},
 			{
 				name:   "2. correct subset, contains subset assertion",
@@ -957,22 +895,8 @@ func TestObject_ContainsSubset(t *testing.T) {
 						},
 					},
 				},
-				assertion: containsSubset,
-				wantEqual: success,
-			},
-			{
-				name:   "2. correct subset, not contains subset assertion",
-				object: testObj,
-				subset: map[string]interface{}{
-					"bar": []interface{}{"456", 789},
-					"baz": map[string]interface{}{
-						"a": map[string]interface{}{
-							"c": 444,
-						},
-					},
-				},
-				assertion: notContainsSubset,
-				wantEqual: failure,
+				wantContainsKey:    success,
+				wantNotContainsKey: failure,
 			},
 		}
 
@@ -981,15 +905,13 @@ func TestObject_ContainsSubset(t *testing.T) {
 				reporter := newMockReporter(t)
 				value := NewObject(reporter, tc.object)
 
-				if tc.assertion == containsSubset {
-					value.ContainsSubset(tc.subset)
-					value.chain.assert(t, tc.wantEqual)
-					value.chain.clear()
-				} else if tc.assertion == notContainsSubset {
-					value.NotContainsSubset(tc.subset)
-					value.chain.assert(t, tc.wantEqual)
-					value.chain.clear()
-				}
+				value.ContainsSubset(tc.subset)
+				value.chain.assert(t, tc.wantContainsKey)
+				value.chain.clear()
+
+				value.NotContainsSubset(tc.subset)
+				value.chain.assert(t, tc.wantNotContainsKey)
+				value.chain.clear()
 
 			})
 		}
@@ -1203,98 +1125,54 @@ func TestObject_HasValue(t *testing.T) {
 			},
 		}
 
-		const (
-			hasValue    = iota
-			notHasValue = iota
-		)
-
 		cases := []struct {
-			name      string
-			object    map[string]interface{}
-			key       string
-			value     interface{}
-			assertion uint
-			wantEqual chainResult
+			name               string
+			object             map[string]interface{}
+			key                string
+			value              interface{}
+			assertion          uint
+			wantContainsKey    chainResult
+			wantNotContainsKey chainResult
 		}{
 			{
-				name:      "1. correct key-value, has value assertion",
-				object:    testObj,
-				key:       "foo",
-				value:     123,
-				assertion: hasValue,
-				wantEqual: success,
+				name:               "1. correct key-value, has value assertion",
+				object:             testObj,
+				key:                "foo",
+				value:              123,
+				wantContainsKey:    success,
+				wantNotContainsKey: failure,
 			},
 			{
-				name:      "1. correct key-value, not has value assertion",
-				object:    testObj,
-				key:       "foo",
-				value:     123,
-				assertion: notHasValue,
-				wantEqual: failure,
+				name:               "2. correct key-value, has value assertion",
+				object:             testObj,
+				key:                "bar",
+				value:              []interface{}{"456", 789},
+				wantContainsKey:    success,
+				wantNotContainsKey: failure,
 			},
 			{
-				name:      "2. correct key-value, has value assertion",
-				object:    testObj,
-				key:       "bar",
-				value:     []interface{}{"456", 789},
-				assertion: hasValue,
-				wantEqual: success,
+				name:               "3. wrong key-value, has value assertion",
+				object:             testObj,
+				key:                "baz",
+				value:              map[string]interface{}{"a": "b"},
+				wantContainsKey:    failure,
+				wantNotContainsKey: success,
 			},
 			{
-				name:      "2. correct key-value, not has value assertion",
-				object:    testObj,
-				key:       "bar",
-				value:     []interface{}{"456", 789},
-				assertion: notHasValue,
-				wantEqual: failure,
+				name:               "4. wrong value, has value assertion",
+				object:             testObj,
+				key:                "baz",
+				value:              func() {},
+				wantContainsKey:    failure,
+				wantNotContainsKey: failure,
 			},
 			{
-				name:      "3. wrong key-value, has value assertion",
-				object:    testObj,
-				key:       "baz",
-				value:     map[string]interface{}{"a": "b"},
-				assertion: hasValue,
-				wantEqual: failure,
-			},
-			{
-				name:      "3. wrong key-value, not has value assertion",
-				object:    testObj,
-				key:       "baz",
-				value:     map[string]interface{}{"a": "b"},
-				assertion: notHasValue,
-				wantEqual: success,
-			},
-			{
-				name:      "4. wrong value, has value assertion",
-				object:    testObj,
-				key:       "baz",
-				value:     func() {},
-				assertion: hasValue,
-				wantEqual: failure,
-			},
-			{
-				name:      "4. wrong value, not has value assertion",
-				object:    testObj,
-				key:       "baz",
-				value:     func() {},
-				assertion: notHasValue,
-				wantEqual: failure,
-			},
-			{
-				name:      "5. wrong key-value, has value assertion",
-				object:    testObj,
-				key:       "BAZ",
-				value:     777,
-				assertion: hasValue,
-				wantEqual: failure,
-			},
-			{
-				name:      "5. wrong key-value, not has value assertion",
-				object:    testObj,
-				key:       "BAZ",
-				value:     777,
-				assertion: notHasValue,
-				wantEqual: failure,
+				name:               "5. wrong key-value, has value assertion",
+				object:             testObj,
+				key:                "BAZ",
+				value:              777,
+				wantContainsKey:    failure,
+				wantNotContainsKey: failure,
 			},
 		}
 
@@ -1303,15 +1181,13 @@ func TestObject_HasValue(t *testing.T) {
 				reporter := newMockReporter(t)
 				value := NewObject(reporter, tc.object)
 
-				if tc.assertion == hasValue {
-					value.HasValue(tc.key, tc.value)
-					value.chain.assert(t, tc.wantEqual)
-					value.chain.clear()
-				} else if tc.assertion == notHasValue {
-					value.NotHasValue(tc.key, tc.value)
-					value.chain.assert(t, tc.wantEqual)
-					value.chain.clear()
-				}
+				value.HasValue(tc.key, tc.value)
+				value.chain.assert(t, tc.wantContainsKey)
+				value.chain.clear()
+
+				value.NotHasValue(tc.key, tc.value)
+				value.chain.assert(t, tc.wantNotContainsKey)
+				value.chain.clear()
 
 			})
 		}
