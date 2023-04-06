@@ -1169,7 +1169,7 @@ func TestObject_HasValue(t *testing.T) {
 				},
 			},
 		}
-	
+
 		const (
 			hasValue    = iota
 			notHasValue = iota
@@ -1178,88 +1178,88 @@ func TestObject_HasValue(t *testing.T) {
 		cases := []struct {
 			name      string
 			object    map[string]interface{}
-			key string
+			key       string
 			value     interface{}
 			assertion uint
 			wantEqual chainResult
 		}{
 			{
-				name:   "1. correct key-value, has value assertion",
-				object: testObj,
-				key: "foo", 
-				value: 123,
+				name:      "1. correct key-value, has value assertion",
+				object:    testObj,
+				key:       "foo",
+				value:     123,
 				assertion: hasValue,
 				wantEqual: success,
 			},
 			{
-				name:   "1. correct key-value, not has value assertion",
-				object: testObj,
-				key: "foo",
-				value: 123,
+				name:      "1. correct key-value, not has value assertion",
+				object:    testObj,
+				key:       "foo",
+				value:     123,
 				assertion: notHasValue,
 				wantEqual: failure,
 			},
 			{
-				name:   "2. correct key-value, has value assertion",
-				object: testObj,
-				key: "bar",
-				value: []interface{}{"456", 789},
+				name:      "2. correct key-value, has value assertion",
+				object:    testObj,
+				key:       "bar",
+				value:     []interface{}{"456", 789},
 				assertion: hasValue,
 				wantEqual: success,
 			},
 			{
-				name:   "2. correct key-value, not has value assertion",
-				object: testObj,
-				key: "bar",
-				value: []interface{}{"456", 789},
+				name:      "2. correct key-value, not has value assertion",
+				object:    testObj,
+				key:       "bar",
+				value:     []interface{}{"456", 789},
 				assertion: notHasValue,
 				wantEqual: failure,
 			},
 			{
-				name:   "3. wrong key-value, has value assertion",
-				object: testObj,
-				key: "baz",
-				value: map[string]interface{}{"a": "b"},
+				name:      "3. wrong key-value, has value assertion",
+				object:    testObj,
+				key:       "baz",
+				value:     map[string]interface{}{"a": "b"},
 				assertion: hasValue,
 				wantEqual: failure,
 			},
 			{
-				name:   "3. wrong key-value, not has value assertion",
-				object: testObj,
-				key: "baz",
-				value: map[string]interface{}{"a": "b"},
+				name:      "3. wrong key-value, not has value assertion",
+				object:    testObj,
+				key:       "baz",
+				value:     map[string]interface{}{"a": "b"},
 				assertion: notHasValue,
 				wantEqual: success,
 			},
 			{
-				name:   "4. wrong value, has value assertion",
-				object: testObj,
-				key: "baz",
-				value: func () {},
+				name:      "4. wrong value, has value assertion",
+				object:    testObj,
+				key:       "baz",
+				value:     func() {},
 				assertion: hasValue,
 				wantEqual: failure,
 			},
 			{
-				name:   "4. wrong value, not has value assertion",
-				object: testObj,
-				key: "baz",
-				value: func () {},
+				name:      "4. wrong value, not has value assertion",
+				object:    testObj,
+				key:       "baz",
+				value:     func() {},
 				assertion: notHasValue,
 				wantEqual: failure,
 			},
 			{
-				name:   "5. wrong key-value, has value assertion",
-				object: testObj,
-				key: "BAZ",
-				value: 777,
+				name:      "5. wrong key-value, has value assertion",
+				object:    testObj,
+				key:       "BAZ",
+				value:     777,
 				assertion: hasValue,
 				wantEqual: failure,
 			},
 			{
-				name:   "5. wrong key-value, not has value assertion",
-				object: testObj,
-				key: "BAZ",
-				value: 777,
+				name:      "5. wrong key-value, not has value assertion",
+				object:    testObj,
+				key:       "BAZ",
+				value:     777,
 				assertion: notHasValue,
 				wantEqual: failure,
 			},
