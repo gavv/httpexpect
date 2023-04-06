@@ -119,79 +119,125 @@ func TestDateTime_Getters(t *testing.T) {
 }
 
 func TestDateTime_IsEqual(t *testing.T) {
-	reporter := newMockReporter(t)
+	cases := []struct {
+		name        string
+		time        time.Time
+		value       time.Time
+		wantIsEqual chainResult
+	}{
+		{
+			name:        "equal to value",
+			time:        time.Unix(0, 1234),
+			value:       time.Unix(0, 1234),
+			wantIsEqual: success,
+		},
+		{
+			name:        "not equal to value",
+			time:        time.Unix(0, 1234),
+			value:       time.Unix(0, 4321),
+			wantIsEqual: failure,
+		},
+	}
 
-	value := NewDateTime(reporter, time.Unix(0, 1234))
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			reporter := newMockReporter(t)
 
-	assert.True(t, time.Unix(0, 1234).Equal(value.Raw()))
+			NewDateTime(reporter, tc.time).IsEqual(tc.value).
+				chain.assert(t, tc.wantIsEqual)
 
-	value.IsEqual(time.Unix(0, 1234))
-	value.chain.assert(t, success)
-	value.chain.clear()
-
-	value.IsEqual(time.Unix(0, 4321))
-	value.chain.assert(t, failure)
-	value.chain.clear()
-
-	value.NotEqual(time.Unix(0, 4321))
-	value.chain.assert(t, success)
-	value.chain.clear()
-
-	value.NotEqual(time.Unix(0, 1234))
-	value.chain.assert(t, failure)
-	value.chain.clear()
+			NewDateTime(reporter, tc.time).NotEqual(tc.value).
+				chain.assert(t, !tc.wantIsEqual)
+		})
+	}
 }
 
 func TestDateTime_IsGreater(t *testing.T) {
-	reporter := newMockReporter(t)
+	cases := []struct {
+		name   string
+		time   time.Time
+		value  time.Time
+		wantGt chainResult
+		wantGe chainResult
+	}{
+		{
+			name:   "greater than value",
+			time:   time.Unix(0, 1234),
+			value:  time.Unix(0, 1234-1),
+			wantGt: success,
+			wantGe: success,
+		},
+		{
+			name:   "equal to value",
+			time:   time.Unix(0, 1234),
+			value:  time.Unix(0, 1234),
+			wantGt: failure,
+			wantGe: success,
+		},
+		{
+			name:   "less than value",
+			time:   time.Unix(0, 1234),
+			value:  time.Unix(0, 1234+1),
+			wantGt: failure,
+			wantGe: failure,
+		},
+	}
 
-	value := NewDateTime(reporter, time.Unix(0, 1234))
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			reporter := newMockReporter(t)
 
-	value.Gt(time.Unix(0, 1234-1))
-	value.chain.assert(t, success)
-	value.chain.clear()
+			NewDateTime(reporter, tc.time).Gt(tc.value).
+				chain.assert(t, tc.wantGt)
 
-	value.Gt(time.Unix(0, 1234))
-	value.chain.assert(t, failure)
-	value.chain.clear()
-
-	value.Ge(time.Unix(0, 1234-1))
-	value.chain.assert(t, success)
-	value.chain.clear()
-
-	value.Ge(time.Unix(0, 1234))
-	value.chain.assert(t, success)
-	value.chain.clear()
-
-	value.Ge(time.Unix(0, 1234+1))
-	value.chain.assert(t, failure)
-	value.chain.clear()
+			NewDateTime(reporter, tc.time).Ge(tc.value).
+				chain.assert(t, tc.wantGe)
+		})
+	}
 }
 
 func TestDateTime_IsLesser(t *testing.T) {
-	reporter := newMockReporter(t)
+	cases := []struct {
+		name   string
+		time   time.Time
+		value  time.Time
+		wantLt chainResult
+		wantLe chainResult
+	}{
+		{
+			name:   "less than value",
+			time:   time.Unix(0, 1234),
+			value:  time.Unix(0, 1234+1),
+			wantLt: success,
+			wantLe: success,
+		},
+		{
+			name:   "equal to value",
+			time:   time.Unix(0, 1234),
+			value:  time.Unix(0, 1234),
+			wantLt: failure,
+			wantLe: success,
+		},
+		{
+			name:   "greater than value",
+			time:   time.Unix(0, 1234),
+			value:  time.Unix(0, 1234-1),
+			wantLt: failure,
+			wantLe: failure,
+		},
+	}
 
-	value := NewDateTime(reporter, time.Unix(0, 1234))
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			reporter := newMockReporter(t)
 
-	value.Lt(time.Unix(0, 1234+1))
-	value.chain.assert(t, success)
-	value.chain.clear()
+			NewDateTime(reporter, tc.time).Lt(tc.value).
+				chain.assert(t, tc.wantLt)
 
-	value.Lt(time.Unix(0, 1234))
-	value.chain.assert(t, failure)
-	value.chain.clear()
-
-	value.Le(time.Unix(0, 1234+1))
-	value.chain.assert(t, success)
-	value.chain.clear()
-
-	value.Le(time.Unix(0, 1234))
-	value.chain.assert(t, success)
-	value.chain.clear()
-
-	value.Le(time.Unix(0, 1234-1))
-	value.chain.assert(t, failure)
-	value.chain.clear()
+			NewDateTime(reporter, tc.time).Le(tc.value).
+				chain.assert(t, tc.wantLe)
+		})
+	}
 }
 
 func TestDateTime_InRange(t *testing.T) {
