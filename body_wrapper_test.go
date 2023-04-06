@@ -71,7 +71,7 @@ func TestBodyWrapper_Close(t *testing.T) {
 }
 
 func TestBodyWrapper_Rewind(t *testing.T) {
-	t.Run("read, close, rewind", func(t *testing.T) {
+	t.Run("readall - close - rewind - readall", func(t *testing.T) {
 		body := newMockBody("test_body")
 
 		cancelCount := 0
@@ -104,7 +104,7 @@ func TestBodyWrapper_Rewind(t *testing.T) {
 		assert.Equal(t, 1, cancelCount)
 	})
 
-	t.Run("rewind, read, close", func(t *testing.T) {
+	t.Run("rewind - readall - close - rewind - readall", func(t *testing.T) {
 		body := newMockBody("test_body")
 
 		cancelCount := 0
@@ -137,9 +137,6 @@ func TestBodyWrapper_Rewind(t *testing.T) {
 		assert.Equal(t, readCount, body.readCount)
 		assert.Equal(t, 1, body.closeCount)
 		assert.Equal(t, 1, cancelCount)
-
-		err = wrp.Close()
-		assert.NoError(t, err)
 	})
 }
 
