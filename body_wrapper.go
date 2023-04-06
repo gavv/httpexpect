@@ -86,23 +86,13 @@ func (bw *bodyWrapper) Read(p []byte) (int, error) {
 
 	if bw.isRewindDisabled && !bw.isFullyRead {
 		// Regular read from original HTTP response.
-		if bw.readErr != nil {
-			return 0, bw.readErr
-		}
 		return bw.httpReader.Read(p)
 	} else if !bw.isFullyRead {
 		// Read from original HTTP response + store into memory.
-		if bw.readErr != nil {
-			return 0, bw.readErr
-		}
 		return bw.httpReadNext(p)
 	} else {
 		// Read from memory.
-		n, err := bw.memReader.Read(p)
-		if err == io.EOF && bw.readErr != nil {
-			err = bw.readErr
-		}
-		return n, err
+		return bw.memReadNext(p)
 	}
 }
 
@@ -157,7 +147,7 @@ func (bw *bodyWrapper) Rewind() {
 		_ = bw.httpReadFull()
 	}
 
-	// Reset reader to the beginning of memory chunk.
+	// Reset memory reader.
 	bw.memReader = bytes.NewReader(bw.memBytes)
 }
 
@@ -192,20 +182,25 @@ func (bw *bodyWrapper) GetBody() (io.ReadCloser, error) {
 }
 
 // Disables storing body contents in memory and clears the cache.
-func (bw *bodyWrapper) DisableRewinds() error {
+func (bw *bodyWrapper) DisableRewinds() {
 	bw.mu.Lock()
 	defer bw.mu.Unlock()
 
 	bw.isRewindDisabled = true
-
-	bw.memReader = nil
-	bw.memBytes = nil
-
-	return nil
 }
 
-func (bw *bodyWrapper) httpReadNext(p []byte) (n int, err error) {
-	n, err = bw.httpReader.Read(p)
+func (bw *bodyWrapper) memReadNext(p []byte) (int, error) {
+	n, err := bw.memReader.Read(p)
+
+	if err == io.EOF && bw.readErr != nil {
+		err = bw.readErr
+	}
+
+	return n, err
+}
+
+func (bw *bodyWrapper) httpReadNext(p []byte) (int, error) {
+	n, err := bw.httpReader.Read(p)
 
 	if n > 0 {
 		bw.memBytes = append(bw.memBytes, p[:n]...)
@@ -219,16 +214,18 @@ func (bw *bodyWrapper) httpReadNext(p []byte) (n int, err error) {
 			err = closeErr
 		}
 
+		// Switch to reading from memory.
 		bw.isFullyRead = true
 		bw.memReader = bytes.NewReader(nil)
 	}
 
-	return
+	return n, err
 }
 
 func (bw *bodyWrapper) httpReadFull() error {
 	b, err := ioutil.ReadAll(bw.httpReader)
 
+	// Switch to reading from memory.
 	bw.isFullyRead = true
 	bw.memBytes = append(bw.memBytes, b...)
 	bw.memReader = bytes.NewReader(bw.memBytes[len(bw.memBytes)-len(b):])
