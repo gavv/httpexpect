@@ -333,9 +333,14 @@ func (me *mockNetError) Temporary() bool {
 	return me.isTemporary
 }
 
-// // mock custom error
+// mock custom error
 type mockError struct{}
 
 func (me *mockError) Error() string {
 	return "mock error"
+}
+
+// mock sleep function
+func mockSleep(time.Duration) <-chan time.Time {
+	return time.After(0)
 }
