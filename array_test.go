@@ -1,7 +1,6 @@
 package httpexpect
 
 import (
-	"math/big"
 	"sort"
 	"testing"
 
@@ -1574,17 +1573,16 @@ func TestArray_Transform(t *testing.T) {
 	t.Run("transform value", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{
-			big.NewFloat(0).SetInt64(2),
-			big.NewFloat(0).SetInt64(4),
-			big.NewFloat(0).SetInt64(6),
+			2,
+			4,
+			6,
 		})
 		newArray := array.Transform(func(_ int, val interface{}) interface{} {
 			if v, ok := val.(float64); ok {
-				value := big.NewFloat(v)
-				return big.NewFloat(0).Mul(value, value)
+				return int(v) * int(v)
 			}
-			t.Errorf("failed transformation %T", val)
-			return big.NewFloat(0)
+			t.Errorf("failed transformation")
+			return nil
 		})
 		assert.Equal(t, []interface{}{
 			4.0,

@@ -1,9 +1,7 @@
 package httpexpect
 
 import (
-	"encoding/json"
 	"fmt"
-	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -265,42 +263,27 @@ func TestExpect_Traverse(t *testing.T) {
 	}
 
 	data := map[string]interface{}{
-		"aaa": []interface{}{"bbb", 123, false, nil},
-		"bbb": "hello",
-		"ccc": 456,
-	}
-
-	expected := map[string]interface{}{
-		"aaa": []interface{}{"bbb", 123, false, nil},
-		"bbb": "hello",
-		"ccc": 456,
+		"foo": []interface{}{"bar", 123, false, nil},
+		"bar": "hello",
+		"baz": 456,
 	}
 
 	resp := WithConfig(config).GET("/url").WithJSON(data).Expect()
-
 	m := resp.JSON().Object()
-
-	m.IsEqual(data)
-
-	m.ContainsKey("aaa")
-	m.ContainsKey("bbb")
-	m.ContainsKey("aaa")
-
-	m.HasValue("aaa", expected["aaa"])
-	m.HasValue("bbb", expected["bbb"])
-	m.HasValue("ccc", expected["ccc"])
-
-	m.Keys().ConsistsOf("aaa", "bbb", "ccc")
-	v, _ := expected["ccc"].(int)
-	m.Values().ConsistsOf(expected["aaa"], expected["bbb"], strconv.Itoa(v))
-
-	m.Value("aaa").Array().ConsistsOf("bbb", 123, false, nil)
-	m.Value("bbb").String().IsEqual("hello")
-
-	m.Value("ccc").Number().IsEqual(json.Number("456"))
-
-	m.Value("aaa").Array().Value(2).Boolean().IsFalse()
-	m.Value("aaa").Array().Value(3).IsNull()
+	m.Equal(data)
+	m.ContainsKey("foo")
+	m.ContainsKey("bar")
+	m.ContainsKey("foo")
+	m.ValueEqual("foo", data["foo"])
+	m.ValueEqual("bar", data["bar"])
+	m.ValueEqual("baz", data["baz"])
+	m.Keys().ContainsOnly("foo", "bar", "baz")
+	m.Values().ContainsOnly(data["foo"], data["bar"], data["baz"])
+	m.Value("foo").Array().Elements("bar", 123, false, nil)
+	m.Value("bar").String().Equal("hello")
+	m.Value("baz").Number().Equal(456)
+	m.Value("foo").Array().Element(2).Boolean().False()
+	m.Value("foo").Array().Element(3).Null()
 }
 
 func TestExpect_Branches(t *testing.T) {
@@ -321,18 +304,18 @@ func TestExpect_Branches(t *testing.T) {
 	req := WithConfig(config).GET("/url").WithJSON(data)
 	resp := req.Expect()
 
-	m1 := resp.JSON().Array()  // fail
-	m2 := resp.JSON().Object() // ok
-	m3 := resp.JSON().Object() // ok
+	m1 := resp.JSON().Array()
+	m2 := resp.JSON().Object()
+	m3 := resp.JSON().Object()
 
-	// e1 := m2.Value("foo").Object()                    // fail
-	// e2 := m2.Value("foo").Array().Value(999).String() // fail
-	e3 := m2.Value("foo").Array().Value(0).Number() // fail
-	// e4 := m2.Value("foo").Array().Value(0).String() // ok
-	// e5 := m2.Value("foo").Array().Value(0).String() // ok
+	e1 := m2.Value("foo").Object()
+	e2 := m2.Value("foo").Array().Value(999).String()
+	e3 := m2.Value("foo").Array().Value(0).Number()
+	e4 := m2.Value("foo").Array().Value(0).String()
+	e5 := m2.Value("foo").Array().Value(0).String()
 
-	// e4.IsEqual("qux") // fail
-	// e5.IsEqual("bar") // ok
+	e4.IsEqual("qux")
+	e5.IsEqual("bar")
 
 	req.chain.assertFlags(t, flagFailedChildren)
 	resp.chain.assertFlags(t, flagFailedChildren)
@@ -341,12 +324,12 @@ func TestExpect_Branches(t *testing.T) {
 	m2.chain.assertFlags(t, flagFailedChildren)
 	m3.chain.assertFlags(t, 0)
 
-	// e1.chain.assertFlags(t, flagFailed)
-	// e2.chain.assertFlags(t, flagFailed)
+	e1.chain.assertFlags(t, flagFailed)
+	e2.chain.assertFlags(t, flagFailed)
 	fmt.Println(e3.chain.flags)
 	e3.chain.assertFlags(t, flagFailed)
-	// e4.chain.assertFlags(t, flagFailed)
-	// e5.chain.assertFlags(t, 0)
+	e4.chain.assertFlags(t, flagFailed)
+	e5.chain.assertFlags(t, 0)
 }
 
 func TestExpect_RequestFactory(t *testing.T) {

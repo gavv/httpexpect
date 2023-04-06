@@ -1,8 +1,6 @@
 package httpexpect
 
 import (
-	"encoding/json"
-	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -154,14 +152,7 @@ func TestObject_Decode(t *testing.T) {
 		value.Decode(&target)
 
 		value.chain.assertNotFailed(t)
-		assert.Equal(t, target, map[string]interface{}{
-			"foo": json.Number("123"),
-			"bar": []interface{}{"123", json.Number("234")},
-			"baz": map[string]interface{}{
-				"a": "b",
-			},
-		},
-		)
+		assert.Equal(t, target, m)
 	})
 
 	t.Run("target is map", func(t *testing.T) {
@@ -181,23 +172,17 @@ func TestObject_Decode(t *testing.T) {
 		value.Decode(&target)
 
 		value.chain.assertNotFailed(t)
-		assert.Equal(t, map[string]interface{}{
-			"foo": json.Number("123"),
-			"bar": []interface{}{"123", json.Number("234")},
-			"baz": map[string]interface{}{
-				"a": "b",
-			},
-		}, target)
+		assert.Equal(t, m, target)
 	})
 
 	t.Run("target is struct", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		type S struct {
-			Foo json.Number             `json:"foo"`
-			Bar []interface{}           `json:"bar"`
-			Baz map[string]interface{}  `json:"baz"`
-			Bat struct{ A json.Number } `json:"bat"`
+			Foo int                    `json:"foo"`
+			Bar []interface{}          `json:"bar"`
+			Baz map[string]interface{} `json:"baz"`
+			Bat struct{ A int }        `json:"bat"`
 		}
 
 		m := map[string]interface{}{
@@ -211,18 +196,11 @@ func TestObject_Decode(t *testing.T) {
 
 		value := NewObject(reporter, m)
 
-		actualStruct := S{
-			Foo: json.Number("123"),
-			Bar: []interface{}{"123", json.Number("234")},
-			Baz: map[string]interface{}{"a": "b"},
-			Bat: struct{ A json.Number }{json.Number("123")},
-		}
-
 		var target S
 		value.Decode(&target)
 
 		value.chain.assertNotFailed(t)
-		assert.Equal(t, target, actualStruct)
+		assert.Equal(t, target, m)
 	})
 
 	t.Run("target is nil", func(t *testing.T) {
@@ -296,16 +274,16 @@ func TestObject_Getters(t *testing.T) {
 	keys := []interface{}{"foo", "bar", "baz"}
 
 	values := []interface{}{
-		json.Number("123"),
-		[]interface{}{"456", json.Number("789")},
+		123.0,
+		[]interface{}{"456", 789.0},
 		map[string]interface{}{
 			"a": "b",
 		},
 	}
 
 	assert.Equal(t, map[string]interface{}{
-		"foo": json.Number("123"),
-		"bar": []interface{}{"456", json.Number("789")},
+		"foo": 123.0,
+		"bar": []interface{}{"456", 789.0},
 		"baz": map[string]interface{}{
 			"a": "b",
 		},
@@ -315,8 +293,8 @@ func TestObject_Getters(t *testing.T) {
 
 	assert.Equal(t,
 		map[string]interface{}{
-			"foo": json.Number("123"),
-			"bar": []interface{}{"456", json.Number("789")},
+			"foo": 123.0,
+			"bar": []interface{}{"456", 789.0},
 			"baz": map[string]interface{}{
 				"a": "b",
 			},
@@ -426,7 +404,7 @@ func TestObject_IsEqual(t *testing.T) {
 
 		value := NewObject(reporter, map[string]interface{}{"foo": 123.0})
 
-		assert.Equal(t, map[string]interface{}{"foo": json.Number("123")}, value.Raw())
+		assert.Equal(t, map[string]interface{}{"foo": 123.0}, value.Raw())
 
 		value.IsEqual(map[string]interface{}{})
 		value.chain.assertFailed(t)
@@ -485,13 +463,13 @@ func TestObject_IsEqual(t *testing.T) {
 			}
 
 			S struct {
-				Foo json.Number `json:"foo"`
-				Bar Bar         `json:"bar"`
+				Foo float64 `json:"foo"`
+				Bar Bar     `json:"bar"`
 			}
 		)
 
 		s := S{
-			Foo: json.Number("123"),
+			Foo: 123.0,
 			Bar: Bar{
 				Baz: []bool{true, false},
 			},
@@ -1386,7 +1364,7 @@ func TestObject_Transform(t *testing.T) {
 		})
 
 		newObject := object.Transform(func(_ string, val interface{}) interface{} {
-			if v, err := strconv.ParseFloat(val.(string), 64); err == nil {
+			if v, ok := val.(float64); ok {
 				return myInt(v)
 			} else {
 				return val
@@ -1395,8 +1373,8 @@ func TestObject_Transform(t *testing.T) {
 
 		assert.Equal(t,
 			map[string]interface{}{
-				"foo": json.Number("123"),
-				"bar": json.Number("456"),
+				"foo": 123.0,
+				"bar": 456.0,
 				"baz": "b",
 			},
 			newObject.Raw())
@@ -1434,13 +1412,13 @@ func TestObject_Filter(t *testing.T) {
 		})
 
 		filteredObject := object.Filter(func(key string, value *Value) bool {
-			return value.Raw() != "bar" && value.Raw() != json.Number("3")
+			return value.Raw() != "bar" && value.Raw() != 3.0
 		})
 
 		assert.Equal(t, map[string]interface{}{"qux": false}, filteredObject.Raw())
 		assert.Equal(t, object.Raw(), map[string]interface{}{
 			"foo": "bar",
-			"baz": json.Number("3"), "qux": false,
+			"baz": 3.0, "qux": false,
 		})
 
 		filteredObject.chain.assertNotFailed(t)
@@ -1495,7 +1473,7 @@ func TestObject_Filter(t *testing.T) {
 
 		assert.Equal(t, map[string]interface{}{"qux": "quux"}, filteredObject.Raw())
 		assert.Equal(t, object.Raw(), map[string]interface{}{
-			"foo": "bar", "baz": json.Number("6"),
+			"foo": "bar", "baz": 6.0,
 			"qux": "quux",
 		})
 
@@ -1562,12 +1540,12 @@ func TestObject_Find(t *testing.T) {
 			return n > 1
 		})
 
-		assert.Equal(t, json.Number("2"), foundValue.Raw())
+		assert.Equal(t, 2.0, foundValue.Raw())
 		assert.Equal(t, object.Raw(), map[string]interface{}{
 			"foo":  "bar",
 			"baz":  true,
-			"qux":  json.Number("-1"),
-			"quux": json.Number("2"),
+			"qux":  -1.0,
+			"quux": 2.0,
 		})
 
 		foundValue.chain.assertNotFailed(t)
@@ -1592,8 +1570,8 @@ func TestObject_Find(t *testing.T) {
 		assert.Equal(t, object.Raw(), map[string]interface{}{
 			"foo":  "bar",
 			"baz":  true,
-			"qux":  json.Number("-1"),
-			"quux": json.Number("2"),
+			"qux":  -1.0,
+			"quux": 2.0,
 		})
 
 		foundValue.chain.assertFailed(t)
@@ -1630,8 +1608,8 @@ func TestObject_Find(t *testing.T) {
 
 		assert.Equal(t, nil, foundValue.Raw())
 		assert.Equal(t, object.Raw(), map[string]interface{}{
-			"foo": json.Number("1"),
-			"bar": json.Number("2"),
+			"foo": 1.0,
+			"bar": 2.0,
 		})
 
 		foundValue.chain.assertFailed(t)
@@ -1653,8 +1631,8 @@ func TestObject_Find(t *testing.T) {
 
 		assert.Equal(t, "str", foundValue.Raw())
 		assert.Equal(t, object.Raw(), map[string]interface{}{
-			"foo": json.Number("1"),
-			"bar": json.Number("2"),
+			"foo": 1.0,
+			"bar": 2.0,
 			"baz": "str",
 		})
 
@@ -1673,8 +1651,8 @@ func TestObject_Find(t *testing.T) {
 
 		assert.Equal(t, nil, foundValue.Raw())
 		assert.Equal(t, object.Raw(), map[string]interface{}{
-			"foo": json.Number("1"),
-			"bar": json.Number("2"),
+			"foo": 1.0,
+			"bar": 2.0,
 		})
 
 		foundValue.chain.assertFailed(t)
@@ -1735,7 +1713,7 @@ func TestObject_FindAll(t *testing.T) {
 		assert.Equal(t, []interface{}{"grault", "bar"}, actual)
 		assert.Equal(t, object.Raw(), map[string]interface{}{
 			"foo":   "bar",
-			"baz":   json.Number("6"),
+			"baz":   6.0,
 			"qux":   "quux",
 			"corge": "grault",
 		})
@@ -1768,8 +1746,8 @@ func TestObject_FindAll(t *testing.T) {
 		assert.Equal(t, object.Raw(), map[string]interface{}{
 			"foo":  "bar",
 			"baz":  true,
-			"qux":  json.Number("-1"),
-			"quux": json.Number("2"),
+			"qux":  -1.0,
+			"quux": 2.0,
 		})
 
 		for _, value := range foundValues {
@@ -1819,8 +1797,8 @@ func TestObject_FindAll(t *testing.T) {
 
 		assert.Equal(t, []interface{}{}, actual)
 		assert.Equal(t, object.Raw(), map[string]interface{}{
-			"foo": json.Number("1"),
-			"bar": json.Number("2"),
+			"foo": 1.0,
+			"bar": 2.0,
 		})
 
 		for _, value := range foundValues {
@@ -1851,8 +1829,8 @@ func TestObject_FindAll(t *testing.T) {
 		assert.Equal(t, []interface{}{"bar", "corge"}, actual)
 		assert.Equal(t, object.Raw(), map[string]interface{}{
 			"foo":  "bar",
-			"baz":  json.Number("1"),
-			"qux":  json.Number("2"),
+			"baz":  1.0,
+			"qux":  2.0,
 			"quux": "corge",
 		})
 
@@ -1878,8 +1856,8 @@ func TestObject_FindAll(t *testing.T) {
 
 		assert.Equal(t, []interface{}{}, actual)
 		assert.Equal(t, object.Raw(), map[string]interface{}{
-			"foo": json.Number("1"),
-			"bar": json.Number("2"),
+			"foo": 1.0,
+			"bar": 2.0,
 		})
 
 		for _, value := range foundValues {

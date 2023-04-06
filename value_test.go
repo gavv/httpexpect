@@ -86,16 +86,16 @@ func TestValue_Decode(t *testing.T) {
 		value.Decode(&target)
 
 		value.chain.assertNotFailed(t)
-		assert.Equal(t, json.Number("123"), target)
+		assert.Equal(t, 123.0, target)
 	})
 
 	t.Run("target is struct", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		type S struct {
-			Foo json.Number             `json:"foo"`
-			Bar []interface{}           `json:"bar"`
-			Baz struct{ A json.Number } `json:"baz"`
+			Foo int             `json:"foo"`
+			Bar []interface{}   `json:"bar"`
+			Baz struct{ A int } `json:"baz"`
 		}
 
 		m := map[string]interface{}{
@@ -107,9 +107,9 @@ func TestValue_Decode(t *testing.T) {
 		value := NewValue(reporter, m)
 
 		actualStruct := S{
-			json.Number("123"),
-			[]interface{}{"123", json.Number("456")},
-			struct{ A json.Number }{json.Number("123")},
+			123,
+			[]interface{}{"123", 456.0},
+			struct{ A int }{123},
 		}
 
 		var target S
@@ -269,13 +269,13 @@ func TestValue_GetObject(t *testing.T) {
 			name:           "map",
 			data:           map[string]interface{}{"foo": 123.0},
 			fail:           false,
-			expectedObject: map[string]interface{}{"foo": json.Number("123")},
+			expectedObject: map[string]interface{}{"foo": 123.0},
 		},
 		{
 			name:           "myMap",
 			data:           myMap{"foo": 123.0},
 			fail:           false,
-			expectedObject: map[string]interface{}(myMap{"foo": json.Number("123")}),
+			expectedObject: map[string]interface{}(myMap{"foo": 123.0}),
 		},
 	}
 
@@ -309,13 +309,13 @@ func TestValue_GetArray(t *testing.T) {
 			name:          "array",
 			data:          []interface{}{"foo", 123.0},
 			fail:          false,
-			expectedArray: []interface{}{"foo", json.Number("123")},
+			expectedArray: []interface{}{"foo", 123.0},
 		},
 		{
 			name:          "myArray",
 			data:          myArray{"foo", 123.0},
 			fail:          false,
-			expectedArray: []interface{}(myArray{"foo", json.Number("123")}),
+			expectedArray: []interface{}(myArray{"foo", 123.0}),
 		},
 	}
 
@@ -739,7 +739,7 @@ func TestValue_PathTypes(t *testing.T) {
 
 		value := NewValue(reporter, data)
 
-		assert.Equal(t, json.Number("123"), value.Path("$").Raw())
+		assert.Equal(t, 123.0, value.Path("$").Raw())
 		value.chain.assertNotFailed(t)
 	})
 
@@ -783,11 +783,11 @@ func TestValue_PathTypes(t *testing.T) {
 
 		a := value.Path(`$["A"]`)
 		a.chain.assertNotFailed(t)
-		assert.Equal(t, json.Number("123"), a.Raw())
+		assert.Equal(t, 123.0, a.Raw())
 
 		b := value.Path(`$["B"]`)
 		b.chain.assertNotFailed(t)
-		assert.Equal(t, json.Number("123"), b.Raw())
+		assert.Equal(t, 123.0, b.Raw())
 	})
 }
 
@@ -863,21 +863,21 @@ func TestValue_PathExpressions(t *testing.T) {
 			"$": map[string]interface{}{
 				"A": []interface{}{
 					"string",
-					json.Number("23.3"),
-					json.Number("3"),
+					23.3,
+					3.0,
 					true,
 					false,
 					nil,
 				},
 				"B": "value",
-				"C": json.Number("3.14"),
+				"C": 3.14,
 				"D": map[string]interface{}{
-					"C": json.Number("3.1415"),
+					"C": 3.1415,
 					"V": []interface{}{
 						"string2a",
 						"string2b",
 						map[string]interface{}{
-							"C": json.Number("3.141592"),
+							"C": 3.141592,
 						},
 					},
 				},
@@ -885,7 +885,7 @@ func TestValue_PathExpressions(t *testing.T) {
 					"A": []interface{}{"string3"},
 					"D": map[string]interface{}{
 						"V": map[string]interface{}{
-							"C": json.Number("3.14159265"),
+							"C": 3.14159265,
 						},
 					},
 				},
@@ -894,7 +894,7 @@ func TestValue_PathExpressions(t *testing.T) {
 						"string4a",
 						"string4b",
 						map[string]interface{}{
-							"CC": json.Number("3.1415926535"),
+							"CC": 3.1415926535,
 						},
 						map[string]interface{}{
 							"CC": "hello",
@@ -914,24 +914,24 @@ func TestValue_PathExpressions(t *testing.T) {
 			`$["A"][0]`: "string",
 			"$.A": []interface{}{
 				"string",
-				json.Number("23.3"),
-				json.Number("3"),
+				23.3,
+				3.0,
 				true,
 				false,
 				nil,
 			},
 			"$.A[*]": []interface{}{
 				"string",
-				json.Number("23.3"),
-				json.Number("3"),
+				23.3,
+				3.0,
 				true,
 				false,
 				nil,
 			},
 			"$.A.*": []interface{}{
 				"string",
-				json.Number("23.3"),
-				json.Number("3"),
+				23.3,
+				3.0,
 				true,
 				false,
 				nil,
@@ -942,16 +942,16 @@ func TestValue_PathExpressions(t *testing.T) {
 
 	t.Run("slice", func(t *testing.T) {
 		runTests(map[string]interface{}{
-			"$.A[1,4,2]": []interface{}{json.Number("23.3"), false, json.Number("3")},
-			`$["B","C"]`: []interface{}{"value", json.Number("3.14")},
-			`$["C","B"]`: []interface{}{json.Number("3.14"), "value"},
-			"$.A[1:4]":   []interface{}{json.Number("23.3"), json.Number("3"), true},
-			"$.A[::2]":   []interface{}{"string", json.Number("3"), false},
+			"$.A[1,4,2]": []interface{}{23.3, false, 3.0},
+			`$["B","C"]`: []interface{}{"value", 3.14},
+			`$["C","B"]`: []interface{}{3.14, "value"},
+			"$.A[1:4]":   []interface{}{23.3, 3.0, true},
+			"$.A[::2]":   []interface{}{"string", 3.0, false},
 			"$.A[-2:]":   []interface{}{false, nil},
 			"$.A[:-1]": []interface{}{
 				"string",
-				json.Number("23.3"),
-				json.Number("3"),
+				23.3,
+				3.0,
 				true,
 				false,
 			},
@@ -959,8 +959,8 @@ func TestValue_PathExpressions(t *testing.T) {
 				nil,
 				false,
 				true,
-				json.Number("3"),
-				json.Number("23.3"),
+				3.0,
+				23.3,
 				"string",
 			},
 			"$.F.V[4:5][0,1]": []interface{}{"string5a", "string5b"},
@@ -984,52 +984,52 @@ func TestValue_PathExpressions(t *testing.T) {
 		runTests(map[string]interface{}{
 			`$[A][0]`:    "string",
 			`$["A"][0]`:  "string",
-			`$[B,C]`:     []interface{}{"value", json.Number("3.14")},
-			`$["B","C"]`: []interface{}{"value", json.Number("3.14")},
+			`$[B,C]`:     []interface{}{"value", 3.14},
+			`$["B","C"]`: []interface{}{"value", 3.14},
 		})
 	})
 
 	t.Run("search", func(t *testing.T) {
 		runTests(map[string]interface{}{
 			"$..C": []interface{}{
-				json.Number("3.14"),
-				json.Number("3.1415"),
-				json.Number("3.141592"),
-				json.Number("3.14159265"),
+				3.14,
+				3.1415,
+				3.141592,
+				3.14159265,
 			},
 			`$..["C"]`: []interface{}{
-				json.Number("3.14"),
-				json.Number("3.1415"),
-				json.Number("3.141592"),
-				json.Number("3.14159265"),
+				3.14,
+				3.1415,
+				3.141592,
+				3.14159265,
 			},
-			"$.D.V..C":   []interface{}{json.Number("3.141592")},
-			"$.D.V.*.C":  []interface{}{json.Number("3.141592")},
-			"$.D.V..*.C": []interface{}{json.Number("3.141592")},
-			"$.D.*..C":   []interface{}{json.Number("3.141592")},
-			"$.*.V..C":   []interface{}{json.Number("3.141592")},
-			"$.*.D.V.C":  []interface{}{json.Number("3.14159265")},
-			"$.*.D..C":   []interface{}{json.Number("3.14159265")},
-			"$.*.D.V..*": []interface{}{json.Number("3.14159265")},
-			"$..D..V..C": []interface{}{json.Number("3.141592"), json.Number("3.14159265")},
-			"$.*.*.*.C":  []interface{}{json.Number("3.141592"), json.Number("3.14159265")},
-			"$..V..C":    []interface{}{json.Number("3.141592"), json.Number("3.14159265")},
+			"$.D.V..C":   []interface{}{3.141592},
+			"$.D.V.*.C":  []interface{}{3.141592},
+			"$.D.V..*.C": []interface{}{3.141592},
+			"$.D.*..C":   []interface{}{3.141592},
+			"$.*.V..C":   []interface{}{3.141592},
+			"$.*.D.V.C":  []interface{}{3.14159265},
+			"$.*.D..C":   []interface{}{3.14159265},
+			"$.*.D.V..*": []interface{}{3.14159265},
+			"$..D..V..C": []interface{}{3.141592, 3.14159265},
+			"$.*.*.*.C":  []interface{}{3.141592, 3.14159265},
+			"$..V..C":    []interface{}{3.141592, 3.14159265},
 			"$.D.V..*": []interface{}{
 				"string2a",
 				"string2b",
 				map[string]interface{}{
-					"C": json.Number("3.141592"),
+					"C": 3.141592,
 				},
-				json.Number("3.141592"),
+				3.141592,
 			},
 			"$..A": []interface{}{
-				[]interface{}{"string", json.Number("23.3"), json.Number("3"), true, false, nil},
+				[]interface{}{"string", 23.3, 3.0, true, false, nil},
 				[]interface{}{"string3"},
 			},
 			"$..A..*": []interface{}{
 				"string",
-				json.Number("23.3"),
-				json.Number("3"),
+				23.3,
+				3.0,
 				true,
 				false,
 				nil,
@@ -1037,41 +1037,41 @@ func TestValue_PathExpressions(t *testing.T) {
 			},
 			"$.A..*": []interface{}{
 				"string",
-				json.Number("23.3"),
-				json.Number("3"),
+				23.3,
+				3.0,
 				true,
 				false,
 				nil,
 			},
 			"$.A.*": []interface{}{
 				"string",
-				json.Number("23.3"),
-				json.Number("3"),
+				23.3,
+				3.0,
 				true,
 				false,
 				nil,
 			},
-			"$..A[0,1]":    []interface{}{"string", json.Number("23.3")},
+			"$..A[0,1]":    []interface{}{"string", 23.3},
 			"$..A[0]":      []interface{}{"string", "string3"},
 			"$.*.V[0]":     []interface{}{"string2a", "string4a"},
 			"$.*.V[1]":     []interface{}{"string2b", "string4b"},
 			"$.*.V[0,1]":   []interface{}{"string2a", "string2b", "string4a", "string4b"},
 			"$.*.V[0:2]":   []interface{}{"string2a", "string2b", "string4a", "string4b"},
-			"$.*.V[2].C":   []interface{}{json.Number("3.141592")},
-			"$..V[2].C":    []interface{}{json.Number("3.141592")},
-			"$..V[*].C":    []interface{}{json.Number("3.141592")},
-			"$.*.V[2].*":   []interface{}{json.Number("3.141592"), json.Number("3.1415926535")},
-			"$.*.V[2:3].*": []interface{}{json.Number("3.141592"), json.Number("3.1415926535")},
+			"$.*.V[2].C":   []interface{}{3.141592},
+			"$..V[2].C":    []interface{}{3.141592},
+			"$..V[*].C":    []interface{}{3.141592},
+			"$.*.V[2].*":   []interface{}{3.141592, 3.1415926535},
+			"$.*.V[2:3].*": []interface{}{3.141592, 3.1415926535},
 			"$.*.V[2:4].*": []interface{}{
-				json.Number("3.141592"),
-				json.Number("3.1415926535"),
+				3.141592,
+				3.1415926535,
 				"hello",
 			},
-			"$..V[2,3].CC": []interface{}{json.Number("3.1415926535"), "hello"},
-			"$..V[2:4].CC": []interface{}{json.Number("3.1415926535"), "hello"},
+			"$..V[2,3].CC": []interface{}{3.1415926535, "hello"},
+			"$..V[2:4].CC": []interface{}{3.1415926535, "hello"},
 			"$..V[*].*": []interface{}{
-				json.Number("3.141592"),
-				json.Number("3.1415926535"),
+				3.141592,
+				3.1415926535,
 				"hello",
 				"string5a",
 				"string5b",

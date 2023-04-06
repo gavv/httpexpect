@@ -287,7 +287,7 @@ func convertJsonNumberToFloatOrBigFloat(data interface{}) interface{} {
 		newVal := convertJsonNumberToFloatOrBigFloat(v.Elem().Interface())
 		return reflect.ValueOf(newVal).Interface()
 	case reflect.String:
-		if _, err := strconv.ParseFloat(v.String(), 64); err == nil {
+		if _, ok := v.Interface().(json.Number); ok {
 			newVal, _ := strconv.ParseFloat(v.String(), 64)
 			if hasPrecisionLoss(newVal) {
 				newVal := big.NewFloat(0)

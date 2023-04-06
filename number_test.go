@@ -1,7 +1,6 @@
 package httpexpect
 
 import (
-	"encoding/json"
 	"math"
 	"testing"
 
@@ -77,7 +76,7 @@ func TestNumber_Decode(t *testing.T) {
 		value.Decode(&target)
 
 		value.chain.assertNotFailed(t)
-		assert.Equal(t, json.Number("10.1"), target)
+		assert.Equal(t, 10.1, target)
 	})
 
 	t.Run("target is int", func(t *testing.T) {
@@ -146,7 +145,7 @@ func TestNumber_Getters(t *testing.T) {
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 
-	assert.Equal(t, json.Number("123"), value.Path("$").Raw())
+	assert.Equal(t, 123.0, value.Path("$").Raw())
 	value.chain.assertNotFailed(t)
 	value.chain.clearFailed()
 

@@ -836,7 +836,7 @@ func (r *Response) getJSON(opChain *chain, options ...ContentOpts) interface{} {
 
 	var value interface{}
 
-	jsonDecode(opChain, content, value)
+	jsonDecode(opChain, content, &value)
 
 	return value
 }

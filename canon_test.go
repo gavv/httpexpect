@@ -1,7 +1,6 @@
 package httpexpect
 
 import (
-	"encoding/json"
 	"math/big"
 	"testing"
 
@@ -66,13 +65,13 @@ func TestCanon_Array(t *testing.T) {
 
 	val, ok = canonArray(chain, []interface{}{123.0, 456.0})
 	assert.True(t, ok)
-	assert.Equal(t, []interface{}{json.Number("123"), json.Number("456")}, val)
+	assert.Equal(t, []interface{}{123.0, 456.0}, val)
 	chain.assertNotFailed(t)
 	chain.clearFailed()
 
 	val, ok = canonArray(chain, myArray{myInt(123), 456.0})
 	assert.True(t, ok)
-	assert.Equal(t, []interface{}{json.Number("123"), json.Number("456")}, val)
+	assert.Equal(t, []interface{}{123.0, 456.0}, val)
 	chain.assertNotFailed(t)
 	chain.clearFailed()
 
@@ -113,13 +112,13 @@ func TestCanon_Map(t *testing.T) {
 
 	val, ok = canonMap(chain, map[string]interface{}{"foo": 123.0})
 	assert.True(t, ok)
-	assert.Equal(t, map[string]interface{}{"foo": json.Number("123")}, val)
+	assert.Equal(t, map[string]interface{}{"foo": 123.0}, val)
 	chain.assertNotFailed(t)
 	chain.clearFailed()
 
 	val, ok = canonMap(chain, myMap{"foo": myInt(123)})
 	assert.True(t, ok)
-	assert.Equal(t, map[string]interface{}{"foo": json.Number("123")}, val)
+	assert.Equal(t, map[string]interface{}{"foo": 123.0}, val)
 	chain.assertNotFailed(t)
 	chain.clearFailed()
 
