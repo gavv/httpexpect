@@ -767,8 +767,6 @@ func TestValue_InList(t *testing.T) {
 }
 
 func TestValue_PathTypes(t *testing.T) {
-	reporter := newMockReporter(t)
-
 	t.Run("object", func(t *testing.T) {
 		user0 := map[string]interface{}{"name": "john"}
 		user1 := map[string]interface{}{"name": "bob"}
@@ -781,6 +779,8 @@ func TestValue_PathTypes(t *testing.T) {
 		}
 
 		t.Run("queries", func(t *testing.T) {
+			reporter := newMockReporter(t)
+
 			value := NewValue(reporter, data)
 
 			assert.Equal(t, data, value.Path("$").Raw())
@@ -798,6 +798,8 @@ func TestValue_PathTypes(t *testing.T) {
 		})
 
 		t.Run("bad key", func(t *testing.T) {
+			reporter := newMockReporter(t)
+
 			value := NewValue(reporter, data)
 
 			bad := value.Path("$.bad")
@@ -807,6 +809,8 @@ func TestValue_PathTypes(t *testing.T) {
 		})
 
 		t.Run("invalid query", func(t *testing.T) {
+			reporter := newMockReporter(t)
+
 			value := NewValue(reporter, data)
 
 			bad := value.Path("!")
@@ -825,6 +829,8 @@ func TestValue_PathTypes(t *testing.T) {
 			user1,
 		}
 
+		reporter := newMockReporter(t)
+
 		value := NewValue(reporter, data)
 
 		assert.Equal(t, data, value.Path("$").Raw())
@@ -838,6 +844,8 @@ func TestValue_PathTypes(t *testing.T) {
 	t.Run("string", func(t *testing.T) {
 		data := "foo"
 
+		reporter := newMockReporter(t)
+
 		value := NewValue(reporter, data)
 
 		assert.Equal(t, data, value.Path("$").Raw())
@@ -846,6 +854,8 @@ func TestValue_PathTypes(t *testing.T) {
 
 	t.Run("number", func(t *testing.T) {
 		data := 123
+
+		reporter := newMockReporter(t)
 
 		value := NewValue(reporter, data)
 
@@ -856,6 +866,8 @@ func TestValue_PathTypes(t *testing.T) {
 	t.Run("boolean", func(t *testing.T) {
 		data := true
 
+		reporter := newMockReporter(t)
+
 		value := NewValue(reporter, data)
 
 		assert.Equal(t, data, value.Path("$").Raw())
@@ -863,6 +875,8 @@ func TestValue_PathTypes(t *testing.T) {
 	})
 
 	t.Run("null", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
 		value := NewValue(reporter, nil)
 
 		assert.Equal(t, nil, value.Path("$").Raw())
@@ -871,6 +885,8 @@ func TestValue_PathTypes(t *testing.T) {
 
 	t.Run("error", func(t *testing.T) {
 		data := "foo"
+
+		reporter := newMockReporter(t)
 
 		value := NewValue(reporter, data)
 
@@ -887,6 +903,8 @@ func TestValue_PathTypes(t *testing.T) {
 			"A": 123,
 			"B": 123.0,
 		}
+
+		reporter := newMockReporter(t)
 
 		value := NewValue(reporter, data)
 		value.chain.assert(t, success)
@@ -954,9 +972,9 @@ func TestValue_PathExpressions(t *testing.T) {
 		},
 	}
 
-	reporter := newMockReporter(t)
-
 	runTests := func(tests map[string]interface{}) {
+		reporter := newMockReporter(t)
+
 		value := NewValue(reporter, data)
 		value.chain.assert(t, success)
 
