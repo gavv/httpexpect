@@ -470,33 +470,69 @@ func TestRequest_Handler(t *testing.T) {
 }
 
 func TestRequest_Proto(t *testing.T) {
-	client := &mockClient{}
-
-	config := Config{
-		Client:   client,
-		Reporter: newMockReporter(t),
+	cases := []struct {
+		name   string
+		proto  string
+		major  int
+		minor  int
+		result chainResult
+	}{
+		{
+			name:   "default",
+			proto:  "",
+			major:  1,
+			minor:  1,
+			result: success,
+		},
+		{
+			name:   "1.0",
+			proto:  "HTTP/1.0",
+			major:  1,
+			minor:  0,
+			result: success,
+		},
+		{
+			name:   "1.1",
+			proto:  "HTTP/1.1",
+			major:  1,
+			minor:  1,
+			result: success,
+		},
+		{
+			name:   "2.0",
+			proto:  "HTTP/2.0",
+			major:  2,
+			minor:  0,
+			result: success,
+		},
+		{
+			name:   "invalid",
+			proto:  "<invalid>",
+			result: failure,
+		},
 	}
 
-	req := NewRequestC(config, "GET", "/")
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			config := Config{
+				Client:   &mockClient{},
+				Reporter: newMockReporter(t),
+			}
 
-	assert.Equal(t, 1, req.httpReq.ProtoMajor)
-	assert.Equal(t, 1, req.httpReq.ProtoMinor)
+			req := NewRequestC(config, "GET", "/")
 
-	req.WithProto("HTTP/2.0")
+			if tc.proto != "" {
+				req.WithProto(tc.proto)
+			}
 
-	assert.Equal(t, 2, req.httpReq.ProtoMajor)
-	assert.Equal(t, 0, req.httpReq.ProtoMinor)
+			req.chain.assert(t, tc.result)
 
-	req.WithProto("HTTP/1.0")
-
-	assert.Equal(t, 1, req.httpReq.ProtoMajor)
-	assert.Equal(t, 0, req.httpReq.ProtoMinor)
-
-	req.WithProto("bad")
-	req.chain.assert(t, failure)
-
-	assert.Equal(t, 1, req.httpReq.ProtoMajor)
-	assert.Equal(t, 0, req.httpReq.ProtoMinor)
+			if tc.result {
+				assert.Equal(t, tc.major, req.httpReq.ProtoMajor)
+				assert.Equal(t, tc.minor, req.httpReq.ProtoMinor)
+			}
+		})
+	}
 }
 
 func TestRequest_URLConcatenate(t *testing.T) {
