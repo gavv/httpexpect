@@ -252,6 +252,9 @@ type mockBody struct {
 
 	closeCount int
 	closeErr   error
+
+	errCount int
+	eofCount int
 }
 
 func newMockBody(body string) *mockBody {
@@ -262,17 +265,28 @@ func newMockBody(body string) *mockBody {
 
 func (mb *mockBody) Read(p []byte) (int, error) {
 	mb.readCount++
+
 	if mb.readErr != nil {
 		return 0, mb.readErr
 	}
-	return mb.reader.Read(p)
+
+	n, err := mb.reader.Read(p)
+	if err == io.EOF {
+		mb.eofCount++
+	} else if err != nil {
+		mb.errCount++
+	}
+
+	return n, err
 }
 
 func (mb *mockBody) Close() error {
 	mb.closeCount++
+
 	if mb.closeErr != nil {
 		return mb.closeErr
 	}
+
 	return nil
 }
 
