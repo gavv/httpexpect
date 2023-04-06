@@ -1159,55 +1159,129 @@ func TestObject_ContainsSubset(t *testing.T) {
 
 func TestObject_HasValue(t *testing.T) {
 	t.Run("basic", func(t *testing.T) {
-		reporter := newMockReporter(t)
-
-		value := NewObject(reporter, map[string]interface{}{
+		testObj := map[string]interface{}{
 			"foo": 123,
 			"bar": []interface{}{"456", 789},
 			"baz": map[string]interface{}{
-				"a": "b",
+				"a": map[string]interface{}{
+					"b": 333,
+					"c": 444,
+				},
 			},
-		})
+		}
+	
+		const (
+			hasValue    = iota
+			notHasValue = iota
+		)
 
-		value.HasValue("foo", 123)
-		value.chain.assert(t, success)
-		value.chain.clear()
+		cases := []struct {
+			name      string
+			object    map[string]interface{}
+			key string
+			value     interface{}
+			assertion uint
+			wantEqual chainResult
+		}{
+			{
+				name:   "1. correct key-value, has value assertion",
+				object: testObj,
+				key: "foo", 
+				value: 123,
+				assertion: hasValue,
+				wantEqual: success,
+			},
+			{
+				name:   "1. correct key-value, not has value assertion",
+				object: testObj,
+				key: "foo",
+				value: 123,
+				assertion: notHasValue,
+				wantEqual: failure,
+			},
+			{
+				name:   "2. correct key-value, has value assertion",
+				object: testObj,
+				key: "bar",
+				value: []interface{}{"456", 789},
+				assertion: hasValue,
+				wantEqual: success,
+			},
+			{
+				name:   "2. correct key-value, not has value assertion",
+				object: testObj,
+				key: "bar",
+				value: []interface{}{"456", 789},
+				assertion: notHasValue,
+				wantEqual: failure,
+			},
+			{
+				name:   "3. wrong key-value, has value assertion",
+				object: testObj,
+				key: "baz",
+				value: map[string]interface{}{"a": "b"},
+				assertion: hasValue,
+				wantEqual: failure,
+			},
+			{
+				name:   "3. wrong key-value, not has value assertion",
+				object: testObj,
+				key: "baz",
+				value: map[string]interface{}{"a": "b"},
+				assertion: notHasValue,
+				wantEqual: success,
+			},
+			{
+				name:   "4. wrong value, has value assertion",
+				object: testObj,
+				key: "baz",
+				value: func () {},
+				assertion: hasValue,
+				wantEqual: failure,
+			},
+			{
+				name:   "4. wrong value, not has value assertion",
+				object: testObj,
+				key: "baz",
+				value: func () {},
+				assertion: notHasValue,
+				wantEqual: failure,
+			},
+			{
+				name:   "5. wrong key-value, has value assertion",
+				object: testObj,
+				key: "BAZ",
+				value: 777,
+				assertion: hasValue,
+				wantEqual: failure,
+			},
+			{
+				name:   "5. wrong key-value, not has value assertion",
+				object: testObj,
+				key: "BAZ",
+				value: 777,
+				assertion: notHasValue,
+				wantEqual: failure,
+			},
+		}
 
-		value.NotHasValue("foo", 123)
-		value.chain.assert(t, failure)
-		value.chain.clear()
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				reporter := newMockReporter(t)
+				value := NewObject(reporter, tc.object)
 
-		value.HasValue("bar", []interface{}{"456", 789})
-		value.chain.assert(t, success)
-		value.chain.clear()
+				if tc.assertion == hasValue {
+					value.HasValue(tc.key, tc.value)
+					value.chain.assert(t, tc.wantEqual)
+					value.chain.clear()
+				} else if tc.assertion == notHasValue {
+					value.NotHasValue(tc.key, tc.value)
+					value.chain.assert(t, tc.wantEqual)
+					value.chain.clear()
+				}
 
-		value.NotHasValue("bar", []interface{}{"456", 789})
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.HasValue("baz", map[string]interface{}{"a": "b"})
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		value.NotHasValue("baz", map[string]interface{}{"a": "b"})
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.HasValue("baz", func() {})
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.NotHasValue("baz", func() {})
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.HasValue("BAZ", 777)
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.NotHasValue("BAZ", 777)
-		value.chain.assert(t, failure)
-		value.chain.clear()
+			})
+		}
 	})
 
 	t.Run("struct", func(t *testing.T) {
