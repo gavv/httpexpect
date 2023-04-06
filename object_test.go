@@ -675,21 +675,21 @@ func TestObject_ContainsKey(t *testing.T) {
 		wantNotContainsKey chainResult
 	}{
 		{
-			name:               "1. correct key value, contains assertion",
+			name:               "foo value, correct key value",
 			object:             testObj,
 			key:                "foo",
 			wantContainsKey:    success,
 			wantNotContainsKey: failure,
 		},
 		{
-			name:               "2. correct key value, contains assertion",
+			name:               "bar value, correct key value",
 			object:             testObj,
 			key:                "bar",
 			wantContainsKey:    success,
 			wantNotContainsKey: failure,
 		},
 		{
-			name:               "3. wrong key value, contains assertion",
+			name:               "BAR value, wrong key value",
 			object:             testObj,
 			key:                "BAR",
 			wantContainsKey:    failure,
@@ -700,15 +700,12 @@ func TestObject_ContainsKey(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
-			value := NewObject(reporter, tc.object)
 
-			value.ContainsKey(tc.key)
-			value.chain.assert(t, tc.wantContainsKey)
-			value.chain.clear()
+			NewObject(reporter, tc.object).ContainsKey(tc.key).
+				chain.assert(t, tc.wantContainsKey)
 
-			value.NotContainsKey(tc.key)
-			value.chain.assert(t, tc.wantNotContainsKey)
-			value.chain.clear()
+			NewObject(reporter, tc.object).NotContainsKey(tc.key).
+				chain.assert(t, tc.wantNotContainsKey)
 
 		})
 	}
@@ -726,21 +723,21 @@ func TestObject_ContainsValue(t *testing.T) {
 			wantNotContainsKey chainResult
 		}{
 			{
-				name:               "1. correct value, contains value assertion",
+				name:               "123 value, correct value",
 				object:             testObj,
 				value:              123,
 				wantContainsKey:    success,
 				wantNotContainsKey: failure,
 			},
 			{
-				name:               "2. correct value, contains value assertion",
+				name:               "xxx value, correct value",
 				object:             testObj,
 				value:              "xxx",
 				wantContainsKey:    success,
 				wantNotContainsKey: failure,
 			},
 			{
-				name:               "3. wrong value, contains value assertion",
+				name:               "XXX value, wrong value",
 				object:             testObj,
 				value:              "XXX",
 				wantContainsKey:    failure,
@@ -751,24 +748,19 @@ func TestObject_ContainsValue(t *testing.T) {
 		for _, tc := range cases {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
-				value := NewObject(reporter, tc.object)
 
-				value.ContainsValue(tc.value)
-				value.chain.assert(t, tc.wantContainsKey)
-				value.chain.clear()
+				NewObject(reporter, tc.object).ContainsValue(tc.value).
+					chain.assert(t, tc.wantContainsKey)
 
-				value.NotContainsValue(tc.value)
-				value.chain.assert(t, tc.wantNotContainsKey)
-				value.chain.clear()
+				NewObject(reporter, tc.object).NotContainsValue(tc.value).
+					chain.assert(t, tc.wantNotContainsKey)
 
 			})
 		}
 	})
 
 	t.Run("struct", func(t *testing.T) {
-		reporter := newMockReporter(t)
-
-		value := NewObject(reporter, map[string]interface{}{
+		testObj :=  map[string]interface{}{
 			"foo": 123,
 			"bar": []interface{}{"456", 789},
 			"baz": map[string]interface{}{
@@ -777,7 +769,7 @@ func TestObject_ContainsValue(t *testing.T) {
 					"c": 444,
 				},
 			},
-		})
+		}
 
 		type (
 			A struct {
@@ -790,71 +782,124 @@ func TestObject_ContainsValue(t *testing.T) {
 			}
 		)
 
-		barValue := []interface{}{"456", 789}
-		bazValue := Baz{
-			A: A{
-				B: 333,
-				C: 444,
+		cases := []struct {
+			name               string
+			object             map[string]interface{}
+			value              interface{}
+			wantContainsKey    chainResult
+			wantNotContainsKey chainResult
+		} {
+			{
+				name: "correct value, contains slice",
+				object: testObj,
+				value: []interface{}{"456", 789},
+				wantContainsKey: success,
+				wantNotContainsKey: failure,
+			},
+			{
+				name: "correct value, contains nested map",
+				object: testObj,
+				value: Baz{
+					A: A{
+						B: 333,
+						C: 444,
+					},
+				},
+				wantContainsKey: success,
+				wantNotContainsKey: failure,
 			},
 		}
 
-		value.ContainsValue(barValue)
-		value.chain.assert(t, success)
-		value.chain.clear()
+		
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				reporter := newMockReporter(t)
 
-		value.NotContainsValue(barValue)
-		value.chain.assert(t, failure)
-		value.chain.clear()
+				NewObject(reporter, tc.object).ContainsValue(tc.value).
+					chain.assert(t, tc.wantContainsKey)
 
-		value.ContainsValue(bazValue)
-		value.chain.assert(t, success)
-		value.chain.clear()
+				NewObject(reporter, tc.object).NotContainsValue(tc.value).
+					chain.assert(t, tc.wantNotContainsKey)
 
-		value.NotContainsValue(bazValue)
-		value.chain.assert(t, failure)
-		value.chain.clear()
+			})
+		}
+	
 	})
 
 	t.Run("canonization", func(t *testing.T) {
+		testObj := map[string]interface{}{"foo": 123, "bar": 789}
+
 		type (
 			myInt int
 		)
 
-		reporter := newMockReporter(t)
+		cases := []struct {
+			name               string
+			object             map[string]interface{}
+			value              interface{}
+			wantContainsKey    chainResult
+			wantNotContainsKey chainResult
+		} {
+			{
+				name: "correct value, wrapped primitive",
+				object: testObj,
+				value: myInt(789.0),
+				wantContainsKey: success,
+				wantNotContainsKey: failure,
+			},
+		}
 
-		value := NewObject(reporter, map[string]interface{}{"foo": 123, "bar": 789})
+		
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				reporter := newMockReporter(t)
 
-		value.ContainsValue(myInt(789.0))
-		value.chain.assert(t, success)
-		value.chain.clear()
+				NewObject(reporter, tc.object).ContainsValue(tc.value).
+					chain.assert(t, tc.wantContainsKey)
 
-		value.NotContainsValue(myInt(789.0))
-		value.chain.assert(t, failure)
-		value.chain.clear()
+				NewObject(reporter, tc.object).NotContainsValue(tc.value).
+					chain.assert(t, tc.wantNotContainsKey)
+
+			})
+		}
 	})
 
 	t.Run("invalid argument", func(t *testing.T) {
-		reporter := newMockReporter(t)
+		testObj := map[string]interface{}{"foo": 123, "bar": "xxx"}
 
-		value := NewObject(reporter, map[string]interface{}{"foo": 123, "bar": "xxx"})
+		cases := []struct {
+			name               string
+			object             map[string]interface{}
+			value              interface{}
+			wantContainsKey    chainResult
+			wantNotContainsKey chainResult
+		} {
+			{
+				name: "invalid value, channel",
+				object: testObj,
+				value: make(chan int),
+				wantContainsKey: failure,
+				wantNotContainsKey: failure,
+			},
+		}
 
-		value.ContainsValue(make(chan int))
-		value.chain.assert(t, failure)
-		value.chain.clear()
+		
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				reporter := newMockReporter(t)
 
-		value.NotContainsValue(make(chan int))
-		value.chain.assert(t, failure)
-		value.chain.clear()
+				NewObject(reporter, tc.object).ContainsValue(tc.value).
+					chain.assert(t, tc.wantContainsKey)
+
+				NewObject(reporter, tc.object).NotContainsValue(tc.value).
+					chain.assert(t, tc.wantNotContainsKey)
+
+			})
+		}
 	})
 }
 
 func TestObject_ContainsSubset(t *testing.T) {
-
-	const (
-		containsSubset    = iota
-		notContainsSubset = iota
-	)
-
 	t.Run("success", func(t *testing.T) {
 		testObj := map[string]interface{}{
 			"foo": 123,
@@ -875,7 +920,7 @@ func TestObject_ContainsSubset(t *testing.T) {
 			wantNotContainsKey chainResult
 		}{
 			{
-				name:   "1. correct subset, contains subset assertion",
+				name:   "partial subset with slices",
 				object: testObj,
 				subset: map[string]interface{}{
 					"foo": 123,
@@ -885,7 +930,7 @@ func TestObject_ContainsSubset(t *testing.T) {
 				wantNotContainsKey: failure,
 			},
 			{
-				name:   "2. correct subset, contains subset assertion",
+				name:   "partial subset with nested maps",
 				object: testObj,
 				subset: map[string]interface{}{
 					"bar": []interface{}{"456", 789},
@@ -903,15 +948,12 @@ func TestObject_ContainsSubset(t *testing.T) {
 		for _, tc := range cases {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
-				value := NewObject(reporter, tc.object)
 
-				value.ContainsSubset(tc.subset)
-				value.chain.assert(t, tc.wantContainsKey)
-				value.chain.clear()
+				NewObject(reporter, tc.object).ContainsSubset(tc.subset).
+					chain.assert(t, tc.wantContainsKey)
 
-				value.NotContainsSubset(tc.subset)
-				value.chain.assert(t, tc.wantNotContainsKey)
-				value.chain.clear()
+				NewObject(reporter, tc.object).NotContainsSubset(tc.subset).
+					chain.assert(t, tc.wantNotContainsKey)
 
 			})
 		}
@@ -930,34 +972,25 @@ func TestObject_ContainsSubset(t *testing.T) {
 		}
 
 		cases := []struct {
-			name      string
-			object    map[string]interface{}
-			subset    map[string]interface{}
-			assertion uint
-			wantEqual chainResult
+			name               string
+			object             map[string]interface{}
+			subset             map[string]interface{}
+			assertion          uint
+			wantContainsKey    chainResult
+			wantNotContainsKey chainResult
 		}{
 			{
-				name:   "1. wrong subset, contains subset assertion",
+				name:   "partial subset with wrong key",
 				object: testObj,
 				subset: map[string]interface{}{
 					"foo": 123,
 					"qux": 456,
 				},
-				assertion: containsSubset,
-				wantEqual: failure,
+				wantContainsKey:    failure,
+				wantNotContainsKey: success,
 			},
 			{
-				name:   "1. wrong subset, not contains subset assertion",
-				object: testObj,
-				subset: map[string]interface{}{
-					"foo": 123,
-					"qux": 456,
-				},
-				assertion: notContainsSubset,
-				wantEqual: success,
-			},
-			{
-				name:   "2. wrong subset, contains subset assertion",
+				name:   "partial subset with nested map",
 				object: testObj,
 				subset: map[string]interface{}{
 					"baz": map[string]interface{}{
@@ -967,53 +1000,27 @@ func TestObject_ContainsSubset(t *testing.T) {
 						},
 					},
 				},
-				assertion: containsSubset,
-				wantEqual: failure,
+				wantContainsKey:    failure,
+				wantNotContainsKey: success,
 			},
 			{
-				name:   "2. wrong subset, not contains subset assertion",
-				object: testObj,
-				subset: map[string]interface{}{
-					"baz": map[string]interface{}{
-						"a": map[string]interface{}{
-							"b": "333",
-							"c": 444,
-						},
-					},
-				},
-				assertion: notContainsSubset,
-				wantEqual: success,
-			},
-			{
-				name:      "3. nil subset, contains subset assertion",
-				object:    testObj,
-				subset:    nil,
-				assertion: containsSubset,
-				wantEqual: failure,
-			},
-			{
-				name:      "3. nil subset, not contains subset assertion",
-				object:    testObj,
-				subset:    nil,
-				assertion: notContainsSubset,
-				wantEqual: failure,
+				name:               "nil subset",
+				object:             testObj,
+				subset:             nil,
+				wantContainsKey:    failure,
+				wantNotContainsKey: failure,
 			},
 		}
 
 		for _, tc := range cases {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
-				value := NewObject(reporter, tc.object)
 
-				if tc.assertion == containsSubset {
-					value.ContainsSubset(tc.subset)
-					value.chain.assert(t, tc.wantEqual)
-					value.chain.clear()
-				} else if tc.assertion == notContainsSubset {
-					value.NotContainsSubset(tc.subset)
-					value.chain.assert(t, tc.wantEqual)
-					value.chain.clear()
-				}
+				NewObject(reporter, tc.object).ContainsSubset(tc.subset).
+					chain.assert(t, tc.wantContainsKey)
+
+				NewObject(reporter, tc.object).NotContainsSubset(tc.subset).
+					chain.assert(t, tc.wantNotContainsKey)
 
 			})
 		}
@@ -1030,9 +1037,6 @@ func TestObject_ContainsSubset(t *testing.T) {
 				},
 			},
 		}
-		reporter := newMockReporter(t)
-
-		value := NewObject(reporter, testObj)
 
 		type (
 			A struct {
@@ -1049,30 +1053,49 @@ func TestObject_ContainsSubset(t *testing.T) {
 			}
 		)
 
-		submap := S{
-			Foo: 123,
-			Baz: Baz{
-				A: A{
-					B: 333,
+		cases := []struct {
+			name               string
+			object             map[string]interface{}
+			value              interface{}
+			wantContainsKey    chainResult
+			wantNotContainsKey chainResult
+		} {
+			{
+				name: "partial subset",
+				object: testObj,
+				value: S{
+					Foo: 123,
+					Baz: Baz{
+						A: A{
+							B: 333,
+						},
+					},
 				},
+				wantContainsKey: success,
+				wantNotContainsKey: failure,
+			},
+			{
+				name: "empty subset",
+				object: testObj,
+				value: S{},
+				wantContainsKey: failure,
+				wantNotContainsKey: success,
 			},
 		}
 
-		value.ContainsSubset(submap)
-		value.chain.assert(t, success)
-		value.chain.clear()
+		
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				reporter := newMockReporter(t)
 
-		value.NotContainsSubset(submap)
-		value.chain.assert(t, failure)
-		value.chain.clear()
+				NewObject(reporter, tc.object).ContainsSubset(tc.value).
+					chain.assert(t, tc.wantContainsKey)
 
-		value.ContainsSubset(S{})
-		value.chain.assert(t, failure)
-		value.chain.clear()
+				NewObject(reporter, tc.object).NotContainsSubset(tc.value).
+					chain.assert(t, tc.wantNotContainsKey)
 
-		value.NotContainsSubset(S{})
-		value.chain.assert(t, success)
-		value.chain.clear()
+			})
+		}
 	})
 
 	t.Run("canonization", func(t *testing.T) {
@@ -1093,22 +1116,38 @@ func TestObject_ContainsSubset(t *testing.T) {
 			myInt   int
 		)
 
-		reporter := newMockReporter(t)
-
-		value := NewObject(reporter, testObj)
-
-		submap := myMap{
-			"foo": myInt(123),
-			"bar": myArray{"456", myInt(789)},
+		cases := []struct {
+			name               string
+			object             map[string]interface{}
+			value              interface{}
+			wantContainsKey    chainResult
+			wantNotContainsKey chainResult
+		} {
+			{
+				name: "correct value, wrapped map",
+				object: testObj,
+				value: myMap{
+					"foo": myInt(123),
+					"bar": myArray{"456", myInt(789)},
+				},
+				wantContainsKey: success,
+				wantNotContainsKey: failure,
+			},
 		}
 
-		value.ContainsSubset(submap)
-		value.chain.assert(t, success)
-		value.chain.clear()
+		
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				reporter := newMockReporter(t)
 
-		value.NotContainsSubset(submap)
-		value.chain.assert(t, failure)
-		value.chain.clear()
+				NewObject(reporter, tc.object).ContainsSubset(tc.value).
+					chain.assert(t, tc.wantContainsKey)
+
+				NewObject(reporter, tc.object).NotContainsSubset(tc.value).
+					chain.assert(t, tc.wantNotContainsKey)
+
+			})
+		}
 	})
 }
 
@@ -1135,7 +1174,7 @@ func TestObject_HasValue(t *testing.T) {
 			wantNotContainsKey chainResult
 		}{
 			{
-				name:               "1. correct key-value, has value assertion",
+				name:               "correct key-value with primitives",
 				object:             testObj,
 				key:                "foo",
 				value:              123,
@@ -1143,7 +1182,7 @@ func TestObject_HasValue(t *testing.T) {
 				wantNotContainsKey: failure,
 			},
 			{
-				name:               "2. correct key-value, has value assertion",
+				name:               "correct key-value with slices",
 				object:             testObj,
 				key:                "bar",
 				value:              []interface{}{"456", 789},
@@ -1151,7 +1190,7 @@ func TestObject_HasValue(t *testing.T) {
 				wantNotContainsKey: failure,
 			},
 			{
-				name:               "3. wrong key-value, has value assertion",
+				name:               "wrong key-value with maps",
 				object:             testObj,
 				key:                "baz",
 				value:              map[string]interface{}{"a": "b"},
@@ -1159,7 +1198,7 @@ func TestObject_HasValue(t *testing.T) {
 				wantNotContainsKey: success,
 			},
 			{
-				name:               "4. wrong value, has value assertion",
+				name:               "wrong value with empty func",
 				object:             testObj,
 				key:                "baz",
 				value:              func() {},
@@ -1167,7 +1206,7 @@ func TestObject_HasValue(t *testing.T) {
 				wantNotContainsKey: failure,
 			},
 			{
-				name:               "5. wrong key-value, has value assertion",
+				name:               "wrong key-value with primitive",
 				object:             testObj,
 				key:                "BAZ",
 				value:              777,
@@ -1179,24 +1218,20 @@ func TestObject_HasValue(t *testing.T) {
 		for _, tc := range cases {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
-				value := NewObject(reporter, tc.object)
 
-				value.HasValue(tc.key, tc.value)
-				value.chain.assert(t, tc.wantContainsKey)
-				value.chain.clear()
+				NewObject(reporter, tc.object).HasValue(tc.key, tc.value).
+					chain.assert(t, tc.wantContainsKey)
 
-				value.NotHasValue(tc.key, tc.value)
-				value.chain.assert(t, tc.wantNotContainsKey)
-				value.chain.clear()
+				NewObject(reporter, tc.object).NotHasValue(tc.key, tc.value).
+					chain.assert(t, tc.wantNotContainsKey)
 
 			})
 		}
 	})
 
 	t.Run("struct", func(t *testing.T) {
-		reporter := newMockReporter(t)
 
-		value := NewObject(reporter, map[string]interface{}{
+		testObj := map[string]interface{}{
 			"foo": 123,
 			"bar": []interface{}{"456", 789},
 			"baz": map[string]interface{}{
@@ -1205,7 +1240,7 @@ func TestObject_HasValue(t *testing.T) {
 					"c": 444,
 				},
 			},
-		})
+		}
 
 		type (
 			A struct {
@@ -1218,28 +1253,50 @@ func TestObject_HasValue(t *testing.T) {
 			}
 		)
 
-		baz := Baz{
-			A: A{
-				B: 333,
-				C: 444,
+		cases := []struct {
+			name               string
+			object             map[string]interface{}
+			key string
+			value              interface{}
+			wantContainsKey    chainResult
+			wantNotContainsKey chainResult
+		} {
+			{
+				name: "partial subset",
+				object: testObj,
+				key: "baz",
+				value: Baz{
+					A: A{
+						B: 333,
+						C: 444,
+					},
+				},
+				wantContainsKey: success,
+				wantNotContainsKey: failure,
+			},
+			{
+				name: "empty subset",
+				object: testObj,
+				key: "baz",
+				value: Baz{},
+				wantContainsKey: failure,
+				wantNotContainsKey: success,
 			},
 		}
 
-		value.HasValue("baz", baz)
-		value.chain.assert(t, success)
-		value.chain.clear()
+		
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				reporter := newMockReporter(t)
 
-		value.NotHasValue("baz", baz)
-		value.chain.assert(t, failure)
-		value.chain.clear()
+				NewObject(reporter, tc.object).HasValue(tc.key, tc.value).
+					chain.assert(t, tc.wantContainsKey)
 
-		value.HasValue("baz", Baz{})
-		value.chain.assert(t, failure)
-		value.chain.clear()
+				NewObject(reporter, tc.object).NotHasValue(tc.key, tc.value).
+					chain.assert(t, tc.wantNotContainsKey)
 
-		value.NotHasValue("baz", Baz{})
-		value.chain.assert(t, success)
-		value.chain.clear()
+			})
+		}
 	})
 
 	t.Run("canonization", func(t *testing.T) {
@@ -1249,31 +1306,53 @@ func TestObject_HasValue(t *testing.T) {
 			myInt   int
 		)
 
-		reporter := newMockReporter(t)
-
-		value := NewObject(reporter, map[string]interface{}{
+		testObj :=  map[string]interface{}{
 			"foo": 123,
 			"bar": []interface{}{"456", 789},
 			"baz": map[string]interface{}{
 				"a": "b",
 			},
-		})
+		}
 
-		value.HasValue("bar", myArray{"456", myInt(789)})
-		value.chain.assert(t, success)
-		value.chain.clear()
+		cases := []struct {
+			name               string
+			object             map[string]interface{}
+			key string
+			value              interface{}
+			wantContainsKey    chainResult
+			wantNotContainsKey chainResult
+		} {
+			{
+				name: "correct value, wrapped array",
+				object: testObj,
+				key: "bar",
+				value: myArray{"456", myInt(789)},
+				wantContainsKey: success,
+				wantNotContainsKey: failure,
+			},
+			{
+				name: "correct value, wrapped map",
+				object: testObj,
+				key: "baz",
+				value: myMap{"a": "b"},
+				wantContainsKey: success,
+				wantNotContainsKey: failure,
+			},
+		}
 
-		value.NotHasValue("bar", myArray{"456", myInt(789)})
-		value.chain.assert(t, failure)
-		value.chain.clear()
+		
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				reporter := newMockReporter(t)
 
-		value.HasValue("baz", myMap{"a": "b"})
-		value.chain.assert(t, success)
-		value.chain.clear()
+				NewObject(reporter, tc.object).HasValue(tc.key, tc.value).
+					chain.assert(t, tc.wantContainsKey)
 
-		value.NotHasValue("baz", myMap{"a": "b"})
-		value.chain.assert(t, failure)
-		value.chain.clear()
+				NewObject(reporter, tc.object).NotHasValue(tc.key, tc.value).
+					chain.assert(t, tc.wantNotContainsKey)
+
+			})
+		}
 	})
 }
 
