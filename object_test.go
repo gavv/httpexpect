@@ -667,56 +667,56 @@ func TestObject_InList(t *testing.T) {
 func TestObject_ContainsKey(t *testing.T) {
 	testObj := map[string]interface{}{"foo": 123, "bar": ""}
 	const (
-		contains = iota
+		contains    = iota
 		notContains = iota
 	)
-	
-	cases := []struct{
-		name string
-		object map[string]interface{}
-		key string
+
+	cases := []struct {
+		name      string
+		object    map[string]interface{}
+		key       string
 		assertion uint
 		wantEqual chainResult
-	} {
+	}{
 		{
-			name: "1. correct key value, contains assertion",
-			object: testObj,
-			key: "foo",
+			name:      "1. correct key value, contains assertion",
+			object:    testObj,
+			key:       "foo",
 			assertion: contains,
 			wantEqual: success,
 		},
 		{
-			name: "1. correct key value, not contains assertion",
-			object: testObj,
-			key: "foo",
+			name:      "1. correct key value, not contains assertion",
+			object:    testObj,
+			key:       "foo",
 			assertion: notContains,
 			wantEqual: failure,
 		},
 		{
-			name: "2. correct key value, contains assertion",
-			object: testObj,
-			key: "bar",
+			name:      "2. correct key value, contains assertion",
+			object:    testObj,
+			key:       "bar",
 			assertion: contains,
 			wantEqual: success,
 		},
 		{
-			name: "2. correct key value, not contains assertion",
-			object: testObj,
-			key: "bar",
+			name:      "2. correct key value, not contains assertion",
+			object:    testObj,
+			key:       "bar",
 			assertion: notContains,
 			wantEqual: failure,
 		},
 		{
-			name: "3. wrong key value, contains assertion",
-			object: testObj,
-			key: "BAR",
+			name:      "3. wrong key value, contains assertion",
+			object:    testObj,
+			key:       "BAR",
 			assertion: contains,
 			wantEqual: failure,
 		},
 		{
-			name: "3. wrong key value, not contains assertion",
-			object: testObj,
-			key: "BAR",
+			name:      "3. wrong key value, not contains assertion",
+			object:    testObj,
+			key:       "BAR",
 			assertion: notContains,
 			wantEqual: success,
 		},
@@ -744,56 +744,56 @@ func TestObject_ContainsValue(t *testing.T) {
 	t.Run("basic", func(t *testing.T) {
 		testObj := map[string]interface{}{"foo": 123, "bar": "xxx"}
 		const (
-			containsValue = iota
+			containsValue    = iota
 			notContainsValue = iota
 		)
 
-		cases := []struct{
-			name string
-			object map[string]interface{}
-			value interface{}
+		cases := []struct {
+			name      string
+			object    map[string]interface{}
+			value     interface{}
 			assertion uint
 			wantEqual chainResult
-		} {
+		}{
 			{
-				name: "1. correct value, contains value assertion",
-				object: testObj,
-				value: 123,
+				name:      "1. correct value, contains value assertion",
+				object:    testObj,
+				value:     123,
 				assertion: containsValue,
 				wantEqual: success,
 			},
 			{
-				name: "1. correct value, not contains value assertion",
-				object: testObj,
-				value: 123,
+				name:      "1. correct value, not contains value assertion",
+				object:    testObj,
+				value:     123,
 				assertion: notContainsValue,
 				wantEqual: failure,
 			},
 			{
-				name: "2. correct value, contains value assertion",
-				object: testObj,
-				value: "xxx",
+				name:      "2. correct value, contains value assertion",
+				object:    testObj,
+				value:     "xxx",
 				assertion: containsValue,
 				wantEqual: success,
 			},
 			{
-				name: "2. correct value, not contains value assertion",
-				object: testObj,
-				value: "xxx",
+				name:      "2. correct value, not contains value assertion",
+				object:    testObj,
+				value:     "xxx",
 				assertion: notContainsValue,
 				wantEqual: failure,
 			},
 			{
-				name: "3. wrong value, contains value assertion",
-				object: testObj,
-				value: "XXX",
+				name:      "3. wrong value, contains value assertion",
+				object:    testObj,
+				value:     "XXX",
 				assertion: containsValue,
 				wantEqual: failure,
 			},
 			{
-				name: "3. wrong value, not contains value assertion",
-				object: testObj,
-				value: "XXX",
+				name:      "3. wrong value, not contains value assertion",
+				object:    testObj,
+				value:     "XXX",
 				assertion: notContainsValue,
 				wantEqual: success,
 			},
@@ -803,7 +803,7 @@ func TestObject_ContainsValue(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
 				value := NewObject(reporter, tc.object)
-	
+
 				if tc.assertion == containsValue {
 					value.ContainsValue(tc.value)
 					value.chain.assert(t, tc.wantEqual)
@@ -901,130 +901,194 @@ func TestObject_ContainsValue(t *testing.T) {
 }
 
 func TestObject_ContainsSubset(t *testing.T) {
+	testObj := map[string]interface{}{
+		"foo": 123,
+		"bar": []interface{}{"456", 789},
+		"baz": map[string]interface{}{
+			"a": map[string]interface{}{
+				"b": 333,
+				"c": 444,
+			},
+		},
+	}
+
+	const (
+		containsSubset    = iota
+		notContainsSubset = iota
+	)
+
 	t.Run("success", func(t *testing.T) {
-		reporter := newMockReporter(t)
-
-		value := NewObject(reporter, map[string]interface{}{
-			"foo": 123,
-			"bar": []interface{}{"456", 789},
-			"baz": map[string]interface{}{
-				"a": map[string]interface{}{
-					"b": 333,
-					"c": 444,
+		cases := []struct {
+			name      string
+			object    map[string]interface{}
+			subset    map[string]interface{}
+			assertion uint
+			wantEqual chainResult
+		}{
+			{
+				name:   "1. correct subset, contains subset assertion",
+				object: testObj,
+				subset: map[string]interface{}{
+					"foo": 123,
+					"bar": []interface{}{"456", 789},
 				},
+				assertion: containsSubset,
+				wantEqual: success,
 			},
-		})
-
-		submap1 := map[string]interface{}{
-			"foo": 123,
-			"bar": []interface{}{"456", 789},
+			{
+				name:   "1. correct subset, not contains subset assertion",
+				object: testObj,
+				subset: map[string]interface{}{
+					"foo": 123,
+					"bar": []interface{}{"456", 789},
+				},
+				assertion: notContainsSubset,
+				wantEqual: failure,
+			},
+			{
+				name:   "2. correct subset, contains subset assertion",
+				object: testObj,
+				subset: map[string]interface{}{
+					"bar": []interface{}{"456", 789},
+					"baz": map[string]interface{}{
+						"a": map[string]interface{}{
+							"c": 444,
+						},
+					},
+				},
+				assertion: containsSubset,
+				wantEqual: success,
+			},
+			{
+				name:   "2. correct subset, not contains subset assertion",
+				object: testObj,
+				subset: map[string]interface{}{
+					"bar": []interface{}{"456", 789},
+					"baz": map[string]interface{}{
+						"a": map[string]interface{}{
+							"c": 444,
+						},
+					},
+				},
+				assertion: notContainsSubset,
+				wantEqual: failure,
+			},
 		}
 
-		value.ContainsSubset(submap1)
-		value.chain.assert(t, success)
-		value.chain.clear()
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				reporter := newMockReporter(t)
+				value := NewObject(reporter, tc.object)
 
-		value.NotContainsSubset(submap1)
-		value.chain.assert(t, failure)
-		value.chain.clear()
+				if tc.assertion == containsSubset {
+					value.ContainsSubset(tc.subset)
+					value.chain.assert(t, tc.wantEqual)
+					value.chain.clear()
+				} else if tc.assertion == notContainsSubset {
+					value.NotContainsSubset(tc.subset)
+					value.chain.assert(t, tc.wantEqual)
+					value.chain.clear()
+				}
 
-		submap2 := map[string]interface{}{
-			"bar": []interface{}{"456", 789},
-			"baz": map[string]interface{}{
-				"a": map[string]interface{}{
-					"c": 444,
-				},
-			},
+			})
 		}
-
-		value.ContainsSubset(submap2)
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		value.NotContainsSubset(submap2)
-		value.chain.assert(t, failure)
-		value.chain.clear()
 	})
 
 	t.Run("failure", func(t *testing.T) {
-		reporter := newMockReporter(t)
-
-		value := NewObject(reporter, map[string]interface{}{
-			"foo": 123,
-			"bar": []interface{}{"456", 789},
-			"baz": map[string]interface{}{
-				"a": map[string]interface{}{
-					"b": 333,
-					"c": 444,
+		cases := []struct {
+			name      string
+			object    map[string]interface{}
+			subset    map[string]interface{}
+			assertion uint
+			wantEqual chainResult
+		}{
+			{
+				name:   "1. wrong subset, contains subset assertion",
+				object: testObj,
+				subset: map[string]interface{}{
+					"foo": 123,
+					"qux": 456,
 				},
+				assertion: containsSubset,
+				wantEqual: failure,
 			},
-		})
-
-		submap1 := map[string]interface{}{
-			"foo": 123,
-			"qux": 456,
-		}
-
-		value.ContainsSubset(submap1)
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.NotContainsSubset(submap1)
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		submap2 := map[string]interface{}{
-			"foo": 123,
-			"bar": []interface{}{"456", "789"},
-		}
-
-		value.ContainsSubset(submap2)
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.NotContainsSubset(submap2)
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		submap3 := map[string]interface{}{
-			"baz": map[string]interface{}{
-				"a": map[string]interface{}{
-					"b": "333",
-					"c": 444,
+			{
+				name:   "1. wrong subset, not contains subset assertion",
+				object: testObj,
+				subset: map[string]interface{}{
+					"foo": 123,
+					"qux": 456,
 				},
+				assertion: notContainsSubset,
+				wantEqual: success,
+			},
+			{
+				name:   "2. wrong subset, contains subset assertion",
+				object: testObj,
+				subset: map[string]interface{}{
+					"baz": map[string]interface{}{
+						"a": map[string]interface{}{
+							"b": "333",
+							"c": 444,
+						},
+					},
+				},
+				assertion: containsSubset,
+				wantEqual: failure,
+			},
+			{
+				name:   "2. wrong subset, not contains subset assertion",
+				object: testObj,
+				subset: map[string]interface{}{
+					"baz": map[string]interface{}{
+						"a": map[string]interface{}{
+							"b": "333",
+							"c": 444,
+						},
+					},
+				},
+				assertion: notContainsSubset,
+				wantEqual: success,
+			},
+			{
+				name:      "3. nil subset, contains subset assertion",
+				object:    testObj,
+				subset:    nil,
+				assertion: containsSubset,
+				wantEqual: failure,
+			},
+			{
+				name:      "3. nil subset, not contains subset assertion",
+				object:    testObj,
+				subset:    nil,
+				assertion: notContainsSubset,
+				wantEqual: failure,
 			},
 		}
 
-		value.ContainsSubset(submap3)
-		value.chain.assert(t, failure)
-		value.chain.clear()
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				reporter := newMockReporter(t)
+				value := NewObject(reporter, tc.object)
 
-		value.NotContainsSubset(submap3)
-		value.chain.assert(t, success)
-		value.chain.clear()
+				if tc.assertion == containsSubset {
+					value.ContainsSubset(tc.subset)
+					value.chain.assert(t, tc.wantEqual)
+					value.chain.clear()
+				} else if tc.assertion == notContainsSubset {
+					value.NotContainsSubset(tc.subset)
+					value.chain.assert(t, tc.wantEqual)
+					value.chain.clear()
+				}
 
-		value.ContainsSubset(nil)
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.NotContainsSubset(nil)
-		value.chain.assert(t, failure)
-		value.chain.clear()
+			})
+		}
 	})
 
 	t.Run("struct", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
-		value := NewObject(reporter, map[string]interface{}{
-			"foo": 123,
-			"bar": []interface{}{"456", 789},
-			"baz": map[string]interface{}{
-				"a": map[string]interface{}{
-					"b": 333,
-					"c": 444,
-				},
-			},
-		})
+		value := NewObject(reporter, testObj)
 
 		type (
 			A struct {
@@ -1076,13 +1140,7 @@ func TestObject_ContainsSubset(t *testing.T) {
 
 		reporter := newMockReporter(t)
 
-		value := NewObject(reporter, map[string]interface{}{
-			"foo": 123,
-			"bar": []interface{}{"456", 789},
-			"baz": map[string]interface{}{
-				"a": "b",
-			},
-		})
+		value := NewObject(reporter, testObj)
 
 		submap := myMap{
 			"foo": myInt(123),
