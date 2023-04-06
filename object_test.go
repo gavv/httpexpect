@@ -901,16 +901,6 @@ func TestObject_ContainsValue(t *testing.T) {
 }
 
 func TestObject_ContainsSubset(t *testing.T) {
-	testObj := map[string]interface{}{
-		"foo": 123,
-		"bar": []interface{}{"456", 789},
-		"baz": map[string]interface{}{
-			"a": map[string]interface{}{
-				"b": 333,
-				"c": 444,
-			},
-		},
-	}
 
 	const (
 		containsSubset    = iota
@@ -918,6 +908,17 @@ func TestObject_ContainsSubset(t *testing.T) {
 	)
 
 	t.Run("success", func(t *testing.T) {
+		testObj := map[string]interface{}{
+			"foo": 123,
+			"bar": []interface{}{"456", 789},
+			"baz": map[string]interface{}{
+				"a": map[string]interface{}{
+					"b": 333,
+					"c": 444,
+				},
+			},
+		}
+
 		cases := []struct {
 			name      string
 			object    map[string]interface{}
@@ -995,6 +996,17 @@ func TestObject_ContainsSubset(t *testing.T) {
 	})
 
 	t.Run("failure", func(t *testing.T) {
+		testObj := map[string]interface{}{
+			"foo": 123,
+			"bar": []interface{}{"456", 789},
+			"baz": map[string]interface{}{
+				"a": map[string]interface{}{
+					"b": 333,
+					"c": 444,
+				},
+			},
+		}
+
 		cases := []struct {
 			name      string
 			object    map[string]interface{}
@@ -1086,6 +1098,16 @@ func TestObject_ContainsSubset(t *testing.T) {
 	})
 
 	t.Run("struct", func(t *testing.T) {
+		testObj := map[string]interface{}{
+			"foo": 123,
+			"bar": []interface{}{"456", 789},
+			"baz": map[string]interface{}{
+				"a": map[string]interface{}{
+					"b": 333,
+					"c": 444,
+				},
+			},
+		}
 		reporter := newMockReporter(t)
 
 		value := NewObject(reporter, testObj)
@@ -1132,6 +1154,17 @@ func TestObject_ContainsSubset(t *testing.T) {
 	})
 
 	t.Run("canonization", func(t *testing.T) {
+		testObj := map[string]interface{}{
+			"foo": 123,
+			"bar": []interface{}{"456", 789},
+			"baz": map[string]interface{}{
+				"a": map[string]interface{}{
+					"b": 333,
+					"c": 444,
+				},
+			},
+		}
+
 		type (
 			myArray []interface{}
 			myMap   map[string]interface{}
