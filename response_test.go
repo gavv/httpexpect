@@ -1705,6 +1705,19 @@ func TestResponse_Reader(t *testing.T) {
 		assert.NotNil(t, reader)
 		assert.Equal(t, contentHijacked, resp.contentState)
 		assert.Equal(t, "", resp.contentMethod)
+		resp.chain.assert(t, success)
+	})
+	t.Run("incorrect body type", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		httpResp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       newMockBody("test body"),
+		}
+		resp := NewResponse(reporter, httpResp)
+		resp.httpResp.Body = nil
+
+		reader := resp.Reader()
+		assert.Nil(t, reader)
 	})
 	t.Run("Body()", func(t *testing.T) {
 		reporter := newMockReporter(t)
@@ -1723,7 +1736,7 @@ func TestResponse_Reader(t *testing.T) {
 
 		reader := resp.Reader()
 		assert.Nil(t, reader)
-		resp.chain.assertFlags(t, flagFailed)
+		resp.chain.assert(t, failure)
 	})
 	t.Run("Text()", func(t *testing.T) {
 		reporter := newMockReporter(t)
@@ -1742,7 +1755,7 @@ func TestResponse_Reader(t *testing.T) {
 
 		reader := resp.Reader()
 		assert.Nil(t, reader)
-		resp.chain.assertFlags(t, flagFailed)
+		resp.chain.assert(t, failure)
 	})
 	t.Run("Form()", func(t *testing.T) {
 		reporter := newMockReporter(t)
@@ -1763,7 +1776,7 @@ func TestResponse_Reader(t *testing.T) {
 
 		reader := resp.Reader()
 		assert.Nil(t, reader)
-		resp.chain.assertFlags(t, flagFailed)
+		resp.chain.assert(t, failure)
 	})
 	t.Run("JSON()", func(t *testing.T) {
 		reporter := newMockReporter(t)
@@ -1784,7 +1797,7 @@ func TestResponse_Reader(t *testing.T) {
 
 		reader := resp.Reader()
 		assert.Nil(t, reader)
-		resp.chain.assertFlags(t, flagFailed)
+		resp.chain.assert(t, failure)
 	})
 	t.Run("JSONP()", func(t *testing.T) {
 		reporter := newMockReporter(t)
@@ -1802,6 +1815,6 @@ func TestResponse_Reader(t *testing.T) {
 
 		reader := resp.Reader()
 		assert.Nil(t, reader)
-		resp.chain.assertFlags(t, flagFailed)
+		resp.chain.assert(t, failure)
 	})
 }

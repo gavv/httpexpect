@@ -1012,9 +1012,12 @@ func (r *Response) Reader() io.ReadCloser {
 
 	resp := r.httpResp
 	bw, ok := resp.Body.(*bodyWrapper)
-	if !ok || bw == nil {
+	if !ok {
 		opChain.fail(AssertionFailure{
 			Type: AssertType,
+			Actual: &AssertionValue{
+				Value: bodyWrapper{},
+			},
 			Errors: []error{
 				errors.New("body is not type bodyWrapper"),
 			},
