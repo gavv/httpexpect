@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"mime"
 	"net/http"
@@ -40,6 +41,7 @@ const (
 	contentPending contentState = iota
 	contentRetreived
 	contentFailed
+	contentHijacked
 )
 
 // NewResponse returns a new Response instance.
@@ -959,6 +961,56 @@ func (r *Response) getJSONP(
 	}
 
 	return value
+}
+
+func (r *Response) Reader() io.ReadCloser {
+	opChain := r.chain.enter("Reader()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return nil
+	}
+
+	if r.contentState != contentPending {
+		opChain.fail(AssertionFailure{
+			Type: AssertValid,
+			Actual: &AssertionValue{
+				Value: r.contentState,
+			},
+			Expected: &AssertionValue{
+				Value: contentPending,
+			},
+			Errors: []error{
+				errors.New("body content already read"),
+			},
+		})
+		return nil
+	}
+
+	bw, ok := r.Raw().Body.(*bodyWrapper)
+	if !ok {
+		opChain.fail(AssertionFailure{
+			Type: AssertType,
+			Errors: []error{
+				errors.New("body is not type bodyWrapper"),
+			},
+		})
+		return nil
+	}
+	if bw == nil {
+		opChain.fail(AssertionFailure{
+			Type: AssertNotNil,
+			Errors: []error{
+				errors.New("bodyWrapper is nil"),
+			},
+		})
+		return nil
+	}
+
+	bw.DisableRewinds()
+	r.contentState = contentHijacked
+
+	return r.Raw().Body
 }
 
 func (r *Response) checkContentOptions(
