@@ -174,29 +174,29 @@ func TestEnvironment_NotFound(t *testing.T) {
 
 func TestEnvironment_Bool(t *testing.T) {
 	cases := []struct {
-		put interface{}
-		get bool
-		ok  bool
+		put    interface{}
+		get    bool
+		result chainResult
 	}{
 		{
-			put: true,
-			get: true,
-			ok:  true,
+			put:    true,
+			get:    true,
+			result: success,
 		},
 		{
-			put: 1,
-			get: false,
-			ok:  false,
+			put:    1,
+			get:    false,
+			result: failure,
 		},
 		{
-			put: 1.0,
-			get: false,
-			ok:  false,
+			put:    1.0,
+			get:    false,
+			result: failure,
 		},
 		{
-			put: "true",
-			get: false,
-			ok:  false,
+			put:    "true",
+			get:    false,
+			result: failure,
 		},
 	}
 	for _, tc := range cases {
@@ -210,90 +210,86 @@ func TestEnvironment_Bool(t *testing.T) {
 				val := env.GetBool("key")
 				assert.Equal(t, tc.get, val)
 
-				if tc.ok {
-					env.chain.assert(t, success)
-				} else {
-					env.chain.assert(t, failure)
-				}
+				env.chain.assert(t, tc.result)
 			})
 	}
 }
 
 func TestEnvironment_Int(t *testing.T) {
 	cases := []struct {
-		put interface{}
-		get int
-		ok  bool
+		put    interface{}
+		get    int
+		result chainResult
 	}{
 		{
-			put: int(123),
-			get: 123,
-			ok:  true,
+			put:    int(123),
+			get:    123,
+			result: success,
 		},
 		{
-			put: int8(123),
-			get: 123,
-			ok:  true,
+			put:    int8(123),
+			get:    123,
+			result: success,
 		},
 		{
-			put: int16(123),
-			get: 123,
-			ok:  true,
+			put:    int16(123),
+			get:    123,
+			result: success,
 		},
 		{
-			put: int32(123),
-			get: 123,
-			ok:  true,
+			put:    int32(123),
+			get:    123,
+			result: success,
 		},
 		{
-			put: int64(123),
-			get: 123,
-			ok:  true,
+			put:    int64(123),
+			get:    123,
+			result: success,
 		},
 		{
-			put: uint(123),
-			get: 123,
-			ok:  true,
+			put:    uint(123),
+			get:    123,
+			result: success,
 		},
 		{
-			put: uint8(123),
-			get: 123,
-			ok:  true,
+			put:    uint8(123),
+			get:    123,
+			result: success,
 		},
 		{
-			put: uint16(123),
-			get: 123,
-			ok:  true,
+			put:    uint16(123),
+			get:    123,
+			result: success,
 		},
 		{
-			put: uint32(123),
-			get: 123,
-			ok:  true,
+			put:    uint32(123),
+			get:    123,
+			result: success,
 		},
 		{
-			put: uint64(math.MaxUint64),
-			get: 0,
-			ok:  false,
+			put:    uint64(math.MaxUint64),
+			get:    0,
+			result: failure,
 		},
 		{
-			put: 123.0,
-			get: 0,
-			ok:  false,
+			put:    123.0,
+			get:    0,
+			result: failure,
 		},
 		{
-			put: false,
-			get: 0,
-			ok:  false,
+			put:    false,
+			get:    0,
+			result: failure,
 		},
 		{
-			put: time.Second,
-			get: 0,
-			ok:  false,
+			put:    time.Second,
+			get:    0,
+			result: failure,
 		},
 		{
-			put: "123",
-			get: 0,
-			ok:  false,
+			put:    "123",
+			get:    0,
+			result: failure,
 		},
 	}
 	for _, tc := range cases {
@@ -307,45 +303,41 @@ func TestEnvironment_Int(t *testing.T) {
 				val := env.GetInt("key")
 				assert.Equal(t, tc.get, val)
 
-				if tc.ok {
-					env.chain.assert(t, success)
-				} else {
-					env.chain.assert(t, failure)
-				}
+				env.chain.assert(t, tc.result)
 			})
 	}
 }
 
 func TestEnvironment_Float(t *testing.T) {
 	cases := []struct {
-		put interface{}
-		get float64
-		ok  bool
+		put    interface{}
+		get    float64
+		result chainResult
 	}{
 		{
-			put: float32(123),
-			get: 123.0,
-			ok:  true,
+			put:    float32(123),
+			get:    123.0,
+			result: success,
 		},
 		{
-			put: float64(123),
-			get: 123.0,
-			ok:  true,
+			put:    float64(123),
+			get:    123.0,
+			result: success,
 		},
 		{
-			put: int(123),
-			get: 0,
-			ok:  false,
+			put:    int(123),
+			get:    0,
+			result: failure,
 		},
 		{
-			put: false,
-			get: 0,
-			ok:  false,
+			put:    false,
+			get:    0,
+			result: failure,
 		},
 		{
-			put: "123.0",
-			get: 0,
-			ok:  false,
+			put:    "123.0",
+			get:    0,
+			result: failure,
 		},
 	}
 	for _, tc := range cases {
@@ -359,35 +351,31 @@ func TestEnvironment_Float(t *testing.T) {
 				val := env.GetFloat("key")
 				assert.Equal(t, tc.get, val)
 
-				if tc.ok {
-					env.chain.assert(t, success)
-				} else {
-					env.chain.assert(t, failure)
-				}
+				env.chain.assert(t, tc.result)
 			})
 	}
 }
 
 func TestEnvironment_String(t *testing.T) {
 	cases := []struct {
-		put interface{}
-		get string
-		ok  bool
+		put    interface{}
+		get    string
+		result chainResult
 	}{
 		{
-			put: "test",
-			get: "test",
-			ok:  true,
+			put:    "test",
+			get:    "test",
+			result: success,
 		},
 		{
-			put: []byte("test"),
-			get: "",
-			ok:  false,
+			put:    []byte("test"),
+			get:    "",
+			result: failure,
 		},
 		{
-			put: 123,
-			get: "",
-			ok:  false,
+			put:    123,
+			get:    "",
+			result: failure,
 		},
 	}
 	for _, tc := range cases {
@@ -401,35 +389,31 @@ func TestEnvironment_String(t *testing.T) {
 				val := env.GetString("key")
 				assert.Equal(t, tc.get, val)
 
-				if tc.ok {
-					env.chain.assert(t, success)
-				} else {
-					env.chain.assert(t, failure)
-				}
+				env.chain.assert(t, tc.result)
 			})
 	}
 }
 
 func TestEnvironment_Bytes(t *testing.T) {
 	cases := []struct {
-		put interface{}
-		get []byte
-		ok  bool
+		put    interface{}
+		get    []byte
+		result chainResult
 	}{
 		{
-			put: []byte("test"),
-			get: []byte("test"),
-			ok:  true,
+			put:    []byte("test"),
+			get:    []byte("test"),
+			result: success,
 		},
 		{
-			put: "test",
-			get: nil,
-			ok:  false,
+			put:    "test",
+			get:    nil,
+			result: failure,
 		},
 		{
-			put: 123,
-			get: nil,
-			ok:  false,
+			put:    123,
+			get:    nil,
+			result: failure,
 		},
 	}
 	for _, tc := range cases {
@@ -443,35 +427,31 @@ func TestEnvironment_Bytes(t *testing.T) {
 				val := env.GetBytes("key")
 				assert.Equal(t, tc.get, val)
 
-				if tc.ok {
-					env.chain.assert(t, success)
-				} else {
-					env.chain.assert(t, failure)
-				}
+				env.chain.assert(t, tc.result)
 			})
 	}
 }
 
 func TestEnvironment_Duration(t *testing.T) {
 	cases := []struct {
-		put interface{}
-		get time.Duration
-		ok  bool
+		put    interface{}
+		get    time.Duration
+		result chainResult
 	}{
 		{
-			put: time.Second,
-			get: time.Second,
-			ok:  true,
+			put:    time.Second,
+			get:    time.Second,
+			result: success,
 		},
 		{
-			put: int64(999999999),
-			get: time.Duration(0),
-			ok:  false,
+			put:    int64(999999999),
+			get:    time.Duration(0),
+			result: failure,
 		},
 		{
-			put: "1s",
-			get: time.Duration(0),
-			ok:  false,
+			put:    "1s",
+			get:    time.Duration(0),
+			result: failure,
 		},
 	}
 	for _, tc := range cases {
@@ -485,35 +465,31 @@ func TestEnvironment_Duration(t *testing.T) {
 				val := env.GetDuration("key")
 				assert.Equal(t, tc.get, val)
 
-				if tc.ok {
-					env.chain.assert(t, success)
-				} else {
-					env.chain.assert(t, failure)
-				}
+				env.chain.assert(t, tc.result)
 			})
 	}
 }
 
 func TestEnvironment_Time(t *testing.T) {
 	cases := []struct {
-		put interface{}
-		get time.Time
-		ok  bool
+		put    interface{}
+		get    time.Time
+		result chainResult
 	}{
 		{
-			put: time.Unix(9999999, 0),
-			get: time.Unix(9999999, 0),
-			ok:  true,
+			put:    time.Unix(9999999, 0),
+			get:    time.Unix(9999999, 0),
+			result: success,
 		},
 		{
-			put: 9999999,
-			get: time.Unix(0, 0),
-			ok:  false,
+			put:    9999999,
+			get:    time.Unix(0, 0),
+			result: failure,
 		},
 		{
-			put: time.Unix(9999999, 0).String(),
-			get: time.Unix(0, 0),
-			ok:  false,
+			put:    time.Unix(9999999, 0).String(),
+			get:    time.Unix(0, 0),
+			result: failure,
 		},
 	}
 	for _, tc := range cases {
@@ -527,11 +503,7 @@ func TestEnvironment_Time(t *testing.T) {
 				val := env.GetTime("key")
 				assert.Equal(t, tc.get, val)
 
-				if tc.ok {
-					env.chain.assert(t, success)
-				} else {
-					env.chain.assert(t, failure)
-				}
+				env.chain.assert(t, tc.result)
 			})
 	}
 }

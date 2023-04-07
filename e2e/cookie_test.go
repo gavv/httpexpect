@@ -1,4 +1,4 @@
-package httpexpect
+package e2e
 
 import (
 	"net/http"
@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/gavv/httpexpect/v2"
 	"github.com/valyala/fasthttp/fasthttpadaptor"
 )
 
@@ -35,7 +36,7 @@ func createCookieHandler() http.Handler {
 	return mux
 }
 
-func testCookieHandler(e *Expect, enabled bool) {
+func testCookieHandler(e *httpexpect.Expect, enabled bool) {
 	r := e.PUT("/set").Expect().Status(http.StatusNoContent)
 
 	r.Cookies().ContainsOnly("myname")
@@ -57,9 +58,9 @@ func TestE2ECookie_LiveDisabled(t *testing.T) {
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
-	e := WithConfig(Config{
+	e := httpexpect.WithConfig(httpexpect.Config{
 		BaseURL:  server.URL,
-		Reporter: NewAssertReporter(t),
+		Reporter: httpexpect.NewAssertReporter(t),
 		Client: &http.Client{
 			Jar: nil,
 		},
@@ -74,11 +75,11 @@ func TestE2ECookie_LiveEnabled(t *testing.T) {
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
-	e := WithConfig(Config{
+	e := httpexpect.WithConfig(httpexpect.Config{
 		BaseURL:  server.URL,
-		Reporter: NewAssertReporter(t),
+		Reporter: httpexpect.NewAssertReporter(t),
 		Client: &http.Client{
-			Jar: NewCookieJar(),
+			Jar: httpexpect.NewCookieJar(),
 		},
 	})
 
@@ -88,11 +89,11 @@ func TestE2ECookie_LiveEnabled(t *testing.T) {
 func TestE2ECookie_BinderStandardDisabled(t *testing.T) {
 	handler := createCookieHandler()
 
-	e := WithConfig(Config{
+	e := httpexpect.WithConfig(httpexpect.Config{
 		BaseURL:  "http://example.com",
-		Reporter: NewAssertReporter(t),
+		Reporter: httpexpect.NewAssertReporter(t),
 		Client: &http.Client{
-			Transport: NewBinder(handler),
+			Transport: httpexpect.NewBinder(handler),
 			Jar:       nil,
 		},
 	})
@@ -103,12 +104,12 @@ func TestE2ECookie_BinderStandardDisabled(t *testing.T) {
 func TestE2ECookie_BinderStandardEnabled(t *testing.T) {
 	handler := createCookieHandler()
 
-	e := WithConfig(Config{
+	e := httpexpect.WithConfig(httpexpect.Config{
 		BaseURL:  "http://example.com",
-		Reporter: NewAssertReporter(t),
+		Reporter: httpexpect.NewAssertReporter(t),
 		Client: &http.Client{
-			Transport: NewBinder(handler),
-			Jar:       NewCookieJar(),
+			Transport: httpexpect.NewBinder(handler),
+			Jar:       httpexpect.NewCookieJar(),
 		},
 	})
 
@@ -118,11 +119,11 @@ func TestE2ECookie_BinderStandardEnabled(t *testing.T) {
 func TestE2ECookie_BinderFastDisabled(t *testing.T) {
 	handler := fasthttpadaptor.NewFastHTTPHandler(createCookieHandler())
 
-	e := WithConfig(Config{
+	e := httpexpect.WithConfig(httpexpect.Config{
 		BaseURL:  "http://example.com",
-		Reporter: NewAssertReporter(t),
+		Reporter: httpexpect.NewAssertReporter(t),
 		Client: &http.Client{
-			Transport: NewFastBinder(handler),
+			Transport: httpexpect.NewFastBinder(handler),
 			Jar:       nil,
 		},
 	})
@@ -133,12 +134,12 @@ func TestE2ECookie_BinderFastDisabled(t *testing.T) {
 func TestE2ECookie_BinderFastEnabled(t *testing.T) {
 	handler := fasthttpadaptor.NewFastHTTPHandler(createCookieHandler())
 
-	e := WithConfig(Config{
+	e := httpexpect.WithConfig(httpexpect.Config{
 		BaseURL:  "http://example.com",
-		Reporter: NewAssertReporter(t),
+		Reporter: httpexpect.NewAssertReporter(t),
 		Client: &http.Client{
-			Transport: NewFastBinder(handler),
-			Jar:       NewCookieJar(),
+			Transport: httpexpect.NewFastBinder(handler),
+			Jar:       httpexpect.NewCookieJar(),
 		},
 	})
 
