@@ -29,8 +29,9 @@ type Response struct {
 	websocket *websocket.Conn
 	rtt       *time.Duration
 
-	content      []byte
-	contentState contentState
+	content       []byte
+	contentState  contentState
+	contentMethod string
 
 	cookies []*http.Cookie
 }
@@ -149,16 +150,17 @@ func newResponse(opts responseOpts) *Response {
 	return r
 }
 
-func (r *Response) getContent(opChain *chain) ([]byte, bool) {
+func (r *Response) getContent(opChain *chain, method string) ([]byte, bool) {
 	switch r.contentState {
 	case contentRetreived:
 		return r.content, true
 
-	case contentFailed:
-		return nil, false
-
 	case contentPending:
 		break
+
+	case contentFailed:
+	case contentHijacked:
+		return nil, false
 	}
 
 	resp := r.httpResp
@@ -195,6 +197,7 @@ func (r *Response) getContent(opChain *chain) ([]byte, bool) {
 
 	r.content = content
 	r.contentState = contentRetreived
+	r.contentMethod = method
 
 	return r.content, true
 }
@@ -565,14 +568,15 @@ func (r *Response) Websocket() *Websocket {
 //	resp.Body().NotEmpty()
 //	resp.Body().Length().IsEqual(100)
 func (r *Response) Body() *String {
-	opChain := r.chain.enter("Body()")
+	m := "Body()"
+	opChain := r.chain.enter(m)
 	defer opChain.leave()
 
 	if opChain.failed() {
 		return newString(opChain, "")
 	}
 
-	content, ok := r.getContent(opChain)
+	content, ok := r.getContent(opChain, m)
 	if !ok {
 		return newString(opChain, "")
 	}
@@ -583,7 +587,8 @@ func (r *Response) Body() *String {
 // NoContent succeeds if response contains empty Content-Type header and
 // empty body.
 func (r *Response) NoContent() *Response {
-	opChain := r.chain.enter("NoContent()")
+	m := "NoContent()"
+	opChain := r.chain.enter(m)
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -595,7 +600,7 @@ func (r *Response) NoContent() *Response {
 		return r
 	}
 
-	content, ok := r.getContent(opChain)
+	content, ok := r.getContent(opChain, m)
 	if !ok {
 		return r
 	}
@@ -707,7 +712,8 @@ type ContentOpts struct {
 //	  MediaType: "text/plain",
 //	}).IsEqual("hello, world!")
 func (r *Response) Text(options ...ContentOpts) *String {
-	opChain := r.chain.enter("Text()")
+	m := "Text()"
+	opChain := r.chain.enter(m)
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -728,7 +734,7 @@ func (r *Response) Text(options ...ContentOpts) *String {
 		return newString(opChain, "")
 	}
 
-	content, ok := r.getContent(opChain)
+	content, ok := r.getContent(opChain, m)
 	if !ok {
 		return newString(opChain, "")
 	}
@@ -750,7 +756,8 @@ func (r *Response) Text(options ...ContentOpts) *String {
 //	  MediaType: "application/x-www-form-urlencoded",
 //	}).Value("foo").IsEqual("bar")
 func (r *Response) Form(options ...ContentOpts) *Object {
-	opChain := r.chain.enter("Form()")
+	m := "Form()"
+	opChain := r.chain.enter(m)
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -767,19 +774,19 @@ func (r *Response) Form(options ...ContentOpts) *Object {
 		return newObject(opChain, nil)
 	}
 
-	object := r.getForm(opChain, options...)
+	object := r.getForm(opChain, m, options...)
 
 	return newObject(opChain, object)
 }
 
 func (r *Response) getForm(
-	opChain *chain, options ...ContentOpts,
+	opChain *chain, method string, options ...ContentOpts,
 ) map[string]interface{} {
 	if !r.checkContentOptions(opChain, options, "application/x-www-form-urlencoded", "") {
 		return nil
 	}
 
-	content, ok := r.getContent(opChain)
+	content, ok := r.getContent(opChain, method)
 	if !ok {
 		return nil
 	}
@@ -818,7 +825,8 @@ func (r *Response) getForm(
 //	  MediaType: "application/json",
 //	}).Array.ConsistsOf("foo", "bar")
 func (r *Response) JSON(options ...ContentOpts) *Value {
-	opChain := r.chain.enter("JSON()")
+	m := "JSON()"
+	opChain := r.chain.enter(m)
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -835,17 +843,19 @@ func (r *Response) JSON(options ...ContentOpts) *Value {
 		return newValue(opChain, nil)
 	}
 
-	value := r.getJSON(opChain, options...)
+	value := r.getJSON(opChain, m, options...)
 
 	return newValue(opChain, value)
 }
 
-func (r *Response) getJSON(opChain *chain, options ...ContentOpts) interface{} {
+func (r *Response) getJSON(
+	opChain *chain, method string, options ...ContentOpts,
+) interface{} {
 	if !r.checkContentOptions(opChain, options, "application/json") {
 		return nil
 	}
 
-	content, ok := r.getContent(opChain)
+	content, ok := r.getContent(opChain, method)
 	if !ok {
 		return nil
 	}
@@ -890,7 +900,8 @@ func (r *Response) getJSON(opChain *chain, options ...ContentOpts) interface{} {
 //	  MediaType: "application/javascript",
 //	}).Array.ConsistsOf("foo", "bar")
 func (r *Response) JSONP(callback string, options ...ContentOpts) *Value {
-	opChain := r.chain.enter("JSONP()")
+	m := "JSONP()"
+	opChain := r.chain.enter(m)
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -907,7 +918,7 @@ func (r *Response) JSONP(callback string, options ...ContentOpts) *Value {
 		return newValue(opChain, nil)
 	}
 
-	value := r.getJSONP(opChain, callback, options...)
+	value := r.getJSONP(opChain, m, callback, options...)
 
 	return newValue(opChain, value)
 }
@@ -917,13 +928,13 @@ var (
 )
 
 func (r *Response) getJSONP(
-	opChain *chain, callback string, options ...ContentOpts,
+	opChain *chain, method string, callback string, options ...ContentOpts,
 ) interface{} {
 	if !r.checkContentOptions(opChain, options, "application/javascript") {
 		return nil
 	}
 
-	content, ok := r.getContent(opChain)
+	content, ok := r.getContent(opChain, method)
 	if !ok {
 		return nil
 	}
@@ -971,6 +982,18 @@ func (r *Response) Reader() io.ReadCloser {
 		return nil
 	}
 
+	if r.contentMethod != "" {
+		opChain.fail(AssertionFailure{
+			Type: AssertValid,
+			Actual: &AssertionValue{
+				Value: r.contentMethod,
+			},
+			Errors: []error{
+				fmt.Errorf("cannot call Reader() because %s was already called", r.contentMethod),
+			},
+		})
+	}
+
 	if r.contentState != contentPending {
 		opChain.fail(AssertionFailure{
 			Type: AssertValid,
@@ -987,7 +1010,8 @@ func (r *Response) Reader() io.ReadCloser {
 		return nil
 	}
 
-	bw, ok := r.Raw().Body.(*bodyWrapper)
+	resp := r.httpResp
+	bw, ok := resp.Body.(*bodyWrapper)
 	if !ok {
 		opChain.fail(AssertionFailure{
 			Type: AssertType,
@@ -1010,7 +1034,7 @@ func (r *Response) Reader() io.ReadCloser {
 	bw.DisableRewinds()
 	r.contentState = contentHijacked
 
-	return r.Raw().Body
+	return resp.Body
 }
 
 func (r *Response) checkContentOptions(

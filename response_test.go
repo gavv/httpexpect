@@ -591,7 +591,7 @@ func TestResponse_BodyDeferred(t *testing.T) {
 
 		// Invoke getContent()
 		chain := resp.chain.enter("Test()")
-		content, ok := resp.getContent(chain)
+		content, ok := resp.getContent(chain, "Test()")
 
 		chain.assert(t, failure)
 		assert.Nil(t, content)
