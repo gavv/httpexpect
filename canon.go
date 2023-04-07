@@ -152,7 +152,7 @@ func canonValue(opChain *chain, in interface{}) (interface{}, bool) {
 	var out interface{}
 
 	jsonDecode(opChain, b, &out)
-	out = convertJsonNumberToFloatOrBigFloat(out)
+	out = convertJSONNumberToFloatOrBigFloat(out)
 
 	return out, true
 }
@@ -183,14 +183,14 @@ func canonDecode(opChain *chain, value interface{}, target interface{}) {
 	jsonDecode(opChain, b, target)
 	switch t := target.(type) {
 	case *interface{}:
-		*t = convertJsonNumberToFloatOrBigFloat(*t)
+		*t = convertJSONNumberToFloatOrBigFloat(*t)
 	case *[]interface{}:
 		for i, val := range *t {
-			(*t)[i] = convertJsonNumberToFloatOrBigFloat(val)
+			(*t)[i] = convertJSONNumberToFloatOrBigFloat(val)
 		}
 	case *map[string]interface{}:
 		for key, val := range *t {
-			(*t)[key] = convertJsonNumberToFloatOrBigFloat(val)
+			(*t)[key] = convertJSONNumberToFloatOrBigFloat(val)
 		}
 	default:
 		v := reflect.ValueOf(t)
@@ -202,7 +202,7 @@ func canonDecode(opChain *chain, value interface{}, target interface{}) {
 				field := v.Field(i)
 				if field.CanInterface() {
 					val := field.Interface()
-					newVal := convertJsonNumberToFloatOrBigFloat(val)
+					newVal := convertJSONNumberToFloatOrBigFloat(val)
 					field.Set(reflect.ValueOf(newVal))
 				}
 			}
@@ -275,7 +275,7 @@ func canonNumberDecode(opChain *chain, value big.Float, target interface{}) {
 	}
 }
 
-func convertJsonNumberToFloatOrBigFloat(data interface{}) interface{} {
+func convertJSONNumberToFloatOrBigFloat(data interface{}) interface{} {
 	v := reflect.ValueOf(data)
 	switch v.Kind() {
 	case reflect.Map:
@@ -284,7 +284,7 @@ func convertJsonNumberToFloatOrBigFloat(data interface{}) interface{} {
 			if val.IsNil() {
 				continue
 			}
-			newVal := convertJsonNumberToFloatOrBigFloat(val.Interface())
+			newVal := convertJSONNumberToFloatOrBigFloat(val.Interface())
 			v.SetMapIndex(key, reflect.ValueOf(newVal))
 		}
 		return v.Interface()
@@ -293,7 +293,7 @@ func convertJsonNumberToFloatOrBigFloat(data interface{}) interface{} {
 			if v.Index(i).IsNil() {
 				continue
 			}
-			newVal := convertJsonNumberToFloatOrBigFloat(v.Index(i).Interface())
+			newVal := convertJSONNumberToFloatOrBigFloat(v.Index(i).Interface())
 			v.Index(i).Set(reflect.ValueOf(newVal))
 		}
 		return v.Interface()
@@ -301,12 +301,12 @@ func convertJsonNumberToFloatOrBigFloat(data interface{}) interface{} {
 		if v.IsNil() {
 			return nil
 		}
-		newVal := convertJsonNumberToFloatOrBigFloat(v.Elem().Interface())
+		newVal := convertJSONNumberToFloatOrBigFloat(v.Elem().Interface())
 		newV := reflect.New(v.Type().Elem())
 		newV.Elem().Set(reflect.ValueOf(newVal))
 		return newV.Interface()
 	case reflect.Interface:
-		newVal := convertJsonNumberToFloatOrBigFloat(v.Elem().Interface())
+		newVal := convertJSONNumberToFloatOrBigFloat(v.Elem().Interface())
 		return reflect.ValueOf(newVal).Interface()
 	case reflect.String:
 		if jsonNum, ok := v.Interface().(json.Number); ok {
@@ -326,10 +326,31 @@ func convertJsonNumberToFloatOrBigFloat(data interface{}) interface{} {
 			if !field.CanInterface() {
 				continue
 			}
-			newField := convertJsonNumberToFloatOrBigFloat(field.Interface())
+			newField := convertJSONNumberToFloatOrBigFloat(field.Interface())
 			newVal.Field(i).Set(reflect.ValueOf(newField))
 		}
 		return newVal.Interface()
+	case reflect.Invalid,
+		reflect.Bool,
+		reflect.Uintptr,
+		reflect.Complex64,
+		reflect.Complex128,
+		reflect.Chan,
+		reflect.Func,
+		reflect.Int,
+		reflect.Int8,
+		reflect.Int16,
+		reflect.Int32,
+		reflect.Int64,
+		reflect.Uint,
+		reflect.Uint8,
+		reflect.Uint16,
+		reflect.Uint32,
+		reflect.Uint64,
+		reflect.Float32,
+		reflect.Float64,
+		reflect.UnsafePointer:
+		return data
 	default:
 		return data
 	}
