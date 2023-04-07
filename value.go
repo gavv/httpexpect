@@ -76,7 +76,8 @@ func newValue(parent *chain, val interface{}) *Value {
 func (v *Value) Raw() interface{} {
 	switch v := v.value.(type) {
 	case big.Float:
-		f, _ := v.Float64()
+		// f, _ := v.Float64()
+		f := json.Number(v.String())
 		if hasPrecisionLoss(f) {
 			return v
 		}
@@ -330,7 +331,7 @@ func (v *Value) String() *String {
 
 // Number returns a new Number attached to underlying value.
 //
-// If underlying value is not a number (numeric type convertible to json.Number), failure
+// If underlying value is not a number (numeric type convertible to float64), failure
 // is reported and empty (but non-nil) value is returned.
 //
 // Example:
@@ -642,7 +643,7 @@ func (v *Value) NotString() *Value {
 
 // IsNumber succeeds if the underlying value is a number.
 //
-// If underlying value is not a number (numeric type convertible to json.Number),
+// If underlying value is not a number (numeric type convertible to float64),
 // failure is reported
 //
 // Example:
@@ -657,7 +658,7 @@ func (v *Value) IsNumber() *Value {
 		return v
 	}
 
-	if _, ok := v.value.(json.Number); !ok {
+	if _, ok := v.value.(float64); !ok {
 		opChain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{v.value},
@@ -687,7 +688,7 @@ func (v *Value) NotNumber() *Value {
 		return v
 	}
 
-	if _, ok := v.value.(json.Number); ok {
+	if _, ok := v.value.(float64); ok {
 		opChain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{v.value},

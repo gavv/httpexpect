@@ -746,7 +746,7 @@ func (o *Object) IsEmpty() *Object {
 		return o
 	}
 
-	if !(len(o.value) == 0) {
+	if len(o.value) != 0 {
 		opChain.fail(AssertionFailure{
 			Type:   AssertEmpty,
 			Actual: &AssertionValue{o.value},

@@ -1,6 +1,7 @@
 package httpexpect
 
 import (
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -196,11 +197,18 @@ func TestObject_Decode(t *testing.T) {
 
 		value := NewObject(reporter, m)
 
+		actualStruct := S{
+			Foo: 123,
+			Bar: []interface{}{"123", 234.0},
+			Baz: map[string]interface{}{"a": "b"},
+			Bat: struct{ A int }{123},
+		}
+
 		var target S
 		value.Decode(&target)
 
 		value.chain.assertNotFailed(t)
-		assert.Equal(t, target, m)
+		assert.Equal(t, target, actualStruct)
 	})
 
 	t.Run("target is nil", func(t *testing.T) {
@@ -1364,7 +1372,7 @@ func TestObject_Transform(t *testing.T) {
 		})
 
 		newObject := object.Transform(func(_ string, val interface{}) interface{} {
-			if v, ok := val.(float64); ok {
+			if v, err := strconv.ParseFloat(val.(string), 64); err == nil {
 				return myInt(v)
 			} else {
 				return val

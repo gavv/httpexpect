@@ -188,6 +188,25 @@ func canonDecode(opChain *chain, value interface{}, target interface{}) {
 		for i, val := range *t {
 			(*t)[i] = convertJsonNumberToFloatOrBigFloat(val)
 		}
+	case *map[string]interface{}:
+		for key, val := range *t {
+			(*t)[key] = convertJsonNumberToFloatOrBigFloat(val)
+		}
+	default:
+		v := reflect.ValueOf(t)
+		if v.Kind() == reflect.Ptr {
+			v = v.Elem()
+		}
+		if v.Kind() == reflect.Struct {
+			for i := 0; i < v.NumField(); i++ {
+				field := v.Field(i)
+				if field.CanInterface() {
+					val := field.Interface()
+					newVal := convertJsonNumberToFloatOrBigFloat(val)
+					field.Set(reflect.ValueOf(newVal))
+				}
+			}
+		}
 	}
 }
 
@@ -262,6 +281,9 @@ func convertJsonNumberToFloatOrBigFloat(data interface{}) interface{} {
 	case reflect.Map:
 		for _, key := range v.MapKeys() {
 			val := v.MapIndex(key)
+			if val.IsNil() {
+				continue
+			}
 			newVal := convertJsonNumberToFloatOrBigFloat(val.Interface())
 			v.SetMapIndex(key, reflect.ValueOf(newVal))
 		}
@@ -287,16 +309,27 @@ func convertJsonNumberToFloatOrBigFloat(data interface{}) interface{} {
 		newVal := convertJsonNumberToFloatOrBigFloat(v.Elem().Interface())
 		return reflect.ValueOf(newVal).Interface()
 	case reflect.String:
-		if _, ok := v.Interface().(json.Number); ok {
-			newVal, _ := strconv.ParseFloat(v.String(), 64)
-			if hasPrecisionLoss(newVal) {
+		if jsonNum, ok := v.Interface().(json.Number); ok {
+			if hasPrecisionLoss(jsonNum) {
 				newVal := big.NewFloat(0)
 				newVal, _ = newVal.SetString(v.String())
 				return newVal
 			}
+			newVal, _ := strconv.ParseFloat(v.String(), 64)
 			return newVal
 		}
 		return data
+	case reflect.Struct:
+		newVal := reflect.New(v.Type()).Elem()
+		for i := 0; i < v.NumField(); i++ {
+			field := v.Field(i)
+			if !field.CanInterface() {
+				continue
+			}
+			newField := convertJsonNumberToFloatOrBigFloat(field.Interface())
+			newVal.Field(i).Set(reflect.ValueOf(newField))
+		}
+		return newVal.Interface()
 	default:
 		return data
 	}

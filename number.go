@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math"
 	"math/big"
 )
 
@@ -1125,7 +1124,10 @@ func (b intBoundary) String() string {
 	return fmt.Sprintf("%s", b.val)
 }
 
-func hasPrecisionLoss(a float64) bool {
-	delta := math.Nextafter(a, a*2) - a
-	return math.Abs(a-a) > delta
+func hasPrecisionLoss(a json.Number) bool {
+	f, err := a.Float64()
+	if err != nil {
+		return true
+	}
+	return a.String() != fmt.Sprintf("%g", f)
 }
