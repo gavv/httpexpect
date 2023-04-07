@@ -1,7 +1,6 @@
 package httpexpect
 
 import (
-	"log"
 	"sort"
 	"testing"
 
@@ -989,7 +988,6 @@ func TestArray_InList(t *testing.T) {
 
 					return
 				}
-				log.Println(tc.testType...)
 				value.InList(tc.testType...)
 				value.chain.assert(t, tc.wantCode)
 				value.chain.clear()
