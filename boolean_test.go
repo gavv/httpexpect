@@ -1,19 +1,19 @@
 package httpexpect
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestBoolean_FailedChain(t *testing.T) {
-	chain := newMockChain(t)
-	chain.setFailed()
+	chain := newMockChain(t, flagFailed)
 
 	value := newBoolean(chain, false)
-	value.chain.assertFailed(t)
+	value.chain.assert(t, failure)
 
-	value.Path("$").chain.assertFailed(t)
+	value.Path("$").chain.assert(t, failure)
 	value.Schema("")
 	value.Alias("foo")
 
@@ -33,7 +33,7 @@ func TestBoolean_Constructors(t *testing.T) {
 		reporter := newMockReporter(t)
 		value := NewBoolean(reporter, true)
 		value.IsEqual(true)
-		value.chain.assertNotFailed(t)
+		value.chain.assert(t, success)
 	})
 
 	t.Run("config", func(t *testing.T) {
@@ -42,7 +42,7 @@ func TestBoolean_Constructors(t *testing.T) {
 			Reporter: reporter,
 		}, true)
 		value.IsEqual(true)
-		value.chain.assertNotFailed(t)
+		value.chain.assert(t, success)
 	})
 
 	t.Run("chain", func(t *testing.T) {
@@ -62,7 +62,7 @@ func TestBoolean_Decode(t *testing.T) {
 		var target interface{}
 		value.Decode(&target)
 
-		value.chain.assertNotFailed(t)
+		value.chain.assert(t, success)
 		assert.Equal(t, true, target)
 	})
 
@@ -74,7 +74,7 @@ func TestBoolean_Decode(t *testing.T) {
 		var target bool
 		value.Decode(&target)
 
-		value.chain.assertNotFailed(t)
+		value.chain.assert(t, success)
 		assert.Equal(t, true, target)
 	})
 
@@ -85,7 +85,7 @@ func TestBoolean_Decode(t *testing.T) {
 
 		value.Decode(nil)
 
-		value.chain.assertFailed(t)
+		value.chain.assert(t, failure)
 	})
 
 	t.Run("target is unmarshable", func(t *testing.T) {
@@ -95,7 +95,7 @@ func TestBoolean_Decode(t *testing.T) {
 
 		value.Decode(123)
 
-		value.chain.assertFailed(t)
+		value.chain.assert(t, failure)
 	})
 }
 
@@ -117,112 +117,100 @@ func TestBoolean_Getters(t *testing.T) {
 	value := NewBoolean(reporter, true)
 
 	assert.Equal(t, true, value.Raw())
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, success)
+	value.chain.clear()
 
 	assert.Equal(t, true, value.Path("$").Raw())
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, success)
+	value.chain.clear()
 
 	value.Schema(`{"type": "boolean"}`)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, success)
+	value.chain.clear()
 
 	value.Schema(`{"type": "object"}`)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+	value.chain.assert(t, failure)
+	value.chain.clear()
 }
 
-func TestBoolean_True(t *testing.T) {
-	reporter := newMockReporter(t)
+func TestBoolean_IsEqual(t *testing.T) {
+	for _, value := range []bool{true, false} {
+		t.Run(fmt.Sprintf("%v", value), func(t *testing.T) {
+			reporter := newMockReporter(t)
 
-	value := NewBoolean(reporter, true)
+			NewBoolean(reporter, value).IsEqual(value).
+				chain.assert(t, success)
 
-	assert.Equal(t, true, value.Raw())
+			NewBoolean(reporter, value).IsEqual(!value).
+				chain.assert(t, failure)
 
-	value.IsEqual(true)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+			NewBoolean(reporter, value).NotEqual(value).
+				chain.assert(t, failure)
 
-	value.IsEqual(false)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotEqual(false)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotEqual(true)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.IsTrue()
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.IsFalse()
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.InList(true, true)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInList(true, false)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+			NewBoolean(reporter, value).NotEqual(!value).
+				chain.assert(t, success)
+		})
+	}
 }
 
-func TestBoolean_False(t *testing.T) {
-	reporter := newMockReporter(t)
+func TestBoolean_IsValue(t *testing.T) {
+	for _, value := range []bool{true, false} {
+		t.Run(fmt.Sprintf("%v", value), func(t *testing.T) {
+			reporter := newMockReporter(t)
 
-	value := NewBoolean(reporter, false)
+			if value {
+				NewBoolean(reporter, value).IsTrue().
+					chain.assert(t, success)
 
-	assert.Equal(t, false, value.Raw())
+				NewBoolean(reporter, value).IsFalse().
+					chain.assert(t, failure)
+			} else {
+				NewBoolean(reporter, value).IsTrue().
+					chain.assert(t, failure)
 
-	value.IsEqual(true)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.IsEqual(false)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.NotEqual(false)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotEqual(true)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.IsTrue()
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.IsFalse()
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
-
-	value.InList(true, true)
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
-
-	value.NotInList(true, true)
-	value.chain.assertNotFailed(t)
-	value.chain.clearFailed()
+				NewBoolean(reporter, value).IsFalse().
+					chain.assert(t, success)
+			}
+		})
+	}
 }
 
-func TestBoolean_Usage(t *testing.T) {
-	reporter := newMockReporter(t)
+func TestBoolean_InList(t *testing.T) {
+	t.Run("basic", func(t *testing.T) {
+		for _, value := range []bool{true, false} {
+			t.Run(fmt.Sprintf("%v", value), func(t *testing.T) {
+				reporter := newMockReporter(t)
 
-	value := NewBoolean(reporter, true)
+				NewBoolean(reporter, value).InList(value).
+					chain.assert(t, success)
 
-	value.InList()
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+				NewBoolean(reporter, value).InList(!value, value).
+					chain.assert(t, success)
 
-	value.NotInList()
-	value.chain.assertFailed(t)
-	value.chain.clearFailed()
+				NewBoolean(reporter, value).InList(!value, !value).
+					chain.assert(t, failure)
+
+				NewBoolean(reporter, value).NotInList(value).
+					chain.assert(t, failure)
+
+				NewBoolean(reporter, value).NotInList(!value, value).
+					chain.assert(t, failure)
+
+				NewBoolean(reporter, value).NotInList(!value, !value).
+					chain.assert(t, success)
+			})
+		}
+	})
+
+	t.Run("invalid argument", func(t *testing.T) {
+		for _, value := range []bool{true, false} {
+			reporter := newMockReporter(t)
+
+			NewBoolean(reporter, value).InList().
+				chain.assert(t, failure)
+
+			NewBoolean(reporter, value).NotInList().
+				chain.assert(t, failure)
+		}
+	})
 }

@@ -1,9 +1,12 @@
 package httpexpect
 
 import (
-	"fmt"
+	"errors"
+	"io"
+	"net/http"
 	"testing"
 
+	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -270,18 +273,24 @@ func TestExpect_Traverse(t *testing.T) {
 
 	resp := WithConfig(config).GET("/url").WithJSON(data).Expect()
 	m := resp.JSON().Object()
-	m.Equal(data)
+
+	m.IsEqual(data)
+
 	m.ContainsKey("foo")
 	m.ContainsKey("bar")
 	m.ContainsKey("foo")
+
 	m.ValueEqual("foo", data["foo"])
 	m.ValueEqual("bar", data["bar"])
 	m.ValueEqual("baz", data["baz"])
+
 	m.Keys().ContainsOnly("foo", "bar", "baz")
 	m.Values().ContainsOnly(data["foo"], data["bar"], data["baz"])
+
 	m.Value("foo").Array().Elements("bar", 123, false, nil)
 	m.Value("bar").String().Equal("hello")
 	m.Value("baz").Number().Equal(456)
+
 	m.Value("foo").Array().Element(2).Boolean().False()
 	m.Value("foo").Array().Element(3).Null()
 }
@@ -326,7 +335,6 @@ func TestExpect_Branches(t *testing.T) {
 
 	e1.chain.assertFlags(t, flagFailed)
 	e2.chain.assertFlags(t, flagFailed)
-	fmt.Println(e3.chain.flags)
 	e3.chain.assertFlags(t, flagFailed)
 	e4.chain.assertFlags(t, flagFailed)
 	e5.chain.assertFlags(t, 0)
@@ -340,7 +348,7 @@ func TestExpect_RequestFactory(t *testing.T) {
 		})
 
 		req := e.Request("GET", "/")
-		req.chain.assertNotFailed(t)
+		req.chain.assert(t, success)
 
 		assert.NotNil(t, req.httpReq)
 	})
@@ -355,7 +363,7 @@ func TestExpect_RequestFactory(t *testing.T) {
 		})
 
 		req := e.Request("GET", "/")
-		req.chain.assertNotFailed(t)
+		req.chain.assert(t, success)
 
 		assert.NotNil(t, factory.lastreq)
 		assert.Same(t, req.httpReq, factory.lastreq)
@@ -373,7 +381,7 @@ func TestExpect_RequestFactory(t *testing.T) {
 		})
 
 		req := e.Request("GET", "/")
-		req.chain.assertFailed(t)
+		req.chain.assert(t, failure)
 
 		assert.Nil(t, factory.lastreq)
 	})
@@ -522,5 +530,111 @@ func TestExpect_Config(t *testing.T) {
 			}
 			badConfig.validate()
 		})
+	})
+}
+
+func TestExpect_Adapters(t *testing.T) {
+	t.Run("RequestFactoryFunc", func(t *testing.T) {
+		called := false
+		factory := RequestFactoryFunc(func(
+			_ string, _ string, _ io.Reader,
+		) (*http.Request, error) {
+			called = true
+			return nil, nil
+		})
+
+		e := WithConfig(Config{
+			RequestFactory: factory,
+			Reporter:       newMockReporter(t),
+		})
+
+		e.Request("GET", "/")
+
+		assert.True(t, called)
+	})
+
+	t.Run("ClientFunc", func(t *testing.T) {
+		called := false
+		client := ClientFunc(func(_ *http.Request) (*http.Response, error) {
+			called = true
+			return &http.Response{
+				Status:     "Test Status",
+				StatusCode: 504,
+			}, nil
+		})
+
+		e := WithConfig(Config{
+			Client:   client,
+			Reporter: newMockReporter(t),
+		})
+
+		req := e.GET("/")
+		resp := req.Expect()
+
+		assert.True(t, called)
+		assert.Equal(t, resp.httpResp.StatusCode, 504)
+		assert.Equal(t, resp.httpResp.Status, "Test Status")
+	})
+
+	t.Run("WebsocketDialerFunc", func(t *testing.T) {
+		called := false
+		dialer := WebsocketDialerFunc(func(
+			_ string, _ http.Header,
+		) (*websocket.Conn, *http.Response, error) {
+			called = true
+			return &websocket.Conn{}, &http.Response{}, nil
+		})
+
+		e := WithConfig(Config{
+			WebsocketDialer: dialer,
+			Reporter:        newMockReporter(t),
+		})
+
+		e.GET("/path").WithWebsocketUpgrade().Expect().Websocket()
+
+		assert.True(t, called)
+	})
+
+	t.Run("ReporterFunc", func(t *testing.T) {
+		called := false
+		message := ""
+		client := ClientFunc(func(r *http.Request) (*http.Response, error) {
+			return nil, errors.New("")
+		})
+		reporter := ReporterFunc(func(_ string, _ ...interface{}) {
+			called = true
+			message = "test reporter called"
+		})
+
+		e := WithConfig(Config{
+			Reporter: reporter,
+			Client:   client,
+		})
+
+		e.GET("/").Expect()
+
+		assert.True(t, called)
+		assert.Contains(t, message, "test reporter called")
+	})
+
+	t.Run("LoggerFunc", func(t *testing.T) {
+		called := false
+		message := ""
+		logger := LoggerFunc(func(_ string, _ ...interface{}) {
+			called = true
+			message = "test logger called"
+		})
+
+		e := WithConfig(Config{
+			Reporter: newMockReporter(t),
+			Printers: []Printer{
+				NewCompactPrinter(logger),
+			},
+		})
+
+		e.GET("").Expect()
+
+		assert.True(t, called)
+		assert.Contains(t, message, "test logger called")
 	})
 }

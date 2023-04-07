@@ -162,6 +162,8 @@ type Config struct {
 	//    (non-fatal / fatal failures using testify package)
 	//  - testing.T / FatalReporter
 	//    (non-fatal / fatal failures using standard testing package)
+	//  - PanicReporter
+	//    (failures that panic to be used in multithreaded tests)
 	//  - custom implementation
 	Reporter Reporter
 
@@ -285,6 +287,27 @@ type RequestFactory interface {
 	NewRequest(method, url string, body io.Reader) (*http.Request, error)
 }
 
+// RequestFactoryFunc is an adapter that allows a function
+// to be used as the RequestFactory
+//
+// Example:
+//
+//	e := httpexpect.WithConfig(httpexpect.Config{
+//		RequestFactory: httpextect.RequestFactoryFunc(
+//			func(method string, url string, body io.Reader) (*http.Request, error) {
+//				// factory code here
+//			}),
+//	})
+type RequestFactoryFunc func(
+	method string, url string, body io.Reader,
+) (*http.Request, error)
+
+func (f RequestFactoryFunc) NewRequest(
+	method string, url string, body io.Reader,
+) (*http.Request, error) {
+	return f(method, url, body)
+}
+
 // Client is used to send http.Request and receive http.Response.
 // http.Client implements this interface.
 //
@@ -303,6 +326,22 @@ type Client interface {
 	Do(*http.Request) (*http.Response, error)
 }
 
+// ClientFunc is an adapter that allows a function to be used as the Client
+//
+// Example:
+//
+//	e := httpexpect.WithConfig(httpexpect.Config{
+//		Client: httpextect.ClientFunc(
+//			func(req *http.Request) (*http.Response, error) {
+//				// client code here
+//			}),
+//	})
+type ClientFunc func(req *http.Request) (*http.Response, error)
+
+func (f ClientFunc) Do(req *http.Request) (*http.Response, error) {
+	return f(req)
+}
+
 // WebsocketDialer is used to establish websocket.Conn and receive http.Response
 // of handshake result.
 // websocket.Dialer implements this interface.
@@ -313,8 +352,7 @@ type Client interface {
 // Example:
 //
 //	e := httpexpect.WithConfig(httpexpect.Config{
-//	  BaseURL:         "http://example.com",
-//	  WebsocketDialer: httpexpect.NewWebsocketDialer(myHandler),
+//		WebsocketDialer: httpexpect.NewWebsocketDialer(myHandler),
 //	})
 type WebsocketDialer interface {
 	// Dial establishes new Websocket connection and returns response
@@ -322,12 +360,49 @@ type WebsocketDialer interface {
 	Dial(url string, reqH http.Header) (*websocket.Conn, *http.Response, error)
 }
 
+// WebsocketDialerFunc is an adapter that allows a function
+// to be used as the WebsocketDialer
+//
+// Example:
+//
+//	e := httpexpect.WithConfig(httpexpect.Config{
+//		WebsocketDialer: httpextect.WebsocketDialerFunc(
+//			func(url string, reqH http.Header) (*websocket.Conn, *http.Response, error) {
+//				// dialer code here
+//			}),
+//	})
+type WebsocketDialerFunc func(
+	url string, reqH http.Header,
+) (*websocket.Conn, *http.Response, error)
+
+func (f WebsocketDialerFunc) Dial(
+	url string, reqH http.Header,
+) (*websocket.Conn, *http.Response, error) {
+	return f(url, reqH)
+}
+
 // Reporter is used to report failures.
-// *testing.T, FatalReporter, AssertReporter, RequireReporter implement it.
+// *testing.T, FatalReporter, AssertReporter, RequireReporter, PanicReporter implement it.
 type Reporter interface {
 	// Errorf reports failure.
 	// Allowed to return normally or terminate test using t.FailNow().
 	Errorf(message string, args ...interface{})
+}
+
+// ReporterFunc is an adapter that allows a function to be used as the Reporter
+//
+// Example:
+//
+//	e := httpexpect.WithConfig(httpexpect.Config{
+//		Reporter: httpextect.ReporterFunc(
+//			func(message string, args ...interface{}) {
+//				// reporter code here
+//			}),
+//	})
+type ReporterFunc func(message string, args ...interface{})
+
+func (f ReporterFunc) Errorf(message string, args ...interface{}) {
+	f(message, args)
 }
 
 // Logger is used as output backend for Printer.
@@ -335,6 +410,25 @@ type Reporter interface {
 type Logger interface {
 	// Logf writes message to test log.
 	Logf(fmt string, args ...interface{})
+}
+
+// LoggerFunc is an adapter that allows a function to be used as the Logger
+//
+// Example:
+//
+//	e := httpexpect.WithConfig(httpexpect.Config{
+//		Printers: []httpexpect.Printer{
+//			httpexpect.NewCompactPrinter(
+//				httpextect.LoggerFunc(
+//					func(fmt string, args ...interface{}) {
+//						// logger code here
+//					})),
+//		},
+//	})
+type LoggerFunc func(fmt string, args ...interface{})
+
+func (f LoggerFunc) Logf(fmt string, args ...interface{}) {
+	f(fmt, args)
 }
 
 // TestingTB is a subset of testing.TB interface used by httpexpect.
@@ -378,11 +472,11 @@ func New(t LoggerReporter, baseURL string) *Expect {
 // Example:
 //
 //	func TestSomething(t *testing.T) {
-//	    e := httpexpect.Default(t, "http://example.com/")
+//		e := httpexpect.Default(t, "http://example.com/")
 //
-//	    e.GET("/path").
-//	        Expect().
-//	        Status(http.StatusOK)
+//		e.GET("/path").
+//			Expect().
+//			Status(http.StatusOK)
 //	}
 func Default(t TestingTB, baseURL string) *Expect {
 	return WithConfig(Config{
@@ -403,23 +497,23 @@ func Default(t TestingTB, baseURL string) *Expect {
 // Example:
 //
 //	func TestSomething(t *testing.T) {
-//	    e := httpexpect.WithConfig(httpexpect.Config{
-//	        TestName: t.Name(),
-//	        BaseURL:  "http://example.com/",
-//	        Client:   &http.Client{
-//	            Transport: httpexpect.NewBinder(myHandler()),
-//	            Jar:       httpexpect.NewCookieJar(),
-//	        },
-//	        Reporter: httpexpect.NewAssertReporter(t),
-//	        Printers: []httpexpect.Printer{
-//	            httpexpect.NewCurlPrinter(t),
-//	            httpexpect.NewDebugPrinter(t, true)
-//	        },
-//	    })
+//		e := httpexpect.WithConfig(httpexpect.Config{
+//			TestName: t.Name(),
+//			BaseURL:  "http://example.com/",
+//			Client:   &http.Client{
+//				Transport: httpexpect.NewBinder(myHandler()),
+//				Jar:       httpexpect.NewCookieJar(),
+//			},
+//			Reporter: httpexpect.NewAssertReporter(t),
+//			Printers: []httpexpect.Printer{
+//				httpexpect.NewCurlPrinter(t),
+//				httpexpect.NewDebugPrinter(t, true)
+//			},
+//		})
 //
-//	    e.GET("/path").
-//	        Expect().
-//	        Status(http.StatusOK)
+//		e.GET("/path").
+//			Expect().
+//			Status(http.StatusOK)
 //	}
 func WithConfig(config Config) *Expect {
 	config = config.withDefaults()
@@ -463,11 +557,11 @@ func (e *Expect) clone() *Expect {
 //	e := httpexpect.Default(t, "http://example.com")
 //
 //	token := e.POST("/login").WithForm(Login{"ford", "betelgeuse7"}).
-//	    Expect().
-//	    Status(http.StatusOK).JSON().Object().Value("token").String().Raw()
+//		Expect().
+//		Status(http.StatusOK).JSON().Object().Value("token").String().Raw()
 //
 //	auth := e.Builder(func (req *httpexpect.Request) {
-//	    req.WithHeader("Authorization", "Bearer "+token)
+//		req.WithHeader("Authorization", "Bearer "+token)
 //	})
 //
 //	auth.GET("/restricted").
@@ -489,16 +583,16 @@ func (e *Expect) Builder(builder func(*Request)) *Expect {
 //	 e := httpexpect.Default(t, "http://example.com")
 //
 //	 m := e.Matcher(func (resp *httpexpect.Response) {
-//	     resp.Header("API-Version").NotEmpty()
+//		 resp.Header("API-Version").NotEmpty()
 //	 })
 //
 //	 m.GET("/some-path").
-//		    Expect().
-//		    Status(http.StatusOK)
+//			Expect().
+//			Status(http.StatusOK)
 //
 //	 m.GET("/bad-path").
-//		    Expect().
-//		    Status(http.StatusNotFound)
+//			Expect().
+//			Status(http.StatusNotFound)
 func (e *Expect) Matcher(matcher func(*Response)) *Expect {
 	ret := e.clone()
 

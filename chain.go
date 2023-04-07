@@ -100,6 +100,13 @@ const (
 	flagFailedChildren                          // fail() was called on any child
 )
 
+type chainResult bool
+
+const (
+	success chainResult = true
+	failure chainResult = false
+)
+
 // Construct chain using config.
 func newChainWithConfig(name string, config Config) *chain {
 	config.validate()
@@ -126,11 +133,13 @@ func newChainWithConfig(name string, config Config) *chain {
 		c.context.Environment = newEnvironment(c)
 	}
 
+	c.context.TestingTB = isTestingTB(c.handler)
+
 	return c
 }
 
 // Construct chain using DefaultAssertionHandler and provided Reporter.
-func newChainWithDefaults(name string, reporter Reporter) *chain {
+func newChainWithDefaults(name string, reporter Reporter, flag ...chainFlags) *chain {
 	if reporter == nil {
 		panic("Reporter is nil")
 	}
@@ -153,6 +162,12 @@ func newChainWithDefaults(name string, reporter Reporter) *chain {
 	}
 
 	c.context.Environment = newEnvironment(c)
+
+	c.context.TestingTB = isTestingTB(c.handler)
+
+	for _, f := range flag {
+		c.flags |= f
+	}
 
 	return c
 }
@@ -439,42 +454,21 @@ func (c *chain) treeFailed() bool {
 	return c.flags&(flagFailed|flagFailedChildren) != 0
 }
 
-// Set failure flag.
+// Report failure unless chain has specified state.
 // For tests.
-func (c *chain) setFailed() {
+func (c *chain) assert(t testing.TB, result chainResult) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	c.flags |= flagFailed
-}
+	switch result {
+	case success:
+		assert.Equal(t, chainFlags(0), c.flags&flagFailed,
+			"expected: chain is in success state")
 
-// Clear failure flags.
-// For tests.
-func (c *chain) clearFailed() {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	c.flags &= ^(flagFailed | flagFailedChildren)
-}
-
-// Report failure unless chain is not failed.
-// For tests.
-func (c *chain) assertNotFailed(t testing.TB) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	assert.Equal(t, chainFlags(0), c.flags&flagFailed,
-		"expected: chain is not failed")
-}
-
-// Report failure unless chain is failed.
-// For tests.
-func (c *chain) assertFailed(t testing.TB) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	assert.NotEqual(t, chainFlags(0), c.flags&flagFailed,
-		"expected: chain is failed")
+	case failure:
+		assert.NotEqual(t, chainFlags(0), c.flags&flagFailed,
+			"expected: chain is in failure state")
+	}
 }
 
 // Report failure unless chain has specified flags.
@@ -485,4 +479,26 @@ func (c *chain) assertFlags(t testing.TB, flags chainFlags) {
 
 	assert.Equal(t, flags, c.flags,
 		"expected: chain has specified flags")
+}
+
+// Clear failure flags.
+// For tests.
+func (c *chain) clear() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.flags &= ^(flagFailed | flagFailedChildren)
+}
+
+// Whether handler outputs to testing.TB
+func isTestingTB(in AssertionHandler) bool {
+	h, ok := in.(*DefaultAssertionHandler)
+	if !ok {
+		return false
+	}
+	switch h.Reporter.(type) {
+	case *AssertReporter, *RequireReporter, *FatalReporter, testing.TB:
+		return true
+	}
+	return false
 }

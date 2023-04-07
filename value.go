@@ -175,7 +175,7 @@ func (v *Value) Alias(name string) *Value {
 //	value := NewValue(t, json)
 //
 //	for _, user := range value.Path("$..user").Array().Iter() {
-//	    user.String().IsEqual("john")
+//		user.String().IsEqual("john")
 //	}
 func (v *Value) Path(path string) *Value {
 	opChain := v.chain.enter("Path(%q)", path)
@@ -201,19 +201,19 @@ func (v *Value) Path(path string) *Value {
 //	 schema := `{
 //	   "type": "object",
 //	   "properties": {
-//	      "foo": {
-//	          "type": "string"
-//	      },
-//	      "bar": {
-//	          "type": "integer"
-//	      }
+//		  "foo": {
+//			  "type": "string"
+//		  },
+//		  "bar": {
+//			  "type": "integer"
+//		  }
 //	  },
 //	  "require": ["foo", "bar"]
 //	}`
 //
 //	value := NewValue(t, map[string]interface{}{
-//	    "foo": "a",
-//	    "bar": 1,
+//		"foo": "a",
+//		"bar": 1,
 //	})
 //
 //	value.Schema(schema)

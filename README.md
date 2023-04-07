@@ -48,6 +48,7 @@ Workflow:
 * Failures are reported using [`testify`](https://github.com/stretchr/testify/) (`assert` or `require` package) or standard `testing` package.
 * JSON values are pretty-printed using `encoding/json`, Go values are pretty-printed using [`litter`](https://github.com/sanity-io/litter).
 * Dumping requests and responses in various formats, using [`httputil`](https://golang.org/pkg/net/http/httputil/), [`http2curl`](https://github.com/moul/http2curl), or simple compact logger.
+* Color support using [`fatih/color`](github.com/fatih/color).
 
 ##### Tuning
 
@@ -799,6 +800,9 @@ e := httpexpect.WithConfig(httpexpect.Config{
 	Formatter: &httpexpect.DefaultFormatter{
 		DisablePaths: true,
 		DisableDiffs: true,
+		FloatFormat:  httpexpect.FloatFormatScientific,
+		ColorMode:    httpexpect.ColorModeNever,
+		LineWidth:    80,
 	},
 })
 

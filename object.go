@@ -351,7 +351,7 @@ func (o *Object) ValueNotEqual(key string, value interface{}) *Object {
 //	object := NewObject(t, numbers)
 //
 //	for key, value := range object.Iter() {
-//	    value.Number().IsEqual(numbers[key])
+//		value.Number().IsEqual(numbers[key])
 //	}
 func (o *Object) Iter() map[string]Value {
 	opChain := o.chain.enter("Iter()")
@@ -1132,28 +1132,28 @@ func (o *Object) NotContainsValue(value interface{}) *Object {
 // Example:
 //
 //	object := NewObject(t, map[string]interface{}{
-//	    "foo": 123,
-//	    "bar": []interface{}{"x", "y"},
-//	    "bar": map[string]interface{}{
-//	        "a": true,
-//	        "b": false,
-//	    },
+//		"foo": 123,
+//		"bar": []interface{}{"x", "y"},
+//		"bar": map[string]interface{}{
+//			"a": true,
+//			"b": false,
+//		},
 //	})
 //
 //	object.ContainsSubset(map[string]interface{}{  // success
-//	    "foo": 123,
-//	    "bar": map[string]interface{}{
-//	        "a": true,
-//	    },
+//		"foo": 123,
+//		"bar": map[string]interface{}{
+//			"a": true,
+//		},
 //	})
 //
 //	object.ContainsSubset(map[string]interface{}{  // failure
-//	    "foo": 123,
-//	    "qux": 456,
+//		"foo": 123,
+//		"qux": 456,
 //	})
 //
 //	object.ContainsSubset(map[string]interface{}{  // failure, slices should match exactly
-//	    "bar": []interface{}{"x"},
+//		"bar": []interface{}{"x"},
 //	})
 func (o *Object) ContainsSubset(value interface{}) *Object {
 	opChain := o.chain.enter("ContainsSubset()")

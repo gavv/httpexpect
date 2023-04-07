@@ -8,12 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type typedErrorNil int
-
-func (*typedErrorNil) Error() string {
-	return ""
-}
-
 func TestAssertion_Handler(t *testing.T) {
 	type test struct {
 		formatter *mockFormatter
@@ -202,14 +196,14 @@ func TestAssertion_HandlerPanics(t *testing.T) {
 }
 
 func TestAssertion_ValidateTraits(t *testing.T) {
-	tests := []struct {
-		testName          string
+	cases := []struct {
+		name              string
 		errorContainsText string
 		failure           AssertionFailure
 		traits            fieldTraits
 	}{
 		{
-			testName:          "bad Type",
+			name:              "bad Type",
 			errorContainsText: "AssertionType",
 			failure: AssertionFailure{
 				Type: AssertionType(9999),
@@ -219,7 +213,7 @@ func TestAssertion_ValidateTraits(t *testing.T) {
 			},
 		},
 		{
-			testName:          "required Actual",
+			name:              "required Actual",
 			errorContainsText: "Actual",
 			failure: AssertionFailure{
 				Actual: nil,
@@ -229,7 +223,7 @@ func TestAssertion_ValidateTraits(t *testing.T) {
 			},
 		},
 		{
-			testName:          "denied Actual",
+			name:              "denied Actual",
 			errorContainsText: "Actual",
 			failure: AssertionFailure{
 				Actual: &AssertionValue{},
@@ -239,7 +233,7 @@ func TestAssertion_ValidateTraits(t *testing.T) {
 			},
 		},
 		{
-			testName:          "required Expected",
+			name:              "required Expected",
 			errorContainsText: "Expected",
 			failure: AssertionFailure{
 				Expected: nil,
@@ -249,7 +243,7 @@ func TestAssertion_ValidateTraits(t *testing.T) {
 			},
 		},
 		{
-			testName:          "denied Expected",
+			name:              "denied Expected",
 			errorContainsText: "Expected",
 			failure: AssertionFailure{
 				Expected: &AssertionValue{},
@@ -259,7 +253,7 @@ func TestAssertion_ValidateTraits(t *testing.T) {
 			},
 		},
 		{
-			testName:          "required AssertionRange",
+			name:              "required AssertionRange",
 			errorContainsText: "Expected",
 			failure: AssertionFailure{
 				Expected: nil,
@@ -269,7 +263,7 @@ func TestAssertion_ValidateTraits(t *testing.T) {
 			},
 		},
 		{
-			testName:          "AssertionRange should not be pointer",
+			name:              "AssertionRange should not be pointer",
 			errorContainsText: "AssertionRange",
 			failure: AssertionFailure{
 				Expected: &AssertionValue{
@@ -281,7 +275,7 @@ func TestAssertion_ValidateTraits(t *testing.T) {
 			},
 		},
 		{
-			testName:          "AssertionRange.Min should not be nil",
+			name:              "AssertionRange.Min should not be nil",
 			errorContainsText: "AssertionRange",
 			failure: AssertionFailure{
 				Expected: &AssertionValue{
@@ -295,7 +289,7 @@ func TestAssertion_ValidateTraits(t *testing.T) {
 			},
 		},
 		{
-			testName:          "AssertionRange.Max should not be nil",
+			name:              "AssertionRange.Max should not be nil",
 			errorContainsText: "AssertionRange",
 			failure: AssertionFailure{
 				Expected: &AssertionValue{
@@ -309,7 +303,7 @@ func TestAssertion_ValidateTraits(t *testing.T) {
 			},
 		},
 		{
-			testName:          "required AssertionList",
+			name:              "required AssertionList",
 			errorContainsText: "Expected",
 			failure: AssertionFailure{
 				Expected: nil,
@@ -319,7 +313,7 @@ func TestAssertion_ValidateTraits(t *testing.T) {
 			},
 		},
 		{
-			testName:          "AssertionList should not be pointer",
+			name:              "AssertionList should not be pointer",
 			errorContainsText: "AssertionValue",
 			failure: AssertionFailure{
 				Expected: &AssertionValue{
@@ -331,7 +325,7 @@ func TestAssertion_ValidateTraits(t *testing.T) {
 			},
 		},
 		{
-			testName:          "AssertionList should be not nil",
+			name:              "AssertionList should be not nil",
 			errorContainsText: "AssertionList",
 			failure: AssertionFailure{
 				Expected: &AssertionValue{
@@ -344,11 +338,11 @@ func TestAssertion_ValidateTraits(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		t.Run(test.testName, func(t *testing.T) {
-			err := validateTraits(&test.failure, test.traits)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validateTraits(&tc.failure, tc.traits)
 			require.Error(t, err)
-			require.Contains(t, err.Error(), test.errorContainsText)
+			require.Contains(t, err.Error(), tc.errorContainsText)
 		})
 	}
 
@@ -376,19 +370,19 @@ func TestAssertion_ValidateTraits(t *testing.T) {
 }
 
 func TestAssertion_ValidateAssertion(t *testing.T) {
-	var tnil *typedErrorNil
-	var tnilPtr error = tnil
+	var mErr *mockError
+	var mErrPtr error = mErr
 
-	assert.Nil(t, tnilPtr)
-	assert.NotEqual(t, nil, tnilPtr)
+	assert.Nil(t, mErrPtr)
+	assert.NotEqual(t, nil, mErrPtr)
 
-	tests := []struct {
-		testName          string
+	cases := []struct {
+		name              string
 		errorContainsText string
 		input             AssertionFailure
 	}{
 		{
-			testName:          "bad Type",
+			name:              "bad Type",
 			errorContainsText: "AssertionType",
 			input: AssertionFailure{
 				Type: AssertionType(9999),
@@ -398,7 +392,7 @@ func TestAssertion_ValidateAssertion(t *testing.T) {
 			},
 		},
 		{
-			testName:          "nil Errors",
+			name:              "nil Errors",
 			errorContainsText: "Errors",
 			input: AssertionFailure{
 				Type:   AssertOperation,
@@ -406,7 +400,7 @@ func TestAssertion_ValidateAssertion(t *testing.T) {
 			},
 		},
 		{
-			testName:          "empty Errors",
+			name:              "empty Errors",
 			errorContainsText: "Errors",
 			input: AssertionFailure{
 				Type:   AssertOperation,
@@ -414,7 +408,7 @@ func TestAssertion_ValidateAssertion(t *testing.T) {
 			},
 		},
 		{
-			testName:          "nil in Errors",
+			name:              "nil in Errors",
 			errorContainsText: "Errors",
 			input: AssertionFailure{
 				Type:   AssertOperation,
@@ -422,15 +416,15 @@ func TestAssertion_ValidateAssertion(t *testing.T) {
 			},
 		},
 		{
-			testName:          "typed nil in Errors",
+			name:              "typed nil in Errors",
 			errorContainsText: "Errors",
 			input: AssertionFailure{
 				Type:   AssertOperation,
-				Errors: []error{tnilPtr},
+				Errors: []error{mErrPtr},
 			},
 		},
 		{
-			testName:          "denied Actual",
+			name:              "denied Actual",
 			errorContainsText: "Actual",
 			input: AssertionFailure{
 				Type: AssertOperation,
@@ -441,7 +435,7 @@ func TestAssertion_ValidateAssertion(t *testing.T) {
 			},
 		},
 		{
-			testName:          "denied Expected",
+			name:              "denied Expected",
 			errorContainsText: "Expected",
 			input: AssertionFailure{
 				Type: AssertOperation,
@@ -452,7 +446,7 @@ func TestAssertion_ValidateAssertion(t *testing.T) {
 			},
 		},
 		{
-			testName:          "required Actual and denied Expected",
+			name:              "required Actual and denied Expected",
 			errorContainsText: "",
 			input: AssertionFailure{
 				Type: AssertType,
@@ -464,7 +458,7 @@ func TestAssertion_ValidateAssertion(t *testing.T) {
 			},
 		},
 		{
-			testName:          "missing Actual and denied Expected",
+			name:              "missing Actual and denied Expected",
 			errorContainsText: "",
 			input: AssertionFailure{
 				Type: AssertType,
@@ -476,7 +470,7 @@ func TestAssertion_ValidateAssertion(t *testing.T) {
 			},
 		},
 		{
-			testName:          "missing Actual",
+			name:              "missing Actual",
 			errorContainsText: "Actual",
 			input: AssertionFailure{
 				Type: AssertEqual,
@@ -488,7 +482,7 @@ func TestAssertion_ValidateAssertion(t *testing.T) {
 			},
 		},
 		{
-			testName:          "missing Expected",
+			name:              "missing Expected",
 			errorContainsText: "Expected",
 			input: AssertionFailure{
 				Type: AssertEqual,
@@ -500,7 +494,7 @@ func TestAssertion_ValidateAssertion(t *testing.T) {
 			},
 		},
 		{
-			testName:          "missing Actual and Expected",
+			name:              "missing Actual and Expected",
 			errorContainsText: "",
 			input: AssertionFailure{
 				Type: AssertEqual,
@@ -512,7 +506,7 @@ func TestAssertion_ValidateAssertion(t *testing.T) {
 			},
 		},
 		{
-			testName:          "Range is nil",
+			name:              "Range is nil",
 			errorContainsText: "AssertionRange",
 			input: AssertionFailure{
 				Type: AssertInRange,
@@ -524,7 +518,7 @@ func TestAssertion_ValidateAssertion(t *testing.T) {
 			},
 		},
 		{
-			testName:          "Range has wrong type",
+			name:              "Range has wrong type",
 			errorContainsText: "AssertionRange",
 			input: AssertionFailure{
 				Type: AssertInRange,
@@ -536,7 +530,7 @@ func TestAssertion_ValidateAssertion(t *testing.T) {
 			},
 		},
 		{
-			testName:          "Range is pointer",
+			name:              "Range is pointer",
 			errorContainsText: "AssertionRange",
 			input: AssertionFailure{
 				Type: AssertInRange,
@@ -548,7 +542,7 @@ func TestAssertion_ValidateAssertion(t *testing.T) {
 			},
 		},
 		{
-			testName:          "Range Min is nil",
+			name:              "Range Min is nil",
 			errorContainsText: "Min",
 			input: AssertionFailure{
 				Type: AssertInRange,
@@ -560,7 +554,7 @@ func TestAssertion_ValidateAssertion(t *testing.T) {
 			},
 		},
 		{
-			testName:          "Range Max is nil",
+			name:              "Range Max is nil",
 			errorContainsText: "Max",
 			input: AssertionFailure{
 				Type: AssertInRange,
@@ -572,7 +566,7 @@ func TestAssertion_ValidateAssertion(t *testing.T) {
 			},
 		},
 		{
-			testName:          "Range Min and Max are nil",
+			name:              "Range Min and Max are nil",
 			errorContainsText: "",
 			input: AssertionFailure{
 				Type: AssertInRange,
@@ -584,7 +578,7 @@ func TestAssertion_ValidateAssertion(t *testing.T) {
 			},
 		},
 		{
-			testName:          "List is nil",
+			name:              "List is nil",
 			errorContainsText: "AssertionList",
 			input: AssertionFailure{
 				Type: AssertBelongs,
@@ -596,7 +590,7 @@ func TestAssertion_ValidateAssertion(t *testing.T) {
 			},
 		},
 		{
-			testName:          "List has wrong type",
+			name:              "List has wrong type",
 			errorContainsText: "AssertionList",
 			input: AssertionFailure{
 				Type: AssertBelongs,
@@ -608,7 +602,7 @@ func TestAssertion_ValidateAssertion(t *testing.T) {
 			},
 		},
 		{
-			testName:          "List is pointer",
+			name:              "List is pointer",
 			errorContainsText: "AssertionList",
 			input: AssertionFailure{
 				Type: AssertBelongs,
@@ -620,7 +614,7 @@ func TestAssertion_ValidateAssertion(t *testing.T) {
 			},
 		},
 		{
-			testName:          "List is typed nil",
+			name:              "List is typed nil",
 			errorContainsText: "AssertionList",
 			input: AssertionFailure{
 				Type: AssertBelongs,
@@ -632,7 +626,7 @@ func TestAssertion_ValidateAssertion(t *testing.T) {
 			},
 		},
 		{
-			testName:          "List is empty",
+			name:              "List is empty",
 			errorContainsText: "AssertionList",
 			input: AssertionFailure{
 				Type: AssertBelongs,
@@ -645,11 +639,11 @@ func TestAssertion_ValidateAssertion(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		t.Run(test.testName, func(t *testing.T) {
-			err := validateAssertion(&test.input)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validateAssertion(&tc.input)
 			require.Error(t, err)
-			require.Contains(t, err.Error(), test.errorContainsText)
+			require.Contains(t, err.Error(), tc.errorContainsText)
 		})
 	}
 }

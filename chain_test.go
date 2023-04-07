@@ -8,6 +8,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func testFailure() AssertionFailure {
+	return AssertionFailure{
+		Type: AssertOperation,
+		Errors: []error{
+			errors.New("test_error"),
+		},
+	}
+}
+
 func TestChain_Basic(t *testing.T) {
 	t.Run("clone", func(t *testing.T) {
 		chain1 := newMockChain(t)
@@ -43,7 +52,7 @@ func TestChain_Basic(t *testing.T) {
 		chain1 := newMockChain(t)
 		chain2 := chain1.enter("test")
 
-		chain2.fail(mockFailure())
+		chain2.fail(testFailure())
 
 		assert.False(t, chain1.failed())
 		assert.True(t, chain2.failed())
@@ -72,7 +81,7 @@ func TestChain_Basic(t *testing.T) {
 		chain3 := chain2.clone()
 		chain3e := chain3.enter("test")
 
-		chain3e.fail(mockFailure())
+		chain3e.fail(testFailure())
 
 		assert.False(t, chain1.failed())
 		assert.False(t, chain2.failed())
@@ -114,8 +123,8 @@ func TestChain_Basic(t *testing.T) {
 		chain3 := chain2.clone()
 		chain3e := chain3.enter("test")
 
-		chain2e.fail(mockFailure())
-		chain3e.fail(mockFailure())
+		chain2e.fail(testFailure())
+		chain3e.fail(testFailure())
 
 		assert.False(t, chain1.failed())
 		assert.False(t, chain2.failed())
@@ -164,7 +173,7 @@ func TestChain_Basic(t *testing.T) {
 		chain3 := chain2.clone()
 		chain3e := chain3.enter("test")
 
-		chain3e.fail(mockFailure())
+		chain3e.fail(testFailure())
 
 		assert.False(t, chain1.failed())
 		assert.False(t, chain2.failed())
@@ -206,7 +215,7 @@ func TestChain_Basic(t *testing.T) {
 		chain3.setRoot()
 		chain3e := chain3.enter("test")
 
-		chain3e.fail(mockFailure())
+		chain3e.fail(testFailure())
 
 		assert.False(t, chain1.failed())
 		assert.False(t, chain2.failed())
@@ -355,7 +364,7 @@ func TestChain_Panics(t *testing.T) {
 		chain := newChainWithDefaults("test", newMockReporter(t))
 
 		assert.Panics(t, func() {
-			chain.fail(mockFailure())
+			chain.fail(testFailure())
 		})
 	})
 
@@ -366,7 +375,7 @@ func TestChain_Panics(t *testing.T) {
 		opChain.leave()
 
 		assert.Panics(t, func() {
-			opChain.fail(mockFailure())
+			opChain.fail(testFailure())
 		})
 	})
 
@@ -606,7 +615,7 @@ func TestChain_Handler(t *testing.T) {
 		}.withDefaults())
 
 		opChain := chain.enter("test")
-		opChain.fail(mockFailure())
+		opChain.fail(testFailure())
 		opChain.leave()
 
 		assert.NotNil(t, handler.ctx)
@@ -623,7 +632,7 @@ func TestChain_Severity(t *testing.T) {
 		}.withDefaults())
 
 		opChain := chain.enter("test")
-		opChain.fail(mockFailure())
+		opChain.fail(testFailure())
 		opChain.leave()
 
 		assert.NotNil(t, handler.failure)
@@ -640,7 +649,7 @@ func TestChain_Severity(t *testing.T) {
 		chain.setSeverity(SeverityError)
 
 		opChain := chain.enter("test")
-		opChain.fail(mockFailure())
+		opChain.fail(testFailure())
 		opChain.leave()
 
 		assert.NotNil(t, handler.failure)
@@ -657,7 +666,7 @@ func TestChain_Severity(t *testing.T) {
 		chain.setSeverity(SeverityLog)
 
 		opChain := chain.enter("test")
-		opChain.fail(mockFailure())
+		opChain.fail(testFailure())
 		opChain.leave()
 
 		assert.NotNil(t, handler.failure)
@@ -700,4 +709,108 @@ func TestChain_Reporting(t *testing.T) {
 	assert.NotNil(t, handler.ctx)    // reported to handler
 	assert.NotNil(t, handler.failure)
 	assert.Equal(t, failure, *handler.failure)
+}
+
+func TestChain_TestingTB(t *testing.T) {
+	type args struct {
+		handler  AssertionHandler
+		reporter Reporter
+	}
+	cases := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "testing.T",
+			args: args{
+				handler: &DefaultAssertionHandler{
+					Formatter: newMockFormatter(t),
+					Reporter:  t,
+					Logger:    newMockLogger(t),
+				},
+				reporter: t,
+			},
+			want: true,
+		},
+		{
+			name: "testing.B",
+			args: args{
+				handler: &DefaultAssertionHandler{
+					Formatter: newMockFormatter(t),
+					Reporter:  &testing.B{},
+					Logger:    newMockLogger(t),
+				},
+				reporter: &testing.B{},
+			},
+			want: true,
+		},
+		{
+			name: "testing.TB",
+			args: args{
+				handler: &DefaultAssertionHandler{
+					Formatter: newMockFormatter(t),
+					Reporter:  testing.TB(t),
+					Logger:    newMockLogger(t),
+				},
+				reporter: testing.TB(t),
+			},
+			want: true,
+		},
+		{
+			name: "AssertReporter",
+			args: args{
+				handler: &DefaultAssertionHandler{
+					Formatter: newMockFormatter(t),
+					Reporter:  NewFatalReporter(t),
+					Logger:    newMockLogger(t),
+				},
+				reporter: NewFatalReporter(t),
+			},
+			want: true,
+		},
+		{
+			name: "AssertReporter",
+			args: args{
+				handler: &DefaultAssertionHandler{
+					Formatter: newMockFormatter(t),
+					Reporter:  NewAssertReporter(t),
+					Logger:    newMockLogger(t),
+				},
+				reporter: NewAssertReporter(t),
+			},
+			want: true,
+		},
+		{
+			name: "RequireReporter",
+			args: args{
+				handler: &DefaultAssertionHandler{
+					Formatter: newMockFormatter(t),
+					Reporter:  NewRequireReporter(t),
+					Logger:    newMockLogger(t),
+				},
+				reporter: NewRequireReporter(t),
+			},
+			want: true,
+		},
+		{
+			name: "mockHandler, mockReporter",
+			args: args{
+				handler:  &mockAssertionHandler{},
+				reporter: newMockReporter(t),
+			},
+			want: false,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			chain := newChainWithConfig(tc.name, Config{
+				AssertionHandler: tc.args.handler,
+			}.withDefaults())
+			assert.Equal(t, tc.want, chain.context.TestingTB)
+
+			chain = newChainWithDefaults(tc.name, tc.args.reporter)
+			assert.Equal(t, tc.want, chain.context.TestingTB)
+		})
+	}
 }
