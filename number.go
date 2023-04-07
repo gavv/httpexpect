@@ -340,7 +340,7 @@ func (n *Number) InRange(min, max interface{}) *Number {
 		opChain.fail(AssertionFailure{
 			Type:     AssertInRange,
 			Actual:   &AssertionValue{n.value},
-			Expected: &AssertionValue{AssertionRange{a, b}},
+			Expected: &AssertionValue{AssertionRange{min, max}},
 			Errors: []error{
 				errors.New("expected: number is within given range"),
 			},
@@ -382,7 +382,7 @@ func (n *Number) NotInRange(min, max interface{}) *Number {
 		opChain.fail(AssertionFailure{
 			Type:     AssertNotInRange,
 			Actual:   &AssertionValue{n.value},
-			Expected: &AssertionValue{AssertionRange{a, b}},
+			Expected: &AssertionValue{AssertionRange{min, max}},
 			Errors: []error{
 				errors.New("expected: number is not within given range"),
 			},
