@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -98,28 +97,6 @@ func (mh *mockAssertionHandler) Failure(
 ) {
 	mh.ctx = ctx
 	mh.failure = failure
-}
-
-// mock printer
-type mockPrinter struct {
-	reqBody  []byte
-	respBody []byte
-	rtt      time.Duration
-}
-
-func (mp *mockPrinter) Request(req *http.Request) {
-	if req.Body != nil {
-		mp.reqBody, _ = ioutil.ReadAll(req.Body)
-		req.Body.Close()
-	}
-}
-
-func (mp *mockPrinter) Response(resp *http.Response, rtt time.Duration) {
-	if resp.Body != nil {
-		mp.respBody, _ = ioutil.ReadAll(resp.Body)
-		resp.Body.Close()
-	}
-	mp.rtt = rtt
 }
 
 // mock websocket printer
@@ -275,6 +252,9 @@ type mockBody struct {
 
 	closeCount int
 	closeErr   error
+
+	errCount int
+	eofCount int
 }
 
 func newMockBody(body string) *mockBody {
@@ -285,17 +265,28 @@ func newMockBody(body string) *mockBody {
 
 func (mb *mockBody) Read(p []byte) (int, error) {
 	mb.readCount++
+
 	if mb.readErr != nil {
 		return 0, mb.readErr
 	}
-	return mb.reader.Read(p)
+
+	n, err := mb.reader.Read(p)
+	if err == io.EOF {
+		mb.eofCount++
+	} else if err != nil {
+		mb.errCount++
+	}
+
+	return n, err
 }
 
 func (mb *mockBody) Close() error {
 	mb.closeCount++
+
 	if mb.closeErr != nil {
 		return mb.closeErr
 	}
+
 	return nil
 }
 
@@ -342,9 +333,14 @@ func (me *mockNetError) Temporary() bool {
 	return me.isTemporary
 }
 
-// // mock custom error
+// mock custom error
 type mockError struct{}
 
 func (me *mockError) Error() string {
 	return "mock error"
+}
+
+// mock sleep function
+func mockSleep(time.Duration) <-chan time.Time {
+	return time.After(0)
 }

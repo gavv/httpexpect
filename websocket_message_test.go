@@ -74,233 +74,436 @@ func TestWebsocketMessage_Alias(t *testing.T) {
 }
 
 func TestWebsocketMessage_CloseMessage(t *testing.T) {
-	reporter := newMockReporter(t)
+	t.Run("CloseMessage type with functions", func(t *testing.T) {
+		cases := []struct {
+			name string
+			typ  int
+			fn   func(s *WebsocketMessage) *WebsocketMessage
+			want chainResult
+		}{
+			{
+				name: "CloseMessage type with CloseMessage function",
+				typ:  websocket.CloseMessage,
+				fn:   (*WebsocketMessage).CloseMessage,
+				want: success,
+			},
+			{
+				name: "CloseMessage type with NotCloseMessage function",
+				typ:  websocket.CloseMessage,
+				fn:   (*WebsocketMessage).NotCloseMessage,
+				want: failure,
+			},
+			{
+				name: "CloseMessage type with BinaryMessage function",
+				typ:  websocket.CloseMessage,
+				fn:   (*WebsocketMessage).BinaryMessage,
+				want: failure,
+			},
+			{
+				name: "CloseMessage type with NotBinaryMessage function",
+				typ:  websocket.CloseMessage,
+				fn:   (*WebsocketMessage).NotBinaryMessage,
+				want: success,
+			},
+			{
+				name: "CloseMessage type with TextMessage function",
+				typ:  websocket.CloseMessage,
+				fn:   (*WebsocketMessage).TextMessage,
+				want: failure,
+			},
+			{
+				name: "CloseMessage type with NotTextMessage function",
+				typ:  websocket.CloseMessage,
+				fn:   (*WebsocketMessage).NotTextMessage,
+				want: success,
+			},
+		}
 
-	msg := NewWebsocketMessage(reporter, websocket.CloseMessage, nil, 1000)
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				reporter := newMockReporter(t)
 
-	msg.CloseMessage()
-	msg.chain.assert(t, success)
-	msg.chain.clear()
+				tc.fn(NewWebsocketMessage(reporter, tc.typ, nil, 1000)).
+					chain.assert(t, tc.want)
+			})
+		}
+	})
 
-	msg.NotCloseMessage()
-	msg.chain.assert(t, failure)
-	msg.chain.clear()
+	t.Run("CloseMessage type with codes", func(t *testing.T) {
+		cases := []struct {
+			name        string
+			typ         int
+			code        int
+			testCode    int
+			wantCode    chainResult
+			wantNotCode chainResult
+		}{
+			{
+				name:        "CloseMessage type with code 1000 and test code 1000",
+				typ:         websocket.CloseMessage,
+				code:        1000,
+				testCode:    1000,
+				wantCode:    success,
+				wantNotCode: failure,
+			},
+			{
+				name:        "CloseMessage type with code 1000 and test code 1001",
+				typ:         websocket.CloseMessage,
+				code:        1000,
+				testCode:    1001,
+				wantCode:    failure,
+				wantNotCode: success,
+			},
+		}
 
-	msg.BinaryMessage()
-	msg.chain.assert(t, failure)
-	msg.chain.clear()
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				reporter := newMockReporter(t)
 
-	msg.NotBinaryMessage()
-	msg.chain.assert(t, success)
-	msg.chain.clear()
+				NewWebsocketMessage(reporter, tc.typ, nil, tc.code).Code(tc.testCode).
+					chain.assert(t, tc.wantCode)
 
-	msg.TextMessage()
-	msg.chain.assert(t, failure)
-	msg.chain.clear()
+				NewWebsocketMessage(reporter, tc.typ, nil, tc.code).NotCode(tc.testCode).
+					chain.assert(t, tc.wantNotCode)
+			})
+		}
+	})
 
-	msg.NotTextMessage()
-	msg.chain.assert(t, success)
-	msg.chain.clear()
+	t.Run("CloseMessage type with types", func(t *testing.T) {
+		cases := []struct {
+			name        string
+			typ         int
+			code        int
+			testCode    int
+			wantCode    chainResult
+			wantNotCode chainResult
+		}{
+			{
+				name:        "CloseMessage type with code 1000 and test code 1000",
+				typ:         websocket.CloseMessage,
+				code:        1000,
+				testCode:    1000,
+				wantCode:    success,
+				wantNotCode: failure,
+			},
+			{
+				name:        "CloseMessage type with code 1000 and test code 1001",
+				typ:         websocket.CloseMessage,
+				code:        1000,
+				testCode:    1001,
+				wantCode:    failure,
+				wantNotCode: success,
+			},
+		}
 
-	msg.Type(websocket.CloseMessage)
-	msg.chain.assert(t, success)
-	msg.chain.clear()
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				reporter := newMockReporter(t)
 
-	msg.NotType(websocket.CloseMessage)
-	msg.chain.assert(t, failure)
-	msg.chain.clear()
+				NewWebsocketMessage(reporter, tc.typ, nil, tc.code).Code(tc.testCode).
+					chain.assert(t, tc.wantCode)
 
-	msg.Type(websocket.TextMessage)
-	msg.chain.assert(t, failure)
-	msg.chain.clear()
-
-	msg.NotType(websocket.TextMessage)
-	msg.chain.assert(t, success)
-	msg.chain.clear()
-
-	msg.Code(1000)
-	msg.chain.assert(t, success)
-	msg.chain.clear()
-
-	msg.NotCode(1000)
-	msg.chain.assert(t, failure)
-	msg.chain.clear()
-
-	msg.Code(1001)
-	msg.chain.assert(t, failure)
-	msg.chain.clear()
-
-	msg.NotCode(1001)
-	msg.chain.assert(t, success)
-	msg.chain.clear()
+				NewWebsocketMessage(reporter, tc.typ, nil, tc.code).NotCode(tc.testCode).
+					chain.assert(t, tc.wantNotCode)
+			})
+		}
+	})
 }
 
 func TestWebsocketMessage_TextMessage(t *testing.T) {
-	reporter := newMockReporter(t)
+	t.Run("TextMessage type with functions", func(t *testing.T) {
+		cases := []struct {
+			name string
+			typ  int
+			fn   func(s *WebsocketMessage) *WebsocketMessage
+			want chainResult
+		}{
+			{
+				name: "TextMessage type with CloseMessage function",
+				typ:  websocket.TextMessage,
+				fn:   (*WebsocketMessage).CloseMessage,
+				want: failure,
+			},
+			{
+				name: "TextMessage type with NotCloseMessage function",
+				typ:  websocket.TextMessage,
+				fn:   (*WebsocketMessage).NotCloseMessage,
+				want: success,
+			},
+			{
+				name: "TextMessage type with BinaryMessage function",
+				typ:  websocket.TextMessage,
+				fn:   (*WebsocketMessage).BinaryMessage,
+				want: failure,
+			},
+			{
+				name: "TextMessage type with NotBinaryMessage function",
+				typ:  websocket.TextMessage,
+				fn:   (*WebsocketMessage).NotBinaryMessage,
+				want: success,
+			},
+			{
+				name: "TextMessage type with TextMessage function",
+				typ:  websocket.TextMessage,
+				fn:   (*WebsocketMessage).TextMessage,
+				want: success,
+			},
+			{
+				name: "TextMessage type with NotTextMessage function",
+				typ:  websocket.TextMessage,
+				fn:   (*WebsocketMessage).NotTextMessage,
+				want: failure,
+			},
+		}
 
-	msg := NewWebsocketMessage(reporter, websocket.TextMessage, nil, 0)
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				reporter := newMockReporter(t)
 
-	msg.CloseMessage()
-	msg.chain.assert(t, failure)
-	msg.chain.clear()
+				tc.fn(NewWebsocketMessage(reporter, tc.typ, nil, 1000)).
+					chain.assert(t, tc.want)
+			})
+		}
+	})
 
-	msg.NotCloseMessage()
-	msg.chain.assert(t, success)
-	msg.chain.clear()
+	t.Run("TextMessage type with types", func(t *testing.T) {
+		cases := []struct {
+			name        string
+			typ         int
+			testTyp     int
+			wantCode    chainResult
+			wantNotCode chainResult
+		}{
+			{
+				name:        "TextMessage type with CloseMessage type",
+				typ:         websocket.TextMessage,
+				testTyp:     websocket.CloseMessage,
+				wantCode:    failure,
+				wantNotCode: success,
+			},
+			{
+				name:        "TextMessage type with TextMessage type",
+				typ:         websocket.TextMessage,
+				testTyp:     websocket.TextMessage,
+				wantCode:    success,
+				wantNotCode: failure,
+			},
+		}
 
-	msg.BinaryMessage()
-	msg.chain.assert(t, failure)
-	msg.chain.clear()
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				reporter := newMockReporter(t)
 
-	msg.NotBinaryMessage()
-	msg.chain.assert(t, success)
-	msg.chain.clear()
+				NewWebsocketMessage(reporter, tc.typ, nil, 10).Type(tc.testTyp).
+					chain.assert(t, tc.wantCode)
 
-	msg.TextMessage()
-	msg.chain.assert(t, success)
-	msg.chain.clear()
-
-	msg.NotTextMessage()
-	msg.chain.assert(t, failure)
-	msg.chain.clear()
-
-	msg.Type(websocket.CloseMessage)
-	msg.chain.assert(t, failure)
-	msg.chain.clear()
-
-	msg.NotType(websocket.CloseMessage)
-	msg.chain.assert(t, success)
-	msg.chain.clear()
-
-	msg.Type(websocket.TextMessage)
-	msg.chain.assert(t, success)
-	msg.chain.clear()
-
-	msg.NotType(websocket.TextMessage)
-	msg.chain.assert(t, failure)
-	msg.chain.clear()
+				NewWebsocketMessage(reporter, tc.typ, nil, 10).NotType(tc.testTyp).
+					chain.assert(t, tc.wantNotCode)
+			})
+		}
+	})
 }
 
 func TestWebsocketMessage_BinaryMessage(t *testing.T) {
-	reporter := newMockReporter(t)
+	t.Run("BinaryMessage type with functions", func(t *testing.T) {
+		cases := []struct {
+			name string
+			typ  int
+			fn   func(s *WebsocketMessage) *WebsocketMessage
+			want chainResult
+		}{
+			{
+				name: "BinaryMessage type with CloseMessage function",
+				typ:  websocket.BinaryMessage,
+				fn:   (*WebsocketMessage).CloseMessage,
+				want: failure,
+			},
+			{
+				name: "BinaryMessage type with NotCloseMessage function",
+				typ:  websocket.BinaryMessage,
+				fn:   (*WebsocketMessage).NotCloseMessage,
+				want: success,
+			},
+			{
+				name: "BinaryMessage type with BinaryMessage function",
+				typ:  websocket.BinaryMessage,
+				fn:   (*WebsocketMessage).BinaryMessage,
+				want: success,
+			},
+			{
+				name: "BinaryMessage type with NotBinaryMessage function",
+				typ:  websocket.BinaryMessage,
+				fn:   (*WebsocketMessage).NotBinaryMessage,
+				want: failure,
+			},
+			{
+				name: "BinaryMessage type with TextMessage function",
+				typ:  websocket.BinaryMessage,
+				fn:   (*WebsocketMessage).TextMessage,
+				want: failure,
+			},
+			{
+				name: "BinaryMessage type with NotTextMessage function",
+				typ:  websocket.BinaryMessage,
+				fn:   (*WebsocketMessage).NotTextMessage,
+				want: success,
+			},
+		}
 
-	msg := NewWebsocketMessage(reporter, websocket.BinaryMessage, nil, 0)
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				reporter := newMockReporter(t)
 
-	msg.CloseMessage()
-	msg.chain.assert(t, failure)
-	msg.chain.clear()
+				tc.fn(NewWebsocketMessage(reporter, tc.typ, nil, 1000)).
+					chain.assert(t, tc.want)
+			})
+		}
+	})
 
-	msg.NotCloseMessage()
-	msg.chain.assert(t, success)
-	msg.chain.clear()
+	t.Run("BinaryMessage with types ", func(t *testing.T) {
+		cases := []struct {
+			name        string
+			typ         int
+			testTyp     int
+			wantCode    chainResult
+			wantNotCode chainResult
+		}{
+			{
+				name:        "BinaryMessage type with BinaryMessage type",
+				typ:         websocket.BinaryMessage,
+				testTyp:     websocket.BinaryMessage,
+				wantCode:    success,
+				wantNotCode: failure,
+			},
+			{
+				name:        "BinaryMessage type with TextMessage type",
+				typ:         websocket.BinaryMessage,
+				testTyp:     websocket.TextMessage,
+				wantCode:    failure,
+				wantNotCode: success,
+			},
+		}
 
-	msg.BinaryMessage()
-	msg.chain.assert(t, success)
-	msg.chain.clear()
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				reporter := newMockReporter(t)
 
-	msg.NotBinaryMessage()
-	msg.chain.assert(t, failure)
-	msg.chain.clear()
+				NewWebsocketMessage(reporter, tc.typ, nil, 10).Type(tc.testTyp).
+					chain.assert(t, tc.wantCode)
 
-	msg.TextMessage()
-	msg.chain.assert(t, failure)
-	msg.chain.clear()
+				NewWebsocketMessage(reporter, tc.typ, nil, 10).NotType(tc.testTyp).
+					chain.assert(t, tc.wantNotCode)
+			})
 
-	msg.NotTextMessage()
-	msg.chain.assert(t, success)
-	msg.chain.clear()
-
-	msg.Type(websocket.BinaryMessage)
-	msg.chain.assert(t, success)
-	msg.chain.clear()
-
-	msg.NotType(websocket.BinaryMessage)
-	msg.chain.assert(t, failure)
-	msg.chain.clear()
-
-	msg.Type(websocket.TextMessage)
-	msg.chain.assert(t, failure)
-	msg.chain.clear()
-
-	msg.NotType(websocket.TextMessage)
-	msg.chain.assert(t, success)
-	msg.chain.clear()
+		}
+	})
 }
 
 func TestWebsocketMessage_MatchTypes(t *testing.T) {
-	reporter := newMockReporter(t)
+	cases := []struct {
+		name        string
+		typ         int
+		testTypes   []int
+		wantCode    chainResult
+		wantNotCode chainResult
+	}{
+		{
+			name:        "TextMessage type with TextMessage and BinaryMessage types",
+			typ:         websocket.TextMessage,
+			testTypes:   []int{websocket.TextMessage, websocket.BinaryMessage},
+			wantCode:    success,
+			wantNotCode: failure,
+		},
+		{
+			name:        "TextMessage type with BinaryMessage andTexMessage types",
+			typ:         websocket.TextMessage,
+			testTypes:   []int{websocket.BinaryMessage, websocket.TextMessage},
+			wantCode:    success,
+			wantNotCode: failure,
+		},
+		{
+			name:        "TextMessage type with CloseMessage and BinaryMessage types",
+			typ:         websocket.TextMessage,
+			testTypes:   []int{websocket.CloseMessage, websocket.BinaryMessage},
+			wantCode:    failure,
+			wantNotCode: success,
+		},
+		{
+			name:        "TextMessage type with BinaryMessage and CloseMessage types",
+			typ:         websocket.TextMessage,
+			testTypes:   []int{websocket.BinaryMessage, websocket.CloseMessage},
+			wantCode:    failure,
+			wantNotCode: success,
+		},
+	}
 
-	msg := NewWebsocketMessage(reporter, websocket.TextMessage, nil, 0)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			reporter := newMockReporter(t)
 
-	msg.Type(websocket.TextMessage, websocket.BinaryMessage)
-	msg.chain.assert(t, success)
-	msg.chain.clear()
+			NewWebsocketMessage(reporter, tc.typ, nil, 0).Type(tc.testTypes...).
+				chain.assert(t, tc.wantCode)
 
-	msg.Type(websocket.BinaryMessage, websocket.TextMessage)
-	msg.chain.assert(t, success)
-	msg.chain.clear()
-
-	msg.Type(websocket.CloseMessage, websocket.BinaryMessage)
-	msg.chain.assert(t, failure)
-	msg.chain.clear()
-
-	msg.Type(websocket.BinaryMessage, websocket.CloseMessage)
-	msg.chain.assert(t, failure)
-	msg.chain.clear()
-
-	msg.NotType(websocket.TextMessage, websocket.BinaryMessage)
-	msg.chain.assert(t, failure)
-	msg.chain.clear()
-
-	msg.NotType(websocket.BinaryMessage, websocket.TextMessage)
-	msg.chain.assert(t, failure)
-	msg.chain.clear()
-
-	msg.NotType(websocket.CloseMessage, websocket.BinaryMessage)
-	msg.chain.assert(t, success)
-	msg.chain.clear()
-
-	msg.NotType(websocket.BinaryMessage, websocket.CloseMessage)
-	msg.chain.assert(t, success)
-	msg.chain.clear()
+			NewWebsocketMessage(reporter, tc.typ, nil, 0).NotType(tc.testTypes...).
+				chain.assert(t, tc.wantNotCode)
+		})
+	}
 }
 
 func TestWebsocketMessage_MatchCodes(t *testing.T) {
-	reporter := newMockReporter(t)
+	cases := []struct {
+		name        string
+		typ         int
+		code        int
+		testCodes   []int
+		wantCode    chainResult
+		wantNotCode chainResult
+	}{
+		{
+			name:        "close message with close code 10 and with test codes 10 and 20",
+			typ:         websocket.CloseMessage,
+			code:        10,
+			testCodes:   []int{10, 20},
+			wantCode:    success,
+			wantNotCode: failure,
+		},
+		{
+			name:        "close message with close code 10 and with test codes 20 and 10",
+			typ:         websocket.CloseMessage,
+			code:        10,
+			testCodes:   []int{20, 10},
+			wantCode:    success,
+			wantNotCode: failure,
+		},
+		{
+			name:        "close message with close code 10 and with test codes 30 and 20",
+			typ:         websocket.CloseMessage,
+			code:        10,
+			testCodes:   []int{30, 20},
+			wantCode:    failure,
+			wantNotCode: success,
+		},
+		{
+			name:        "close message with close code 10 and with test codes 20 and 30",
+			typ:         websocket.CloseMessage,
+			code:        10,
+			testCodes:   []int{20, 30},
+			wantCode:    failure,
+			wantNotCode: success,
+		},
+	}
 
-	msg := NewWebsocketMessage(reporter, websocket.CloseMessage, nil, 10)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			reporter := newMockReporter(t)
 
-	msg.Code(10, 20)
-	msg.chain.assert(t, success)
-	msg.chain.clear()
+			NewWebsocketMessage(reporter, tc.typ, nil, tc.code).Code(tc.testCodes...).
+				chain.assert(t, tc.wantCode)
 
-	msg.Code(20, 10)
-	msg.chain.assert(t, success)
-	msg.chain.clear()
-
-	msg.Code(30, 20)
-	msg.chain.assert(t, failure)
-	msg.chain.clear()
-
-	msg.Code(20, 30)
-	msg.chain.assert(t, failure)
-	msg.chain.clear()
-
-	msg.NotCode(10, 20)
-	msg.chain.assert(t, failure)
-	msg.chain.clear()
-
-	msg.NotCode(20, 10)
-	msg.chain.assert(t, failure)
-	msg.chain.clear()
-
-	msg.NotCode(30, 20)
-	msg.chain.assert(t, success)
-	msg.chain.clear()
-
-	msg.NotCode(20, 30)
-	msg.chain.assert(t, success)
-	msg.chain.clear()
+			NewWebsocketMessage(reporter, tc.typ, nil, tc.code).NotCode(tc.testCodes...).
+				chain.assert(t, tc.wantNotCode)
+		})
+	}
 }
 
 func TestWebsocketMessage_CodeAndType(t *testing.T) {
@@ -409,9 +612,9 @@ func TestWebsocketMessage_Body(t *testing.T) {
 }
 
 func TestWebsocketMessage_JSON(t *testing.T) {
-	reporter := newMockReporter(t)
-
 	t.Run("good", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
 		body := []byte(`{"foo":"bar"}`)
 
 		msg := NewWebsocketMessage(reporter, websocket.TextMessage, body)
@@ -423,6 +626,8 @@ func TestWebsocketMessage_JSON(t *testing.T) {
 	})
 
 	t.Run("bad", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
 		body := []byte(`{`)
 
 		msg := NewWebsocketMessage(reporter, websocket.TextMessage, body)
@@ -435,27 +640,25 @@ func TestWebsocketMessage_JSON(t *testing.T) {
 }
 
 func TestWebsocketMessage_Usage(t *testing.T) {
-	chain := newMockChain(t)
+	t.Run("type", func(t *testing.T) {
+		reporter := newMockReporter(t)
 
-	msg := newEmptyWebsocketMessage(chain)
+		NewWebsocketMessage(reporter, websocket.TextMessage, nil).Type().
+			chain.assert(t, failure)
 
-	msg.chain.assert(t, success)
+		NewWebsocketMessage(reporter, websocket.TextMessage, nil).NotType().
+			chain.assert(t, failure)
+	})
 
-	msg.Type()
-	msg.chain.assert(t, failure)
-	msg.chain.clear()
+	t.Run("code", func(t *testing.T) {
+		reporter := newMockReporter(t)
 
-	msg.NotType()
-	msg.chain.assert(t, failure)
-	msg.chain.clear()
+		NewWebsocketMessage(reporter, websocket.TextMessage, nil).Code().
+			chain.assert(t, failure)
 
-	msg.Code()
-	msg.chain.assert(t, failure)
-	msg.chain.clear()
-
-	msg.NotCode()
-	msg.chain.assert(t, failure)
-	msg.chain.clear()
+		NewWebsocketMessage(reporter, websocket.TextMessage, nil).NotCode().
+			chain.assert(t, failure)
+	})
 }
 
 func TestWebsocketMessage_Codes(t *testing.T) {

@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/fasthttp/websocket v1.5.0
-	github.com/gavv/httpexpect/v2 v2.14.0
+	github.com/gavv/httpexpect/v2 v2.15.0
 	github.com/gin-gonic/gin v1.8.1
 	github.com/go-oauth2/oauth2/v4 v4.5.1
 	github.com/gorilla/websocket v1.5.0
@@ -27,6 +27,7 @@ require (
 	github.com/aymerick/raymond v2.0.3-0.20180322193309-b565731e1464+incompatible // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/eknkc/amber v0.0.0-20171010120322-cdade1c07385 // indirect
+	github.com/fatih/color v1.15.0 // indirect
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
@@ -49,11 +50,11 @@ require (
 	github.com/kataras/golog v0.1.8 // indirect
 	github.com/kataras/pio v0.0.11 // indirect
 	github.com/kataras/sitemap v0.0.6 // indirect
-	github.com/klauspost/compress v1.16.3 // indirect
+	github.com/klauspost/compress v1.16.4 // indirect
 	github.com/labstack/gommon v0.4.0 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/mattn/go-isatty v0.0.16 // indirect
+	github.com/mattn/go-isatty v0.0.18 // indirect
 	github.com/microcosm-cc/bluemonday v1.0.21 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
@@ -86,9 +87,9 @@ require (
 	github.com/yudai/gojsondiff v1.0.0 // indirect
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
 	golang.org/x/crypto v0.7.0 // indirect
-	golang.org/x/net v0.8.0 // indirect
-	golang.org/x/sys v0.6.0 // indirect
-	golang.org/x/text v0.8.0 // indirect
+	golang.org/x/net v0.9.0 // indirect
+	golang.org/x/sys v0.7.0 // indirect
+	golang.org/x/text v0.9.0 // indirect
 	golang.org/x/time v0.2.0 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect

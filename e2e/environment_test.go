@@ -1,14 +1,15 @@
-package httpexpect
+package e2e
 
 import (
 	"testing"
 
+	"github.com/gavv/httpexpect/v2"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestE2EEnvironment_Default(t *testing.T) {
-	e1 := Default(t, "")
-	e2 := WithConfig(Config{
+	e1 := httpexpect.Default(t, "")
+	e2 := httpexpect.WithConfig(httpexpect.Config{
 		Reporter: t,
 	})
 
@@ -30,13 +31,13 @@ func TestE2EEnvironment_Default(t *testing.T) {
 }
 
 func TestE2EEnvironment_Shared(t *testing.T) {
-	env := NewEnvironment(t)
+	env := httpexpect.NewEnvironment(t)
 
-	e1 := WithConfig(Config{
+	e1 := httpexpect.WithConfig(httpexpect.Config{
 		Reporter:    t,
 		Environment: env,
 	})
-	e2 := WithConfig(Config{
+	e2 := httpexpect.WithConfig(httpexpect.Config{
 		Reporter:    t,
 		Environment: env,
 	})
