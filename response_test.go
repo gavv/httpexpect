@@ -606,15 +606,17 @@ func TestResponse_BodyDeferred(t *testing.T) {
 	t.Run("content hijacked", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
-		body := newMockBody("test")
 		resp := NewResponse(reporter, &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       body,
+			Header: map[string][]string{
+				"Content-Type": {"text/plain; charset=utf-8"},
+			},
+			Body: newMockBody("hijacked body"),
 		})
 		resp.contentState = contentHijacked
 
-		text := resp.Text()
-		text.IsEmpty()
+		body := resp.Body()
+		body.IsEmpty()
 	})
 }
 
