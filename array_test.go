@@ -1120,7 +1120,7 @@ func TestArray_InList(t *testing.T) {
 			{
 				name:        "with no parameter",
 				typ:         []interface{}{},
-				testType:    nil, // For this case, we will call InList without any parameter including nil.
+				testType:    nil,
 				wantCode:    failure,
 				wantNotCode: failure,
 			},
@@ -1147,6 +1147,7 @@ func TestArray_InList(t *testing.T) {
 				value := NewArray(reporter, tc.typ)
 
 				if i == 0 {
+					//For the first case, we will call InList without any parameter including nil.
 					value.InList()
 					value.chain.assert(t, tc.wantCode)
 					value.chain.clear()
