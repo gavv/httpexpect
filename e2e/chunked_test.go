@@ -105,11 +105,7 @@ func TestE2EChunked_ResponseReader(t *testing.T) {
 	mux.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
 		b := make([]byte, 1000000)
 		for i := range b {
-			if i < 26 {
-				b[i] = chars[i]
-			} else {
-				b[i] = chars[i%26]
-			}
+			b[i] = chars[i%26]
 		}
 		w.Header().Add("Content-Type", "text/plain; charset=utf-8")
 		_, _ = w.Write(b)
@@ -125,9 +121,9 @@ func TestE2EChunked_ResponseReader(t *testing.T) {
 	defer reader.Close()
 	assert.NotNil(t, reader)
 
-	rb := make([]byte, 26)
+	rb := make([]byte, 1000000)
 	l, err := reader.Read(rb)
 	assert.NoError(t, err)
-	assert.Equal(t, 26, l)
-	assert.Equal(t, chars, string(rb))
+	assert.Equal(t, 1000000, l)
+	assert.Equal(t, chars, string(rb[0:26]))
 }
