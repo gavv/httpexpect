@@ -112,7 +112,7 @@ func TestE2EChunked_ResponseReader(t *testing.T) {
 			}
 		}
 		w.Header().Add("Content-Type", "text/plain; charset=utf-8")
-		w.Write(b)
+		_, _ = w.Write(b)
 	})
 	e := httpexpect.WithConfig(httpexpect.Config{
 		BaseURL:  "http://example.com",
