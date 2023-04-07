@@ -98,3 +98,33 @@ func TestE2EChunked_BinderFast(t *testing.T) {
 		},
 	}))
 }
+
+func TestE2EChunked_ResponseReader(t *testing.T) {
+	const chars = "abcdefghijklmnopqrstuvwxyz"
+	mux := http.NewServeMux()
+	mux.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
+		b := make([]byte, 1000000)
+		for i := range b {
+			b[i] = chars[i%26]
+		}
+		w.Header().Add("Content-Type", "text/plain; charset=utf-8")
+		_, _ = w.Write(b)
+	})
+	e := httpexpect.WithConfig(httpexpect.Config{
+		BaseURL:  "http://example.com",
+		Reporter: httpexpect.NewAssertReporter(t),
+		Client: &http.Client{
+			Transport: httpexpect.NewBinder(mux),
+		},
+	})
+	reader := e.GET("/test").Expect().Reader()
+
+	rb := make([]byte, 1000000)
+	l, err := reader.Read(rb)
+	assert.NoError(t, err)
+	assert.Equal(t, 1000000, l)
+	assert.Equal(t, chars, string(rb[0:26]))
+
+	err = reader.Close()
+	assert.NoError(t, err)
+}
