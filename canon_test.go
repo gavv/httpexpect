@@ -22,19 +22,19 @@ func TestCanon_Number(t *testing.T) {
 
 	val, ok = canonNumber(chain, 123)
 	assert.True(t, ok)
-	assert.Equal(t, 123.0, val)
+	assert.Equal(t, big.NewFloat(123.0), val)
 	chain.assert(t, success)
 	chain.clear()
 
 	val, ok = canonNumber(chain, 123.0)
 	assert.True(t, ok)
-	assert.Equal(t, 123.0, val)
+	assert.Equal(t, big.NewFloat(123.0), val)
 	chain.assert(t, success)
 	chain.clear()
 
 	val, ok = canonNumber(chain, myInt(123))
 	assert.True(t, ok)
-	assert.Equal(t, 123.0, val)
+	assert.Equal(t, big.NewFloat(123.0), val)
 	chain.assert(t, success)
 	chain.clear()
 
