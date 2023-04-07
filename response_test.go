@@ -1718,6 +1718,7 @@ func TestResponse_Reader(t *testing.T) {
 
 		reader := resp.Reader()
 		assert.Nil(t, reader)
+		resp.chain.assert(t, failure)
 	})
 	t.Run("Body()", func(t *testing.T) {
 		reporter := newMockReporter(t)
