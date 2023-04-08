@@ -974,6 +974,15 @@ func (r *Response) getJSONP(
 	return value
 }
 
+// Reader returns the body reader from the response.
+//
+// Reader replaces the other methods for reading response body
+// and disables rewinding when reading.
+//
+// Example:
+//
+//	resp := NewResponse(t, response)
+//	reader := resp.Reader()
 func (r *Response) Reader() io.ReadCloser {
 	opChain := r.chain.enter("Reader()")
 	defer opChain.leave()
