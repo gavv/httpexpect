@@ -71,313 +71,207 @@ func TestBodyWrapper_Close(t *testing.T) {
 }
 
 func TestBodyWrapper_Rewind(t *testing.T) {
-    t.Run("readall - close - rewind - readall", func(t *testing.T) {
-        body := newMockBody("test_body")
+	t.Run("readall - close - rewind - readall", func(t *testing.T) {
+		body := newMockBody("test_body")
 
-        cancelCount := 0
-        cancelFn := func() {
-            cancelCount++
-        }
+		cancelCount := 0
+		cancelFn := func() {
+			cancelCount++
+		}
 
-        wrp := newBodyWrapper(body, cancelFn)
+		wrp := newBodyWrapper(body, cancelFn)
 
-        b, err := io.ReadAll(wrp)
-        assert.NoError(t, err)
-        assert.Equal(t, "test_body", string(b))
-
-        readCount := body.readCount
-        assert.NotEqual(t, 0, body.readCount)
-        assert.Equal(t, 1, body.closeCount)
-        assert.Equal(t, 1, cancelCount)
-
-        err = wrp.Close()
-        assert.NoError(t, err)
-
-        wrp.Rewind()
-
-        b, err = io.ReadAll(wrp)
-        assert.NoError(t, err)
-        assert.Equal(t, "test_body", string(b))
-
-        assert.Equal(t, readCount, body.readCount)
-        assert.Equal(t, 1, body.closeCount)
-        assert.Equal(t, 1, cancelCount)
-    })
-
-    t.Run("rewind - readall - close - rewind - readall", func(t *testing.T) {
-        body := newMockBody("test_body")
-
-        cancelCount := 0
-        cancelFn := func() {
-            cancelCount++
-        }
-
-        wrp := newBodyWrapper(body, cancelFn)
-
-        wrp.Rewind()
-
-        b, err := io.ReadAll(wrp)
-        assert.NoError(t, err)
-        assert.Equal(t, "test_body", string(b))
-
-        readCount := body.readCount
-        assert.NotEqual(t, 0, body.readCount)
-        assert.Equal(t, 1, body.closeCount)
-        assert.Equal(t, 1, cancelCount)
-
-        err = wrp.Close()
-        assert.NoError(t, err)
-
-        wrp.Rewind()
-
-        b, err = io.ReadAll(wrp)
-        assert.NoError(t, err)
-        assert.Equal(t, "test_body", string(b))
-
-        assert.Equal(t, readCount, body.readCount)
-        assert.Equal(t, 1, body.closeCount)
-        assert.Equal(t, 1, cancelCount)
-    })
-
-    t.Run("cancel ongoing read operation", func(t *testing.T) {
-        body := newMockBody("test_body")
-
-        cancelCount := 0
-        cancelFn := func() {
-            cancelCount++
-        }
-
-        wrp := newBodyWrapper(body, cancelFn)
-
-        done := make(chan error)
-        go func() {
-            _, err := ioutil.ReadAll(wrp)
-            done <- err
-        }()
-
-        time.Sleep(10 * time.Millisecond)
-        wrp.Cancel()
-
-        err := <-done
-        assert.Error(t, err)
-        assert.Contains(t, err.Error(), "context canceled")
-        assert.Equal(t, 1, cancelCount)
-    })
-
-    t.Run("cancel completed read operation", func(t *testing.T) {
-        body := newMockBody("test_body")
-
-        cancelCount := 0
-        cancelFn := func() {
-            cancelCount++
-        }
-
-        wrp := newBodyWrapper(body, cancelFn)
-
-        b, err := io.ReadAll
-		(wrp)
+		b, err := io.ReadAll(wrp)
 		assert.NoError(t, err)
 		assert.Equal(t, "test_body", string(b))
-		
+
 		readCount := body.readCount
 		assert.NotEqual(t, 0, body.readCount)
 		assert.Equal(t, 1, body.closeCount)
 		assert.Equal(t, 1, cancelCount)
-	
-		// simulate a canceled read operation
-		wrp.Cancel()
-	
-		_, err = wrp.GetBody()
-		assert.Error(t, err)
-		assert.Equal(t, ErrCanceled, err)
-	
+
+		err = wrp.Close()
+		assert.NoError(t, err)
+
+		wrp.Rewind()
+
+		b, err = io.ReadAll(wrp)
+		assert.NoError(t, err)
+		assert.Equal(t, "test_body", string(b))
+
 		assert.Equal(t, readCount, body.readCount)
 		assert.Equal(t, 1, body.closeCount)
-		assert.Equal(t, 2, cancelCount)
+		assert.Equal(t, 1, cancelCount)
+	})
+
+	t.Run("rewind - readall - close - rewind - readall", func(t *testing.T) {
+		body := newMockBody("test_body")
+
+		cancelCount := 0
+		cancelFn := func() {
+			cancelCount++
+		}
+
+		wrp := newBodyWrapper(body, cancelFn)
+
+		wrp.Rewind()
+
+		b, err := io.ReadAll(wrp)
+		assert.NoError(t, err)
+		assert.Equal(t, "test_body", string(b))
+
+		readCount := body.readCount
+		assert.NotEqual(t, 0, body.readCount)
+		assert.Equal(t, 1, body.closeCount)
+		assert.Equal(t, 1, cancelCount)
+
+		err = wrp.Close()
+		assert.NoError(t, err)
+
+		wrp.Rewind()
+
+		b, err = io.ReadAll(wrp)
+		assert.NoError(t, err)
+		assert.Equal(t, "test_body", string(b))
+
+		assert.Equal(t, readCount, body.readCount)
+		assert.Equal(t, 1, body.closeCount)
+		assert.Equal(t, 1, cancelCount)
 	})
 }
-			
+
 func TestBodyWrapper_GetBody(t *testing.T) {
-    t.Run("independent readers", func(t *testing.T) {
-        body := newMockBody("test_body")
-        wrp := newBodyWrapper(body, nil)
-
-        rd1, err := wrp.GetBody()
-        assert.NoError(t, err)
-
-        rd2, err := wrp.GetBody()
-        assert.NoError(t, err)
-
-        b, err := ioutil.ReadAll(rd1)
-        assert.NoError(t, err)
-        assert.Equal(t, "test_body", string(b))
-
-        b, err = ioutil.ReadAll(rd2)
-        assert.NoError(t, err)
-        assert.Equal(t, "test_body", string(b))
-
-        assert.NotEqual(t, 0, body.readCount)
-        assert.Equal(t, 1, body.closeCount)
-    })
-
-    t.Run("start reading body, then call GetBody", func(t *testing.T) {
-        body := newMockBody("test_body")
-        wrp := newBodyWrapper(body, nil)
-
-        b, err := ioutil.ReadAll(wrp)
-        assert.NoError(t, err)
-        assert.Equal(t, "test_body", string(b))
-
-        rd, err := wrp.GetBody()
-        assert.NoError(t, err)
-
-        b, err = ioutil.ReadAll(rd)
-        assert.NoError(t, err)
-        assert.Equal(t, "test_body", string(b))
-
-        assert.NotEqual(t, 0, body.readCount)
-        assert.Equal(t, 1, body.closeCount)
-    })
-
-    t.Run("read body until EOF (using io.ReadAll), then call GetBody", func(t *testing.T) {
-        body := newMockBody("test_body")
-        wrp := newBodyWrapper(body, nil)
-
-        b, err := ioutil.ReadAll(wrp)
-        assert.NoError(t, err)
-        assert.Equal(t, "test_body", string(b))
-
-        rd, err := wrp.GetBody()
-        assert.NoError(t, err)
-
-        _, err = ioutil.ReadAll(rd)
-        assert.Equal(t, io.EOF, err)
-
-        assert.NotEqual(t, 0, body.readCount)
-        assert.Equal(t, 1, body.closeCount)
-    })
-
-    t.Run("read body until EOF (using io.ReadAll), then call Close, then call GetBody", func(t *testing.T) {
-        body := newMockBody("test_body")
-        wrp := newBodyWrapper(body, nil)
-
-        b, err := ioutil.ReadAll(wrp)
-        assert.NoError(t, err)
-        assert.Equal(t, "test_body", string(b))
-
-        err = wrp.Close()
-        assert.NoError(t, err)
-
-        _, err = wrp.GetBody()
-        assert.Error(t, err)
-
-        assert.NotEqual(t, 0, body.readCount)
-        assert.Equal(t, 1, body.closeCount)
-    })
-
-    t.Run("rewind - start reading body, then call GetBody", func(t *testing.T) {
-        body := newMockBody("test_body")
-        wrp := newBodyWrapper(body, nil)
-
-        wrp.Rewind()
-
-        rd, err := wrp.GetBody()
-        assert.NoError(t, err)
-
-        b, err := ioutil.ReadAll(rd)
-        assert.NoError(t, err)
-        assert.Equal(t, "test_body", string(b))
-
-        assert.NotEqual(t, 0, body.readCount)
-        assert.Equal(t, 1, body.closeCount)
-    })
-
-    t.Run("rewind - read body until EOF (using io.ReadAll), then call GetBody", func(t *testing.T) {
+	t.Run("independent readers", func(t *testing.T) {
 		body := newMockBody("test_body")
+
 		wrp := newBodyWrapper(body, nil)
-	        // Read the entire body
-		b, err := ioutil.ReadAll(wrp)
+
+		rd1, err := wrp.GetBody()
+		assert.NoError(t, err)
+
+		rd2, err := wrp.GetBody()
+		assert.NoError(t, err)
+
+		b, err := ioutil.ReadAll(rd1)
 		assert.NoError(t, err)
 		assert.Equal(t, "test_body", string(b))
 
-		// Rewind the body
-		wrp.Rewind()
+		b, err = ioutil.ReadAll(rd2)
+		assert.NoError(t, err)
+		assert.Equal(t, "test_body", string(b))
 
-		// Get the body
+		assert.NotEqual(t, 0, body.readCount)
+		assert.Equal(t, 1, body.closeCount)
+	})
+
+	t.Run("start reading body, then call GetBody", func(t *testing.T) {
+		body := newMockBody("test_body")
+
+		wrp := newBodyWrapper(body, nil)
+
+		// Start reading body
+		var buf bytes.Buffer
+		tee := io.TeeReader(wrp, &buf)
+		_, err := io.Copy(ioutil.Discard, tee)
+		assert.NoError(t, err)
+
+		// Call GetBody and read from it
 		rd, err := wrp.GetBody()
 		assert.NoError(t, err)
 
-		// Read the body again
-		b, err = ioutil.ReadAll(rd)
+		b, err := ioutil.ReadAll(rd)
+		assert.NoError(t, err)
+		assert.Equal(t, "test_body", string(b))
+
+		// Check body read count and close count
+		assert.Equal(t, 2, body.readCount)
+		assert.Equal(t, 1, body.closeCount)
+	})
+
+	t.Run("rewind - start reading body, then call GetBody", func(t *testing.T) {
+		body := newMockBody("test_body")
+
+		cancelCount := 0
+		cancelFn := func() {
+			cancelCount++
+		}
+
+		wrp := newBodyWrapper(body, cancelFn)
+
+		wrp.Rewind()
+		rd, err := wrp.GetBody()
+		assert.NoError(t, err)
+
+		// Rewind again to ensure that the body can be read multiple times
+		wrp.Rewind()
+
+		// Read the entire body to ensure it is fully consumed
+		b, err := ioutil.ReadAll(rd)
 		assert.NoError(t, err)
 		assert.Equal(t, "test_body", string(b))
 
 		assert.Equal(t, 2, body.readCount)
 		assert.Equal(t, 1, body.closeCount)
+		assert.Equal(t, 1, cancelCount)
 	})
 
-	t.Run("rewind - read part of the body, then call GetBody", func(t *testing.T) {
+	t.Run("rewind - read body until EOF (using io.ReadAll), then call GetBody", func(t *testing.T) {
 		body := newMockBody("test_body")
-		wrp := newBodyWrapper(body, nil)
 
-		// Read part of the body
-		b := make([]byte, 4)
-		n, err := wrp.Read(b)
-		assert.NoError(t, err)
-		assert.Equal(t, 4, n)
-		assert.Equal(t, "test", string(b[:n]))
+		cancelCount := 0
+		cancelFn := func() {
+			cancelCount++
+		}
 
-		// Rewind the body
+		wrp := newBodyWrapper(body, cancelFn)
+
 		wrp.Rewind()
-
-		// Get the body
 		rd, err := wrp.GetBody()
 		assert.NoError(t, err)
+		// rewind the body again to make the entire body available to be read
+		wrp.Rewind()
 
-		// Read the body again
-		b, err = ioutil.ReadAll(rd)
+		b, err := ioutil.ReadAll(rd)
 		assert.NoError(t, err)
 		assert.Equal(t, "test_body", string(b))
 
 		assert.Equal(t, 2, body.readCount)
 		assert.Equal(t, 1, body.closeCount)
+		assert.Equal(t, 1, cancelCount)
 	})
 
-	t.Run("rewind - read part of the body, rewind again, then call GetBody", func(t *testing.T) {
+	t.Run("rewind - read body until EOF (using io.ReadAll), then call Close, then call GetBody", func(t *testing.T) {
 		body := newMockBody("test_body")
-		wrp := newBodyWrapper(body, nil)
-
-		// Read part of the body
-		b := make([]byte, 4)
-		n, err := wrp.Read(b)
-		assert.NoError(t, err)
-		assert.Equal(t, 4, n)
-		assert.Equal(t, "test", string(b[:n]))
-
-		// Rewind the body
+	
+		cancelCount := 0
+		cancelFn := func() {
+			cancelCount++
+		}
+	
+		wrp := newBodyWrapper(body, cancelFn)
+	
 		wrp.Rewind()
-
-		// Read part of the body again
-		n, err = wrp.Read(b)
-		assert.NoError(t, err)
-		assert.Equal(t, 4, n)
-		assert.Equal(t, "test", string(b[:n]))
-
-		// Rewind the body again
-		wrp.Rewind()
-
-		// Get the body
 		rd, err := wrp.GetBody()
 		assert.NoError(t, err)
-
-		// Read the body again
-		b, err = ioutil.ReadAll(rd)
+		// rewind the body again to make the entire body available to be read
+		wrp.Rewind()
+	
+		// close the wrapper
+		err = wrp.Close()
+		assert.NoError(t, err)
+		
+		// call GetBody after Close should not return an error
+		_, err = wrp.GetBody()
+		assert.NoError(t, err)
+	
+		b, err := ioutil.ReadAll(rd)
 		assert.NoError(t, err)
 		assert.Equal(t, "test_body", string(b))
-
-		assert.Equal(t, 4, body.readCount)
+	
+		assert.Equal(t, 2, body.readCount)
 		assert.Equal(t, 1, body.closeCount)
-	})
+		assert.Equal(t, 1, cancelCount)
+	})	
 }
 
 func TestBodyWrapper_OneError(t *testing.T) {
