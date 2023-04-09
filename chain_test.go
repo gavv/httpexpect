@@ -674,6 +674,21 @@ func TestChain_Severity(t *testing.T) {
 	})
 }
 
+func TestChain_Stacktrace(t *testing.T) {
+	handler := &mockAssertionHandler{}
+
+	chain := newChainWithConfig("test", Config{
+		AssertionHandler: handler,
+	}.withDefaults())
+
+	opChain := chain.enter("test")
+	opChain.fail(testFailure())
+	opChain.leave()
+
+	assert.NotNil(t, handler.failure)
+	assert.NotEmpty(t, handler.failure.Stacktrace)
+}
+
 func TestChain_Reporting(t *testing.T) {
 	handler := &mockAssertionHandler{}
 

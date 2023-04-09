@@ -181,6 +181,9 @@ type AssertionFailure struct {
 	// List of error messages
 	Errors []error
 
+	// Stacktrace of a fail
+	Stacktrace string
+
 	// Actually observed value
 	Actual *AssertionValue
 

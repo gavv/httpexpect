@@ -2,6 +2,7 @@ package httpexpect
 
 import (
 	"fmt"
+	"runtime/debug"
 	"sync"
 	"testing"
 
@@ -435,6 +436,9 @@ func (c *chain) fail(failure AssertionFailure) {
 	if c.severity == SeverityError {
 		failure.IsFatal = true
 	}
+
+	failure.Stacktrace = string(debug.Stack())
+
 	c.failure = &failure
 }
 

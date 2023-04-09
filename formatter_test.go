@@ -1056,3 +1056,16 @@ func TestFormatter_ColorMode(t *testing.T) {
 		})
 	}
 }
+
+func TestFormatter_Stacktrace(t *testing.T) {
+	df := &DefaultFormatter{
+		EnableStacktrace: true,
+	}
+	ctx := &AssertionContext{}
+
+	fl := &AssertionFailure{
+		Stacktrace: "Foo()\n\tBar()\n\tBuzz()",
+	}
+	fd := df.buildFormatData(ctx, fl)
+	assert.Equal(t, []string{"Foo()", "Bar()", "Buzz()"}, fd.Stacktrace)
+}

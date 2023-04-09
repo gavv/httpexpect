@@ -86,6 +86,9 @@ type DefaultFormatter struct {
 	// defines the function map passed to template engine.
 	// May be nil.
 	TemplateFuncs template.FuncMap
+
+	// Enables printing of stacktrace on failure
+	EnableStacktrace bool
 }
 
 // FormatSuccess implements Formatter.FormatSuccess.
@@ -183,7 +186,8 @@ type FormatData struct {
 	AssertType     string
 	AssertSeverity string
 
-	Errors []string
+	Errors     []string
+	Stacktrace []string
 
 	HaveActual bool
 	Actual     string
@@ -284,6 +288,7 @@ func (f *DefaultFormatter) buildFormatData(
 
 		f.fillRequest(&data, ctx, failure)
 		f.fillResponse(&data, ctx, failure)
+		f.fillStacktrace(&data, ctx, failure)
 	}
 
 	return &data
@@ -543,6 +548,14 @@ func (f *DefaultFormatter) fillResponse(
 
 		data.HaveResponse = true
 		data.Response = fmt.Sprintf("%s %s\n%s", lines[0], ctx.Response.rtt, lines[1])
+	}
+}
+
+func (f *DefaultFormatter) fillStacktrace(
+	data *FormatData, ctx *AssertionContext, failure *AssertionFailure,
+) {
+	if f.EnableStacktrace {
+		data.Stacktrace = strings.Split(failure.Stacktrace, "\n\t")
 	}
 }
 
@@ -1050,5 +1063,10 @@ allowed delta:
 
 diff:
 {{ .Diff | colordiff .EnableColors | indent }}
+{{- end -}}
+
+stacktrace:
+{{- range $n, $call := .Stacktrace }}
+{{ $call | indent }}
 {{- end -}}
 `
