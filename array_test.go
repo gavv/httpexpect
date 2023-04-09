@@ -323,174 +323,128 @@ func TestArray_Getters(t *testing.T) {
 }
 
 func TestArray_IsEmpty(t *testing.T) {
-	t.Run("empty slice", func(t *testing.T) {
-		reporter := newMockReporter(t)
+	cases := []struct {
+		name      string
+		value     []interface{}
+		wantEmpty chainResult
+	}{
+		{
+			name:      "empty slice",
+			value:     []interface{}{},
+			wantEmpty: success,
+		},
+		{
+			name:      "one empty element",
+			value:     []interface{}{""},
+			wantEmpty: failure,
+		},
+	}
 
-		value := NewArray(reporter, []interface{}{})
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			reporter := newMockReporter(t)
 
-		value.IsEmpty()
-		value.chain.assert(t, success)
-		value.chain.clear()
+			NewArray(reporter, tc.value).IsEmpty().
+				chain.assert(t, tc.wantEmpty)
 
-		value.NotEmpty()
-		value.chain.assert(t, failure)
-		value.chain.clear()
-	})
-
-	t.Run("one empty element", func(t *testing.T) {
-		reporter := newMockReporter(t)
-
-		value := NewArray(reporter, []interface{}{""})
-
-		value.IsEmpty()
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.NotEmpty()
-		value.chain.assert(t, success)
-		value.chain.clear()
-	})
+			NewArray(reporter, tc.value).NotEmpty().
+				chain.assert(t, !tc.wantEmpty)
+		})
+	}
 }
 
 func TestArray_IsEqual(t *testing.T) {
-	t.Run("empty", func(t *testing.T) {
-		reporter := newMockReporter(t)
+	t.Run("basic", func(t *testing.T) {
+		cases := []struct {
+			name      string
+			value     []interface{}
+			testValue interface{}
+			wantEqual chainResult
+		}{
+			{
+				name:      "empty array vs empty array",
+				value:     []interface{}{},
+				testValue: []interface{}{},
+				wantEqual: success,
+			},
+			{
+				name:      "one empty element vs one empty elemenent",
+				value:     []interface{}{""},
+				testValue: []interface{}{""},
+				wantEqual: success,
+			},
+			{
+				name:      "array vs empty array",
+				value:     []interface{}{"foo", "bar"},
+				testValue: []interface{}{},
+				wantEqual: failure,
+			},
+			{
+				name:      "subset",
+				value:     []interface{}{"foo", "bar"},
+				testValue: []interface{}{"foo"},
+				wantEqual: failure,
+			},
+			{
+				name:      "reordered",
+				value:     []interface{}{"foo", "bar"},
+				testValue: []interface{}{"bar", "foo"},
+				wantEqual: failure,
+			},
+			{
+				name:      "strings",
+				value:     []interface{}{"foo", "bar"},
+				testValue: []interface{}{"foo", "bar"},
+				wantEqual: success,
+			},
+			{
+				name:      "numbers",
+				value:     []interface{}{123, 456},
+				testValue: []interface{}{123, 456},
+				wantEqual: success,
+			},
+		}
 
-		value := NewArray(reporter, []interface{}{})
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				reporter := newMockReporter(t)
 
-		assert.Equal(t, []interface{}{}, value.Raw())
+				NewArray(reporter, tc.value).IsEqual(tc.testValue).
+					chain.assert(t, tc.wantEqual)
 
-		value.IsEqual([]interface{}{})
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		value.NotEqual([]interface{}{})
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.IsEqual([]interface{}{""})
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.NotEqual([]interface{}{""})
-		value.chain.assert(t, success)
-		value.chain.clear()
-	})
-
-	t.Run("not empty", func(t *testing.T) {
-		reporter := newMockReporter(t)
-
-		value := NewArray(reporter, []interface{}{"foo", "bar"})
-
-		assert.Equal(t, []interface{}{"foo", "bar"}, value.Raw())
-
-		value.IsEqual([]interface{}{})
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.NotEqual([]interface{}{})
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		value.IsEqual([]interface{}{"foo"})
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.NotEqual([]interface{}{"foo"})
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		value.IsEqual([]interface{}{"bar", "foo"})
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.NotEqual([]interface{}{"bar", "foo"})
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		value.IsEqual([]interface{}{"foo", "bar"})
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		value.NotEqual([]interface{}{"foo", "bar"})
-		value.chain.assert(t, failure)
-		value.chain.clear()
-	})
-
-	t.Run("strings", func(t *testing.T) {
-		reporter := newMockReporter(t)
-
-		value := NewArray(reporter, []interface{}{"foo", "bar"})
-
-		value.IsEqual([]string{"foo", "bar"})
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		value.IsEqual([]string{"bar", "foo"})
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.NotEqual([]string{"foo", "bar"})
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.NotEqual([]string{"bar", "foo"})
-		value.chain.assert(t, success)
-		value.chain.clear()
-	})
-
-	t.Run("numbers", func(t *testing.T) {
-		reporter := newMockReporter(t)
-
-		value := NewArray(reporter, []interface{}{123, 456})
-
-		value.IsEqual([]int{123, 456})
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		value.IsEqual([]int{456, 123})
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.NotEqual([]int{123, 456})
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.NotEqual([]int{456, 123})
-		value.chain.assert(t, success)
-		value.chain.clear()
+				NewArray(reporter, tc.value).NotEqual(tc.testValue).
+					chain.assert(t, !tc.wantEqual)
+			})
+		}
 	})
 
 	t.Run("struct", func(t *testing.T) {
-		reporter := newMockReporter(t)
 		type S struct {
 			Foo int `json:"foo"`
 		}
 
-		value := NewArray(reporter, []interface{}{
+		value := []interface{}{
 			map[string]interface{}{
 				"foo": 123,
 			},
 			map[string]interface{}{
 				"foo": 456,
 			},
-		})
+		}
 
-		value.IsEqual([]S{{123}, {456}})
-		value.chain.assert(t, success)
-		value.chain.clear()
+		reporter := newMockReporter(t)
 
-		value.IsEqual([]S{{456}, {123}})
-		value.chain.assert(t, failure)
-		value.chain.clear()
+		NewArray(reporter, value).IsEqual([]S{{123}, {456}}).
+			chain.assert(t, success)
 
-		value.NotEqual([]S{{123}, {456}})
-		value.chain.assert(t, failure)
-		value.chain.clear()
+		NewArray(reporter, value).NotEqual([]S{{123}, {456}}).
+			chain.assert(t, failure)
 
-		value.NotEqual([]S{{456}, {123}})
-		value.chain.assert(t, success)
-		value.chain.clear()
+		NewArray(reporter, value).IsEqual([]S{{456}, {123}}).
+			chain.assert(t, failure)
+
+		NewArray(reporter, value).NotEqual([]S{{456}, {123}}).
+			chain.assert(t, success)
 	})
 
 	t.Run("canonization", func(t *testing.T) {
@@ -501,141 +455,139 @@ func TestArray_IsEqual(t *testing.T) {
 
 		reporter := newMockReporter(t)
 
-		value := NewArray(reporter, []interface{}{123, 456})
+		NewArray(reporter, []interface{}{123, 456}).IsEqual(myArray{myInt(123), 456.0}).
+			chain.assert(t, success)
 
-		assert.Equal(t, []interface{}{123.0, 456.0}, value.Raw())
-
-		value.IsEqual(myArray{myInt(123), 456.0})
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		value.NotEqual(myArray{myInt(123), 456.0})
-		value.chain.assert(t, failure)
-		value.chain.clear()
+		NewArray(reporter, []interface{}{123, 456}).NotEqual(myArray{myInt(123), 456.0}).
+			chain.assert(t, failure)
 	})
 
 	t.Run("invalid argument", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
-		value := NewArray(reporter, []interface{}{})
+		NewArray(reporter, []interface{}{}).IsEqual(nil).
+			chain.assert(t, failure)
 
-		value.IsEqual(nil)
-		value.chain.assert(t, failure)
-		value.chain.clear()
+		NewArray(reporter, []interface{}{}).NotEqual(nil).
+			chain.assert(t, failure)
 
-		value.NotEqual(nil)
-		value.chain.assert(t, failure)
-		value.chain.clear()
+		NewArray(reporter, []interface{}{}).IsEqual(func() {}).
+			chain.assert(t, failure)
 
-		value.IsEqual(func() {})
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.NotEqual(func() {})
-		value.chain.assert(t, failure)
-		value.chain.clear()
+		NewArray(reporter, []interface{}{}).NotEqual(func() {}).
+			chain.assert(t, failure)
 	})
 }
 
 func TestArray_IsEqualUnordered(t *testing.T) {
 	t.Run("without duplicates", func(t *testing.T) {
-		reporter := newMockReporter(t)
+		cases := []struct {
+			name               string
+			value              []interface{}
+			testValue          interface{}
+			wantEqualUnordered chainResult
+		}{
+			{
+				name:               "only first element",
+				value:              []interface{}{123, "foo"},
+				testValue:          []interface{}{123},
+				wantEqualUnordered: failure,
+			},
+			{
+				name:               "only second element",
+				value:              []interface{}{123, "foo"},
+				testValue:          []interface{}{"foo"},
+				wantEqualUnordered: failure,
+			},
+			{
+				name:               "extra element",
+				value:              []interface{}{123, "foo"},
+				testValue:          []interface{}{123, "foo", "foo"},
+				wantEqualUnordered: failure,
+			},
+			{
+				name:               "equal ordered",
+				value:              []interface{}{123, "foo"},
+				testValue:          []interface{}{123, "foo"},
+				wantEqualUnordered: success,
+			},
+			{
+				name:               "equal unordered",
+				value:              []interface{}{123, "foo"},
+				testValue:          []interface{}{"foo", 123},
+				wantEqualUnordered: success,
+			},
+			{
+				name:               "overlap",
+				value:              []interface{}{123, "foo"},
+				testValue:          []interface{}{"foo", 1234},
+				wantEqualUnordered: failure,
+			},
+		}
 
-		value := NewArray(reporter, []interface{}{123, "foo"})
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				reporter := newMockReporter(t)
 
-		value.IsEqualUnordered([]interface{}{123})
-		value.chain.assert(t, failure)
-		value.chain.clear()
+				NewArray(reporter, tc.value).IsEqualUnordered(tc.testValue).
+					chain.assert(t, tc.wantEqualUnordered)
 
-		value.NotEqualUnordered([]interface{}{123})
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		value.IsEqualUnordered([]interface{}{"foo"})
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.NotEqualUnordered([]interface{}{"foo"})
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		value.IsEqualUnordered([]interface{}{123, "foo", "foo"})
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.NotEqualUnordered([]interface{}{123, "foo", "foo"})
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		value.IsEqualUnordered([]interface{}{123, "foo"})
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		value.NotEqualUnordered([]interface{}{123, "foo"})
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.IsEqualUnordered([]interface{}{"foo", 123})
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		value.NotEqualUnordered([]interface{}{"foo", 123})
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.IsEqualUnordered([]interface{}{"foo", 1234})
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.NotEqualUnordered([]interface{}{"foo", 1234})
-		value.chain.assert(t, success)
-		value.chain.clear()
+				NewArray(reporter, tc.value).NotEqualUnordered(tc.testValue).
+					chain.assert(t, !tc.wantEqualUnordered)
+			})
+		}
 	})
 
 	t.Run("with duplicates", func(t *testing.T) {
-		reporter := newMockReporter(t)
+		cases := []struct {
+			name               string
+			value              []interface{}
+			testValue          interface{}
+			wantEqualUnordered chainResult
+		}{
+			{
+				name:               "missing duplicate",
+				value:              []interface{}{123, "foo", "foo"},
+				testValue:          []interface{}{123, "foo"},
+				wantEqualUnordered: failure,
+			},
+			{
+				name:               "count mismatch",
+				value:              []interface{}{123, "foo", "foo"},
+				testValue:          []interface{}{123, 123, "foo"},
+				wantEqualUnordered: failure,
+			},
+			{
+				name:               "equal ordered",
+				value:              []interface{}{123, "foo", "foo"},
+				testValue:          []interface{}{123, "foo", "foo"},
+				wantEqualUnordered: success,
+			},
+			{
+				name:               "equal unordered",
+				value:              []interface{}{123, "foo", "foo"},
+				testValue:          []interface{}{"foo", 123, "foo"},
+				wantEqualUnordered: success,
+			},
+			{
+				name:               "only one element",
+				value:              []interface{}{123, "foo", "foo"},
+				testValue:          []interface{}{123},
+				wantEqualUnordered: failure,
+			},
+		}
 
-		value := NewArray(reporter, []interface{}{123, "foo", "foo"})
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				reporter := newMockReporter(t)
 
-		value.IsEqualUnordered([]interface{}{123, "foo"})
-		value.chain.assert(t, failure)
-		value.chain.clear()
+				NewArray(reporter, tc.value).IsEqualUnordered(tc.testValue).
+					chain.assert(t, tc.wantEqualUnordered)
 
-		value.NotEqualUnordered([]interface{}{123, "foo"})
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		value.IsEqualUnordered([]interface{}{123, 123, "foo"})
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.NotEqualUnordered([]interface{}{123, 123, "foo"})
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		value.IsEqualUnordered([]interface{}{123, "foo", "foo"})
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		value.NotEqualUnordered([]interface{}{123, "foo", "foo"})
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.IsEqualUnordered([]interface{}{"foo", 123, "foo"})
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		value.NotEqualUnordered([]interface{}{"foo", 123, "foo"})
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.IsEqualUnordered([]interface{}{123})
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.NotEqualUnordered([]interface{}{123})
-		value.chain.assert(t, success)
-		value.chain.clear()
+				NewArray(reporter, tc.value).NotEqualUnordered(tc.testValue).
+					chain.assert(t, !tc.wantEqualUnordered)
+			})
+		}
 	})
 
 	t.Run("canonization", func(t *testing.T) {
@@ -646,94 +598,84 @@ func TestArray_IsEqualUnordered(t *testing.T) {
 
 		reporter := newMockReporter(t)
 
-		value := NewArray(reporter, []interface{}{123, 456, "foo"})
+		testVal := myArray{myInt(456), 123.0, "foo"}
 
-		assert.Equal(t,
-			[]interface{}{
-				123.0,
-				456.0,
-				"foo",
-			},
-			value.Raw(),
-		)
-
-		value.IsEqualUnordered(myArray{myInt(456), 123.0, "foo"})
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		value.NotEqualUnordered(myArray{myInt(456), 123.0, "foo"})
-		value.chain.assert(t, failure)
-		value.chain.clear()
+		NewArray(reporter, []interface{}{123, 456, "foo"}).NotEqualUnordered(testVal).
+			chain.assert(t, failure)
 	})
 
 	t.Run("invalid argument", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
-		value := NewArray(reporter, []interface{}{})
+		NewArray(reporter, []interface{}{}).IsEqualUnordered(nil).
+			chain.assert(t, failure)
 
-		value.IsEqualUnordered(nil)
-		value.chain.assert(t, failure)
-		value.chain.clear()
+		NewArray(reporter, []interface{}{}).NotEqualUnordered(nil).
+			chain.assert(t, failure)
 
-		value.NotEqualUnordered(nil)
-		value.chain.assert(t, failure)
-		value.chain.clear()
+		NewArray(reporter, []interface{}{}).IsEqualUnordered(func() {}).
+			chain.assert(t, failure)
 
-		value.IsEqualUnordered(func() {})
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.NotEqualUnordered(func() {})
-		value.chain.assert(t, failure)
-		value.chain.clear()
+		NewArray(reporter, []interface{}{}).NotEqualUnordered(func() {}).
+			chain.assert(t, failure)
 	})
 }
 
 func TestArray_InList(t *testing.T) {
 	t.Run("basic", func(t *testing.T) {
-		reporter := newMockReporter(t)
+		cases := []struct {
+			name       string
+			value      []interface{}
+			testList   []interface{}
+			wantInList chainResult
+		}{
+			{
+				name:  "one element list with equal array",
+				value: []interface{}{"foo", "bar"},
+				testList: []interface{}{
+					[]interface{}{"foo", "bar"},
+				},
+				wantInList: success,
+			},
+			{
+				name:  "one element list with inequal array",
+				value: []interface{}{"foo", "bar"},
+				testList: []interface{}{
+					[]interface{}{"bar", "foo"},
+				},
+				wantInList: failure,
+			},
+			{
+				name:  "list with inequal and equal arrays",
+				value: []interface{}{"foo", "bar"},
+				testList: []interface{}{
+					[]interface{}{"bar", "foo"},
+					[]interface{}{"foo", "bar"},
+				},
+				wantInList: success,
+			},
+			{
+				name:  "list with inequal arrays",
+				value: []interface{}{"foo", "bar"},
+				testList: []interface{}{
+					[]interface{}{"bar", "foo"},
+					[]interface{}{"FOO", "BAR"},
+				},
+				wantInList: failure,
+			},
+		}
 
-		value := NewArray(reporter, []interface{}{"foo", "bar"})
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				reporter := newMockReporter(t)
 
-		value.InList("foo", "bar")
-		value.chain.assert(t, failure)
-		value.chain.clear()
+				NewArray(reporter, tc.value).InList(tc.testList...).
+					chain.assert(t, tc.wantInList)
 
-		value.NotInList("foo", "bar")
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.InList([]interface{}{})
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.NotInList([]interface{}{})
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		value.InList([]interface{}{"bar", "foo"})
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.NotInList([]interface{}{"bar", "foo"})
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		value.InList([]interface{}{"bar", "foo"}, []interface{}{"foo", "bar"})
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		value.NotInList([]interface{}{"bar", "foo"}, []interface{}{"foo", "bar"})
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.InList([]interface{}{"bar", "foo"}, []interface{}{"FOO", "BAR"})
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.NotInList([]interface{}{"bar", "foo"}, []interface{}{"FOO", "BAR"})
-		value.chain.assert(t, success)
-		value.chain.clear()
+				NewArray(reporter, tc.value).NotInList(tc.testList...).
+					chain.assert(t, !tc.wantInList)
+			})
+		}
 	})
 
 	t.Run("canonization", func(t *testing.T) {
@@ -743,106 +685,120 @@ func TestArray_InList(t *testing.T) {
 			myInt   int
 		)
 
-		reporter := newMockReporter(t)
-
-		value := NewArray(reporter, []interface{}{
+		value := []interface{}{
 			123,
 			456,
 			[]interface{}{789, 567},
 			map[string]interface{}{"a": "b"},
-		})
+		}
 
-		value.InList(myArray{
-			myInt(123.0),
-			myInt(456.0),
-			myArray{
-				myInt(789.0),
-				myInt(567.0),
+		cases := []struct {
+			name      string
+			value     []interface{}
+			testValue []interface{}
+			result    chainResult
+		}{
+			{
+				name:  "test 1",
+				value: value,
+				testValue: myArray{
+					myInt(123.0),
+					myInt(456.0),
+					myArray{
+						myInt(789.0),
+						myInt(567.0),
+					},
+					myMap{"a": "b"},
+				},
+				result: success,
 			},
-			myMap{"a": "b"},
-		})
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		value.NotInList(myArray{
-			myInt(123.0),
-			myInt(456.0),
-			myArray{
-				myInt(789.0),
-				myInt(567.0),
+			{
+				name:  "test 2",
+				value: value,
+				testValue: myArray{
+					123.0,
+					456.0,
+					myArray{789.0, 567.0},
+					myMap{"a": "b"},
+				},
+				result: success,
 			},
-			myMap{"a": "b"},
-		})
-		value.chain.assert(t, failure)
-		value.chain.clear()
+			{
+				name:  "test 3",
+				value: value,
+				testValue: myArray{
+					myInt(123),
+					456.0,
+					myArray{myInt(789), 567.0},
+					myMap{"a": "b"},
+				},
+				result: success,
+			},
+		}
 
-		value.InList(myArray{123.0, 456.0, myArray{789.0, 567.0}, myMap{"a": "b"}})
-		value.chain.assert(t, success)
-		value.chain.clear()
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				reporter := newMockReporter(t)
 
-		value.NotInList(myArray{123.0, 456.0, myArray{789.0, 567.0}, myMap{"a": "b"}})
-		value.chain.assert(t, failure)
-		value.chain.clear()
+				NewArray(reporter, tc.value).InList(tc.testValue).
+					chain.assert(t, tc.result)
 
-		value.InList(myArray{myInt(123), 456.0, myArray{myInt(789), 567.0}, myMap{"a": "b"}})
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		value.NotInList(myArray{myInt(123), 456.0, myArray{myInt(789), 567.0}, myMap{"a": "b"}})
-		value.chain.assert(t, failure)
-		value.chain.clear()
-	})
-
-	t.Run("not array", func(t *testing.T) {
-		reporter := newMockReporter(t)
-
-		value := NewArray(reporter, []interface{}{"foo", "bar"})
-
-		value.InList([]interface{}{"bar", "foo"}, "NOT ARRAY")
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.NotInList([]interface{}{"bar", "foo"}, "NOT ARRAY")
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.InList([]interface{}{"foo", "bar"}, "NOT ARRAY")
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.NotInList([]interface{}{"foo", "bar"}, "NOT ARRAY")
-		value.chain.assert(t, failure)
-		value.chain.clear()
+				NewArray(reporter, tc.value).NotInList(tc.testValue).
+					chain.assert(t, !tc.result)
+			})
+		}
 	})
 
 	t.Run("invalid argument", func(t *testing.T) {
-		reporter := newMockReporter(t)
+		cases := []struct {
+			name     string
+			value    []interface{}
+			testList []interface{}
+		}{
+			{
+				name:     "empty list",
+				value:    []interface{}{},
+				testList: []interface{}{},
+			},
+			{
+				name:     "nil list",
+				value:    []interface{}{},
+				testList: nil,
+			},
+			{
+				name:     "invalid type",
+				value:    []interface{}{},
+				testList: []interface{}{func() {}},
+			},
+			{
+				name:  "one equal array, another not array",
+				value: []interface{}{"foo", "bar"},
+				testList: []interface{}{
+					[]interface{}{"foo", "bar"},
+					"NOT ARRAY",
+				},
+			},
+			{
+				name:  "one inequal array, another not array",
+				value: []interface{}{"foo", "bar"},
+				testList: []interface{}{
+					[]interface{}{"bar", "foo"},
+					"NOT ARRAY",
+				},
+			},
+		}
 
-		value := NewArray(reporter, []interface{}{})
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				reporter := newMockReporter(t)
 
-		value.InList()
-		value.chain.assert(t, failure)
-		value.chain.clear()
+				NewArray(reporter, tc.value).InList(tc.testList...).
+					chain.assert(t, failure)
 
-		value.NotInList()
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.InList(nil)
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.NotInList(nil)
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.InList(func() {})
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		value.NotInList(func() {})
-		value.chain.assert(t, failure)
-		value.chain.clear()
+				NewArray(reporter, tc.value).NotInList(tc.testList...).
+					chain.assert(t, failure)
+			})
+		}
 	})
 }
 

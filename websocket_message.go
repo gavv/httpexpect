@@ -460,24 +460,6 @@ func (wm *WebsocketMessage) checkNotCode(opChain *chain, codes ...int) {
 	}
 }
 
-// Body returns a new String instance with WebSocket message content.
-//
-// Example:
-//
-//	msg := conn.Expect()
-//	msg.Body().NotEmpty()
-//	msg.Body().Length().IsEqual(100)
-func (wm *WebsocketMessage) Body() *String {
-	opChain := wm.chain.enter("Body()")
-	defer opChain.leave()
-
-	if opChain.failed() {
-		return newString(opChain, "")
-	}
-
-	return newString(opChain, string(wm.content))
-}
-
 // NoContent succeeds if WebSocket message has no content (is empty).
 func (wm *WebsocketMessage) NoContent() *WebsocketMessage {
 	opChain := wm.chain.enter("NoContent()")
@@ -507,6 +489,24 @@ func (wm *WebsocketMessage) NoContent() *WebsocketMessage {
 	}
 
 	return wm
+}
+
+// Body returns a new String instance with WebSocket message content.
+//
+// Example:
+//
+//	msg := conn.Expect()
+//	msg.Body().NotEmpty()
+//	msg.Body().Length().IsEqual(100)
+func (wm *WebsocketMessage) Body() *String {
+	opChain := wm.chain.enter("Body()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return newString(opChain, "")
+	}
+
+	return newString(opChain, string(wm.content))
 }
 
 // JSON returns a new Value instance with JSON contents of WebSocket message.

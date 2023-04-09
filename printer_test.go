@@ -10,6 +10,16 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type errorReader struct{}
+
+func (errorReader) Read(_ []byte) (n int, err error) {
+	return 0, errors.New("error")
+}
+
+func (errorReader) Close() error {
+	return errors.New("error")
+}
+
 func TestPrinter_Compact(t *testing.T) {
 	printer := NewCompactPrinter(t)
 
@@ -44,16 +54,6 @@ func TestPrinter_Debug(t *testing.T) {
 	printer.Response(&http.Response{Body: ioutil.NopCloser(body2)}, 0)
 	printer.Response(&http.Response{}, 0)
 	printer.Response(nil, 0)
-}
-
-type errorReader struct{}
-
-func (errorReader) Read(_ []byte) (n int, err error) {
-	return 0, errors.New("error")
-}
-
-func (errorReader) Close() error {
-	return errors.New("error")
 }
 
 func TestPrinter_Panics(t *testing.T) {
