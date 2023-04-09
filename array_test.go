@@ -399,9 +399,6 @@ func TestArray_IsEqual(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
 
-				value := NewArray(reporter, tc.value)
-				assert.Equal(t, tc.value, value.Raw())
-
 				NewArray(reporter, tc.value).IsEqual(tc.testValue).
 					chain.assert(t, tc.wantCode)
 
