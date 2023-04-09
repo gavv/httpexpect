@@ -283,6 +283,7 @@ func (c *chain) setHandler(handler AssertionHandler) {
 	}
 
 	c.handler = handler
+	c.context.TestingTB = isTestingTB(handler)
 }
 
 // Create chain clone.

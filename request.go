@@ -242,6 +242,98 @@ func (r *Request) WithName(name string) *Request {
 	return r
 }
 
+// WithReporter sets reporter to be used for this request.
+//
+// The new reporter overwrites AssertionHandler.
+// The new AssertionHandler is DefaultAssertionHandler
+// with specified reporter, existing formatter and nil Logger
+// It will be used to report formatted fatal failure messages
+//
+// Example:
+//
+//	req := NewRequestC(config, "GET", "http://example.com/path")
+//	reporter := httpextect.ReporterFunc(
+//		func(message string, args ...interface{}) {
+//			// reporter code here
+//		}),
+//	req.WithReporter(reporter)
+func (r *Request) WithReporter(reporter Reporter) *Request {
+	opChain := r.chain.enter("WithReporter()")
+	defer opChain.leave()
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if opChain.failed() {
+		return r
+	}
+
+	if !r.checkOrder(opChain, "WithReporter()") {
+		return r
+	}
+
+	if reporter == nil {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected nil argument"),
+			},
+		})
+		return r
+	}
+
+	handler := &DefaultAssertionHandler{
+		Reporter:  reporter,
+		Formatter: r.config.Formatter,
+	}
+	r.chain.setHandler(handler)
+
+	return r
+}
+
+// WithAssertionHandler sets assertion handler to be used for this request.
+//
+// The new handler overwrites assertion handler that will be used
+// by Request and its children (Response, body, etc.).
+// It will be used to format and report test Failure or Success.
+//
+// Example:
+//
+//	req := NewRequestC(config, "GET", "http://example.com/path")
+//	req.WithAssertionHandler(&DefaultAssertionHandler{
+//		Reporter:  reporter,
+//		Formatter: req.config.Formatter,
+//	})
+func (r *Request) WithAssertionHandler(handler AssertionHandler) *Request {
+	opChain := r.chain.enter("WithAssertionHandler()")
+	defer opChain.leave()
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if opChain.failed() {
+		return r
+	}
+
+	if !r.checkOrder(opChain, "WithAssertionHandler()") {
+		return r
+	}
+
+	if handler == nil {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected nil argument"),
+			},
+		})
+		return r
+	}
+
+	r.chain.setHandler(handler)
+
+	return r
+}
+
 // WithMatcher attaches a matcher to the request.
 // All attached matchers are invoked in the Expect method for a newly
 // created Response.
@@ -1922,62 +2014,6 @@ func (r *Request) WithMultipart() *Request {
 		r.multipart = r.multipartFn(r.formbuf)
 		r.setBody(opChain, "WithMultipart()", r.formbuf, 0, false)
 	}
-
-	return r
-}
-
-//	req := NewRequestC(config, "GET", "/path")
-//	req.WithClient(&http.Client{
-//	  Transport: &http.Transport{
-//		DisableCompression: true,
-//	  },
-//	})
-
-// WithReporter sets reporter.
-//
-// The new reporter overwrites AssertionHandler.Reporter. It will be used to
-// report formatted fatal failure messages
-//
-// Example:
-//
-//	req := NewRequestC(config, "GET", "http://example.com/path")
-//	reporter := httpextect.ReporterFunc(
-//		func(message string, args ...interface{}) {
-//			// reporter code here
-//		}),
-//	req.WithReporter(reporter)
-func (r *Request) WithReporter(reporter Reporter) *Request {
-	return r.WithAssertionHandler(&DefaultAssertionHandler{
-		Reporter:  reporter,
-		Formatter: r.config.Formatter,
-	})
-}
-
-// WithAssertionHandler sets assertion handler.
-//
-// The new handler overwrites assertion handler. It will be used to
-// format and report test Failure or Success.
-//
-// Example:
-//
-//	req := NewRequestC(config, "GET", "http://example.com/path")
-//	req.WithAssertionHandler(DefaultAssertionHandler)
-func (r *Request) WithAssertionHandler(handler AssertionHandler) *Request {
-	opChain := r.chain.enter("WithAssertionHandler()")
-	defer opChain.leave()
-
-	r.mu.Lock()
-	defer r.mu.Unlock()
-
-	if opChain.failed() {
-		return r
-	}
-
-	if !r.checkOrder(opChain, "WithAssertionHandler()") {
-		return r
-	}
-
-	r.chain.setHandler(handler)
 
 	return r
 }
