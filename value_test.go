@@ -164,95 +164,52 @@ func TestValue_Getters(t *testing.T) {
 		wantNumber  chainResult
 		wantBoolean chainResult
 		wantNull    chainResult
-		wantNotNull chainResult
+		wantInvalid chainResult
 	}{
 		{
-			name:        "null",
-			data:        nil,
-			wantObject:  failure,
-			wantArray:   failure,
-			wantString:  failure,
-			wantNumber:  failure,
-			wantBoolean: failure,
-			wantNull:    success,
-			wantNotNull: failure,
+			name:     "null",
+			data:     nil,
+			wantNull: success,
 		},
 		{
-			name:        "indirect null",
-			data:        []interface{}(nil),
-			wantObject:  failure,
-			wantArray:   failure,
-			wantString:  failure,
-			wantNumber:  failure,
-			wantBoolean: failure,
-			wantNull:    success,
-			wantNotNull: failure,
+			name:     "null object",
+			data:     map[string]interface{}(nil),
+			wantNull: success,
 		},
 		{
-			name:        "bad",
-			data:        func() {},
-			wantObject:  failure,
-			wantArray:   failure,
-			wantString:  failure,
-			wantNumber:  failure,
-			wantBoolean: failure,
-			wantNull:    failure,
-			wantNotNull: failure,
+			name:     "null array",
+			data:     []interface{}(nil),
+			wantNull: success,
 		},
 		{
-			name:        "object",
-			data:        map[string]interface{}{},
-			wantObject:  success,
-			wantArray:   failure,
-			wantString:  failure,
-			wantNumber:  failure,
-			wantBoolean: failure,
-			wantNull:    failure,
-			wantNotNull: success,
+			name:       "object",
+			data:       map[string]interface{}{},
+			wantObject: success,
 		},
 		{
-			name:        "array",
-			data:        []interface{}{},
-			wantObject:  failure,
-			wantArray:   success,
-			wantString:  failure,
-			wantNumber:  failure,
-			wantBoolean: failure,
-			wantNull:    failure,
-			wantNotNull: success,
+			name:      "array",
+			data:      []interface{}{},
+			wantArray: success,
 		},
 		{
-			name:        "string",
-			data:        "",
-			wantObject:  failure,
-			wantArray:   failure,
-			wantString:  success,
-			wantNumber:  failure,
-			wantBoolean: failure,
-			wantNull:    failure,
-			wantNotNull: success,
+			name:       "string",
+			data:       "",
+			wantString: success,
 		},
 		{
-			name:        "number",
-			data:        0.0,
-			wantObject:  failure,
-			wantArray:   failure,
-			wantString:  failure,
-			wantNumber:  success,
-			wantBoolean: failure,
-			wantNull:    failure,
-			wantNotNull: success,
+			name:       "number",
+			data:       0.0,
+			wantNumber: success,
 		},
 		{
 			name:        "boolean",
 			data:        false,
-			wantObject:  failure,
-			wantArray:   failure,
-			wantString:  failure,
-			wantNumber:  failure,
 			wantBoolean: success,
-			wantNull:    failure,
-			wantNotNull: success,
+		},
+		{
+			name:        "invalid",
+			data:        func() {},
+			wantInvalid: success,
 		},
 	}
 
@@ -260,26 +217,68 @@ func TestValue_Getters(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			NewValue(reporter, tc.data).Object().
-				chain.assert(t, tc.wantObject)
+			t.Run("null", func(t *testing.T) {
+				NewValue(reporter, tc.data).IsNull().
+					chain.assert(t, tc.wantNull && !tc.wantInvalid)
 
-			NewValue(reporter, tc.data).Array().
-				chain.assert(t, tc.wantArray)
+				NewValue(reporter, tc.data).NotNull().
+					chain.assert(t, !tc.wantNull && !tc.wantInvalid)
+			})
 
-			NewValue(reporter, tc.data).String().
-				chain.assert(t, tc.wantString)
+			t.Run("object", func(t *testing.T) {
+				NewValue(reporter, tc.data).Object().
+					chain.assert(t, tc.wantObject && !tc.wantInvalid)
 
-			NewValue(reporter, tc.data).Number().
-				chain.assert(t, tc.wantNumber)
+				NewValue(reporter, tc.data).IsObject().
+					chain.assert(t, tc.wantObject && !tc.wantInvalid)
 
-			NewValue(reporter, tc.data).Boolean().
-				chain.assert(t, tc.wantBoolean)
+				NewValue(reporter, tc.data).NotObject().
+					chain.assert(t, !tc.wantObject && !tc.wantInvalid)
+			})
 
-			NewValue(reporter, tc.data).IsNull().
-				chain.assert(t, tc.wantNull)
+			t.Run("array", func(t *testing.T) {
+				NewValue(reporter, tc.data).Array().
+					chain.assert(t, tc.wantArray && !tc.wantInvalid)
 
-			NewValue(reporter, tc.data).NotNull().
-				chain.assert(t, tc.wantNotNull)
+				NewValue(reporter, tc.data).IsArray().
+					chain.assert(t, tc.wantArray && !tc.wantInvalid)
+
+				NewValue(reporter, tc.data).NotArray().
+					chain.assert(t, !tc.wantArray && !tc.wantInvalid)
+			})
+
+			t.Run("string", func(t *testing.T) {
+				NewValue(reporter, tc.data).String().
+					chain.assert(t, tc.wantString && !tc.wantInvalid)
+
+				NewValue(reporter, tc.data).IsString().
+					chain.assert(t, tc.wantString && !tc.wantInvalid)
+
+				NewValue(reporter, tc.data).NotString().
+					chain.assert(t, !tc.wantString && !tc.wantInvalid)
+			})
+
+			t.Run("number", func(t *testing.T) {
+				NewValue(reporter, tc.data).Number().
+					chain.assert(t, tc.wantNumber && !tc.wantInvalid)
+
+				NewValue(reporter, tc.data).IsNumber().
+					chain.assert(t, tc.wantNumber && !tc.wantInvalid)
+
+				NewValue(reporter, tc.data).NotNumber().
+					chain.assert(t, !tc.wantNumber && !tc.wantInvalid)
+			})
+
+			t.Run("boolean", func(t *testing.T) {
+				NewValue(reporter, tc.data).Boolean().
+					chain.assert(t, tc.wantBoolean && !tc.wantInvalid)
+
+				NewValue(reporter, tc.data).IsBoolean().
+					chain.assert(t, tc.wantBoolean && !tc.wantInvalid)
+
+				NewValue(reporter, tc.data).NotBoolean().
+					chain.assert(t, !tc.wantBoolean && !tc.wantInvalid)
+			})
 		})
 	}
 }
