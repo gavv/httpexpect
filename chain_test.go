@@ -18,7 +18,7 @@ func testFailure() AssertionFailure {
 }
 
 func TestChain_Reentrancy(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
 		assertionHandler := &mockAssertionHandler{}
 
 		chain := newChainWithConfig("root", Config{
@@ -27,7 +27,8 @@ func TestChain_Reentrancy(t *testing.T) {
 
 		chain2 := chain.enter("test")
 		assertionHandler.assertionCb = func() {
-			chain2.env() // will hang if lock chain's lock is used to call Failure()
+			// will hang if chain calls assertion handler under a lock
+			chain2.env()
 		}
 
 		chain2.leave()
@@ -37,7 +38,7 @@ func TestChain_Reentrancy(t *testing.T) {
 		assert.Equal(t, 0, assertionHandler.failureCalled)
 	})
 
-	t.Run("Failure", func(t *testing.T) {
+	t.Run("failure", func(t *testing.T) {
 		assertionHandler := &mockAssertionHandler{}
 
 		chain := newChainWithConfig("root", Config{
@@ -46,7 +47,8 @@ func TestChain_Reentrancy(t *testing.T) {
 
 		chain2 := chain.enter("test")
 		assertionHandler.assertionCb = func() {
-			chain2.env() // will hang if lock chain's lock is used to call Failure()
+			// will hang if chain calls assertion handler under a lock
+			chain2.env()
 		}
 
 		chain2.fail(testFailure())
