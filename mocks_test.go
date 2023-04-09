@@ -84,12 +84,20 @@ func (mf *mockFormatter) FormatFailure(
 
 // mock assertion handler
 type mockAssertionHandler struct {
-	ctx     *AssertionContext
-	failure *AssertionFailure
+	ctx           *AssertionContext
+	failure       *AssertionFailure
+	successCalled int
+	failureCalled int
+	assertionCb   func()
 }
 
 func (mh *mockAssertionHandler) Success(ctx *AssertionContext) {
 	mh.ctx = ctx
+	mh.successCalled++
+
+	if mh.assertionCb != nil {
+		mh.assertionCb()
+	}
 }
 
 func (mh *mockAssertionHandler) Failure(
@@ -97,6 +105,11 @@ func (mh *mockAssertionHandler) Failure(
 ) {
 	mh.ctx = ctx
 	mh.failure = failure
+	mh.failureCalled++
+
+	if mh.assertionCb != nil {
+		mh.assertionCb()
+	}
 }
 
 // mock websocket printer
