@@ -7,176 +7,217 @@ import (
 )
 
 func TestCanon_Number(t *testing.T) {
-	type (
-		myInt int
-	)
 
-	chain := newMockChain(t).enter("test")
-	defer chain.leave()
+	type myInt int
 
-	var (
-		val float64
-		ok  bool
-	)
-
-	val, ok = canonNumber(chain, 123)
-	assert.True(t, ok)
-	assert.Equal(t, 123.0, val)
-	chain.assert(t, success)
-	chain.clear()
-
-	val, ok = canonNumber(chain, 123.0)
-	assert.True(t, ok)
-	assert.Equal(t, 123.0, val)
-	chain.assert(t, success)
-	chain.clear()
-
-	val, ok = canonNumber(chain, myInt(123))
-	assert.True(t, ok)
-	assert.Equal(t, 123.0, val)
-	chain.assert(t, success)
-	chain.clear()
-
-	_, ok = canonNumber(chain, "123")
-	assert.False(t, ok)
-	chain.assert(t, failure)
-	chain.clear()
-
-	_, ok = canonNumber(chain, nil)
-	assert.False(t, ok)
-	chain.assert(t, failure)
-	chain.clear()
+	for _, tc := range []struct {
+		name   string
+		in     interface{}
+		val    interface{}
+		result chainResult
+	}{
+		{
+			name:   "testCanon_Number: input '123' as int",
+			in:     123,
+			val:    123.0,
+			result: true,
+		},
+		{
+			name:   "testCanon_Number: input '123.0' as float",
+			in:     123.0,
+			val:    123.0,
+			result: true,
+		},
+		{
+			name:   "testCanon_Number: input '123' as myInt",
+			in:     myInt(123),
+			val:    123.0,
+			result: true,
+		},
+		{
+			name:   "testCanon_Number: input '123' as string",
+			in:     "123",
+			result: false,
+		},
+		{
+			name:   "testCanon_Number: input is nil",
+			in:     nil,
+			result: false,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			chain := newMockChain(t).enter("test")
+			defer chain.leave()
+			val, ok := canonNumber(chain, tc.in)
+			assert := assert.New(t)
+			assert.Equal(tc.result, chainResult(ok))
+			chain.assert(t, tc.result)
+			if tc.result {
+				assert.Equal(tc.val, val)
+			}
+			chain.clear()
+		})
+	}
 }
 
-func TestCanon_Array(t *testing.T) {
+func TestCannon_Array(t *testing.T) {
+
 	type (
-		myArray []interface{}
 		myInt   int
+		myArray []interface{}
 	)
 
-	chain := newMockChain(t).enter("test")
-	defer chain.leave()
-
-	var (
-		val []interface{}
-		ok  bool
-	)
-
-	val, ok = canonArray(chain, []interface{}{123.0, 456.0})
-	assert.True(t, ok)
-	assert.Equal(t, []interface{}{123.0, 456.0}, val)
-	chain.assert(t, success)
-	chain.clear()
-
-	val, ok = canonArray(chain, myArray{myInt(123), 456.0})
-	assert.True(t, ok)
-	assert.Equal(t, []interface{}{123.0, 456.0}, val)
-	chain.assert(t, success)
-	chain.clear()
-
-	_, ok = canonArray(chain, "123")
-	assert.False(t, ok)
-	chain.assert(t, failure)
-	chain.clear()
-
-	_, ok = canonArray(chain, func() {})
-	assert.False(t, ok)
-	chain.assert(t, failure)
-	chain.clear()
-
-	_, ok = canonArray(chain, nil)
-	assert.False(t, ok)
-	chain.assert(t, failure)
-	chain.clear()
-
-	_, ok = canonArray(chain, []interface{}(nil))
-	assert.False(t, ok)
-	chain.assert(t, failure)
-	chain.clear()
+	for _, tc := range []struct {
+		name   string
+		in     interface{}
+		val    interface{}
+		result chainResult
+	}{
+		{
+			name:   "testCanon_Array: input []interface{}{123.0, 456.0}",
+			in:     []interface{}{123.0, 456.0},
+			val:    []interface{}{123.0, 456.0},
+			result: true,
+		},
+		{
+			name:   "testCanon_Array: input myArray{myInt(123), 456.0}",
+			in:     myArray{myInt(123), 456.0},
+			val:    []interface{}{123.0, 456.0},
+			result: true,
+		},
+		{
+			name:   "testCanon_Array: input '123'",
+			in:     "123",
+			result: false,
+		},
+		{
+			name:   "testCanon_Array: input empty function",
+			in:     func() {},
+			result: false,
+		},
+		{
+			name:   "testCanon_Array: input is nil",
+			in:     nil,
+			result: false,
+		},
+		{
+			name:   "testCanon_Array: input is []interface{}(nil)",
+			in:     []interface{}(nil),
+			result: false,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			chain := newMockChain(t).enter("test")
+			defer chain.leave()
+			val, ok := canonArray(chain, tc.in)
+			assert := assert.New(t)
+			assert.Equal(tc.result, chainResult(ok))
+			chain.assert(t, tc.result)
+			if tc.result {
+				assert.Equal(tc.val, val)
+			}
+			chain.clear()
+		})
+	}
 }
 
 func TestCanon_Map(t *testing.T) {
+
 	type (
-		myMap map[string]interface{}
 		myInt int
+		myMap map[string]interface{}
 	)
 
-	chain := newMockChain(t).enter("test")
-	defer chain.leave()
-
-	var (
-		val map[string]interface{}
-		ok  bool
-	)
-
-	val, ok = canonMap(chain, map[string]interface{}{"foo": 123.0})
-	assert.True(t, ok)
-	assert.Equal(t, map[string]interface{}{"foo": 123.0}, val)
-	chain.assert(t, success)
-	chain.clear()
-
-	val, ok = canonMap(chain, myMap{"foo": myInt(123)})
-	assert.True(t, ok)
-	assert.Equal(t, map[string]interface{}{"foo": 123.0}, val)
-	chain.assert(t, success)
-	chain.clear()
-
-	_, ok = canonMap(chain, "123")
-	assert.False(t, ok)
-	chain.assert(t, failure)
-	chain.clear()
-
-	_, ok = canonMap(chain, func() {})
-	assert.False(t, ok)
-	chain.assert(t, failure)
-	chain.clear()
-
-	_, ok = canonMap(chain, nil)
-	assert.False(t, ok)
-	chain.assert(t, failure)
-	chain.clear()
-
-	_, ok = canonMap(chain, map[string]interface{}(nil))
-	assert.False(t, ok)
-	chain.assert(t, failure)
-	chain.clear()
+	for _, tc := range []struct {
+		name   string
+		in     interface{}
+		val    interface{}
+		result chainResult
+	}{
+		{
+			name:   "testCanon_Map: input is map[string]interface{}{'foo': 123.0}",
+			in:     map[string]interface{}{"foo": 123.0},
+			val:    map[string]interface{}{"foo": 123.0},
+			result: true,
+		},
+		{
+			name:   "testCanon_Map: input is myMap{'foo': myInt(123)}",
+			in:     myMap{"foo": myInt(123)},
+			val:    map[string]interface{}{"foo": 123.0},
+			result: true,
+		},
+		{
+			name:   "testCanon_Map: input is '123'",
+			in:     "123",
+			result: false,
+		},
+		{
+			name:   "testCanon_Map: input is func() {}",
+			in:     func() {},
+			result: false,
+		},
+		{
+			name:   "testCanon_Map: input is nil",
+			in:     nil,
+			result: false,
+		},
+		{
+			name:   "testCanon_Map: input is map[string]interface{}(nil)",
+			in:     map[string]interface{}(nil),
+			result: false,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			chain := newMockChain(t).enter("test")
+			defer chain.leave()
+			val, ok := canonMap(chain, tc.in)
+			assert := assert.New(t)
+			assert.Equal(tc.result, chainResult(ok))
+			chain.assert(t, tc.result)
+			if tc.result {
+				assert.Equal(tc.val, val)
+			}
+			chain.clear()
+		})
+	}
 }
 
 func TestCannon_Decode(t *testing.T) {
-	t.Run("target is nil", func(t *testing.T) {
-		chain := newMockChain(t).enter("test")
-		defer chain.leave()
 
-		canonDecode(chain, 123, nil)
+	type S struct {
+		MyFunc func() string
+	}
+	var (
+		target    S
+		targetInt int
+	)
 
-		chain.assert(t, failure)
-	})
-
-	t.Run("value is not marshallable", func(t *testing.T) {
-		chain := newMockChain(t).enter("test")
-		defer chain.leave()
-
-		type S struct {
-			MyFunc func() string
-		}
-
-		value := &S{
-			MyFunc: func() string { return "foo" },
-		}
-
-		var target S
-		canonDecode(chain, value, &target)
-
-		chain.assert(t, failure)
-	})
-
-	t.Run("value is not unmarshallable into target", func(t *testing.T) {
-		chain := newMockChain(t).enter("test")
-		defer chain.leave()
-
-		var target int
-		canonDecode(chain, true, target)
-
-		chain.assert(t, failure)
-	})
+	for _, tc := range []struct {
+		name   string
+		value  interface{}
+		target interface{}
+	}{
+		{
+			name:   "target is nil",
+			value:  123,
+			target: nil,
+		},
+		{
+			name:   "value is not marshallable",
+			value:  &S{MyFunc: func() string { return "foo" }},
+			target: &target,
+		},
+		{
+			name:   "value is not unmarshallable into target",
+			value:  true,
+			target: targetInt,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			chain := newMockChain(t).enter("test")
+			defer chain.leave()
+			canonDecode(chain, tc.value, tc.target)
+			chain.assert(t, failure)
+		})
+	}
 }
