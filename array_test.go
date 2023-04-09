@@ -619,10 +619,11 @@ func TestArray_IsEqualUnordered(t *testing.T) {
 
 		reporter := newMockReporter(t)
 
-		NewArray(reporter, []interface{}{123, 456, "foo"}).IsEqualUnordered(myArray{myInt(456), 123.0, "foo"}).
+		testVal := myArray{myInt(456), 123.0, "foo"}
+		NewArray(reporter, []interface{}{123, 456, "foo"}).IsEqualUnordered(testVal).
 			chain.assert(t, success)
 
-		NewArray(reporter, []interface{}{123, 456, "foo"}).NotEqualUnordered(myArray{myInt(456), 123.0, "foo"}).
+		NewArray(reporter, []interface{}{123, 456, "foo"}).NotEqualUnordered(testVal).
 			chain.assert(t, failure)
 	})
 
@@ -777,16 +778,18 @@ func TestArray_InList(t *testing.T) {
 	t.Run("not array", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
-		NewArray(reporter, []interface{}{"foo", "bar"}).InList([]interface{}{[]interface{}{"bar", "foo"}, "NOT ARRAY"}).
+		testVal := []interface{}{[]interface{}{"bar", "foo"}, "NOT ARRAY"}
+		NewArray(reporter, []interface{}{"foo", "bar"}).InList(testVal).
 			chain.assert(t, failure)
 
-		NewArray(reporter, []interface{}{"foo", "bar"}).NotInList([]interface{}{[]interface{}{"bar", "foo"}, "NOT ARRAY"}).
+		NewArray(reporter, []interface{}{"foo", "bar"}).NotInList(testVal).
 			chain.assert(t, success)
 
-		NewArray(reporter, []interface{}{"foo", "bar"}).InList([]interface{}{[]interface{}{"foo", "bar"}, "NOT ARRAY"}).
+		testVal = []interface{}{[]interface{}{"foo", "bar"}, "NOT ARRAY"}
+		NewArray(reporter, []interface{}{"foo", "bar"}).InList().
 			chain.assert(t, failure)
 
-		NewArray(reporter, []interface{}{"foo", "bar"}).NotInList([]interface{}{[]interface{}{"foo", "bar"}, "NOT ARRAY"}).
+		NewArray(reporter, []interface{}{"foo", "bar"}).NotInList(testVal).
 			chain.assert(t, success)
 
 	})
