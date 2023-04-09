@@ -324,150 +324,74 @@ func TestArray_Getters(t *testing.T) {
 
 func TestArray_IsEmpty(t *testing.T) {
 	t.Run("empty slice", func(t *testing.T) {
-		cases := []struct {
-			name        string
-			wantCode    chainResult
-			wantNotCode chainResult
-			value       []interface{}
-		}{
-			{
-				name:        "empty",
-				wantCode:    success,
-				wantNotCode: failure,
-				value:       []interface{}{},
-			},
-		}
+		reporter := newMockReporter(t)
 
-		for _, tc := range cases {
-			t.Run(tc.name, func(t *testing.T) {
-				reporter := newMockReporter(t)
+		NewArray(reporter, []interface{}{}).IsEmpty().
+			chain.assert(t, success)
 
-				value := NewArray(reporter, tc.value)
-
-				value.IsEmpty()
-				value.chain.assert(t, tc.wantCode)
-				value.chain.clear()
-
-				value.NotEmpty()
-				value.chain.assert(t, tc.wantNotCode)
-				value.chain.clear()
-			})
-		}
+		NewArray(reporter, []interface{}{}).NotEmpty().
+			chain.assert(t, failure)
 	})
 
 	t.Run("one empty element", func(t *testing.T) {
-		cases := []struct {
-			name        string
-			wantCode    chainResult
-			wantNotCode chainResult
-			value       []interface{}
-		}{
-			{
-				name:        "empty element",
-				wantCode:    failure,
-				wantNotCode: success,
-				value:       []interface{}{""},
-			},
-		}
+		reporter := newMockReporter(t)
 
-		for _, tc := range cases {
-			t.Run(tc.name, func(t *testing.T) {
-				reporter := newMockReporter(t)
+		NewArray(reporter, []interface{}{""}).IsEmpty().
+			chain.assert(t, failure)
 
-				value := NewArray(reporter, tc.value)
-
-				value.IsEmpty()
-				value.chain.assert(t, tc.wantCode)
-				value.chain.clear()
-
-				value.NotEmpty()
-				value.chain.assert(t, tc.wantNotCode)
-				value.chain.clear()
-			})
-		}
+		NewArray(reporter, []interface{}{""}).NotEmpty().
+			chain.assert(t, success)
 	})
 }
 
 func TestArray_IsEqual(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
-		cases := []struct {
-			name        string
-			wantCode    chainResult
-			wantNotCode chainResult
-			value       []interface{} // or any
-			testValue   interface{}
-		}{
-			{
-				name:        "empty array",
-				wantCode:    success,
-				wantNotCode: failure,
-				value:       []interface{}{},
-				testValue:   []interface{}{},
-			},
-			{
-				name:        "one empty element",
-				wantCode:    failure,
-				wantNotCode: success,
-				value:       []interface{}{},
-				testValue:   []interface{}{""},
-			},
-		}
+		reporter := newMockReporter(t)
 
-		for _, tc := range cases {
-			t.Run(tc.name, func(t *testing.T) {
-				reporter := newMockReporter(t)
+		NewArray(reporter, []interface{}{}).IsEqual([]interface{}{}).
+			chain.assert(t, success)
 
-				value := NewArray(reporter, tc.value)
+		NewArray(reporter, []interface{}{}).NotEqual([]interface{}{}).
+			chain.assert(t, failure)
 
-				assert.Equal(t, []interface{}{}, value.Raw())
+		NewArray(reporter, []interface{}{}).IsEqual([]interface{}{""}).
+			chain.assert(t, failure)
 
-				value.IsEqual(tc.testValue)
-				value.chain.assert(t, tc.wantCode)
-				value.chain.clear()
+		NewArray(reporter, []interface{}{}).NotEqual([]interface{}{""}).
+			chain.assert(t, success)
 
-				value.NotEqual(tc.testValue)
-				value.chain.assert(t, tc.wantNotCode)
-				value.chain.clear()
-			})
-
-		}
 	})
 
 	t.Run("not empty", func(t *testing.T) {
 		cases := []struct {
-			name        string
-			wantCode    chainResult
-			wantNotCode chainResult
-			value       []interface{} // or any
-			testValue   interface{}
+			name      string
+			wantCode  chainResult
+			value     []interface{} // or any
+			testValue interface{}
 		}{
 			{
-				name:        "with empty array",
-				wantCode:    failure,
-				wantNotCode: success,
-				value:       []interface{}{"foo", "bar"},
-				testValue:   []interface{}{},
+				name:      "with empty array",
+				wantCode:  failure,
+				value:     []interface{}{"foo", "bar"},
+				testValue: []interface{}{},
 			},
 			{
-				name:        "with only foo",
-				wantCode:    failure,
-				wantNotCode: success,
-				value:       []interface{}{"foo", "bar"},
-				testValue:   []interface{}{"foo"},
+				name:      "with only foo",
+				wantCode:  failure,
+				value:     []interface{}{"foo", "bar"},
+				testValue: []interface{}{"foo"},
 			},
 			{
-				name:        "with (bar,foo)",
-				wantCode:    failure,
-				wantNotCode: success,
-				value:       []interface{}{"foo", "bar"},
-				testValue:   []interface{}{"bar", "foo"},
+				name:      "with (bar,foo)",
+				wantCode:  failure,
+				value:     []interface{}{"foo", "bar"},
+				testValue: []interface{}{"bar", "foo"},
 			},
 			{
-				name:        "with (foo,bar)",
-				wantCode:    success,
-				wantNotCode: failure,
-				value:       []interface{}{"foo", "bar"},
-				testValue:   []interface{}{"foo", "bar"},
+				name:      "with (foo,bar)",
+				wantCode:  success,
+				value:     []interface{}{"foo", "bar"},
+				testValue: []interface{}{"foo", "bar"},
 			},
 		}
 
@@ -476,102 +400,49 @@ func TestArray_IsEqual(t *testing.T) {
 				reporter := newMockReporter(t)
 
 				value := NewArray(reporter, tc.value)
-
 				assert.Equal(t, tc.value, value.Raw())
 
-				value.IsEqual(tc.testValue)
-				value.chain.assert(t, tc.wantCode)
-				value.chain.clear()
+				NewArray(reporter, tc.value).IsEqual(tc.testValue).
+					chain.assert(t, tc.wantCode)
 
-				value.NotEqual(tc.testValue)
-				value.chain.assert(t, tc.wantNotCode)
-				value.chain.clear()
+				NewArray(reporter, tc.value).NotEqual(tc.testValue).
+					chain.assert(t, !tc.wantCode)
 			})
 		}
 	})
 
 	t.Run("strings", func(t *testing.T) {
-		cases := []struct {
-			name        string
-			wantCode    chainResult
-			wantNotCode chainResult
-			value       []interface{} // or any
-			testValue   interface{}
-		}{
-			{
-				name:        "with (foo,bar)",
-				wantCode:    success,
-				wantNotCode: failure,
-				value:       []interface{}{"foo", "bar"},
-				testValue:   []string{"foo", "bar"},
-			},
-			{
-				name:        "with (bar,foo)",
-				wantCode:    failure,
-				wantNotCode: success,
-				value:       []interface{}{"foo", "bar"},
-				testValue:   []string{"bar", "foo"},
-			},
-		}
+		reporter := newMockReporter(t)
 
-		for _, tc := range cases {
-			t.Run(tc.name, func(t *testing.T) {
-				reporter := newMockReporter(t)
+		NewArray(reporter, []interface{}{"foo", "bar"}).IsEqual([]string{"foo", "bar"}).
+			chain.assert(t, success)
 
-				value := NewArray(reporter, tc.value)
+		NewArray(reporter, []interface{}{"foo", "bar"}).NotEqual([]string{"foo", "bar"}).
+			chain.assert(t, failure)
 
-				value.IsEqual(tc.testValue)
-				value.chain.assert(t, tc.wantCode)
-				value.chain.clear()
+		NewArray(reporter, []interface{}{"foo", "bar"}).IsEqual([]string{"bar", "foo"}).
+			chain.assert(t, failure)
 
-				value.NotEqual(tc.testValue)
-				value.chain.assert(t, tc.wantNotCode)
-				value.chain.clear()
-			})
+		NewArray(reporter, []interface{}{"foo", "bar"}).NotEqual([]string{"bar", "foo"}).
+			chain.assert(t, success)
 
-		}
 	})
 
 	t.Run("numbers", func(t *testing.T) {
-		cases := []struct {
-			name        string
-			wantCode    chainResult
-			wantNotCode chainResult
-			value       []interface{} // or any
-			testValue   interface{}
-		}{
-			{
-				name:        "with (123,456)",
-				wantCode:    success,
-				wantNotCode: failure,
-				value:       []interface{}{123, 456},
-				testValue:   []int{123, 456},
-			},
-			{
-				name:        "with (456,123)",
-				wantCode:    failure,
-				wantNotCode: success,
-				value:       []interface{}{123, 456},
-				testValue:   []int{456, 123},
-			},
-		}
+		reporter := newMockReporter(t)
 
-		for _, tc := range cases {
-			t.Run(tc.name, func(t *testing.T) {
-				reporter := newMockReporter(t)
+		NewArray(reporter, []interface{}{123, 456}).IsEqual([]int{123, 456}).
+			chain.assert(t, success)
 
-				value := NewArray(reporter, tc.value)
+		NewArray(reporter, []interface{}{123, 456}).NotEqual([]int{123, 456}).
+			chain.assert(t, failure)
 
-				value.IsEqual(tc.testValue)
-				value.chain.assert(t, tc.wantCode)
-				value.chain.clear()
+		NewArray(reporter, []interface{}{123, 456}).IsEqual([]int{456, 123}).
+			chain.assert(t, failure)
 
-				value.NotEqual(tc.testValue)
-				value.chain.assert(t, tc.wantNotCode)
-				value.chain.clear()
-			})
+		NewArray(reporter, []interface{}{123, 456}).NotEqual([]int{456, 123}).
+			chain.assert(t, success)
 
-		}
 	})
 
 	t.Run("struct", func(t *testing.T) {
@@ -587,44 +458,19 @@ func TestArray_IsEqual(t *testing.T) {
 			},
 		}
 
-		cases := []struct {
-			name        string
-			wantCode    chainResult
-			wantNotCode chainResult
-			value       []interface{} // or any
-			testValue   interface{}
-		}{
-			{
-				name:        "with (123,456) int fields",
-				wantCode:    success,
-				wantNotCode: failure,
-				value:       value,
-				testValue:   []S{{123}, {456}},
-			},
-			{
-				name:        "with (456,123) int fields",
-				wantCode:    failure,
-				wantNotCode: success,
-				value:       value,
-				testValue:   []S{{456}, {123}},
-			},
-		}
+		reporter := newMockReporter(t)
 
-		for _, tc := range cases {
-			t.Run(tc.name, func(t *testing.T) {
-				reporter := newMockReporter(t)
+		NewArray(reporter, value).IsEqual([]S{{123}, {456}}).
+			chain.assert(t, success)
 
-				value := NewArray(reporter, tc.value)
+		NewArray(reporter, value).NotEqual([]S{{123}, {456}}).
+			chain.assert(t, failure)
 
-				value.IsEqual(tc.testValue)
-				value.chain.assert(t, tc.wantCode)
-				value.chain.clear()
+		NewArray(reporter, value).IsEqual([]S{{456}, {123}}).
+			chain.assert(t, failure)
 
-				value.NotEqual(tc.testValue)
-				value.chain.assert(t, tc.wantNotCode)
-				value.chain.clear()
-			})
-		}
+		NewArray(reporter, value).NotEqual([]S{{456}, {123}}).
+			chain.assert(t, success)
 	})
 
 	t.Run("canonization", func(t *testing.T) {
@@ -633,133 +479,69 @@ func TestArray_IsEqual(t *testing.T) {
 			myInt   int
 		)
 
-		cases := []struct {
-			name        string
-			wantCode    chainResult
-			wantNotCode chainResult
-			value       []interface{} // or any
-			testValue   interface{}
-		}{
-			{
-				name:        "with (123,456.0)",
-				wantCode:    success,
-				wantNotCode: failure,
-				value:       []interface{}{123, 456},
-				testValue:   myArray{myInt(123), 456.0},
-			},
-		}
+		reporter := newMockReporter(t)
 
-		for _, tc := range cases {
-			t.Run(tc.name, func(t *testing.T) {
-				reporter := newMockReporter(t)
+		NewArray(reporter, []interface{}{123, 456}).IsEqual(myArray{myInt(123), 456.0}).
+			chain.assert(t, success)
 
-				value := NewArray(reporter, tc.value)
-
-				assert.Equal(t, []interface{}{123.0, 456.0}, value.Raw())
-
-				value.IsEqual(tc.testValue)
-				value.chain.assert(t, tc.wantCode)
-				value.chain.clear()
-
-				value.NotEqual(tc.testValue)
-				value.chain.assert(t, tc.wantNotCode)
-				value.chain.clear()
-			})
-		}
+		NewArray(reporter, []interface{}{123, 456}).NotEqual(myArray{myInt(123), 456.0}).
+			chain.assert(t, failure)
 	})
 
 	t.Run("invalid argument", func(t *testing.T) {
-		cases := []struct {
-			name        string
-			wantCode    chainResult
-			wantNotCode chainResult
-			value       []interface{} // or any
-			testValue   interface{}
-		}{
-			{
-				name:        "with nil",
-				wantCode:    failure,
-				wantNotCode: failure,
-				value:       []interface{}{},
-				testValue:   nil,
-			},
-			{
-				name:        "with func",
-				wantCode:    failure,
-				wantNotCode: failure,
-				value:       []interface{}{},
-				testValue:   func() {},
-			},
-		}
+		reporter := newMockReporter(t)
 
-		for _, tc := range cases {
-			t.Run(tc.name, func(t *testing.T) {
-				reporter := newMockReporter(t)
+		NewArray(reporter, []interface{}{}).IsEqual(nil).
+			chain.assert(t, failure)
 
-				value := NewArray(reporter, tc.value)
-
-				value.IsEqual(tc.testValue)
-				value.chain.assert(t, tc.wantCode)
-				value.chain.clear()
-
-				value.NotEqual(tc.testValue)
-				value.chain.assert(t, tc.wantNotCode)
-				value.chain.clear()
-			})
-		}
+		NewArray(reporter, []interface{}{}).NotEqual(func() {}).
+			chain.assert(t, failure)
 	})
 }
 
 func TestArray_IsEqualUnordered(t *testing.T) {
 	t.Run("without duplicates", func(t *testing.T) {
 		cases := []struct {
-			name        string
-			value       []interface{} // or any
-			testValue   interface{}
-			wantCode    chainResult
-			wantNotCode chainResult
+			name      string
+			value     []interface{} // or any
+			testValue interface{}
+			wantCode  chainResult
 		}{
 			{
-				name:        "with 123",
-				value:       []interface{}{123, "foo"},
-				testValue:   []interface{}{123},
-				wantCode:    failure,
-				wantNotCode: success,
+				name:      "with 123",
+				value:     []interface{}{123, "foo"},
+				testValue: []interface{}{123},
+				wantCode:  failure,
 			},
 			{
-				name:        "with foo",
-				value:       []interface{}{123, "foo"},
-				testValue:   []interface{}{"foo"},
-				wantCode:    failure,
-				wantNotCode: success,
+				name:      "with foo",
+				value:     []interface{}{123, "foo"},
+				testValue: []interface{}{"foo"},
+				wantCode:  failure,
 			},
 			{
-				name:        "with (123,foo,foo)",
-				value:       []interface{}{123, "foo"},
-				testValue:   []interface{}{123, "foo", "foo"},
-				wantCode:    failure,
-				wantNotCode: success,
+				name:      "with (123,foo,foo)",
+				value:     []interface{}{123, "foo"},
+				testValue: []interface{}{123, "foo", "foo"},
+				wantCode:  failure,
 			},
 			{
-				name:        "with (123,foo)",
-				value:       []interface{}{123, "foo"},
-				testValue:   []interface{}{123, "foo"},
-				wantCode:    success,
-				wantNotCode: failure,
+				name:      "with (123,foo)",
+				value:     []interface{}{123, "foo"},
+				testValue: []interface{}{123, "foo"},
+				wantCode:  success,
 			},
 			{
-				name:        "with (foo,123)",
-				value:       []interface{}{123, "foo"},
-				testValue:   []interface{}{"foo", 123},
-				wantCode:    success,
-				wantNotCode: failure,
+				name:      "with (foo,123)",
+				value:     []interface{}{123, "foo"},
+				testValue: []interface{}{"foo", 123},
+				wantCode:  success,
 			},
 			{
-				name:        "with (foo,1234)",
-				value:       []interface{}{123, "foo"},
-				testValue:   []interface{}{"foo", 1234},
-				wantCode:    failure,
-				wantNotCode: success,
+				name:      "with (foo,1234)",
+				value:     []interface{}{123, "foo"},
+				testValue: []interface{}{"foo", 1234},
+				wantCode:  failure,
 			},
 		}
 
@@ -767,61 +549,52 @@ func TestArray_IsEqualUnordered(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
 
-				value := NewArray(reporter, tc.value)
+				NewArray(reporter, tc.value).IsEqualUnordered(tc.testValue).
+					chain.assert(t, tc.wantCode)
 
-				value.IsEqualUnordered(tc.testValue)
-				value.chain.assert(t, tc.wantCode)
-				value.chain.clear()
+				NewArray(reporter, tc.value).NotEqualUnordered(tc.testValue).
+					chain.assert(t, !tc.wantCode)
 
-				value.NotEqualUnordered(tc.testValue)
-				value.chain.assert(t, tc.wantNotCode)
-				value.chain.clear()
 			})
 		}
 	})
 
 	t.Run("with duplicates", func(t *testing.T) {
 		cases := []struct {
-			name        string
-			value       []interface{} // or any
-			testValue   interface{}
-			wantCode    chainResult
-			wantNotCode chainResult
+			name      string
+			value     []interface{} // or any
+			testValue interface{}
+			wantCode  chainResult
 		}{
 			{
-				name:        "with (123,foo)",
-				value:       []interface{}{123, "foo", "foo"},
-				testValue:   []interface{}{123, "foo"},
-				wantCode:    failure,
-				wantNotCode: success,
+				name:      "with (123,foo)",
+				value:     []interface{}{123, "foo", "foo"},
+				testValue: []interface{}{123, "foo"},
+				wantCode:  failure,
 			},
 			{
-				name:        "with (123,123,foo)",
-				value:       []interface{}{123, "foo", "foo"},
-				testValue:   []interface{}{123, 123, "foo"},
-				wantCode:    failure,
-				wantNotCode: success,
+				name:      "with (123,123,foo)",
+				value:     []interface{}{123, "foo", "foo"},
+				testValue: []interface{}{123, 123, "foo"},
+				wantCode:  failure,
 			},
 			{
-				name:        "with (123,foo,foo)",
-				value:       []interface{}{123, "foo", "foo"},
-				testValue:   []interface{}{123, "foo", "foo"},
-				wantCode:    success,
-				wantNotCode: failure,
+				name:      "with (123,foo,foo)",
+				value:     []interface{}{123, "foo", "foo"},
+				testValue: []interface{}{123, "foo", "foo"},
+				wantCode:  success,
 			},
 			{
-				name:        "with (foo,123,foo)",
-				value:       []interface{}{123, "foo", "foo"},
-				testValue:   []interface{}{"foo", 123, "foo"},
-				wantCode:    success,
-				wantNotCode: failure,
+				name:      "with (foo,123,foo)",
+				value:     []interface{}{123, "foo", "foo"},
+				testValue: []interface{}{"foo", 123, "foo"},
+				wantCode:  success,
 			},
 			{
-				name:        "with 123",
-				value:       []interface{}{123, "foo", "foo"},
-				testValue:   []interface{}{123},
-				wantCode:    failure,
-				wantNotCode: success,
+				name:      "with 123",
+				value:     []interface{}{123, "foo", "foo"},
+				testValue: []interface{}{123},
+				wantCode:  failure,
 			},
 		}
 
@@ -829,15 +602,11 @@ func TestArray_IsEqualUnordered(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
 
-				value := NewArray(reporter, tc.value)
+				NewArray(reporter, tc.value).IsEqualUnordered(tc.testValue).
+					chain.assert(t, tc.wantCode)
 
-				value.IsEqualUnordered(tc.testValue)
-				value.chain.assert(t, tc.wantCode)
-				value.chain.clear()
-
-				value.NotEqualUnordered(tc.testValue)
-				value.chain.assert(t, tc.wantNotCode)
-				value.chain.clear()
+				NewArray(reporter, tc.value).NotEqualUnordered(tc.testValue).
+					chain.assert(t, !tc.wantCode)
 			})
 		}
 	})
@@ -848,154 +617,98 @@ func TestArray_IsEqualUnordered(t *testing.T) {
 			myInt   int
 		)
 
-		cases := []struct {
-			name        string
-			value       []interface{} // or any
-			testValue   interface{}
-			wantCode    chainResult
-			wantNotCode chainResult
-		}{
-			{
-				name:        "with (123,456,foo)",
-				value:       []interface{}{123, 456, "foo"},
-				testValue:   myArray{myInt(456), 123.0, "foo"},
-				wantCode:    success,
-				wantNotCode: failure,
-			},
-		}
+		reporter := newMockReporter(t)
 
-		for _, tc := range cases {
-			t.Run(tc.name, func(t *testing.T) {
-				reporter := newMockReporter(t)
+		NewArray(reporter, []interface{}{123, 456, "foo"}).IsEqualUnordered(myArray{myInt(456), 123.0, "foo"}).
+			chain.assert(t, success)
 
-				value := NewArray(reporter, tc.value)
-
-				assert.Equal(t, []interface{}{123.0, 456.0, "foo"}, value.Raw())
-
-				value.IsEqualUnordered(tc.testValue)
-				value.chain.assert(t, success)
-				value.chain.clear()
-
-				value.NotEqualUnordered(tc.testValue)
-				value.chain.assert(t, failure)
-				value.chain.clear()
-			})
-		}
+		NewArray(reporter, []interface{}{123, 456, "foo"}).NotEqualUnordered(myArray{myInt(456), 123.0, "foo"}).
+			chain.assert(t, failure)
 	})
+
 	t.Run("invalid argument", func(t *testing.T) {
-		cases := []struct {
-			name        string
-			value       []interface{} // or any
-			testValue   interface{}
-			wantCode    chainResult
-			wantNotCode chainResult
-		}{
-			{
-				name:        "with nil",
-				value:       []interface{}{},
-				testValue:   nil,
-				wantCode:    failure,
-				wantNotCode: failure,
-			},
-			{
-				name:        "with func",
-				value:       []interface{}{},
-				testValue:   func() {},
-				wantCode:    failure,
-				wantNotCode: failure,
-			},
-		}
+		reporter := newMockReporter(t)
 
-		for _, tc := range cases {
-			t.Run(tc.name, func(t *testing.T) {
-				reporter := newMockReporter(t)
+		NewArray(reporter, []interface{}{}).IsEqualUnordered(nil).
+			chain.assert(t, failure)
 
-				value := NewArray(reporter, tc.value)
+		NewArray(reporter, []interface{}{}).IsEqualUnordered(func() {}).
+			chain.assert(t, failure)
 
-				value.IsEqualUnordered(tc.testValue)
-				value.chain.assert(t, tc.wantCode)
-				value.chain.clear()
-
-				value.NotEqualUnordered(tc.testValue)
-				value.chain.assert(t, tc.wantNotCode)
-				value.chain.clear()
-			})
-
-		}
 	})
 }
 
 func TestArray_InList(t *testing.T) {
 	t.Run("basic", func(t *testing.T) {
 		cases := []struct {
-			name        string
-			typ         []interface{}
-			testType    []interface{}
-			wantCode    chainResult
-			wantNotCode chainResult
+			name     string
+			typ      []interface{}
+			testType []interface{}
+			wantCode chainResult
 		}{
 			{
-				name:        "with (foo,bar)",
-				typ:         []interface{}{"foo", "bar"},
-				testType:    []interface{}{"foo", "bar"},
-				wantCode:    failure,
-				wantNotCode: failure,
+				name:     "with foo and bar",
+				typ:      []interface{}{"foo", "bar"},
+				testType: []interface{}{"foo", "bar"},
+				wantCode: failure,
 			},
 			{
-				name:        "with empty list",
-				typ:         []interface{}{"foo", "bar"},
-				testType:    []interface{}{},
-				wantCode:    failure,
-				wantNotCode: success,
+				name:     "with empty list",
+				typ:      []interface{}{"foo", "bar"},
+				testType: []interface{}{},
+				wantCode: failure,
 			},
 			{
-				name:        "with (bar,foo)",
-				typ:         []interface{}{"foo", "bar"},
-				testType:    []interface{}{[]interface{}{"bar", "foo"}},
-				wantCode:    failure,
-				wantNotCode: success,
+				name:     "with (bar,foo)",
+				typ:      []interface{}{"foo", "bar"},
+				testType: []interface{}{[]interface{}{"bar", "foo"}},
+				wantCode: failure,
 			},
 			{
-				name:        "with (bar,foo) and (foo,bar)",
-				typ:         []interface{}{"foo", "bar"},
-				testType:    []interface{}{[]interface{}{"bar", "foo"}, []interface{}{"foo", "bar"}},
-				wantCode:    success,
-				wantNotCode: failure,
+				name:     "with (bar,foo) and (foo,bar)",
+				typ:      []interface{}{"foo", "bar"},
+				testType: []interface{}{[]interface{}{"bar", "foo"}, []interface{}{"foo", "bar"}},
+				wantCode: success,
 			},
 			{
-				name:        "with (bar,foo) and (FOO,BAR)",
-				typ:         []interface{}{"foo", "bar"},
-				testType:    []interface{}{[]interface{}{"bar", "foo"}, []interface{}{"FOO", "BAR"}},
-				wantCode:    failure,
-				wantNotCode: success,
+				name:     "with (bar,foo) and (FOO,BAR)",
+				typ:      []interface{}{"foo", "bar"},
+				testType: []interface{}{[]interface{}{"bar", "foo"}, []interface{}{"FOO", "BAR"}},
+				wantCode: failure,
 			},
 		}
 
-		for _, tc := range cases {
+		for i, tc := range cases {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
 
-				value := NewArray(reporter, tc.typ)
+				// In first case, we want failure for both cases since both InList and
+				// NotInList functions reports failure if any parameter is not slice.
+				if i == 0 {
+					NewArray(reporter, tc.typ).InList(tc.testType...).
+						chain.assert(t, tc.wantCode)
 
-				if len(tc.testType) == 0 {
-					value.InList(tc.testType)
-					value.chain.assert(t, tc.wantCode)
-					value.chain.clear()
-
-					value.NotInList(tc.testType)
-					value.chain.assert(t, tc.wantNotCode)
-					value.chain.clear()
+					NewArray(reporter, tc.typ).NotInList(tc.testType...).
+						chain.assert(t, tc.wantCode)
 
 					return
 				}
-				value.InList(tc.testType...)
-				value.chain.assert(t, tc.wantCode)
-				value.chain.clear()
 
-				value.NotInList(tc.testType...)
-				value.chain.assert(t, tc.wantNotCode)
-				value.chain.clear()
+				// if testType slice is nil, we don't use '...'.
+				if len(tc.testType) == 0 {
+					NewArray(reporter, tc.typ).InList(tc.testType).
+						chain.assert(t, tc.wantCode)
 
+					NewArray(reporter, tc.typ).NotInList(tc.testType).
+						chain.assert(t, !tc.wantCode)
+
+					return
+				}
+				NewArray(reporter, tc.typ).InList(tc.testType...).
+					chain.assert(t, tc.wantCode)
+
+				NewArray(reporter, tc.typ).NotInList(tc.testType...).
+					chain.assert(t, !tc.wantCode)
 			})
 		}
 	})
@@ -1012,12 +725,12 @@ func TestArray_InList(t *testing.T) {
 			[]interface{}{789, 567},
 			map[string]interface{}{"a": "b"},
 		}
+
 		cases := []struct {
-			name        string
-			typ         []interface{}
-			testType    []interface{}
-			wantCode    chainResult
-			wantNotCode chainResult
+			name     string
+			typ      []interface{}
+			testType []interface{}
+			wantCode chainResult
 		}{
 			{
 				name: "test 1",
@@ -1031,22 +744,19 @@ func TestArray_InList(t *testing.T) {
 					},
 					myMap{"a": "b"},
 				},
-				wantCode:    failure,
-				wantNotCode: failure,
+				wantCode: success,
 			},
 			{
-				name:        "test 2",
-				typ:         value,
-				testType:    myArray{123.0, 456.0, myArray{789.0, 567.0}, myMap{"a": "b"}},
-				wantCode:    success,
-				wantNotCode: failure,
+				name:     "test 2",
+				typ:      value,
+				testType: myArray{123.0, 456.0, myArray{789.0, 567.0}, myMap{"a": "b"}},
+				wantCode: success,
 			},
 			{
-				name:        "test 3",
-				typ:         value,
-				testType:    myArray{myInt(123), 456.0, myArray{myInt(789), 567.0}, myMap{"a": "b"}},
-				wantCode:    success,
-				wantNotCode: failure,
+				name:     "test 3",
+				typ:      value,
+				testType: myArray{myInt(123), 456.0, myArray{myInt(789), 567.0}, myMap{"a": "b"}},
+				wantCode: success,
 			},
 		}
 
@@ -1054,89 +764,57 @@ func TestArray_InList(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
 
-				value := NewArray(reporter, tc.typ)
+				NewArray(reporter, tc.typ).InList(tc.testType).
+					chain.assert(t, tc.wantCode)
 
-				value.InList(tc.testType...)
-				value.chain.assert(t, failure)
-				value.chain.clear()
+				NewArray(reporter, tc.typ).NotInList(tc.testType).
+					chain.assert(t, !tc.wantCode)
 
-				value.NotInList(tc.testType...)
-				value.chain.assert(t, failure)
-				value.chain.clear()
 			})
 		}
 	})
 
 	t.Run("not array", func(t *testing.T) {
-		cases := []struct {
-			name        string
-			typ         []interface{}
-			testType    []interface{}
-			wantCode    chainResult
-			wantNotCode chainResult
-		}{
-			{
-				name:        "test 1",
-				typ:         []interface{}{"foo", "bar"},
-				testType:    []interface{}{[]interface{}{"bar", "foo"}, "NOT ARRAY"},
-				wantCode:    failure,
-				wantNotCode: failure,
-			},
-			{
-				name:        "test 2",
-				typ:         []interface{}{"foo", "bar"},
-				testType:    []interface{}{[]interface{}{"foo", "bar"}, "NOT ARRAY"},
-				wantCode:    failure,
-				wantNotCode: failure,
-			},
-		}
+		reporter := newMockReporter(t)
 
-		for _, tc := range cases {
-			t.Run(tc.name, func(t *testing.T) {
-				reporter := newMockReporter(t)
+		NewArray(reporter, []interface{}{"foo", "bar"}).InList([]interface{}{[]interface{}{"bar", "foo"}, "NOT ARRAY"}).
+			chain.assert(t, failure)
 
-				value := NewArray(reporter, tc.typ)
+		NewArray(reporter, []interface{}{"foo", "bar"}).NotInList([]interface{}{[]interface{}{"bar", "foo"}, "NOT ARRAY"}).
+			chain.assert(t, success)
 
-				value.InList(tc.testType...)
-				value.chain.assert(t, tc.wantCode)
-				value.chain.clear()
+		NewArray(reporter, []interface{}{"foo", "bar"}).InList([]interface{}{[]interface{}{"foo", "bar"}, "NOT ARRAY"}).
+			chain.assert(t, failure)
 
-				value.NotInList(tc.testType...)
-				value.chain.assert(t, tc.wantNotCode)
-				value.chain.clear()
-			})
+		NewArray(reporter, []interface{}{"foo", "bar"}).NotInList([]interface{}{[]interface{}{"foo", "bar"}, "NOT ARRAY"}).
+			chain.assert(t, success)
 
-		}
 	})
 
 	t.Run("invalid argument", func(t *testing.T) {
 		cases := []struct {
-			name        string
-			typ         []interface{}
-			testType    interface{}
-			wantCode    chainResult
-			wantNotCode chainResult
+			name     string
+			typ      []interface{}
+			testType interface{}
+			wantCode chainResult
 		}{
 			{
-				name:        "with no parameter",
-				typ:         []interface{}{},
-				testType:    nil,
-				wantCode:    failure,
-				wantNotCode: failure,
+				name:     "with no parameter",
+				typ:      []interface{}{},
+				testType: nil,
+				wantCode: failure,
 			},
 			{
-				name:        "with nil",
-				typ:         []interface{}{},
-				testType:    nil,
-				wantCode:    failure,
-				wantNotCode: failure,
+				name:     "with nil",
+				typ:      []interface{}{},
+				testType: nil,
+				wantCode: failure,
 			},
 			{
-				name:        "with func",
-				typ:         []interface{}{},
-				testType:    func() {},
-				wantCode:    failure,
-				wantNotCode: failure,
+				name:     "with func",
+				typ:      []interface{}{},
+				testType: func() {},
+				wantCode: failure,
 			},
 		}
 
@@ -1144,28 +822,22 @@ func TestArray_InList(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
 
-				value := NewArray(reporter, tc.typ)
-
 				if i == 0 {
 					//For the first case, we will call InList without any parameter including nil.
-					value.InList()
-					value.chain.assert(t, tc.wantCode)
-					value.chain.clear()
+					NewArray(reporter, tc.typ).InList().
+						chain.assert(t, tc.wantCode)
 
-					value.NotInList()
-					value.chain.assert(t, tc.wantNotCode)
-					value.chain.clear()
+					NewArray(reporter, tc.typ).NotInList().
+						chain.assert(t, tc.wantCode)
 
 					return
 				}
 
-				value.InList(tc.testType)
-				value.chain.assert(t, tc.wantCode)
-				value.chain.clear()
+				NewArray(reporter, tc.typ).InList(tc.testType).
+					chain.assert(t, tc.wantCode)
 
-				value.NotInList(tc.testType)
-				value.chain.assert(t, tc.wantNotCode)
-				value.chain.clear()
+				NewArray(reporter, tc.typ).NotInList(tc.testType).
+					chain.assert(t, tc.wantCode)
 			})
 		}
 	})
