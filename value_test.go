@@ -174,8 +174,8 @@ func TestValue_Getters(t *testing.T) {
 			wantString:  failure,
 			wantNumber:  failure,
 			wantBoolean: failure,
-			wantNotNull: failure,
 			wantNull:    success,
+			wantNotNull: failure,
 		},
 		{
 			name:        "indirect null",
@@ -185,8 +185,8 @@ func TestValue_Getters(t *testing.T) {
 			wantString:  failure,
 			wantNumber:  failure,
 			wantBoolean: failure,
-			wantNotNull: failure,
 			wantNull:    success,
+			wantNotNull: failure,
 		},
 		{
 			name:        "bad",
@@ -196,8 +196,8 @@ func TestValue_Getters(t *testing.T) {
 			wantString:  failure,
 			wantNumber:  failure,
 			wantBoolean: failure,
-			wantNotNull: failure,
 			wantNull:    failure,
+			wantNotNull: failure,
 		},
 		{
 			name:        "object",
@@ -207,8 +207,8 @@ func TestValue_Getters(t *testing.T) {
 			wantString:  failure,
 			wantNumber:  failure,
 			wantBoolean: failure,
-			wantNotNull: success,
 			wantNull:    failure,
+			wantNotNull: success,
 		},
 		{
 			name:        "array",
@@ -218,8 +218,8 @@ func TestValue_Getters(t *testing.T) {
 			wantString:  failure,
 			wantNumber:  failure,
 			wantBoolean: failure,
-			wantNotNull: success,
 			wantNull:    failure,
+			wantNotNull: success,
 		},
 		{
 			name:        "string",
@@ -229,8 +229,8 @@ func TestValue_Getters(t *testing.T) {
 			wantString:  success,
 			wantNumber:  failure,
 			wantBoolean: failure,
-			wantNotNull: success,
 			wantNull:    failure,
+			wantNotNull: success,
 		},
 		{
 			name:        "number",
