@@ -118,7 +118,6 @@ func TestE2EChunked_ResponseReader(t *testing.T) {
 		},
 	})
 	reader := e.GET("/test").Expect().Reader()
-	defer reader.Close()
 
 	rb := make([]byte, 1000000)
 	l, err := reader.Read(rb)
