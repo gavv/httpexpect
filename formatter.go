@@ -1006,6 +1006,10 @@ var defaultTemplateFuncs = template.FuncMap{
 var defaultSuccessTemplate = `[OK] {{ join .LineWidth .AssertPath }}`
 
 var defaultFailureTemplate = `
+{{- range $n, $call := .Stacktrace }}
+{{ $call | indent }}
+{{- end -}}
+
 {{- range $n, $err := .Errors }}
 {{ if eq $n 0 -}}
 {{ $err | wrap $.LineWidth | color $.EnableColors "Red" }}
@@ -1063,10 +1067,5 @@ allowed delta:
 
 diff:
 {{ .Diff | colordiff .EnableColors | indent }}
-{{- end -}}
-
-stacktrace:
-{{- range $n, $call := .Stacktrace }}
-{{ $call | indent }}
 {{- end -}}
 `

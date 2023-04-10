@@ -723,6 +723,8 @@ func TestChain_Reporting(t *testing.T) {
 	assert.True(t, chain.failed())   // reported to parent
 	assert.NotNil(t, handler.ctx)    // reported to handler
 	assert.NotNil(t, handler.failure)
+
+	failure.Stacktrace = handler.failure.Stacktrace
 	assert.Equal(t, failure, *handler.failure)
 }
 
