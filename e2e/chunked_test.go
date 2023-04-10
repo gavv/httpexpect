@@ -119,11 +119,13 @@ func TestE2EChunked_ResponseReader(t *testing.T) {
 	})
 	reader := e.GET("/test").Expect().Reader()
 	defer reader.Close()
-	assert.NotNil(t, reader)
 
 	rb := make([]byte, 1000000)
 	l, err := reader.Read(rb)
 	assert.NoError(t, err)
 	assert.Equal(t, 1000000, l)
 	assert.Equal(t, chars, string(rb[0:26]))
+
+	err = reader.Close()
+	assert.NoError(t, err)
 }

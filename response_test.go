@@ -1704,23 +1704,31 @@ func TestResponse_Reader(t *testing.T) {
 		resp := NewResponse(reporter, httpResp)
 
 		reader := resp.Reader()
-		assert.NotNil(t, reader)
 		assert.Equal(t, contentHijacked, resp.contentState)
 		assert.Equal(t, "", resp.contentMethod)
 		resp.chain.assert(t, success)
+
+		err := reader.Close()
+		assert.NoError(t, err)
 	})
-	t.Run("incorrect body type", func(t *testing.T) {
+	t.Run("rewind disabled", func(t *testing.T) {
 		reporter := newMockReporter(t)
+		bw := newBodyWrapper(newMockBody("test"), nil)
 		httpResp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       newMockBody("test body"),
+			Header: http.Header(map[string][]string{
+				"Content-Type": {"text/plain; charset=utf-8"},
+			}),
+			Body: bw,
 		}
 		resp := NewResponse(reporter, httpResp)
-		resp.httpResp.Body = nil
 
 		reader := resp.Reader()
-		assert.Nil(t, reader)
-		resp.chain.assert(t, failure)
+		resp.chain.assert(t, success)
+		assert.True(t, bw.isRewindDisabled)
+
+		err := reader.Close()
+		assert.NoError(t, err)
 	})
 	t.Run("Body()", func(t *testing.T) {
 		reporter := newMockReporter(t)
@@ -1738,8 +1746,10 @@ func TestResponse_Reader(t *testing.T) {
 		assert.Equal(t, resp.contentMethod, "Body()")
 
 		reader := resp.Reader()
-		assert.Nil(t, reader)
 		resp.chain.assert(t, failure)
+
+		err := reader.Close()
+		assert.Error(t, err)
 	})
 	t.Run("Text()", func(t *testing.T) {
 		reporter := newMockReporter(t)
@@ -1757,8 +1767,10 @@ func TestResponse_Reader(t *testing.T) {
 		assert.Equal(t, resp.contentMethod, "Text()")
 
 		reader := resp.Reader()
-		assert.Nil(t, reader)
 		resp.chain.assert(t, failure)
+
+		err := reader.Close()
+		assert.Error(t, err)
 	})
 	t.Run("Form()", func(t *testing.T) {
 		reporter := newMockReporter(t)
@@ -1778,8 +1790,10 @@ func TestResponse_Reader(t *testing.T) {
 		})
 
 		reader := resp.Reader()
-		assert.Nil(t, reader)
 		resp.chain.assert(t, failure)
+
+		err := reader.Close()
+		assert.Error(t, err)
 	})
 	t.Run("JSON()", func(t *testing.T) {
 		reporter := newMockReporter(t)
@@ -1799,8 +1813,10 @@ func TestResponse_Reader(t *testing.T) {
 		})
 
 		reader := resp.Reader()
-		assert.Nil(t, reader)
 		resp.chain.assert(t, failure)
+
+		err := reader.Close()
+		assert.Error(t, err)
 	})
 	t.Run("JSONP()", func(t *testing.T) {
 		reporter := newMockReporter(t)
@@ -1817,7 +1833,9 @@ func TestResponse_Reader(t *testing.T) {
 		value.IsEqual(map[string]string{"test_key": "test_value"})
 
 		reader := resp.Reader()
-		assert.Nil(t, reader)
 		resp.chain.assert(t, failure)
+
+		err := reader.Close()
+		assert.Error(t, err)
 	})
 }
