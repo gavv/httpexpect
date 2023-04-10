@@ -1,13 +1,36 @@
-package httpexpect
+package e2e
 
 import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
+	"github.com/gavv/httpexpect/v2"
 	"github.com/stretchr/testify/assert"
 )
+
+type mockPrinter struct {
+	reqBody  []byte
+	respBody []byte
+	rtt      time.Duration
+}
+
+func (p *mockPrinter) Request(req *http.Request) {
+	if req.Body != nil {
+		p.reqBody, _ = ioutil.ReadAll(req.Body)
+		req.Body.Close()
+	}
+}
+
+func (p *mockPrinter) Response(resp *http.Response, rtt time.Duration) {
+	if resp.Body != nil {
+		p.respBody, _ = ioutil.ReadAll(resp.Body)
+		resp.Body.Close()
+	}
+	p.rtt = rtt
+}
 
 func createPrinterHandler() http.Handler {
 	mux := http.NewServeMux()
@@ -32,10 +55,10 @@ func TestE2EPrinter_Single(t *testing.T) {
 
 	p := &mockPrinter{}
 
-	e := WithConfig(Config{
+	e := httpexpect.WithConfig(httpexpect.Config{
 		BaseURL:  server.URL,
-		Reporter: NewAssertReporter(t),
-		Printers: []Printer{
+		Reporter: httpexpect.NewAssertReporter(t),
+		Printers: []httpexpect.Printer{
 			p,
 		},
 	})
@@ -59,10 +82,10 @@ func TestE2EPrinter_Multiple(t *testing.T) {
 	p1 := &mockPrinter{}
 	p2 := &mockPrinter{}
 
-	e := WithConfig(Config{
+	e := httpexpect.WithConfig(httpexpect.Config{
 		BaseURL:  server.URL,
-		Reporter: NewAssertReporter(t),
-		Printers: []Printer{
+		Reporter: httpexpect.NewAssertReporter(t),
+		Printers: []httpexpect.Printer{
 			p1,
 			p2,
 		},
