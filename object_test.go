@@ -467,16 +467,20 @@ func TestObject_IsEqual(t *testing.T) {
 			myInt int
 		)
 
-		NewObject(reporter, map[string]interface{}{"foo": 123}).IsEqual(map[string]interface{}{"foo": 123}).
+		NewObject(reporter, map[string]interface{}{"foo": 123}).
+			IsEqual(map[string]interface{}{"foo": 123}).
 			chain.assert(t, success)
 
-		NewObject(reporter, map[string]interface{}{"foo": 123}).NotEqual(map[string]interface{}{"foo": 123}).
+		NewObject(reporter, map[string]interface{}{"foo": 123}).
+			NotEqual(map[string]interface{}{"foo": 123}).
 			chain.assert(t, failure)
 
-		NewObject(reporter, map[string]interface{}{"foo": 123}).IsEqual(myMap{"foo": myInt(123)}).
+		NewObject(reporter, map[string]interface{}{"foo": 123}).
+			IsEqual(myMap{"foo": myInt(123)}).
 			chain.assert(t, success)
 
-		NewObject(reporter, map[string]interface{}{"foo": 123}).NotEqual(myMap{"foo": myInt(123)}).
+		NewObject(reporter, map[string]interface{}{"foo": 123}).
+			NotEqual(myMap{"foo": myInt(123)}).
 			chain.assert(t, failure)
 	})
 }
@@ -490,21 +494,24 @@ func TestObject_InList(t *testing.T) {
 			wantEqual chainResult
 		}{
 			{
-				name:      "with (FOO: 123.0, BAR: 456.0)",
-				value:     map[string]interface{}{"foo": 123.0},
-				testValue: []interface{}{map[string]interface{}{"FOO": 123.0}, map[string]interface{}{"BAR": 456.0}},
+				name:  "with (FOO: 123.0, BAR: 456.0)",
+				value: map[string]interface{}{"foo": 123.0},
+				testValue: []interface{}{map[string]interface{}{"FOO": 123.0},
+					map[string]interface{}{"BAR": 456.0}},
 				wantEqual: failure,
 			},
 			{
-				name:      "with (foo: 456.0, bar: 123.0)",
-				value:     map[string]interface{}{"foo": 123.0},
-				testValue: []interface{}{map[string]interface{}{"foo": 456.0}, map[string]interface{}{"bar": 123.0}},
+				name:  "with (foo: 456.0, bar: 123.0)",
+				value: map[string]interface{}{"foo": 123.0},
+				testValue: []interface{}{map[string]interface{}{"foo": 456.0},
+					map[string]interface{}{"bar": 123.0}},
 				wantEqual: failure,
 			},
 			{
-				name:      "with (foo: 123.0, bar: 456.0)",
-				value:     map[string]interface{}{"foo": 123.0},
-				testValue: []interface{}{map[string]interface{}{"foo": 123.0}, map[string]interface{}{"bar": 456.0}},
+				name:  "with (foo: 123.0, bar: 456.0)",
+				value: map[string]interface{}{"foo": 123.0},
+				testValue: []interface{}{map[string]interface{}{"foo": 123.0},
+					map[string]interface{}{"bar": 456.0}},
 				wantEqual: success,
 			},
 			{
@@ -543,16 +550,20 @@ func TestObject_InList(t *testing.T) {
 	t.Run("not object", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
-		NewObject(reporter, map[string]interface{}{"foo": 123.0}).InList(map[string]interface{}{"bar": 123.0}, "NOT OBJECT").
+		NewObject(reporter, map[string]interface{}{"foo": 123.0}).
+			InList(map[string]interface{}{"bar": 123.0}, "NOT OBJECT").
 			chain.assert(t, failure)
 
-		NewObject(reporter, map[string]interface{}{"foo": 123.0}).NotInList(map[string]interface{}{"bar": 123.0}, "NOT OBJECT").
+		NewObject(reporter, map[string]interface{}{"foo": 123.0}).
+			NotInList(map[string]interface{}{"bar": 123.0}, "NOT OBJECT").
 			chain.assert(t, failure)
 
-		NewObject(reporter, map[string]interface{}{"foo": 123.0}).InList(map[string]interface{}{"foo": 123.0}, "NOT OBJECT").
+		NewObject(reporter, map[string]interface{}{"foo": 123.0}).
+			InList(map[string]interface{}{"foo": 123.0}, "NOT OBJECT").
 			chain.assert(t, failure)
 
-		NewObject(reporter, map[string]interface{}{"foo": 123.0}).NotInList(map[string]interface{}{"foo": 123.0}, "NOT OBJECT").
+		NewObject(reporter, map[string]interface{}{"foo": 123.0}).
+			NotInList(map[string]interface{}{"foo": 123.0}, "NOT OBJECT").
 			chain.assert(t, failure)
 	})
 
@@ -612,16 +623,20 @@ func TestObject_InList(t *testing.T) {
 		)
 		reporter := newMockReporter(t)
 
-		NewObject(reporter, map[string]interface{}{"foo": 123, "bar": 456}).InList(myMap{"foo": 123.0, "bar": 456.0}).
+		NewObject(reporter, map[string]interface{}{"foo": 123, "bar": 456}).
+			InList(myMap{"foo": 123.0, "bar": 456.0}).
 			chain.assert(t, success)
 
-		NewObject(reporter, map[string]interface{}{"foo": 123, "bar": 456}).NotInList(myMap{"foo": 123.0, "bar": 456.0}).
+		NewObject(reporter, map[string]interface{}{"foo": 123, "bar": 456}).
+			NotInList(myMap{"foo": 123.0, "bar": 456.0}).
 			chain.assert(t, failure)
 
-		NewObject(reporter, map[string]interface{}{"foo": 123, "bar": 456}).InList(myMap{"foo": "123", "bar": myInt(456.0)}).
+		NewObject(reporter, map[string]interface{}{"foo": 123, "bar": 456}).
+			InList(myMap{"foo": "123", "bar": myInt(456.0)}).
 			chain.assert(t, failure)
 
-		NewObject(reporter, map[string]interface{}{"foo": 123, "bar": 456}).NotInList(myMap{"foo": "123", "bar": myInt(456.0)}).
+		NewObject(reporter, map[string]interface{}{"foo": 123, "bar": 456}).
+			NotInList(myMap{"foo": "123", "bar": myInt(456.0)}).
 			chain.assert(t, success)
 	})
 }
