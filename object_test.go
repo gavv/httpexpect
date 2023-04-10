@@ -372,13 +372,25 @@ func TestObject_IsEqual(t *testing.T) {
 			chain.assert(t, success)
 	})
 
-	t.Run("not empty", func(t *testing.T) {
+	t.Run("basic", func(t *testing.T) {
 		cases := []struct {
 			name      string
 			value     map[string]interface{}
 			testValue map[string]interface{}
 			wantEqual chainResult
 		}{
+			{
+				name:      "compare empty object with empty object",
+				value:     map[string]interface{}{},
+				testValue: map[string]interface{}{},
+				wantEqual: success,
+			},
+			{
+				name:      "compare empty object with non-empty object",
+				value:     map[string]interface{}{"": nil},
+				testValue: map[string]interface{}{},
+				wantEqual: failure,
+			},
 			{
 				name:      "with empty object",
 				value:     map[string]interface{}{"foo": 123.0},
@@ -494,24 +506,36 @@ func TestObject_InList(t *testing.T) {
 			wantEqual chainResult
 		}{
 			{
+				name:      "with empty object",
+				value:     map[string]interface{}{},
+				testValue: []interface{}{map[string]interface{}{}},
+				wantEqual: success,
+			},
+			{
 				name:  "with (FOO: 123.0, BAR: 456.0)",
 				value: map[string]interface{}{"foo": 123.0},
-				testValue: []interface{}{map[string]interface{}{"FOO": 123.0},
-					map[string]interface{}{"BAR": 456.0}},
+				testValue: []interface{}{
+					map[string]interface{}{"FOO": 123.0},
+					map[string]interface{}{"BAR": 456.0},
+				},
 				wantEqual: failure,
 			},
 			{
 				name:  "with (foo: 456.0, bar: 123.0)",
 				value: map[string]interface{}{"foo": 123.0},
-				testValue: []interface{}{map[string]interface{}{"foo": 456.0},
-					map[string]interface{}{"bar": 123.0}},
+				testValue: []interface{}{
+					map[string]interface{}{"foo": 456.0},
+					map[string]interface{}{"bar": 123.0},
+				},
 				wantEqual: failure,
 			},
 			{
 				name:  "with (foo: 123.0, bar: 456.0)",
 				value: map[string]interface{}{"foo": 123.0},
-				testValue: []interface{}{map[string]interface{}{"foo": 123.0},
-					map[string]interface{}{"bar": 456.0}},
+				testValue: []interface{}{
+					map[string]interface{}{"foo": 123.0},
+					map[string]interface{}{"bar": 456.0},
+				},
 				wantEqual: success,
 			},
 			{
@@ -537,81 +561,55 @@ func TestObject_InList(t *testing.T) {
 		}
 	})
 
-	t.Run("empty", func(t *testing.T) {
-		reporter := newMockReporter(t)
-
-		NewObject(reporter, map[string]interface{}{}).InList(map[string]interface{}{}).
-			chain.assert(t, success)
-
-		NewObject(reporter, map[string]interface{}{}).NotInList(map[string]interface{}{}).
-			chain.assert(t, failure)
-	})
-
-	t.Run("not object", func(t *testing.T) {
-		reporter := newMockReporter(t)
-
-		NewObject(reporter, map[string]interface{}{"foo": 123.0}).
-			InList(map[string]interface{}{"bar": 123.0}, "NOT OBJECT").
-			chain.assert(t, failure)
-
-		NewObject(reporter, map[string]interface{}{"foo": 123.0}).
-			NotInList(map[string]interface{}{"bar": 123.0}, "NOT OBJECT").
-			chain.assert(t, failure)
-
-		NewObject(reporter, map[string]interface{}{"foo": 123.0}).
-			InList(map[string]interface{}{"foo": 123.0}, "NOT OBJECT").
-			chain.assert(t, failure)
-
-		NewObject(reporter, map[string]interface{}{"foo": 123.0}).
-			NotInList(map[string]interface{}{"foo": 123.0}, "NOT OBJECT").
-			chain.assert(t, failure)
-	})
-
 	t.Run("invalid argument", func(t *testing.T) {
 		cases := []struct {
-			name      string
-			value     map[string]interface{}
-			testValue interface{}
-			wantEqual chainResult
+			name     string
+			value    map[string]interface{}
+			testList []interface{}
 		}{
 			{
-				name:      "with no parameter",
-				value:     map[string]interface{}{},
-				testValue: nil,
-				wantEqual: failure,
+				name:     "empty list",
+				value:    map[string]interface{}{},
+				testList: []interface{}{},
 			},
 			{
-				name:      "with nil",
-				value:     map[string]interface{}{},
-				testValue: nil,
-				wantEqual: failure,
+				name:     "nil list",
+				value:    map[string]interface{}{},
+				testList: nil,
 			},
 			{
-				name:      "with func",
-				value:     map[string]interface{}{},
-				testValue: func() {},
-				wantEqual: failure,
+				name:     "invalid type",
+				value:    map[string]interface{}{},
+				testList: []interface{}{func() {}},
+			},
+			{
+				name:  "one inequal object, another not object",
+				value: map[string]interface{}{"foo": 123.0},
+				testList: []interface{}{
+					map[string]interface{}{"bar": 123.0},
+					"NOT OBJECT",
+				},
+			},
+			{
+				name:  "one equal object, another not object",
+				value: map[string]interface{}{"foo": 123.0},
+				testList: []interface{}{
+					map[string]interface{}{"foo": 123.0},
+					"NOT OBJECT",
+				},
 			},
 		}
 
-		for i, tc := range cases {
+		for _, tc := range cases {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
-				if i == 0 {
-					// For first case, we want to call InList without any parameter.
-					NewObject(reporter, tc.value).InList().
-						chain.assert(t, tc.wantEqual)
 
-					NewObject(reporter, tc.value).NotInList().
-						chain.assert(t, tc.wantEqual)
+				NewObject(reporter, tc.value).InList(tc.testList...).
+					chain.assert(t, failure)
 
-					return
-				}
-				NewObject(reporter, tc.value).InList(tc.testValue).
-					chain.assert(t, tc.wantEqual)
+				NewObject(reporter, tc.value).NotInList(tc.testList...).
+					chain.assert(t, failure)
 
-				NewObject(reporter, tc.value).NotInList(tc.testValue).
-					chain.assert(t, tc.wantEqual)
 			})
 		}
 	})
