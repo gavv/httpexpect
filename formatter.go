@@ -566,15 +566,44 @@ func (f *DefaultFormatter) formatValue(value interface{}) string {
 				return ss
 			}
 		}
-		if b, err := json.MarshalIndent(value, "", defaultIndent); err == nil {
-			return string(b)
+
+		if arr, ok := value.([]interface{}); ok {
+			for k, v := range arr {
+				arr[k] = f.formatValue(v)
+			}
+			if b, err := json.MarshalIndent(arr, "", defaultIndent); err == nil {
+				return string(b)
+			}
+		} else if m, ok := value.(map[interface{}]interface{}); ok {
+			for k, v := range m {
+				m[k] = f.formatValue(v)
+			}
+			if b, err := json.MarshalIndent(m, "", defaultIndent); err == nil {
+				return string(b)
+			}
+		} else {
+			if b, err := json.MarshalIndent(value, "", defaultIndent); err == nil {
+				return string(b)
+			}
 		}
 	}
 
 	sq := litter.Options{
 		Separator: defaultIndent,
 	}
-	return sq.Sdump(value)
+	if arr, ok := value.([]interface{}); ok {
+		for k, v := range arr {
+			arr[k] = f.formatValue(v)
+		}
+		return sq.Sdump(value)
+	} else if m, ok := value.(map[interface{}]interface{}); ok {
+		for k, v := range m {
+			m[k] = f.formatValue(v)
+		}
+		return sq.Sdump(value)
+	} else {
+		return sq.Sdump(value)
+	}
 }
 
 func (f *DefaultFormatter) formatFloatValue(value float64, bits int) string {
