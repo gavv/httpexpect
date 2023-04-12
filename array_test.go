@@ -237,7 +237,6 @@ func TestArray_Path(t *testing.T) {
 
 		assert.Equal(t, data, value.Path("$").Raw())
 		value.chain.assert(t, success)
-		value.chain.clear()
 	})
 
 	t.Run("not empty", func(t *testing.T) {
@@ -249,7 +248,6 @@ func TestArray_Path(t *testing.T) {
 
 		assert.Equal(t, data, value.Path("$").Raw())
 		value.chain.assert(t, success)
-		value.chain.clear()
 	})
 }
 

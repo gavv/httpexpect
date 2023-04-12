@@ -275,7 +275,6 @@ func TestObject_Path(t *testing.T) {
 
 	assert.Equal(t, m, value.Path("$").Raw())
 	value.chain.assert(t, success)
-	value.chain.clear()
 }
 
 func TestObject_Schema(t *testing.T) {

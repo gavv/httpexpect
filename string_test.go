@@ -152,7 +152,6 @@ func TestString_Path(t *testing.T) {
 
 	assert.Equal(t, "foo", value.Path("$").Raw())
 	value.chain.assert(t, success)
-	value.chain.clear()
 }
 
 func TestString_Schema(t *testing.T) {

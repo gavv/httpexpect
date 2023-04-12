@@ -118,7 +118,6 @@ func TestBoolean_Path(t *testing.T) {
 
 	assert.Equal(t, true, value.Path("$").Raw())
 	value.chain.assert(t, success)
-	value.chain.clear()
 }
 
 func TestBoolean_Schema(t *testing.T) {
@@ -133,14 +132,13 @@ func TestBoolean_Schema(t *testing.T) {
 	value.chain.assert(t, failure)
 }
 
-func TestBoolean_Getters(t *testing.T) {
+func TestBoolean_Raw(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewBoolean(reporter, true)
 
 	assert.Equal(t, true, value.Raw())
 	value.chain.assert(t, success)
-	value.chain.clear()
 }
 
 func TestBoolean_IsEqual(t *testing.T) {
