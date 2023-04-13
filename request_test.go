@@ -3252,99 +3252,86 @@ func TestRequest_Conflicts(t *testing.T) {
 	}
 
 	t.Run("body conflict", func(t *testing.T) {
-		var req *Request
+		cases := []func(req *Request){
+			func(req *Request) {
+				req.WithChunked(nil)
+			},
+			func(req *Request) {
+				req.WithBytes(nil)
+			},
+			func(req *Request) {
+				req.WithText("")
+			},
+			func(req *Request) {
+				req.WithJSON(map[string]interface{}{"a": "b"})
+			},
+			func(req *Request) {
+				req.WithForm(map[string]interface{}{"a": "b"})
+				req.Expect()
+			},
+			func(req *Request) {
+				req.WithFormField("a", "b")
+				req.Expect()
+			},
+			func(req *Request) {
+				req.WithMultipart()
+			},
+		}
 
-		req = NewRequestC(config, "GET", "url")
-		req.WithChunked(nil)
-		req.chain.assert(t, success)
-		req.WithChunked(nil)
-		req.chain.assert(t, failure)
-
-		req = NewRequestC(config, "GET", "url")
-		req.WithChunked(nil)
-		req.chain.assert(t, success)
-		req.WithBytes(nil)
-		req.chain.assert(t, failure)
-
-		req = NewRequestC(config, "GET", "url")
-		req.WithChunked(nil)
-		req.chain.assert(t, success)
-		req.WithText("")
-		req.chain.assert(t, failure)
-
-		req = NewRequestC(config, "GET", "url")
-		req.WithChunked(nil)
-		req.chain.assert(t, success)
-		req.WithJSON(map[string]interface{}{"a": "b"})
-		req.chain.assert(t, failure)
-
-		req = NewRequestC(config, "GET", "url")
-		req.WithChunked(nil)
-		req.chain.assert(t, success)
-		req.WithForm(map[string]interface{}{"a": "b"})
-		req.Expect()
-		req.chain.assert(t, failure)
-
-		req = NewRequestC(config, "GET", "url")
-		req.WithChunked(nil)
-		req.chain.assert(t, success)
-		req.WithFormField("a", "b")
-		req.Expect()
-		req.chain.assert(t, failure)
-
-		req = NewRequestC(config, "GET", "url")
-		req.WithChunked(nil)
-		req.chain.assert(t, success)
-		req.WithMultipart()
-		req.chain.assert(t, failure)
+		for _, conflictFunc := range cases {
+			req := NewRequestC(config, "GET", "url")
+			req.WithChunked(nil)
+			req.chain.assert(t, success)
+			conflictFunc(req)
+			req.chain.assert(t, failure)
+		}
 	})
 
 	t.Run("type conflict", func(t *testing.T) {
-		var req *Request
+		cases := []func(req *Request){
+			func(req *Request) {
+				req.WithJSON(map[string]interface{}{"a": "b"})
+			},
+			func(req *Request) {
+				req.WithJSON(map[string]interface{}{"a": "b"})
+			},
+			func(req *Request) {
+				req.WithForm(map[string]interface{}{"a": "b"})
+			},
+			func(req *Request) {
+				req.WithFormField("a", "b")
+			},
+			func(req *Request) {
+				req.WithMultipart()
+			},
+		}
 
-		req = NewRequestC(config, "GET", "url")
-		req.WithText("")
-		req.chain.assert(t, success)
-		req.WithJSON(map[string]interface{}{"a": "b"})
-		req.chain.assert(t, failure)
-
-		req = NewRequestC(config, "GET", "url")
-		req.WithText("")
-		req.chain.assert(t, success)
-		req.WithForm(map[string]interface{}{"a": "b"})
-		req.chain.assert(t, failure)
-
-		req = NewRequestC(config, "GET", "url")
-		req.WithText("")
-		req.chain.assert(t, success)
-		req.WithFormField("a", "b")
-		req.chain.assert(t, failure)
-
-		req = NewRequestC(config, "GET", "url")
-		req.WithText("")
-		req.chain.assert(t, success)
-		req.WithMultipart()
-		req.chain.assert(t, failure)
+		for _, conflictFunc := range cases {
+			req := NewRequestC(config, "GET", "url")
+			req.WithText("")
+			req.chain.assert(t, success)
+			conflictFunc(req)
+			req.chain.assert(t, failure)
+		}
 	})
 
 	t.Run("multipart conflict", func(t *testing.T) {
-		var req *Request
+		cases := []func(req *Request){
+			func(req *Request) {
+				req.WithForm(map[string]interface{}{"a": "b"})
+			},
+			func(req *Request) {
+				req.WithFormField("a", "b")
+			},
+		}
 
-		req = NewRequestC(config, "GET", "url")
-		req.WithForm(map[string]interface{}{"a": "b"})
-		req.chain.assert(t, success)
-		req.WithMultipart()
-		req.chain.assert(t, failure)
-
-		req = NewRequestC(config, "GET", "url")
-		req.WithFormField("a", "b")
-		req.chain.assert(t, success)
-		req.WithMultipart()
-		req.chain.assert(t, failure)
-
-		req = NewRequestC(config, "GET", "url")
-		req.WithFileBytes("a", "a", []byte("a"))
-		req.chain.assert(t, failure)
+		for _, conflictFunc := range cases {
+			req := NewRequestC(config, "GET", "url")
+			conflictFunc(req)
+			req.chain.assert(t, success)
+			req.WithMultipart()
+			req.chain.assert(t, failure)
+		}
 	})
 }
 
