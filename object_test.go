@@ -452,13 +452,13 @@ func TestObject_IsEqual(t *testing.T) {
 			}
 
 			S struct {
-				Foo float64 `json:"foo"`
-				Bar Bar     `json:"bar"`
+				Foo int `json:"foo"`
+				Bar Bar `json:"bar"`
 			}
 		)
 
 		s := S{
-			Foo: 123.0,
+			Foo: 123,
 			Bar: Bar{
 				Baz: []bool{true, false},
 			},

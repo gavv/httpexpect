@@ -600,6 +600,8 @@ func TestArray_IsEqualUnordered(t *testing.T) {
 
 		testVal := myArray{myInt(456), 123.0, "foo"}
 
+		NewArray(reporter, []interface{}{123, 456, "foo"}).IsEqualUnordered(testVal).
+			chain.assert(t, success)
 		NewArray(reporter, []interface{}{123, 456, "foo"}).NotEqualUnordered(testVal).
 			chain.assert(t, failure)
 	})
@@ -1659,11 +1661,7 @@ func TestArray_Transform(t *testing.T) {
 
 	t.Run("transform value", func(t *testing.T) {
 		reporter := newMockReporter(t)
-		array := NewArray(reporter, []interface{}{
-			2,
-			4,
-			6,
-		})
+		array := NewArray(reporter, []interface{}{2, 4, 6})
 		newArray := array.Transform(func(_ int, val interface{}) interface{} {
 			if v, ok := val.(float64); ok {
 				return int(v) * int(v)
@@ -1726,20 +1724,8 @@ func TestArray_Filter(t *testing.T) {
 			return value.Raw() != 2.0 && value.Raw() != 5.0
 		})
 
-		assert.Equal(t, []interface{}{
-			1.0,
-			3.0,
-			4.0,
-			6.0,
-		}, filteredArray.Raw())
-		assert.Equal(t, array.Raw(), []interface{}{
-			1.0,
-			2.0,
-			3.0,
-			4.0,
-			5.0,
-			6.0,
-		})
+		assert.Equal(t, []interface{}{1.0, 3.0, 4.0, 6.0}, filteredArray.Raw())
+		assert.Equal(t, array.Raw(), []interface{}{1.0, 2.0, 3.0, 4.0, 5.0, 6.0})
 
 		array.chain.assert(t, success)
 		filteredArray.chain.assert(t, success)
@@ -1800,17 +1786,7 @@ func TestArray_Filter(t *testing.T) {
 		})
 
 		assert.Equal(t, []interface{}{"foo", "baz"}, filteredArray.Raw())
-		assert.Equal(t,
-			array.Raw(),
-			[]interface{}{
-				1.0,
-				"foo",
-				"bar",
-				4.0,
-				"baz",
-				6.0,
-			},
-		)
+		assert.Equal(t, array.Raw(), []interface{}{1.0, "foo", "bar", 4.0, "baz", 6.0})
 
 		array.chain.assert(t, success)
 		filteredArray.chain.assert(t, success)
@@ -1835,14 +1811,7 @@ func TestArray_Find(t *testing.T) {
 		})
 
 		assert.Equal(t, 2.0, foundValue.Raw())
-		assert.Equal(t, array.Raw(), []interface{}{
-			1.0,
-			2.0,
-			3.0,
-			4.0,
-			5.0,
-			6.0,
-		})
+		assert.Equal(t, array.Raw(), []interface{}{1.0, 2.0, 3.0, 4.0, 5.0, 6.0})
 
 		array.chain.assert(t, success)
 		foundValue.chain.assert(t, success)
@@ -1971,17 +1940,7 @@ func TestArray_FindAll(t *testing.T) {
 		}
 
 		assert.Equal(t, []interface{}{2.0, 5.0}, actual)
-		assert.Equal(t,
-			array.Raw(),
-			[]interface{}{
-				1.0,
-				2.0,
-				3.0,
-				4.0,
-				5.0,
-				6.0,
-			},
-		)
+		assert.Equal(t, array.Raw(), []interface{}{1.0, 2.0, 3.0, 4.0, 5.0, 6.0})
 
 		array.chain.assert(t, success)
 		for _, value := range foundValues {
@@ -2094,15 +2053,7 @@ func TestArray_FindAll(t *testing.T) {
 		}
 
 		assert.Equal(t, []interface{}{"foo", "bar"}, actual)
-		assert.Equal(t,
-			[]interface{}{
-				"foo",
-				1.0,
-				2.0,
-				"bar",
-			},
-			array.Raw(),
-		)
+		assert.Equal(t, []interface{}{"foo", 1.0, 2.0, "bar"}, array.Raw())
 
 		array.chain.assert(t, success)
 		for _, value := range foundValues {
@@ -2122,7 +2073,7 @@ func TestArray_FindAll(t *testing.T) {
 		}
 
 		assert.Equal(t, []interface{}{}, actual)
-		assert.Equal(t, []interface{}{1.0, 2.0}, array.Raw())
+		assert.Equal(t, array.Raw(), []interface{}{1.0, 2.0})
 
 		array.chain.assert(t, failure)
 		for _, value := range foundValues {

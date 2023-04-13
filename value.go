@@ -76,7 +76,6 @@ func newValue(parent *chain, val interface{}) *Value {
 func (v *Value) Raw() interface{} {
 	switch v := v.value.(type) {
 	case big.Float:
-		// f, _ := v.Float64()
 		f := json.Number(v.String())
 		if hasPrecisionLoss(f) {
 			return v

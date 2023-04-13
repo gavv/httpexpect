@@ -2,7 +2,6 @@ package httpexpect
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -423,7 +422,6 @@ func TestValue_GetNumber(t *testing.T) {
 
 			value := NewValue(reporter, tc.data)
 			inner := value.Number()
-			fmt.Println("inner", inner)
 
 			value.chain.assert(t, tc.result)
 			inner.chain.assert(t, tc.result)
@@ -1019,109 +1017,26 @@ func TestValue_PathExpressions(t *testing.T) {
 
 	t.Run("pick", func(t *testing.T) {
 		runTests(map[string]interface{}{
-			"$": map[string]interface{}{
-				"A": []interface{}{
-					"string",
-					23.3,
-					3.0,
-					true,
-					false,
-					nil,
-				},
-				"B": "value",
-				"C": 3.14,
-				"D": map[string]interface{}{
-					"C": 3.1415,
-					"V": []interface{}{
-						"string2a",
-						"string2b",
-						map[string]interface{}{
-							"C": 3.141592,
-						},
-					},
-				},
-				"E": map[string]interface{}{
-					"A": []interface{}{"string3"},
-					"D": map[string]interface{}{
-						"V": map[string]interface{}{
-							"C": 3.14159265,
-						},
-					},
-				},
-				"F": map[string]interface{}{
-					"V": []interface{}{
-						"string4a",
-						"string4b",
-						map[string]interface{}{
-							"CC": 3.1415926535,
-						},
-						map[string]interface{}{
-							"CC": "hello",
-						},
-						[]interface{}{
-							"string5a",
-							"string5b",
-						},
-						[]interface{}{
-							"string6a",
-							"string6b",
-						},
-					},
-				},
-			},
+			"$":         data,
 			"$.A[0]":    "string",
 			`$["A"][0]`: "string",
-			"$.A": []interface{}{
-				"string",
-				23.3,
-				3.0,
-				true,
-				false,
-				nil,
-			},
-			"$.A[*]": []interface{}{
-				"string",
-				23.3,
-				3.0,
-				true,
-				false,
-				nil,
-			},
-			"$.A.*": []interface{}{
-				"string",
-				23.3,
-				3.0,
-				true,
-				false,
-				nil,
-			},
-			"$.A.*.a": []interface{}{},
+			"$.A":       []interface{}{"string", 23.3, 3.0, true, false, nil},
+			"$.A[*]":    []interface{}{"string", 23.3, 3.0, true, false, nil},
+			"$.A.*":     []interface{}{"string", 23.3, 3.0, true, false, nil},
+			"$.A.*.a":   []interface{}{},
 		})
 	})
 
 	t.Run("slice", func(t *testing.T) {
 		runTests(map[string]interface{}{
-			"$.A[1,4,2]": []interface{}{23.3, false, 3.0},
-			`$["B","C"]`: []interface{}{"value", 3.14},
-			`$["C","B"]`: []interface{}{3.14, "value"},
-			"$.A[1:4]":   []interface{}{23.3, 3.0, true},
-			"$.A[::2]":   []interface{}{"string", 3.0, false},
-			"$.A[-2:]":   []interface{}{false, nil},
-			"$.A[:-1]": []interface{}{
-				"string",
-				23.3,
-				3.0,
-				true,
-				false,
-			},
-			"$.A[::-1]": []interface{}{
-				nil,
-				false,
-				true,
-				3.0,
-				23.3,
-				"string",
-			},
+			"$.A[1,4,2]":      []interface{}{23.3, false, 3.0},
+			`$["B","C"]`:      []interface{}{"value", 3.14},
+			`$["C","B"]`:      []interface{}{3.14, "value"},
+			"$.A[1:4]":        []interface{}{23.3, 3.0, true},
+			"$.A[::2]":        []interface{}{"string", 3.0, false},
+			"$.A[-2:]":        []interface{}{false, nil},
+			"$.A[:-1]":        []interface{}{"string", 23.3, 3.0, true, false},
+			"$.A[::-1]":       []interface{}{nil, false, true, 3.0, 23.3, "string"},
 			"$.F.V[4:5][0,1]": []interface{}{"string5a", "string5b"},
 			"$.F.V[4:6][1]":   []interface{}{"string5b", "string6b"},
 			"$.F.V[4:6][0,1]": []interface{}{"string5a", "string5b", "string6a", "string6b"},
@@ -1150,18 +1065,8 @@ func TestValue_PathExpressions(t *testing.T) {
 
 	t.Run("search", func(t *testing.T) {
 		runTests(map[string]interface{}{
-			"$..C": []interface{}{
-				3.14,
-				3.1415,
-				3.141592,
-				3.14159265,
-			},
-			`$..["C"]`: []interface{}{
-				3.14,
-				3.1415,
-				3.141592,
-				3.14159265,
-			},
+			"$..C":       []interface{}{3.14, 3.1415, 3.141592, 3.14159265},
+			`$..["C"]`:   []interface{}{3.14, 3.1415, 3.141592, 3.14159265},
 			"$.D.V..C":   []interface{}{3.141592},
 			"$.D.V.*.C":  []interface{}{3.141592},
 			"$.D.V..*.C": []interface{}{3.141592},
@@ -1185,31 +1090,9 @@ func TestValue_PathExpressions(t *testing.T) {
 				[]interface{}{"string", 23.3, 3.0, true, false, nil},
 				[]interface{}{"string3"},
 			},
-			"$..A..*": []interface{}{
-				"string",
-				23.3,
-				3.0,
-				true,
-				false,
-				nil,
-				"string3",
-			},
-			"$.A..*": []interface{}{
-				"string",
-				23.3,
-				3.0,
-				true,
-				false,
-				nil,
-			},
-			"$.A.*": []interface{}{
-				"string",
-				23.3,
-				3.0,
-				true,
-				false,
-				nil,
-			},
+			"$..A..*":      []interface{}{"string", 23.3, 3.0, true, false, nil, "string3"},
+			"$.A..*":       []interface{}{"string", 23.3, 3.0, true, false, nil},
+			"$.A.*":        []interface{}{"string", 23.3, 3.0, true, false, nil},
 			"$..A[0,1]":    []interface{}{"string", 23.3},
 			"$..A[0]":      []interface{}{"string", "string3"},
 			"$.*.V[0]":     []interface{}{"string2a", "string4a"},
@@ -1221,11 +1104,7 @@ func TestValue_PathExpressions(t *testing.T) {
 			"$..V[*].C":    []interface{}{3.141592},
 			"$.*.V[2].*":   []interface{}{3.141592, 3.1415926535},
 			"$.*.V[2:3].*": []interface{}{3.141592, 3.1415926535},
-			"$.*.V[2:4].*": []interface{}{
-				3.141592,
-				3.1415926535,
-				"hello",
-			},
+			"$.*.V[2:4].*": []interface{}{3.141592, 3.1415926535, "hello"},
 			"$..V[2,3].CC": []interface{}{3.1415926535, "hello"},
 			"$..V[2:4].CC": []interface{}{3.1415926535, "hello"},
 			"$..V[*].*": []interface{}{
