@@ -186,14 +186,26 @@ func (bw *bodyWrapper) DisableRewinds() {
 	bw.mu.Lock()
 	defer bw.mu.Unlock()
 
+	// Free memory if still reading from original HTTP response.
+	if !bw.isFullyRead {
+		bw.memReader = bytes.NewReader(nil)
+		bw.memBytes = nil
+	}
+
 	bw.isRewindDisabled = true
 }
 
 func (bw *bodyWrapper) memReadNext(p []byte) (int, error) {
 	n, err := bw.memReader.Read(p)
 
-	if err == io.EOF && bw.readErr != nil {
-		err = bw.readErr
+	if err == io.EOF {
+		if bw.isRewindDisabled {
+			bw.memReader = bytes.NewReader(nil)
+			bw.memBytes = nil
+		}
+		if bw.readErr != nil {
+			err = bw.readErr
+		}
 	}
 
 	return n, err
