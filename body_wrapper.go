@@ -186,7 +186,7 @@ func (bw *bodyWrapper) DisableRewinds() {
 	bw.mu.Lock()
 	defer bw.mu.Unlock()
 
-	// Free memory if still reading from original HTTP response.
+	// Free memory if reading from original HTTP response.
 	if !bw.isFullyRead {
 		bw.memReader = bytes.NewReader(nil)
 		bw.memBytes = nil
