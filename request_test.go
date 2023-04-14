@@ -3250,102 +3250,151 @@ func TestRequest_Conflicts(t *testing.T) {
 		Client:   client,
 		Reporter: newMockReporter(t),
 	}
+	testCases := []struct {
+		name       string
+		beforeFunc func(req *Request)
+		afterFunc  func(req *Request)
+	}{
+		{
+			name: "WithChunked body conflict",
+			beforeFunc: func(req *Request) {
+				req.WithChunked(nil)
+			},
+			afterFunc: func(req *Request) {
+				req.WithChunked(nil)
+			},
+		},
+		{
+			name: "WithBytes body conflict",
+			beforeFunc: func(req *Request) {
+				req.WithChunked(nil)
+			},
+			afterFunc: func(req *Request) {
+				req.WithBytes(nil)
+			},
+		},
+		{
+			name: "WithText body conflict",
+			beforeFunc: func(req *Request) {
+				req.WithChunked(nil)
+			},
+			afterFunc: func(req *Request) {
+				req.WithText("")
+			},
+		},
+		{
+			name: "WithJSON body conflict",
+			beforeFunc: func(req *Request) {
+				req.WithChunked(nil)
+			},
+			afterFunc: func(req *Request) {
+				req.WithJSON(map[string]interface{}{"a": "b"})
+			},
+		},
+		{
+			name: "WithForm body conflict",
+			beforeFunc: func(req *Request) {
+				req.WithChunked(nil)
+			},
+			afterFunc: func(req *Request) {
+				req.WithForm(map[string]interface{}{"a": "b"})
+				req.Expect()
+			},
+		},
+		{
+			name: "WithFormField body conflict",
+			beforeFunc: func(req *Request) {
+				req.WithChunked(nil)
+			},
+			afterFunc: func(req *Request) {
+				req.WithFormField("a", "b")
+				req.Expect()
+			},
+		},
+		{
+			name: "WithMultipart body conflict",
+			beforeFunc: func(req *Request) {
+				req.WithChunked(nil)
+			},
+			afterFunc: func(req *Request) {
+				req.WithMultipart()
+			},
+		},
 
-	t.Run("body conflict", func(t *testing.T) {
-		var req *Request
+		{
+			name: "WithJSON type conflict",
+			beforeFunc: func(req *Request) {
+				req.WithText("")
+			},
+			afterFunc: func(req *Request) {
+				req.WithJSON(map[string]interface{}{"a": "b"})
+			},
+		},
+		{
+			name: "WithForm type conflict",
+			beforeFunc: func(req *Request) {
+				req.WithText("")
+			},
+			afterFunc: func(req *Request) {
+				req.WithForm(map[string]interface{}{"a": "b"})
+			},
+		},
+		{
+			name: "WithFormField type conflict",
+			beforeFunc: func(req *Request) {
+				req.WithText("")
+			},
+			afterFunc: func(req *Request) {
+				req.WithFormField("a", "b")
+			},
+		},
+		{
+			name: "WithMultipart type conflict",
+			beforeFunc: func(req *Request) {
+				req.WithText("")
+			},
+			afterFunc: func(req *Request) {
+				req.WithMultipart()
+			},
+		},
 
-		req = NewRequestC(config, "GET", "url")
-		req.WithChunked(nil)
-		req.chain.assert(t, success)
-		req.WithChunked(nil)
-		req.chain.assert(t, failure)
+		{
+			name: "WithForm multipart conflict",
+			beforeFunc: func(req *Request) {
+				req.WithForm(map[string]interface{}{"a": "b"})
+			},
+			afterFunc: func(req *Request) {
+				req.WithMultipart()
+			},
+		},
+		{
+			name: "WithFormField multipart conflict",
+			beforeFunc: func(req *Request) {
+				req.WithFormField("a", "b")
+			},
+			afterFunc: func(req *Request) {
+				req.WithMultipart()
+			},
+		},
+		{
+			name: "WithFileBytes multipart conflict",
+			afterFunc: func(req *Request) {
+				req.WithFileBytes("a", "a", []byte("a"))
+			},
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := NewRequestC(config, "GET", "url")
+			if tc.beforeFunc != nil {
+				tc.beforeFunc(req)
+			}
+			req.chain.assert(t, success)
+			tc.afterFunc(req)
+			req.chain.assert(t, failure)
+		})
+	}
 
-		req = NewRequestC(config, "GET", "url")
-		req.WithChunked(nil)
-		req.chain.assert(t, success)
-		req.WithBytes(nil)
-		req.chain.assert(t, failure)
-
-		req = NewRequestC(config, "GET", "url")
-		req.WithChunked(nil)
-		req.chain.assert(t, success)
-		req.WithText("")
-		req.chain.assert(t, failure)
-
-		req = NewRequestC(config, "GET", "url")
-		req.WithChunked(nil)
-		req.chain.assert(t, success)
-		req.WithJSON(map[string]interface{}{"a": "b"})
-		req.chain.assert(t, failure)
-
-		req = NewRequestC(config, "GET", "url")
-		req.WithChunked(nil)
-		req.chain.assert(t, success)
-		req.WithForm(map[string]interface{}{"a": "b"})
-		req.Expect()
-		req.chain.assert(t, failure)
-
-		req = NewRequestC(config, "GET", "url")
-		req.WithChunked(nil)
-		req.chain.assert(t, success)
-		req.WithFormField("a", "b")
-		req.Expect()
-		req.chain.assert(t, failure)
-
-		req = NewRequestC(config, "GET", "url")
-		req.WithChunked(nil)
-		req.chain.assert(t, success)
-		req.WithMultipart()
-		req.chain.assert(t, failure)
-	})
-
-	t.Run("type conflict", func(t *testing.T) {
-		var req *Request
-
-		req = NewRequestC(config, "GET", "url")
-		req.WithText("")
-		req.chain.assert(t, success)
-		req.WithJSON(map[string]interface{}{"a": "b"})
-		req.chain.assert(t, failure)
-
-		req = NewRequestC(config, "GET", "url")
-		req.WithText("")
-		req.chain.assert(t, success)
-		req.WithForm(map[string]interface{}{"a": "b"})
-		req.chain.assert(t, failure)
-
-		req = NewRequestC(config, "GET", "url")
-		req.WithText("")
-		req.chain.assert(t, success)
-		req.WithFormField("a", "b")
-		req.chain.assert(t, failure)
-
-		req = NewRequestC(config, "GET", "url")
-		req.WithText("")
-		req.chain.assert(t, success)
-		req.WithMultipart()
-		req.chain.assert(t, failure)
-	})
-
-	t.Run("multipart conflict", func(t *testing.T) {
-		var req *Request
-
-		req = NewRequestC(config, "GET", "url")
-		req.WithForm(map[string]interface{}{"a": "b"})
-		req.chain.assert(t, success)
-		req.WithMultipart()
-		req.chain.assert(t, failure)
-
-		req = NewRequestC(config, "GET", "url")
-		req.WithFormField("a", "b")
-		req.chain.assert(t, success)
-		req.WithMultipart()
-		req.chain.assert(t, failure)
-
-		req = NewRequestC(config, "GET", "url")
-		req.WithFileBytes("a", "a", []byte("a"))
-		req.chain.assert(t, failure)
-	})
 }
 
 func TestRequest_Usage(t *testing.T) {
