@@ -75,15 +75,23 @@ func IrisHandler() http.Handler {
 	})
 
 	app.Get("/stream", func(ctx iris.Context) {
-		ctx.StreamWriter(func(w io.Writer) bool {
-			for i := 0; i < 10; i++ {
-				fmt.Fprintf(w, "%d", i)
+		i := 0
+		writer := func(w io.Writer) error {
+			if i == 10 {
+				// causes StreamWriter to stop writing
+				return io.EOF
+			} else if _, err := fmt.Fprintf(w, "%d", i); err != nil {
+				return err
 			}
-			// return true to continue, return false to stop and flush
-			return false
-		})
+
+			i++
+			// return nil to continue writing
+			return nil
+		}
+
+		ctx.StreamWriter(writer)
 		// if we had to write here then the StreamWriter callback should
-		// return true
+		// return nil instead of EOF
 	})
 
 	app.Post("/stream", func(ctx iris.Context) {
