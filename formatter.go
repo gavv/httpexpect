@@ -548,6 +548,10 @@ func (f *DefaultFormatter) fillResponse(
 }
 
 func (f *DefaultFormatter) formatValue(value interface{}) string {
+	return f.formatValueNested(value, 0).(string)
+}
+
+func (f *DefaultFormatter) formatValueNested(value interface{}, level int) interface{} {
 	if flt := extractFloat32(value); flt != nil {
 		return f.reformatNumber(f.formatFloatValue(*flt, 32))
 	}
@@ -569,14 +573,20 @@ func (f *DefaultFormatter) formatValue(value interface{}) string {
 
 		if arr, ok := value.([]interface{}); ok {
 			for k, v := range arr {
-				arr[k] = f.formatValue(v)
+				arr[k] = f.formatValueNested(v, level+1)
+			}
+			if level > 0 {
+				return arr
 			}
 			if b, err := json.MarshalIndent(arr, "", defaultIndent); err == nil {
 				return string(b)
 			}
-		} else if m, ok := value.(map[interface{}]interface{}); ok {
+		} else if m, ok := value.(map[string]interface{}); ok {
 			for k, v := range m {
-				m[k] = f.formatValue(v)
+				m[k] = f.formatValueNested(v, level+1)
+			}
+			if level > 0 {
+				return m
 			}
 			if b, err := json.MarshalIndent(m, "", defaultIndent); err == nil {
 				return string(b)
@@ -593,12 +603,12 @@ func (f *DefaultFormatter) formatValue(value interface{}) string {
 	}
 	if arr, ok := value.([]interface{}); ok {
 		for k, v := range arr {
-			arr[k] = f.formatValue(v)
+			arr[k] = f.formatValueNested(v, level+1)
 		}
 		return sq.Sdump(value)
 	} else if m, ok := value.(map[interface{}]interface{}); ok {
 		for k, v := range m {
-			m[k] = f.formatValue(v)
+			m[k] = f.formatValueNested(v, level+1)
 		}
 		return sq.Sdump(value)
 	} else {

@@ -628,6 +628,59 @@ func TestFormatter_FloatFormat(t *testing.T) {
 			value:    int(12345678),
 			wantText: "12_345_678",
 		},
+		// map and array of floats
+		{
+			name:   "array of floats",
+			format: FloatFormatAuto,
+			value: []interface{}{
+				float32(1.2345678),
+				float64(9.87654321),
+			},
+			wantText: "[\n  \"1.234_567_8\",\n  \"9.876_543_21\"\n]",
+		},
+		{
+			name:   "map of floats",
+			format: FloatFormatDecimal,
+			value: map[string]interface{}{
+				"a": float32(1.2340),
+				"b": float64(9.0),
+			},
+			wantText: "{\n  \"a\": \"1.234\",\n  \"b\": \"9\"\n}",
+		},
+		{
+			name:   "map of array of floats",
+			format: FloatFormatScientific,
+			value: map[string]interface{}{
+				"a": []interface{}{
+					float32(1.234),
+					float64(5.678),
+				},
+			},
+			wantText: "{\n  \"a\": [\n    \"1.234e+00\",\n    \"5.678e+00\"\n  ]\n}",
+		},
+		{
+			name:   "array of map of floats",
+			format: FloatFormatScientific,
+			value: []interface{}{
+				map[string]interface{}{
+					"a": float32(1.234),
+					"b": float64(5.678),
+				},
+			},
+			wantText: "[\n  {\n    \"a\": \"1.234e+00\",\n    \"b\": \"5.678e+00\"\n  }\n]",
+		},
+		{
+			name:   "mixed of map, array, and single float",
+			format: FloatFormatDecimal,
+			value: map[string]interface{}{
+				"a": []interface{}{
+					float32(1.2340),
+					float64(5.678),
+				},
+				"b": float32(1.10),
+			},
+			wantText: "{\n  \"a\": [\n    \"1.234\",\n    \"5.678\"\n  ],\n  \"b\": \"1.1\"\n}",
+		},
 	}
 
 	for _, tc := range cases {
