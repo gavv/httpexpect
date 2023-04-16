@@ -280,9 +280,9 @@ func TestExpect_Traverse(t *testing.T) {
 	m.ContainsKey("bbb")
 	m.ContainsKey("ccc")
 
-	m.ValueEqual("aaa", data["aaa"])
-	m.ValueEqual("bbb", data["bbb"])
-	m.ValueEqual("ccc", data["ccc"])
+  m.HasValue("aaa", data["aaa"])
+	m.HasValue("bbb", data["bbb"])
+	m.HasValue("ccc", data["ccc"])
 
 	m.Keys().ConsistsOf("aaa", "bbb", "ccc")
 	m.Values().ConsistsOf(data["aaa"], data["bbb"], data["ccc"])

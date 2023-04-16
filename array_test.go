@@ -1124,6 +1124,7 @@ func TestArray_ContainsAny(t *testing.T) {
 					chain.assert(t, !tc.wantContainsAny)
 			})
 		}
+
 	})
 
 	t.Run("canonization", func(t *testing.T) {

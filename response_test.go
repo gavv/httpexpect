@@ -1620,6 +1620,7 @@ func TestResponse_Usage(t *testing.T) {
 		}
 		resp.Form(contentOpts1, contentOpts2)
 		resp.chain.assert(t, failure)
+
 	})
 
 	t.Run("JSON multiple arguments", func(t *testing.T) {

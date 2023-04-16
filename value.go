@@ -344,6 +344,7 @@ func (v *Value) Number() *Number {
 	if opChain.failed() {
 		return newNumber(opChain, 0)
 	}
+
 	data, ok := v.value.(float64)
 
 	if !ok {
