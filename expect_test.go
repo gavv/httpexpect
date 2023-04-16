@@ -272,6 +272,7 @@ func TestExpect_Traverse(t *testing.T) {
 	}
 
 	resp := WithConfig(config).GET("/url").WithJSON(data).Expect()
+
 	m := resp.JSON().Object()
 
 	m.IsEqual(data)
