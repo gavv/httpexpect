@@ -1,11 +1,8 @@
 package httpexpect
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 
 	"github.com/gorilla/websocket"
 )
@@ -525,29 +522,9 @@ func (wm *WebsocketMessage) JSON() *Value {
 		return newValue(opChain, nil)
 	}
 
-	reader := bytes.NewReader(wm.content)
-	dec := json.NewDecoder(reader)
-	dec.UseNumber()
-
 	var value interface{}
 
-	for {
-		if err := dec.Decode(&value); err == io.EOF {
-			break
-		} else if err != nil {
-			opChain.fail(AssertionFailure{
-				Type: AssertValid,
-				Actual: &AssertionValue{
-					string(wm.content),
-				},
-				Errors: []error{
-					errors.New("failed to decode json"),
-					err,
-				},
-			})
-			return newValue(opChain, nil)
-		}
-	}
+	jsonDecode(opChain, wm.content, &value)
 
 	return newValue(opChain, value)
 }
