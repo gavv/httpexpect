@@ -281,7 +281,7 @@ func TestExpect_Traverse(t *testing.T) {
 	m.ContainsKey("bbb")
 	m.ContainsKey("ccc")
 
-  m.HasValue("aaa", data["aaa"])
+	m.HasValue("aaa", data["aaa"])
 	m.HasValue("bbb", data["bbb"])
 	m.HasValue("ccc", data["ccc"])
 
