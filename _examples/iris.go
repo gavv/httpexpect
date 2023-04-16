@@ -76,7 +76,7 @@ func IrisHandler() http.Handler {
 
 	app.Get("/stream", func(ctx iris.Context) {
 		i := 0
-		writer := func(w io.Writer) error {
+		ctx.StreamWriter(func(w io.Writer) error {
 			if i == 10 {
 				// causes StreamWriter to stop writing
 				return io.EOF
@@ -87,9 +87,7 @@ func IrisHandler() http.Handler {
 			i++
 			// return nil to continue writing
 			return nil
-		}
-
-		ctx.StreamWriter(writer)
+		})
 		// if we had to write here then the StreamWriter callback should
 		// return nil instead of EOF
 	})
