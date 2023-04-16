@@ -266,9 +266,9 @@ func TestExpect_Traverse(t *testing.T) {
 	}
 
 	data := map[string]interface{}{
-		"foo": []interface{}{"bar", 123, false, nil},
-		"bar": "hello",
-		"baz": 456,
+		"aaa": []interface{}{"bbb", 123, false, nil},
+		"bbb": "hello",
+		"ccc": 456,
 	}
 
 	resp := WithConfig(config).GET("/url").WithJSON(data).Expect()
@@ -276,23 +276,23 @@ func TestExpect_Traverse(t *testing.T) {
 
 	m.IsEqual(data)
 
-	m.ContainsKey("foo")
-	m.ContainsKey("bar")
-	m.ContainsKey("foo")
+	m.ContainsKey("aaa")
+	m.ContainsKey("bbb")
+	m.ContainsKey("ccc")
 
-	m.ValueEqual("foo", data["foo"])
-	m.ValueEqual("bar", data["bar"])
-	m.ValueEqual("baz", data["baz"])
+	m.ValueEqual("aaa", data["aaa"])
+	m.ValueEqual("bbb", data["bbb"])
+	m.ValueEqual("ccc", data["ccc"])
 
-	m.Keys().ContainsOnly("foo", "bar", "baz")
-	m.Values().ContainsOnly(data["foo"], data["bar"], data["baz"])
+	m.Keys().ConsistsOf("aaa", "bbb", "ccc")
+	m.Values().ConsistsOf(data["aaa"], data["bbb"], data["ccc"])
 
-	m.Value("foo").Array().Elements("bar", 123, false, nil)
-	m.Value("bar").String().Equal("hello")
-	m.Value("baz").Number().Equal(456)
+	m.Value("aaa").Array().ConsistsOf("bbb", 123, false, nil)
+	m.Value("bbb").String().IsEqual("hello")
+	m.Value("ccc").Number().IsEqual(456)
 
-	m.Value("foo").Array().Element(2).Boolean().False()
-	m.Value("foo").Array().Element(3).Null()
+	m.Value("aaa").Array().Value(2).Boolean().IsFalse()
+	m.Value("aaa").Array().Value(3).IsNull()
 }
 
 func TestExpect_Branches(t *testing.T) {
@@ -313,18 +313,18 @@ func TestExpect_Branches(t *testing.T) {
 	req := WithConfig(config).GET("/url").WithJSON(data)
 	resp := req.Expect()
 
-	m1 := resp.JSON().Array()
-	m2 := resp.JSON().Object()
-	m3 := resp.JSON().Object()
+	m1 := resp.JSON().Array()  // fail
+	m2 := resp.JSON().Object() // ok
+	m3 := resp.JSON().Object() // ok
 
-	e1 := m2.Value("foo").Object()
-	e2 := m2.Value("foo").Array().Value(999).String()
-	e3 := m2.Value("foo").Array().Value(0).Number()
-	e4 := m2.Value("foo").Array().Value(0).String()
-	e5 := m2.Value("foo").Array().Value(0).String()
+	e1 := m2.Value("foo").Object()                    // fail
+	e2 := m2.Value("foo").Array().Value(999).String() // fail
+	e3 := m2.Value("foo").Array().Value(0).Number()   // fail
+	e4 := m2.Value("foo").Array().Value(0).String()   // ok
+	e5 := m2.Value("foo").Array().Value(0).String()   // ok
 
-	e4.IsEqual("qux")
-	e5.IsEqual("bar")
+	e4.IsEqual("qux") // fail
+	e5.IsEqual("bar") // ok
 
 	req.chain.assertFlags(t, flagFailedChildren)
 	resp.chain.assertFlags(t, flagFailedChildren)

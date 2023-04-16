@@ -602,6 +602,7 @@ func TestArray_IsEqualUnordered(t *testing.T) {
 
 		NewArray(reporter, []interface{}{123, 456, "foo"}).IsEqualUnordered(testVal).
 			chain.assert(t, success)
+
 		NewArray(reporter, []interface{}{123, 456, "foo"}).NotEqualUnordered(testVal).
 			chain.assert(t, failure)
 	})
@@ -1662,6 +1663,7 @@ func TestArray_Transform(t *testing.T) {
 	t.Run("transform value", func(t *testing.T) {
 		reporter := newMockReporter(t)
 		array := NewArray(reporter, []interface{}{2, 4, 6})
+
 		newArray := array.Transform(func(_ int, val interface{}) interface{} {
 			if v, ok := val.(float64); ok {
 				return int(v) * int(v)
@@ -1669,6 +1671,7 @@ func TestArray_Transform(t *testing.T) {
 			t.Errorf("failed transformation")
 			return nil
 		})
+
 		assert.Equal(t, []interface{}{float64(4), float64(16), float64(36)}, newArray.value)
 		newArray.chain.assert(t, success)
 	})
@@ -1733,7 +1736,7 @@ func TestArray_Filter(t *testing.T) {
 
 	t.Run("elements of different types", func(t *testing.T) {
 		reporter := newMockReporter(t)
-		array := NewArray(reporter, []interface{}{"foo", "bar", true, 1})
+		array := NewArray(reporter, []interface{}{"foo", "bar", true, 1.0})
 
 		filteredArray := array.Filter(func(index int, value *Value) bool {
 			return value.Raw() != "bar"
@@ -1763,7 +1766,7 @@ func TestArray_Filter(t *testing.T) {
 
 	t.Run("no match", func(t *testing.T) {
 		reporter := newMockReporter(t)
-		array := NewArray(reporter, []interface{}{"foo", "bar", true, 1})
+		array := NewArray(reporter, []interface{}{"foo", "bar", true, 1.0})
 
 		filteredArray := array.Filter(func(index int, value *Value) bool {
 			return false
@@ -2030,7 +2033,7 @@ func TestArray_FindAll(t *testing.T) {
 		}
 
 		assert.Equal(t, []interface{}{}, actual)
-		assert.Equal(t, []interface{}{1.0, 2.0}, array.Raw())
+		assert.Equal(t, array.Raw(), []interface{}{1.0, 2.0})
 
 		array.chain.assert(t, success)
 		for _, value := range foundValues {
@@ -2053,7 +2056,7 @@ func TestArray_FindAll(t *testing.T) {
 		}
 
 		assert.Equal(t, []interface{}{"foo", "bar"}, actual)
-		assert.Equal(t, []interface{}{"foo", 1.0, 2.0, "bar"}, array.Raw())
+		assert.Equal(t, array.Raw(), []interface{}{"foo", 1.0, 2.0, "bar"})
 
 		array.chain.assert(t, success)
 		for _, value := range foundValues {
