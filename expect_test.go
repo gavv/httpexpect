@@ -349,9 +349,14 @@ func TestExpect_ErrorPropagation(t *testing.T) {
 			ctr++
 		}
 
+		// Failed operation
 		arr := NewArray(reporter, []interface{}{"foo"})
-		arr.IsEmpty().IsEmpty() // The second .IsEmpty() call does not report failure
+		arr.IsEmpty()
+		arr.chain.assertFlags(t, flagFailed)
+		assert.Equal(t, 1, ctr)
 
+		// Subsequent failed operation won't report failures
+		arr.IsEmpty()
 		arr.chain.assertFlags(t, flagFailed)
 		assert.Equal(t, 1, ctr)
 	})
@@ -363,12 +368,15 @@ func TestExpect_ErrorPropagation(t *testing.T) {
 			ctr++
 		}
 
+		// Parent's failed operation
 		arr := NewArray(reporter, []interface{}{"foo"})
 		arr.IsEmpty()
-		val := arr.Value(0)
-		val.IsEqual("bar") // Child does not report failure
+		arr.chain.assertFlags(t, flagFailed)
+		assert.Equal(t, 1, ctr)
 
-		arr.chain.assertFlags(t, (flagFailed | flagFailedChildren))
+		// Child's failed operation won't report failures
+		val := arr.Value(0)
+		val.IsEqual("bar")
 		val.chain.assertFlags(t, flagFailed)
 		assert.Equal(t, 1, ctr)
 	})
@@ -380,12 +388,19 @@ func TestExpect_ErrorPropagation(t *testing.T) {
 			ctr++
 		}
 
+		// Parent
 		arr := NewArray(reporter, []interface{}{"foo"})
-		val := arr.Value(0)
-		arr.IsEmpty()
-		val.IsEqual("bar") // Child reports failure
 
-		arr.chain.assertFlags(t, (flagFailed | flagFailedChildren))
+		// Child
+		val := arr.Value(0)
+
+		// Parent's failed operation
+		arr.IsEmpty()
+		arr.chain.assertFlags(t, flagFailed)
+		assert.Equal(t, 1, ctr)
+
+		// Previously created child's failed operation will report failures
+		val.IsEqual("bar")
 		val.chain.assertFlags(t, flagFailed)
 		assert.Equal(t, 2, ctr)
 	})
@@ -397,14 +412,21 @@ func TestExpect_ErrorPropagation(t *testing.T) {
 			ctr++
 		}
 
+		// Parent
 		arr := NewArray(reporter, []interface{}{"foo"})
+
+		// We have 2 children, Child_1 and Child_2
+		// In this case, Child_2 as a newly created children of parent
+
+		// Child_1's failed operation will report failures
 		val1 := arr.Value(0)
 		val1.IsEqual("bar")
-		val2 := arr.Value(0)
-		val2.IsEqual("bar") // Child reports failure
-
-		arr.chain.assertFlags(t, flagFailedChildren)
 		val1.chain.assertFlags(t, flagFailed)
+		assert.Equal(t, 1, ctr)
+
+		// Child_2's failed operation will report failures
+		val2 := arr.Value(0)
+		val2.IsEqual("bar")
 		val2.chain.assertFlags(t, flagFailed)
 		assert.Equal(t, 2, ctr)
 	})
@@ -416,16 +438,28 @@ func TestExpect_ErrorPropagation(t *testing.T) {
 			ctr++
 		}
 
+		// Parent
 		arr := NewArray(reporter, []interface{}{"foo"})
-		val1 := arr.Value(0)
-		val2 := arr.Value(0)
-		val2.IsEqual("bar")
-		val1.IsEqual("bar") // Child reports failure
 
-		arr.chain.assertFlags(t, flagFailedChildren)
-		val1.chain.assertFlags(t, flagFailed)
+		// We have 2 children, Child_1 and Child_2
+		// In this case, Child_1 as a previously created children of parent
+
+		// Child_1
+		val1 := arr.Value(0)
+
+		// Child_2
+		val2 := arr.Value(0)
+
+		// Child_2's failed operation will report failures
+		val2.IsEqual("bar")
 		val2.chain.assertFlags(t, flagFailed)
+		assert.Equal(t, 1, ctr)
+
+		// Child_1's failed operation will report failures
+		val1.IsEqual("bar")
+		val1.chain.assertFlags(t, flagFailed)
 		assert.Equal(t, 2, ctr)
+
 	})
 }
 
