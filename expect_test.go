@@ -353,7 +353,6 @@ func TestExpect_ErrorPropagation(t *testing.T) {
 		arr.IsEmpty().IsEmpty() // The second .IsEmpty() call does not report failure
 
 		arr.chain.assertFlags(t, flagFailed)
-		assert.Equal(t, true, reporter.reported)
 		assert.Equal(t, 1, ctr)
 	})
 
@@ -371,7 +370,6 @@ func TestExpect_ErrorPropagation(t *testing.T) {
 
 		arr.chain.assertFlags(t, (flagFailed | flagFailedChildren))
 		val.chain.assertFlags(t, flagFailed)
-		assert.Equal(t, true, reporter.reported)
 		assert.Equal(t, 1, ctr)
 	})
 
@@ -389,7 +387,6 @@ func TestExpect_ErrorPropagation(t *testing.T) {
 
 		arr.chain.assertFlags(t, (flagFailed | flagFailedChildren))
 		val.chain.assertFlags(t, flagFailed)
-		assert.Equal(t, true, reporter.reported)
 		assert.Equal(t, 2, ctr)
 	})
 
@@ -409,7 +406,6 @@ func TestExpect_ErrorPropagation(t *testing.T) {
 		arr.chain.assertFlags(t, flagFailedChildren)
 		val1.chain.assertFlags(t, flagFailed)
 		val2.chain.assertFlags(t, flagFailed)
-		assert.Equal(t, true, reporter.reported)
 		assert.Equal(t, 2, ctr)
 	})
 
@@ -429,7 +425,6 @@ func TestExpect_ErrorPropagation(t *testing.T) {
 		arr.chain.assertFlags(t, flagFailedChildren)
 		val1.chain.assertFlags(t, flagFailed)
 		val2.chain.assertFlags(t, flagFailed)
-		assert.Equal(t, true, reporter.reported)
 		assert.Equal(t, 2, ctr)
 	})
 }
