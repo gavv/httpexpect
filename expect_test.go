@@ -375,7 +375,7 @@ func TestExpect_ErrorPropagation(t *testing.T) {
 		assert.Equal(t, 1, ctr)
 	})
 
-	t.Run("previously created nested object", func(t *testing.T) {
+	t.Run("previously created child object", func(t *testing.T) {
 		ctr := 0
 		reporter := newMockReporter(t)
 		reporter.reportCb = func() {
@@ -393,7 +393,7 @@ func TestExpect_ErrorPropagation(t *testing.T) {
 		assert.Equal(t, 2, ctr)
 	})
 
-	t.Run("newly created child objects of object's parent", func(t *testing.T) {
+	t.Run("newly created children of parent", func(t *testing.T) {
 		ctr := 0
 		reporter := newMockReporter(t)
 		reporter.reportCb = func() {
@@ -413,7 +413,7 @@ func TestExpect_ErrorPropagation(t *testing.T) {
 		assert.Equal(t, 2, ctr)
 	})
 
-	t.Run("previously created child objects of object's parent", func(t *testing.T) {
+	t.Run("previously created children of parent", func(t *testing.T) {
 		ctr := 0
 		reporter := newMockReporter(t)
 		reporter.reportCb = func() {
