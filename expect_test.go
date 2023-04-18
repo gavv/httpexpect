@@ -459,7 +459,6 @@ func TestExpect_ErrorPropagation(t *testing.T) {
 		val1.IsEqual("bar")
 		val1.chain.assertFlags(t, flagFailed)
 		assert.Equal(t, 2, ctr)
-
 	})
 }
 
