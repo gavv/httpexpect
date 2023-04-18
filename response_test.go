@@ -153,6 +153,34 @@ func TestResponse_RoundTripTime(t *testing.T) {
 	})
 }
 
+func TestResponse_Status(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	cases := []struct {
+		status     int
+		testStatus int
+	}{
+		{http.StatusOK, http.StatusOK},
+		{http.StatusOK, http.StatusNotFound},
+		{http.StatusNotFound, http.StatusNotFound},
+		{http.StatusNotFound, http.StatusOK},
+	}
+
+	for _, tc := range cases {
+		resp := NewResponse(reporter, &http.Response{
+			StatusCode: tc.status,
+		})
+
+		resp.Status(tc.testStatus)
+
+		if tc.status == tc.testStatus {
+			resp.chain.assert(t, success)
+		} else {
+			resp.chain.assert(t, failure)
+		}
+	}
+}
+
 func TestResponse_StatusRange(t *testing.T) {
 	reporter := newMockReporter(t)
 
@@ -165,8 +193,8 @@ func TestResponse_StatusRange(t *testing.T) {
 	}
 
 	cases := []struct {
-		Status int
-		Range  StatusRange
+		status      int
+		statusRange StatusRange
 	}{
 		{99, StatusRange(-1)},
 		{100, Status1xx},
@@ -182,15 +210,15 @@ func TestResponse_StatusRange(t *testing.T) {
 		{600, StatusRange(-1)},
 	}
 
-	for _, test := range cases {
+	for _, tc := range cases {
 		for _, r := range ranges {
 			resp := NewResponse(reporter, &http.Response{
-				StatusCode: test.Status,
+				StatusCode: tc.status,
 			})
 
 			resp.StatusRange(r)
 
-			if test.Range == r {
+			if tc.statusRange == r {
 				resp.chain.assert(t, success)
 			} else {
 				resp.chain.assert(t, failure)
@@ -203,42 +231,38 @@ func TestResponse_StatusList(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	cases := []struct {
-		Status int
-		List   []int
-		WantOK bool
+		status     int
+		statusList []int
+		result     chainResult
 	}{
 		{
 			http.StatusOK,
 			[]int{http.StatusOK, http.StatusBadRequest, http.StatusInternalServerError},
-			true,
+			success,
 		},
 		{
 			http.StatusBadRequest,
 			[]int{http.StatusOK, http.StatusBadRequest, http.StatusInternalServerError},
-			true,
+			success,
 		},
 		{
 			http.StatusOK,
 			[]int{http.StatusInternalServerError, http.StatusBadRequest},
-			false,
+			failure,
 		},
 		{
 			http.StatusBadGateway,
 			[]int{},
-			false,
+			failure,
 		},
 	}
 
-	for _, c := range cases {
+	for _, tc := range cases {
 		resp := NewResponse(reporter, &http.Response{
-			StatusCode: c.Status,
+			StatusCode: tc.status,
 		})
-		resp.StatusList(c.List...)
-		if c.WantOK {
-			resp.chain.assert(t, success)
-		} else {
-			resp.chain.assert(t, failure)
-		}
+		resp.StatusList(tc.statusList...)
+		resp.chain.assert(t, tc.result)
 	}
 }
 
@@ -257,28 +281,21 @@ func TestResponse_Headers(t *testing.T) {
 	}
 
 	resp := NewResponse(reporter, httpResp)
-	resp.chain.assert(t, success)
-	resp.chain.clear()
 
 	assert.Same(t, httpResp, resp.Raw())
 
-	resp.Status(http.StatusOK)
-	resp.chain.assert(t, success)
-	resp.chain.clear()
-
-	resp.Status(http.StatusNotFound)
-	resp.chain.assert(t, failure)
-	resp.chain.clear()
-
-	resp.Headers().IsEqual(headers).chain.assert(t, success)
+	resp.Headers().IsEqual(headers).
+		chain.assert(t, success)
 
 	for k, v := range headers {
 		for _, h := range []string{k, strings.ToLower(k), strings.ToUpper(k)} {
-			resp.Header(h).IsEqual(v[0]).chain.assert(t, success)
+			resp.Header(h).IsEqual(v[0]).
+				chain.assert(t, success)
 		}
 	}
 
-	resp.Header("Bad-Header").IsEmpty().chain.assert(t, success)
+	resp.Header("Bad-Header").IsEmpty().
+		chain.assert(t, success)
 }
 
 func TestResponse_Cookies(t *testing.T) {
