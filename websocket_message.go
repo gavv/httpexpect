@@ -66,6 +66,19 @@ func newWebsocketMessage(
 	wm.typ = typ
 	wm.content = content
 
+	opChain := wm.chain.enter("")
+	defer opChain.leave()
+
+	if len(closeCode) > 1 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected multiple closeCode arguments"),
+			},
+		})
+		return wm
+	}
+
 	if len(closeCode) != 0 {
 		wm.closeCode = closeCode[0]
 	}
