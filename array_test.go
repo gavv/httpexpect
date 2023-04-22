@@ -228,57 +228,58 @@ func TestArray_Alias(t *testing.T) {
 }
 
 func TestArray_Path(t *testing.T) {
-	t.Run("empty", func(t *testing.T) {
-		reporter := newMockReporter(t)
+	cases := []struct {
+		name  string
+		value []interface{}
+	}{
+		{
+			name:  "empty",
+			value: []interface{}{},
+		},
+		{
+			name:  "not empty",
+			value: []interface{}{"foo", 123.0},
+		},
+	}
 
-		data := []interface{}{}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			reporter := newMockReporter(t)
 
-		value := NewArray(reporter, data)
+			value := NewArray(reporter, tc.value)
 
-		assert.Equal(t, data, value.Path("$").Raw())
-		value.chain.assert(t, success)
-	})
-
-	t.Run("not empty", func(t *testing.T) {
-		reporter := newMockReporter(t)
-
-		data := []interface{}{}
-
-		value := NewArray(reporter, data)
-
-		assert.Equal(t, data, value.Path("$").Raw())
-		value.chain.assert(t, success)
-	})
+			assert.Equal(t, tc.value, value.Path("$").Raw())
+			value.chain.assert(t, success)
+		})
+	}
 }
 
 func TestArray_Schema(t *testing.T) {
-	t.Run("empty", func(t *testing.T) {
-		reporter := newMockReporter(t)
+	cases := []struct {
+		name  string
+		value []interface{}
+	}{
+		{
+			name:  "empty",
+			value: []interface{}{},
+		},
+		{
+			name:  "not empty",
+			value: []interface{}{"foo", 123.0},
+		},
+	}
 
-		data := []interface{}{}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			reporter := newMockReporter(t)
 
-		value := NewArray(reporter, data)
+			NewArray(reporter, tc.value).Schema(`{"type": "array"}`).
+				chain.assert(t, success)
 
-		value.Schema(`{"type": "array"}`)
-		value.chain.assert(t, success)
-
-		value.Schema(`{"type": "object"}`)
-		value.chain.assert(t, failure)
-	})
-
-	t.Run("not empty", func(t *testing.T) {
-		reporter := newMockReporter(t)
-
-		data := []interface{}{}
-
-		value := NewArray(reporter, data)
-
-		value.Schema(`{"type": "array"}`)
-		value.chain.assert(t, success)
-
-		value.Schema(`{"type": "object"}`)
-		value.chain.assert(t, failure)
-	})
+			NewArray(reporter, tc.value).Schema(`{"type": "object"}`).
+				chain.assert(t, failure)
+		})
+	}
 }
 
 func TestArray_Getters(t *testing.T) {

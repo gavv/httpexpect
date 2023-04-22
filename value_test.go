@@ -1141,7 +1141,7 @@ func TestValue_Schema(t *testing.T) {
 			}
 		},
 		"require": ["foo", "bar"]
-		}`
+	}`
 
 	t.Run("schema with valid data", func(t *testing.T) {
 		reporter := newMockReporter(t)

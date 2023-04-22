@@ -280,15 +280,15 @@ func TestObject_Path(t *testing.T) {
 func TestObject_Schema(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	value := NewObject(reporter, map[string]interface{}{
+	data := map[string]interface{}{
 		"foo": "bar",
-	})
+	}
 
-	value.Schema(`{"type": "object"}`)
-	value.chain.assert(t, success)
+	NewObject(reporter, data).Schema(`{"type": "object"}`).
+		chain.assert(t, success)
 
-	value.Schema(`{"type": "array"}`)
-	value.chain.assert(t, failure)
+	NewObject(reporter, data).Schema(`{"type": "array"}`).
+		chain.assert(t, failure)
 }
 
 func TestObject_Getters(t *testing.T) {
@@ -1587,7 +1587,6 @@ func TestObject_Transform(t *testing.T) {
 			if v, err := strconv.ParseFloat(val.(string), 64); err == nil {
 				return myInt(v)
 			}
-
 			return val
 		})
 

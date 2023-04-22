@@ -157,13 +157,11 @@ func TestString_Path(t *testing.T) {
 func TestString_Schema(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	value := NewString(reporter, "foo")
+	NewString(reporter, "foo").Schema(`{"type": "string"}`).
+		chain.assert(t, success)
 
-	value.Schema(`{"type": "string"}`)
-	value.chain.assert(t, success)
-
-	value.Schema(`{"type": "object"}`)
-	value.chain.assert(t, failure)
+	NewString(reporter, "foo").Schema(`{"type": "object"}`).
+		chain.assert(t, failure)
 }
 
 func TestString_Getters(t *testing.T) {
