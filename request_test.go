@@ -1775,6 +1775,36 @@ func TestRequest_BodyMultipart(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("missing WithMultipart", func(t *testing.T) {
+		cases := []struct {
+			name  string
+			reqFn func(*Request)
+		}{
+			{
+				name: "WithFile",
+				reqFn: func(req *Request) {
+					req.WithFile("test_key", "test_file", strings.NewReader("test_data"))
+				},
+			},
+			{
+				name: "WithFileBytes",
+				reqFn: func(req *Request) {
+					req.WithFileBytes("test_key", "test_file", []byte("test_data"))
+				},
+			},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				req := NewRequestC(config, "POST", "url")
+
+				tc.reqFn(req)
+				req.chain.assert(t, failure)
+			})
+		}
+
+	})
 }
 
 func TestRequest_BodyJSON(t *testing.T) {
@@ -3252,85 +3282,138 @@ func TestRequest_Conflicts(t *testing.T) {
 	}
 
 	t.Run("body conflict", func(t *testing.T) {
-		cases := []func(req *Request){
-			func(req *Request) {
-				req.WithChunked(nil)
-			},
-			func(req *Request) {
-				req.WithBytes(nil)
-			},
-			func(req *Request) {
-				req.WithText("")
-			},
-			func(req *Request) {
-				req.WithJSON(map[string]interface{}{"a": "b"})
-			},
-			func(req *Request) {
-				req.WithForm(map[string]interface{}{"a": "b"})
-				req.Expect()
-			},
-			func(req *Request) {
-				req.WithFormField("a", "b")
-				req.Expect()
-			},
-			func(req *Request) {
-				req.WithMultipart()
-			},
+		cases := []struct {
+			name string
+			fn   func(req *Request)
+		}{
+			{"WithChunked",
+				func(req *Request) {
+					req.WithChunked(strings.NewReader("test"))
+				}},
+			{"WithBytes",
+				func(req *Request) {
+					req.WithBytes([]byte("test"))
+				}},
+			{"WithText",
+				func(req *Request) {
+					req.WithText("test")
+				}},
+			{"WithJSON",
+				func(req *Request) {
+					req.WithJSON(map[string]interface{}{"a": "b"})
+				}},
+			{"WithForm",
+				func(req *Request) {
+					req.WithForm(map[string]interface{}{"a": "b"})
+				}},
+			{"WithFormField",
+				func(req *Request) {
+					req.WithFormField("a", "b")
+				}},
+			{"WithMultipart",
+				func(req *Request) {
+					req.WithMultipart()
+				}},
 		}
 
-		for _, conflictFunc := range cases {
-			req := NewRequestC(config, "GET", "url")
-			req.WithChunked(nil)
-			req.chain.assert(t, success)
-			conflictFunc(req)
-			req.chain.assert(t, failure)
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				req := NewRequestC(config, "GET", "url")
+
+				req.WithChunked(strings.NewReader("test"))
+				req.chain.assert(t, success)
+
+				tc.fn(req)
+				resp := req.Expect()
+				req.chain.assert(t, failure)
+				resp.chain.assert(t, failure)
+			})
+
+			t.Run(tc.name+" - reversed", func(t *testing.T) {
+				req := NewRequestC(config, "GET", "url")
+
+				tc.fn(req)
+				req.chain.assert(t, success)
+
+				req.WithChunked(strings.NewReader("test"))
+				resp := req.Expect()
+				req.chain.assert(t, failure)
+				resp.chain.assert(t, failure)
+			})
 		}
 	})
 
 	t.Run("type conflict", func(t *testing.T) {
-		cases := []func(req *Request){
-			func(req *Request) {
-				req.WithJSON(map[string]interface{}{"a": "b"})
-			},
-			func(req *Request) {
-				req.WithJSON(map[string]interface{}{"a": "b"})
-			},
-			func(req *Request) {
-				req.WithForm(map[string]interface{}{"a": "b"})
-			},
-			func(req *Request) {
-				req.WithFormField("a", "b")
-			},
-			func(req *Request) {
-				req.WithMultipart()
-			},
+		cases := []struct {
+			name string
+			fn   func(req *Request)
+		}{
+			{"WithJSON",
+				func(req *Request) {
+					req.WithJSON(map[string]interface{}{"a": "b"})
+				}},
+			{"WithForm",
+				func(req *Request) {
+					req.WithForm(map[string]interface{}{"a": "b"})
+				}},
+			{"WithFormField",
+				func(req *Request) {
+					req.WithFormField("a", "b")
+				}},
+			{"WithMultipart",
+				func(req *Request) {
+					req.WithMultipart()
+				}},
 		}
 
-		for _, conflictFunc := range cases {
-			req := NewRequestC(config, "GET", "url")
-			req.WithText("")
-			req.chain.assert(t, success)
-			conflictFunc(req)
-			req.chain.assert(t, failure)
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				req := NewRequestC(config, "GET", "url")
+
+				req.WithText("test")
+				req.chain.assert(t, success)
+
+				tc.fn(req)
+				req.chain.assert(t, failure)
+			})
+
+			t.Run(tc.name+" - reversed", func(t *testing.T) {
+				req := NewRequestC(config, "GET", "url")
+
+				tc.fn(req)
+				req.chain.assert(t, success)
+
+				req.WithText("test")
+				req.chain.assert(t, failure)
+			})
 		}
 	})
 
 	t.Run("multipart conflict", func(t *testing.T) {
-		cases := []func(req *Request){
-			func(req *Request) {
-				req.WithForm(map[string]interface{}{"a": "b"})
-			},
-			func(req *Request) {
-				req.WithFormField("a", "b")
-			},
+		cases := []struct {
+			name string
+			fn   func(req *Request)
+		}{
+			{"WithForm",
+				func(req *Request) {
+					req.WithForm(map[string]interface{}{"a": "b"})
+				}},
+			{"WithFormField",
+				func(req *Request) {
+					req.WithFormField("a", "b")
+				}},
 		}
 
-		for _, conflictFunc := range cases {
-			req := NewRequestC(config, "GET", "url")
-			conflictFunc(req)
-			req.chain.assert(t, success)
-			req.WithMultipart()
-			req.chain.assert(t, failure)
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				req := NewRequestC(config, "GET", "url")
+
+				tc.fn(req)
+				req.chain.assert(t, success)
+
+				req.WithMultipart()
+				req.chain.assert(t, failure)
+			})
 		}
 	})
 }
