@@ -260,6 +260,37 @@ func TestObject_Alias(t *testing.T) {
 	assert.Equal(t, []string{"bar", "Values()"}, childValue.chain.context.AliasedPath)
 }
 
+func TestObject_Path(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	m := map[string]interface{}{
+		"foo": 123.0,
+		"bar": []interface{}{"456", 789.0},
+		"baz": map[string]interface{}{
+			"a": "b",
+		},
+	}
+
+	value := NewObject(reporter, m)
+
+	assert.Equal(t, m, value.Path("$").Raw())
+	value.chain.assert(t, success)
+}
+
+func TestObject_Schema(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewObject(reporter, map[string]interface{}{
+		"foo": "bar",
+	})
+
+	value.Schema(`{"type": "object"}`)
+	value.chain.assert(t, success)
+
+	value.Schema(`{"type": "array"}`)
+	value.chain.assert(t, failure)
+}
+
 func TestObject_Getters(t *testing.T) {
 	reporter := newMockReporter(t)
 
@@ -285,18 +316,6 @@ func TestObject_Getters(t *testing.T) {
 
 	assert.Equal(t, m, value.Raw())
 	value.chain.assert(t, success)
-	value.chain.clear()
-
-	assert.Equal(t, m, value.Path("$").Raw())
-	value.chain.assert(t, success)
-	value.chain.clear()
-
-	value.Schema(`{"type": "object"}`)
-	value.chain.assert(t, success)
-	value.chain.clear()
-
-	value.Schema(`{"type": "array"}`)
-	value.chain.assert(t, failure)
 	value.chain.clear()
 
 	value.Keys().ContainsOnly(keys...)
@@ -1567,9 +1586,9 @@ func TestObject_Transform(t *testing.T) {
 		newObject := object.Transform(func(_ string, val interface{}) interface{} {
 			if v, err := strconv.ParseFloat(val.(string), 64); err == nil {
 				return myInt(v)
-			} else {
-				return val
 			}
+
+			return val
 		})
 
 		assert.Equal(t,

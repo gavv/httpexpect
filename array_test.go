@@ -227,6 +227,60 @@ func TestArray_Alias(t *testing.T) {
 	assert.Equal(t, []string{"foo", "Filter()"}, childValue.chain.context.AliasedPath)
 }
 
+func TestArray_Path(t *testing.T) {
+	t.Run("empty", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		data := []interface{}{}
+
+		value := NewArray(reporter, data)
+
+		assert.Equal(t, data, value.Path("$").Raw())
+		value.chain.assert(t, success)
+	})
+
+	t.Run("not empty", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		data := []interface{}{}
+
+		value := NewArray(reporter, data)
+
+		assert.Equal(t, data, value.Path("$").Raw())
+		value.chain.assert(t, success)
+	})
+}
+
+func TestArray_Schema(t *testing.T) {
+	t.Run("empty", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		data := []interface{}{}
+
+		value := NewArray(reporter, data)
+
+		value.Schema(`{"type": "array"}`)
+		value.chain.assert(t, success)
+
+		value.Schema(`{"type": "object"}`)
+		value.chain.assert(t, failure)
+	})
+
+	t.Run("not empty", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		data := []interface{}{}
+
+		value := NewArray(reporter, data)
+
+		value.Schema(`{"type": "array"}`)
+		value.chain.assert(t, success)
+
+		value.Schema(`{"type": "object"}`)
+		value.chain.assert(t, failure)
+	})
+}
+
 func TestArray_Getters(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
 		reporter := newMockReporter(t)
@@ -237,18 +291,6 @@ func TestArray_Getters(t *testing.T) {
 
 		assert.Equal(t, data, value.Raw())
 		value.chain.assert(t, success)
-		value.chain.clear()
-
-		assert.Equal(t, data, value.Path("$").Raw())
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		value.Schema(`{"type": "array"}`)
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		value.Schema(`{"type": "object"}`)
-		value.chain.assert(t, failure)
 		value.chain.clear()
 
 		assert.Equal(t, 0.0, value.Length().Raw())
@@ -281,18 +323,6 @@ func TestArray_Getters(t *testing.T) {
 
 		assert.Equal(t, data, value.Raw())
 		value.chain.assert(t, success)
-		value.chain.clear()
-
-		assert.Equal(t, data, value.Path("$").Raw())
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		value.Schema(`{"type": "array"}`)
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		value.Schema(`{"type": "object"}`)
-		value.chain.assert(t, failure)
 		value.chain.clear()
 
 		assert.Equal(t, 2.0, value.Length().Raw())

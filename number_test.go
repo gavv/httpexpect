@@ -135,26 +135,34 @@ func TestNumber_Alias(t *testing.T) {
 	assert.Equal(t, []string{"foo"}, value.chain.context.AliasedPath)
 }
 
-func TestNumber_Getters(t *testing.T) {
+func TestNumber_Path(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewNumber(reporter, 123.0)
+
+	assert.Equal(t, 123.0, value.Path("$").Raw())
+	value.chain.assert(t, success)
+}
+
+func TestNumber_Schema(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewNumber(reporter, 123.0)
+
+	value.Schema(`{"type": "number"}`)
+	value.chain.assert(t, success)
+
+	value.Schema(`{"type": "object"}`)
+	value.chain.assert(t, failure)
+}
+
+func TestNumber_Raw(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewNumber(reporter, 123.0)
 
 	assert.Equal(t, 123.0, value.Raw())
 	value.chain.assert(t, success)
-	value.chain.clear()
-
-	assert.Equal(t, 123.0, value.Path("$").Raw())
-	value.chain.assert(t, success)
-	value.chain.clear()
-
-	value.Schema(`{"type": "number"}`)
-	value.chain.assert(t, success)
-	value.chain.clear()
-
-	value.Schema(`{"type": "object"}`)
-	value.chain.assert(t, failure)
-	value.chain.clear()
 }
 
 func TestNumber_IsEqual(t *testing.T) {

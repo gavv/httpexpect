@@ -145,6 +145,27 @@ func TestString_Alias(t *testing.T) {
 	assert.Equal(t, []string{"foo", "AsNumber()"}, childValue.chain.context.AliasedPath)
 }
 
+func TestString_Path(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewString(reporter, "foo")
+
+	assert.Equal(t, "foo", value.Path("$").Raw())
+	value.chain.assert(t, success)
+}
+
+func TestString_Schema(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewString(reporter, "foo")
+
+	value.Schema(`{"type": "string"}`)
+	value.chain.assert(t, success)
+
+	value.Schema(`{"type": "object"}`)
+	value.chain.assert(t, failure)
+}
+
 func TestString_Getters(t *testing.T) {
 	reporter := newMockReporter(t)
 
@@ -152,18 +173,6 @@ func TestString_Getters(t *testing.T) {
 
 	assert.Equal(t, "foo", value.Raw())
 	value.chain.assert(t, success)
-	value.chain.clear()
-
-	assert.Equal(t, "foo", value.Path("$").Raw())
-	value.chain.assert(t, success)
-	value.chain.clear()
-
-	value.Schema(`{"type": "string"}`)
-	value.chain.assert(t, success)
-	value.chain.clear()
-
-	value.Schema(`{"type": "object"}`)
-	value.chain.assert(t, failure)
 	value.chain.clear()
 
 	num := value.Length()

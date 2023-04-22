@@ -111,26 +111,34 @@ func TestBoolean_Alias(t *testing.T) {
 	assert.Equal(t, []string{"foo"}, value.chain.context.AliasedPath)
 }
 
-func TestBoolean_Getters(t *testing.T) {
+func TestBoolean_Path(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewBoolean(reporter, true)
+
+	assert.Equal(t, true, value.Path("$").Raw())
+	value.chain.assert(t, success)
+}
+
+func TestBoolean_Schema(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewBoolean(reporter, true)
+
+	value.Schema(`{"type": "boolean"}`)
+	value.chain.assert(t, success)
+
+	value.Schema(`{"type": "object"}`)
+	value.chain.assert(t, failure)
+}
+
+func TestBoolean_Raw(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewBoolean(reporter, true)
 
 	assert.Equal(t, true, value.Raw())
 	value.chain.assert(t, success)
-	value.chain.clear()
-
-	assert.Equal(t, true, value.Path("$").Raw())
-	value.chain.assert(t, success)
-	value.chain.clear()
-
-	value.Schema(`{"type": "boolean"}`)
-	value.chain.assert(t, success)
-	value.chain.clear()
-
-	value.Schema(`{"type": "object"}`)
-	value.chain.assert(t, failure)
-	value.chain.clear()
 }
 
 func TestBoolean_IsEqual(t *testing.T) {
