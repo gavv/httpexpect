@@ -1130,8 +1130,6 @@ func TestValue_PathExpressions(t *testing.T) {
 }
 
 func TestValue_Schema(t *testing.T) {
-	reporter := newMockReporter(t)
-
 	schema := `{
 		"type": "object",
 		"properties": {
@@ -1143,45 +1141,132 @@ func TestValue_Schema(t *testing.T) {
 			}
 		},
 		"require": ["foo", "bar"]
-	}`
+		}`
 
-	data1 := map[string]interface{}{
-		"foo": "a",
-		"bar": 1,
-	}
+	t.Run("schema with valid data", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		data := map[string]interface{}{
+			"foo": "a",
+			"bar": 1,
+		}
+		NewValue(reporter, data).Schema(schema).
+			chain.assert(t, success)
+	})
 
-	data2 := map[string]interface{}{
-		"foo": "a",
-		"bar": "b",
-	}
+	t.Run("byte slice schema with valid data", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		data := map[string]interface{}{
+			"foo": "a",
+			"bar": 1,
+		}
+		NewValue(reporter, data).Schema([]byte(schema)).
+			chain.assert(t, success)
+	})
 
-	NewValue(reporter, data1).Schema(schema).chain.assert(t, success)
-	NewValue(reporter, data2).Schema(schema).chain.assert(t, failure)
+	t.Run("schema with invalid data", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		data := map[string]interface{}{
+			"foo": "a",
+			"bar": "b",
+		}
+		NewValue(reporter, data).Schema(schema).
+			chain.assert(t, failure)
+	})
 
-	NewValue(reporter, data1).Schema([]byte(schema)).chain.assert(t, success)
-	NewValue(reporter, data2).Schema([]byte(schema)).chain.assert(t, failure)
+	t.Run("byte slice schema with invalid data", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		data := map[string]interface{}{
+			"foo": "a",
+			"bar": "b",
+		}
+		NewValue(reporter, data).Schema([]byte(schema)).
+			chain.assert(t, failure)
+	})
 
-	var b interface{}
-	err := json.Unmarshal([]byte(schema), &b)
-	require.Nil(t, err)
+	t.Run("schema from unmarshalled JSON with valid data", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		data := map[string]interface{}{
+			"foo": "a",
+			"bar": 1,
+		}
+		var b interface{}
+		err := json.Unmarshal([]byte(schema), &b)
+		require.Nil(t, err)
+		NewValue(reporter, data).Schema(b).
+			chain.assert(t, success)
+	})
 
-	NewValue(reporter, data1).Schema(b).chain.assert(t, success)
-	NewValue(reporter, data2).Schema(b).chain.assert(t, failure)
+	t.Run("schema from unmarshalled JSON with invalid data", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		data := map[string]interface{}{
+			"foo": "a",
+			"bar": "b",
+		}
+		var b interface{}
+		err := json.Unmarshal([]byte(schema), &b)
+		require.Nil(t, err)
+		NewValue(reporter, data).Schema(b).
+			chain.assert(t, failure)
+	})
 
-	tmp, _ := ioutil.TempFile("", "httpexpect")
-	defer os.Remove(tmp.Name())
+	t.Run("schema with valid file url with valid data", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		data := map[string]interface{}{
+			"foo": "a",
+			"bar": 1,
+		}
+		tmp, _ := ioutil.TempFile("", "httpexpect")
+		defer os.Remove(tmp.Name())
 
-	_, err = tmp.Write([]byte(schema))
-	require.Nil(t, err)
+		_, err := tmp.Write([]byte(schema))
+		require.Nil(t, err)
 
-	err = tmp.Close()
-	require.Nil(t, err)
+		err = tmp.Close()
+		require.Nil(t, err)
 
-	url := "file://" + tmp.Name()
+		url := "file://" + tmp.Name()
+		NewValue(reporter, data).Schema(url).
+			chain.assert(t, success)
+	})
 
-	NewValue(reporter, data1).Schema(url).chain.assert(t, success)
-	NewValue(reporter, data2).Schema(url).chain.assert(t, failure)
+	t.Run("schema with valid file url with invalid data", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		data := map[string]interface{}{
+			"foo": "a",
+			"bar": "b",
+		}
 
-	NewValue(reporter, data1).Schema("file:///bad/path").chain.assert(t, failure)
-	NewValue(reporter, data1).Schema("{ bad json").chain.assert(t, failure)
+		tmp, _ := ioutil.TempFile("", "httpexpect")
+		defer os.Remove(tmp.Name())
+
+		_, err := tmp.Write([]byte(schema))
+		require.Nil(t, err)
+
+		err = tmp.Close()
+		require.Nil(t, err)
+
+		url := "file://" + tmp.Name()
+		NewValue(reporter, data).Schema(url).
+			chain.assert(t, failure)
+	})
+
+	t.Run("invalid schema file url", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		data := map[string]interface{}{
+			"foo": "a",
+			"bar": 1,
+		}
+		NewValue(reporter, data).Schema("file:///bad/path").
+			chain.assert(t, failure)
+	})
+
+	t.Run("invalid schema json", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		data := map[string]interface{}{
+			"foo": "a",
+			"bar": 1,
+		}
+		NewValue(reporter, data).Schema("{ bad json").
+			chain.assert(t, failure)
+	})
 }
