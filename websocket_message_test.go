@@ -73,6 +73,33 @@ func TestWebsocketMessage_Alias(t *testing.T) {
 	assert.Equal(t, []string{"foo", "Body()"}, childValue.chain.context.AliasedPath)
 }
 
+func TestWebsocketMessage_CloseCode(t *testing.T) {
+	t.Run("close code is not passed", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		NewWebsocketMessage(reporter, websocket.CloseMessage, nil).Code(0).
+			chain.assert(t, success)
+		NewWebsocketMessage(reporter, websocket.CloseMessage, nil).NotCode(0).
+			chain.assert(t, failure)
+	})
+
+	t.Run("single close code is passed", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		NewWebsocketMessage(reporter, websocket.CloseMessage, nil, 10).Code(10).
+			chain.assert(t, success)
+		NewWebsocketMessage(reporter, websocket.CloseMessage, nil, 10).NotCode(10).
+			chain.assert(t, failure)
+	})
+
+	t.Run("multiple close code is passed", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		NewWebsocketMessage(reporter, websocket.CloseMessage, nil, 10, 20).
+			chain.assert(t, failure)
+	})
+}
+
 func TestWebsocketMessage_CloseMessage(t *testing.T) {
 	t.Run("CloseMessage type with functions", func(t *testing.T) {
 		cases := []struct {
@@ -672,32 +699,5 @@ func TestWebsocketMessage_Codes(t *testing.T) {
 		for n := 0; n < 2000; n++ {
 			assert.NotEmpty(t, wsCloseCode(n).String())
 		}
-	})
-}
-
-func TestWebsocketMessage_CloseCode(t *testing.T) {
-	t.Run("close code is not passed", func(t *testing.T) {
-		reporter := newMockReporter(t)
-
-		NewWebsocketMessage(reporter, websocket.CloseMessage, nil).Code(0).
-			chain.assert(t, success)
-		NewWebsocketMessage(reporter, websocket.CloseMessage, nil).NotCode(0).
-			chain.assert(t, failure)
-	})
-
-	t.Run("single close code is passed", func(t *testing.T) {
-		reporter := newMockReporter(t)
-
-		NewWebsocketMessage(reporter, websocket.CloseMessage, nil, 10).Code(10).
-			chain.assert(t, success)
-		NewWebsocketMessage(reporter, websocket.CloseMessage, nil, 10).NotCode(10).
-			chain.assert(t, failure)
-	})
-
-	t.Run("multiple close code is passed", func(t *testing.T) {
-		reporter := newMockReporter(t)
-
-		NewWebsocketMessage(reporter, websocket.CloseMessage, nil, 10, 20).
-			chain.assert(t, failure)
 	})
 }

@@ -63,11 +63,11 @@ func newWebsocketMessage(
 ) *WebsocketMessage {
 	wm := newEmptyWebsocketMessage(parent)
 
-	wm.typ = typ
-	wm.content = content
-
 	opChain := wm.chain.enter("")
 	defer opChain.leave()
+
+	wm.typ = typ
+	wm.content = content
 
 	if len(closeCode) > 1 {
 		opChain.fail(AssertionFailure{
