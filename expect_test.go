@@ -341,7 +341,7 @@ func TestExpect_Branches(t *testing.T) {
 	e5.chain.assertFlags(t, 0)
 }
 
-func TestExpect_ErrorPropagation(t *testing.T) {
+func TestExpect_Propagation(t *testing.T) {
 	t.Run("subsequent operations", func(t *testing.T) {
 		ctr := 0
 		reporter := newMockReporter(t)
@@ -350,62 +350,65 @@ func TestExpect_ErrorPropagation(t *testing.T) {
 		}
 
 		// Failed operation
-		arr := NewArray(reporter, []interface{}{"foo"})
-		arr.IsEmpty()
-		arr.chain.assertFlags(t, flagFailed)
+		value := NewArray(reporter, []interface{}{"foo"})
+		value.IsEmpty()
+		value.chain.assertFlags(t, flagFailed)
 		assert.Equal(t, 1, ctr)
 
 		// Subsequent failed operation won't report failures
-		arr.IsEmpty()
-		arr.chain.assertFlags(t, flagFailed)
+		value.IsEmpty()
+		value.chain.assertFlags(t, flagFailed)
 		assert.Equal(t, 1, ctr)
 	})
 
-	t.Run("newly created child objects", func(t *testing.T) {
+	t.Run("newly created child", func(t *testing.T) {
 		ctr := 0
 		reporter := newMockReporter(t)
 		reporter.reportCb = func() {
 			ctr++
 		}
 
-		// Parent's failed operation
-		arr := NewArray(reporter, []interface{}{"foo"})
-		arr.IsEmpty()
-		arr.chain.assertFlags(t, flagFailed)
+		// Parent's failed operation reports failure
+		parent := NewArray(reporter, []interface{}{"foo"})
+		parent.IsEmpty()
+		parent.chain.assertFlags(t, flagFailed)
 		assert.Equal(t, 1, ctr)
 
+		// Child created after parent's failure
 		// Child's failed operation won't report failures
-		val := arr.Value(0)
-		val.IsEqual("bar")
-		val.chain.assertFlags(t, flagFailed)
+		child := parent.Value(0)
+		child.IsEqual("bar")
+		parent.chain.assertFlags(t, flagFailed|flagFailedChildren)
+		child.chain.assertFlags(t, flagFailed)
 		assert.Equal(t, 1, ctr)
 	})
 
-	t.Run("previously created child object", func(t *testing.T) {
+	t.Run("previously created child", func(t *testing.T) {
 		ctr := 0
 		reporter := newMockReporter(t)
 		reporter.reportCb = func() {
 			ctr++
 		}
 
-		// Parent
-		arr := NewArray(reporter, []interface{}{"foo"})
+		// Parent and child
+		parent := NewArray(reporter, []interface{}{"foo"})
+		child := parent.Value(0)
 
-		// Child
-		val := arr.Value(0)
-
-		// Parent's failed operation
-		arr.IsEmpty()
-		arr.chain.assertFlags(t, flagFailed)
+		// Parent's failed operation reports failure
+		parent.IsEmpty()
+		parent.chain.assertFlags(t, flagFailed)
+		child.chain.assertFlags(t, 0)
 		assert.Equal(t, 1, ctr)
 
-		// Previously created child's failed operation will report failures
-		val.IsEqual("bar")
-		val.chain.assertFlags(t, flagFailed)
+		// Child was created before parent's failure
+		// Child's failed operation will report failures
+		child.IsEqual("bar")
+		parent.chain.assertFlags(t, flagFailed|flagFailedChildren)
+		child.chain.assertFlags(t, flagFailed)
 		assert.Equal(t, 2, ctr)
 	})
 
-	t.Run("newly created children of parent", func(t *testing.T) {
+	t.Run("newly created child of parent", func(t *testing.T) {
 		ctr := 0
 		reporter := newMockReporter(t)
 		reporter.reportCb = func() {
@@ -413,25 +416,26 @@ func TestExpect_ErrorPropagation(t *testing.T) {
 		}
 
 		// Parent
-		arr := NewArray(reporter, []interface{}{"foo"})
+		parent := NewArray(reporter, []interface{}{"foo"})
 
-		// We have 2 children, Child_1 and Child_2
-		// In this case, Child_2 as a newly created children of parent
-
-		// Child_1's failed operation will report failures
-		val1 := arr.Value(0)
-		val1.IsEqual("bar")
-		val1.chain.assertFlags(t, flagFailed)
+		// Child's failed operation will report failures
+		child := parent.Value(0)
+		child.IsEqual("bar")
+		parent.chain.assertFlags(t, flagFailedChildren)
+		child.chain.assertFlags(t, flagFailed)
 		assert.Equal(t, 1, ctr)
 
-		// Child_2's failed operation will report failures
-		val2 := arr.Value(0)
-		val2.IsEqual("bar")
-		val2.chain.assertFlags(t, flagFailed)
+		// New child created after failure in another child
+		// New child's failed operation will report failures
+		newChild := parent.Value(0)
+		newChild.IsEqual("bar")
+		parent.chain.assertFlags(t, flagFailedChildren)
+		child.chain.assertFlags(t, flagFailed)
+		newChild.chain.assertFlags(t, flagFailed)
 		assert.Equal(t, 2, ctr)
 	})
 
-	t.Run("previously created children of parent", func(t *testing.T) {
+	t.Run("previously created child of parent", func(t *testing.T) {
 		ctr := 0
 		reporter := newMockReporter(t)
 		reporter.reportCb = func() {
@@ -439,25 +443,24 @@ func TestExpect_ErrorPropagation(t *testing.T) {
 		}
 
 		// Parent
-		arr := NewArray(reporter, []interface{}{"foo"})
+		parent := NewArray(reporter, []interface{}{"foo"})
 
-		// We have 2 children, Child_1 and Child_2
-		// In this case, Child_1 as a previously created children of parent
+		// Children
+		child1 := parent.Value(0)
+		child2 := parent.Value(0)
 
-		// Child_1
-		val1 := arr.Value(0)
-
-		// Child_2
-		val2 := arr.Value(0)
-
-		// Child_2's failed operation will report failures
-		val2.IsEqual("bar")
-		val2.chain.assertFlags(t, flagFailed)
+		// child1's failed operation will report failures
+		child1.IsEqual("bar")
+		parent.chain.assertFlags(t, flagFailedChildren)
+		child1.chain.assertFlags(t, flagFailed)
+		child2.chain.assertFlags(t, 0)
 		assert.Equal(t, 1, ctr)
 
-		// Child_1's failed operation will report failures
-		val1.IsEqual("bar")
-		val1.chain.assertFlags(t, flagFailed)
+		// child2's failed operation will report failures
+		child2.IsEqual("bar")
+		parent.chain.assertFlags(t, flagFailedChildren)
+		child1.chain.assertFlags(t, flagFailed)
+		child2.chain.assertFlags(t, flagFailed)
 		assert.Equal(t, 2, ctr)
 	})
 }
