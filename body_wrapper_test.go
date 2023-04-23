@@ -989,3 +989,66 @@ func TestBodyWrapper_DisableRewinds(t *testing.T) {
 		assert.Equal(t, 1, body.eofCount)
 	})
 }
+
+func TestBodyWrapper_DisableRewindsErrors(t *testing.T) {
+	bodyText := "test_body"
+
+	t.Run("rewinds are disabled before first read", func(t *testing.T) {
+		body := newMockBody(bodyText)
+		wrp := newBodyWrapper(body, nil)
+		bodyErr := errors.New("read_error")
+		body.readErr = bodyErr
+		b := make([]byte, len(bodyText)+1)
+
+		wrp.DisableRewinds()
+
+		_, err := wrp.Read(b)
+		assert.EqualError(t, err, bodyErr.Error())
+		assert.Equal(t, 1, body.readCount)
+
+		_, err = wrp.Read(b)
+		assert.EqualError(t, err, bodyErr.Error())
+		assert.Equal(t, 2, body.readCount)
+	})
+
+	t.Run("rewinds are disabled after read error", func(t *testing.T) {
+		body := newMockBody(bodyText)
+		wrp := newBodyWrapper(body, nil)
+		bodyErr := errors.New("read_error")
+		body.readErr = bodyErr
+		b := make([]byte, len(bodyText)+1)
+
+		_, err := wrp.Read(b)
+		assert.EqualError(t, err, bodyErr.Error())
+		assert.Equal(t, 1, body.readCount)
+
+		wrp.DisableRewinds()
+
+		_, err = wrp.Read(b)
+		assert.EqualError(t, err, bodyErr.Error())
+		assert.Equal(t, 1, body.readCount)
+	})
+
+	t.Run("rewinds are disabled after close error", func(t *testing.T) {
+		body := newMockBody(bodyText)
+		wrp := newBodyWrapper(body, nil)
+		bodyErr := errors.New("close_error")
+		body.closeErr = bodyErr
+		b := make([]byte, len(bodyText)+1)
+
+		err := wrp.Close()
+		assert.True(t, wrp.isFullyRead)
+		assert.EqualError(t, err, bodyErr.Error())
+		assert.Equal(t, 2, body.readCount)
+
+		wrp.DisableRewinds()
+
+		_, err = wrp.Read(b)
+		assert.EqualError(t, err, bodyErr.Error())
+		assert.Equal(t, 2, body.readCount)
+
+		_, err = wrp.Read(b)
+		assert.EqualError(t, err, bodyErr.Error())
+		assert.Equal(t, 2, body.readCount)
+	})
+}
