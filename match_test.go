@@ -15,7 +15,7 @@ func TestMatch_FailedChain(t *testing.T) {
 	value.Alias("foo")
 
 	value.Length().chain.assert(t, failure)
-	value.Index(0).chain.assert(t, failure)
+	value.Value(0).chain.assert(t, failure)
 	value.Name("").chain.assert(t, failure)
 
 	value.IsEmpty()
@@ -66,9 +66,9 @@ func TestMatch_Alias(t *testing.T) {
 	assert.Equal(t, []string{"Match()"}, value.chain.context.Path)
 	assert.Equal(t, []string{"foo"}, value.chain.context.AliasedPath)
 
-	childValue := value.Index(0)
-	assert.Equal(t, []string{"Match()", "Index(0)"}, childValue.chain.context.Path)
-	assert.Equal(t, []string{"foo", "Index(0)"}, childValue.chain.context.AliasedPath)
+	childValue := value.Value(0)
+	assert.Equal(t, []string{"Match()", "Value(0)"}, childValue.chain.context.Path)
+	assert.Equal(t, []string{"foo", "Value(0)"}, childValue.chain.context.AliasedPath)
 }
 
 func TestMatch_Getters(t *testing.T) {
@@ -83,20 +83,20 @@ func TestMatch_Getters(t *testing.T) {
 
 	assert.Equal(t, 3.0, value.Length().Raw())
 
-	assert.Equal(t, "m0", value.Index(0).Raw())
-	assert.Equal(t, "m1", value.Index(1).Raw())
-	assert.Equal(t, "m2", value.Index(2).Raw())
+	assert.Equal(t, "m0", value.Value(0).Raw())
+	assert.Equal(t, "m1", value.Value(1).Raw())
+	assert.Equal(t, "m2", value.Value(2).Raw())
 	value.chain.assert(t, success)
 
 	assert.Equal(t, "m1", value.Name("n1").Raw())
 	assert.Equal(t, "m2", value.Name("n2").Raw())
 	value.chain.assert(t, success)
 
-	assert.Equal(t, "", value.Index(-1).Raw())
+	assert.Equal(t, "", value.Value(-1).Raw())
 	value.chain.assert(t, failure)
 	value.chain.clear()
 
-	assert.Equal(t, "", value.Index(3).Raw())
+	assert.Equal(t, "", value.Value(3).Raw())
 	value.chain.assert(t, failure)
 	value.chain.clear()
 

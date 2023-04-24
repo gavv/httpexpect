@@ -359,9 +359,9 @@ m := e.GET("/users/john").
 	Expect().
 	Header("Location").Match("http://(?P<host>.+)/users/(?P<user>.+)")
 
-m.Index(0).IsEqual("http://example.com/users/john")
-m.Index(1).IsEqual("example.com")
-m.Index(2).IsEqual("john")
+m.Value(0).IsEqual("http://example.com/users/john")
+m.Value(1).IsEqual("example.com")
+m.Value(2).IsEqual("john")
 
 m.Name("host").IsEqual("example.com")
 m.Name("user").IsEqual("john")

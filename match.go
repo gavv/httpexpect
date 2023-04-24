@@ -27,9 +27,9 @@ type Match struct {
 //	m.NotEmpty()
 //	m.Length().IsEqual(3)
 //
-//	m.Index(0).IsEqual("http://example.com/users/john")
-//	m.Index(1).IsEqual("example.com")
-//	m.Index(2).IsEqual("john")
+//	m.Value(0).IsEqual("http://example.com/users/john")
+//	m.Value(1).IsEqual("example.com")
+//	m.Value(2).IsEqual("john")
 //
 //	m.Name("host").IsEqual("example.com")
 //	m.Name("user").IsEqual("john")
@@ -103,10 +103,10 @@ func (m *Match) Length() *Number {
 	return newNumber(opChain, float64(len(m.submatches)))
 }
 
-// Index returns a new String instance with submatch for given index.
+// Value returns a new String instance with submatch for given index.
 //
 // Note that submatch with index 0 contains the whole match. If index is out
-// of bounds, Index reports failure and returns empty (but non-nil) instance.
+// of bounds, Value reports failure and returns empty (but non-nil) instance.
 //
 // Example:
 //
@@ -115,11 +115,11 @@ func (m *Match) Length() *Number {
 //	r := regexp.MustCompile(`http://(.+)/users/(.+)`)
 //	m := NewMatch(t, r.FindStringSubmatch(s), nil)
 //
-//	m.Index(0).IsEqual("http://example.com/users/john")
-//	m.Index(1).IsEqual("example.com")
-//	m.Index(2).IsEqual("john")
-func (m *Match) Index(index int) *String {
-	opChain := m.chain.enter("Index(%d)", index)
+//	m.Value(0).IsEqual("http://example.com/users/john")
+//	m.Value(1).IsEqual("example.com")
+//	m.Value(2).IsEqual("john")
+func (m *Match) Value(index int) *String {
+	opChain := m.chain.enter("Value(%d)", index)
 	defer opChain.leave()
 
 	if opChain.failed() {
