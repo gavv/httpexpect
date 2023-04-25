@@ -24,6 +24,7 @@ import (
 
 func TestRequest_FailedChain(t *testing.T) {
 	reporter := newMockReporter(t)
+	assertionHandler := &mockAssertionHandler{}
 	config := newMockConfig(reporter)
 	chain := newChainWithDefaults("test", reporter, flagFailed)
 
@@ -32,6 +33,8 @@ func TestRequest_FailedChain(t *testing.T) {
 
 	req.Alias("foo")
 	req.WithName("foo")
+	req.WithReporter(reporter)
+	req.WithAssertionHandler(assertionHandler)
 	req.WithMatcher(func(resp *Response) {
 	})
 	req.WithTransformer(func(r *http.Request) {
@@ -264,6 +267,80 @@ func TestRequest_Basic(t *testing.T) {
 		resp.chain.assert(t, failure)
 
 		assert.Nil(t, resp.Raw())
+	})
+}
+
+func TestRequest_Reporter(t *testing.T) {
+	t.Run("default reporter", func(t *testing.T) {
+		configReporter := newMockReporter(t)
+		config := Config{
+			Client:   &mockClient{},
+			Reporter: configReporter,
+		}
+
+		req := NewRequestC(config, "GET", "/")
+
+		req.WithClient(nil)
+		req.chain.assert(t, failure)
+
+		assert.True(t, configReporter.reported)
+	})
+
+	t.Run("custom reporter", func(t *testing.T) {
+		configReporter := newMockReporter(t)
+		config := Config{
+			Client:   &mockClient{},
+			Reporter: configReporter,
+		}
+
+		req := NewRequestC(config, "GET", "/")
+
+		// set custom reporter
+		reqReporter := newMockReporter(t)
+		req.WithReporter(reqReporter)
+
+		req.WithClient(nil)
+		req.chain.assert(t, failure)
+
+		assert.False(t, configReporter.reported)
+		assert.True(t, reqReporter.reported)
+	})
+}
+
+func TestRequest_AssertionHandler(t *testing.T) {
+	t.Run("default handler", func(t *testing.T) {
+		configHandler := &mockAssertionHandler{}
+		config := Config{
+			Client:           &mockClient{},
+			AssertionHandler: configHandler,
+		}
+
+		req := NewRequestC(config, "GET", "/")
+
+		req.WithClient(nil)
+		req.chain.assert(t, failure)
+
+		assert.Equal(t, 1, configHandler.failureCalled)
+	})
+
+	t.Run("custom handler", func(t *testing.T) {
+		configHandler := &mockAssertionHandler{}
+		config := Config{
+			Client:           &mockClient{},
+			AssertionHandler: configHandler,
+		}
+
+		req := NewRequestC(config, "GET", "/")
+
+		// set custom assertion handler
+		reqHandler := &mockAssertionHandler{}
+		req.WithAssertionHandler(reqHandler)
+
+		req.WithClient(nil)
+		req.chain.assert(t, failure)
+
+		assert.Equal(t, 0, configHandler.failureCalled)
+		assert.Equal(t, 1, reqHandler.failureCalled)
 	})
 }
 
@@ -3427,6 +3504,22 @@ func TestRequest_Usage(t *testing.T) {
 		expectFails bool
 	}{
 		{
+			name: "WithReporter - nil argument",
+			prepFunc: func(req *Request) {
+				req.WithReporter(nil)
+			},
+			prepFails:   true,
+			expectFails: true,
+		},
+		{
+			name: "WithAssertionHandler - nil argument",
+			prepFunc: func(req *Request) {
+				req.WithAssertionHandler(nil)
+			},
+			prepFails:   true,
+			expectFails: true,
+		},
+		{
 			name: "WithMatcher - nil argument",
 			prepFunc: func(req *Request) {
 				req.WithMatcher(nil)
@@ -3598,6 +3691,18 @@ func TestRequest_Order(t *testing.T) {
 			name: "WithName after Expect",
 			afterFunc: func(req *Request) {
 				req.WithName("Test")
+			},
+		},
+		{
+			name: "WithReporter after Expect",
+			afterFunc: func(req *Request) {
+				req.WithReporter(newMockReporter(t))
+			},
+		},
+		{
+			name: "WithAssertionHandler after Expect",
+			afterFunc: func(req *Request) {
+				req.WithAssertionHandler(&mockAssertionHandler{})
 			},
 		},
 		{
