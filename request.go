@@ -245,18 +245,14 @@ func (r *Request) WithName(name string) *Request {
 // WithReporter sets reporter to be used for this request.
 //
 // The new reporter overwrites AssertionHandler.
-// The new AssertionHandler is DefaultAssertionHandler
-// with specified reporter, existing formatter and nil Logger
-// It will be used to report formatted fatal failure messages
+// The new AssertionHandler is DefaultAssertionHandler with specified reporter,
+// existing Config.Formatter and nil Logger.
+// It will be used to report formatted fatal failure messages.
 //
 // Example:
 //
 //	req := NewRequestC(config, "GET", "http://example.com/path")
-//	reporter := httpextect.ReporterFunc(
-//		func(message string, args ...interface{}) {
-//			// reporter code here
-//		}),
-//	req.WithReporter(reporter)
+//	req.WithReporter(t)
 func (r *Request) WithReporter(reporter Reporter) *Request {
 	opChain := r.chain.enter("WithReporter()")
 	defer opChain.leave()
@@ -294,7 +290,7 @@ func (r *Request) WithReporter(reporter Reporter) *Request {
 // WithAssertionHandler sets assertion handler to be used for this request.
 //
 // The new handler overwrites assertion handler that will be used
-// by Request and its children (Response, body, etc.).
+// by Request and its children (Response, Body, etc.).
 // It will be used to format and report test Failure or Success.
 //
 // Example:
@@ -302,7 +298,7 @@ func (r *Request) WithReporter(reporter Reporter) *Request {
 //	req := NewRequestC(config, "GET", "http://example.com/path")
 //	req.WithAssertionHandler(&DefaultAssertionHandler{
 //		Reporter:  reporter,
-//		Formatter: req.config.Formatter,
+//		Formatter: formatter,
 //	})
 func (r *Request) WithAssertionHandler(handler AssertionHandler) *Request {
 	opChain := r.chain.enter("WithAssertionHandler()")
