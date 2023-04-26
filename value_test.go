@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -1224,9 +1225,15 @@ func TestValue_Schema(t *testing.T) {
 		err = tmp.Close()
 		require.Nil(t, err)
 
-		url := "file://" + tmp.Name()
-		NewValue(reporter, data).Schema(url).
-			chain.assert(t, success)
+		if runtime.GOOS == "windows" {
+			file, _ := ioutil.ReadFile(tmp.Name())
+			NewValue(reporter, data).Schema(file).
+				chain.assert(t, success)
+		} else {
+			url := "file://" + tmp.Name()
+			NewValue(reporter, data).Schema(url).
+				chain.assert(t, success)
+		}
 	})
 
 	t.Run("schema with valid file url with invalid data", func(t *testing.T) {
