@@ -3,6 +3,7 @@ package httpexpect
 import (
 	"bytes"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"math"
 	"net/http/httputil"
@@ -319,7 +320,7 @@ func (f *DefaultFormatter) fillGeneral(
 		case colorsForced:
 			data.EnableColors = true
 		case colorsSupported:
-			data.EnableColors = ctx.TestingTB && testing.Verbose()
+			data.EnableColors = ctx.TestingTB && flag.Parsed() && testing.Verbose()
 		}
 	case ColorModeAlways:
 		data.EnableColors = true
