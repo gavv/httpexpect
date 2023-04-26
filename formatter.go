@@ -16,6 +16,7 @@ import (
 	"testing"
 	"text/template"
 
+	"github.com/TylerBrock/colorjson"
 	"github.com/fatih/color"
 	"github.com/mattn/go-isatty"
 	"github.com/mitchellh/go-wordwrap"
@@ -1044,6 +1045,33 @@ var defaultTemplateFuncs = template.FuncMap{
 
 		return sb.String()
 	},
+	"colorjson": func(enable bool, stringColor, input string) string {
+		if !enable {
+			return input
+		}
+		var colorObj map[string]interface{}
+		err := json.Unmarshal([]byte(input), &colorObj)
+		if err != nil {
+			return input
+		}
+		colorInput := "HiMagenta"
+		if _, ok := defaultColors[stringColor]; ok {
+			colorInput = stringColor
+		}
+		cyanColor := color.New(defaultColors["Cyan"])
+
+		formatter := colorjson.NewFormatter()
+		formatter.StringColor = color.New(defaultColors[colorInput])
+		formatter.NumberColor = cyanColor
+		formatter.BoolColor = cyanColor
+		formatter.NullColor = cyanColor
+
+		s, err := formatter.Marshal(colorObj)
+		if err != nil {
+			return input
+		}
+		return string(s)
+	},
 }
 
 var defaultSuccessTemplate = `[OK] {{ join .LineWidth .AssertPath }}`
@@ -1097,7 +1125,7 @@ assertion:
 {{- if .HaveActual }}
 
 actual value:
-{{ .Actual | indent | color .EnableColors "HiMagenta" }}
+{{ .Actual | indent | colorjson .EnableColors "HiMagenta"}}
 {{- end -}}
 {{- if .HaveReference }}
 
@@ -1107,7 +1135,7 @@ reference value:
 {{- if .HaveDelta }}
 
 allowed delta:
-{{ .Delta | indent | color .EnableColors "HiMagenta" }}
+{{ .Delta | indent | colorjson .EnableColors "Cyan" }}
 {{- end -}}
 {{- if .HaveDiff }}
 
