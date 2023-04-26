@@ -58,6 +58,9 @@ type DefaultFormatter struct {
 	// Exclude HTTP response from failure report.
 	DisableResponses bool
 
+	// Enables printing of stacktrace on failure
+	EnableStacktrace bool
+
 	// Thousand separator.
 	// Default is DigitSeparatorUnderscore.
 	DigitSeparator DigitSeparator
@@ -86,9 +89,6 @@ type DefaultFormatter struct {
 	// defines the function map passed to template engine.
 	// May be nil.
 	TemplateFuncs template.FuncMap
-
-	// Enables printing of stacktrace on failure
-	EnableStacktrace bool
 }
 
 // FormatSuccess implements Formatter.FormatSuccess.
@@ -186,8 +186,7 @@ type FormatData struct {
 	AssertType     string
 	AssertSeverity string
 
-	Errors     []string
-	Stacktrace []string
+	Errors []string
 
 	HaveActual bool
 	Actual     string
@@ -212,6 +211,9 @@ type FormatData struct {
 
 	HaveResponse bool
 	Response     string
+
+	HaveStacktrace bool
+	Stacktrace     []string
 
 	EnableColors bool
 	LineWidth    int
@@ -554,8 +556,13 @@ func (f *DefaultFormatter) fillResponse(
 func (f *DefaultFormatter) fillStacktrace(
 	data *FormatData, ctx *AssertionContext, failure *AssertionFailure,
 ) {
+	data.Stacktrace = []string{}
+
 	if f.EnableStacktrace {
-		data.Stacktrace = strings.Split(failure.Stacktrace, "\n\t")
+		if len(data.Stacktrace) != 0 {
+			data.Stacktrace = strings.Split(failure.Stacktrace, "\n\t")
+			data.HaveStacktrace = true
+		}
 	}
 }
 
@@ -1006,10 +1013,6 @@ var defaultTemplateFuncs = template.FuncMap{
 var defaultSuccessTemplate = `[OK] {{ join .LineWidth .AssertPath }}`
 
 var defaultFailureTemplate = `
-{{- range $n, $call := .Stacktrace }}
-{{ $call | indent }}
-{{- end -}}
-
 {{- range $n, $err := .Errors }}
 {{ if eq $n 0 -}}
 {{ $err | wrap $.LineWidth | color $.EnableColors "Red" }}
@@ -1032,6 +1035,13 @@ request: {{ .Request | indent | trim | color $.EnableColors "HiMagenta" }}
 {{- if .HaveResponse }}
 
 response: {{ .Response | indent | trim | color $.EnableColors "HiMagenta" }}
+{{- end -}}
+{{- if .HaveStacktrace }}
+
+trace:
+{{- range $n, $call := .Stacktrace }}
+{{ $call | indent }}
+{{- end -}}
 {{- end -}}
 {{- if .AssertPath }}
 

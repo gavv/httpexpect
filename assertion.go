@@ -181,9 +181,6 @@ type AssertionFailure struct {
 	// List of error messages
 	Errors []error
 
-	// Stacktrace of a fail
-	Stacktrace string
-
 	// Actually observed value
 	Actual *AssertionValue
 
@@ -195,6 +192,9 @@ type AssertionFailure struct {
 
 	// Allowed delta between actual and expected
 	Delta *AssertionValue
+
+	// Stacktrace of a fail
+	Stacktrace string
 }
 
 // AssertionValue holds expected or actual value
