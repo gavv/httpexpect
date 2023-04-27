@@ -59,7 +59,7 @@ type DefaultFormatter struct {
 	DisableResponses bool
 
 	// Enables printing of stacktrace on failure
-	EnableStacktrace bool
+	StacktraceMode StacktraceMode
 
 	// Thousand separator.
 	// Default is DigitSeparatorUnderscore.
@@ -114,6 +114,16 @@ func (f *DefaultFormatter) FormatFailure(
 			defaultFailureTemplate, defaultTemplateFuncs, ctx, failure)
 	}
 }
+
+type StacktraceMode int
+
+const (
+	// Unconditionally disable stacktrace.
+	StacktraceModeDisabled StacktraceMode = iota
+
+	// Format caller info as `at [function name]([file]:[line])`
+	StacktraceModeDefault
+)
 
 // DigitSeparator defines the separator used to format integers and floats.
 type DigitSeparator int
@@ -558,11 +568,15 @@ func (f *DefaultFormatter) fillStacktrace(
 ) {
 	data.Stacktrace = []string{}
 
-	if f.EnableStacktrace {
-		if len(data.Stacktrace) != 0 {
-			data.Stacktrace = strings.Split(failure.Stacktrace, "\n\t")
-			data.HaveStacktrace = true
+	if f.StacktraceMode == StacktraceModeDisabled {
+		return
+	}
+	if f.StacktraceMode == StacktraceModeDefault {
+		for _, call := range failure.Stacktrace {
+			formatted := fmt.Sprintf("at %s(%s:%d)", call.FuncName, call.File, call.Line)
+			data.Stacktrace = append(data.Stacktrace, formatted)
 		}
+		data.HaveStacktrace = len(failure.Stacktrace) != 0
 	}
 }
 

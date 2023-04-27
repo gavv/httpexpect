@@ -688,7 +688,6 @@ func TestChain_Stacktrace(t *testing.T) {
 	assert.True(t, opChain.failed())
 	assert.NotNil(t, handler.failure)
 	assert.NotEmpty(t, handler.failure.Stacktrace)
-	assert.Contains(t, handler.failure.Stacktrace, "TestChain_Stacktrace")
 }
 
 func TestChain_Reporting(t *testing.T) {

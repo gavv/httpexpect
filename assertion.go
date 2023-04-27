@@ -194,7 +194,7 @@ type AssertionFailure struct {
 	Delta *AssertionValue
 
 	// Stacktrace of a fail
-	Stacktrace string
+	Stacktrace []CallerInfo
 }
 
 // AssertionValue holds expected or actual value
