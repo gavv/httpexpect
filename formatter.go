@@ -1009,6 +1009,57 @@ var defaultTemplateFuncs = template.FuncMap{
 		}
 		return color.New(colorAttr).Sprint(input)
 	},
+	"colorhttp": func(enable bool, colorName string, isResponse bool, input string) string {
+		if !enable {
+			return input
+		}
+
+		colorAttr := color.Reset
+		present := true
+		var sb strings.Builder
+		if ca, ok := defaultColors[colorName]; ok {
+			colorAttr = ca
+		}
+
+		httpMethod := map[string]bool{
+			"GET":    present,
+			"POST":   present,
+			"PATCH":  present,
+			"DELETE": present,
+			"PUT":    present,
+		}
+
+		getColor := func(word string, forceApplyColor bool) color.Attribute {
+			if v := httpMethod[word]; v == present {
+				return colorAttr
+			}
+			if word[len(word)-1] == ':' {
+				return colorAttr
+			}
+			if forceApplyColor {
+				return colorAttr
+			}
+
+			return color.Reset
+		}
+		isFirstLine := true
+		for _, line := range strings.Split(input, "\n") {
+			if sb.Len() != 0 {
+				sb.WriteString("\n")
+			}
+
+			words := strings.Fields(line)
+			wordLen := len(words)
+			for index, word := range words {
+				forceApplyColor := index != wordLen-1 && isResponse && isFirstLine
+				sb.WriteString(color.New(getColor(word, forceApplyColor)).Sprint(word))
+				sb.WriteString(" ")
+			}
+			isFirstLine = false
+		}
+
+		return sb.String()
+	},
 	"colordiff": func(enable bool, input string) string {
 		if !enable {
 			return input
@@ -1098,11 +1149,11 @@ request name: {{ .RequestName | color $.EnableColors "Cyan" }}
 {{- end -}}
 {{- if .HaveRequest }}
 
-request: {{ .Request | indent | trim | color $.EnableColors "HiMagenta" }}
+request: {{ .Request | indent | trim | colorhttp $.EnableColors "HiMagenta" false}}
 {{- end -}}
 {{- if .HaveResponse }}
 
-response: {{ .Response | indent | trim | color $.EnableColors "HiMagenta" }}
+response: {{ .Response | indent | trim | colorhttp $.EnableColors "HiMagenta" true}}
 {{- end -}}
 {{- if .HaveStacktrace }}
 
