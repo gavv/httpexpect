@@ -299,32 +299,7 @@ func (n *Number) InDeltaRelative(value, delta float64) *Number {
 	anyNumIsNaN := math.IsNaN(n.value) || math.IsNaN(value) || math.IsNaN(delta)
 
 	if anyNumIsNaN {
-		var assertionErrors []error
-		assertionErrors = append(
-			assertionErrors,
-			errors.New("expected: can compare values with relative delta"),
-		)
-
-		if math.IsNaN(n.value) {
-			assertionErrors = append(
-				assertionErrors,
-				errors.New("actual value is NaN"),
-			)
-		}
-
-		if math.IsNaN(value) {
-			assertionErrors = append(
-				assertionErrors,
-				errors.New("expected value is NaN"),
-			)
-		}
-
-		if math.IsNaN(delta) {
-			assertionErrors = append(
-				assertionErrors,
-				errors.New("delta is NaN"),
-			)
-		}
+		assertionErrors := numNaNCheck(n.value, value, delta)
 
 		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
@@ -414,32 +389,7 @@ func (n *Number) NotInDeltaRelative(value, delta float64) *Number {
 	anyNumIsNaN := math.IsNaN(n.value) || math.IsNaN(value) || math.IsNaN(delta)
 
 	if anyNumIsNaN {
-		var assertionErrors []error
-		assertionErrors = append(
-			assertionErrors,
-			errors.New("expected: can compare values with relative delta"),
-		)
-
-		if math.IsNaN(n.value) {
-			assertionErrors = append(
-				assertionErrors,
-				errors.New("actual value is NaN"),
-			)
-		}
-
-		if math.IsNaN(value) {
-			assertionErrors = append(
-				assertionErrors,
-				errors.New("expected value is NaN"),
-			)
-		}
-
-		if math.IsNaN(delta) {
-			assertionErrors = append(
-				assertionErrors,
-				errors.New("delta is NaN"),
-			)
-		}
+		assertionErrors := numNaNCheck(n.value, value, delta)
 
 		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
@@ -1335,4 +1285,30 @@ type relativeDelta float64
 
 func (rd relativeDelta) String() string {
 	return fmt.Sprintf("%v (%.f%%)", float64(rd), rd*100)
+}
+
+func appendError(errorSlice []error, errorMsg string) []error {
+	return append(
+		errorSlice,
+		errors.New(errorMsg),
+	)
+}
+
+func numNaNCheck(number, value, delta float64) []error {
+	var assertionErrors []error
+	assertionErrors = appendError(assertionErrors, "expected: can compare values with relative delta")
+
+	if math.IsNaN(number) {
+		assertionErrors = appendError(assertionErrors, "actual value is NaN")
+	}
+
+	if math.IsNaN(value) {
+		assertionErrors = appendError(assertionErrors, "expected value is NaN")
+	}
+
+	if math.IsNaN(delta) {
+		assertionErrors = appendError(assertionErrors, "delta is NaN")
+	}
+
+	return assertionErrors
 }
