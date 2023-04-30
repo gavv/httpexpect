@@ -346,8 +346,8 @@ func (n *Number) InDeltaRelative(value, delta float64) *Number {
 		return n
 	}
 
-	if ((n.value == 0 || math.IsInf(n.value, 0)) && value != n.value) ||
-		math.Abs(n.value-value)/math.Abs(n.value) > delta {
+	deltaRelativeError := deltaRelativeErrorCheck(true, n.value, value, delta)
+	if deltaRelativeError {
 		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{n.value},
@@ -445,8 +445,8 @@ func (n *Number) NotInDeltaRelative(value, delta float64) *Number {
 		return n
 	}
 
-	if ((n.value == 0 || math.IsInf(n.value, 0)) && value != n.value) ||
-		!(math.Abs(n.value-value)/math.Abs(n.value) > delta) {
+	deltaRelativeError := deltaRelativeErrorCheck(false, n.value, value, delta)
+	if deltaRelativeError {
 		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{n.value},
@@ -1292,6 +1292,22 @@ func appendError(errorSlice []error, errorMsg string) []error {
 		errorSlice,
 		errors.New(errorMsg),
 	)
+}
+
+func deltaRelativeErrorCheck(inDeltaRelative bool, number, value, delta float64) bool {
+	if (number == 0 || math.IsInf(number, 0)) && value != number {
+		return true
+	}
+	if math.Abs(number-value)/math.Abs(number) > delta {
+		if inDeltaRelative {
+			return true
+		}
+	} else {
+		if !(inDeltaRelative) {
+			return true
+		}
+	}
+	return false
 }
 
 func numNaNCheck(number, value, delta float64) []error {
