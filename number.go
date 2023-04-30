@@ -346,6 +346,31 @@ func (n *Number) InDeltaRelative(value, delta float64) *Number {
 		return n
 	}
 
+	// Pass if number and value are +-Inf and equal, regardless if delta is 0 or positive number
+	sameInfNumCheck := math.IsInf(n.value, 0) && math.IsInf(value, 0) && value == n.value
+	if sameInfNumCheck {
+		return n
+	}
+
+	// Fail is number and value are +=Inf and unequal with specific error message
+	diffInfNumCheck := math.IsInf(n.value, 0) && math.IsInf(value, 0) && value != n.value
+	if diffInfNumCheck {
+		var assertionErrors []error
+		assertionErrors = append(
+			assertionErrors,
+			errors.New("expected: can compare values with relative delta"),
+			errors.New("actual value and expected value are opposite Infs"),
+		)
+		opChain.fail(AssertionFailure{
+			Type:     AssertEqual,
+			Actual:   &AssertionValue{n.value},
+			Expected: &AssertionValue{value},
+			Delta:    &AssertionValue{relativeDelta(delta)},
+			Errors:   assertionErrors,
+		})
+		return n
+	}
+
 	if ((n.value == 0 || math.IsInf(n.value, 0)) && value != n.value) ||
 		math.Abs(n.value-value)/math.Abs(n.value) > delta {
 		opChain.fail(AssertionFailure{
@@ -432,6 +457,40 @@ func (n *Number) NotInDeltaRelative(value, delta float64) *Number {
 			Errors: []error{
 				errors.New("unexpected negative delta argument"),
 			},
+		})
+		return n
+	}
+
+	// Fail if number and value are +-Inf and equal, regardless if delta is 0 or positive number
+	sameInfNumCheck := math.IsInf(n.value, 0) && math.IsInf(value, 0) && value == n.value
+	if sameInfNumCheck {
+		opChain.fail(AssertionFailure{
+			Type:     AssertEqual,
+			Actual:   &AssertionValue{n.value},
+			Expected: &AssertionValue{value},
+			Delta:    &AssertionValue{relativeDelta(delta)},
+			Errors: []error{
+				errors.New("expected: numbers lie within relative delta"),
+			},
+		})
+		return n
+	}
+
+	// Fail is number and value are +=Inf and unequal with specific error message
+	diffInfNumCheck := math.IsInf(n.value, 0) && math.IsInf(value, 0) && value != n.value
+	if diffInfNumCheck {
+		var assertionErrors []error
+		assertionErrors = append(
+			assertionErrors,
+			errors.New("expected: can compare values with relative delta"),
+			errors.New("actual value and expected value are opposite Infs"),
+		)
+		opChain.fail(AssertionFailure{
+			Type:     AssertEqual,
+			Actual:   &AssertionValue{n.value},
+			Expected: &AssertionValue{value},
+			Delta:    &AssertionValue{relativeDelta(delta)},
+			Errors:   assertionErrors,
 		})
 		return n
 	}
