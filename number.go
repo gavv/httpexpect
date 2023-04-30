@@ -321,7 +321,8 @@ func (n *Number) InDeltaRelative(value, delta float64) *Number {
 		return n
 	}
 
-	// Pass if number and value are +-Inf and equal, regardless if delta is 0 or positive number
+	// Pass if number and value are +-Inf and equal,
+	// regardless if delta is 0 or positive number
 	sameInfNumCheck := math.IsInf(n.value, 0) && math.IsInf(value, 0) && value == n.value
 	if sameInfNumCheck {
 		return n
@@ -411,7 +412,8 @@ func (n *Number) NotInDeltaRelative(value, delta float64) *Number {
 		return n
 	}
 
-	// Fail if number and value are +-Inf and equal, regardless if delta is 0 or positive number
+	// Fail if number and value are +-Inf and equal,
+	// regardless if delta is 0 or positive number
 	sameInfNumCheck := math.IsInf(n.value, 0) && math.IsInf(value, 0) && value == n.value
 	if sameInfNumCheck {
 		opChain.fail(AssertionFailure{
