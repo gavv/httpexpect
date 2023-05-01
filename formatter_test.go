@@ -445,7 +445,12 @@ func TestFormatter_FailureContext(t *testing.T) {
 		},
 	}
 
-	ctx := &AssertionContext{TestName: t.Name(), RequestName: "RequestName", Path: []string{"GET"}, AliasedPath: []string{"ALIASGET"}}
+	ctx := &AssertionContext{
+		TestName:    t.Name(),
+		RequestName: "RequestName",
+		Path:        []string{"GET"},
+		AliasedPath: []string{"ALIASGET"},
+	}
 	var fd *FormatData
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
