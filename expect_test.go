@@ -764,66 +764,64 @@ func TestExpect_Adapters(t *testing.T) {
 	})
 }
 
-
 func TestReporterAndAssertionHandler(t *testing.T) {
 	mainRep := newMockReporter(t)
 	mainAssertionHandler := &mockAssertionHandler{}
 
-    config := Config{
-        BaseURL: "http://example.com",
-        Reporter: mainRep,
-    }
+	config := Config{
+		BaseURL:  "http://example.com",
+		Reporter: mainRep,
+	}
 
 	assertionConfig := Config{
-		BaseURL: "http://example.com",
+		BaseURL:          "http://example.com",
 		AssertionHandler: mainAssertionHandler,
 	}
 
-   cases := []struct{
-	name string
-	config Config
-	hasReporter bool
-	wantEqual chainResult
-   }{
-	{
-		name: "Response reported failure with reporter",
-		config: config,
-		hasReporter: true,
-		wantEqual: failure,
-	},
-	{
-		name: "Response reported failure with assertion handler",
-		config: assertionConfig,
-		hasReporter: true,
-		wantEqual: failure,
-	},
-   }
+	cases := []struct {
+		name        string
+		config      Config
+		hasReporter bool
+		wantEqual   chainResult
+	}{
+		{
+			name:        "Response reported failure with reporter",
+			config:      config,
+			hasReporter: true,
+			wantEqual:   failure,
+		},
+		{
+			name:        "Response reported failure with assertion handler",
+			config:      assertionConfig,
+			hasReporter: true,
+			wantEqual:   failure,
+		},
+	}
 
-   for _, tc := range cases {
-	t.Run(tc.name, func(t *testing.T) {
-		subRep := newMockReporter(t);
-		subAssertionHandler :=  &mockAssertionHandler{}
-		var req2 *Request
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			subRep := newMockReporter(t)
+			subAssertionHandler := &mockAssertionHandler{}
+			var req2 *Request
 
-		req1 := NewRequest(config, "GET", "/")
-		
-		if tc.hasReporter {
-			req2 = NewRequest(config, "GET", "/2").WithReporter(subRep)
-		} else {
-			req2 = NewRequest(config, "GET", "/2").WithAssertionHandler(subAssertionHandler)
-		}
+			req1 := NewRequest(config, "GET", "/")
 
-		resp1 := req1.Expect().Status(200)
-		resp2 := req2.Expect().Status(200)
+			if tc.hasReporter {
+				req2 = NewRequest(config, "GET", "/2").WithReporter(subRep)
+			} else {
+				req2 = NewRequest(config, "GET", "/2").WithAssertionHandler(subAssertionHandler)
+			}
 
-		// Make some assertion that fails on both responses
-		resp1.JSON().Object().Value("foo").chain.assert(t, failure)
-		resp2.JSON().Object().Value("foo").chain.assert(t, failure)
+			resp1 := req1.Expect().Status(200)
+			resp2 := req2.Expect().Status(200)
 
-		resp1.chain.assert(t, tc.wantEqual)
-		resp2.chain.assert(t, tc.wantEqual)
-	})
-   }
-   
+			// Make some assertion that fails on both responses
+			resp1.JSON().Object().Value("foo").chain.assert(t, failure)
+			resp2.JSON().Object().Value("foo").chain.assert(t, failure)
+
+			resp1.chain.assert(t, tc.wantEqual)
+			resp2.chain.assert(t, tc.wantEqual)
+		})
+	}
+
 }
-
