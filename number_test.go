@@ -393,11 +393,11 @@ func TestNumber_InDeltaRelative(t *testing.T) {
 			wantNotInDelta: failure,
 		},
 		{
-			name:           "+Inf delta in range",
+			name:           "delta is +Inf",
 			number:         1234.5,
 			value:          1234.0,
 			delta:          math.Inf(1),
-			wantInDelta:    success,
+			wantInDelta:    failure,
 			wantNotInDelta: failure,
 		},
 		{

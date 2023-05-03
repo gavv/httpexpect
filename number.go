@@ -311,6 +311,16 @@ func (n *Number) InDeltaRelative(value, delta float64) *Number {
 		return n
 	}
 
+	if math.IsInf(delta, 0) {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected Inf delta argument"),
+			},
+		})
+		return n
+	}
+
 	if delta < 0 {
 		opChain.fail(AssertionFailure{
 			Type: AssertUsage,
@@ -398,6 +408,16 @@ func (n *Number) NotInDeltaRelative(value, delta float64) *Number {
 			Expected: &AssertionValue{value},
 			Delta:    &AssertionValue{relativeDelta(delta)},
 			Errors:   assertionErrors,
+		})
+		return n
+	}
+
+	if math.IsInf(delta, 0) {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected Inf delta argument"),
+			},
 		})
 		return n
 	}
