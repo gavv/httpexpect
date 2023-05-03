@@ -1314,18 +1314,30 @@ func deltaRelativeErrorCheck(inDeltaRelative bool, number, value, delta float64)
 
 func numNaNCheck(number, value, delta float64) []error {
 	var assertionErrors []error
-	assertionErrors = appendError(assertionErrors, "expected: can compare values with relative delta")
+	assertionErrors = appendError(
+		assertionErrors,
+		"expected: can compare values with relative delta",
+	)
 
 	if math.IsNaN(number) {
-		assertionErrors = appendError(assertionErrors, "actual value is NaN")
+		assertionErrors = appendError(
+			assertionErrors,
+			"actual value is NaN",
+		)
 	}
 
 	if math.IsNaN(value) {
-		assertionErrors = appendError(assertionErrors, "expected value is NaN")
+		assertionErrors = appendError(
+			assertionErrors,
+			"expected value is NaN",
+		)
 	}
 
 	if math.IsNaN(delta) {
-		assertionErrors = appendError(assertionErrors, "delta is NaN")
+		assertionErrors = appendError(
+			assertionErrors,
+			"delta is NaN",
+		)
 	}
 
 	return assertionErrors
