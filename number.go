@@ -281,8 +281,8 @@ func (n *Number) NotInDelta(value, delta float64) *Number {
 // A number and a value are within relative delta if
 // Abs(number-value) / Abs(number) < relative delta.
 //
-// Please note that number, value, and delta can't be NaN and number and value can't
-// be Inf.
+// Please note that number, value, and delta can't be NaN, number and value can't
+// be opposite Inf and delta cannot be Inf.
 //
 // Example:
 //
@@ -328,7 +328,7 @@ func (n *Number) InDeltaRelative(value, delta float64) *Number {
 		return n
 	}
 
-	// Fail is number and value are +=Inf and unequal with specific error message
+	// Fail if number and value are +=Inf and unequal with specific error message
 	diffInfNumCheck := math.IsInf(n.value, 0) && math.IsInf(value, 0) && value != n.value
 	if diffInfNumCheck {
 		var assertionErrors []error
@@ -372,8 +372,8 @@ func (n *Number) InDeltaRelative(value, delta float64) *Number {
 // A number and a value are within relative delta if
 // Abs(number-value) / Abs(number) < relative delta.
 //
-// Please note that number, value, and delta can't be NaN and number and value can't
-// be Inf.
+// Please note that number, value, and delta can't be NaN, number and value can't
+// be opposite Inf and delta cannot be Inf.
 //
 // Example:
 //
