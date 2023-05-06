@@ -101,7 +101,7 @@ func TestFormatter_FailureActual(t *testing.T) {
 			assertionType:  AssertValid,
 			assertionValue: "test string",
 			wantHaveActual: true,
-			wantActual:     "\"test string\"",
+			wantActual:     "test string",
 		},
 		{
 			name:           "AssertValid object",
@@ -310,7 +310,7 @@ func TestFormatter_FailureExpected(t *testing.T) {
 			},
 			wantHaveExpected: true,
 			wantExpectedKind: kindFormatList,
-			wantExpected:     []string{"\"test string 1\"", "\"test string 2\""},
+			wantExpected:     []string{"test string 1", "test string 2"},
 		},
 		{
 			name:          "AssertMatchFormat object",
@@ -380,7 +380,7 @@ func TestFormatter_FailureReference(t *testing.T) {
 			name:              "string",
 			assertionValue:    "test string",
 			wantHaveReference: true,
-			wantReference:     "\"test string\"",
+			wantReference:     "test string",
 		},
 		{
 			name:              "object",
@@ -442,7 +442,7 @@ func TestFormatter_FailureDelta(t *testing.T) {
 			name:           "string",
 			assertionValue: "test string",
 			wantHaveDelta:  true,
-			wantDelta:      "\"test string\"",
+			wantDelta:      "test string",
 		},
 		{
 			name:           "object",

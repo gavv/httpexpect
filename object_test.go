@@ -1751,8 +1751,8 @@ func TestObject_Find(t *testing.T) {
 		assert.Equal(t, object.Raw(), map[string]interface{}{
 			"foo":  "bar",
 			"baz":  true,
-			"qux":  -1.0,
-			"quux": 2.0,
+			"qux":  "-1",
+			"quux": "2",
 		})
 
 		foundValue.chain.assert(t, failure)
@@ -1789,8 +1789,8 @@ func TestObject_Find(t *testing.T) {
 
 		assert.Equal(t, nil, foundValue.Raw())
 		assert.Equal(t, object.Raw(), map[string]interface{}{
-			"foo": 1.0,
-			"bar": 2.0,
+			"foo": "1",
+			"bar": "2",
 		})
 
 		foundValue.chain.assert(t, failure)

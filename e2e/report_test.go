@@ -127,7 +127,7 @@ func TestE2EReport_Values(t *testing.T) {
 			"missing Errors",
 		)
 		assert.Contains(
-			t, trimmed, "[111,222,444,333]", "missing Reference",
+			t, trimmed, "[\"111\",\"222\",\"444\",\"333\"]", "missing Reference",
 		)
 	})
 
