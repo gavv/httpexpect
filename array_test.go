@@ -1893,7 +1893,7 @@ func TestArray_Find(t *testing.T) {
 		})
 
 		assert.Equal(t, nil, foundValue.Raw())
-		assert.Equal(t, array.Raw(), []interface{}{1.0, "foo", true, "bar"})
+		assert.Equal(t, array.Raw(), []interface{}{"1", "foo", true, "bar"})
 
 		array.chain.assert(t, failure)
 		foundValue.chain.assert(t, failure)
@@ -1924,7 +1924,7 @@ func TestArray_Find(t *testing.T) {
 		})
 
 		assert.Equal(t, nil, foundValue.Raw())
-		assert.Equal(t, array.Raw(), []interface{}{1.0, 2.0})
+		assert.Equal(t, array.Raw(), []interface{}{"1", "2"})
 
 		array.chain.assert(t, failure)
 		foundValue.chain.assert(t, failure)

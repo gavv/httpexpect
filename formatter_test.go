@@ -681,6 +681,17 @@ func TestFormatter_FloatFormat(t *testing.T) {
 			},
 			wantText: "{\n  \"a\": [\n    \"1.234\",\n    \"5.678\"\n  ],\n  \"b\": \"1.1\"\n}",
 		},
+		{
+			name:   "array of mixed data types",
+			format: FloatFormatAuto,
+			value: []interface{}{
+				float32(1.2345678),
+				true,
+				float64(9.87654321),
+				"abc",
+			},
+			wantText: "[\n  \"1.234_567_8\",\n  true,\n  \"9.876_543_21\",\n  \"abc\"\n]",
+		},
 	}
 
 	for _, tc := range cases {

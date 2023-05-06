@@ -548,7 +548,19 @@ func (f *DefaultFormatter) fillResponse(
 }
 
 func (f *DefaultFormatter) formatValue(value interface{}) string {
-	return f.formatValueNested(value, 0).(string)
+	formatted := f.formatValueNested(value, 0)
+	if str, ok := formatted.(string); ok {
+		return str
+	}
+
+	if b, err := json.MarshalIndent(formatted, "", defaultIndent); err == nil {
+		return string(b)
+	}
+
+	sq := litter.Options{
+		Separator: defaultIndent,
+	}
+	return sq.Sdump(formatted)
 }
 
 func (f *DefaultFormatter) formatValueNested(value interface{}, level int) interface{} {
@@ -575,26 +587,29 @@ func (f *DefaultFormatter) formatValueNested(value interface{}, level int) inter
 			for k, v := range arr {
 				arr[k] = f.formatValueNested(v, level+1)
 			}
-			if level > 0 {
-				return arr
-			}
-			if b, err := json.MarshalIndent(arr, "", defaultIndent); err == nil {
-				return string(b)
-			}
+			// if level > 0 {
+			// 	return arr
+			// }
+			// if b, err := json.MarshalIndent(arr, "", defaultIndent); err == nil {
+			// 	return string(b)
+			// }
+			return arr
 		} else if m, ok := value.(map[string]interface{}); ok {
 			for k, v := range m {
 				m[k] = f.formatValueNested(v, level+1)
 			}
-			if level > 0 {
-				return m
-			}
-			if b, err := json.MarshalIndent(m, "", defaultIndent); err == nil {
-				return string(b)
-			}
+			// if level > 0 {
+			// 	return m
+			// }
+			// if b, err := json.MarshalIndent(m, "", defaultIndent); err == nil {
+			// 	return string(b)
+			// }
+			return m
 		} else {
-			if b, err := json.MarshalIndent(value, "", defaultIndent); err == nil {
-				return string(b)
-			}
+			// if b, err := json.MarshalIndent(value, "", defaultIndent); err == nil {
+			// 	return string(b)
+			// }
+			return value
 		}
 	}
 
@@ -605,12 +620,14 @@ func (f *DefaultFormatter) formatValueNested(value interface{}, level int) inter
 		for k, v := range arr {
 			arr[k] = f.formatValueNested(v, level+1)
 		}
-		return sq.Sdump(value)
+		// return sq.Sdump(value)
+		return arr
 	} else if m, ok := value.(map[interface{}]interface{}); ok {
 		for k, v := range m {
 			m[k] = f.formatValueNested(v, level+1)
 		}
-		return sq.Sdump(value)
+		// return sq.Sdump(value)
+		return m
 	} else {
 		return sq.Sdump(value)
 	}
