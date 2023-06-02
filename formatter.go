@@ -8,6 +8,7 @@ import (
 	"math"
 	"net/http/httputil"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -59,9 +60,6 @@ type DefaultFormatter struct {
 	// Exclude HTTP response from failure report.
 	DisableResponses bool
 
-	// Enables printing of stacktrace on failure
-	StacktraceMode StacktraceMode
-
 	// Thousand separator.
 	// Default is DigitSeparatorUnderscore.
 	DigitSeparator DigitSeparator
@@ -69,6 +67,10 @@ type DefaultFormatter struct {
 	// Float printing format.
 	// Default is FloatFormatAuto.
 	FloatFormat FloatFormat
+
+	// Defines whether to print stacktrace on failure and in what format.
+	// Default is StacktraceModeDisabled.
+	StacktraceMode StacktraceMode
 
 	// Colorization mode.
 	// Default is ColorModeAuto.
@@ -116,16 +118,6 @@ func (f *DefaultFormatter) FormatFailure(
 	}
 }
 
-type StacktraceMode int
-
-const (
-	// Unconditionally disable stacktrace.
-	StacktraceModeDisabled StacktraceMode = iota
-
-	// Format caller info as `at [function name]([file]:[line])`
-	StacktraceModeDefault
-)
-
 // DigitSeparator defines the separator used to format integers and floats.
 type DigitSeparator int
 
@@ -162,6 +154,20 @@ const (
 	// Precision is the smallest needed to identify the value uniquely.
 	// Similar to %e format.
 	FloatFormatScientific
+)
+
+// StacktraceMode defines the format of stacktrace.
+type StacktraceMode int
+
+const (
+	// Don't print stacktrace.
+	StacktraceModeDisabled StacktraceMode = iota
+
+	// Standard, verbose format.
+	StacktraceModeStandard
+
+	// Compact format.
+	StacktraceModeCompact
 )
 
 // ColorMode defines how the text color is enabled.
@@ -323,12 +329,6 @@ func (f *DefaultFormatter) fillGeneral(
 		}
 	}
 
-	if f.LineWidth != 0 {
-		data.LineWidth = f.LineWidth
-	} else {
-		data.LineWidth = defaultLineWidth
-	}
-
 	switch f.ColorMode {
 	case ColorModeAuto:
 		switch colorMode() {
@@ -343,6 +343,12 @@ func (f *DefaultFormatter) fillGeneral(
 		data.EnableColors = true
 	case ColorModeNever:
 		data.EnableColors = false
+	}
+
+	if f.LineWidth != 0 {
+		data.LineWidth = f.LineWidth
+	} else {
+		data.LineWidth = defaultLineWidth
 	}
 }
 
@@ -569,15 +575,30 @@ func (f *DefaultFormatter) fillStacktrace(
 ) {
 	data.Stacktrace = []string{}
 
-	if f.StacktraceMode == StacktraceModeDisabled {
-		return
-	}
-	if f.StacktraceMode == StacktraceModeDefault {
-		for _, call := range failure.Stacktrace {
-			formatted := fmt.Sprintf("at %s(%s:%d)", call.FuncName, call.File, call.Line)
-			data.Stacktrace = append(data.Stacktrace, formatted)
+	switch f.StacktraceMode {
+	case StacktraceModeDisabled:
+		break
+
+	case StacktraceModeStandard:
+		for _, entry := range failure.Stacktrace {
+			data.HaveStacktrace = true
+			data.Stacktrace = append(data.Stacktrace,
+				fmt.Sprintf("%s()\n\t%s:%d +0x%x",
+					entry.Func.Name(), entry.File, entry.Line, entry.FuncOffset))
+
 		}
-		data.HaveStacktrace = len(failure.Stacktrace) != 0
+
+	case StacktraceModeCompact:
+		for _, entry := range failure.Stacktrace {
+			if entry.IsEntrypoint {
+				break
+			}
+			data.HaveStacktrace = true
+			data.Stacktrace = append(data.Stacktrace,
+				fmt.Sprintf("%s() at %s:%d (%s)",
+					entry.FuncName, filepath.Base(entry.File), entry.Line, entry.FuncPackage))
+
+		}
 	}
 }
 

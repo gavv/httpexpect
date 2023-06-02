@@ -1028,6 +1028,51 @@ func TestFormatter_FormatDiff(t *testing.T) {
 	})
 }
 
+func TestFormatter_StacktraceMode(t *testing.T) {
+	cases := []struct {
+		name string
+		mode StacktraceMode
+		want bool
+	}{
+		{
+			name: "disabled",
+			mode: StacktraceModeDisabled,
+			want: false,
+		},
+		{
+			name: "standard",
+			mode: StacktraceModeStandard,
+			want: true,
+		},
+		{
+			name: "compact",
+			mode: StacktraceModeCompact,
+			want: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			f := &DefaultFormatter{
+				StacktraceMode: tc.mode,
+			}
+			fd := f.buildFormatData(&AssertionContext{}, &AssertionFailure{
+				Stacktrace: stacktrace(),
+			})
+
+			if tc.want {
+				require.GreaterOrEqual(t, len(fd.Stacktrace), 1)
+				assert.Contains(t, fd.Stacktrace[0], "TestFormatter_StacktraceMode.func")
+				assert.Contains(t, fd.Stacktrace[0], "formatter_test.go")
+				assert.Contains(t, fd.Stacktrace[0], "github.com/gavv/httpexpect")
+			} else {
+				assert.NotNil(t, fd.Stacktrace)
+				assert.Equal(t, 0, len(fd.Stacktrace))
+			}
+		})
+	}
+}
+
 func TestFormatter_ColorMode(t *testing.T) {
 	cases := []struct {
 		name string
@@ -1054,50 +1099,5 @@ func TestFormatter_ColorMode(t *testing.T) {
 			fd := f.buildFormatData(&AssertionContext{}, &AssertionFailure{})
 			assert.Equal(t, tc.want, fd.EnableColors)
 		})
-	}
-}
-
-func TestFormatter_Stacktrace(t *testing.T) {
-	df := &DefaultFormatter{
-		StacktraceMode: StacktraceModeDefault,
-	}
-	ctx := &AssertionContext{}
-
-	cases := []struct {
-		callerInfo CallerInfo
-		want       string
-	}{
-		{
-			CallerInfo{
-				FuncName: "Foo()",
-				File:     "formatter_test.go",
-				Line:     228,
-			},
-			"at Foo()(formatter_test.go:228)",
-		},
-		{
-			CallerInfo{
-				FuncName: "Bar()",
-				File:     "formatter.go",
-				Line:     123,
-			},
-			"at Bar()(formatter.go:123)",
-		},
-		{
-			CallerInfo{
-				FuncName: "Buzz()",
-				File:     "file.go",
-				Line:     5,
-			},
-			"at Buzz()(file.go:5)",
-		},
-	}
-
-	for _, tc := range cases {
-		fl := &AssertionFailure{
-			Stacktrace: []CallerInfo{tc.callerInfo},
-		}
-		fd := df.buildFormatData(ctx, fl)
-		assert.Equal(t, []string{tc.want}, fd.Stacktrace)
 	}
 }
