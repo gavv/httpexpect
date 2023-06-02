@@ -11,7 +11,7 @@ require (
 	github.com/gorilla/websocket v1.5.0
 	github.com/kataras/iris/v12 v12.2.0
 	github.com/labstack/echo/v4 v4.10.0
-	github.com/valyala/fasthttp v1.46.0
+	github.com/valyala/fasthttp v1.47.0
 	golang.org/x/oauth2 v0.4.0
 	google.golang.org/appengine v1.6.7
 )
@@ -57,7 +57,7 @@ require (
 	github.com/mailgun/raymond/v2 v2.0.48 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/mattn/go-isatty v0.0.18 // indirect
+	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/microcosm-cc/bluemonday v1.0.23 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
@@ -71,7 +71,7 @@ require (
 	github.com/sergi/go-diff v1.3.1 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/smartystreets/goconvey v1.7.2 // indirect
-	github.com/stretchr/testify v1.8.2 // indirect
+	github.com/stretchr/testify v1.8.4 // indirect
 	github.com/tdewolff/minify/v2 v2.12.4 // indirect
 	github.com/tdewolff/parse/v2 v2.6.4 // indirect
 	github.com/tidwall/btree v0.0.0-20191029221954-400434d76274 // indirect
@@ -95,8 +95,8 @@ require (
 	github.com/yudai/gojsondiff v1.0.0 // indirect
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
 	golang.org/x/crypto v0.7.0 // indirect
-	golang.org/x/net v0.9.0 // indirect
-	golang.org/x/sys v0.7.0 // indirect
+	golang.org/x/net v0.10.0 // indirect
+	golang.org/x/sys v0.8.0 // indirect
 	golang.org/x/text v0.9.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	google.golang.org/protobuf v1.29.1 // indirect
