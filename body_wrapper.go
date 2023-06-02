@@ -45,7 +45,7 @@ type bodyWrapper struct {
 
 	// Reader for HTTP response body stored in memory.
 	// Rewind() resets this reader to start from the beginning.
-	memReader io.Reader
+	memReader *bytes.Reader
 
 	// HTTP response body stored in memory.
 	memBytes []byte
@@ -123,6 +123,11 @@ func (bw *bodyWrapper) Close() error {
 	// Reset memory reader.
 	bw.memReader = bytes.NewReader(nil)
 
+	// Free memory when rewind is disabled.
+	if bw.isRewindDisabled {
+		bw.memBytes = nil
+	}
+
 	return err
 }
 
@@ -186,14 +191,27 @@ func (bw *bodyWrapper) DisableRewinds() {
 	bw.mu.Lock()
 	defer bw.mu.Unlock()
 
+	// Free memory if reading from original HTTP response
+	// or reader has nothing left to read in memory.
+	if !bw.isFullyRead || bw.memReader.Len() == 0 {
+		bw.memReader = bytes.NewReader(nil)
+		bw.memBytes = nil
+	}
+
 	bw.isRewindDisabled = true
 }
 
 func (bw *bodyWrapper) memReadNext(p []byte) (int, error) {
 	n, err := bw.memReader.Read(p)
 
-	if err == io.EOF && bw.readErr != nil {
-		err = bw.readErr
+	if err == io.EOF {
+		if bw.isRewindDisabled {
+			bw.memReader = bytes.NewReader(nil)
+			bw.memBytes = nil
+		}
+		if bw.readErr != nil {
+			err = bw.readErr
+		}
 	}
 
 	return n, err
