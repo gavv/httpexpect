@@ -138,6 +138,145 @@ func TestBodyWrapper_Rewind(t *testing.T) {
 		assert.Equal(t, 1, body.closeCount)
 		assert.Equal(t, 1, cancelCount)
 	})
+
+	t.Run("readall - rewind - readall", func(t *testing.T) {
+		body := newMockBody("test_body")
+
+		cancelCount := 0
+		cancelFn := func() {
+			cancelCount++
+		}
+
+		wrp := newBodyWrapper(body, cancelFn)
+
+		b, err := io.ReadAll(wrp)
+		assert.NoError(t, err)
+		assert.Equal(t, "test_body", string(b))
+
+		readCount := body.readCount
+		assert.NotEqual(t, 0, body.readCount)
+		assert.Equal(t, 1, body.closeCount)
+		assert.Equal(t, 1, cancelCount)
+
+		wrp.Rewind()
+
+		b, err = io.ReadAll(wrp)
+		assert.NoError(t, err)
+		assert.Equal(t, "test_body", string(b))
+
+		assert.Equal(t, readCount, body.readCount)
+		assert.Equal(t, 1, body.closeCount)
+		assert.Equal(t, 1, cancelCount)
+	})
+
+	t.Run("close - rewind - readall", func(t *testing.T) {
+		body := newMockBody("test_body")
+
+		cancelCount := 0
+		cancelFn := func() {
+			cancelCount++
+		}
+
+		wrp := newBodyWrapper(body, cancelFn)
+
+		err := wrp.Close()
+		assert.NoError(t, err)
+
+		wrp.Rewind()
+
+		b, err := io.ReadAll(wrp)
+		assert.NoError(t, err)
+		assert.Equal(t, "test_body", string(b))
+
+		assert.NotEqual(t, 0, body.readCount)
+		assert.Equal(t, 1, body.closeCount)
+		assert.Equal(t, 1, cancelCount)
+	})
+
+	t.Run("rewind - readall - rewind - readall", func(t *testing.T) {
+		body := newMockBody("test_body")
+
+		cancelCount := 0
+		cancelFn := func() {
+			cancelCount++
+		}
+
+		wrp := newBodyWrapper(body, cancelFn)
+
+		wrp.Rewind()
+
+		b, err := io.ReadAll(wrp)
+		assert.NoError(t, err)
+		assert.Equal(t, "test_body", string(b))
+
+		readCount := body.readCount
+		assert.NotEqual(t, 0, body.readCount)
+		assert.Equal(t, 1, body.closeCount)
+		assert.Equal(t, 1, cancelCount)
+
+		wrp.Rewind()
+
+		b, err = io.ReadAll(wrp)
+		assert.NoError(t, err)
+		assert.Equal(t, "test_body", string(b))
+
+		assert.Equal(t, readCount, body.readCount)
+		assert.Equal(t, 1, body.closeCount)
+		assert.Equal(t, 1, cancelCount)
+	})
+
+	t.Run("rewind - close - rewind - readall", func(t *testing.T) {
+		body := newMockBody("test_body")
+
+		cancelCount := 0
+		cancelFn := func() {
+			cancelCount++
+		}
+
+		wrp := newBodyWrapper(body, cancelFn)
+
+		wrp.Rewind()
+
+		err := wrp.Close()
+		assert.NoError(t, err)
+
+		wrp.Rewind()
+
+		b, err := io.ReadAll(wrp)
+		assert.NoError(t, err)
+		assert.Equal(t, "test_body", string(b))
+
+		assert.NotEqual(t, 0, body.readCount)
+		assert.Equal(t, 1, body.closeCount)
+		assert.Equal(t, 1, cancelCount)
+	})
+
+	t.Run("readall - close - rewind", func(t *testing.T) {
+		body := newMockBody("test_body")
+
+		cancelCount := 0
+		cancelFn := func() {
+			cancelCount++
+		}
+
+		wrp := newBodyWrapper(body, cancelFn)
+
+		n := 3
+		for i := 0; i < n; i++ {
+			b, err := io.ReadAll(wrp)
+			assert.NoError(t, err)
+			assert.Equal(t, "test_body", string(b))
+
+			assert.NotEqual(t, 0, body.readCount)
+			assert.Equal(t, 1, body.closeCount)
+			assert.Equal(t, 1, cancelCount)
+
+			err = wrp.Close()
+			assert.NoError(t, err)
+
+			wrp.Rewind()
+		}
+	})
 }
 
 func TestBodyWrapper_GetBody(t *testing.T) {
