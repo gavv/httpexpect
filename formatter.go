@@ -59,6 +59,9 @@ type DefaultFormatter struct {
 	// Exclude HTTP response from failure report.
 	DisableResponses bool
 
+	// Enables printing of stacktrace on failure
+	StacktraceMode StacktraceMode
+
 	// Thousand separator.
 	// Default is DigitSeparatorUnderscore.
 	DigitSeparator DigitSeparator
@@ -112,6 +115,16 @@ func (f *DefaultFormatter) FormatFailure(
 			defaultFailureTemplate, defaultTemplateFuncs, ctx, failure)
 	}
 }
+
+type StacktraceMode int
+
+const (
+	// Unconditionally disable stacktrace.
+	StacktraceModeDisabled StacktraceMode = iota
+
+	// Format caller info as `at [function name]([file]:[line])`
+	StacktraceModeDefault
+)
 
 // DigitSeparator defines the separator used to format integers and floats.
 type DigitSeparator int
@@ -210,6 +223,9 @@ type FormatData struct {
 	HaveResponse bool
 	Response     string
 
+	HaveStacktrace bool
+	Stacktrace     []string
+
 	EnableColors bool
 	LineWidth    int
 }
@@ -285,6 +301,7 @@ func (f *DefaultFormatter) buildFormatData(
 
 		f.fillRequest(&data, ctx, failure)
 		f.fillResponse(&data, ctx, failure)
+		f.fillStacktrace(&data, ctx, failure)
 	}
 
 	return &data
@@ -544,6 +561,23 @@ func (f *DefaultFormatter) fillResponse(
 
 		data.HaveResponse = true
 		data.Response = fmt.Sprintf("%s %s\n%s", lines[0], ctx.Response.rtt, lines[1])
+	}
+}
+
+func (f *DefaultFormatter) fillStacktrace(
+	data *FormatData, ctx *AssertionContext, failure *AssertionFailure,
+) {
+	data.Stacktrace = []string{}
+
+	if f.StacktraceMode == StacktraceModeDisabled {
+		return
+	}
+	if f.StacktraceMode == StacktraceModeDefault {
+		for _, call := range failure.Stacktrace {
+			formatted := fmt.Sprintf("at %s(%s:%d)", call.FuncName, call.File, call.Line)
+			data.Stacktrace = append(data.Stacktrace, formatted)
+		}
+		data.HaveStacktrace = len(failure.Stacktrace) != 0
 	}
 }
 
@@ -1016,6 +1050,13 @@ request: {{ .Request | indent | trim | color $.EnableColors "HiMagenta" }}
 {{- if .HaveResponse }}
 
 response: {{ .Response | indent | trim | color $.EnableColors "HiMagenta" }}
+{{- end -}}
+{{- if .HaveStacktrace }}
+
+trace:
+{{- range $n, $call := .Stacktrace }}
+{{ $call | indent }}
+{{- end -}}
 {{- end -}}
 {{- if .AssertPath }}
 

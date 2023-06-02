@@ -717,6 +717,22 @@ func TestChain_Severity(t *testing.T) {
 	})
 }
 
+func TestChain_Stacktrace(t *testing.T) {
+	handler := &mockAssertionHandler{}
+
+	chain := newChainWithConfig("test", Config{
+		AssertionHandler: handler,
+	}.withDefaults())
+
+	opChain := chain.enter("test")
+	opChain.fail(testFailure())
+	opChain.leave()
+
+	assert.True(t, opChain.failed())
+	assert.NotNil(t, handler.failure)
+	assert.NotEmpty(t, handler.failure.Stacktrace)
+}
+
 func TestChain_Reporting(t *testing.T) {
 	handler := &mockAssertionHandler{}
 
@@ -751,6 +767,8 @@ func TestChain_Reporting(t *testing.T) {
 	assert.True(t, chain.failed())   // reported to parent
 	assert.NotNil(t, handler.ctx)    // reported to handler
 	assert.NotNil(t, handler.failure)
+
+	failure.Stacktrace = handler.failure.Stacktrace
 	assert.Equal(t, failure, *handler.failure)
 }
 

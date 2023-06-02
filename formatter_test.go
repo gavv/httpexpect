@@ -1056,3 +1056,48 @@ func TestFormatter_ColorMode(t *testing.T) {
 		})
 	}
 }
+
+func TestFormatter_Stacktrace(t *testing.T) {
+	df := &DefaultFormatter{
+		StacktraceMode: StacktraceModeDefault,
+	}
+	ctx := &AssertionContext{}
+
+	cases := []struct {
+		callerInfo CallerInfo
+		want       string
+	}{
+		{
+			CallerInfo{
+				FuncName: "Foo()",
+				File:     "formatter_test.go",
+				Line:     228,
+			},
+			"at Foo()(formatter_test.go:228)",
+		},
+		{
+			CallerInfo{
+				FuncName: "Bar()",
+				File:     "formatter.go",
+				Line:     123,
+			},
+			"at Bar()(formatter.go:123)",
+		},
+		{
+			CallerInfo{
+				FuncName: "Buzz()",
+				File:     "file.go",
+				Line:     5,
+			},
+			"at Buzz()(file.go:5)",
+		},
+	}
+
+	for _, tc := range cases {
+		fl := &AssertionFailure{
+			Stacktrace: []CallerInfo{tc.callerInfo},
+		}
+		fd := df.buildFormatData(ctx, fl)
+		assert.Equal(t, []string{tc.want}, fd.Stacktrace)
+	}
+}
