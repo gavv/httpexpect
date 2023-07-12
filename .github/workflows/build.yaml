@@ -114,6 +114,7 @@ jobs:
 
       - name: Run linters
         uses: golangci/golangci-lint-action@v3
+        timeout-minutes: 5
         with:
           version: v1.51.2
           working-directory: ${{ matrix.dir }}
