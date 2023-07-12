@@ -1,7 +1,7 @@
 package e2e
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -18,7 +18,7 @@ func createRedirectHandler() http.Handler {
 		if r.Method == "GET" {
 			_, _ = w.Write([]byte(`default_response`))
 		} else {
-			b, _ := ioutil.ReadAll(r.Body)
+			b, _ := io.ReadAll(r.Body)
 			_, _ = w.Write(b)
 		}
 	})

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"mime"
 	"net/http"
 	"reflect"
@@ -169,7 +169,7 @@ func (r *Response) getContent(opChain *chain) ([]byte, bool) {
 		bw.Rewind()
 	}
 
-	content, err := ioutil.ReadAll(resp.Body)
+	content, err := io.ReadAll(resp.Body)
 
 	closeErr := resp.Body.Close()
 	if err == nil {

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -370,7 +370,7 @@ func TestResponse_BodyOperations(t *testing.T) {
 
 		httpResp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       ioutil.NopCloser(bytes.NewBufferString("body")),
+			Body:       io.NopCloser(bytes.NewBufferString("body")),
 		}
 
 		resp := NewResponse(reporter, httpResp)
@@ -615,7 +615,7 @@ func TestResponse_NoContent(t *testing.T) {
 		httpResp := &http.Response{
 			StatusCode: http.StatusOK,
 			Header:     http.Header(headers),
-			Body:       ioutil.NopCloser(bytes.NewBufferString("")),
+			Body:       io.NopCloser(bytes.NewBufferString("")),
 		}
 
 		resp := NewResponse(reporter, httpResp)
@@ -705,7 +705,7 @@ func TestResponse_NoContent(t *testing.T) {
 		httpResp := &http.Response{
 			StatusCode: http.StatusOK,
 			Header:     http.Header(headers),
-			Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+			Body:       io.NopCloser(bytes.NewBufferString(body)),
 		}
 
 		resp := NewResponse(reporter, httpResp)
@@ -931,7 +931,7 @@ func TestResponse_Text(t *testing.T) {
 		httpResp := &http.Response{
 			StatusCode: http.StatusOK,
 			Header:     http.Header(headers),
-			Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+			Body:       io.NopCloser(bytes.NewBufferString(body)),
 		}
 
 		resp := NewResponse(reporter, httpResp)
@@ -998,7 +998,7 @@ func TestResponse_Form(t *testing.T) {
 		httpResp := &http.Response{
 			StatusCode: http.StatusOK,
 			Header:     http.Header(headers),
-			Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+			Body:       io.NopCloser(bytes.NewBufferString(body)),
 		}
 
 		resp := NewResponse(reporter, httpResp)
@@ -1043,7 +1043,7 @@ func TestResponse_Form(t *testing.T) {
 		httpResp := &http.Response{
 			StatusCode: http.StatusOK,
 			Header:     http.Header(headers),
-			Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+			Body:       io.NopCloser(bytes.NewBufferString(body)),
 		}
 
 		resp := NewResponse(reporter, httpResp)
@@ -1067,7 +1067,7 @@ func TestResponse_Form(t *testing.T) {
 		httpResp := &http.Response{
 			StatusCode: http.StatusOK,
 			Header:     http.Header(headers),
-			Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+			Body:       io.NopCloser(bytes.NewBufferString(body)),
 		}
 
 		resp := NewResponse(reporter, httpResp)
@@ -1119,7 +1119,7 @@ func TestResponse_JSON(t *testing.T) {
 		httpResp := &http.Response{
 			StatusCode: http.StatusOK,
 			Header:     http.Header(headers),
-			Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+			Body:       io.NopCloser(bytes.NewBufferString(body)),
 		}
 
 		resp := NewResponse(reporter, httpResp)
@@ -1160,7 +1160,7 @@ func TestResponse_JSON(t *testing.T) {
 		httpResp := &http.Response{
 			StatusCode: http.StatusOK,
 			Header:     http.Header(headers),
-			Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+			Body:       io.NopCloser(bytes.NewBufferString(body)),
 		}
 
 		resp := NewResponse(reporter, httpResp)
@@ -1184,7 +1184,7 @@ func TestResponse_JSON(t *testing.T) {
 		httpResp := &http.Response{
 			StatusCode: http.StatusOK,
 			Header:     http.Header(headers),
-			Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+			Body:       io.NopCloser(bytes.NewBufferString(body)),
 		}
 
 		resp := NewResponse(reporter, httpResp)
@@ -1209,7 +1209,7 @@ func TestResponse_JSON(t *testing.T) {
 		httpResp := &http.Response{
 			StatusCode: http.StatusOK,
 			Header:     http.Header(headers),
-			Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+			Body:       io.NopCloser(bytes.NewBufferString(body)),
 		}
 
 		resp := NewResponse(reporter, httpResp)
@@ -1265,7 +1265,7 @@ func TestResponse_JSONP(t *testing.T) {
 					httpResp := &http.Response{
 						StatusCode: http.StatusOK,
 						Header:     http.Header(headers),
-						Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+						Body:       io.NopCloser(bytes.NewBufferString(body)),
 					}
 
 					resp := NewResponse(reporter, httpResp)
@@ -1323,7 +1323,7 @@ func TestResponse_JSONP(t *testing.T) {
 					httpResp := &http.Response{
 						StatusCode: http.StatusOK,
 						Header:     http.Header(headers),
-						Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+						Body:       io.NopCloser(bytes.NewBufferString(body)),
 					}
 
 					resp := NewResponse(reporter, httpResp)
@@ -1349,7 +1349,7 @@ func TestResponse_JSONP(t *testing.T) {
 		httpResp := &http.Response{
 			StatusCode: http.StatusOK,
 			Header:     http.Header(headers),
-			Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+			Body:       io.NopCloser(bytes.NewBufferString(body)),
 		}
 
 		resp := NewResponse(reporter, httpResp)
@@ -1374,7 +1374,7 @@ func TestResponse_JSONP(t *testing.T) {
 		httpResp := &http.Response{
 			StatusCode: http.StatusOK,
 			Header:     http.Header(headers),
-			Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+			Body:       io.NopCloser(bytes.NewBufferString(body)),
 		}
 
 		resp := NewResponse(reporter, httpResp)
@@ -1430,7 +1430,7 @@ func TestResponse_ContentOpts(t *testing.T) {
 		httpResp := &http.Response{
 			StatusCode: http.StatusOK,
 			Header:     http.Header(headers),
-			Body:       ioutil.NopCloser(bytes.NewBufferString(tc.respBody)),
+			Body:       io.NopCloser(bytes.NewBufferString(tc.respBody)),
 		}
 
 		reporter := newMockReporter(t)
@@ -1608,7 +1608,7 @@ func TestResponse_Usage(t *testing.T) {
 		httpResp := &http.Response{
 			StatusCode: http.StatusOK,
 			Header:     http.Header(headers),
-			Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+			Body:       io.NopCloser(bytes.NewBufferString(body)),
 		}
 
 		resp := NewResponse(reporter, httpResp)
@@ -1634,7 +1634,7 @@ func TestResponse_Usage(t *testing.T) {
 		httpResp := &http.Response{
 			StatusCode: http.StatusOK,
 			Header:     http.Header(headers),
-			Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+			Body:       io.NopCloser(bytes.NewBufferString(body)),
 		}
 
 		resp := NewResponse(reporter, httpResp)
@@ -1660,7 +1660,7 @@ func TestResponse_Usage(t *testing.T) {
 		httpResp := &http.Response{
 			StatusCode: http.StatusOK,
 			Header:     http.Header(headers),
-			Body:       ioutil.NopCloser(bytes.NewBufferString(body1)),
+			Body:       io.NopCloser(bytes.NewBufferString(body1)),
 		}
 
 		resp := NewResponse(reporter, httpResp)

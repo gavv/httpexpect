@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"io"
-	"io/ioutil"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -152,11 +151,11 @@ func TestBodyWrapper_GetBody(t *testing.T) {
 		rd2, err := wrp.GetBody()
 		assert.NoError(t, err)
 
-		b, err := ioutil.ReadAll(rd1)
+		b, err := io.ReadAll(rd1)
 		assert.NoError(t, err)
 		assert.Equal(t, "test_body", string(b))
 
-		b, err = ioutil.ReadAll(rd2)
+		b, err = io.ReadAll(rd2)
 		assert.NoError(t, err)
 		assert.Equal(t, "test_body", string(b))
 
@@ -601,7 +600,7 @@ func TestBodyWrapper_Memory(t *testing.T) {
 		assert.Equal(t, 1, body.eofCount)
 
 		// check body
-		c, err := ioutil.ReadAll(reader)
+		c, err := io.ReadAll(reader)
 		assert.NoError(t, err)
 		assert.Equal(t, "123456789", string(c))
 

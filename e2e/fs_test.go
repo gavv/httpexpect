@@ -1,7 +1,6 @@
 package e2e
 
 import (
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
@@ -12,13 +11,13 @@ import (
 )
 
 func TestE2EFs_FastBinder(t *testing.T) {
-	tempdir, err := ioutil.TempDir("", "httpexpect")
+	tempdir, err := os.MkdirTemp("", "httpexpect")
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer os.RemoveAll(tempdir)
 
-	if err := ioutil.WriteFile(
+	if err := os.WriteFile(
 		path.Join(tempdir, "hello"), []byte("hello, world!"), 0666); err != nil {
 		t.Fatal(err)
 	}

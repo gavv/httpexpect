@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net"
 	"net/http"
@@ -1889,7 +1888,7 @@ func (r *Request) WithFile(key, path string, reader ...io.Reader) *Request {
 //
 //	req := NewRequestC(config, "PUT", "http://example.com/path")
 //	fh, _ := os.Open("./john.png")
-//	b, _ := ioutil.ReadAll(fh)
+//	b, _ := io.ReadAll(fh)
 //	req.WithMultipart().
 //		WithFileBytes("avatar", "john.png", b)
 //	fh.Close()
@@ -2427,7 +2426,8 @@ func (r *Request) setupRedirects(opChain *chain) {
 			if _, ok := r.httpReq.Body.(*bodyWrapper); !ok {
 				r.httpReq.Body = newBodyWrapper(r.httpReq.Body, nil)
 			}
-			r.httpReq.GetBody = r.httpReq.Body.(*bodyWrapper).GetBody
+			wrapper := r.httpReq.Body.(*bodyWrapper)
+			r.httpReq.GetBody = wrapper.GetBody
 		} else {
 			r.httpReq.GetBody = func() (io.ReadCloser, error) {
 				return http.NoBody, nil
@@ -2495,7 +2495,7 @@ func (r *Request) setBody(
 		r.httpReq.Body = http.NoBody
 		r.httpReq.ContentLength = 0
 	} else {
-		r.httpReq.Body = ioutil.NopCloser(reader)
+		r.httpReq.Body = io.NopCloser(reader)
 		r.httpReq.ContentLength = int64(len)
 	}
 
