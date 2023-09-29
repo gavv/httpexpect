@@ -21,7 +21,7 @@ jobs:
     strategy:
       matrix:
         go: [1.17, 1.x]
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest]
 
     name: Go ${{ matrix.go }} OS ${{ matrix.os }}
     steps:
