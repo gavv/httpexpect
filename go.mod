@@ -1,6 +1,6 @@
 module github.com/gavv/httpexpect/v2
 
-go 1.17
+go 1.19
 
 require (
 	github.com/ajg/form v1.5.1
