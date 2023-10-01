@@ -1,11 +1,11 @@
 name: build
 
 on:
+  workflow_dispatch:
   pull_request:
     branches:
       - master
       - v*
-
   push:
     branches:
       - master
@@ -15,21 +15,21 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
-
     strategy:
       matrix:
-        go: [1.17, 1.x]
-
-    name: Go ${{ matrix.go }}
+        go: [1.x]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }} 
+    name: Go ${{ matrix.go }} ${{ matrix.os }} 
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
       - name: Install Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4.0.1
         with:
           go-version: ${{ matrix.go }}
+          cache: true
 
       - name: Build
         run: go get -v ./...
@@ -38,17 +38,21 @@ jobs:
         run: go test ./...
 
   examples:
-    runs-on: ubuntu-latest
-
-    name: Examples
+    strategy:
+      matrix:
+        go: [1.x]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }} 
+    name: Examples ${{ matrix.go }} ${{ matrix.os }} 
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
       - name: Install Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4.0.1
         with:
-          go-version: 1.x
+          go-version: ${{ matrix.go }}
+          cache: true
 
       - name: Build
         run: cd _examples && go get -v .
@@ -104,12 +108,13 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Install Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4.0.1
         with:
           go-version: 1.x
 
       - name: Run linters
         uses: golangci/golangci-lint-action@v3
+        timeout-minutes: 5
         with:
           version: v1.51.2
           working-directory: ${{ matrix.dir }}
@@ -124,9 +129,10 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Install Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v4.0.1
         with:
           go-version: 1.x
+          cache: true
 
       - name: Run tests
         run: go test -covermode=count -coverprofile=coverage.out -coverpkg=. ./...

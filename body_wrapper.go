@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"io"
-	"io/ioutil"
 	"runtime"
 	"sync"
 )
@@ -178,7 +177,7 @@ func (bw *bodyWrapper) GetBody() (io.ReadCloser, error) {
 	}
 
 	// Return fresh reader for memory chunk.
-	return ioutil.NopCloser(bytes.NewReader(bw.memBytes)), nil
+	return io.NopCloser(bytes.NewReader(bw.memBytes)), nil
 }
 
 // Disables storing body contents in memory and clears the cache.
@@ -223,7 +222,7 @@ func (bw *bodyWrapper) httpReadNext(p []byte) (int, error) {
 }
 
 func (bw *bodyWrapper) httpReadFull() error {
-	b, err := ioutil.ReadAll(bw.httpReader)
+	b, err := io.ReadAll(bw.httpReader)
 
 	// Switch to reading from memory.
 	bw.isFullyRead = true

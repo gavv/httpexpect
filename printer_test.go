@@ -3,7 +3,7 @@ package httpexpect
 import (
 	"bytes"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 
@@ -33,7 +33,7 @@ func TestPrinter_Compact(t *testing.T) {
 	printer.Request(req2)
 	printer.Request(nil)
 
-	printer.Response(&http.Response{Body: ioutil.NopCloser(body2)}, 0)
+	printer.Response(&http.Response{Body: io.NopCloser(body2)}, 0)
 	printer.Response(&http.Response{}, 0)
 	printer.Response(nil, 0)
 }
@@ -51,7 +51,7 @@ func TestPrinter_Debug(t *testing.T) {
 	printer.Request(req2)
 	printer.Request(nil)
 
-	printer.Response(&http.Response{Body: ioutil.NopCloser(body2)}, 0)
+	printer.Response(&http.Response{Body: io.NopCloser(body2)}, 0)
 	printer.Response(&http.Response{}, 0)
 	printer.Response(nil, 0)
 }
