@@ -113,14 +113,15 @@ jobs:
         uses: actions/setup-go@v4.0.1
         with:
           go-version: 1.x
+          cache: false
 
       - name: Run linters
         uses: golangci/golangci-lint-action@v3
-        timeout-minutes: 5
+        timeout-minutes: 20
         with:
           version: v1.51.2
           working-directory: ${{ matrix.dir }}
-          skip-pkg-cache: true
+          args: --timeout=20m
 
   coverage:
     runs-on: ubuntu-latest
