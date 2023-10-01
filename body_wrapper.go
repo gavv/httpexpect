@@ -190,8 +190,10 @@ func (bw *bodyWrapper) DisableRewinds() {
 	bw.mu.Lock()
 	defer bw.mu.Unlock()
 
-	// Free memory if reading from original HTTP response
-	// or reader has nothing left to read in memory.
+	// Free memory if reading from original HTTP response, or reading from memory
+	// and memory reader has nothing left to read.
+	// Otherwise, i.e. when we're reading from memory, and there is more to read,
+	// memReadNext() will free memory later when it hits EOF.
 	if !bw.isFullyRead || bw.memReader.Len() == 0 {
 		bw.memReader = bytes.NewReader(nil)
 		bw.memBytes = nil
@@ -204,6 +206,8 @@ func (bw *bodyWrapper) memReadNext(p []byte) (int, error) {
 	n, err := bw.memReader.Read(p)
 
 	if err == io.EOF {
+		// Free memory after we hit EOF when reading from memory,
+		// if rewinds were disabled while we were reading from it.
 		if bw.isRewindDisabled {
 			bw.memReader = bytes.NewReader(nil)
 			bw.memBytes = nil
