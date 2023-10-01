@@ -999,12 +999,15 @@ func TestBodyWrapper_DisableRewindsErrors(t *testing.T) {
 		body.readErr = bodyErr
 		b := make([]byte, len(bodyText)+1)
 
+		// disable rewinds before first read
 		wrp.DisableRewinds()
 
+		// Read calls body.Read, which fails
 		_, err := wrp.Read(b)
 		assert.EqualError(t, err, bodyErr.Error())
 		assert.Equal(t, 1, body.readCount)
 
+		// Read calls body.Read again, which fails again
 		_, err = wrp.Read(b)
 		assert.EqualError(t, err, bodyErr.Error())
 		assert.Equal(t, 2, body.readCount)
@@ -1017,12 +1020,15 @@ func TestBodyWrapper_DisableRewindsErrors(t *testing.T) {
 		body.readErr = bodyErr
 		b := make([]byte, len(bodyText)+1)
 
+		// Read calls body.Read, which fails
 		_, err := wrp.Read(b)
 		assert.EqualError(t, err, bodyErr.Error())
 		assert.Equal(t, 1, body.readCount)
 
+		// disable rewinds after failed read
 		wrp.DisableRewinds()
 
+		// Read returns cached error from previous call
 		_, err = wrp.Read(b)
 		assert.EqualError(t, err, bodyErr.Error())
 		assert.Equal(t, 1, body.readCount)
@@ -1035,17 +1041,21 @@ func TestBodyWrapper_DisableRewindsErrors(t *testing.T) {
 		body.closeErr = bodyErr
 		b := make([]byte, len(bodyText)+1)
 
+		// Close calls body.Read, then body.Close, which fails
 		err := wrp.Close()
 		assert.True(t, wrp.isFullyRead)
 		assert.EqualError(t, err, bodyErr.Error())
 		assert.Equal(t, 2, body.readCount)
 
+		// disable rewinds after failed close
 		wrp.DisableRewinds()
 
+		// Read returns cached error from Close call
 		_, err = wrp.Read(b)
 		assert.EqualError(t, err, bodyErr.Error())
 		assert.Equal(t, 2, body.readCount)
 
+		// Read returns cached error from Close call, again
 		_, err = wrp.Read(b)
 		assert.EqualError(t, err, bodyErr.Error())
 		assert.Equal(t, 2, body.readCount)
