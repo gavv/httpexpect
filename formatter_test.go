@@ -406,79 +406,6 @@ func TestFormatter_FailureReference(t *testing.T) {
 		})
 	}
 }
-func TestFormatter_FailureContext(t *testing.T) {
-	cases := []struct {
-		name          string
-		assertionType AssertionType
-		testName      string
-		requestName   string
-		path          []string
-		aliasedPath   []string
-	}{
-		{
-			name:          "Assert Equal",
-			assertionType: AssertEqual,
-			testName:      t.Name(),
-			requestName:   "RequestName",
-			path:          []string{"GET"},
-			aliasedPath:   []string{"ALIASGET"},
-		},
-		{
-			name:          "Assert DisableNames",
-			assertionType: AssertEqual,
-			path:          []string{"GET"},
-			aliasedPath:   []string{"ALIASGET"},
-		},
-		{
-			name:          "Assert DisablePaths",
-			assertionType: AssertEqual,
-			testName:      t.Name(),
-			requestName:   "RequestName",
-		},
-		{
-			name:          "Assert DisableAliases",
-			assertionType: AssertEqual,
-			testName:      t.Name(),
-			requestName:   "RequestName",
-			path:          []string{"GET"},
-			aliasedPath:   []string{"ALIASGET"},
-		},
-	}
-
-	ctx := &AssertionContext{
-		TestName:    t.Name(),
-		RequestName: "RequestName",
-		Path:        []string{"GET"},
-		AliasedPath: []string{"ALIASGET"},
-	}
-	var fd *FormatData
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			fl := &AssertionFailure{
-				Type: tc.assertionType,
-			}
-			if tc.name == "Assert Equal" {
-				df := &DefaultFormatter{}
-				fd = df.buildFormatData(ctx, fl)
-				assert.Equal(t, tc.aliasedPath, fd.AssertPath)
-			} else if tc.name == "Assert DisableNames" {
-				df := &DefaultFormatter{DisableNames: true}
-				fd = df.buildFormatData(ctx, fl)
-				assert.Equal(t, tc.aliasedPath, fd.AssertPath)
-			} else if tc.name == "Assert DisablePaths" {
-				df := &DefaultFormatter{DisablePaths: true}
-				fd = df.buildFormatData(ctx, fl)
-				assert.Equal(t, tc.path, fd.AssertPath)
-			} else if tc.name == "Assert DisableAliases" {
-				df := &DefaultFormatter{DisableAliases: true}
-				fd = df.buildFormatData(ctx, fl)
-				assert.Equal(t, tc.path, fd.AssertPath)
-			}
-			assert.Equal(t, tc.requestName, fd.RequestName)
-			assert.Equal(t, tc.testName, fd.TestName)
-		})
-	}
-}
 
 func TestFormatter_FailureDelta(t *testing.T) {
 	cases := []struct {
@@ -602,6 +529,74 @@ func TestFormatter_FailureErrors(t *testing.T) {
 			}
 			fd := df.buildFormatData(ctx, fl)
 			assert.Equal(t, tc.expected, fd.Errors)
+		})
+	}
+}
+
+func TestFormatter_FailureContext(t *testing.T) {
+	ctx := &AssertionContext{
+		TestName:    "MyTestName",
+		RequestName: "MyRequestName",
+		Path:        []string{"MyPath"},
+		AliasedPath: []string{"MyAliasedPath"},
+	}
+
+	cases := []struct {
+		name  string
+		fmt   DefaultFormatter
+		check func(t *testing.T, data *FormatData)
+	}{
+		{
+			name: "default options",
+			fmt:  DefaultFormatter{},
+			check: func(t *testing.T, fd *FormatData) {
+				assert.Equal(t, "MyTestName", fd.TestName)
+				assert.Equal(t, "MyRequestName", fd.RequestName)
+				assert.Equal(t, []string{"MyAliasedPath"}, fd.AssertPath)
+			},
+		},
+		{
+			name: "DisableNames",
+			fmt: DefaultFormatter{
+				DisableNames: true,
+			},
+			check: func(t *testing.T, fd *FormatData) {
+				assert.Equal(t, "", fd.TestName)
+				assert.Equal(t, "", fd.RequestName)
+				assert.Equal(t, []string{"MyAliasedPath"}, fd.AssertPath)
+			},
+		},
+		{
+			name: "DisablePaths",
+			fmt: DefaultFormatter{
+				DisablePaths: true,
+			},
+			check: func(t *testing.T, fd *FormatData) {
+				assert.Equal(t, "MyTestName", fd.TestName)
+				assert.Equal(t, "MyRequestName", fd.RequestName)
+				assert.Equal(t, []string(nil), fd.AssertPath)
+			},
+		},
+		{
+			name: "DisableAliases",
+			fmt: DefaultFormatter{
+				DisableAliases: true,
+			},
+			check: func(t *testing.T, fd *FormatData) {
+				assert.Equal(t, "MyTestName", fd.TestName)
+				assert.Equal(t, "MyRequestName", fd.RequestName)
+				assert.Equal(t, []string{"MyPath"}, fd.AssertPath)
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			fl := &AssertionFailure{
+				Type: AssertEqual,
+			}
+			fd := tc.fmt.buildFormatData(ctx, fl)
+			tc.check(t, fd)
 		})
 	}
 }
