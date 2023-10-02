@@ -3,6 +3,7 @@ module github.com/gavv/httpexpect/v2
 go 1.19
 
 require (
+	github.com/TylerBrock/colorjson v0.0.0-20200706003622-8a50f05110d2
 	github.com/ajg/form v1.5.1
 	github.com/fasthttp/websocket v1.4.3-rc.6
 	github.com/fatih/color v1.15.0
@@ -24,9 +25,9 @@ require (
 )
 
 require (
-	github.com/TylerBrock/colorjson v0.0.0-20200706003622-8a50f05110d2 // indirect
 	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/hokaccha/go-prettyjson v0.0.0-20211117102719-0474bc63780f // indirect
 	github.com/klauspost/compress v1.15.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/onsi/ginkgo v1.10.1 // indirect
