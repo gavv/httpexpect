@@ -1045,32 +1045,36 @@ var defaultTemplateFuncs = template.FuncMap{
 
 		return sb.String()
 	},
-	"colorjson": func(enable bool, stringColor, input string) string {
+	"colorjson": func(enable bool, colorName, input string) string {
 		if !enable {
 			return input
 		}
-		var colorObj map[string]interface{}
-		err := json.Unmarshal([]byte(input), &colorObj)
+
+		fallbackColor := color.Reset
+		if attr, ok := defaultColors[colorName]; ok {
+			fallbackColor = attr
+		}
+
+		var parsedInput interface{}
+		err := json.Unmarshal([]byte(input), &parsedInput)
 		if err != nil {
-			return input
+			return color.New(fallbackColor).Sprint(input)
 		}
-		colorInput := "HiMagenta"
-		if _, ok := defaultColors[stringColor]; ok {
-			colorInput = stringColor
-		}
-		cyanColor := color.New(defaultColors["Cyan"])
 
 		formatter := colorjson.NewFormatter()
-		formatter.StringColor = color.New(defaultColors[colorInput])
-		formatter.NumberColor = cyanColor
-		formatter.BoolColor = cyanColor
-		formatter.NullColor = cyanColor
+		formatter.KeyColor = color.New(color.Reset)
+		formatter.StringColor = color.New(defaultColors["HiMagenta"])
+		formatter.NumberColor = color.New(defaultColors["Cyan"])
+		formatter.BoolColor = color.New(defaultColors["Cyan"])
+		formatter.NullColor = color.New(defaultColors["Cyan"])
+		formatter.Indent = 2
 
-		s, err := formatter.Marshal(colorObj)
+		b, err := formatter.Marshal(parsedInput)
 		if err != nil {
-			return input
+			return color.New(fallbackColor).Sprint(input)
 		}
-		return string(s)
+
+		return string(b)
 	},
 }
 
@@ -1119,23 +1123,23 @@ assertion:
 {{- else }}expected
 {{- end }} {{ .ExpectedKind }}:
 {{- range $n, $exp := .Expected }}
-{{ $exp | indent | color $.EnableColors "HiMagenta" }}
+{{ $exp | colorjson $.EnableColors "HiMagenta" | indent }}
 {{- end -}}
 {{- end -}}
 {{- if .HaveActual }}
 
 actual value:
-{{ .Actual | indent | colorjson .EnableColors "HiMagenta"}}
+{{ .Actual | colorjson .EnableColors "HiMagenta" | indent }}
 {{- end -}}
 {{- if .HaveReference }}
 
 reference value:
-{{ .Reference | indent | color .EnableColors "HiMagenta" }}
+{{ .Reference | colorjson .EnableColors "HiMagenta" | indent }}
 {{- end -}}
 {{- if .HaveDelta }}
 
 allowed delta:
-{{ .Delta | indent | colorjson .EnableColors "Cyan" }}
+{{ .Delta | indent | color .EnableColors "Cyan" }}
 {{- end -}}
 {{- if .HaveDiff }}
 
