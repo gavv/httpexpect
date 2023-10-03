@@ -1009,89 +1009,63 @@ var defaultTemplateFuncs = template.FuncMap{
 		}
 		return color.New(colorAttr).Sprint(input)
 	},
-	"colorhttp": func(enable bool, colorName string, isResponse bool, input string) string {
+	"colorhttp": func(enable bool, isResponse bool, input string) string {
 		if !enable {
 			return input
 		}
 
-		colorAttr := color.Reset
-		present := true
+		methodColor := color.New(defaultColors["HiMagenta"])
+		statusColor := color.New(defaultColors["HiMagenta"])
+		headerColor := color.New(defaultColors["Cyan"])
+
 		var sb strings.Builder
-		if ca, ok := defaultColors[colorName]; ok {
-			colorAttr = ca
-		}
 
-		httpMethod := map[string]bool{
-			"GET":    present,
-			"POST":   present,
-			"PATCH":  present,
-			"DELETE": present,
-			"PUT":    present,
-		}
-
-		getColor := func(word string, forceApplyColor bool) color.Attribute {
-			if v := httpMethod[word]; v == present {
-				return colorAttr
-			}
-			if word[len(word)-1] == ':' {
-				return colorAttr
-			}
-			if forceApplyColor {
-				return colorAttr
-			}
-
-			return color.Reset
-		}
 		isFirstLine := true
 		for _, line := range strings.Split(input, "\n") {
 			if sb.Len() != 0 {
 				sb.WriteString("\n")
 			}
 
-			words := strings.Fields(line)
+			line = strings.TrimSuffix(line, "\n")
+			line = strings.TrimSuffix(line, "\r")
+
+			var words []string
+			if isFirstLine {
+				words = strings.SplitN(line, " ", -1)
+			} else {
+				words = strings.SplitN(line, " ", 2)
+			}
+
 			wordLen := len(words)
 			for index, word := range words {
-				forceApplyColor := index != wordLen-1 && isResponse && isFirstLine
-				sb.WriteString(color.New(getColor(word, forceApplyColor)).Sprint(word))
+				var applyColor *color.Color
+
+				if isFirstLine {
+					if isResponse {
+						if index != 0 && index != wordLen-1 {
+							applyColor = statusColor
+						}
+					} else {
+						if index == 0 {
+							applyColor = methodColor
+						}
+					}
+				} else {
+					if index == 0 {
+						applyColor = headerColor
+					}
+				}
+
+				if word != "" && applyColor != nil {
+					sb.WriteString(applyColor.Sprint(word))
+				} else {
+					sb.WriteString(word)
+				}
+
 				sb.WriteString(" ")
 			}
+
 			isFirstLine = false
-		}
-
-		return sb.String()
-	},
-	"colordiff": func(enable bool, input string) string {
-		if !enable {
-			return input
-		}
-
-		prefixColor := []struct {
-			prefix string
-			color  color.Attribute
-		}{
-			{"---", color.FgWhite},
-			{"+++", color.FgWhite},
-			{"-", color.FgRed},
-			{"+", color.FgGreen},
-		}
-
-		lineColor := func(s string) color.Attribute {
-			for _, pc := range prefixColor {
-				if strings.HasPrefix(s, pc.prefix) {
-					return pc.color
-				}
-			}
-
-			return color.Reset
-		}
-
-		var sb strings.Builder
-		for _, line := range strings.Split(input, "\n") {
-			if sb.Len() != 0 {
-				sb.WriteString("\n")
-			}
-
-			sb.WriteString(color.New(lineColor(line)).Sprint(line))
 		}
 
 		return sb.String()
@@ -1127,6 +1101,42 @@ var defaultTemplateFuncs = template.FuncMap{
 
 		return string(b)
 	},
+	"colordiff": func(enable bool, input string) string {
+		if !enable {
+			return input
+		}
+
+		prefixColor := [...]struct {
+			prefix string
+			color  color.Attribute
+		}{
+			{"---", color.FgWhite},
+			{"+++", color.FgWhite},
+			{"-", color.FgRed},
+			{"+", color.FgGreen},
+		}
+
+		lineColor := func(s string) color.Attribute {
+			for _, pc := range prefixColor {
+				if strings.HasPrefix(s, pc.prefix) {
+					return pc.color
+				}
+			}
+
+			return color.Reset
+		}
+
+		var sb strings.Builder
+		for _, line := range strings.Split(input, "\n") {
+			if sb.Len() != 0 {
+				sb.WriteString("\n")
+			}
+
+			sb.WriteString(color.New(lineColor(line)).Sprint(line))
+		}
+
+		return sb.String()
+	},
 }
 
 var defaultSuccessTemplate = `[OK] {{ join .LineWidth .AssertPath }}`
@@ -1149,11 +1159,11 @@ request name: {{ .RequestName | color $.EnableColors "Cyan" }}
 {{- end -}}
 {{- if .HaveRequest }}
 
-request: {{ .Request | indent | trim | colorhttp $.EnableColors "HiMagenta" false}}
+request: {{ .Request | colorhttp $.EnableColors false | indent | trim }}
 {{- end -}}
 {{- if .HaveResponse }}
 
-response: {{ .Response | indent | trim | colorhttp $.EnableColors "HiMagenta" true}}
+response: {{ .Response | colorhttp $.EnableColors true | indent | trim }}
 {{- end -}}
 {{- if .HaveStacktrace }}
 
