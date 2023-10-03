@@ -136,7 +136,7 @@ func TestIrisStream(t *testing.T) {
 	e.GET("/stream").
 		Expect().
 		Status(http.StatusOK).
-		TransferEncoding("chunked"). // ensure server sent chunks
+		HasTransferEncoding("chunked"). // ensure server sent chunks
 		Body().IsEqual("0123456789")
 
 	// send chunks to server
