@@ -41,9 +41,10 @@ func (ml *mockLogger) Logf(message string, args ...interface{}) {
 
 // mock reporter
 type mockReporter struct {
-	testing  *testing.T
-	reported bool
-	reportCb func()
+	testing      *testing.T
+	reported     bool
+	reportCalled int
+	reportCb     func()
 }
 
 func newMockReporter(t *testing.T) *mockReporter {
@@ -53,6 +54,7 @@ func newMockReporter(t *testing.T) *mockReporter {
 func (mr *mockReporter) Errorf(message string, args ...interface{}) {
 	mr.testing.Logf("Fail: "+message, args...)
 	mr.reported = true
+	mr.reportCalled++
 
 	if mr.reportCb != nil {
 		mr.reportCb()

@@ -465,6 +465,86 @@ func TestExpect_Propagation(t *testing.T) {
 	})
 }
 
+func TestExpect_Inheritance(t *testing.T) {
+	t.Run("reporter", func(t *testing.T) {
+		rootReporter := newMockReporter(t)
+		req2Reporter := newMockReporter(t)
+
+		e := WithConfig(Config{
+			BaseURL:  "http://example.com",
+			Client:   &mockClient{},
+			Reporter: rootReporter,
+		})
+
+		req1 := e.GET("/")
+		req2 := e.GET("/")
+
+		req2.WithReporter(req2Reporter)
+
+		// So far OK
+		req1.chain.assert(t, success)
+		req2.chain.assert(t, success)
+
+		resp1 := req1.Expect()
+		resp2 := req2.Expect()
+
+		// So far OK
+		resp1.chain.assert(t, success)
+		resp2.chain.assert(t, success)
+
+		// Failure on resp1 should be reported to rootReporter,
+		// which was inherited from config
+		resp1.JSON().Object().Value("foo").chain.assert(t, failure)
+		assert.Equal(t, 1, rootReporter.reportCalled)
+		assert.Equal(t, 0, req2Reporter.reportCalled)
+
+		// Failure on resp2 should be reported to req2Reporter,
+		// which was inherited from req2
+		resp2.JSON().Object().Value("foo").chain.assert(t, failure)
+		assert.Equal(t, 1, rootReporter.reportCalled)
+		assert.Equal(t, 1, req2Reporter.reportCalled)
+	})
+
+	t.Run("assertion handler", func(t *testing.T) {
+		rootHandler := &mockAssertionHandler{}
+		req2Handler := &mockAssertionHandler{}
+
+		e := WithConfig(Config{
+			BaseURL:          "http://example.com",
+			Client:           &mockClient{},
+			AssertionHandler: rootHandler,
+		})
+
+		req1 := e.GET("/")
+		req2 := e.GET("/")
+
+		req2.WithAssertionHandler(req2Handler)
+
+		// So far OK
+		req1.chain.assert(t, success)
+		req2.chain.assert(t, success)
+
+		resp1 := req1.Expect()
+		resp2 := req2.Expect()
+
+		// So far OK
+		resp1.chain.assert(t, success)
+		resp2.chain.assert(t, success)
+
+		// Failure on resp1 should be reported to rootReporter,
+		// which was inherited from config
+		resp1.JSON().Object().Value("foo").chain.assert(t, failure)
+		assert.Equal(t, 1, rootHandler.failureCalled)
+		assert.Equal(t, 0, req2Handler.failureCalled)
+
+		// Failure on resp2 should be reported to req2Reporter,
+		// which was inherited from req2
+		resp2.JSON().Object().Value("foo").chain.assert(t, failure)
+		assert.Equal(t, 1, rootHandler.failureCalled)
+		assert.Equal(t, 1, req2Handler.failureCalled)
+	})
+}
+
 func TestExpect_RequestFactory(t *testing.T) {
 	t.Run("default factory", func(t *testing.T) {
 		e := WithConfig(Config{
@@ -762,66 +842,4 @@ func TestExpect_Adapters(t *testing.T) {
 		assert.True(t, called)
 		assert.Contains(t, message, "test logger called")
 	})
-}
-
-func TestReporterAndAssertionHandler(t *testing.T) {
-	mainRep := newMockReporter(t)
-	mainAssertionHandler := &mockAssertionHandler{}
-
-	config := Config{
-		BaseURL:  "http://example.com",
-		Reporter: mainRep,
-	}
-
-	assertionConfig := Config{
-		BaseURL:          "http://example.com",
-		AssertionHandler: mainAssertionHandler,
-	}
-
-	cases := []struct {
-		name        string
-		config      Config
-		hasReporter bool
-		wantEqual   chainResult
-	}{
-		{
-			name:        "Response reported failure with reporter",
-			config:      config,
-			hasReporter: true,
-			wantEqual:   failure,
-		},
-		{
-			name:        "Response reported failure with assertion handler",
-			config:      assertionConfig,
-			hasReporter: true,
-			wantEqual:   failure,
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			subRep := newMockReporter(t)
-			subAssertionHandler := &mockAssertionHandler{}
-			var req2 *Request
-
-			req1 := NewRequest(config, "GET", "/")
-
-			if tc.hasReporter {
-				req2 = NewRequest(config, "GET", "/2").WithReporter(subRep)
-			} else {
-				req2 = NewRequest(config, "GET", "/2").WithAssertionHandler(subAssertionHandler)
-			}
-
-			resp1 := req1.Expect().Status(200)
-			resp2 := req2.Expect().Status(200)
-
-			// Make some assertion that fails on both responses
-			resp1.JSON().Object().Value("foo").chain.assert(t, failure)
-			resp2.JSON().Object().Value("foo").chain.assert(t, failure)
-
-			resp1.chain.assert(t, tc.wantEqual)
-			resp2.chain.assert(t, tc.wantEqual)
-		})
-	}
-
 }
