@@ -404,6 +404,16 @@ e.POST("/path").
 	WithRetryDelay(time.Second, time.Minute).
 	Expect().
 	Status(http.StatusOK)
+
+// custom retry function
+e.POST("/path").
+	WithMaxRetries(5).
+	WithCustomRetryFunc(func(resp *http.Response, err error) bool {
+		// your custom function here
+		return true
+	}).
+	Expect().
+	Status(http.StatusOK)
 ```
 
 ##### Subdomains and per-request URL

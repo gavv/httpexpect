@@ -46,6 +46,9 @@ func TestRequest_FailedChain(t *testing.T) {
 	req.WithMaxRedirects(1)
 	req.WithRetryPolicy(RetryAllErrors)
 	req.WithMaxRetries(1)
+	req.WithCustomRetryFunc(func(r *http.Response, err error) bool {
+		return true
+	})
 	req.WithRetryDelay(time.Millisecond, time.Millisecond)
 	req.WithWebsocketUpgrade()
 	req.WithWebsocketDialer(
@@ -3767,6 +3770,14 @@ func TestRequest_Order(t *testing.T) {
 			},
 		},
 		{
+			name: "WithRetryCustomFunc after Expect",
+			afterFunc: func(req *Request) {
+				req.WithCustomRetryFunc(func(r *http.Response, err error) bool {
+					return true
+				})
+			},
+		},
+		{
 			name: "WithRetryDelay after Expect",
 			afterFunc: func(req *Request) {
 				req.WithRetryDelay(time.Second, 5*time.Second)
@@ -3990,4 +4001,53 @@ func TestRequest_Panics(t *testing.T) {
 
 		assert.Panics(t, func() { newRequest(newMockChain(t), config, "GET", "") })
 	})
+}
+
+func TestRequest_RetriesCustomFunc(t *testing.T) {
+
+	client := &mockClient{
+		resp: http.Response{
+			StatusCode: http.StatusBadRequest,
+		},
+		cb: func(req *http.Request) {
+
+			assert.Error(t, req.Context().Err(), context.Canceled.Error())
+
+			b, err := io.ReadAll(req.Body)
+			assert.NoError(t, err)
+			assert.Equal(t, "test body", string(b))
+		},
+	}
+
+	config := Config{
+		Client:   client,
+		Reporter: newMockReporter(t),
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // Cancel immediately to trigger error
+
+	called := struct {
+		called bool
+	}{
+		called: true,
+	}
+
+	req := NewRequestC(config, http.MethodPost, "/url").
+		WithText("test body").
+		WithRetryPolicy(RetryAllErrors).
+		WithMaxRetries(2).
+		WithContext(ctx).
+		WithRetryDelay(0, 0).
+		WithCustomRetryFunc(func(resp *http.Response, err error) bool {
+			called.called = true
+			return true
+		})
+	req.chain.assert(t, success)
+
+	resp := req.Expect()
+	resp.chain.assert(t, failure)
+
+	// Should execute custom func
+	assert.True(t, called.called)
 }
