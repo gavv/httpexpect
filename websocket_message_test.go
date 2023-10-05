@@ -56,6 +56,62 @@ func TestWebsocketMessage_Constructors(t *testing.T) {
 	})
 }
 
+func TestWebsocketMessage_Raw(t *testing.T) {
+	t.Run("nil content", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		msg := NewWebsocketMessage(reporter, websocket.CloseMessage, nil)
+
+		typ, content, closeCode := msg.Raw()
+
+		assert.Equal(t, websocket.CloseMessage, typ)
+		assert.NotNil(t, content)
+		assert.Equal(t, 0, len(content))
+		assert.Equal(t, 0, closeCode)
+	})
+
+	t.Run("empty content", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		msg := NewWebsocketMessage(reporter, websocket.CloseMessage, []byte{})
+
+		typ, content, closeCode := msg.Raw()
+
+		assert.Equal(t, websocket.CloseMessage, typ)
+		assert.NotNil(t, content)
+		assert.Equal(t, 0, len(content))
+		assert.Equal(t, 0, closeCode)
+	})
+
+	t.Run("non-empty content", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		origContent := []byte{1, 2, 3}
+
+		msg := NewWebsocketMessage(reporter, websocket.CloseMessage, origContent)
+
+		typ, content, closeCode := msg.Raw()
+
+		assert.Equal(t, websocket.CloseMessage, typ)
+		assert.NotNil(t, content)
+		assert.Equal(t, origContent, content)
+		assert.NotSame(t, &origContent[0], &content[0])
+		assert.Equal(t, 0, closeCode)
+	})
+
+	t.Run("close code", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		msg := NewWebsocketMessage(reporter, websocket.CloseMessage, []byte{}, 123)
+
+		typ, content, closeCode := msg.Raw()
+
+		assert.Equal(t, websocket.CloseMessage, typ)
+		assert.NotNil(t, content)
+		assert.Equal(t, 123, closeCode)
+	})
+}
+
 func TestWebsocketMessage_Alias(t *testing.T) {
 	reporter := newMockReporter(t)
 

@@ -83,6 +83,15 @@ func TestString_Constructors(t *testing.T) {
 	})
 }
 
+func TestString_Raw(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewString(reporter, "foo")
+
+	assert.Equal(t, "foo", value.Raw())
+	value.chain.assert(t, success)
+}
+
 func TestString_Decode(t *testing.T) {
 	t.Run("target is empty interface", func(t *testing.T) {
 		reporter := newMockReporter(t)
@@ -165,18 +174,17 @@ func TestString_Schema(t *testing.T) {
 }
 
 func TestString_Getters(t *testing.T) {
-	reporter := newMockReporter(t)
+	t.Run("length", func(t *testing.T) {
+		reporter := newMockReporter(t)
 
-	value := NewString(reporter, "foo")
+		value := NewString(reporter, "foo")
 
-	assert.Equal(t, "foo", value.Raw())
-	value.chain.assert(t, success)
-	value.chain.clear()
+		innerValue := value.Length()
+		assert.Equal(t, 3.0, innerValue.Raw())
 
-	num := value.Length()
-	value.chain.assert(t, success)
-	num.chain.assert(t, success)
-	assert.Equal(t, 3.0, num.Raw())
+		value.chain.assert(t, success)
+		innerValue.chain.assert(t, success)
+	})
 }
 
 func TestString_IsEmpty(t *testing.T) {

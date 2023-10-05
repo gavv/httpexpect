@@ -113,6 +113,17 @@ func TestResponse_Constructors(t *testing.T) {
 	})
 }
 
+func TestResponse_Raw(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	httpResp := http.Response{}
+
+	resp := NewResponse(reporter, &httpResp)
+
+	assert.Same(t, &httpResp, resp.Raw())
+	resp.chain.assert(t, success)
+}
+
 func TestResponse_Alias(t *testing.T) {
 	reporter := newMockReporter(t)
 
@@ -281,8 +292,6 @@ func TestResponse_Headers(t *testing.T) {
 	}
 
 	resp := NewResponse(reporter, httpResp)
-
-	assert.Same(t, httpResp, resp.Raw())
 
 	resp.Headers().IsEqual(headers).
 		chain.assert(t, success)

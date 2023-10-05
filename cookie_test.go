@@ -96,6 +96,17 @@ func TestCookie_Constructors(t *testing.T) {
 	})
 }
 
+func TestCookie_Raw(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	data := http.Cookie{}
+
+	value := NewCookie(reporter, &data)
+
+	assert.Same(t, &data, value.Raw())
+	value.chain.assert(t, success)
+}
+
 func TestCookie_Alias(t *testing.T) {
 	reporter := newMockReporter(t)
 

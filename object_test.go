@@ -129,6 +129,20 @@ func TestObject_Constructors(t *testing.T) {
 	})
 }
 
+func TestObject_Raw(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	data := map[string]interface{}{"foo": "bar"}
+
+	value := NewObject(reporter, data)
+	assert.Equal(t, data, value.Raw())
+
+	data["foo"] = "baz"
+	assert.NotEqual(t, data, value.Raw())
+
+	value.chain.assert(t, success)
+}
+
 func TestObject_Decode(t *testing.T) {
 	t.Run("target is empty interface", func(t *testing.T) {
 		reporter := newMockReporter(t)
@@ -340,15 +354,6 @@ func TestObject_Getters(t *testing.T) {
 
 	assert.Equal(t, nil, value.Value("BAZ").Raw())
 	value.chain.assert(t, failure)
-	value.chain.clear()
-
-	it := value.Iter()
-	assert.Equal(t, 3, len(it))
-	assert.Equal(t, it["foo"].value, value.Value("foo").Raw())
-	assert.Equal(t, it["bar"].value, value.Value("bar").Raw())
-	it["foo"].chain.assert(t, success)
-	it["bar"].chain.assert(t, success)
-	value.chain.assert(t, success)
 	value.chain.clear()
 }
 
@@ -1306,6 +1311,29 @@ func TestObject_HasValue(t *testing.T) {
 			})
 		}
 	})
+}
+
+func TestObject_Iter(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	m := map[string]interface{}{
+		"foo": 123.0,
+		"bar": []interface{}{"456", 789.0},
+	}
+
+	value := NewObject(reporter, m)
+
+	it := value.Iter()
+
+	assert.NotNil(t, it)
+	assert.Equal(t, 2, len(it))
+	assert.Equal(t, it["foo"].value, value.Value("foo").Raw())
+	assert.Equal(t, it["bar"].value, value.Value("bar").Raw())
+
+	it["foo"].chain.assert(t, success)
+	it["bar"].chain.assert(t, success)
+
+	value.chain.assert(t, success)
 }
 
 func TestObject_Every(t *testing.T) {

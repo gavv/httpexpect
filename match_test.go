@@ -52,6 +52,30 @@ func TestMatch_Constructors(t *testing.T) {
 	})
 }
 
+func TestMatch_Raw(t *testing.T) {
+	t.Run("nil", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewMatch(reporter, nil, nil)
+
+		assert.NotNil(t, []string{}, value.Raw())
+		assert.Equal(t, []string{}, value.Raw())
+		value.chain.assert(t, success)
+	})
+
+	t.Run("non-nil", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		data := []string{"foo", "bar"}
+
+		value := NewMatch(reporter, data, nil)
+
+		assert.Equal(t, data, value.Raw())
+		assert.NotSame(t, &data[0], &value.Raw()[0])
+		value.chain.assert(t, success)
+	})
+}
+
 func TestMatch_Alias(t *testing.T) {
 	reporter := newMockReporter(t)
 
