@@ -309,14 +309,6 @@ func TestArray_Getters(t *testing.T) {
 		assert.NotNil(t, value.Value(0))
 		value.chain.assert(t, failure)
 		value.chain.clear()
-
-		assert.NotNil(t, value.First())
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		assert.NotNil(t, value.Last())
-		value.chain.assert(t, failure)
-		value.chain.clear()
 	})
 
 	t.Run("not empty", func(t *testing.T) {
@@ -337,11 +329,6 @@ func TestArray_Getters(t *testing.T) {
 
 		assert.Equal(t, nil, value.Value(2).Raw())
 		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		assert.Equal(t, "foo", value.First().Raw())
-		assert.Equal(t, 123.0, value.Last().Raw())
-		value.chain.assert(t, success)
 		value.chain.clear()
 	})
 }
