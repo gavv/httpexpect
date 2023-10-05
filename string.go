@@ -865,12 +865,12 @@ func (s *String) NotHasSuffixFold(value string) *String {
 //	m.NotEmpty()
 //	m.Length().IsEqual(3)
 //
-//	m.Index(0).IsEqual("http://example.com/users/john")
-//	m.Index(1).IsEqual("example.com")
-//	m.Index(2).IsEqual("john")
+//	m.Submatch(0).IsEqual("http://example.com/users/john")
+//	m.Submatch(1).IsEqual("example.com")
+//	m.Submatch(2).IsEqual("john")
 //
-//	m.Name("host").IsEqual("example.com")
-//	m.Name("user").IsEqual("john")
+//	m.NamedSubmatch("host").IsEqual("example.com")
+//	m.NamedSubmatch("user").IsEqual("john")
 func (s *String) Match(re string) *Match {
 	opChain := s.chain.enter("Match()")
 	defer opChain.leave()
@@ -963,8 +963,8 @@ func (s *String) NotMatch(re string) *String {
 //
 //	m := s.MatchAll(`http://(?P<host>\S+)/users/(?P<user>\S+)`)
 //
-//	m[0].Name("user").IsEqual("john")
-//	m[1].Name("user").IsEqual("bob")
+//	m[0].NamedSubmatch("user").IsEqual("john")
+//	m[1].NamedSubmatch("user").IsEqual("bob")
 func (s *String) MatchAll(re string) []Match {
 	opChain := s.chain.enter("MatchAll()")
 	defer opChain.leave()
