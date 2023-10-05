@@ -531,7 +531,7 @@ func TestString_Match(t *testing.T) {
 
 		assert.Equal(t,
 			[]string{"http://example.com/users/john", "example.com", "john"},
-			m.submatches)
+			m.submatchValues)
 	})
 
 	t.Run("unnamed", func(t *testing.T) {
@@ -544,7 +544,7 @@ func TestString_Match(t *testing.T) {
 
 		assert.Equal(t,
 			[]string{"http://example.com/users/john", "example.com", "john"},
-			m.submatches)
+			m.submatchValues)
 	})
 
 	t.Run("all", func(t *testing.T) {
@@ -562,11 +562,11 @@ func TestString_Match(t *testing.T) {
 
 		assert.Equal(t,
 			[]string{"http://example.com/users/john", "example.com", "john"},
-			m[0].submatches)
+			m[0].submatchValues)
 
 		assert.Equal(t,
 			[]string{"http://example.com/users/bob", "example.com", "bob"},
-			m[1].submatches)
+			m[1].submatchValues)
 	})
 
 	t.Run("status", func(t *testing.T) {

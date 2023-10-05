@@ -7,9 +7,9 @@ import (
 
 // Match provides methods to inspect attached regexp match results.
 type Match struct {
-	chain      *chain
-	submatches []string
-	names      map[string]int
+	chain          *chain
+	submatchValues []string
+	submatchNames  map[string]int
 }
 
 // NewMatch returns a new Match instance.
@@ -33,8 +33,9 @@ type Match struct {
 //
 //	m.Name("host").IsEqual("example.com")
 //	m.Name("user").IsEqual("john")
-func NewMatch(reporter Reporter, submatches []string, names []string) *Match {
-	return newMatch(newChainWithDefaults("Match()", reporter), submatches, names)
+func NewMatch(reporter Reporter, submatchValues []string, submatchNames []string) *Match {
+	return newMatch(
+		newChainWithDefaults("Match()", reporter), submatchValues, submatchNames)
 }
 
 // NewMatchC returns a new Match instance with config.
@@ -43,24 +44,25 @@ func NewMatch(reporter Reporter, submatches []string, names []string) *Match {
 // Both submatches and names may be nil.
 //
 // See NewMatch for usage example.
-func NewMatchC(config Config, submatches []string, names []string) *Match {
-	return newMatch(newChainWithConfig("Match()", config.withDefaults()), submatches, names)
+func NewMatchC(config Config, submatchValues []string, submatchNames []string) *Match {
+	return newMatch(
+		newChainWithConfig("Match()", config.withDefaults()), submatchValues, submatchNames)
 }
 
-func newMatch(parent *chain, matchList []string, nameList []string) *Match {
+func newMatch(parent *chain, submatchValues []string, submatchNames []string) *Match {
 	m := &Match{parent.clone(), nil, nil}
 
-	if matchList != nil {
-		m.submatches = make([]string, len(matchList))
-		copy(m.submatches, matchList)
+	if submatchValues != nil {
+		m.submatchValues = make([]string, len(submatchValues))
+		copy(m.submatchValues, submatchValues)
 	} else {
-		m.submatches = []string{}
+		m.submatchValues = []string{}
 	}
 
-	m.names = map[string]int{}
-	for n, name := range nameList {
+	m.submatchNames = map[string]int{}
+	for n, name := range submatchNames {
 		if name != "" {
-			m.names[name] = n
+			m.submatchNames[name] = n
 		}
 	}
 
@@ -75,7 +77,7 @@ func newMatch(parent *chain, matchList []string, nameList []string) *Match {
 //	m := NewMatch(t, submatches, names)
 //	assert.Equal(t, submatches, m.Raw())
 func (m *Match) Raw() []string {
-	return m.submatches
+	return m.submatchValues
 }
 
 // Alias is similar to Value.Alias.
@@ -101,7 +103,7 @@ func (m *Match) Length() *Number {
 		return newNumber(opChain, 0)
 	}
 
-	return newNumber(opChain, float64(len(m.submatches)))
+	return newNumber(opChain, float64(len(m.submatchValues)))
 }
 
 // Index returns a new String instance with submatch for given index.
@@ -127,13 +129,13 @@ func (m *Match) Index(index int) *String {
 		return newString(opChain, "")
 	}
 
-	if index < 0 || index >= len(m.submatches) {
+	if index < 0 || index >= len(m.submatchValues) {
 		opChain.fail(AssertionFailure{
 			Type:   AssertInRange,
 			Actual: &AssertionValue{index},
 			Expected: &AssertionValue{AssertionRange{
 				Min: 0,
-				Max: len(m.submatches) - 1,
+				Max: len(m.submatchValues) - 1,
 			}},
 			Errors: []error{
 				errors.New("expected: valid sub-match index"),
@@ -142,7 +144,7 @@ func (m *Match) Index(index int) *String {
 		return newString(opChain, "")
 	}
 
-	return newString(opChain, m.submatches[index])
+	return newString(opChain, m.submatchValues[index])
 }
 
 // Name returns a new String instance with submatch for given name.
@@ -167,10 +169,10 @@ func (m *Match) Name(name string) *String {
 		return newString(opChain, "")
 	}
 
-	index, ok := m.names[name]
+	index, ok := m.submatchNames[name]
 	if !ok {
-		nameList := make([]interface{}, 0, len(m.names))
-		for n := range m.names {
+		nameList := make([]interface{}, 0, len(m.submatchNames))
+		for n := range m.submatchNames {
 			nameList = append(nameList, n)
 		}
 
@@ -186,7 +188,7 @@ func (m *Match) Name(name string) *String {
 		return newString(opChain, "")
 	}
 
-	return newString(opChain, m.submatches[index])
+	return newString(opChain, m.submatchValues[index])
 }
 
 // IsEmpty succeeds if submatches array is empty.
@@ -203,10 +205,10 @@ func (m *Match) IsEmpty() *Match {
 		return m
 	}
 
-	if !(len(m.submatches) == 0) {
+	if !(len(m.submatchValues) == 0) {
 		opChain.fail(AssertionFailure{
 			Type:   AssertEmpty,
-			Actual: &AssertionValue{m.submatches},
+			Actual: &AssertionValue{m.submatchValues},
 			Errors: []error{
 				errors.New("expected: empty sub-match list"),
 			},
@@ -230,10 +232,10 @@ func (m *Match) NotEmpty() *Match {
 		return m
 	}
 
-	if !(len(m.submatches) != 0) {
+	if !(len(m.submatchValues) != 0) {
 		opChain.fail(AssertionFailure{
 			Type:   AssertNotEmpty,
-			Actual: &AssertionValue{m.submatches},
+			Actual: &AssertionValue{m.submatchValues},
 			Errors: []error{
 				errors.New("expected: non-empty sub-match list"),
 			},
@@ -275,7 +277,7 @@ func (m *Match) Values(values ...string) *Match {
 	if !reflect.DeepEqual(values, m.getValues()) {
 		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
-			Actual:   &AssertionValue{m.submatches},
+			Actual:   &AssertionValue{m.submatchValues},
 			Expected: &AssertionValue{values},
 			Errors: []error{
 				errors.New("expected: sub-match lists are equal"),
@@ -309,7 +311,7 @@ func (m *Match) NotValues(values ...string) *Match {
 	if reflect.DeepEqual(values, m.getValues()) {
 		opChain.fail(AssertionFailure{
 			Type:     AssertNotEqual,
-			Actual:   &AssertionValue{m.submatches},
+			Actual:   &AssertionValue{m.submatchValues},
 			Expected: &AssertionValue{values},
 			Errors: []error{
 				errors.New("expected: sub-match lists are non-equal"),
@@ -321,8 +323,8 @@ func (m *Match) NotValues(values ...string) *Match {
 }
 
 func (m *Match) getValues() []string {
-	if len(m.submatches) > 1 {
-		return m.submatches[1:]
+	if len(m.submatchValues) > 1 {
+		return m.submatchValues[1:]
 	}
 	return []string{}
 }
