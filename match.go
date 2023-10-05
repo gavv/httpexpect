@@ -51,7 +51,8 @@ func newMatch(parent *chain, matchList []string, nameList []string) *Match {
 	m := &Match{parent.clone(), nil, nil}
 
 	if matchList != nil {
-		m.submatches = matchList
+		m.submatches = make([]string, len(matchList))
+		copy(m.submatches, matchList)
 	} else {
 		m.submatches = []string{}
 	}
