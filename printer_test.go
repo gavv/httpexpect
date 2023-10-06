@@ -10,13 +10,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type errorReader struct{}
+type failingReader struct{}
 
-func (errorReader) Read(_ []byte) (n int, err error) {
+func (failingReader) Read(_ []byte) (n int, err error) {
 	return 0, errors.New("error")
 }
 
-func (errorReader) Close() error {
+func (failingReader) Close() error {
 	return errors.New("error")
 }
 
@@ -70,13 +70,13 @@ func TestPrinter_Panics(t *testing.T) {
 
 		assert.Panics(t, func() {
 			curl.Request(&http.Request{
-				Body: errorReader{},
+				Body: failingReader{},
 			})
 		})
 
 		assert.Panics(t, func() {
 			curl.Response(&http.Response{
-				Body: errorReader{},
+				Body: failingReader{},
 			}, 0)
 		})
 	})

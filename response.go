@@ -35,28 +35,16 @@ type Response struct {
 	cookies []*http.Cookie
 }
 
-type ErrorReader struct {
-	err error
-}
-
-func (er *ErrorReader) Read(_ []byte) (int, error) {
-	return 0, er.err
-}
-
-func (er *ErrorReader) Close() error {
-	return er.err
-}
-
-func newErrorReader(err error) *ErrorReader {
-	return &ErrorReader{err}
-}
-
 type contentState int
 
 const (
+	// We didn't try to retrieve response content yet
 	contentPending contentState = iota
+	// We successfully retrieved response content
 	contentRetreived
+	// We tried to retrieve response content and failed
 	contentFailed
+	// We transferred body reader to user and will not use it by ourselves
 	contentHijacked
 )
 
@@ -583,6 +571,44 @@ func (r *Response) Websocket() *Websocket {
 	return newWebsocket(opChain, r.config, r.websocket)
 }
 
+// Reader returns the body reader from the response.
+//
+// This method is mutually exclusive with methods that read entire
+// response body, like Text, Body, JSON, etc. It can be used when
+// you need to parse body manually or retrieve infinite responses.
+//
+// Example:
+//
+//	resp := NewResponse(t, response)
+//	reader := resp.Reader()
+func (r *Response) Reader() io.ReadCloser {
+	opChain := r.chain.enter("Reader()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return errBodyReader{errors.New("cannot read from failed Response")}
+	}
+
+	if r.contentState != contentPending {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				fmt.Errorf("cannot call Reader() because %s was already called",
+					r.contentMethod),
+			},
+		})
+		return errBodyReader{errors.New("cannot read from failed Response")}
+	}
+
+	if bw, _ := r.httpResp.Body.(*bodyWrapper); bw != nil {
+		bw.DisableRewinds()
+	}
+
+	r.contentState = contentHijacked
+
+	return r.httpResp.Body
+}
+
 // Body returns a new String instance with response body.
 //
 // Example:
@@ -916,7 +942,7 @@ func (r *Response) getJSON(
 //	resp.JSONP("myCallback").Array().ConsistsOf("foo", "bar")
 //	resp.JSONP("myCallback", ContentOpts{
 //	  MediaType: "application/javascript",
-//	}).Array.ConsistsOf("foo", "bar")
+//	}).Array().ConsistsOf("foo", "bar")
 func (r *Response) JSONP(callback string, options ...ContentOpts) *Value {
 	opChain := r.chain.enter("JSONP()")
 	defer opChain.leave()
@@ -989,43 +1015,6 @@ func (r *Response) getJSONP(
 	}
 
 	return value
-}
-
-// Reader returns the body reader from the response.
-//
-// Reader replaces the other methods for reading response body
-// and disables rewinding when reading.
-//
-// Example:
-//
-//	resp := NewResponse(t, response)
-//	reader := resp.Reader()
-func (r *Response) Reader() io.ReadCloser {
-	opChain := r.chain.enter("Reader()")
-	defer opChain.leave()
-
-	if opChain.failed() {
-		return newErrorReader(errors.New("cannot call Reader() because chain has failed"))
-	}
-
-	if r.contentState != contentPending {
-		err := fmt.Errorf("cannot call Reader() because %s was already called", r.contentMethod)
-		opChain.fail(AssertionFailure{
-			Type:   AssertUsage,
-			Errors: []error{err},
-		})
-		return newErrorReader(err)
-	}
-
-	resp := r.httpResp
-	bw, ok := resp.Body.(*bodyWrapper)
-	if ok && bw != nil {
-		bw.DisableRewinds()
-	}
-
-	r.contentState = contentHijacked
-
-	return resp.Body
 }
 
 func (r *Response) checkContentOptions(
@@ -1125,4 +1114,16 @@ func (r *Response) checkEqual(
 	}
 
 	return true
+}
+
+type errBodyReader struct {
+	err error
+}
+
+func (r errBodyReader) Read(_ []byte) (int, error) {
+	return 0, r.err
+}
+
+func (r errBodyReader) Close() error {
+	return r.err
 }

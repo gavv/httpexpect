@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestResponse_FailedChain(t *testing.T) {
@@ -612,20 +613,38 @@ func TestResponse_BodyDeferred(t *testing.T) {
 		assert.Equal(t, contentFailed, resp.contentState)
 	})
 
-	t.Run("content hijacked", func(t *testing.T) {
+	t.Run("hijacked state", func(t *testing.T) {
 		reporter := newMockReporter(t)
+
+		body := newMockBody("body string")
 
 		resp := NewResponse(reporter, &http.Response{
 			StatusCode: http.StatusOK,
-			Header: map[string][]string{
-				"Content-Type": {"text/plain; charset=utf-8"},
-			},
-			Body: newMockBody("hijacked body"),
+			Body:       body,
 		})
-		resp.contentState = contentHijacked
 
-		body := resp.Body()
-		body.IsEmpty()
+		assert.Equal(t, 0, body.readCount)
+		assert.Equal(t, 0, body.closeCount)
+		assert.Nil(t, resp.content)
+		assert.Equal(t, contentPending, resp.contentState)
+
+		// Hijack body
+		reader := resp.Reader()
+		assert.NotNil(t, reader)
+		resp.chain.assert(t, success)
+
+		// Invoke getContent()
+		chain := resp.chain.enter("Test()")
+		content, ok := resp.getContent(chain, "Test()")
+
+		chain.assert(t, failure)
+		assert.Nil(t, content)
+		assert.False(t, ok)
+
+		assert.Equal(t, 0, body.readCount)
+		assert.Equal(t, 0, body.closeCount)
+		assert.Nil(t, resp.content)
+		assert.Equal(t, contentHijacked, resp.contentState)
 	})
 }
 
@@ -1583,6 +1602,161 @@ func TestResponse_ContentOpts(t *testing.T) {
 	})
 }
 
+func TestResponse_Reader(t *testing.T) {
+	t.Run("read body", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		httpResp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       newMockBody("test body"),
+		}
+		resp := NewResponse(reporter, httpResp)
+
+		reader := resp.Reader()
+		require.NotNil(t, reader)
+		resp.chain.assert(t, success)
+
+		b, err := io.ReadAll(reader)
+		assert.NoError(t, err)
+		assert.Equal(t, "test body", string(b))
+
+		err = reader.Close()
+		assert.NoError(t, err)
+	})
+
+	t.Run("rewinds disabled", func(t *testing.T) {
+		wrp := newBodyWrapper(newMockBody("test"), nil)
+
+		reporter := newMockReporter(t)
+		httpResp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       wrp,
+		}
+		resp := NewResponse(reporter, httpResp)
+
+		assert.False(t, wrp.isRewindDisabled)
+
+		reader := resp.Reader()
+		require.NotNil(t, reader)
+		resp.chain.assert(t, success)
+
+		assert.True(t, wrp.isRewindDisabled)
+
+		err := reader.Close()
+		assert.NoError(t, err)
+	})
+
+	t.Run("conflicts", func(t *testing.T) {
+		cases := []struct {
+			name        string
+			contentType string
+			body        string
+			method      func(resp *Response) *chain
+		}{
+			{
+				name:        "Body",
+				contentType: "text/plain; charset=utf-8",
+				body:        `test`,
+				method: func(resp *Response) *chain {
+					return resp.Body().chain
+				},
+			},
+			{
+				name:        "Text",
+				contentType: "text/plain; charset=utf-8",
+				body:        `test`,
+				method: func(resp *Response) *chain {
+					return resp.Text().chain
+				},
+			},
+			{
+				name:        "Form",
+				contentType: "application/x-www-form-urlencoded",
+				body:        `x=1&y=0`,
+				method: func(resp *Response) *chain {
+					return resp.Form().chain
+				},
+			},
+			{
+				name:        "JSON",
+				contentType: "application/json",
+				body:        `{"x":"y"}`,
+				method: func(resp *Response) *chain {
+					return resp.JSON().chain
+				},
+			},
+			{
+				name:        "JSONP",
+				contentType: "application/javascript",
+				body:        `test({"x":"y"})`,
+				method: func(resp *Response) *chain {
+					return resp.JSONP("test").chain
+				},
+			},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				t.Run("before reader", func(t *testing.T) {
+					reporter := newMockReporter(t)
+					httpResp := &http.Response{
+						StatusCode: http.StatusOK,
+						Header: http.Header(map[string][]string{
+							"Content-Type": {tc.contentType},
+						}),
+						Body: newMockBody(tc.body),
+					}
+					resp := NewResponse(reporter, httpResp)
+
+					// other method reads body
+					tc.method(resp).assert(t, success)
+
+					// Reader will fail
+					reader := resp.Reader()
+					require.NotNil(t, reader)
+					resp.chain.assert(t, failure)
+
+					b, err := io.ReadAll(reader)
+					assert.Error(t, err)
+					assert.Empty(t, b)
+
+					err = reader.Close()
+					assert.Error(t, err)
+				})
+			})
+
+			t.Run(tc.name, func(t *testing.T) {
+				t.Run("after reader", func(t *testing.T) {
+					reporter := newMockReporter(t)
+					httpResp := &http.Response{
+						StatusCode: http.StatusOK,
+						Header: http.Header(map[string][]string{
+							"Content-Type": {tc.contentType},
+						}),
+						Body: newMockBody(tc.body),
+					}
+					resp := NewResponse(reporter, httpResp)
+
+					// Reader hijacks body
+					reader := resp.Reader()
+					require.NotNil(t, reader)
+					resp.chain.assert(t, success)
+
+					// other method will fail
+					tc.method(resp).assert(t, failure)
+					resp.chain.assert(t, failure)
+
+					b, err := io.ReadAll(reader)
+					assert.NoError(t, err)
+					assert.Equal(t, tc.body, string(b))
+
+					err = reader.Close()
+					assert.NoError(t, err)
+				})
+			})
+		}
+	})
+}
+
 func TestResponse_Usage(t *testing.T) {
 	t.Run("NewResponse multiple rtt arguments", func(t *testing.T) {
 		reporter := newMockReporter(t)
@@ -1697,154 +1871,5 @@ func TestResponse_Usage(t *testing.T) {
 		}
 		resp.JSONP("foo", contentOpts1, contentOpts2)
 		resp.chain.assert(t, failure)
-	})
-}
-
-func TestResponse_Reader(t *testing.T) {
-	t.Run("get reader", func(t *testing.T) {
-		reporter := newMockReporter(t)
-		httpResp := &http.Response{
-			StatusCode: http.StatusOK,
-			Header: http.Header(map[string][]string{
-				"Content-Type": {"text/plain; charset=utf-8"},
-			}),
-			Body: newMockBody("test body"),
-		}
-		resp := NewResponse(reporter, httpResp)
-
-		reader := resp.Reader()
-		assert.Equal(t, contentHijacked, resp.contentState)
-		assert.Equal(t, "", resp.contentMethod)
-		resp.chain.assert(t, success)
-
-		err := reader.Close()
-		assert.NoError(t, err)
-	})
-	t.Run("rewind disabled", func(t *testing.T) {
-		reporter := newMockReporter(t)
-		bw := newBodyWrapper(newMockBody("test"), nil)
-		httpResp := &http.Response{
-			StatusCode: http.StatusOK,
-			Header: http.Header(map[string][]string{
-				"Content-Type": {"text/plain; charset=utf-8"},
-			}),
-			Body: bw,
-		}
-		resp := NewResponse(reporter, httpResp)
-
-		reader := resp.Reader()
-		resp.chain.assert(t, success)
-		assert.True(t, bw.isRewindDisabled)
-
-		err := reader.Close()
-		assert.NoError(t, err)
-	})
-	t.Run("Body()", func(t *testing.T) {
-		reporter := newMockReporter(t)
-		httpResp := &http.Response{
-			StatusCode: http.StatusOK,
-			Header: http.Header(map[string][]string{
-				"Content-Type": {"text/plain; charset=utf-8"},
-			}),
-			Body: newMockBody("test body"),
-		}
-		resp := NewResponse(reporter, httpResp)
-
-		body := resp.Body()
-		assert.Equal(t, "test body", body.value)
-		assert.Equal(t, resp.contentMethod, "Body()")
-
-		reader := resp.Reader()
-		resp.chain.assert(t, failure)
-
-		err := reader.Close()
-		assert.Error(t, err)
-	})
-	t.Run("Text()", func(t *testing.T) {
-		reporter := newMockReporter(t)
-		httpResp := &http.Response{
-			StatusCode: http.StatusOK,
-			Header: http.Header(map[string][]string{
-				"Content-Type": {"text/plain; charset=utf-8"},
-			}),
-			Body: newMockBody("test text"),
-		}
-		resp := NewResponse(reporter, httpResp)
-
-		txt := resp.Text()
-		assert.Equal(t, "test text", txt.value)
-		assert.Equal(t, resp.contentMethod, "Text()")
-
-		reader := resp.Reader()
-		resp.chain.assert(t, failure)
-
-		err := reader.Close()
-		assert.Error(t, err)
-	})
-	t.Run("Form()", func(t *testing.T) {
-		reporter := newMockReporter(t)
-		httpResp := &http.Response{
-			StatusCode: http.StatusOK,
-			Header: http.Header(map[string][]string{
-				"Content-Type": {"application/x-www-form-urlencoded"},
-			}),
-			Body: newMockBody("x=1&y=0"),
-		}
-		resp := NewResponse(reporter, httpResp)
-
-		form := resp.Form()
-		form.IsEqual(map[string]string{
-			"x": "1",
-			"y": "0",
-		})
-
-		reader := resp.Reader()
-		resp.chain.assert(t, failure)
-
-		err := reader.Close()
-		assert.Error(t, err)
-	})
-	t.Run("JSON()", func(t *testing.T) {
-		reporter := newMockReporter(t)
-		httpResp := &http.Response{
-			StatusCode: http.StatusOK,
-			Header: http.Header(map[string][]string{
-				"Content-Type": {"application/json"},
-			}),
-			Body: newMockBody(`{"a":"test","b":"value"}`),
-		}
-		resp := NewResponse(reporter, httpResp)
-
-		json := resp.JSON()
-		json.IsEqual(map[string]string{
-			"a": "test",
-			"b": "value",
-		})
-
-		reader := resp.Reader()
-		resp.chain.assert(t, failure)
-
-		err := reader.Close()
-		assert.Error(t, err)
-	})
-	t.Run("JSONP()", func(t *testing.T) {
-		reporter := newMockReporter(t)
-		httpResp := &http.Response{
-			StatusCode: http.StatusOK,
-			Header: http.Header(map[string][]string{
-				"Content-Type": {"application/javascript; charset=utf-8"},
-			}),
-			Body: newMockBody(`cb({"test_key":"test_value"})`),
-		}
-		resp := NewResponse(reporter, httpResp)
-
-		value := resp.JSONP("cb")
-		value.IsEqual(map[string]string{"test_key": "test_value"})
-
-		reader := resp.Reader()
-		resp.chain.assert(t, failure)
-
-		err := reader.Close()
-		assert.Error(t, err)
 	})
 }
