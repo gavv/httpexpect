@@ -24,6 +24,8 @@ func TestNumber_FailedChain(t *testing.T) {
 	value.NotEqual(0)
 	value.InDelta(0, 0)
 	value.NotInDelta(0, 0)
+	value.InDeltaRelative(0, 0)
+	value.NotInDeltaRelative(0, 0)
 	value.InRange(0, 0)
 	value.NotInRange(0, 0)
 	value.InList(0)
@@ -312,6 +314,166 @@ func TestNumber_InDelta(t *testing.T) {
 				chain.assert(t, tc.wantInDelta)
 
 			NewNumber(reporter, tc.number).NotInDelta(tc.value, tc.delta).
+				chain.assert(t, tc.wantNotInDelta)
+		})
+	}
+}
+
+func TestNumber_InDeltaRelative(t *testing.T) {
+	cases := []struct {
+		name           string
+		number         float64
+		value          float64
+		delta          float64
+		wantInDelta    chainResult
+		wantNotInDelta chainResult
+	}{
+		{
+			name:           "larger value in delta range",
+			number:         1234.5,
+			value:          1271.5,
+			delta:          0.03,
+			wantInDelta:    success,
+			wantNotInDelta: failure,
+		},
+		{
+			name:           "smaller value in delta range",
+			number:         1234.5,
+			value:          1221.1,
+			delta:          0.03,
+			wantInDelta:    success,
+			wantNotInDelta: failure,
+		},
+		{
+			name:           "larger value not in delta range",
+			number:         1234.5,
+			value:          1259.1,
+			delta:          0.01,
+			wantInDelta:    failure,
+			wantNotInDelta: success,
+		},
+		{
+			name:           "smaller value not in delta range",
+			number:         1234.5,
+			value:          1209.8,
+			delta:          0.01,
+			wantInDelta:    failure,
+			wantNotInDelta: success,
+		},
+		{
+			name:           "delta is negative",
+			number:         1234.5,
+			value:          1234.0,
+			delta:          -0.01,
+			wantInDelta:    failure,
+			wantNotInDelta: failure,
+		},
+		{
+			name:           "target is NaN",
+			number:         math.NaN(),
+			value:          1234.0,
+			delta:          0.01,
+			wantInDelta:    failure,
+			wantNotInDelta: failure,
+		},
+		{
+			name:           "value is NaN",
+			number:         1234.5,
+			value:          math.NaN(),
+			delta:          0.01,
+			wantInDelta:    failure,
+			wantNotInDelta: failure,
+		},
+		{
+			name:           "delta is NaN",
+			number:         1234.5,
+			value:          1234.0,
+			delta:          math.NaN(),
+			wantInDelta:    failure,
+			wantNotInDelta: failure,
+		},
+		{
+			name:           "delta is +Inf",
+			number:         1234.5,
+			value:          1234.0,
+			delta:          math.Inf(1),
+			wantInDelta:    failure,
+			wantNotInDelta: failure,
+		},
+		{
+			name:           "+Inf target",
+			number:         math.Inf(1),
+			value:          1234.0,
+			delta:          0,
+			wantInDelta:    failure,
+			wantNotInDelta: failure,
+		},
+		{
+			name:           "-Inf value",
+			number:         1234.5,
+			value:          math.Inf(-1),
+			delta:          0.01,
+			wantInDelta:    failure,
+			wantNotInDelta: success,
+		},
+		{
+			name:           "+Inf number and target with 0 delta",
+			number:         math.Inf(1),
+			value:          math.Inf(1),
+			delta:          0,
+			wantInDelta:    success,
+			wantNotInDelta: failure,
+		},
+		{
+			name:           "-Inf number and target with 0 delta",
+			number:         math.Inf(-1),
+			value:          math.Inf(-1),
+			delta:          0,
+			wantInDelta:    success,
+			wantNotInDelta: failure,
+		},
+		{
+			name:           "+Inf number and -Inf target",
+			number:         math.Inf(1),
+			value:          math.Inf(-1),
+			delta:          0,
+			wantInDelta:    failure,
+			wantNotInDelta: failure,
+		},
+		{
+			name:           "target is 0 in delta range",
+			number:         0,
+			value:          0,
+			delta:          0,
+			wantInDelta:    success,
+			wantNotInDelta: failure,
+		},
+		{
+			name:           "value is 0 in delta range",
+			number:         0.05,
+			value:          0,
+			delta:          1.0,
+			wantInDelta:    success,
+			wantNotInDelta: failure,
+		},
+		{
+			name:           "value is 0 not in delta range",
+			number:         0.01,
+			value:          0,
+			delta:          0.01,
+			wantInDelta:    failure,
+			wantNotInDelta: success,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			reporter := newMockReporter(t)
+
+			NewNumber(reporter, tc.number).InDeltaRelative(tc.value, tc.delta).
+				chain.assert(t, tc.wantInDelta)
+
+			NewNumber(reporter, tc.number).NotInDeltaRelative(tc.value, tc.delta).
 				chain.assert(t, tc.wantNotInDelta)
 		})
 	}
