@@ -197,7 +197,17 @@ func (n *Number) InDelta(value, delta float64) *Number {
 		return n
 	}
 
-	if math.IsNaN(n.value) || math.IsNaN(value) || math.IsNaN(delta) {
+	if math.IsNaN(delta) {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected NaN delta argument"),
+			},
+		})
+		return n
+	}
+
+	if math.IsNaN(n.value) || math.IsNaN(value) {
 		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{n.value},
@@ -242,7 +252,17 @@ func (n *Number) NotInDelta(value, delta float64) *Number {
 		return n
 	}
 
-	if math.IsNaN(n.value) || math.IsNaN(value) || math.IsNaN(delta) {
+	if math.IsNaN(delta) {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected NaN delta argument"),
+			},
+		})
+		return n
+	}
+
+	if math.IsNaN(n.value) || math.IsNaN(value) {
 		opChain.fail(AssertionFailure{
 			Type:     AssertNotEqual,
 			Actual:   &AssertionValue{n.value},
@@ -273,6 +293,16 @@ func (n *Number) NotInDelta(value, delta float64) *Number {
 	return n
 }
 
+// Deprecated: use InDelta instead.
+func (n *Number) EqualDelta(value, delta float64) *Number {
+	return n.InDelta(value, delta)
+}
+
+// Deprecated: use NotInDelta instead.
+func (n *Number) NotEqualDelta(value, delta float64) *Number {
+	return n.NotInDelta(value, delta)
+}
+
 // InDeltaRelative succeeds if two numbers are within relative delta of each other.
 //
 // The relative delta is expressed as a decimal. For example, to determine if a number
@@ -296,26 +326,11 @@ func (n *Number) InDeltaRelative(value, delta float64) *Number {
 		return n
 	}
 
-	anyNumIsNaN := math.IsNaN(n.value) || math.IsNaN(value) || math.IsNaN(delta)
-
-	if anyNumIsNaN {
-		assertionErrors := numNaNCheck(n.value, value, delta)
-
-		opChain.fail(AssertionFailure{
-			Type:     AssertEqual,
-			Actual:   &AssertionValue{n.value},
-			Expected: &AssertionValue{value},
-			Delta:    &AssertionValue{relativeDelta(delta)},
-			Errors:   assertionErrors,
-		})
-		return n
-	}
-
-	if math.IsInf(delta, 0) {
+	if math.IsNaN(delta) || math.IsInf(delta, 0) {
 		opChain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
-				errors.New("unexpected Inf delta argument"),
+				fmt.Errorf("unexpected non-number delta argument: %v", delta),
 			},
 		})
 		return n
@@ -325,8 +340,38 @@ func (n *Number) InDeltaRelative(value, delta float64) *Number {
 		opChain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
-				errors.New("unexpected negative delta argument"),
+				fmt.Errorf("unexpected negative delta argument: %v", delta),
 			},
+		})
+		return n
+	}
+
+	// Fail if any of the numbers is NaN with specific error message
+	anyNumIsNaN := math.IsNaN(n.value) || math.IsNaN(value)
+	if anyNumIsNaN {
+		var assertionErrors []error
+		assertionErrors = append(
+			assertionErrors,
+			errors.New("expected: can compare values with relative delta"),
+		)
+		if math.IsNaN(n.value) {
+			assertionErrors = append(
+				assertionErrors,
+				errors.New("actual value is NaN"),
+			)
+		}
+		if math.IsNaN(value) {
+			assertionErrors = append(
+				assertionErrors,
+				errors.New("expected value is NaN"),
+			)
+		}
+		opChain.fail(AssertionFailure{
+			Type:     AssertEqual,
+			Actual:   &AssertionValue{n.value},
+			Expected: &AssertionValue{value},
+			Delta:    &AssertionValue{relativeDelta(delta)},
+			Errors:   assertionErrors,
 		})
 		return n
 	}
@@ -357,6 +402,7 @@ func (n *Number) InDeltaRelative(value, delta float64) *Number {
 		return n
 	}
 
+	// Normal comparison after filtering out all corner cases
 	deltaRelativeError := deltaRelativeErrorCheck(true, n.value, value, delta)
 	if deltaRelativeError {
 		opChain.fail(AssertionFailure{
@@ -397,26 +443,11 @@ func (n *Number) NotInDeltaRelative(value, delta float64) *Number {
 		return n
 	}
 
-	anyNumIsNaN := math.IsNaN(n.value) || math.IsNaN(value) || math.IsNaN(delta)
-
-	if anyNumIsNaN {
-		assertionErrors := numNaNCheck(n.value, value, delta)
-
-		opChain.fail(AssertionFailure{
-			Type:     AssertEqual,
-			Actual:   &AssertionValue{n.value},
-			Expected: &AssertionValue{value},
-			Delta:    &AssertionValue{relativeDelta(delta)},
-			Errors:   assertionErrors,
-		})
-		return n
-	}
-
-	if math.IsInf(delta, 0) {
+	if math.IsNaN(delta) || math.IsInf(delta, 0) {
 		opChain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
-				errors.New("unexpected Inf delta argument"),
+				fmt.Errorf("unexpected non-number delta argument: %v", delta),
 			},
 		})
 		return n
@@ -426,8 +457,38 @@ func (n *Number) NotInDeltaRelative(value, delta float64) *Number {
 		opChain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
-				errors.New("unexpected negative delta argument"),
+				fmt.Errorf("unexpected negative delta argument: %v", delta),
 			},
+		})
+		return n
+	}
+
+	// Fail if any of the numbers is NaN with specific error message
+	anyNumIsNaN := math.IsNaN(n.value) || math.IsNaN(value)
+	if anyNumIsNaN {
+		var assertionErrors []error
+		assertionErrors = append(
+			assertionErrors,
+			errors.New("expected: can compare values with relative delta"),
+		)
+		if math.IsNaN(n.value) {
+			assertionErrors = append(
+				assertionErrors,
+				errors.New("actual value is NaN"),
+			)
+		}
+		if math.IsNaN(value) {
+			assertionErrors = append(
+				assertionErrors,
+				errors.New("expected value is NaN"),
+			)
+		}
+		opChain.fail(AssertionFailure{
+			Type:     AssertEqual,
+			Actual:   &AssertionValue{n.value},
+			Expected: &AssertionValue{value},
+			Delta:    &AssertionValue{relativeDelta(delta)},
+			Errors:   assertionErrors,
 		})
 		return n
 	}
@@ -448,25 +509,13 @@ func (n *Number) NotInDeltaRelative(value, delta float64) *Number {
 		return n
 	}
 
-	// Fail is number and value are +=Inf and unequal with specific error message
+	// Pass if number and value are +=Inf and unequal
 	diffInfNumCheck := math.IsInf(n.value, 0) && math.IsInf(value, 0) && value != n.value
 	if diffInfNumCheck {
-		var assertionErrors []error
-		assertionErrors = append(
-			assertionErrors,
-			errors.New("expected: can compare values with relative delta"),
-			errors.New("actual value and expected value are opposite Infs"),
-		)
-		opChain.fail(AssertionFailure{
-			Type:     AssertEqual,
-			Actual:   &AssertionValue{n.value},
-			Expected: &AssertionValue{value},
-			Delta:    &AssertionValue{relativeDelta(delta)},
-			Errors:   assertionErrors,
-		})
 		return n
 	}
 
+	// Normal comparison after filtering out all corner cases
 	deltaRelativeError := deltaRelativeErrorCheck(false, n.value, value, delta)
 	if deltaRelativeError {
 		opChain.fail(AssertionFailure{
@@ -482,16 +531,6 @@ func (n *Number) NotInDeltaRelative(value, delta float64) *Number {
 	}
 
 	return n
-}
-
-// Deprecated: use InDelta instead.
-func (n *Number) EqualDelta(value, delta float64) *Number {
-	return n.InDelta(value, delta)
-}
-
-// Deprecated: use NotInDelta instead.
-func (n *Number) NotEqualDelta(value, delta float64) *Number {
-	return n.NotInDelta(value, delta)
 }
 
 // InRange succeeds if number is within given range [min; max].
@@ -1309,13 +1348,6 @@ func (rd relativeDelta) String() string {
 	return fmt.Sprintf("%v (%.f%%)", float64(rd), rd*100)
 }
 
-func appendError(errorSlice []error, errorMsg string) []error {
-	return append(
-		errorSlice,
-		errors.New(errorMsg),
-	)
-}
-
 func deltaRelativeErrorCheck(inDeltaRelative bool, number, value, delta float64) bool {
 	if (number == 0 || math.IsInf(number, 0)) && value != number {
 		return true
@@ -1330,35 +1362,4 @@ func deltaRelativeErrorCheck(inDeltaRelative bool, number, value, delta float64)
 		}
 	}
 	return false
-}
-
-func numNaNCheck(number, value, delta float64) []error {
-	var assertionErrors []error
-	assertionErrors = appendError(
-		assertionErrors,
-		"expected: can compare values with relative delta",
-	)
-
-	if math.IsNaN(number) {
-		assertionErrors = appendError(
-			assertionErrors,
-			"actual value is NaN",
-		)
-	}
-
-	if math.IsNaN(value) {
-		assertionErrors = appendError(
-			assertionErrors,
-			"expected value is NaN",
-		)
-	}
-
-	if math.IsNaN(delta) {
-		assertionErrors = appendError(
-			assertionErrors,
-			"delta is NaN",
-		)
-	}
-
-	return assertionErrors
 }
