@@ -644,7 +644,7 @@ func (f *DefaultFormatter) convertNumber(value interface{}) (interface{}, bool) 
 
 	rv := reflect.ValueOf(value)
 
-	switch rv.Kind() {
+	switch rv.Kind() { //nolint
 	case reflect.Slice:
 		sl := reflect.MakeSlice(reflect.TypeOf([]interface{}{}), rv.Len(), rv.Cap())
 		updated := false
@@ -675,9 +675,10 @@ func (f *DefaultFormatter) convertNumber(value interface{}) (interface{}, bool) 
 		}
 
 		return mp.Interface(), updated
-	}
 
-	return value, false
+	default:
+		return value, false
+	}
 }
 
 type formatNumber struct {
@@ -710,18 +711,18 @@ func (fn formatNumber) MarshalJSON() ([]byte, error) {
 func (fn formatNumber) LitterDump(w io.Writer) {
 	if flt, accuracy := fn.value.Float32(); accuracy == big.Exact {
 		s := fn.f.reformatNumber(fn.f.formatFloatValue(float64(flt), 32))
-		w.Write([]byte(s))
+		_, _ = w.Write([]byte(s))
 		return
 	}
 
 	if flt, accuracy := fn.value.Float64(); accuracy == big.Exact {
 		s := fn.f.reformatNumber(fn.f.formatFloatValue(flt, 64))
-		w.Write([]byte(s))
+		_, _ = w.Write([]byte(s))
 		return
 	}
 
 	if bytes, err := fn.value.MarshalText(); err == nil {
-		w.Write(bytes)
+		_, _ = w.Write(bytes)
 	}
 }
 

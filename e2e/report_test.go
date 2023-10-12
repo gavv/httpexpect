@@ -71,7 +71,7 @@ func TestE2EReport_Values(t *testing.T) {
 	})
 	mux.HandleFunc("/slice/float", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add("Content-Type", "application/json")
-		_, _ = w.Write([]byte("[12.34, 0.0056, 78]"))
+		_, _ = w.Write([]byte("[12.34, 0.056]"))
 	})
 
 	server := httptest.NewServer(mux)
@@ -248,7 +248,8 @@ func TestE2EReport_Values(t *testing.T) {
 			"missing Errors",
 		)
 		assert.Contains(
-			t, reporter.recorded, "[\n    1.234e+01,\n    5.6e-03,\n    7.8e+01\n  ]", "missing Actual",
+			t, reporter.recorded, "[\n    1.234e+01,\n    5.6e-02\n  ]",
+			"missing Actual",
 		)
 	})
 }

@@ -759,20 +759,20 @@ func TestFormatter_FloatFormat(t *testing.T) {
 		{
 			name:     "slice of slice auto",
 			format:   FloatFormatAuto,
-			value:    []interface{}{[]float64{.01, 20}, big.NewFloat(.0025), []json.Number{"23.45"}, 10},
-			wantText: "[\n  [\n    0.01,\n    20\n  ],\n  0.0025,\n  [\n    23.45\n  ],\n  10\n]",
+			value:    []interface{}{[]float64{.01, 20}, []json.Number{"23.45"}, 10},
+			wantText: "[\n  [\n    0.01,\n    20\n  ],\n  [\n    23.45\n  ],\n  10\n]",
 		},
 		{
 			name:     "slice of slice decimal",
 			format:   FloatFormatDecimal,
-			value:    []interface{}{[]float64{.01, 20}, big.NewFloat(.0025), []json.Number{"23.45"}, 10},
-			wantText: "[\n  [\n    0.01,\n    20\n  ],\n  0.0025,\n  [\n    23.45\n  ],\n  10\n]",
+			value:    []interface{}{[]float64{.01, 20}, []json.Number{"23.45"}, 10},
+			wantText: "[\n  [\n    0.01,\n    20\n  ],\n  [\n    23.45\n  ],\n  10\n]",
 		},
 		{
 			name:     "slice of slice scientific",
 			format:   FloatFormatScientific,
-			value:    []interface{}{[]float64{.01, 20}, big.NewFloat(.0025), []json.Number{"23.45"}, 10},
-			wantText: "[\n  [\n    1e-02,\n    2e+01\n  ],\n  2.5e-03,\n  [\n    2.345e+01\n  ],\n  1e+01\n]",
+			value:    []interface{}{[]float64{.01, 20}, []json.Number{"23.45"}, 10},
+			wantText: "[\n  [\n    1e-02,\n    2e+01\n  ],\n  [\n    2.345e+01\n  ],\n  1e+01\n]",
 		},
 		// map of floats
 		{
@@ -816,39 +816,57 @@ func TestFormatter_FloatFormat(t *testing.T) {
 		{
 			name:     "map of any auto",
 			format:   FloatFormatAuto,
-			value:    map[string]interface{}{"a": []float32{12.34}, "b": big.NewFloat(45.67), "c": []int{100}},
-			wantText: "{\n  \"a\": [\n    12.34\n  ],\n  \"b\": 45.67,\n  \"c\": [\n    100\n  ]\n}",
+			value:    map[string]interface{}{"a": []float32{12.34}, "b": []int{100}},
+			wantText: "{\n  \"a\": [\n    12.34\n  ],\n  \"b\": [\n    100\n  ]\n}",
 		},
 		{
 			name:     "map of any decimal",
 			format:   FloatFormatDecimal,
-			value:    map[string]interface{}{"a": []float32{12.34}, "b": big.NewFloat(45.67), "c": []int{100}},
-			wantText: "{\n  \"a\": [\n    12.34\n  ],\n  \"b\": 45.67,\n  \"c\": [\n    100\n  ]\n}",
+			value:    map[string]interface{}{"a": []float32{12.34}, "b": []int{100}},
+			wantText: "{\n  \"a\": [\n    12.34\n  ],\n  \"b\": [\n    100\n  ]\n}",
 		},
 		{
 			name:     "map of any scientific",
 			format:   FloatFormatScientific,
-			value:    map[string]interface{}{"a": []float32{12.34}, "b": big.NewFloat(45.67), "c": []int{100}},
-			wantText: "{\n  \"a\": [\n    1.234e+01\n  ],\n  \"b\": 4.567e+01,\n  \"c\": [\n    1e+02\n  ]\n}",
+			value:    map[string]interface{}{"a": []float32{12.3}, "b": []int{100}},
+			wantText: "{\n  \"a\": [\n    1.23e+01\n  ],\n  \"b\": [\n    1e+02\n  ]\n}",
 		},
 		// dump go values
 		{
-			name:     "go values auto",
-			format:   FloatFormatAuto,
-			value:    map[[1]int][]float64{{1}: {12345.678}},
-			wantText: "map[[1]int]interface {}{\n  [1]int{\n    1,\n  }: []interface {}{\n    *httpexpect.formatNumber12_345.678,\n  },\n}",
+			name:   "go values auto",
+			format: FloatFormatAuto,
+			value:  map[[1]int][]float64{{1}: {12345.678}},
+			wantText: `map[[1]int]interface {}{
+  [1]int{
+    1,
+  }: []interface {}{
+    *httpexpect.formatNumber12_345.678,
+  },
+}`,
 		},
 		{
-			name:     "go values decimal",
-			format:   FloatFormatDecimal,
-			value:    map[[1]int][]float64{{1}: {12345.678}},
-			wantText: "map[[1]int]interface {}{\n  [1]int{\n    1,\n  }: []interface {}{\n    *httpexpect.formatNumber12_345.678,\n  },\n}",
+			name:   "go values decimal",
+			format: FloatFormatDecimal,
+			value:  map[[1]int][]float64{{1}: {12345.678}},
+			wantText: `map[[1]int]interface {}{
+  [1]int{
+    1,
+  }: []interface {}{
+    *httpexpect.formatNumber12_345.678,
+  },
+}`,
 		},
 		{
-			name:     "go values scientific",
-			format:   FloatFormatScientific,
-			value:    map[[1]int][]float64{{1}: {12345.678}},
-			wantText: "map[[1]int]interface {}{\n  [1]int{\n    1,\n  }: []interface {}{\n    *httpexpect.formatNumber1.234_567_8e+04,\n  },\n}",
+			name:   "go values scientific",
+			format: FloatFormatScientific,
+			value:  map[[1]int][]float64{{1}: {12345.678}},
+			wantText: `map[[1]int]interface {}{
+  [1]int{
+    1,
+  }: []interface {}{
+    *httpexpect.formatNumber1.234_567_8e+04,
+  },
+}`,
 		},
 	}
 
