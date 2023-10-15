@@ -15,6 +15,10 @@ linters:
 linters-settings:
   lll:
     line-length: 90
+  revive:
+    rules:
+      - name: unused-parameter
+        disabled: true
 
 issues:
   exclude-rules:
