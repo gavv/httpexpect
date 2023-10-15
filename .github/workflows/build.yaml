@@ -119,7 +119,7 @@ jobs:
         uses: golangci/golangci-lint-action@v3
         timeout-minutes: 20
         with:
-          version: v1.51.2
+          version: v1.54.2
           working-directory: ${{ matrix.dir }}
           args: --timeout=20m
 
