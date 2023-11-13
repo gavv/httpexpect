@@ -9,19 +9,19 @@ import (
 	"testing"
 )
 
-func TlsClient() *http.Client {
+func TLSClient() *http.Client {
 	cfg := tls.Config{RootCAs: NewRootCertPool()}
 	return &http.Client{Transport: &http.Transport{TLSClientConfig: &cfg}}
 }
 
 func TestExampleTlsServer(t *testing.T) {
 
-	server := ExampleTlsServer() // ExampleTlsServer()
+	server := ExampleTLSServer() // ExampleTlsServer()
 	server.StartTLS()
 	defer server.Close()
 
 	config := httpexpect.Config{
-		BaseURL: server.URL, Client: TlsClient(),
+		BaseURL: server.URL, Client: TLSClient(),
 		Reporter: httpexpect.NewRequireReporter(t),
 		Printers: []httpexpect.Printer{
 			httpexpect.NewDebugPrinter(t, true),
@@ -73,7 +73,7 @@ func TestExampleTlsServer(t *testing.T) {
 		Expect().
 		Status(http.StatusNoContent).NoContent()
 
-	items["car"] -= 1
+	items["car"]--
 
 	var m map[string]int
 

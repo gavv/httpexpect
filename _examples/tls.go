@@ -37,8 +37,8 @@ LoibTriVMg==
 	return roots
 }
 
-// ExampleTlsServer creates a httptest.Server with hardcoded key pair.
-func ExampleTlsServer() *httptest.Server {
+// ExampleTLSServer creates a httptest.Server with hardcoded key pair.
+func ExampleTLSServer() *httptest.Server {
 	certPem := []byte(`-----BEGIN CERTIFICATE-----
 MIIBbDCCARKgAwIBAgIBAjAKBggqhkjOPQQDAjASMRAwDgYDVQQKEwdUZXN0IENB
 MB4XDTIzMTExMzEyMjUxN1oXDTI0MDUxMTEyMjUxN1owEjEQMA4GA1UEChMHQWNt
@@ -61,19 +61,19 @@ UIzVXHIYlzwdwqLYo8hpCZUXaxgIvC7zGw==
 		log.Fatal(err)
 	}
 
-	server := httptest.NewUnstartedServer(TlsHandler())
+	server := httptest.NewUnstartedServer(TLSHandler())
 	server.TLS = &tls.Config{Certificates: []tls.Certificate{cert}}
 	return server
 }
 
-// TlsHandler creates http.Handler for tls server
+// TLSHandler creates http.Handler for tls server
 //
 // Routes:
 //
 //	GET /fruits           get item map
 //	GET /fruits/{name}    get item amount
 //	PUT /fruits/{name}    add or update fruit (amount in body)
-func TlsHandler() http.Handler {
+func TLSHandler() http.Handler {
 	items := map[string]int{}
 
 	mux := http.NewServeMux()
