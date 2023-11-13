@@ -787,7 +787,9 @@ func (r *Request) WithRetryPolicy(policy RetryPolicy) *Request {
 //	req.WithRetryPolicyFunc(func(res *http.Response, err error) bool {
 //		return resp.StatusCode == http.StatusTeapot
 //	})
-func (r *Request) WithRetryPolicyFunc(fn func(res *http.Response, err error) bool) *Request {
+func (r *Request) WithRetryPolicyFunc(
+	fn func(res *http.Response, err error) bool,
+) *Request {
 	opChain := r.chain.enter("WithRetryPolicyFunc()")
 	defer opChain.leave()
 
