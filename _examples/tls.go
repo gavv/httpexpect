@@ -11,6 +11,11 @@ import (
 	"strconv"
 )
 
+// NewRootCertPool creates a new custom root-certificate set.
+//
+// In this example, it's used so that the server's certificates are trusted.
+// In real world use it's better to omit this in order to use the
+// default root set of the current operating system.
 func NewRootCertPool() *x509.CertPool {
 	const rootPEM = `
 -----BEGIN CERTIFICATE-----
@@ -32,6 +37,7 @@ LoibTriVMg==
 	return roots
 }
 
+// ExampleTlsServer creates a httptest.Server with hardcoded key pair.
 func ExampleTlsServer() *httptest.Server {
 	certPem := []byte(`-----BEGIN CERTIFICATE-----
 MIIBbDCCARKgAwIBAgIBAjAKBggqhkjOPQQDAjASMRAwDgYDVQQKEwdUZXN0IENB
@@ -60,6 +66,13 @@ UIzVXHIYlzwdwqLYo8hpCZUXaxgIvC7zGw==
 	return server
 }
 
+// TlsHandler creates http.Handler for tls server
+//
+// Routes:
+//
+//	GET /fruits           get item map
+//	GET /fruits/{name}    get item amount
+//	PUT /fruits/{name}    add or update fruit (amount in body)
 func TlsHandler() http.Handler {
 	items := map[string]int{}
 
@@ -78,8 +91,12 @@ func TlsHandler() http.Handler {
 			writer.WriteHeader(http.StatusNoContent)
 
 		case "DELETE":
+			var data int
+			if err := json.NewDecoder(request.Body).Decode(&data); err != nil {
+				panic(err)
+			}
 			if _, ok := items[name]; ok {
-				delete(items, name)
+				items[name] -= data
 				writer.WriteHeader(http.StatusNoContent)
 			} else {
 				writer.WriteHeader(http.StatusNotFound)
