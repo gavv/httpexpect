@@ -142,6 +142,10 @@ See [`_examples`](_examples) directory for complete standalone examples.
 
     Testing with custom formatter for assertion messages.
 
+* [`tls_test.go`](_examples/tls_test.go)
+
+    Testing a tls server made with `net/http` and `crypto/tls`
+
 ## Quick start
 
 ##### Hello, world!
