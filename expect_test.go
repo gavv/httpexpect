@@ -843,3 +843,135 @@ func TestExpect_Adapters(t *testing.T) {
 		assert.Contains(t, message, "test logger called")
 	})
 }
+
+type contextAssertionHandler struct {
+	Formatter        Formatter
+	Reporter         Reporter
+	Logger           Logger
+	AssertionContext *AssertionContext
+}
+
+// Success implements AssertionHandler.Success.
+func (h *contextAssertionHandler) Success(ctx *AssertionContext) {
+	if h.Formatter == nil {
+		panic("DefaultAssertionHandler.Formatter is nil")
+	}
+	h.Formatter.FormatSuccess(ctx)
+	h.AssertionContext = ctx
+
+}
+
+// Failure implements AssertionHandler.Failure.
+func (h *contextAssertionHandler) Failure(
+	ctx *AssertionContext, failure *AssertionFailure,
+) {
+	if h.Formatter == nil {
+		panic("DefaultAssertionHandler.Formatter is nil")
+	}
+
+	switch failure.Severity {
+	case SeverityError:
+		if h.Reporter == nil {
+			panic("DefaultAssertionHandler.Reporter is nil")
+		}
+
+		h.Formatter.FormatFailure(ctx, failure)
+		h.AssertionContext = ctx
+
+	case SeverityLog:
+		if h.Logger == nil {
+			return
+		}
+
+		h.Formatter.FormatFailure(ctx, failure)
+		h.AssertionContext = ctx
+
+	}
+}
+
+func TestExpect_AssertionContext_Success(t *testing.T) {
+	client := &mockClient{}
+
+	reporter := NewAssertReporter(t)
+	formatter := &DefaultFormatter{}
+
+	handler := &contextAssertionHandler{Reporter: reporter, Formatter: formatter}
+
+	config := Config{
+		BaseURL:          "http://example.com",
+		Client:           client,
+		Reporter:         reporter,
+		Formatter:        formatter,
+		AssertionHandler: handler,
+	}
+
+	e := WithConfig(config)
+
+	req := e.GET("/test").WithText("test")
+	resp := req.Expect()
+	body := resp.Body()
+	assert.Equal(t, req, handler.AssertionContext.Request)
+	assert.Equal(t, body.value, handler.AssertionContext.Response.Body().value)
+}
+
+func TestExpect_AssertionContextResponseRequest(t *testing.T) {
+
+	prepare := func(client Client) (*Expect, Config, *contextAssertionHandler) {
+		reporter := NewAssertReporter(t)
+		formatter := &DefaultFormatter{}
+
+		handler := &contextAssertionHandler{Reporter: reporter, Formatter: formatter}
+
+		config := Config{
+			BaseURL:          "http://example.com",
+			Client:           client,
+			Reporter:         reporter,
+			Formatter:        formatter,
+			AssertionHandler: handler,
+		}
+		return WithConfig(config), config, handler
+	}
+
+	t.Run("success", func(t *testing.T) {
+		e, _, handler := prepare(&mockClient{})
+		req := e.GET("/test").WithText("test")
+		resp := req.Expect()
+		resp.Body()
+		assert.Equal(t, &req, &handler.AssertionContext.Request)
+		assert.Equal(t, &resp, &handler.AssertionContext.Response)
+	})
+
+	t.Run("fail request", func(t *testing.T) {
+		e, _, handler := prepare(&mockClient{err: errors.New("test")})
+		req := e.GET("/test").WithText("test")
+		resp := req.Expect()
+		resp.Body()
+		assert.Equal(t, &req, &handler.AssertionContext.Request)
+		assert.Nil(t, handler.AssertionContext.Response)
+	})
+
+	t.Run("fail response", func(t *testing.T) {
+		client := ClientFunc(func(_ *http.Request) (*http.Response, error) {
+			return &http.Response{
+				Status:     "Test Status",
+				StatusCode: 504,
+			}, nil
+		})
+		e, _, handler := prepare(client)
+		req := e.GET("/test")
+		resp := req.Expect()
+		resp.Body()
+		assert.Equal(t, &req, &handler.AssertionContext.Request)
+		assert.Equal(t, &resp, &handler.AssertionContext.Response)
+	})
+
+	t.Run("fail response children", func(t *testing.T) {
+		e, _, handler := prepare(&mockClient{})
+		req := e.GET("/test").WithText("{{}")
+		resp := req.Expect()
+		resp.JSON().Array()
+		req.chain.assertFlags(t, flagFailedChildren)
+		assert.Equal(t, &req, &handler.AssertionContext.Request)
+		assert.Equal(t, &resp, &handler.AssertionContext.Response)
+	})
+}
