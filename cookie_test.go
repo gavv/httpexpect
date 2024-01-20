@@ -28,8 +28,8 @@ func TestCookie_FailedChain(t *testing.T) {
 		value.Expires().chain.assert(t, failure)
 		value.MaxAge().chain.assert(t, failure)
 
-		value.HasMaxAge()
-		value.NotHasMaxAge()
+		value.ContainsMaxAge()
+		value.NotContainsMaxAge()
 	}
 
 	t.Run("failed chain", func(t *testing.T) {
@@ -96,6 +96,17 @@ func TestCookie_Constructors(t *testing.T) {
 	})
 }
 
+func TestCookie_Raw(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	data := http.Cookie{}
+
+	value := NewCookie(reporter, &data)
+
+	assert.Same(t, &data, value.Raw())
+	value.chain.assert(t, success)
+}
+
 func TestCookie_Alias(t *testing.T) {
 	reporter := newMockReporter(t)
 
@@ -147,27 +158,27 @@ func TestCookie_Getters(t *testing.T) {
 
 func TestCookie_MaxAge(t *testing.T) {
 	cases := []struct {
-		name          string
-		maxAge        int
-		wantHasMaxAge chainResult
-		wantDuration  time.Duration
+		name               string
+		maxAge             int
+		wantContainsMaxAge chainResult
+		wantDuration       time.Duration
 	}{
 		{
-			name:          "unset",
-			maxAge:        0,
-			wantHasMaxAge: failure,
+			name:               "unset",
+			maxAge:             0,
+			wantContainsMaxAge: failure,
 		},
 		{
-			name:          "zero",
-			maxAge:        -1,
-			wantHasMaxAge: success,
-			wantDuration:  time.Duration(0),
+			name:               "zero",
+			maxAge:             -1,
+			wantContainsMaxAge: success,
+			wantDuration:       time.Duration(0),
 		},
 		{
-			name:          "non-zero",
-			maxAge:        3,
-			wantHasMaxAge: success,
-			wantDuration:  time.Duration(3) * time.Second,
+			name:               "non-zero",
+			maxAge:             3,
+			wantContainsMaxAge: success,
+			wantDuration:       time.Duration(3) * time.Second,
 		},
 	}
 
@@ -178,13 +189,13 @@ func TestCookie_MaxAge(t *testing.T) {
 				MaxAge: tc.maxAge,
 			}
 
-			NewCookie(reporter, data).HasMaxAge().
-				chain.assert(t, tc.wantHasMaxAge)
+			NewCookie(reporter, data).ContainsMaxAge().
+				chain.assert(t, tc.wantContainsMaxAge)
 
-			NewCookie(reporter, data).NotHasMaxAge().
-				chain.assert(t, !tc.wantHasMaxAge)
+			NewCookie(reporter, data).NotContainsMaxAge().
+				chain.assert(t, !tc.wantContainsMaxAge)
 
-			if tc.wantHasMaxAge {
+			if tc.wantContainsMaxAge {
 				require.NotNil(t,
 					NewCookie(reporter, data).MaxAge().value)
 

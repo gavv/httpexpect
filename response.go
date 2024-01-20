@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime"
 	"net/http"
 	"reflect"
@@ -29,8 +28,9 @@ type Response struct {
 	websocket *websocket.Conn
 	rtt       *time.Duration
 
-	content      []byte
-	contentState contentState
+	content       []byte
+	contentState  contentState
+	contentMethod string
 
 	cookies []*http.Cookie
 }
@@ -38,9 +38,14 @@ type Response struct {
 type contentState int
 
 const (
+	// We didn't try to retrieve response content yet
 	contentPending contentState = iota
+	// We successfully retrieved response content
 	contentRetreived
+	// We tried to retrieve response content and failed
 	contentFailed
+	// We transferred body reader to user and will not use it by ourselves
+	contentHijacked
 )
 
 // NewResponse returns a new Response instance.
@@ -148,7 +153,7 @@ func newResponse(opts responseOpts) *Response {
 	return r
 }
 
-func (r *Response) getContent(opChain *chain) ([]byte, bool) {
+func (r *Response) getContent(opChain *chain, method string) ([]byte, bool) {
 	switch r.contentState {
 	case contentRetreived:
 		return r.content, true
@@ -158,6 +163,15 @@ func (r *Response) getContent(opChain *chain) ([]byte, bool) {
 
 	case contentPending:
 		break
+
+	case contentHijacked:
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				fmt.Errorf("cannot call %s because Reader() was already called", method),
+			},
+		})
+		return nil, false
 	}
 
 	resp := r.httpResp
@@ -170,7 +184,7 @@ func (r *Response) getContent(opChain *chain) ([]byte, bool) {
 		bw.Rewind()
 	}
 
-	content, err := ioutil.ReadAll(resp.Body)
+	content, err := io.ReadAll(resp.Body)
 
 	closeErr := resp.Body.Close()
 	if err == nil {
@@ -194,6 +208,7 @@ func (r *Response) getContent(opChain *chain) ([]byte, bool) {
 
 	r.content = content
 	r.contentState = contentRetreived
+	r.contentMethod = method
 
 	return r.content, true
 }
@@ -556,6 +571,44 @@ func (r *Response) Websocket() *Websocket {
 	return newWebsocket(opChain, r.config, r.websocket)
 }
 
+// Reader returns the body reader from the response.
+//
+// This method is mutually exclusive with methods that read entire
+// response body, like Text, Body, JSON, etc. It can be used when
+// you need to parse body manually or retrieve infinite responses.
+//
+// Example:
+//
+//	resp := NewResponse(t, response)
+//	reader := resp.Reader()
+func (r *Response) Reader() io.ReadCloser {
+	opChain := r.chain.enter("Reader()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return errBodyReader{errors.New("cannot read from failed Response")}
+	}
+
+	if r.contentState != contentPending {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				fmt.Errorf("cannot call Reader() because %s was already called",
+					r.contentMethod),
+			},
+		})
+		return errBodyReader{errors.New("cannot read from failed Response")}
+	}
+
+	if bw, _ := r.httpResp.Body.(*bodyWrapper); bw != nil {
+		bw.DisableRewinds()
+	}
+
+	r.contentState = contentHijacked
+
+	return r.httpResp.Body
+}
+
 // Body returns a new String instance with response body.
 //
 // Example:
@@ -571,7 +624,7 @@ func (r *Response) Body() *String {
 		return newString(opChain, "")
 	}
 
-	content, ok := r.getContent(opChain)
+	content, ok := r.getContent(opChain, "Body()")
 	if !ok {
 		return newString(opChain, "")
 	}
@@ -594,7 +647,7 @@ func (r *Response) NoContent() *Response {
 		return r
 	}
 
-	content, ok := r.getContent(opChain)
+	content, ok := r.getContent(opChain, "NoContent()")
 	if !ok {
 		return r
 	}
@@ -727,7 +780,7 @@ func (r *Response) Text(options ...ContentOpts) *String {
 		return newString(opChain, "")
 	}
 
-	content, ok := r.getContent(opChain)
+	content, ok := r.getContent(opChain, "Text()")
 	if !ok {
 		return newString(opChain, "")
 	}
@@ -766,19 +819,19 @@ func (r *Response) Form(options ...ContentOpts) *Object {
 		return newObject(opChain, nil)
 	}
 
-	object := r.getForm(opChain, options...)
+	object := r.getForm(opChain, "Form()", options...)
 
 	return newObject(opChain, object)
 }
 
 func (r *Response) getForm(
-	opChain *chain, options ...ContentOpts,
+	opChain *chain, method string, options ...ContentOpts,
 ) map[string]interface{} {
 	if !r.checkContentOptions(opChain, options, "application/x-www-form-urlencoded", "") {
 		return nil
 	}
 
-	content, ok := r.getContent(opChain)
+	content, ok := r.getContent(opChain, method)
 	if !ok {
 		return nil
 	}
@@ -834,17 +887,19 @@ func (r *Response) JSON(options ...ContentOpts) *Value {
 		return newValue(opChain, nil)
 	}
 
-	value := r.getJSON(opChain, options...)
+	value := r.getJSON(opChain, "JSON()", options...)
 
 	return newValue(opChain, value)
 }
 
-func (r *Response) getJSON(opChain *chain, options ...ContentOpts) interface{} {
+func (r *Response) getJSON(
+	opChain *chain, method string, options ...ContentOpts,
+) interface{} {
 	if !r.checkContentOptions(opChain, options, "application/json") {
 		return nil
 	}
 
-	content, ok := r.getContent(opChain)
+	content, ok := r.getContent(opChain, method)
 	if !ok {
 		return nil
 	}
@@ -875,7 +930,7 @@ func (r *Response) getJSON(opChain *chain, options ...ContentOpts) interface{} {
 //	resp.JSONP("myCallback").Array().ConsistsOf("foo", "bar")
 //	resp.JSONP("myCallback", ContentOpts{
 //	  MediaType: "application/javascript",
-//	}).Array.ConsistsOf("foo", "bar")
+//	}).Array().ConsistsOf("foo", "bar")
 func (r *Response) JSONP(callback string, options ...ContentOpts) *Value {
 	opChain := r.chain.enter("JSONP()")
 	defer opChain.leave()
@@ -894,7 +949,7 @@ func (r *Response) JSONP(callback string, options ...ContentOpts) *Value {
 		return newValue(opChain, nil)
 	}
 
-	value := r.getJSONP(opChain, callback, options...)
+	value := r.getJSONP(opChain, "JSONP()", callback, options...)
 
 	return newValue(opChain, value)
 }
@@ -902,13 +957,13 @@ func (r *Response) JSONP(callback string, options ...ContentOpts) *Value {
 var jsonp = regexp.MustCompile(`^\s*([^\s(]+)\s*\((.*)\)\s*;*\s*$`)
 
 func (r *Response) getJSONP(
-	opChain *chain, callback string, options ...ContentOpts,
+	opChain *chain, method string, callback string, options ...ContentOpts,
 ) interface{} {
 	if !r.checkContentOptions(opChain, options, "application/javascript") {
 		return nil
 	}
 
-	content, ok := r.getContent(opChain)
+	content, ok := r.getContent(opChain, method)
 	if !ok {
 		return nil
 	}
@@ -1053,4 +1108,16 @@ func (r *Response) checkEqual(
 	}
 
 	return true
+}
+
+type errBodyReader struct {
+	err error
+}
+
+func (r errBodyReader) Read(_ []byte) (int, error) {
+	return 0, r.err
+}
+
+func (r errBodyReader) Close() error {
+	return r.err
 }

@@ -83,6 +83,15 @@ func TestString_Constructors(t *testing.T) {
 	})
 }
 
+func TestString_Raw(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewString(reporter, "foo")
+
+	assert.Equal(t, "foo", value.Raw())
+	value.chain.assert(t, success)
+}
+
 func TestString_Decode(t *testing.T) {
 	t.Run("target is empty interface", func(t *testing.T) {
 		reporter := newMockReporter(t)
@@ -145,31 +154,37 @@ func TestString_Alias(t *testing.T) {
 	assert.Equal(t, []string{"foo", "AsNumber()"}, childValue.chain.context.AliasedPath)
 }
 
-func TestString_Getters(t *testing.T) {
+func TestString_Path(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewString(reporter, "foo")
 
-	assert.Equal(t, "foo", value.Raw())
-	value.chain.assert(t, success)
-	value.chain.clear()
-
 	assert.Equal(t, "foo", value.Path("$").Raw())
 	value.chain.assert(t, success)
-	value.chain.clear()
+}
 
-	value.Schema(`{"type": "string"}`)
-	value.chain.assert(t, success)
-	value.chain.clear()
+func TestString_Schema(t *testing.T) {
+	reporter := newMockReporter(t)
 
-	value.Schema(`{"type": "object"}`)
-	value.chain.assert(t, failure)
-	value.chain.clear()
+	NewString(reporter, "foo").Schema(`{"type": "string"}`).
+		chain.assert(t, success)
 
-	num := value.Length()
-	value.chain.assert(t, success)
-	num.chain.assert(t, success)
-	assert.Equal(t, 3.0, num.Raw())
+	NewString(reporter, "foo").Schema(`{"type": "object"}`).
+		chain.assert(t, failure)
+}
+
+func TestString_Getters(t *testing.T) {
+	t.Run("length", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewString(reporter, "foo")
+
+		innerValue := value.Length()
+		assert.Equal(t, 3.0, innerValue.Raw())
+
+		value.chain.assert(t, success)
+		innerValue.chain.assert(t, success)
+	})
 }
 
 func TestString_IsEmpty(t *testing.T) {
@@ -516,7 +531,7 @@ func TestString_Match(t *testing.T) {
 
 		assert.Equal(t,
 			[]string{"http://example.com/users/john", "example.com", "john"},
-			m.submatches)
+			m.submatchValues)
 	})
 
 	t.Run("unnamed", func(t *testing.T) {
@@ -529,7 +544,7 @@ func TestString_Match(t *testing.T) {
 
 		assert.Equal(t,
 			[]string{"http://example.com/users/john", "example.com", "john"},
-			m.submatches)
+			m.submatchValues)
 	})
 
 	t.Run("all", func(t *testing.T) {
@@ -547,11 +562,11 @@ func TestString_Match(t *testing.T) {
 
 		assert.Equal(t,
 			[]string{"http://example.com/users/john", "example.com", "john"},
-			m[0].submatches)
+			m[0].submatchValues)
 
 		assert.Equal(t,
 			[]string{"http://example.com/users/bob", "example.com", "bob"},
-			m[1].submatches)
+			m[1].submatchValues)
 	})
 
 	t.Run("status", func(t *testing.T) {

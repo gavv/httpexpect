@@ -62,8 +62,27 @@ func newWebsocketMessage(
 ) *WebsocketMessage {
 	wm := newEmptyWebsocketMessage(parent)
 
+	opChain := wm.chain.enter("")
+	defer opChain.leave()
+
 	wm.typ = typ
-	wm.content = content
+
+	if content != nil {
+		wm.content = make([]byte, len(content))
+		copy(wm.content, content)
+	} else {
+		wm.content = []byte{}
+	}
+
+	if len(closeCode) > 1 {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected multiple closeCode arguments"),
+			},
+		})
+		return wm
+	}
 
 	if len(closeCode) != 0 {
 		wm.closeCode = closeCode[0]
@@ -466,7 +485,7 @@ func (wm *WebsocketMessage) NoContent() *WebsocketMessage {
 		return wm
 	}
 
-	if !(len(wm.content) == 0) {
+	if len(wm.content) != 0 {
 		var actual interface{}
 		switch wm.typ {
 		case websocket.BinaryMessage:

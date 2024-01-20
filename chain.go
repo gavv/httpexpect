@@ -272,6 +272,20 @@ func (c *chain) setResponse(resp *Response) {
 	c.context.Response = resp
 }
 
+// Set assertion handler
+// Chain always overrides assertion handler with given one.
+func (c *chain) setHandler(handler AssertionHandler) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if chainValidation && c.state == stateLeaved {
+		panic("can't use chain after leave")
+	}
+
+	c.handler = handler
+	c.context.TestingTB = isTestingTB(handler)
+}
+
 // Create chain clone.
 // Typically is called between enter() and leave().
 func (c *chain) clone() *chain {
@@ -435,6 +449,9 @@ func (c *chain) fail(failure AssertionFailure) {
 	if c.severity == SeverityError {
 		failure.IsFatal = true
 	}
+
+	failure.Stacktrace = stacktrace()
+
 	c.failure = &failure
 }
 

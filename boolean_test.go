@@ -53,6 +53,19 @@ func TestBoolean_Constructors(t *testing.T) {
 	})
 }
 
+func TestBoolean_Raw(t *testing.T) {
+	for _, data := range []bool{true, false} {
+		t.Run(fmt.Sprintf("%v", data), func(t *testing.T) {
+			reporter := newMockReporter(t)
+
+			value := NewBoolean(reporter, data)
+
+			assert.Equal(t, data, value.Raw())
+			value.chain.assert(t, success)
+		})
+	}
+}
+
 func TestBoolean_Decode(t *testing.T) {
 	t.Run("target is empty interface", func(t *testing.T) {
 		reporter := newMockReporter(t)
@@ -111,64 +124,61 @@ func TestBoolean_Alias(t *testing.T) {
 	assert.Equal(t, []string{"foo"}, value.chain.context.AliasedPath)
 }
 
-func TestBoolean_Getters(t *testing.T) {
+func TestBoolean_Path(t *testing.T) {
 	reporter := newMockReporter(t)
 
 	value := NewBoolean(reporter, true)
 
-	assert.Equal(t, true, value.Raw())
-	value.chain.assert(t, success)
-	value.chain.clear()
-
 	assert.Equal(t, true, value.Path("$").Raw())
 	value.chain.assert(t, success)
-	value.chain.clear()
+}
 
-	value.Schema(`{"type": "boolean"}`)
-	value.chain.assert(t, success)
-	value.chain.clear()
+func TestBoolean_Schema(t *testing.T) {
+	reporter := newMockReporter(t)
 
-	value.Schema(`{"type": "object"}`)
-	value.chain.assert(t, failure)
-	value.chain.clear()
+	NewBoolean(reporter, true).Schema(`{"type": "boolean"}`).
+		chain.assert(t, success)
+
+	NewBoolean(reporter, true).Schema(`{"type": "object"}`).
+		chain.assert(t, failure)
 }
 
 func TestBoolean_IsEqual(t *testing.T) {
-	for _, value := range []bool{true, false} {
-		t.Run(fmt.Sprintf("%v", value), func(t *testing.T) {
+	for _, data := range []bool{true, false} {
+		t.Run(fmt.Sprintf("%v", data), func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			NewBoolean(reporter, value).IsEqual(value).
+			NewBoolean(reporter, data).IsEqual(data).
 				chain.assert(t, success)
 
-			NewBoolean(reporter, value).IsEqual(!value).
+			NewBoolean(reporter, data).IsEqual(!data).
 				chain.assert(t, failure)
 
-			NewBoolean(reporter, value).NotEqual(value).
+			NewBoolean(reporter, data).NotEqual(data).
 				chain.assert(t, failure)
 
-			NewBoolean(reporter, value).NotEqual(!value).
+			NewBoolean(reporter, data).NotEqual(!data).
 				chain.assert(t, success)
 		})
 	}
 }
 
 func TestBoolean_IsValue(t *testing.T) {
-	for _, value := range []bool{true, false} {
-		t.Run(fmt.Sprintf("%v", value), func(t *testing.T) {
+	for _, data := range []bool{true, false} {
+		t.Run(fmt.Sprintf("%v", data), func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			if value {
-				NewBoolean(reporter, value).IsTrue().
+			if data {
+				NewBoolean(reporter, data).IsTrue().
 					chain.assert(t, success)
 
-				NewBoolean(reporter, value).IsFalse().
+				NewBoolean(reporter, data).IsFalse().
 					chain.assert(t, failure)
 			} else {
-				NewBoolean(reporter, value).IsTrue().
+				NewBoolean(reporter, data).IsTrue().
 					chain.assert(t, failure)
 
-				NewBoolean(reporter, value).IsFalse().
+				NewBoolean(reporter, data).IsFalse().
 					chain.assert(t, success)
 			}
 		})
@@ -177,39 +187,39 @@ func TestBoolean_IsValue(t *testing.T) {
 
 func TestBoolean_InList(t *testing.T) {
 	t.Run("basic", func(t *testing.T) {
-		for _, value := range []bool{true, false} {
-			t.Run(fmt.Sprintf("%v", value), func(t *testing.T) {
+		for _, data := range []bool{true, false} {
+			t.Run(fmt.Sprintf("%v", data), func(t *testing.T) {
 				reporter := newMockReporter(t)
 
-				NewBoolean(reporter, value).InList(value).
+				NewBoolean(reporter, data).InList(data).
 					chain.assert(t, success)
 
-				NewBoolean(reporter, value).InList(!value, value).
+				NewBoolean(reporter, data).InList(!data, data).
 					chain.assert(t, success)
 
-				NewBoolean(reporter, value).InList(!value, !value).
+				NewBoolean(reporter, data).InList(!data, !data).
 					chain.assert(t, failure)
 
-				NewBoolean(reporter, value).NotInList(value).
+				NewBoolean(reporter, data).NotInList(data).
 					chain.assert(t, failure)
 
-				NewBoolean(reporter, value).NotInList(!value, value).
+				NewBoolean(reporter, data).NotInList(!data, data).
 					chain.assert(t, failure)
 
-				NewBoolean(reporter, value).NotInList(!value, !value).
+				NewBoolean(reporter, data).NotInList(!data, !data).
 					chain.assert(t, success)
 			})
 		}
 	})
 
 	t.Run("invalid argument", func(t *testing.T) {
-		for _, value := range []bool{true, false} {
+		for _, data := range []bool{true, false} {
 			reporter := newMockReporter(t)
 
-			NewBoolean(reporter, value).InList().
+			NewBoolean(reporter, data).InList().
 				chain.assert(t, failure)
 
-			NewBoolean(reporter, value).NotInList().
+			NewBoolean(reporter, data).NotInList().
 				chain.assert(t, failure)
 		}
 	})

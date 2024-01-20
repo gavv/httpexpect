@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"io/ioutil"
 	"mime"
 	"mime/multipart"
 	"net/http"
@@ -24,6 +23,7 @@ import (
 
 func TestRequest_FailedChain(t *testing.T) {
 	reporter := newMockReporter(t)
+	assertionHandler := &mockAssertionHandler{}
 	config := newMockConfig(reporter)
 	chain := newChainWithDefaults("test", reporter, flagFailed)
 
@@ -32,6 +32,8 @@ func TestRequest_FailedChain(t *testing.T) {
 
 	req.Alias("foo")
 	req.WithName("foo")
+	req.WithReporter(reporter)
+	req.WithAssertionHandler(assertionHandler)
 	req.WithMatcher(func(resp *Response) {
 	})
 	req.WithTransformer(func(r *http.Request) {
@@ -264,6 +266,80 @@ func TestRequest_Basic(t *testing.T) {
 		resp.chain.assert(t, failure)
 
 		assert.Nil(t, resp.Raw())
+	})
+}
+
+func TestRequest_Reporter(t *testing.T) {
+	t.Run("default reporter", func(t *testing.T) {
+		configReporter := newMockReporter(t)
+		config := Config{
+			Client:   &mockClient{},
+			Reporter: configReporter,
+		}
+
+		req := NewRequestC(config, "GET", "/")
+
+		req.WithClient(nil)
+		req.chain.assert(t, failure)
+
+		assert.True(t, configReporter.reported)
+	})
+
+	t.Run("custom reporter", func(t *testing.T) {
+		configReporter := newMockReporter(t)
+		config := Config{
+			Client:   &mockClient{},
+			Reporter: configReporter,
+		}
+
+		req := NewRequestC(config, "GET", "/")
+
+		// set custom reporter
+		reqReporter := newMockReporter(t)
+		req.WithReporter(reqReporter)
+
+		req.WithClient(nil)
+		req.chain.assert(t, failure)
+
+		assert.False(t, configReporter.reported)
+		assert.True(t, reqReporter.reported)
+	})
+}
+
+func TestRequest_AssertionHandler(t *testing.T) {
+	t.Run("default handler", func(t *testing.T) {
+		configHandler := &mockAssertionHandler{}
+		config := Config{
+			Client:           &mockClient{},
+			AssertionHandler: configHandler,
+		}
+
+		req := NewRequestC(config, "GET", "/")
+
+		req.WithClient(nil)
+		req.chain.assert(t, failure)
+
+		assert.Equal(t, 1, configHandler.failureCalled)
+	})
+
+	t.Run("custom handler", func(t *testing.T) {
+		configHandler := &mockAssertionHandler{}
+		config := Config{
+			Client:           &mockClient{},
+			AssertionHandler: configHandler,
+		}
+
+		req := NewRequestC(config, "GET", "/")
+
+		// set custom assertion handler
+		reqHandler := &mockAssertionHandler{}
+		req.WithAssertionHandler(reqHandler)
+
+		req.WithClient(nil)
+		req.chain.assert(t, failure)
+
+		assert.Equal(t, 0, configHandler.failureCalled)
+		assert.Equal(t, 1, reqHandler.failureCalled)
 	})
 }
 
@@ -1653,19 +1729,19 @@ func TestRequest_BodyMultipart(t *testing.T) {
 		part1, _ := reader.NextPart()
 		assert.Equal(t, "b", part1.FormName())
 		assert.Equal(t, "", part1.FileName())
-		b1, _ := ioutil.ReadAll(part1)
+		b1, _ := io.ReadAll(part1)
 		assert.Equal(t, "1", string(b1))
 
 		part2, _ := reader.NextPart()
 		assert.Equal(t, "c", part2.FormName())
 		assert.Equal(t, "", part2.FileName())
-		b2, _ := ioutil.ReadAll(part2)
+		b2, _ := io.ReadAll(part2)
 		assert.Equal(t, "2", string(b2))
 
 		part3, _ := reader.NextPart()
 		assert.Equal(t, "a", part3.FormName())
 		assert.Equal(t, "", part3.FileName())
-		b3, _ := ioutil.ReadAll(part3)
+		b3, _ := io.ReadAll(part3)
 		assert.Equal(t, "3", string(b3))
 
 		eof, _ := reader.NextPart()
@@ -1675,7 +1751,7 @@ func TestRequest_BodyMultipart(t *testing.T) {
 	t.Run("multipart file", func(t *testing.T) {
 		req := NewRequestC(config, "POST", "url")
 
-		fh, _ := ioutil.TempFile("", "httpexpect")
+		fh, _ := os.CreateTemp("", "httpexpect")
 		filename2 := fh.Name()
 		_, _ = fh.WriteString("2")
 		fh.Close()
@@ -1705,25 +1781,25 @@ func TestRequest_BodyMultipart(t *testing.T) {
 		part1, _ := reader.NextPart()
 		assert.Equal(t, "a", part1.FormName())
 		assert.Equal(t, "", part1.FileName())
-		b1, _ := ioutil.ReadAll(part1)
+		b1, _ := io.ReadAll(part1)
 		assert.Equal(t, "1", string(b1))
 
 		part2, _ := reader.NextPart()
 		assert.Equal(t, "b", part2.FormName())
 		assert.Equal(t, filepath.Base(filename2), filepath.Base(part2.FileName()))
-		b2, _ := ioutil.ReadAll(part2)
+		b2, _ := io.ReadAll(part2)
 		assert.Equal(t, "2", string(b2))
 
 		part3, _ := reader.NextPart()
 		assert.Equal(t, "c", part3.FormName())
 		assert.Equal(t, "filename3", filepath.Base(part3.FileName()))
-		b3, _ := ioutil.ReadAll(part3)
+		b3, _ := io.ReadAll(part3)
 		assert.Equal(t, "3", string(b3))
 
 		part4, _ := reader.NextPart()
 		assert.Equal(t, "d", part4.FormName())
 		assert.Equal(t, "filename4", filepath.Base(part4.FileName()))
-		b4, _ := ioutil.ReadAll(part4)
+		b4, _ := io.ReadAll(part4)
 		assert.Equal(t, "4", string(b4))
 
 		eof, _ := reader.NextPart()
@@ -1774,6 +1850,36 @@ func TestRequest_BodyMultipart(t *testing.T) {
 				req.chain.assert(t, tc.result)
 			})
 		}
+	})
+
+	t.Run("missing WithMultipart", func(t *testing.T) {
+		cases := []struct {
+			name  string
+			reqFn func(*Request)
+		}{
+			{
+				name: "WithFile",
+				reqFn: func(req *Request) {
+					req.WithFile("test_key", "test_file", strings.NewReader("test_data"))
+				},
+			},
+			{
+				name: "WithFileBytes",
+				reqFn: func(req *Request) {
+					req.WithFileBytes("test_key", "test_file", []byte("test_data"))
+				},
+			},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				req := NewRequestC(config, "POST", "url")
+
+				tc.reqFn(req)
+				req.chain.assert(t, failure)
+			})
+		}
+
 	})
 }
 
@@ -2062,7 +2168,7 @@ func TestRequest_RedirectsDontFollow(t *testing.T) {
 
 		tp := newMockRedirectTransport()
 		tp.assertFn = func(r *http.Request) {
-			b, err := ioutil.ReadAll(r.Body)
+			b, err := io.ReadAll(r.Body)
 			assert.NoError(t, err)
 			assert.Equal(t, "test body", string(b))
 		}
@@ -2186,7 +2292,7 @@ func TestRequest_RedirectsFollowAll(t *testing.T) {
 		tp := newMockRedirectTransport()
 		tp.maxRedirects = 1
 		tp.assertFn = func(r *http.Request) {
-			b, err := ioutil.ReadAll(r.Body)
+			b, err := io.ReadAll(r.Body)
 			assert.NoError(t, err)
 			assert.Equal(t, "test body", string(b))
 		}
@@ -2210,7 +2316,7 @@ func TestRequest_RedirectsFollowAll(t *testing.T) {
 		// Should set GetBody
 		gb, err := req.httpReq.GetBody()
 		assert.NoError(t, err)
-		b, err := ioutil.ReadAll(gb)
+		b, err := io.ReadAll(gb)
 		assert.NoError(t, err)
 		assert.Equal(t, "test body", string(b))
 
@@ -2232,7 +2338,7 @@ func TestRequest_RedirectsFollowAll(t *testing.T) {
 
 		tp := newMockRedirectTransport()
 		tp.assertFn = func(r *http.Request) {
-			b, err := ioutil.ReadAll(r.Body)
+			b, err := io.ReadAll(r.Body)
 			assert.NoError(t, err)
 			assert.Equal(t, "test body", string(b))
 		}
@@ -2255,7 +2361,7 @@ func TestRequest_RedirectsFollowAll(t *testing.T) {
 		// Should set GetBody
 		gb, err := req.httpReq.GetBody()
 		assert.NoError(t, err)
-		b, err := ioutil.ReadAll(gb)
+		b, err := io.ReadAll(gb)
 		assert.NoError(t, err)
 		assert.Equal(t, "test body", string(b))
 
@@ -2358,7 +2464,7 @@ func TestRequest_RedirectsFollowWithoutBody(t *testing.T) {
 		tp := newMockRedirectTransport()
 		tp.maxRedirects = 1
 		tp.assertFn = func(r *http.Request) {
-			b, err := ioutil.ReadAll(r.Body)
+			b, err := io.ReadAll(r.Body)
 			assert.NoError(t, err)
 			assert.Equal(t, "test body", string(b))
 		}
@@ -2405,7 +2511,7 @@ func TestRequest_RedirectsFollowWithoutBody(t *testing.T) {
 			if r.URL.String() == "/url" {
 				assert.Equal(t, r.Method, http.MethodPut)
 
-				b, err := ioutil.ReadAll(r.Body)
+				b, err := io.ReadAll(r.Body)
 				assert.NoError(t, err)
 				assert.Equal(t, "test body", string(b))
 			} else if r.URL.String() == "/redirect" {
@@ -2457,7 +2563,7 @@ func TestRequest_RedirectsFollowWithoutBody(t *testing.T) {
 			if r.URL.String() == "/url" {
 				assert.Equal(t, r.Method, http.MethodPut)
 
-				b, err := ioutil.ReadAll(r.Body)
+				b, err := io.ReadAll(r.Body)
 				assert.NoError(t, err)
 				assert.Equal(t, "test body", string(b))
 			} else if r.URL.String() == "/redirect" {
@@ -2511,7 +2617,7 @@ func TestRequest_RetriesDisabled(t *testing.T) {
 			cb: func(req *http.Request) {
 				callCount++
 
-				b, err := ioutil.ReadAll(req.Body)
+				b, err := io.ReadAll(req.Body)
 				assert.NoError(t, err)
 				assert.Equal(t, "test body", string(b))
 			},
@@ -2545,7 +2651,7 @@ func TestRequest_RetriesDisabled(t *testing.T) {
 			cb: func(req *http.Request) {
 				callCount++
 
-				b, err := ioutil.ReadAll(req.Body)
+				b, err := io.ReadAll(req.Body)
 				assert.NoError(t, err)
 				assert.Equal(t, "test body", string(b))
 			},
@@ -2580,7 +2686,7 @@ func TestRequest_RetriesDisabled(t *testing.T) {
 			cb: func(req *http.Request) {
 				callCount++
 
-				b, err := ioutil.ReadAll(req.Body)
+				b, err := io.ReadAll(req.Body)
 				assert.NoError(t, err)
 				assert.Equal(t, "test body", string(b))
 			},
@@ -2616,7 +2722,7 @@ func TestRequest_RetriesDisabled(t *testing.T) {
 			cb: func(req *http.Request) {
 				callCount++
 
-				b, err := ioutil.ReadAll(req.Body)
+				b, err := io.ReadAll(req.Body)
 				assert.NoError(t, err)
 				assert.Equal(t, "test body", string(b))
 			},
@@ -2654,7 +2760,7 @@ func TestRequest_RetriesTimeout(t *testing.T) {
 			cb: func(req *http.Request) {
 				callCount++
 
-				b, err := ioutil.ReadAll(req.Body)
+				b, err := io.ReadAll(req.Body)
 				assert.NoError(t, err)
 				assert.Equal(t, "test body", string(b))
 			},
@@ -2688,7 +2794,7 @@ func TestRequest_RetriesTimeout(t *testing.T) {
 			cb: func(req *http.Request) {
 				callCount++
 
-				b, err := ioutil.ReadAll(req.Body)
+				b, err := io.ReadAll(req.Body)
 				assert.NoError(t, err)
 				assert.Equal(t, "test body", string(b))
 			},
@@ -2724,7 +2830,7 @@ func TestRequest_RetriesTimeout(t *testing.T) {
 			cb: func(req *http.Request) {
 				callCount++
 
-				b, err := ioutil.ReadAll(req.Body)
+				b, err := io.ReadAll(req.Body)
 				assert.NoError(t, err)
 				assert.Equal(t, "test body", string(b))
 			},
@@ -2760,7 +2866,7 @@ func TestRequest_RetriesTimeout(t *testing.T) {
 			cb: func(req *http.Request) {
 				callCount++
 
-				b, err := ioutil.ReadAll(req.Body)
+				b, err := io.ReadAll(req.Body)
 				assert.NoError(t, err)
 				assert.Equal(t, "test body", string(b))
 			},
@@ -2798,7 +2904,7 @@ func TestRequest_RetriesTimeoutAndServer(t *testing.T) {
 			cb: func(req *http.Request) {
 				callCount++
 
-				b, err := ioutil.ReadAll(req.Body)
+				b, err := io.ReadAll(req.Body)
 				assert.NoError(t, err)
 				assert.Equal(t, "test body", string(b))
 			},
@@ -2832,7 +2938,7 @@ func TestRequest_RetriesTimeoutAndServer(t *testing.T) {
 			cb: func(req *http.Request) {
 				callCount++
 
-				b, err := ioutil.ReadAll(req.Body)
+				b, err := io.ReadAll(req.Body)
 				assert.NoError(t, err)
 				assert.Equal(t, "test body", string(b))
 			},
@@ -2868,7 +2974,7 @@ func TestRequest_RetriesTimeoutAndServer(t *testing.T) {
 			cb: func(req *http.Request) {
 				callCount++
 
-				b, err := ioutil.ReadAll(req.Body)
+				b, err := io.ReadAll(req.Body)
 				assert.NoError(t, err)
 				assert.Equal(t, "test body", string(b))
 			},
@@ -2905,7 +3011,7 @@ func TestRequest_RetriesTimeoutAndServer(t *testing.T) {
 			cb: func(req *http.Request) {
 				callCount++
 
-				b, err := ioutil.ReadAll(req.Body)
+				b, err := io.ReadAll(req.Body)
 				assert.NoError(t, err)
 				assert.Equal(t, "test body", string(b))
 			},
@@ -2943,7 +3049,7 @@ func TestRequest_RetriesAll(t *testing.T) {
 			cb: func(req *http.Request) {
 				callCount++
 
-				b, err := ioutil.ReadAll(req.Body)
+				b, err := io.ReadAll(req.Body)
 				assert.NoError(t, err)
 				assert.Equal(t, "test body", string(b))
 			},
@@ -2977,7 +3083,7 @@ func TestRequest_RetriesAll(t *testing.T) {
 			cb: func(req *http.Request) {
 				callCount++
 
-				b, err := ioutil.ReadAll(req.Body)
+				b, err := io.ReadAll(req.Body)
 				assert.NoError(t, err)
 				assert.Equal(t, "test body", string(b))
 			},
@@ -3013,7 +3119,7 @@ func TestRequest_RetriesAll(t *testing.T) {
 			cb: func(req *http.Request) {
 				callCount++
 
-				b, err := ioutil.ReadAll(req.Body)
+				b, err := io.ReadAll(req.Body)
 				assert.NoError(t, err)
 				assert.Equal(t, "test body", string(b))
 			},
@@ -3050,7 +3156,7 @@ func TestRequest_RetriesAll(t *testing.T) {
 			cb: func(req *http.Request) {
 				callCount++
 
-				b, err := ioutil.ReadAll(req.Body)
+				b, err := io.ReadAll(req.Body)
 				assert.NoError(t, err)
 				assert.Equal(t, "test body", string(b))
 			},
@@ -3088,7 +3194,7 @@ func TestRequest_RetriesLimit(t *testing.T) {
 		cb: func(req *http.Request) {
 			callCount++
 
-			b, err := ioutil.ReadAll(req.Body)
+			b, err := io.ReadAll(req.Body)
 			assert.NoError(t, err)
 			assert.Equal(t, "test body", string(b))
 		},
@@ -3126,7 +3232,7 @@ func TestRequest_RetriesDelay(t *testing.T) {
 			cb: func(req *http.Request) {
 				callCount++
 
-				b, err := ioutil.ReadAll(req.Body)
+				b, err := io.ReadAll(req.Body)
 				assert.NoError(t, err)
 				assert.Equal(t, "test body", string(b))
 			},
@@ -3168,7 +3274,7 @@ func TestRequest_RetriesDelay(t *testing.T) {
 			cb: func(req *http.Request) {
 				callCount++
 
-				b, err := ioutil.ReadAll(req.Body)
+				b, err := io.ReadAll(req.Body)
 				assert.NoError(t, err)
 				assert.Equal(t, "test body", string(b))
 			},
@@ -3214,7 +3320,7 @@ func TestRequest_RetriesCancellation(t *testing.T) {
 
 			assert.Error(t, req.Context().Err(), context.Canceled.Error())
 
-			b, err := ioutil.ReadAll(req.Body)
+			b, err := io.ReadAll(req.Body)
 			assert.NoError(t, err)
 			assert.Equal(t, "test body", string(b))
 		},
@@ -3252,99 +3358,139 @@ func TestRequest_Conflicts(t *testing.T) {
 	}
 
 	t.Run("body conflict", func(t *testing.T) {
-		var req *Request
+		cases := []struct {
+			name string
+			fn   func(req *Request)
+		}{
+			{"WithChunked",
+				func(req *Request) {
+					req.WithChunked(strings.NewReader("test"))
+				}},
+			{"WithBytes",
+				func(req *Request) {
+					req.WithBytes([]byte("test"))
+				}},
+			{"WithText",
+				func(req *Request) {
+					req.WithText("test")
+				}},
+			{"WithJSON",
+				func(req *Request) {
+					req.WithJSON(map[string]interface{}{"a": "b"})
+				}},
+			{"WithForm",
+				func(req *Request) {
+					req.WithForm(map[string]interface{}{"a": "b"})
+				}},
+			{"WithFormField",
+				func(req *Request) {
+					req.WithFormField("a", "b")
+				}},
+			{"WithMultipart",
+				func(req *Request) {
+					req.WithMultipart()
+				}},
+		}
 
-		req = NewRequestC(config, "GET", "url")
-		req.WithChunked(nil)
-		req.chain.assert(t, success)
-		req.WithChunked(nil)
-		req.chain.assert(t, failure)
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				req := NewRequestC(config, "GET", "url")
 
-		req = NewRequestC(config, "GET", "url")
-		req.WithChunked(nil)
-		req.chain.assert(t, success)
-		req.WithBytes(nil)
-		req.chain.assert(t, failure)
+				req.WithChunked(strings.NewReader("test"))
+				req.chain.assert(t, success)
 
-		req = NewRequestC(config, "GET", "url")
-		req.WithChunked(nil)
-		req.chain.assert(t, success)
-		req.WithText("")
-		req.chain.assert(t, failure)
+				tc.fn(req)
+				resp := req.Expect()
+				req.chain.assert(t, failure)
+				resp.chain.assert(t, failure)
+			})
 
-		req = NewRequestC(config, "GET", "url")
-		req.WithChunked(nil)
-		req.chain.assert(t, success)
-		req.WithJSON(map[string]interface{}{"a": "b"})
-		req.chain.assert(t, failure)
+			t.Run(tc.name+" - reversed", func(t *testing.T) {
+				req := NewRequestC(config, "GET", "url")
 
-		req = NewRequestC(config, "GET", "url")
-		req.WithChunked(nil)
-		req.chain.assert(t, success)
-		req.WithForm(map[string]interface{}{"a": "b"})
-		req.Expect()
-		req.chain.assert(t, failure)
+				tc.fn(req)
+				req.chain.assert(t, success)
 
-		req = NewRequestC(config, "GET", "url")
-		req.WithChunked(nil)
-		req.chain.assert(t, success)
-		req.WithFormField("a", "b")
-		req.Expect()
-		req.chain.assert(t, failure)
-
-		req = NewRequestC(config, "GET", "url")
-		req.WithChunked(nil)
-		req.chain.assert(t, success)
-		req.WithMultipart()
-		req.chain.assert(t, failure)
+				req.WithChunked(strings.NewReader("test"))
+				resp := req.Expect()
+				req.chain.assert(t, failure)
+				resp.chain.assert(t, failure)
+			})
+		}
 	})
 
 	t.Run("type conflict", func(t *testing.T) {
-		var req *Request
+		cases := []struct {
+			name string
+			fn   func(req *Request)
+		}{
+			{"WithJSON",
+				func(req *Request) {
+					req.WithJSON(map[string]interface{}{"a": "b"})
+				}},
+			{"WithForm",
+				func(req *Request) {
+					req.WithForm(map[string]interface{}{"a": "b"})
+				}},
+			{"WithFormField",
+				func(req *Request) {
+					req.WithFormField("a", "b")
+				}},
+			{"WithMultipart",
+				func(req *Request) {
+					req.WithMultipart()
+				}},
+		}
 
-		req = NewRequestC(config, "GET", "url")
-		req.WithText("")
-		req.chain.assert(t, success)
-		req.WithJSON(map[string]interface{}{"a": "b"})
-		req.chain.assert(t, failure)
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				req := NewRequestC(config, "GET", "url")
 
-		req = NewRequestC(config, "GET", "url")
-		req.WithText("")
-		req.chain.assert(t, success)
-		req.WithForm(map[string]interface{}{"a": "b"})
-		req.chain.assert(t, failure)
+				req.WithText("test")
+				req.chain.assert(t, success)
 
-		req = NewRequestC(config, "GET", "url")
-		req.WithText("")
-		req.chain.assert(t, success)
-		req.WithFormField("a", "b")
-		req.chain.assert(t, failure)
+				tc.fn(req)
+				req.chain.assert(t, failure)
+			})
 
-		req = NewRequestC(config, "GET", "url")
-		req.WithText("")
-		req.chain.assert(t, success)
-		req.WithMultipart()
-		req.chain.assert(t, failure)
+			t.Run(tc.name+" - reversed", func(t *testing.T) {
+				req := NewRequestC(config, "GET", "url")
+
+				tc.fn(req)
+				req.chain.assert(t, success)
+
+				req.WithText("test")
+				req.chain.assert(t, failure)
+			})
+		}
 	})
 
 	t.Run("multipart conflict", func(t *testing.T) {
-		var req *Request
+		cases := []struct {
+			name string
+			fn   func(req *Request)
+		}{
+			{"WithForm",
+				func(req *Request) {
+					req.WithForm(map[string]interface{}{"a": "b"})
+				}},
+			{"WithFormField",
+				func(req *Request) {
+					req.WithFormField("a", "b")
+				}},
+		}
 
-		req = NewRequestC(config, "GET", "url")
-		req.WithForm(map[string]interface{}{"a": "b"})
-		req.chain.assert(t, success)
-		req.WithMultipart()
-		req.chain.assert(t, failure)
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				req := NewRequestC(config, "GET", "url")
 
-		req = NewRequestC(config, "GET", "url")
-		req.WithFormField("a", "b")
-		req.chain.assert(t, success)
-		req.WithMultipart()
-		req.chain.assert(t, failure)
+				tc.fn(req)
+				req.chain.assert(t, success)
 
-		req = NewRequestC(config, "GET", "url")
-		req.WithFileBytes("a", "a", []byte("a"))
-		req.chain.assert(t, failure)
+				req.WithMultipart()
+				req.chain.assert(t, failure)
+			})
+		}
 	})
 }
 
@@ -3356,6 +3502,22 @@ func TestRequest_Usage(t *testing.T) {
 		prepFails   bool
 		expectFails bool
 	}{
+		{
+			name: "WithReporter - nil argument",
+			prepFunc: func(req *Request) {
+				req.WithReporter(nil)
+			},
+			prepFails:   true,
+			expectFails: true,
+		},
+		{
+			name: "WithAssertionHandler - nil argument",
+			prepFunc: func(req *Request) {
+				req.WithAssertionHandler(nil)
+			},
+			prepFails:   true,
+			expectFails: true,
+		},
 		{
 			name: "WithMatcher - nil argument",
 			prepFunc: func(req *Request) {
@@ -3528,6 +3690,18 @@ func TestRequest_Order(t *testing.T) {
 			name: "WithName after Expect",
 			afterFunc: func(req *Request) {
 				req.WithName("Test")
+			},
+		},
+		{
+			name: "WithReporter after Expect",
+			afterFunc: func(req *Request) {
+				req.WithReporter(newMockReporter(t))
+			},
+		},
+		{
+			name: "WithAssertionHandler after Expect",
+			afterFunc: func(req *Request) {
+				req.WithAssertionHandler(&mockAssertionHandler{})
 			},
 		},
 		{

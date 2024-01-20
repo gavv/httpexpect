@@ -3,10 +3,12 @@ package httpexpect
 import (
 	"bytes"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"math"
 	"net/http/httputil"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -14,6 +16,7 @@ import (
 	"testing"
 	"text/template"
 
+	"github.com/TylerBrock/colorjson"
 	"github.com/fatih/color"
 	"github.com/mattn/go-isatty"
 	"github.com/mitchellh/go-wordwrap"
@@ -65,6 +68,10 @@ type DefaultFormatter struct {
 	// Float printing format.
 	// Default is FloatFormatAuto.
 	FloatFormat FloatFormat
+
+	// Defines whether to print stacktrace on failure and in what format.
+	// Default is StacktraceModeDisabled.
+	StacktraceMode StacktraceMode
 
 	// Colorization mode.
 	// Default is ColorModeAuto.
@@ -150,6 +157,20 @@ const (
 	FloatFormatScientific
 )
 
+// StacktraceMode defines the format of stacktrace.
+type StacktraceMode int
+
+const (
+	// Don't print stacktrace.
+	StacktraceModeDisabled StacktraceMode = iota
+
+	// Standard, verbose format.
+	StacktraceModeStandard
+
+	// Compact format.
+	StacktraceModeCompact
+)
+
 // ColorMode defines how the text color is enabled.
 type ColorMode int
 
@@ -208,6 +229,9 @@ type FormatData struct {
 
 	HaveResponse bool
 	Response     string
+
+	HaveStacktrace bool
+	Stacktrace     []string
 
 	EnableColors bool
 	LineWidth    int
@@ -284,6 +308,7 @@ func (f *DefaultFormatter) buildFormatData(
 
 		f.fillRequest(&data, ctx, failure)
 		f.fillResponse(&data, ctx, failure)
+		f.fillStacktrace(&data, ctx, failure)
 	}
 
 	return &data
@@ -305,12 +330,6 @@ func (f *DefaultFormatter) fillGeneral(
 		}
 	}
 
-	if f.LineWidth != 0 {
-		data.LineWidth = f.LineWidth
-	} else {
-		data.LineWidth = defaultLineWidth
-	}
-
 	switch f.ColorMode {
 	case ColorModeAuto:
 		switch colorMode() {
@@ -319,12 +338,18 @@ func (f *DefaultFormatter) fillGeneral(
 		case colorsForced:
 			data.EnableColors = true
 		case colorsSupported:
-			data.EnableColors = ctx.TestingTB && testing.Verbose()
+			data.EnableColors = ctx.TestingTB && flag.Parsed() && testing.Verbose()
 		}
 	case ColorModeAlways:
 		data.EnableColors = true
 	case ColorModeNever:
 		data.EnableColors = false
+	}
+
+	if f.LineWidth != 0 {
+		data.LineWidth = f.LineWidth
+	} else {
+		data.LineWidth = defaultLineWidth
 	}
 }
 
@@ -543,6 +568,38 @@ func (f *DefaultFormatter) fillResponse(
 
 		data.HaveResponse = true
 		data.Response = fmt.Sprintf("%s %s\n%s", lines[0], ctx.Response.rtt, lines[1])
+	}
+}
+
+func (f *DefaultFormatter) fillStacktrace(
+	data *FormatData, ctx *AssertionContext, failure *AssertionFailure,
+) {
+	data.Stacktrace = []string{}
+
+	switch f.StacktraceMode {
+	case StacktraceModeDisabled:
+		break
+
+	case StacktraceModeStandard:
+		for _, entry := range failure.Stacktrace {
+			data.HaveStacktrace = true
+			data.Stacktrace = append(data.Stacktrace,
+				fmt.Sprintf("%s()\n\t%s:%d +0x%x",
+					entry.Func.Name(), entry.File, entry.Line, entry.FuncOffset))
+
+		}
+
+	case StacktraceModeCompact:
+		for _, entry := range failure.Stacktrace {
+			if entry.IsEntrypoint {
+				break
+			}
+			data.HaveStacktrace = true
+			data.Stacktrace = append(data.Stacktrace,
+				fmt.Sprintf("%s() at %s:%d (%s)",
+					entry.FuncName, filepath.Base(entry.File), entry.Line, entry.FuncPackage))
+
+		}
 	}
 }
 
@@ -952,12 +1009,104 @@ var defaultTemplateFuncs = template.FuncMap{
 		}
 		return color.New(colorAttr).Sprint(input)
 	},
+	"colorhttp": func(enable bool, isResponse bool, input string) string {
+		if !enable {
+			return input
+		}
+
+		methodColor := color.New(defaultColors["HiMagenta"])
+		statusColor := color.New(defaultColors["HiMagenta"])
+		headerColor := color.New(defaultColors["Cyan"])
+
+		var sb strings.Builder
+
+		isFirstLine := true
+		for _, line := range strings.Split(input, "\n") {
+			if sb.Len() != 0 {
+				sb.WriteString("\n")
+			}
+
+			line = strings.TrimSuffix(line, "\n")
+			line = strings.TrimSuffix(line, "\r")
+
+			var words []string
+			if isFirstLine {
+				words = strings.SplitN(line, " ", -1)
+			} else {
+				words = strings.SplitN(line, " ", 2)
+			}
+
+			wordLen := len(words)
+			for index, word := range words {
+				var applyColor *color.Color
+
+				if isFirstLine {
+					if isResponse {
+						if index != 0 && index != wordLen-1 {
+							applyColor = statusColor
+						}
+					} else {
+						if index == 0 {
+							applyColor = methodColor
+						}
+					}
+				} else {
+					if index == 0 {
+						applyColor = headerColor
+					}
+				}
+
+				if word != "" && applyColor != nil {
+					sb.WriteString(applyColor.Sprint(word))
+				} else {
+					sb.WriteString(word)
+				}
+
+				sb.WriteString(" ")
+			}
+
+			isFirstLine = false
+		}
+
+		return sb.String()
+	},
+	"colorjson": func(enable bool, colorName, input string) string {
+		if !enable {
+			return input
+		}
+
+		fallbackColor := color.Reset
+		if attr, ok := defaultColors[colorName]; ok {
+			fallbackColor = attr
+		}
+
+		var parsedInput interface{}
+		err := json.Unmarshal([]byte(input), &parsedInput)
+		if err != nil {
+			return color.New(fallbackColor).Sprint(input)
+		}
+
+		formatter := colorjson.NewFormatter()
+		formatter.KeyColor = color.New(color.Reset)
+		formatter.StringColor = color.New(defaultColors["HiMagenta"])
+		formatter.NumberColor = color.New(defaultColors["Cyan"])
+		formatter.BoolColor = color.New(defaultColors["Cyan"])
+		formatter.NullColor = color.New(defaultColors["Cyan"])
+		formatter.Indent = 2
+
+		b, err := formatter.Marshal(parsedInput)
+		if err != nil {
+			return color.New(fallbackColor).Sprint(input)
+		}
+
+		return string(b)
+	},
 	"colordiff": func(enable bool, input string) string {
 		if !enable {
 			return input
 		}
 
-		prefixColor := []struct {
+		prefixColor := [...]struct {
 			prefix string
 			color  color.Attribute
 		}{
@@ -1010,11 +1159,18 @@ request name: {{ .RequestName | color $.EnableColors "Cyan" }}
 {{- end -}}
 {{- if .HaveRequest }}
 
-request: {{ .Request | indent | trim | color $.EnableColors "HiMagenta" }}
+request: {{ .Request | colorhttp $.EnableColors false | indent | trim }}
 {{- end -}}
 {{- if .HaveResponse }}
 
-response: {{ .Response | indent | trim | color $.EnableColors "HiMagenta" }}
+response: {{ .Response | colorhttp $.EnableColors true | indent | trim }}
+{{- end -}}
+{{- if .HaveStacktrace }}
+
+trace:
+{{- range $n, $call := .Stacktrace }}
+{{ $call | indent }}
+{{- end -}}
 {{- end -}}
 {{- if .AssertPath }}
 
@@ -1028,23 +1184,23 @@ assertion:
 {{- else }}expected
 {{- end }} {{ .ExpectedKind }}:
 {{- range $n, $exp := .Expected }}
-{{ $exp | indent | color $.EnableColors "HiMagenta" }}
+{{ $exp | colorjson $.EnableColors "HiMagenta" | indent }}
 {{- end -}}
 {{- end -}}
 {{- if .HaveActual }}
 
 actual value:
-{{ .Actual | indent | color .EnableColors "HiMagenta" }}
+{{ .Actual | colorjson .EnableColors "HiMagenta" | indent }}
 {{- end -}}
 {{- if .HaveReference }}
 
 reference value:
-{{ .Reference | indent | color .EnableColors "HiMagenta" }}
+{{ .Reference | colorjson .EnableColors "HiMagenta" | indent }}
 {{- end -}}
 {{- if .HaveDelta }}
 
 allowed delta:
-{{ .Delta | indent | color .EnableColors "HiMagenta" }}
+{{ .Delta | indent | color .EnableColors "Cyan" }}
 {{- end -}}
 {{- if .HaveDiff }}
 

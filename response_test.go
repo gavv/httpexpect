@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestResponse_FailedChain(t *testing.T) {
@@ -111,6 +112,17 @@ func TestResponse_Constructors(t *testing.T) {
 		assert.NotSame(t, value.chain, chain)
 		assert.Equal(t, value.chain.context.Path, chain.context.Path)
 	})
+}
+
+func TestResponse_Raw(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	httpResp := http.Response{}
+
+	resp := NewResponse(reporter, &httpResp)
+
+	assert.Same(t, &httpResp, resp.Raw())
+	resp.chain.assert(t, success)
 }
 
 func TestResponse_Alias(t *testing.T) {
@@ -282,8 +294,6 @@ func TestResponse_Headers(t *testing.T) {
 
 	resp := NewResponse(reporter, httpResp)
 
-	assert.Same(t, httpResp, resp.Raw())
-
 	resp.Headers().IsEqual(headers).
 		chain.assert(t, success)
 
@@ -370,7 +380,7 @@ func TestResponse_BodyOperations(t *testing.T) {
 
 		httpResp := &http.Response{
 			StatusCode: http.StatusOK,
-			Body:       ioutil.NopCloser(bytes.NewBufferString("body")),
+			Body:       io.NopCloser(bytes.NewBufferString("body")),
 		}
 
 		resp := NewResponse(reporter, httpResp)
@@ -591,7 +601,7 @@ func TestResponse_BodyDeferred(t *testing.T) {
 
 		// Invoke getContent()
 		chain := resp.chain.enter("Test()")
-		content, ok := resp.getContent(chain)
+		content, ok := resp.getContent(chain, "Test()")
 
 		chain.assert(t, failure)
 		assert.Nil(t, content)
@@ -601,6 +611,40 @@ func TestResponse_BodyDeferred(t *testing.T) {
 		assert.Equal(t, 1, body.closeCount)
 		assert.Nil(t, resp.content)
 		assert.Equal(t, contentFailed, resp.contentState)
+	})
+
+	t.Run("hijacked state", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		body := newMockBody("body string")
+
+		resp := NewResponse(reporter, &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       body,
+		})
+
+		assert.Equal(t, 0, body.readCount)
+		assert.Equal(t, 0, body.closeCount)
+		assert.Nil(t, resp.content)
+		assert.Equal(t, contentPending, resp.contentState)
+
+		// Hijack body
+		reader := resp.Reader()
+		assert.NotNil(t, reader)
+		resp.chain.assert(t, success)
+
+		// Invoke getContent()
+		chain := resp.chain.enter("Test()")
+		content, ok := resp.getContent(chain, "Test()")
+
+		chain.assert(t, failure)
+		assert.Nil(t, content)
+		assert.False(t, ok)
+
+		assert.Equal(t, 0, body.readCount)
+		assert.Equal(t, 0, body.closeCount)
+		assert.Nil(t, resp.content)
+		assert.Equal(t, contentHijacked, resp.contentState)
 	})
 }
 
@@ -615,7 +659,7 @@ func TestResponse_NoContent(t *testing.T) {
 		httpResp := &http.Response{
 			StatusCode: http.StatusOK,
 			Header:     http.Header(headers),
-			Body:       ioutil.NopCloser(bytes.NewBufferString("")),
+			Body:       io.NopCloser(bytes.NewBufferString("")),
 		}
 
 		resp := NewResponse(reporter, httpResp)
@@ -705,7 +749,7 @@ func TestResponse_NoContent(t *testing.T) {
 		httpResp := &http.Response{
 			StatusCode: http.StatusOK,
 			Header:     http.Header(headers),
-			Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+			Body:       io.NopCloser(bytes.NewBufferString(body)),
 		}
 
 		resp := NewResponse(reporter, httpResp)
@@ -931,7 +975,7 @@ func TestResponse_Text(t *testing.T) {
 		httpResp := &http.Response{
 			StatusCode: http.StatusOK,
 			Header:     http.Header(headers),
-			Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+			Body:       io.NopCloser(bytes.NewBufferString(body)),
 		}
 
 		resp := NewResponse(reporter, httpResp)
@@ -998,7 +1042,7 @@ func TestResponse_Form(t *testing.T) {
 		httpResp := &http.Response{
 			StatusCode: http.StatusOK,
 			Header:     http.Header(headers),
-			Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+			Body:       io.NopCloser(bytes.NewBufferString(body)),
 		}
 
 		resp := NewResponse(reporter, httpResp)
@@ -1043,7 +1087,7 @@ func TestResponse_Form(t *testing.T) {
 		httpResp := &http.Response{
 			StatusCode: http.StatusOK,
 			Header:     http.Header(headers),
-			Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+			Body:       io.NopCloser(bytes.NewBufferString(body)),
 		}
 
 		resp := NewResponse(reporter, httpResp)
@@ -1067,7 +1111,7 @@ func TestResponse_Form(t *testing.T) {
 		httpResp := &http.Response{
 			StatusCode: http.StatusOK,
 			Header:     http.Header(headers),
-			Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+			Body:       io.NopCloser(bytes.NewBufferString(body)),
 		}
 
 		resp := NewResponse(reporter, httpResp)
@@ -1119,7 +1163,7 @@ func TestResponse_JSON(t *testing.T) {
 		httpResp := &http.Response{
 			StatusCode: http.StatusOK,
 			Header:     http.Header(headers),
-			Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+			Body:       io.NopCloser(bytes.NewBufferString(body)),
 		}
 
 		resp := NewResponse(reporter, httpResp)
@@ -1160,7 +1204,7 @@ func TestResponse_JSON(t *testing.T) {
 		httpResp := &http.Response{
 			StatusCode: http.StatusOK,
 			Header:     http.Header(headers),
-			Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+			Body:       io.NopCloser(bytes.NewBufferString(body)),
 		}
 
 		resp := NewResponse(reporter, httpResp)
@@ -1184,7 +1228,7 @@ func TestResponse_JSON(t *testing.T) {
 		httpResp := &http.Response{
 			StatusCode: http.StatusOK,
 			Header:     http.Header(headers),
-			Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+			Body:       io.NopCloser(bytes.NewBufferString(body)),
 		}
 
 		resp := NewResponse(reporter, httpResp)
@@ -1209,7 +1253,7 @@ func TestResponse_JSON(t *testing.T) {
 		httpResp := &http.Response{
 			StatusCode: http.StatusOK,
 			Header:     http.Header(headers),
-			Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+			Body:       io.NopCloser(bytes.NewBufferString(body)),
 		}
 
 		resp := NewResponse(reporter, httpResp)
@@ -1265,7 +1309,7 @@ func TestResponse_JSONP(t *testing.T) {
 					httpResp := &http.Response{
 						StatusCode: http.StatusOK,
 						Header:     http.Header(headers),
-						Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+						Body:       io.NopCloser(bytes.NewBufferString(body)),
 					}
 
 					resp := NewResponse(reporter, httpResp)
@@ -1323,7 +1367,7 @@ func TestResponse_JSONP(t *testing.T) {
 					httpResp := &http.Response{
 						StatusCode: http.StatusOK,
 						Header:     http.Header(headers),
-						Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+						Body:       io.NopCloser(bytes.NewBufferString(body)),
 					}
 
 					resp := NewResponse(reporter, httpResp)
@@ -1349,7 +1393,7 @@ func TestResponse_JSONP(t *testing.T) {
 		httpResp := &http.Response{
 			StatusCode: http.StatusOK,
 			Header:     http.Header(headers),
-			Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+			Body:       io.NopCloser(bytes.NewBufferString(body)),
 		}
 
 		resp := NewResponse(reporter, httpResp)
@@ -1374,7 +1418,7 @@ func TestResponse_JSONP(t *testing.T) {
 		httpResp := &http.Response{
 			StatusCode: http.StatusOK,
 			Header:     http.Header(headers),
-			Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+			Body:       io.NopCloser(bytes.NewBufferString(body)),
 		}
 
 		resp := NewResponse(reporter, httpResp)
@@ -1430,7 +1474,7 @@ func TestResponse_ContentOpts(t *testing.T) {
 		httpResp := &http.Response{
 			StatusCode: http.StatusOK,
 			Header:     http.Header(headers),
-			Body:       ioutil.NopCloser(bytes.NewBufferString(tc.respBody)),
+			Body:       io.NopCloser(bytes.NewBufferString(tc.respBody)),
 		}
 
 		reporter := newMockReporter(t)
@@ -1558,6 +1602,161 @@ func TestResponse_ContentOpts(t *testing.T) {
 	})
 }
 
+func TestResponse_Reader(t *testing.T) {
+	t.Run("read body", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		httpResp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       newMockBody("test body"),
+		}
+		resp := NewResponse(reporter, httpResp)
+
+		reader := resp.Reader()
+		require.NotNil(t, reader)
+		resp.chain.assert(t, success)
+
+		b, err := io.ReadAll(reader)
+		assert.NoError(t, err)
+		assert.Equal(t, "test body", string(b))
+
+		err = reader.Close()
+		assert.NoError(t, err)
+	})
+
+	t.Run("rewinds disabled", func(t *testing.T) {
+		wrp := newBodyWrapper(newMockBody("test"), nil)
+
+		reporter := newMockReporter(t)
+		httpResp := &http.Response{
+			StatusCode: http.StatusOK,
+			Body:       wrp,
+		}
+		resp := NewResponse(reporter, httpResp)
+
+		assert.False(t, wrp.isRewindDisabled)
+
+		reader := resp.Reader()
+		require.NotNil(t, reader)
+		resp.chain.assert(t, success)
+
+		assert.True(t, wrp.isRewindDisabled)
+
+		err := reader.Close()
+		assert.NoError(t, err)
+	})
+
+	t.Run("conflicts", func(t *testing.T) {
+		cases := []struct {
+			name        string
+			contentType string
+			body        string
+			method      func(resp *Response) *chain
+		}{
+			{
+				name:        "Body",
+				contentType: "text/plain; charset=utf-8",
+				body:        `test`,
+				method: func(resp *Response) *chain {
+					return resp.Body().chain
+				},
+			},
+			{
+				name:        "Text",
+				contentType: "text/plain; charset=utf-8",
+				body:        `test`,
+				method: func(resp *Response) *chain {
+					return resp.Text().chain
+				},
+			},
+			{
+				name:        "Form",
+				contentType: "application/x-www-form-urlencoded",
+				body:        `x=1&y=0`,
+				method: func(resp *Response) *chain {
+					return resp.Form().chain
+				},
+			},
+			{
+				name:        "JSON",
+				contentType: "application/json",
+				body:        `{"x":"y"}`,
+				method: func(resp *Response) *chain {
+					return resp.JSON().chain
+				},
+			},
+			{
+				name:        "JSONP",
+				contentType: "application/javascript",
+				body:        `test({"x":"y"})`,
+				method: func(resp *Response) *chain {
+					return resp.JSONP("test").chain
+				},
+			},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				t.Run("before reader", func(t *testing.T) {
+					reporter := newMockReporter(t)
+					httpResp := &http.Response{
+						StatusCode: http.StatusOK,
+						Header: http.Header(map[string][]string{
+							"Content-Type": {tc.contentType},
+						}),
+						Body: newMockBody(tc.body),
+					}
+					resp := NewResponse(reporter, httpResp)
+
+					// other method reads body
+					tc.method(resp).assert(t, success)
+
+					// Reader will fail
+					reader := resp.Reader()
+					require.NotNil(t, reader)
+					resp.chain.assert(t, failure)
+
+					b, err := io.ReadAll(reader)
+					assert.Error(t, err)
+					assert.Empty(t, b)
+
+					err = reader.Close()
+					assert.Error(t, err)
+				})
+			})
+
+			t.Run(tc.name, func(t *testing.T) {
+				t.Run("after reader", func(t *testing.T) {
+					reporter := newMockReporter(t)
+					httpResp := &http.Response{
+						StatusCode: http.StatusOK,
+						Header: http.Header(map[string][]string{
+							"Content-Type": {tc.contentType},
+						}),
+						Body: newMockBody(tc.body),
+					}
+					resp := NewResponse(reporter, httpResp)
+
+					// Reader hijacks body
+					reader := resp.Reader()
+					require.NotNil(t, reader)
+					resp.chain.assert(t, success)
+
+					// other method will fail
+					tc.method(resp).assert(t, failure)
+					resp.chain.assert(t, failure)
+
+					b, err := io.ReadAll(reader)
+					assert.NoError(t, err)
+					assert.Equal(t, tc.body, string(b))
+
+					err = reader.Close()
+					assert.NoError(t, err)
+				})
+			})
+		}
+	})
+}
+
 func TestResponse_Usage(t *testing.T) {
 	t.Run("NewResponse multiple rtt arguments", func(t *testing.T) {
 		reporter := newMockReporter(t)
@@ -1608,7 +1807,7 @@ func TestResponse_Usage(t *testing.T) {
 		httpResp := &http.Response{
 			StatusCode: http.StatusOK,
 			Header:     http.Header(headers),
-			Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+			Body:       io.NopCloser(bytes.NewBufferString(body)),
 		}
 
 		resp := NewResponse(reporter, httpResp)
@@ -1634,7 +1833,7 @@ func TestResponse_Usage(t *testing.T) {
 		httpResp := &http.Response{
 			StatusCode: http.StatusOK,
 			Header:     http.Header(headers),
-			Body:       ioutil.NopCloser(bytes.NewBufferString(body)),
+			Body:       io.NopCloser(bytes.NewBufferString(body)),
 		}
 
 		resp := NewResponse(reporter, httpResp)
@@ -1660,7 +1859,7 @@ func TestResponse_Usage(t *testing.T) {
 		httpResp := &http.Response{
 			StatusCode: http.StatusOK,
 			Header:     http.Header(headers),
-			Body:       ioutil.NopCloser(bytes.NewBufferString(body1)),
+			Body:       io.NopCloser(bytes.NewBufferString(body1)),
 		}
 
 		resp := NewResponse(reporter, httpResp)

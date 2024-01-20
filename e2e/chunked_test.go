@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"bufio"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -97,4 +98,58 @@ func TestE2EChunked_BinderFast(t *testing.T) {
 			Transport: httpexpect.NewFastBinder(handler),
 		},
 	}))
+}
+
+func TestE2EChunked_ResponseReader(t *testing.T) {
+	const chars = "abcdefghijklmnopqrstuvwxyz"
+
+	doneCh := make(chan struct{})
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Content-Type", "text/plain")
+		for {
+			wb := make([]byte, len(chars)*10)
+			for i := range wb {
+				wb[i] = chars[i%26]
+			}
+			_, err := w.Write(wb)
+			if err != nil {
+				break
+			}
+			w.(http.Flusher).Flush()
+		}
+		close(doneCh)
+	})
+
+	server := httptest.NewServer(mux)
+	defer server.Close()
+
+	e := httpexpect.Default(t, server.URL)
+
+	resp := e.GET("/test").Expect()
+
+	resp.Status(http.StatusOK).
+		HasContentType("text/plain").
+		HasTransferEncoding("chunked")
+
+	reader := resp.Reader()
+
+	rb := make([]byte, 1000000)
+	n, err := io.ReadFull(reader, rb)
+	assert.NoError(t, err)
+	assert.Equal(t, 1000000, n)
+
+	diff := 0
+	for i := range rb {
+		if rb[i] != chars[i%26] {
+			diff++
+		}
+	}
+	assert.Equal(t, 0, diff)
+
+	err = reader.Close()
+	assert.NoError(t, err)
+
+	<-doneCh
 }

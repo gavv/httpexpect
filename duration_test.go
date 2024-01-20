@@ -54,6 +54,15 @@ func TestDuration_Constructors(t *testing.T) {
 	})
 }
 
+func TestDuration_Raw(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewDuration(reporter, time.Second)
+
+	assert.Equal(t, time.Second, value.Raw())
+	value.chain.assert(t, success)
+}
+
 func TestDuration_Alias(t *testing.T) {
 	reporter := newMockReporter(t)
 

@@ -1,7 +1,7 @@
 package e2e
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -19,14 +19,14 @@ type mockPrinter struct {
 
 func (p *mockPrinter) Request(req *http.Request) {
 	if req.Body != nil {
-		p.reqBody, _ = ioutil.ReadAll(req.Body)
+		p.reqBody, _ = io.ReadAll(req.Body)
 		req.Body.Close()
 	}
 }
 
 func (p *mockPrinter) Response(resp *http.Response, rtt time.Duration) {
 	if resp.Body != nil {
-		p.respBody, _ = ioutil.ReadAll(resp.Body)
+		p.respBody, _ = io.ReadAll(resp.Body)
 		resp.Body.Close()
 	}
 	p.rtt = rtt
@@ -36,7 +36,7 @@ func createPrinterHandler() http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
-		body, _ := ioutil.ReadAll(r.Body)
+		body, _ := io.ReadAll(r.Body)
 		if string(body) != "test_request" {
 			panic("unexpected request body " + string(body))
 		}

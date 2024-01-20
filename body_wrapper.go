@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"io"
-	"io/ioutil"
 	"runtime"
 	"sync"
 )
@@ -45,7 +44,7 @@ type bodyWrapper struct {
 
 	// Reader for HTTP response body stored in memory.
 	// Rewind() resets this reader to start from the beginning.
-	memReader io.Reader
+	memReader *bytes.Reader
 
 	// HTTP response body stored in memory.
 	memBytes []byte
@@ -123,6 +122,11 @@ func (bw *bodyWrapper) Close() error {
 	// Reset memory reader.
 	bw.memReader = bytes.NewReader(nil)
 
+	// Free memory when rewind is disabled.
+	if bw.isRewindDisabled {
+		bw.memBytes = nil
+	}
+
 	return err
 }
 
@@ -178,7 +182,7 @@ func (bw *bodyWrapper) GetBody() (io.ReadCloser, error) {
 	}
 
 	// Return fresh reader for memory chunk.
-	return ioutil.NopCloser(bytes.NewReader(bw.memBytes)), nil
+	return io.NopCloser(bytes.NewReader(bw.memBytes)), nil
 }
 
 // Disables storing body contents in memory and clears the cache.
@@ -186,14 +190,31 @@ func (bw *bodyWrapper) DisableRewinds() {
 	bw.mu.Lock()
 	defer bw.mu.Unlock()
 
+	// Free memory if reading from original HTTP response, or reading from memory
+	// and memory reader has nothing left to read.
+	// Otherwise, i.e. when we're reading from memory, and there is more to read,
+	// memReadNext() will free memory later when it hits EOF.
+	if !bw.isFullyRead || bw.memReader.Len() == 0 {
+		bw.memReader = bytes.NewReader(nil)
+		bw.memBytes = nil
+	}
+
 	bw.isRewindDisabled = true
 }
 
 func (bw *bodyWrapper) memReadNext(p []byte) (int, error) {
 	n, err := bw.memReader.Read(p)
 
-	if err == io.EOF && bw.readErr != nil {
-		err = bw.readErr
+	if err == io.EOF {
+		// Free memory after we hit EOF when reading from memory,
+		// if rewinds were disabled while we were reading from it.
+		if bw.isRewindDisabled {
+			bw.memReader = bytes.NewReader(nil)
+			bw.memBytes = nil
+		}
+		if bw.readErr != nil {
+			err = bw.readErr
+		}
 	}
 
 	return n, err
@@ -223,7 +244,7 @@ func (bw *bodyWrapper) httpReadNext(p []byte) (int, error) {
 }
 
 func (bw *bodyWrapper) httpReadFull() error {
-	b, err := ioutil.ReadAll(bw.httpReader)
+	b, err := io.ReadAll(bw.httpReader)
 
 	// Switch to reading from memory.
 	bw.isFullyRead = true

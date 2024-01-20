@@ -134,6 +134,18 @@ func TestArray_Constructors(t *testing.T) {
 	})
 }
 
+func TestArray_Raw(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	data := []interface{}{"foo", 123.0}
+
+	value := NewArray(reporter, data)
+
+	assert.Equal(t, data, value.Raw())
+	assert.NotSame(t, &data[0], &value.Raw()[0])
+	value.chain.assert(t, success)
+}
+
 func TestArray_Decode(t *testing.T) {
 	t.Run("target is empty interface", func(t *testing.T) {
 		reporter := newMockReporter(t)
@@ -227,6 +239,61 @@ func TestArray_Alias(t *testing.T) {
 	assert.Equal(t, []string{"foo", "Filter()"}, childValue.chain.context.AliasedPath)
 }
 
+func TestArray_Path(t *testing.T) {
+	cases := []struct {
+		name  string
+		value []interface{}
+	}{
+		{
+			name:  "empty",
+			value: []interface{}{},
+		},
+		{
+			name:  "not empty",
+			value: []interface{}{"foo", 123.0},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			reporter := newMockReporter(t)
+
+			value := NewArray(reporter, tc.value)
+
+			assert.Equal(t, tc.value, value.Path("$").Raw())
+			value.chain.assert(t, success)
+		})
+	}
+}
+
+func TestArray_Schema(t *testing.T) {
+	cases := []struct {
+		name  string
+		value []interface{}
+	}{
+		{
+			name:  "empty",
+			value: []interface{}{},
+		},
+		{
+			name:  "not empty",
+			value: []interface{}{"foo", 123.0},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			reporter := newMockReporter(t)
+
+			NewArray(reporter, tc.value).Schema(`{"type": "array"}`).
+				chain.assert(t, success)
+
+			NewArray(reporter, tc.value).Schema(`{"type": "object"}`).
+				chain.assert(t, failure)
+		})
+	}
+}
+
 func TestArray_Getters(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
 		reporter := newMockReporter(t)
@@ -235,40 +302,12 @@ func TestArray_Getters(t *testing.T) {
 
 		value := NewArray(reporter, data)
 
-		assert.Equal(t, data, value.Raw())
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		assert.Equal(t, data, value.Path("$").Raw())
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		value.Schema(`{"type": "array"}`)
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		value.Schema(`{"type": "object"}`)
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
 		assert.Equal(t, 0.0, value.Length().Raw())
 		value.chain.assert(t, success)
 		value.chain.clear()
 
 		assert.NotNil(t, value.Value(0))
 		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		assert.NotNil(t, value.First())
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		assert.NotNil(t, value.Last())
-		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		assert.NotNil(t, value.Iter())
-		value.chain.assert(t, success)
 		value.chain.clear()
 	})
 
@@ -278,22 +317,6 @@ func TestArray_Getters(t *testing.T) {
 		data := []interface{}{"foo", 123.0}
 
 		value := NewArray(reporter, data)
-
-		assert.Equal(t, data, value.Raw())
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		assert.Equal(t, data, value.Path("$").Raw())
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		value.Schema(`{"type": "array"}`)
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		value.Schema(`{"type": "object"}`)
-		value.chain.assert(t, failure)
-		value.chain.clear()
 
 		assert.Equal(t, 2.0, value.Length().Raw())
 		value.chain.assert(t, success)
@@ -306,18 +329,6 @@ func TestArray_Getters(t *testing.T) {
 
 		assert.Equal(t, nil, value.Value(2).Raw())
 		value.chain.assert(t, failure)
-		value.chain.clear()
-
-		assert.Equal(t, "foo", value.First().Raw())
-		assert.Equal(t, 123.0, value.Last().Raw())
-		value.chain.assert(t, success)
-		value.chain.clear()
-
-		it := value.Iter()
-		assert.Equal(t, 2, len(it))
-		assert.Equal(t, "foo", it[0].Raw())
-		assert.Equal(t, 123.0, it[1].Raw())
-		value.chain.assert(t, success)
 		value.chain.clear()
 	})
 }
@@ -1560,6 +1571,40 @@ func TestArray_HasValue(t *testing.T) {
 
 		NewArray(reporter, []interface{}{1, 2, 3}).NotHasValue(1, func() {}).
 			chain.assert(t, failure)
+	})
+}
+
+func TestArray_Iter(t *testing.T) {
+	t.Run("empty", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		data := []interface{}{}
+
+		value := NewArray(reporter, data)
+
+		it := value.Iter()
+
+		assert.NotNil(t, it)
+		assert.Equal(t, 0, len(data), it)
+
+		value.chain.assert(t, success)
+	})
+
+	t.Run("not empty", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		data := []interface{}{"foo", 123.0}
+
+		value := NewArray(reporter, data)
+
+		it := value.Iter()
+
+		assert.NotNil(t, it)
+		assert.Equal(t, 2, len(it))
+		assert.Equal(t, "foo", it[0].Raw())
+		assert.Equal(t, 123.0, it[1].Raw())
+
+		value.chain.assert(t, success)
 	})
 }
 

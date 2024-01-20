@@ -3,7 +3,7 @@ package httpexpect
 import (
 	"bufio"
 	"crypto/tls"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -20,7 +20,7 @@ type mockHandler struct {
 }
 
 func (c *mockHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	body, err := ioutil.ReadAll(req.Body)
+	body, err := io.ReadAll(req.Body)
 	assert.True(c.t, err == nil)
 
 	if c.http10 {
@@ -81,7 +81,7 @@ func TestBinder_Basic(t *testing.T) {
 		"Content-Type": {"application/json"},
 	}
 
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -240,7 +240,7 @@ func TestFastBinder_Basic(t *testing.T) {
 		"Content-Type": {"application/json"},
 	}
 
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -278,7 +278,7 @@ func TestFastBinder_RemoteAddr(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -312,7 +312,7 @@ func TestFastBinder_Protocol(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -476,7 +476,7 @@ func TestFastBinder_EmptyResponse(t *testing.T) {
 
 	assert.False(t, resp.Body == nil)
 
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		t.Fatal(err)
 	}

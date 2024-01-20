@@ -15,13 +15,13 @@ func TestMatch_FailedChain(t *testing.T) {
 	value.Alias("foo")
 
 	value.Length().chain.assert(t, failure)
-	value.Index(0).chain.assert(t, failure)
-	value.Name("").chain.assert(t, failure)
+	value.Submatch(0).chain.assert(t, failure)
+	value.NamedSubmatch("").chain.assert(t, failure)
 
 	value.IsEmpty()
 	value.NotEmpty()
-	value.Values("")
-	value.NotValues("")
+	value.HasSubmatches("")
+	value.NotHasSubmatches("")
 }
 
 func TestMatch_Constructors(t *testing.T) {
@@ -52,6 +52,30 @@ func TestMatch_Constructors(t *testing.T) {
 	})
 }
 
+func TestMatch_Raw(t *testing.T) {
+	t.Run("nil", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewMatch(reporter, nil, nil)
+
+		assert.NotNil(t, []string{}, value.Raw())
+		assert.Equal(t, []string{}, value.Raw())
+		value.chain.assert(t, success)
+	})
+
+	t.Run("non-nil", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		data := []string{"foo", "bar"}
+
+		value := NewMatch(reporter, data, nil)
+
+		assert.Equal(t, data, value.Raw())
+		assert.NotSame(t, &data[0], &value.Raw()[0])
+		value.chain.assert(t, success)
+	})
+}
+
 func TestMatch_Alias(t *testing.T) {
 	reporter := newMockReporter(t)
 
@@ -66,9 +90,9 @@ func TestMatch_Alias(t *testing.T) {
 	assert.Equal(t, []string{"Match()"}, value.chain.context.Path)
 	assert.Equal(t, []string{"foo"}, value.chain.context.AliasedPath)
 
-	childValue := value.Index(0)
-	assert.Equal(t, []string{"Match()", "Index(0)"}, childValue.chain.context.Path)
-	assert.Equal(t, []string{"foo", "Index(0)"}, childValue.chain.context.AliasedPath)
+	childValue := value.Submatch(0)
+	assert.Equal(t, []string{"Match()", "Submatch(0)"}, childValue.chain.context.Path)
+	assert.Equal(t, []string{"foo", "Submatch(0)"}, childValue.chain.context.AliasedPath)
 }
 
 func TestMatch_Getters(t *testing.T) {
@@ -83,28 +107,28 @@ func TestMatch_Getters(t *testing.T) {
 
 	assert.Equal(t, 3.0, value.Length().Raw())
 
-	assert.Equal(t, "m0", value.Index(0).Raw())
-	assert.Equal(t, "m1", value.Index(1).Raw())
-	assert.Equal(t, "m2", value.Index(2).Raw())
+	assert.Equal(t, "m0", value.Submatch(0).Raw())
+	assert.Equal(t, "m1", value.Submatch(1).Raw())
+	assert.Equal(t, "m2", value.Submatch(2).Raw())
 	value.chain.assert(t, success)
 
-	assert.Equal(t, "m1", value.Name("n1").Raw())
-	assert.Equal(t, "m2", value.Name("n2").Raw())
+	assert.Equal(t, "m1", value.NamedSubmatch("n1").Raw())
+	assert.Equal(t, "m2", value.NamedSubmatch("n2").Raw())
 	value.chain.assert(t, success)
 
-	assert.Equal(t, "", value.Index(-1).Raw())
+	assert.Equal(t, "", value.Submatch(-1).Raw())
 	value.chain.assert(t, failure)
 	value.chain.clear()
 
-	assert.Equal(t, "", value.Index(3).Raw())
+	assert.Equal(t, "", value.Submatch(3).Raw())
 	value.chain.assert(t, failure)
 	value.chain.clear()
 
-	assert.Equal(t, "", value.Name("").Raw())
+	assert.Equal(t, "", value.NamedSubmatch("").Raw())
 	value.chain.assert(t, failure)
 	value.chain.clear()
 
-	assert.Equal(t, "", value.Name("bad").Raw())
+	assert.Equal(t, "", value.NamedSubmatch("bad").Raw())
 	value.chain.assert(t, failure)
 	value.chain.clear()
 }
@@ -202,10 +226,10 @@ func TestMatch_Values(t *testing.T) {
 			reporter := newMockReporter(t)
 
 			for _, match := range tc.wantMatch {
-				NewMatch(reporter, tc.submatches, nil).Values(match.target...).
+				NewMatch(reporter, tc.submatches, nil).HasSubmatches(match.target...).
 					chain.assert(t, match.result)
 
-				NewMatch(reporter, tc.submatches, nil).NotValues(match.target...).
+				NewMatch(reporter, tc.submatches, nil).NotHasSubmatches(match.target...).
 					chain.assert(t, !match.result)
 			}
 		})

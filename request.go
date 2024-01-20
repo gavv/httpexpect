@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net"
 	"net/http"
@@ -238,6 +237,94 @@ func (r *Request) WithName(name string) *Request {
 	}
 
 	r.chain.setRequestName(name)
+
+	return r
+}
+
+// WithReporter sets reporter to be used for this request.
+//
+// The new reporter overwrites AssertionHandler.
+// The new AssertionHandler is DefaultAssertionHandler with specified reporter,
+// existing Config.Formatter and nil Logger.
+// It will be used to report formatted fatal failure messages.
+//
+// Example:
+//
+//	req := NewRequestC(config, "GET", "http://example.com/path")
+//	req.WithReporter(t)
+func (r *Request) WithReporter(reporter Reporter) *Request {
+	opChain := r.chain.enter("WithReporter()")
+	defer opChain.leave()
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if opChain.failed() {
+		return r
+	}
+
+	if !r.checkOrder(opChain, "WithReporter()") {
+		return r
+	}
+
+	if reporter == nil {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected nil argument"),
+			},
+		})
+		return r
+	}
+
+	handler := &DefaultAssertionHandler{
+		Reporter:  reporter,
+		Formatter: r.config.Formatter,
+	}
+	r.chain.setHandler(handler)
+
+	return r
+}
+
+// WithAssertionHandler sets assertion handler to be used for this request.
+//
+// The new handler overwrites assertion handler that will be used
+// by Request and its children (Response, Body, etc.).
+// It will be used to format and report test Failure or Success.
+//
+// Example:
+//
+//	req := NewRequestC(config, "GET", "http://example.com/path")
+//	req.WithAssertionHandler(&DefaultAssertionHandler{
+//		Reporter:  reporter,
+//		Formatter: formatter,
+//	})
+func (r *Request) WithAssertionHandler(handler AssertionHandler) *Request {
+	opChain := r.chain.enter("WithAssertionHandler()")
+	defer opChain.leave()
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if opChain.failed() {
+		return r
+	}
+
+	if !r.checkOrder(opChain, "WithAssertionHandler()") {
+		return r
+	}
+
+	if handler == nil {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				errors.New("unexpected nil argument"),
+			},
+		})
+		return r
+	}
+
+	r.chain.setHandler(handler)
 
 	return r
 }
@@ -1801,7 +1888,7 @@ func (r *Request) WithFile(key, path string, reader ...io.Reader) *Request {
 //
 //	req := NewRequestC(config, "PUT", "http://example.com/path")
 //	fh, _ := os.Open("./john.png")
-//	b, _ := ioutil.ReadAll(fh)
+//	b, _ := io.ReadAll(fh)
 //	req.WithMultipart().
 //		WithFileBytes("avatar", "john.png", b)
 //	fh.Close()
@@ -2339,7 +2426,8 @@ func (r *Request) setupRedirects(opChain *chain) {
 			if _, ok := r.httpReq.Body.(*bodyWrapper); !ok {
 				r.httpReq.Body = newBodyWrapper(r.httpReq.Body, nil)
 			}
-			r.httpReq.GetBody = r.httpReq.Body.(*bodyWrapper).GetBody
+			wrapper := r.httpReq.Body.(*bodyWrapper)
+			r.httpReq.GetBody = wrapper.GetBody
 		} else {
 			r.httpReq.GetBody = func() (io.ReadCloser, error) {
 				return http.NoBody, nil
@@ -2407,7 +2495,7 @@ func (r *Request) setBody(
 		r.httpReq.Body = http.NoBody
 		r.httpReq.ContentLength = 0
 	} else {
-		r.httpReq.Body = ioutil.NopCloser(reader)
+		r.httpReq.Body = io.NopCloser(reader)
 		r.httpReq.ContentLength = int64(len)
 	}
 

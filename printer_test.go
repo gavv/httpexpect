@@ -3,20 +3,20 @@ package httpexpect
 import (
 	"bytes"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-type errorReader struct{}
+type failingReader struct{}
 
-func (errorReader) Read(_ []byte) (n int, err error) {
+func (failingReader) Read(_ []byte) (n int, err error) {
 	return 0, errors.New("error")
 }
 
-func (errorReader) Close() error {
+func (failingReader) Close() error {
 	return errors.New("error")
 }
 
@@ -33,7 +33,7 @@ func TestPrinter_Compact(t *testing.T) {
 	printer.Request(req2)
 	printer.Request(nil)
 
-	printer.Response(&http.Response{Body: ioutil.NopCloser(body2)}, 0)
+	printer.Response(&http.Response{Body: io.NopCloser(body2)}, 0)
 	printer.Response(&http.Response{}, 0)
 	printer.Response(nil, 0)
 }
@@ -51,7 +51,7 @@ func TestPrinter_Debug(t *testing.T) {
 	printer.Request(req2)
 	printer.Request(nil)
 
-	printer.Response(&http.Response{Body: ioutil.NopCloser(body2)}, 0)
+	printer.Response(&http.Response{Body: io.NopCloser(body2)}, 0)
 	printer.Response(&http.Response{}, 0)
 	printer.Response(nil, 0)
 }
@@ -70,13 +70,13 @@ func TestPrinter_Panics(t *testing.T) {
 
 		assert.Panics(t, func() {
 			curl.Request(&http.Request{
-				Body: errorReader{},
+				Body: failingReader{},
 			})
 		})
 
 		assert.Panics(t, func() {
 			curl.Response(&http.Response{
-				Body: errorReader{},
+				Body: failingReader{},
 			}, 0)
 		})
 	})

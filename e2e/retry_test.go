@@ -1,7 +1,7 @@
 package e2e
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"sync"
@@ -75,7 +75,7 @@ func createRetryHandler(rc *retryController) http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
-		b, _ := ioutil.ReadAll(r.Body)
+		b, _ := io.ReadAll(r.Body)
 
 		w.WriteHeader(rc.getStatus())
 		_, _ = w.Write(b)

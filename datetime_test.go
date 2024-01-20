@@ -69,6 +69,17 @@ func TestDateTime_Constructors(t *testing.T) {
 	})
 }
 
+func TestDateTime_Raw(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	data := time.Unix(0, 1234)
+
+	value := NewDateTime(reporter, data)
+
+	assert.Equal(t, data, value.Raw())
+	value.chain.assert(t, success)
+}
+
 func TestDateTime_Alias(t *testing.T) {
 	reporter := newMockReporter(t)
 

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"crypto/tls"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -78,7 +78,7 @@ func (binder Binder) RoundTrip(origReq *http.Request) (*http.Response, error) {
 	}
 
 	if recorder.Body != nil {
-		resp.Body = ioutil.NopCloser(recorder.Body)
+		resp.Body = io.NopCloser(recorder.Body)
 	}
 
 	return &resp, nil
@@ -148,7 +148,7 @@ func (binder FastBinder) RoundTrip(stdreq *http.Request) (*http.Response, error)
 	}
 
 	if stdreq.Body != nil {
-		b, err := ioutil.ReadAll(stdreq.Body)
+		b, err := io.ReadAll(stdreq.Body)
 		if err == nil {
 			ctx.Request.SetBody(b)
 		}
@@ -219,9 +219,9 @@ func fast2std(stdreq *http.Request, fastresp *fasthttp.Response) *http.Response 
 	}
 
 	if body != nil {
-		stdresp.Body = ioutil.NopCloser(bytes.NewReader(body))
+		stdresp.Body = io.NopCloser(bytes.NewReader(body))
 	} else {
-		stdresp.Body = ioutil.NopCloser(bytes.NewReader(nil))
+		stdresp.Body = io.NopCloser(bytes.NewReader(nil))
 	}
 
 	return stdresp

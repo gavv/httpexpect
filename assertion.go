@@ -192,6 +192,9 @@ type AssertionFailure struct {
 
 	// Allowed delta between actual and expected
 	Delta *AssertionValue
+
+	// Stacktrace of the failure
+	Stacktrace []StacktraceEntry
 }
 
 // AssertionValue holds expected or actual value

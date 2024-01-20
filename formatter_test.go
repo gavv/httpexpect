@@ -533,6 +533,74 @@ func TestFormatter_FailureErrors(t *testing.T) {
 	}
 }
 
+func TestFormatter_FailureContext(t *testing.T) {
+	ctx := &AssertionContext{
+		TestName:    "MyTestName",
+		RequestName: "MyRequestName",
+		Path:        []string{"MyPath"},
+		AliasedPath: []string{"MyAliasedPath"},
+	}
+
+	cases := []struct {
+		name  string
+		fmt   DefaultFormatter
+		check func(t *testing.T, data *FormatData)
+	}{
+		{
+			name: "default options",
+			fmt:  DefaultFormatter{},
+			check: func(t *testing.T, fd *FormatData) {
+				assert.Equal(t, "MyTestName", fd.TestName)
+				assert.Equal(t, "MyRequestName", fd.RequestName)
+				assert.Equal(t, []string{"MyAliasedPath"}, fd.AssertPath)
+			},
+		},
+		{
+			name: "DisableNames",
+			fmt: DefaultFormatter{
+				DisableNames: true,
+			},
+			check: func(t *testing.T, fd *FormatData) {
+				assert.Equal(t, "", fd.TestName)
+				assert.Equal(t, "", fd.RequestName)
+				assert.Equal(t, []string{"MyAliasedPath"}, fd.AssertPath)
+			},
+		},
+		{
+			name: "DisablePaths",
+			fmt: DefaultFormatter{
+				DisablePaths: true,
+			},
+			check: func(t *testing.T, fd *FormatData) {
+				assert.Equal(t, "MyTestName", fd.TestName)
+				assert.Equal(t, "MyRequestName", fd.RequestName)
+				assert.Equal(t, []string(nil), fd.AssertPath)
+			},
+		},
+		{
+			name: "DisableAliases",
+			fmt: DefaultFormatter{
+				DisableAliases: true,
+			},
+			check: func(t *testing.T, fd *FormatData) {
+				assert.Equal(t, "MyTestName", fd.TestName)
+				assert.Equal(t, "MyRequestName", fd.RequestName)
+				assert.Equal(t, []string{"MyPath"}, fd.AssertPath)
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			fl := &AssertionFailure{
+				Type: AssertEqual,
+			}
+			fd := tc.fmt.buildFormatData(ctx, fl)
+			tc.check(t, fd)
+		})
+	}
+}
+
 func TestFormatter_FloatFormat(t *testing.T) {
 	cases := []struct {
 		name     string
@@ -1026,6 +1094,51 @@ func TestFormatter_FormatDiff(t *testing.T) {
 		check(map[string]interface{}{}, map[string]interface{}{})
 		check([]interface{}{}, []interface{}{})
 	})
+}
+
+func TestFormatter_StacktraceMode(t *testing.T) {
+	cases := []struct {
+		name string
+		mode StacktraceMode
+		want bool
+	}{
+		{
+			name: "disabled",
+			mode: StacktraceModeDisabled,
+			want: false,
+		},
+		{
+			name: "standard",
+			mode: StacktraceModeStandard,
+			want: true,
+		},
+		{
+			name: "compact",
+			mode: StacktraceModeCompact,
+			want: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			f := &DefaultFormatter{
+				StacktraceMode: tc.mode,
+			}
+			fd := f.buildFormatData(&AssertionContext{}, &AssertionFailure{
+				Stacktrace: stacktrace(),
+			})
+
+			if tc.want {
+				require.GreaterOrEqual(t, len(fd.Stacktrace), 1)
+				assert.Contains(t, fd.Stacktrace[0], "TestFormatter_StacktraceMode.func")
+				assert.Contains(t, fd.Stacktrace[0], "formatter_test.go")
+				assert.Contains(t, fd.Stacktrace[0], "github.com/gavv/httpexpect")
+			} else {
+				assert.NotNil(t, fd.Stacktrace)
+				assert.Equal(t, 0, len(fd.Stacktrace))
+			}
+		})
+	}
 }
 
 func TestFormatter_ColorMode(t *testing.T) {

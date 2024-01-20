@@ -341,6 +341,210 @@ func TestExpect_Branches(t *testing.T) {
 	e5.chain.assertFlags(t, 0)
 }
 
+func TestExpect_Propagation(t *testing.T) {
+	t.Run("subsequent operations", func(t *testing.T) {
+		ctr := 0
+		reporter := newMockReporter(t)
+		reporter.reportCb = func() {
+			ctr++
+		}
+
+		// Failed operation
+		value := NewArray(reporter, []interface{}{"foo"})
+		value.IsEmpty()
+		value.chain.assertFlags(t, flagFailed)
+		assert.Equal(t, 1, ctr)
+
+		// Subsequent failed operation won't report failures
+		value.IsEmpty()
+		value.chain.assertFlags(t, flagFailed)
+		assert.Equal(t, 1, ctr)
+	})
+
+	t.Run("newly created child", func(t *testing.T) {
+		ctr := 0
+		reporter := newMockReporter(t)
+		reporter.reportCb = func() {
+			ctr++
+		}
+
+		// Parent's failed operation reports failure
+		parent := NewArray(reporter, []interface{}{"foo"})
+		parent.IsEmpty()
+		parent.chain.assertFlags(t, flagFailed)
+		assert.Equal(t, 1, ctr)
+
+		// Child created after parent's failure
+		// Child's failed operation won't report failures
+		child := parent.Value(0)
+		child.IsEqual("bar")
+		parent.chain.assertFlags(t, flagFailed|flagFailedChildren)
+		child.chain.assertFlags(t, flagFailed)
+		assert.Equal(t, 1, ctr)
+	})
+
+	t.Run("previously created child", func(t *testing.T) {
+		ctr := 0
+		reporter := newMockReporter(t)
+		reporter.reportCb = func() {
+			ctr++
+		}
+
+		// Parent and child
+		parent := NewArray(reporter, []interface{}{"foo"})
+		child := parent.Value(0)
+
+		// Parent's failed operation reports failure
+		parent.IsEmpty()
+		parent.chain.assertFlags(t, flagFailed)
+		child.chain.assertFlags(t, 0)
+		assert.Equal(t, 1, ctr)
+
+		// Child was created before parent's failure
+		// Child's failed operation will report failures
+		child.IsEqual("bar")
+		parent.chain.assertFlags(t, flagFailed|flagFailedChildren)
+		child.chain.assertFlags(t, flagFailed)
+		assert.Equal(t, 2, ctr)
+	})
+
+	t.Run("newly created child of parent", func(t *testing.T) {
+		ctr := 0
+		reporter := newMockReporter(t)
+		reporter.reportCb = func() {
+			ctr++
+		}
+
+		// Parent
+		parent := NewArray(reporter, []interface{}{"foo"})
+
+		// Child's failed operation will report failures
+		child := parent.Value(0)
+		child.IsEqual("bar")
+		parent.chain.assertFlags(t, flagFailedChildren)
+		child.chain.assertFlags(t, flagFailed)
+		assert.Equal(t, 1, ctr)
+
+		// New child created after failure in another child
+		// New child's failed operation will report failures
+		newChild := parent.Value(0)
+		newChild.IsEqual("bar")
+		parent.chain.assertFlags(t, flagFailedChildren)
+		child.chain.assertFlags(t, flagFailed)
+		newChild.chain.assertFlags(t, flagFailed)
+		assert.Equal(t, 2, ctr)
+	})
+
+	t.Run("previously created child of parent", func(t *testing.T) {
+		ctr := 0
+		reporter := newMockReporter(t)
+		reporter.reportCb = func() {
+			ctr++
+		}
+
+		// Parent
+		parent := NewArray(reporter, []interface{}{"foo"})
+
+		// Children
+		child1 := parent.Value(0)
+		child2 := parent.Value(0)
+
+		// child1's failed operation will report failures
+		child1.IsEqual("bar")
+		parent.chain.assertFlags(t, flagFailedChildren)
+		child1.chain.assertFlags(t, flagFailed)
+		child2.chain.assertFlags(t, 0)
+		assert.Equal(t, 1, ctr)
+
+		// child2's failed operation will report failures
+		child2.IsEqual("bar")
+		parent.chain.assertFlags(t, flagFailedChildren)
+		child1.chain.assertFlags(t, flagFailed)
+		child2.chain.assertFlags(t, flagFailed)
+		assert.Equal(t, 2, ctr)
+	})
+}
+
+func TestExpect_Inheritance(t *testing.T) {
+	t.Run("reporter", func(t *testing.T) {
+		rootReporter := newMockReporter(t)
+		req2Reporter := newMockReporter(t)
+
+		e := WithConfig(Config{
+			BaseURL:  "http://example.com",
+			Client:   &mockClient{},
+			Reporter: rootReporter,
+		})
+
+		req1 := e.GET("/")
+		req2 := e.GET("/")
+
+		req2.WithReporter(req2Reporter)
+
+		// So far OK
+		req1.chain.assert(t, success)
+		req2.chain.assert(t, success)
+
+		resp1 := req1.Expect()
+		resp2 := req2.Expect()
+
+		// So far OK
+		resp1.chain.assert(t, success)
+		resp2.chain.assert(t, success)
+
+		// Failure on resp1 should be reported to rootReporter,
+		// which was inherited from config
+		resp1.JSON().Object().Value("foo").chain.assert(t, failure)
+		assert.Equal(t, 1, rootReporter.reportCalled)
+		assert.Equal(t, 0, req2Reporter.reportCalled)
+
+		// Failure on resp2 should be reported to req2Reporter,
+		// which was inherited from req2
+		resp2.JSON().Object().Value("foo").chain.assert(t, failure)
+		assert.Equal(t, 1, rootReporter.reportCalled)
+		assert.Equal(t, 1, req2Reporter.reportCalled)
+	})
+
+	t.Run("assertion handler", func(t *testing.T) {
+		rootHandler := &mockAssertionHandler{}
+		req2Handler := &mockAssertionHandler{}
+
+		e := WithConfig(Config{
+			BaseURL:          "http://example.com",
+			Client:           &mockClient{},
+			AssertionHandler: rootHandler,
+		})
+
+		req1 := e.GET("/")
+		req2 := e.GET("/")
+
+		req2.WithAssertionHandler(req2Handler)
+
+		// So far OK
+		req1.chain.assert(t, success)
+		req2.chain.assert(t, success)
+
+		resp1 := req1.Expect()
+		resp2 := req2.Expect()
+
+		// So far OK
+		resp1.chain.assert(t, success)
+		resp2.chain.assert(t, success)
+
+		// Failure on resp1 should be reported to rootReporter,
+		// which was inherited from config
+		resp1.JSON().Object().Value("foo").chain.assert(t, failure)
+		assert.Equal(t, 1, rootHandler.failureCalled)
+		assert.Equal(t, 0, req2Handler.failureCalled)
+
+		// Failure on resp2 should be reported to req2Reporter,
+		// which was inherited from req2
+		resp2.JSON().Object().Value("foo").chain.assert(t, failure)
+		assert.Equal(t, 1, rootHandler.failureCalled)
+		assert.Equal(t, 1, req2Handler.failureCalled)
+	})
+}
+
 func TestExpect_RequestFactory(t *testing.T) {
 	t.Run("default factory", func(t *testing.T) {
 		e := WithConfig(Config{

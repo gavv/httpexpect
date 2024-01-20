@@ -48,7 +48,7 @@ Workflow:
 * Failures are reported using [`testify`](https://github.com/stretchr/testify/) (`assert` or `require` package) or standard `testing` package.
 * JSON values are pretty-printed using `encoding/json`, Go values are pretty-printed using [`litter`](https://github.com/sanity-io/litter).
 * Dumping requests and responses in various formats, using [`httputil`](https://golang.org/pkg/net/http/httputil/), [`http2curl`](https://github.com/moul/http2curl), or simple compact logger.
-* Color support using [`fatih/color`](github.com/fatih/color).
+* Color support using [`fatih/color`](https://github.com/fatih/color).
 
 ##### Tuning
 
@@ -359,12 +359,12 @@ m := e.GET("/users/john").
 	Expect().
 	Header("Location").Match("http://(?P<host>.+)/users/(?P<user>.+)")
 
-m.Index(0).IsEqual("http://example.com/users/john")
-m.Index(1).IsEqual("example.com")
-m.Index(2).IsEqual("john")
+m.Submatch(0).IsEqual("http://example.com/users/john")
+m.Submatch(1).IsEqual("example.com")
+m.Submatch(2).IsEqual("john")
 
-m.Name("host").IsEqual("example.com")
-m.Name("user").IsEqual("john")
+m.NamedSubmatch("host").IsEqual("example.com")
+m.NamedSubmatch("user").IsEqual("john")
 ```
 
 ##### Redirection support
