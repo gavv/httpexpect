@@ -1,6 +1,7 @@
 package httpexpect
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math"
@@ -12,7 +13,7 @@ import (
 type Number struct {
 	noCopy noCopy
 	chain  *chain
-	value  float64
+	value  *big.Float
 }
 
 // NewNumber returns a new Number instance.
@@ -37,8 +38,9 @@ func NewNumberC(config Config, value float64) *Number {
 	return newNumber(newChainWithConfig("Number()", config.withDefaults()), value)
 }
 
-func newNumber(parent *chain, val float64) *Number {
-	return &Number{chain: parent.clone(), value: val}
+func newNumber(parent *chain, val interface{}) *Number {
+	number, _ := canonNumber(parent, val)
+	return &Number{chain: parent.clone(), value: number}
 }
 
 // Raw returns underlying value attached to Number.
@@ -48,8 +50,11 @@ func newNumber(parent *chain, val float64) *Number {
 //
 //	number := NewNumber(t, 123.4)
 //	assert.Equal(t, 123.4, number.Raw())
+//
+// Deprecated: Use AsFloat() instead.
 func (n *Number) Raw() float64 {
-	return n.value
+	value, _ := n.value.Float64()
+	return value
 }
 
 // Decode unmarshals the underlying value attached to the Number to a target variable.
@@ -74,7 +79,7 @@ func (n *Number) Decode(target interface{}) *Number {
 		return n
 	}
 
-	canonDecode(opChain, n.value, target)
+	canonNumberDecode(opChain, *n.value, target)
 	return n
 }
 
@@ -92,7 +97,7 @@ func (n *Number) Path(path string) *Value {
 	opChain := n.chain.enter("Path(%q)", path)
 	defer opChain.leave()
 
-	return jsonPath(opChain, n.value, path)
+	return jsonPath(opChain, json.Number(n.value.String()), path)
 }
 
 // Schema is similar to Value.Schema.
@@ -100,7 +105,7 @@ func (n *Number) Schema(schema interface{}) *Number {
 	opChain := n.chain.enter("Schema()")
 	defer opChain.leave()
 
-	jsonSchema(opChain, n.value, schema)
+	jsonSchema(opChain, json.Number(n.value.String()), schema)
 	return n
 }
 
@@ -124,10 +129,18 @@ func (n *Number) IsEqual(value interface{}) *Number {
 
 	num, ok := canonNumber(opChain, value)
 	if !ok {
+		opChain.fail(AssertionFailure{
+			Type:     AssertEqual,
+			Actual:   &AssertionValue{n.value},
+			Expected: &AssertionValue{num},
+			Errors: []error{
+				errors.New("expected: numbers are equal"),
+			},
+		})
 		return n
 	}
 
-	if !(n.value == num) {
+	if n.value == nil || n.value.Cmp(num) != 0 {
 		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{n.value},
@@ -159,12 +172,19 @@ func (n *Number) NotEqual(value interface{}) *Number {
 		return n
 	}
 
-	num, ok := canonNumber(opChain, value)
-	if !ok {
+	// n is nil (NaN) && value is NaN
+	if n.value == nil {
 		return n
 	}
 
-	if n.value == num {
+	// n is not nil && value is NaN
+	if n.value != nil && value != value {
+		return n
+	}
+
+	num, _ := canonNumber(opChain, value)
+
+	if n.value.Cmp(num) == 0 {
 		opChain.fail(AssertionFailure{
 			Type:     AssertNotEqual,
 			Actual:   &AssertionValue{n.value},
@@ -189,7 +209,7 @@ func (n *Number) Equal(value interface{}) *Number {
 //
 //	number := NewNumber(t, 123.0)
 //	number.InDelta(123.2, 0.3)
-func (n *Number) InDelta(value, delta float64) *Number {
+func (n *Number) InDelta(value, delta interface{}) *Number {
 	opChain := n.chain.enter("InDelta()")
 	defer opChain.leave()
 
@@ -197,17 +217,10 @@ func (n *Number) InDelta(value, delta float64) *Number {
 		return n
 	}
 
-	if math.IsNaN(delta) {
-		opChain.fail(AssertionFailure{
-			Type: AssertUsage,
-			Errors: []error{
-				errors.New("unexpected NaN delta argument"),
-			},
-		})
-		return n
-	}
+	num, ok := canonNumber(opChain, value)
+	del, okDel := canonNumber(opChain, delta)
 
-	if math.IsNaN(n.value) || math.IsNaN(value) {
+	if !ok || !okDel || delta != delta || value != value || n.value == nil {
 		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{n.value},
@@ -220,9 +233,9 @@ func (n *Number) InDelta(value, delta float64) *Number {
 		return n
 	}
 
-	diff := n.value - value
+	diff := big.NewFloat(0).Sub(n.value, num)
 
-	if diff < -delta || diff > delta {
+	if diff.Cmp(del) == 1 || diff.Cmp(del.Neg(del)) == -1 {
 		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{n.value},
@@ -244,7 +257,7 @@ func (n *Number) InDelta(value, delta float64) *Number {
 //
 //	number := NewNumber(t, 123.0)
 //	number.NotInDelta(123.2, 0.1)
-func (n *Number) NotInDelta(value, delta float64) *Number {
+func (n *Number) NotInDelta(value, delta interface{}) *Number {
 	opChain := n.chain.enter("NotInDelta()")
 	defer opChain.leave()
 
@@ -252,17 +265,10 @@ func (n *Number) NotInDelta(value, delta float64) *Number {
 		return n
 	}
 
-	if math.IsNaN(delta) {
-		opChain.fail(AssertionFailure{
-			Type: AssertUsage,
-			Errors: []error{
-				errors.New("unexpected NaN delta argument"),
-			},
-		})
-		return n
-	}
+	num, ok := canonNumber(opChain, value)
+	del, okDel := canonNumber(opChain, delta)
 
-	if math.IsNaN(n.value) || math.IsNaN(value) {
+	if !ok || !okDel || delta != delta || value != value || n.value == nil {
 		opChain.fail(AssertionFailure{
 			Type:     AssertNotEqual,
 			Actual:   &AssertionValue{n.value},
@@ -275,9 +281,9 @@ func (n *Number) NotInDelta(value, delta float64) *Number {
 		return n
 	}
 
-	diff := n.value - value
+	diff := big.NewFloat(0).Sub(n.value, num)
 
-	if !(diff < -delta || diff > delta) {
+	if diff.Cmp(del) != 1 && diff.Cmp(del.Neg(del)) != -1 {
 		opChain.fail(AssertionFailure{
 			Type:     AssertNotEqual,
 			Actual:   &AssertionValue{n.value},
@@ -289,7 +295,6 @@ func (n *Number) NotInDelta(value, delta float64) *Number {
 		})
 		return n
 	}
-
 	return n
 }
 
@@ -562,11 +567,11 @@ func (n *Number) InRange(min, max interface{}) *Number {
 		return n
 	}
 
-	if !(n.value >= a && n.value <= b) {
+	if n.value.Cmp(a) < 0 || n.value.Cmp(b) > 0 {
 		opChain.fail(AssertionFailure{
 			Type:     AssertInRange,
 			Actual:   &AssertionValue{n.value},
-			Expected: &AssertionValue{AssertionRange{a, b}},
+			Expected: &AssertionValue{AssertionRange{min, max}},
 			Errors: []error{
 				errors.New("expected: number is within given range"),
 			},
@@ -604,11 +609,11 @@ func (n *Number) NotInRange(min, max interface{}) *Number {
 		return n
 	}
 
-	if n.value >= a && n.value <= b {
+	if n.value.Cmp(a) >= 0 && n.value.Cmp(b) <= 0 {
 		opChain.fail(AssertionFailure{
 			Type:     AssertNotInRange,
 			Actual:   &AssertionValue{n.value},
-			Expected: &AssertionValue{AssertionRange{a, b}},
+			Expected: &AssertionValue{AssertionRange{min, max}},
 			Errors: []error{
 				errors.New("expected: number is not within given range"),
 			},
@@ -653,7 +658,7 @@ func (n *Number) InList(values ...interface{}) *Number {
 			return n
 		}
 
-		if n.value == num {
+		if n.value.Cmp(num) == 0 {
 			isListed = true
 			// continue loop to check that all values are correct
 		}
@@ -707,7 +712,7 @@ func (n *Number) NotInList(values ...interface{}) *Number {
 			return n
 		}
 
-		if n.value == num {
+		if n.value.Cmp(num) == 0 {
 			opChain.fail(AssertionFailure{
 				Type:     AssertNotBelongs,
 				Actual:   &AssertionValue{n.value},
@@ -746,7 +751,7 @@ func (n *Number) Gt(value interface{}) *Number {
 		return n
 	}
 
-	if !(n.value > num) {
+	if n.value.Cmp(num) <= 0 {
 		opChain.fail(AssertionFailure{
 			Type:     AssertGt,
 			Actual:   &AssertionValue{n.value},
@@ -783,7 +788,7 @@ func (n *Number) Ge(value interface{}) *Number {
 		return n
 	}
 
-	if !(n.value >= num) {
+	if n.value.Cmp(num) < 0 {
 		opChain.fail(AssertionFailure{
 			Type:     AssertGe,
 			Actual:   &AssertionValue{n.value},
@@ -820,7 +825,7 @@ func (n *Number) Lt(value interface{}) *Number {
 		return n
 	}
 
-	if !(n.value < num) {
+	if n.value.Cmp(num) >= 0 {
 		opChain.fail(AssertionFailure{
 			Type:     AssertLt,
 			Actual:   &AssertionValue{n.value},
@@ -857,7 +862,7 @@ func (n *Number) Le(value interface{}) *Number {
 		return n
 	}
 
-	if !(n.value <= num) {
+	if n.value.Cmp(num) > 0 {
 		opChain.fail(AssertionFailure{
 			Type:     AssertLe,
 			Actual:   &AssertionValue{n.value},
@@ -919,18 +924,18 @@ func (n *Number) IsInt(bits ...int) *Number {
 		return n
 	}
 
-	if math.IsNaN(n.value) {
+	if n.value == nil {
 		opChain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{n.value},
 			Errors: []error{
-				errors.New("expected: number is signed integer"),
+				errors.New("expected: number is not NaN"),
 			},
 		})
 		return n
 	}
 
-	inum, acc := big.NewFloat(n.value).Int(nil)
+	inum, acc := n.value.Int(nil)
 	if !(acc == big.Exact) {
 		opChain.fail(AssertionFailure{
 			Type:   AssertValid,
@@ -998,6 +1003,10 @@ func (n *Number) NotInt(bits ...int) *Number {
 		return n
 	}
 
+	if n.value == nil {
+		return n
+	}
+
 	if len(bits) > 1 {
 		opChain.fail(AssertionFailure{
 			Type: AssertUsage,
@@ -1018,43 +1027,41 @@ func (n *Number) NotInt(bits ...int) *Number {
 		return n
 	}
 
-	if !math.IsNaN(n.value) {
-		inum, acc := big.NewFloat(n.value).Int(nil)
-		if acc == big.Exact {
-			if len(bits) == 0 {
-				opChain.fail(AssertionFailure{
-					Type:   AssertValid,
-					Actual: &AssertionValue{n.value},
-					Errors: []error{
-						errors.New("expected: number is not signed integer"),
-					},
-				})
-				return n
-			}
+	inum, acc := n.value.Int(nil)
+	if acc == big.Exact {
+		if len(bits) == 0 {
+			opChain.fail(AssertionFailure{
+				Type:   AssertValid,
+				Actual: &AssertionValue{n.value},
+				Errors: []error{
+					errors.New("expected: number is not signed integer"),
+				},
+			})
+			return n
+		}
 
-			bitSize := bits[0]
-			imax := new(big.Int)
-			imax.Lsh(big.NewInt(1), uint(bitSize-1))
-			imax.Sub(imax, big.NewInt(1))
-			imin := new(big.Int)
-			imin.Neg(imax)
-			imin.Sub(imin, big.NewInt(1))
-			if !(inum.Cmp(imin) < 0 || inum.Cmp(imax) > 0) {
-				opChain.fail(AssertionFailure{
-					Type:   AssertNotInRange,
-					Actual: &AssertionValue{n.value},
-					Expected: &AssertionValue{AssertionRange{
-						Min: intBoundary{imin, -1, bitSize - 1},
-						Max: intBoundary{imax, +1, bitSize - 1},
-					}},
-					Errors: []error{
-						fmt.Errorf(
-							"expected: number doesn't fit %d-bit signed integer",
-							bitSize),
-					},
-				})
-				return n
-			}
+		bitSize := bits[0]
+		imax := new(big.Int)
+		imax.Lsh(big.NewInt(1), uint(bitSize-1))
+		imax.Sub(imax, big.NewInt(1))
+		imin := new(big.Int)
+		imin.Neg(imax)
+		imin.Sub(imin, big.NewInt(1))
+		if !(inum.Cmp(imin) < 0 || inum.Cmp(imax) > 0) {
+			opChain.fail(AssertionFailure{
+				Type:   AssertNotInRange,
+				Actual: &AssertionValue{n.value},
+				Expected: &AssertionValue{AssertionRange{
+					Min: intBoundary{imin, -1, bitSize - 1},
+					Max: intBoundary{imax, +1, bitSize - 1},
+				}},
+				Errors: []error{
+					fmt.Errorf(
+						"expected: number doesn't fit %d-bit signed integer",
+						bitSize),
+				},
+			})
+			return n
 		}
 	}
 
@@ -1109,18 +1116,18 @@ func (n *Number) IsUint(bits ...int) *Number {
 		return n
 	}
 
-	if math.IsNaN(n.value) {
+	if n.value == nil {
 		opChain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{n.value},
 			Errors: []error{
-				errors.New("expected: number is unsigned integer"),
+				errors.New("expected: number is not NaN"),
 			},
 		})
 		return n
 	}
 
-	inum, acc := big.NewFloat(n.value).Int(nil)
+	inum, acc := n.value.Int(nil)
 	if !(acc == big.Exact) {
 		opChain.fail(AssertionFailure{
 			Type:   AssertValid,
@@ -1196,6 +1203,10 @@ func (n *Number) NotUint(bits ...int) *Number {
 		return n
 	}
 
+	if n.value == nil {
+		return n
+	}
+
 	if len(bits) > 1 {
 		opChain.fail(AssertionFailure{
 			Type: AssertUsage,
@@ -1216,42 +1227,40 @@ func (n *Number) NotUint(bits ...int) *Number {
 		return n
 	}
 
-	if !math.IsNaN(n.value) {
-		inum, acc := big.NewFloat(n.value).Int(nil)
-		if acc == big.Exact {
-			imin := big.NewInt(0)
-			if inum.Cmp(imin) >= 0 {
-				if len(bits) == 0 {
-					opChain.fail(AssertionFailure{
-						Type:   AssertValid,
-						Actual: &AssertionValue{n.value},
-						Errors: []error{
-							errors.New("expected: number is not unsigned integer"),
-						},
-					})
-					return n
-				}
+	inum, acc := n.value.Int(nil)
+	if acc == big.Exact {
+		imin := big.NewInt(0)
+		if inum.Cmp(imin) >= 0 {
+			if len(bits) == 0 {
+				opChain.fail(AssertionFailure{
+					Type:   AssertValid,
+					Actual: &AssertionValue{n.value},
+					Errors: []error{
+						errors.New("expected: number is not unsigned integer"),
+					},
+				})
+				return n
+			}
 
-				bitSize := bits[0]
-				imax := new(big.Int)
-				imax.Lsh(big.NewInt(1), uint(bitSize))
-				imax.Sub(imax, big.NewInt(1))
-				if inum.Cmp(imax) <= 0 {
-					opChain.fail(AssertionFailure{
-						Type:   AssertNotInRange,
-						Actual: &AssertionValue{n.value},
-						Expected: &AssertionValue{AssertionRange{
-							Min: intBoundary{imin, 0, 0},
-							Max: intBoundary{imax, +1, bitSize},
-						}},
-						Errors: []error{
-							fmt.Errorf(
-								"expected: number doesn't fit %d-bit unsigned integer",
-								bitSize),
-						},
-					})
-					return n
-				}
+			bitSize := bits[0]
+			imax := new(big.Int)
+			imax.Lsh(big.NewInt(1), uint(bitSize))
+			imax.Sub(imax, big.NewInt(1))
+			if inum.Cmp(imax) <= 0 {
+				opChain.fail(AssertionFailure{
+					Type:   AssertNotInRange,
+					Actual: &AssertionValue{n.value},
+					Expected: &AssertionValue{AssertionRange{
+						Min: intBoundary{imin, 0, 0},
+						Max: intBoundary{imax, +1, bitSize},
+					}},
+					Errors: []error{
+						fmt.Errorf(
+							"expected: number doesn't fit %d-bit unsigned integer",
+							bitSize),
+					},
+				})
+				return n
 			}
 		}
 	}
@@ -1279,7 +1288,7 @@ func (n *Number) IsFinite() *Number {
 		return n
 	}
 
-	if math.IsInf(n.value, 0) || math.IsNaN(n.value) {
+	if n.value == nil || n.value.IsInf() {
 		opChain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{n.value},
@@ -1313,7 +1322,11 @@ func (n *Number) NotFinite() *Number {
 		return n
 	}
 
-	if !(math.IsInf(n.value, 0) || math.IsNaN(n.value)) {
+	if n.value == nil {
+		return n
+	}
+
+	if !n.value.IsInf() {
 		opChain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{n.value},
@@ -1340,6 +1353,14 @@ func (b intBoundary) String() string {
 		return fmt.Sprintf("-2^%d   (%s)", b.bits, b.val)
 	}
 	return fmt.Sprintf("%s", b.val)
+}
+
+func hasPrecisionLoss(a json.Number) bool {
+	f, err := a.Float64()
+	if err != nil {
+		return true
+	}
+	return a.String() != fmt.Sprintf("%g", f)
 }
 
 type relativeDelta float64

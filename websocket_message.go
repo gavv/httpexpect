@@ -1,7 +1,6 @@
 package httpexpect
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -544,19 +543,7 @@ func (wm *WebsocketMessage) JSON() *Value {
 
 	var value interface{}
 
-	if err := json.Unmarshal(wm.content, &value); err != nil {
-		opChain.fail(AssertionFailure{
-			Type: AssertValid,
-			Actual: &AssertionValue{
-				string(wm.content),
-			},
-			Errors: []error{
-				errors.New("failed to decode json"),
-				err,
-			},
-		})
-		return newValue(opChain, nil)
-	}
+	jsonDecode(opChain, wm.content, &value)
 
 	return newValue(opChain, value)
 }

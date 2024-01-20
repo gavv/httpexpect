@@ -906,19 +906,7 @@ func (r *Response) getJSON(
 
 	var value interface{}
 
-	if err := json.Unmarshal(content, &value); err != nil {
-		opChain.fail(AssertionFailure{
-			Type: AssertValid,
-			Actual: &AssertionValue{
-				string(content),
-			},
-			Errors: []error{
-				errors.New("failed to decode json"),
-				err,
-			},
-		})
-		return nil
-	}
+	jsonDecode(opChain, content, &value)
 
 	return value
 }
@@ -966,9 +954,7 @@ func (r *Response) JSONP(callback string, options ...ContentOpts) *Value {
 	return newValue(opChain, value)
 }
 
-var (
-	jsonp = regexp.MustCompile(`^\s*([^\s(]+)\s*\((.*)\)\s*;*\s*$`)
-)
+var jsonp = regexp.MustCompile(`^\s*([^\s(]+)\s*\((.*)\)\s*;*\s*$`)
 
 func (r *Response) getJSONP(
 	opChain *chain, method string, callback string, options ...ContentOpts,
@@ -998,20 +984,28 @@ func (r *Response) getJSONP(
 		return nil
 	}
 
+	reader := bytes.NewReader(m[2])
+	dec := json.NewDecoder(reader)
+	dec.UseNumber()
+
 	var value interface{}
 
-	if err := json.Unmarshal(m[2], &value); err != nil {
-		opChain.fail(AssertionFailure{
-			Type: AssertValid,
-			Actual: &AssertionValue{
-				string(content),
-			},
-			Errors: []error{
-				errors.New("failed to decode json"),
-				err,
-			},
-		})
-		return nil
+	for {
+		if err := dec.Decode(&value); err == io.EOF && value != nil {
+			break
+		} else if err != nil {
+			opChain.fail(AssertionFailure{
+				Type: AssertValid,
+				Actual: &AssertionValue{
+					string(r.content),
+				},
+				Errors: []error{
+					errors.New("failed to decode json"),
+					err,
+				},
+			})
+			return nil
+		}
 	}
 
 	return value

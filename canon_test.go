@@ -1,6 +1,7 @@
 package httpexpect
 
 import (
+	"math/big"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -18,19 +19,19 @@ func TestCanon_Number(t *testing.T) {
 		{
 			name:   "input is int",
 			in:     123,
-			out:    123.0,
+			out:    big.NewFloat(123.0),
 			result: success,
 		},
 		{
 			name:   "input is float",
 			in:     123.0,
-			out:    123.0,
+			out:    big.NewFloat(123.0),
 			result: success,
 		},
 		{
 			name:   "input is myInt",
 			in:     myInt(123),
-			out:    123.0,
+			out:    big.NewFloat(123.0),
 			result: success,
 		},
 		{

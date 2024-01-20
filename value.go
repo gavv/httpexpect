@@ -1,7 +1,9 @@
 package httpexpect
 
 import (
+	"encoding/json"
 	"errors"
+	"math/big"
 	"reflect"
 )
 
@@ -72,7 +74,16 @@ func newValue(parent *chain, val interface{}) *Value {
 //	value := NewValue(t, "foo")
 //	assert.Equal(t, "foo", number.Raw().(string))
 func (v *Value) Raw() interface{} {
-	return v.value
+	switch v := v.value.(type) {
+	case big.Float:
+		f := json.Number(v.String())
+		if hasPrecisionLoss(f) {
+			return v
+		}
+		return f
+	default:
+		return v
+	}
 }
 
 // Decode unmarshals the underlying value attached to the Object to a target variable
