@@ -3,6 +3,7 @@ package httpexpect
 import (
 	"encoding/json"
 	"os"
+	"reflect"
 	"runtime"
 	"testing"
 
@@ -813,38 +814,70 @@ func TestValue_PathTypes(t *testing.T) {
 			value := NewValue(reporter, data)
 
 			assert.Equal(t, data, value.Path("$").Raw())
+			assert.Equal(t, data, value.Query("$").Raw())
 			assert.Equal(t, data["users"], value.Path("$.users").Raw())
+			assert.Equal(t, data["users"], value.Query("$.users").Raw())
 			assert.Equal(t, user0, value.Path("$.users[0]").Raw())
+			assert.Equal(t, user0, value.Query("$.users[0]").Raw())
 			assert.Equal(t, "john", value.Path("$.users[0].name").Raw())
-			assert.Equal(t, []interface{}{"john", "bob"}, value.Path("$.users[*].name").Raw())
-			assert.Equal(t, []interface{}{"john", "bob"}, value.Path("$..name").Raw())
+			assert.Equal(t, "john", value.Query("$.users[0].name").Raw())
+			assert.Equal(t, []any{"john", "bob"}, value.Path("$.users[*].name").Raw())
+			assert.Equal(t, []any{"john", "bob"}, value.Query("$.users[*].name").Raw())
+			assert.Equal(t, []any{"john", "bob"}, value.Path("$..name").Raw())
+			assert.Equal(t, []any{"john", "bob"}, value.Query("$..name").Raw())
 			value.chain.assert(t, success)
 
 			names := value.Path("$..name").Array().Iter()
 			names[0].String().IsEqual("john").chain.assert(t, success)
 			names[1].String().IsEqual("bob").chain.assert(t, success)
 			value.chain.assert(t, success)
+
+			names = value.Query("$..name").Array().Iter()
+			names[0].String().IsEqual("john").chain.assert(t, success)
+			names[1].String().IsEqual("bob").chain.assert(t, success)
+			value.chain.assert(t, success)
 		})
 
-		t.Run("bad key", func(t *testing.T) {
+		t.Run("unknown key", func(t *testing.T) {
 			reporter := newMockReporter(t)
 
 			value := NewValue(reporter, data)
 
 			bad := value.Path("$.bad")
-			assert.True(t, bad != nil)
-			assert.True(t, bad.Raw() == nil)
+			assert.NotNil(t, bad)
+			assert.Nil(t, bad.Raw())
 			value.chain.assert(t, failure)
 		})
 
-		t.Run("invalid query", func(t *testing.T) {
+		t.Run("unknown key is ignored in ojg", func(t *testing.T) {
+			reporter := newMockReporter(t)
+
+			value := NewValue(reporter, data)
+
+			bad := value.Query("$.bad")
+			assert.Equal(t, []interface{}{}, bad.Raw())
+			value.chain.assert(t, success)
+		})
+
+		t.Run("invalid query fails in yalp", func(t *testing.T) {
 			reporter := newMockReporter(t)
 
 			value := NewValue(reporter, data)
 
 			bad := value.Path("!")
-			assert.True(t, bad != nil)
-			assert.True(t, bad.Raw() == nil)
+			assert.NotNil(t, bad)
+			assert.Nil(t, bad.Raw())
+			value.chain.assert(t, failure)
+		})
+
+		t.Run("invalid query fails in ojg", func(t *testing.T) {
+			reporter := newMockReporter(t)
+
+			value := NewValue(reporter, data)
+
+			bad := value.Query("!")
+			assert.NotNil(t, bad)
+			assert.Nil(t, bad.Raw())
 			value.chain.assert(t, failure)
 		})
 	})
@@ -863,10 +896,15 @@ func TestValue_PathTypes(t *testing.T) {
 		value := NewValue(reporter, data)
 
 		assert.Equal(t, data, value.Path("$").Raw())
+		assert.Equal(t, data, value.Query("$").Raw())
 		assert.Equal(t, user0, value.Path("$[0]").Raw())
+		assert.Equal(t, user0, value.Query("$[0]").Raw())
 		assert.Equal(t, "john", value.Path("$[0].name").Raw())
+		assert.Equal(t, "john", value.Query("$[0].name").Raw())
 		assert.Equal(t, []interface{}{"john", "bob"}, value.Path("$[*].name").Raw())
+		assert.Equal(t, []interface{}{"john", "bob"}, value.Query("$[*].name").Raw())
 		assert.Equal(t, []interface{}{"john", "bob"}, value.Path("$..name").Raw())
+		assert.Equal(t, []interface{}{"john", "bob"}, value.Query("$..name").Raw())
 		value.chain.assert(t, success)
 	})
 
@@ -878,6 +916,7 @@ func TestValue_PathTypes(t *testing.T) {
 		value := NewValue(reporter, data)
 
 		assert.Equal(t, data, value.Path("$").Raw())
+		assert.Equal(t, data, value.Query("$").Raw())
 		value.chain.assert(t, success)
 	})
 
@@ -889,6 +928,7 @@ func TestValue_PathTypes(t *testing.T) {
 		value := NewValue(reporter, data)
 
 		assert.Equal(t, float64(data), value.Path("$").Raw())
+		assert.Equal(t, float64(data), value.Query("$").Raw())
 		value.chain.assert(t, success)
 	})
 
@@ -900,6 +940,7 @@ func TestValue_PathTypes(t *testing.T) {
 		value := NewValue(reporter, data)
 
 		assert.Equal(t, data, value.Path("$").Raw())
+		assert.Equal(t, data, value.Query("$").Raw())
 		value.chain.assert(t, success)
 	})
 
@@ -909,10 +950,11 @@ func TestValue_PathTypes(t *testing.T) {
 		value := NewValue(reporter, nil)
 
 		assert.Equal(t, nil, value.Path("$").Raw())
+		assert.Equal(t, nil, value.Query("$").Raw())
 		value.chain.assert(t, success)
 	})
 
-	t.Run("error", func(t *testing.T) {
+	t.Run("error in yalp", func(t *testing.T) {
 		data := "foo"
 
 		reporter := newMockReporter(t)
@@ -921,10 +963,22 @@ func TestValue_PathTypes(t *testing.T) {
 
 		for _, key := range []string{"$.bad", "!"} {
 			bad := value.Path(key)
-			assert.True(t, bad != nil)
-			assert.True(t, bad.Raw() == nil)
+			assert.NotNil(t, bad)
+			assert.Nil(t, bad.Raw())
 			value.chain.assert(t, failure)
 		}
+	})
+
+	t.Run("error in ojg", func(t *testing.T) {
+		data := "foo"
+		reporter := newMockReporter(t)
+		value := NewValue(reporter, data)
+
+		bad := value.Query("!")
+
+		assert.NotNil(t, bad)
+		assert.Nil(t, bad.Raw())
+		value.chain.assert(t, failure)
 	})
 
 	t.Run("int float", func(t *testing.T) {
@@ -943,6 +997,14 @@ func TestValue_PathTypes(t *testing.T) {
 		assert.Equal(t, 123.0, a.Raw())
 
 		b := value.Path(`$["B"]`)
+		b.chain.assert(t, success)
+		assert.Equal(t, 123.0, b.Raw())
+
+		a = value.Query(`$["A"]`)
+		a.chain.assert(t, success)
+		assert.Equal(t, 123.0, a.Raw())
+
+		b = value.Query(`$["B"]`)
 		b.chain.assert(t, success)
 		assert.Equal(t, 123.0, b.Raw())
 	})
@@ -1001,113 +1063,170 @@ func TestValue_PathExpressions(t *testing.T) {
 		},
 	}
 
-	runTests := func(tests map[string]interface{}) {
-		reporter := newMockReporter(t)
+	type expect struct {
+		value     any
+		yalpError bool
+		ojgError  bool
+		// only populated if it differs from yalp
+		ojgValue any
+	}
 
-		value := NewValue(reporter, data)
-		value.chain.assert(t, success)
+	evaluateFn := func(t *testing.T, reporter *mockReporter,
+		pathFunction func(string) *Value, path string, expected any, expectError bool) {
+		actual := pathFunction(path)
+		if expectError {
+			actual.chain.assert(t, failure)
+			return
+		}
+		actual.chain.assert(t, success)
 
-		for path, expected := range tests {
-			actual := value.Path(path)
-			actual.chain.assert(t, success)
-
-			assert.Equal(t, expected, actual.Raw())
+		calledFn := runtime.FuncForPC(reflect.ValueOf(pathFunction).Pointer()).Name()
+		// as the order is arbitrary in many cases, if actual.Raw is a slice use ElementsMatch
+		if reflect.TypeOf(actual.Raw()).Kind() == reflect.Slice &&
+			reflect.TypeOf(expected).Kind() == reflect.Slice {
+			assert.ElementsMatchf(t, expected, actual.Raw(), "%v: expected %v for %s",
+				calledFn, expected, path)
+		} else {
+			assert.Equalf(t, expected, actual.Raw(), "%v: Expected %v for %s",
+				calledFn, expected, path)
 		}
 	}
 
+	runTests := func(tests map[string]expect) {
+		reporter := newMockReporter(t)
+
+		for path, expected := range tests {
+			value := NewValue(reporter, data)
+			value.chain.assert(t, success)
+			evaluateFn(t, reporter, value.Path, path, expected.value, expected.yalpError)
+
+			var expectedOjg any
+			if expected.ojgValue != nil {
+				expectedOjg = expected.ojgValue
+			} else {
+				expectedOjg = expected.value
+			}
+			value = NewValue(reporter, data)
+			value.chain.assert(t, success)
+			evaluateFn(t, reporter, value.Query, path, expectedOjg, expected.ojgError)
+		}
+	}
+
+	t.Run("filters", func(t *testing.T) {
+		runTests(map[string]expect{
+			"$.F.V[?(@.CC == 'hello')].CC": {value: "hello", yalpError: true},
+			"$..[?(@ <= $.D.C)]":           {value: []any{3.1415, 3.0, 3.14}, yalpError: true},
+			"$.A[?(@ > 4)]":                {value: 23.3, yalpError: true},
+			"$.F..[?(@ ~= /string.?b/)]": {
+				value:     []any{"string4b", "string5b", "string6b"},
+				yalpError: true},
+		})
+	})
+
+	t.Run("ojg result transormations", func(t *testing.T) {
+		runTests(map[string]expect{
+			"$.E.A":    {value: []any{"string3"}},
+			"$.E.A[*]": {value: []any{"string3"}},
+		})
+	})
+
 	t.Run("pick", func(t *testing.T) {
-		runTests(map[string]interface{}{
-			"$":         data,
-			"$.A[0]":    "string",
-			`$["A"][0]`: "string",
-			"$.A":       []interface{}{"string", 23.3, 3.0, true, false, nil},
-			"$.A[*]":    []interface{}{"string", 23.3, 3.0, true, false, nil},
-			"$.A.*":     []interface{}{"string", 23.3, 3.0, true, false, nil},
-			"$.A.*.a":   []interface{}{},
+		runTests(map[string]expect{
+			"$":         {value: data},
+			"$.A[0]":    {value: "string"},
+			`$["A"][0]`: {value: "string"},
+			"$.A":       {value: []any{"string", 23.3, 3.0, true, false, nil}},
+			"$.A[*]":    {value: []any{"string", 23.3, 3.0, true, false, nil}},
+			"$.A.*":     {value: []any{"string", 23.3, 3.0, true, false, nil}},
+			"$.A.*.a":   {value: []any{}},
 		})
 	})
 
 	t.Run("slice", func(t *testing.T) {
-		runTests(map[string]interface{}{
-			"$.A[1,4,2]":      []interface{}{23.3, false, 3.0},
-			`$["B","C"]`:      []interface{}{"value", 3.14},
-			`$["C","B"]`:      []interface{}{3.14, "value"},
-			"$.A[1:4]":        []interface{}{23.3, 3.0, true},
-			"$.A[::2]":        []interface{}{"string", 3.0, false},
-			"$.A[-2:]":        []interface{}{false, nil},
-			"$.A[:-1]":        []interface{}{"string", 23.3, 3.0, true, false},
-			"$.A[::-1]":       []interface{}{nil, false, true, 3.0, 23.3, "string"},
-			"$.F.V[4:5][0,1]": []interface{}{"string5a", "string5b"},
-			"$.F.V[4:6][1]":   []interface{}{"string5b", "string6b"},
-			"$.F.V[4:6][0,1]": []interface{}{"string5a", "string5b", "string6a", "string6b"},
-			"$.F.V[4,5][0:2]": []interface{}{"string5a", "string5b", "string6a", "string6b"},
-			"$.F.V[4:6]": []interface{}{
-				[]interface{}{
+		runTests(map[string]expect{
+			"$.A[1,4,2]": {value: []any{23.3, false, 3.0}},
+			`$["B","C"]`: {value: []any{"value", 3.14}},
+			`$["C","B"]`: {value: []any{3.14, "value"}},
+			"$.A[1:4]":   {value: []any{23.3, 3.0, true}},
+			"$.A[::2]":   {value: []any{"string", 3.0, false}},
+			"$.A[-2:]":   {value: []any{false, nil}},
+			"$.A[:-1]":   {value: []any{"string", 23.3, 3.0, true, false}},
+			"$.A[::-1]": {
+				value:    []any{nil, false, true, 3.0, 23.3, "string"},
+				ojgValue: []any{}},
+			"$.F.V[4:5][0,1]": {value: []any{"string5a", "string5b"}},
+			"$.F.V[4:6][1]":   {value: []any{"string5b", "string6b"}},
+			"$.F.V[4:6][0,1]": {value: []any{"string5a", "string5b", "string6a", "string6b"}},
+			"$.F.V[4,5][0:2]": {value: []any{"string5a", "string5b", "string6a", "string6b"}},
+			"$.F.V[4:6]": {value: []any{
+				[]any{
 					"string5a",
 					"string5b",
 				},
-				[]interface{}{
+				[]any{
 					"string6a",
 					"string6b",
 				},
-			},
+			}},
 		})
 	})
 
 	t.Run("quote", func(t *testing.T) {
-		runTests(map[string]interface{}{
-			`$[A][0]`:    "string",
-			`$["A"][0]`:  "string",
-			`$[B,C]`:     []interface{}{"value", 3.14},
-			`$["B","C"]`: []interface{}{"value", 3.14},
+		runTests(map[string]expect{
+			`$[A][0]`:    {value: "string", ojgError: true},
+			`$["A"][0]`:  {value: "string"},
+			`$[B,C]`:     {value: []any{"value", 3.14}, ojgError: true},
+			`$["B","C"]`: {value: []any{"value", 3.14}},
 		})
 	})
 
 	t.Run("search", func(t *testing.T) {
-		runTests(map[string]interface{}{
-			"$..C":       []interface{}{3.14, 3.1415, 3.141592, 3.14159265},
-			`$..["C"]`:   []interface{}{3.14, 3.1415, 3.141592, 3.14159265},
-			"$.D.V..C":   []interface{}{3.141592},
-			"$.D.V.*.C":  []interface{}{3.141592},
-			"$.D.V..*.C": []interface{}{3.141592},
-			"$.D.*..C":   []interface{}{3.141592},
-			"$.*.V..C":   []interface{}{3.141592},
-			"$.*.D.V.C":  []interface{}{3.14159265},
-			"$.*.D..C":   []interface{}{3.14159265},
-			"$.*.D.V..*": []interface{}{3.14159265},
-			"$..D..V..C": []interface{}{3.141592, 3.14159265},
-			"$.*.*.*.C":  []interface{}{3.141592, 3.14159265},
-			"$..V..C":    []interface{}{3.141592, 3.14159265},
-			"$.D.V..*": []interface{}{
+		runTests(map[string]expect{
+			"$..C":       {value: []any{3.14, 3.1415, 3.141592, 3.14159265}},
+			`$..["C"]`:   {value: []any{3.14, 3.1415, 3.141592, 3.14159265}},
+			"$.D.V..C":   {value: []any{3.141592}},
+			"$.D.V.*.C":  {value: []any{3.141592}},
+			"$.D.V..*.C": {value: []any{3.141592}},
+			"$.D.*..C":   {value: []any{3.141592}},
+			"$.*.V..C":   {value: []any{3.141592}},
+			"$.*.D.V.C":  {value: []any{3.14159265}},
+			"$.*.D..C":   {value: []any{3.14159265}},
+			"$.*.D.V..*": {value: []any{3.14159265}},
+			"$..D..V..C": {value: []any{3.141592, 3.14159265}},
+			"$.*.*.*.C":  {value: []any{3.141592, 3.14159265}},
+			"$..V..C":    {value: []any{3.141592, 3.14159265}},
+			"$.D.V..*": {value: []any{
 				"string2a",
 				"string2b",
 				map[string]interface{}{
 					"C": 3.141592,
 				},
 				3.141592,
-			},
-			"$..A": []interface{}{
-				[]interface{}{"string", 23.3, 3.0, true, false, nil},
-				[]interface{}{"string3"},
-			},
-			"$..A..*":      []interface{}{"string", 23.3, 3.0, true, false, nil, "string3"},
-			"$.A..*":       []interface{}{"string", 23.3, 3.0, true, false, nil},
-			"$.A.*":        []interface{}{"string", 23.3, 3.0, true, false, nil},
-			"$..A[0,1]":    []interface{}{"string", 23.3},
-			"$..A[0]":      []interface{}{"string", "string3"},
-			"$.*.V[0]":     []interface{}{"string2a", "string4a"},
-			"$.*.V[1]":     []interface{}{"string2b", "string4b"},
-			"$.*.V[0,1]":   []interface{}{"string2a", "string2b", "string4a", "string4b"},
-			"$.*.V[0:2]":   []interface{}{"string2a", "string2b", "string4a", "string4b"},
-			"$.*.V[2].C":   []interface{}{3.141592},
-			"$..V[2].C":    []interface{}{3.141592},
-			"$..V[*].C":    []interface{}{3.141592},
-			"$.*.V[2].*":   []interface{}{3.141592, 3.1415926535},
-			"$.*.V[2:3].*": []interface{}{3.141592, 3.1415926535},
-			"$.*.V[2:4].*": []interface{}{3.141592, 3.1415926535, "hello"},
-			"$..V[2,3].CC": []interface{}{3.1415926535, "hello"},
-			"$..V[2:4].CC": []interface{}{3.1415926535, "hello"},
-			"$..V[*].*": []interface{}{
+			}},
+			"$..A": {value: []any{
+				[]any{"string", 23.3, 3.0, true, false, nil},
+				[]any{"string3"},
+			}},
+			"$..A..*": {value: []any{"string", 23.3, 3.0, true, false, nil, "string3"}},
+			"$.A..*":  {value: []any{"string", 23.3, 3.0, true, false, nil}},
+			"$.A.*":   {value: []any{"string", 23.3, 3.0, true, false, nil}},
+			"$..A[0,1]": {
+				value:    []any{"string", 23.3},
+				ojgValue: []any{"string", 23.3, "string3"}},
+			"$..A[0]":      {value: []any{"string", "string3"}},
+			"$.*.V[0]":     {value: []any{"string2a", "string4a"}},
+			"$.*.V[1]":     {value: []any{"string2b", "string4b"}},
+			"$.*.V[0,1]":   {value: []any{"string2a", "string2b", "string4a", "string4b"}},
+			"$.*.V[0:2]":   {value: []any{"string2a", "string2b", "string4a", "string4b"}},
+			"$.*.V[2].C":   {value: []any{3.141592}},
+			"$..V[2].C":    {value: []any{3.141592}},
+			"$..V[*].C":    {value: []any{3.141592}},
+			"$.*.V[2].*":   {value: []any{3.141592, 3.1415926535}},
+			"$.*.V[2:3].*": {value: []any{3.141592, 3.1415926535}},
+			"$.*.V[2:4].*": {value: []any{3.141592, 3.1415926535, "hello"}},
+			"$..V[2,3].CC": {value: []any{3.1415926535, "hello"}},
+			"$..V[2:4].CC": {value: []any{3.1415926535, "hello"}},
+			"$..V[*].*": {value: []any{
 				3.141592,
 				3.1415926535,
 				"hello",
@@ -1115,16 +1234,16 @@ func TestValue_PathExpressions(t *testing.T) {
 				"string5b",
 				"string6a",
 				"string6b",
-			},
-			"$..[0]": []interface{}{
+			}},
+			"$..[0]": {value: []any{
 				"string",
 				"string2a",
 				"string3",
 				"string4a",
 				"string5a",
 				"string6a",
-			},
-			"$..ZZ": []interface{}{},
+			}},
+			"$..ZZ": {value: []any{}},
 		})
 	})
 }

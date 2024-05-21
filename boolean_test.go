@@ -14,6 +14,7 @@ func TestBoolean_FailedChain(t *testing.T) {
 	value.chain.assert(t, failure)
 
 	value.Path("$").chain.assert(t, failure)
+	value.Query("$").chain.assert(t, failure)
 	value.Schema("")
 	value.Alias("foo")
 
@@ -130,6 +131,15 @@ func TestBoolean_Path(t *testing.T) {
 	value := NewBoolean(reporter, true)
 
 	assert.Equal(t, true, value.Path("$").Raw())
+	value.chain.assert(t, success)
+}
+
+func TestBoolean_Query(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewBoolean(reporter, true)
+
+	assert.Equal(t, true, value.Query("$").Raw())
 	value.chain.assert(t, success)
 }
 

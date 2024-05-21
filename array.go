@@ -124,6 +124,14 @@ func (a *Array) Path(path string) *Value {
 	return jsonPath(opChain, a.value, path)
 }
 
+// Query is similar to Value.Query.
+func (a *Array) Query(path string) *Value {
+	opChain := a.chain.enter("Query(%q)", path)
+	defer opChain.leave()
+
+	return jsonPathOjg(opChain, a.value, path)
+}
+
 // Schema is similar to Value.Schema.
 func (a *Array) Schema(schema interface{}) *Array {
 	opChain := a.chain.enter("Schema()")
