@@ -172,6 +172,13 @@ func (v *Value) Path(path string) *Value {
 	return jsonPath(opChain, v.value, path)
 }
 
+func (v *Value) Query(path string) *Value {
+	opChain := v.chain.enter("Query(%q)", path)
+	defer opChain.leave()
+
+	return jsonPathOjg(opChain, v.value, path)
+}
+
 // Schema succeeds if value matches given JSON Schema.
 //
 // JSON Schema specifies a JSON-based format to define the structure of

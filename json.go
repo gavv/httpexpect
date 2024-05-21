@@ -3,12 +3,53 @@ package httpexpect
 import (
 	"errors"
 	"fmt"
+	"github.com/ohler55/ojg/jp"
 	"reflect"
 	"regexp"
 
 	"github.com/xeipuuv/gojsonschema"
 	"github.com/yalp/jsonpath"
 )
+
+func jsonPathOjg(opChain *chain, value interface{}, path string) *Value {
+	if opChain.failed() {
+		return newValue(opChain, nil)
+	}
+
+	expr, err := jp.ParseString(path)
+	if err != nil {
+		opChain.fail(AssertionFailure{
+			Type:   AssertValid,
+			Actual: &AssertionValue{path},
+			Errors: []error{
+				errors.New("expected: valid json path"),
+				err,
+			},
+		})
+		return newValue(opChain, nil)
+	}
+	result := expr.Get(value)
+	// in order to keep the results somewhat consistent with yalp's results,
+	// we return a single value where no wildcards or descends are involved.
+	// TODO: it might be more consistent if it also included filters
+	if len(result) == 1 && !hasWildcardsOrDescend(expr) {
+		return newValue(opChain, result[0])
+	}
+	if result == nil {
+		return newValue(opChain, []interface{}{})
+	}
+	return newValue(opChain, result)
+}
+
+func hasWildcardsOrDescend(expr jp.Expr) bool {
+	for _, frag := range expr {
+		switch frag.(type) {
+		case jp.Wildcard, jp.Descent:
+			return true
+		}
+	}
+	return false
+}
 
 func jsonPath(opChain *chain, value interface{}, path string) *Value {
 	if opChain.failed() {
