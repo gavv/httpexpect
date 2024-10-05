@@ -46,7 +46,7 @@ Please follow a few simple rules to ease the work of the reviewer:
 
 For development, you need two additional dependencies:
 
-* [golangci-lint](https://golangci-lint.run/usage/install/#local-installation)
+* [golangci-lint](https://golangci-lint.run/welcome/install/#local-installation)
 
 * [stringer](https://github.com/golang/tools)
 
