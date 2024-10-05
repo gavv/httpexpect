@@ -14,6 +14,7 @@ import (
 	"os"
 	"reflect"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -1049,7 +1050,13 @@ func (r *Request) withPath(opChain *chain, key string, value interface{}) {
 					},
 				})
 			} else {
-				mustWrite(w, fmt.Sprint(value))
+				switch value.(type) {
+				case float64, float32:
+					v := value.(float64)
+					mustWrite(w, strconv.FormatFloat(v, 'f', -1, 64))
+				default:
+					mustWrite(w, fmt.Sprint(value))
+				}
 				found = true
 			}
 		} else {
