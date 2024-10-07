@@ -12,6 +12,7 @@ func TestObject_FailedChain(t *testing.T) {
 		value.chain.assert(t, failure)
 
 		value.Path("$").chain.assert(t, failure)
+		value.Query("$").chain.assert(t, failure)
 		value.Schema("")
 		value.Alias("foo")
 
@@ -288,6 +289,23 @@ func TestObject_Path(t *testing.T) {
 	value := NewObject(reporter, m)
 
 	assert.Equal(t, m, value.Path("$").Raw())
+	value.chain.assert(t, success)
+}
+
+func TestObject_Query(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	m := map[string]interface{}{
+		"foo": 123.0,
+		"bar": []interface{}{"456", 789.0},
+		"baz": map[string]interface{}{
+			"a": "b",
+		},
+	}
+
+	value := NewObject(reporter, m)
+
+	assert.Equal(t, m, value.Query("$").Raw())
 	value.chain.assert(t, success)
 }
 

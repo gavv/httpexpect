@@ -16,7 +16,7 @@ import (
 //     to current assertion starting from chain root
 //
 //   - AssertionHandler: provides methods to handle successful and failed assertions;
-//     may be defined by user, but usually we just use DefaulAssertionHandler
+//     may be defined by user, but usually we just use DefaultAssertionHandler
 //
 //   - AssertionSeverity: severity to be used for failures (fatal or non-fatal)
 //
