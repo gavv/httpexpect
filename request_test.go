@@ -1074,6 +1074,24 @@ func TestRequest_Path(t *testing.T) {
 		req.WithPath("arg", nil)
 		req.chain.assert(t, failure)
 	})
+
+	t.Run("floating point", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/{arg1}")
+		req.WithPath("arg1", 12345.6789)
+		req.Expect().chain.assert(t, success)
+		require.NotNil(t, client.req)
+		assert.Equal(t, "http://example.com/12345.6789",
+			client.req.URL.String())
+	})
+
+	t.Run("floating point with trailing zero", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/{arg1}")
+		req.WithPath("arg1", 12345.0)
+		req.Expect().chain.assert(t, success)
+		require.NotNil(t, client.req)
+		assert.Equal(t, "http://example.com/12345",
+			client.req.URL.String())
+	})
 }
 
 func TestRequest_PathObject(t *testing.T) {
