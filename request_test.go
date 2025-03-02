@@ -45,6 +45,7 @@ func TestRequest_FailedChain(t *testing.T) {
 	req.WithRedirectPolicy(FollowAllRedirects)
 	req.WithMaxRedirects(1)
 	req.WithRetryPolicy(RetryAllErrors)
+	req.WithRetryPolicyFunc(func(*http.Response, error) bool { return false })
 	req.WithMaxRetries(1)
 	req.WithRetryDelay(time.Millisecond, time.Millisecond)
 	req.WithWebsocketUpgrade()
@@ -55,6 +56,7 @@ func TestRequest_FailedChain(t *testing.T) {
 	req.WithPathObject(map[string]interface{}{"foo": "bar"})
 	req.WithQuery("foo", "bar")
 	req.WithQueryObject(map[string]interface{}{"foo": "bar"})
+	req.WithQueryEncoder(QueryEncoderForm)
 	req.WithQueryString("foo=bar")
 	req.WithURL("http://example.com")
 	req.WithHeaders(map[string]string{"foo": "bar"})
@@ -861,9 +863,9 @@ func TestRequest_URLQuery(t *testing.T) {
 	})
 
 	type S struct {
-		Bb int    `url:"bb"`
-		Cc string `url:"cc"`
-		Dd string `url:"-"`
+		B int    `url:"bb"`
+		C string `url:"cc"`
+		D string `url:"-"`
 	}
 
 	t.Run("WithQueryObject struct", func(t *testing.T) {
@@ -878,6 +880,29 @@ func TestRequest_URLQuery(t *testing.T) {
 			WithQueryObject(&S{123, "*&@", "dummy"}).WithQuery("aa", "foo")
 		checkOK(req,
 			"http://example.com/path?aa=foo&bb=123&cc=%2A%26%40")
+	})
+
+	type F struct {
+		A int    `form:"aa"`
+		B int    `form:"bb"`
+		C string `form:"cc"`
+		D string `form:"-"`
+	}
+
+	t.Run("WithQueryObject + QueryEncoderForm", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/path").
+			WithQueryEncoder(QueryEncoderForm).
+			WithQueryObject(F{0, 123, "456", "789"})
+		checkOK(req,
+			"http://example.com/path?aa=&bb=123&cc=456")
+	})
+
+	t.Run("WithQueryObject + QueryEncoderFormKeepZeros", func(t *testing.T) {
+		req := NewRequestC(config, "GET", "/path").
+			WithQueryEncoder(QueryEncoderFormKeepZeros).
+			WithQueryObject(F{0, 123, "456", "789"})
+		checkOK(req,
+			"http://example.com/path?aa=0&bb=123&cc=456")
 	})
 
 	t.Run("WithQuery and WithQueryString", func(t *testing.T) {
@@ -3929,6 +3954,12 @@ func TestRequest_Order(t *testing.T) {
 				req.WithQueryObject(map[string]string{
 					"a": "val",
 				})
+			},
+		},
+		{
+			name: "WithQueryEncoder after Expect",
+			afterFunc: func(req *Request) {
+				req.WithQueryEncoder(QueryEncoderForm)
 			},
 		},
 		{
