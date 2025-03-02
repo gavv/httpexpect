@@ -37,13 +37,12 @@ type Request struct {
 	redirectPolicy RedirectPolicy
 	maxRedirects   int
 
-	retryPolicy           RetryPolicy
-	withRetryPolicyCalled bool
-	maxRetries            int
-	minRetryDelay         time.Duration
-	maxRetryDelay         time.Duration
-	sleepFn               func(d time.Duration) <-chan time.Time
-	retryPolicyFn         func(*http.Response, error) bool
+	retryPolicy   *RetryPolicy
+	retryPolicyFn func(*http.Response, error) bool
+	maxRetries    int
+	minRetryDelay time.Duration
+	maxRetryDelay time.Duration
+	sleepFn       func(d time.Duration) <-chan time.Time
 
 	timeout time.Duration
 
@@ -123,13 +122,14 @@ func newRequest(
 		redirectPolicy: defaultRedirectPolicy,
 		maxRedirects:   -1,
 
-		retryPolicy:   RetryTimeoutAndServerErrors,
+		retryPolicy:   nil, // use default policy
 		maxRetries:    0,
 		minRetryDelay: time.Millisecond * 50,
 		maxRetryDelay: time.Second * 5,
 		sleepFn: func(d time.Duration) <-chan time.Time {
 			return time.After(d)
 		},
+
 		multipartFn: func(w io.Writer) *multipart.Writer {
 			return multipart.NewWriter(w)
 		},
@@ -762,16 +762,14 @@ func (r *Request) WithRetryPolicy(policy RetryPolicy) *Request {
 		opChain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
-				fmt.Errorf("expected: " +
-					"WithRetryPolicyFunc() and WithRetryPolicy() should be mutual exclusive, " +
-					"WithRetryPolicyFunc() is already called"),
+				fmt.Errorf("unexpected call:" +
+					" WithRetryPolicy() and WithRetryPolicyFunc() are mutually exclusive"),
 			},
 		})
 		return r
 	}
 
-	r.retryPolicy = policy
-	r.withRetryPolicyCalled = true
+	r.retryPolicy = &policy
 
 	return r
 }
@@ -805,13 +803,12 @@ func (r *Request) WithRetryPolicyFunc(
 		return r
 	}
 
-	if r.withRetryPolicyCalled {
+	if r.retryPolicy != nil {
 		opChain.fail(AssertionFailure{
 			Type: AssertUsage,
 			Errors: []error{
-				fmt.Errorf("expected: " +
-					"WithRetryPolicyFunc() and WithRetryPolicy() should be mutual exclusive, " +
-					"WithRetryPolicy() is already called"),
+				fmt.Errorf("unexpected call:" +
+					" WithRetryPolicy() and WithRetryPolicyFunc() are mutually exclusive"),
 			},
 		})
 		return r
@@ -2401,7 +2398,7 @@ func (r *Request) retryRequest(reqFunc func() (*http.Response, error)) (
 
 func (r *Request) shouldRetry(resp *http.Response, err error) bool {
 	if r.retryPolicyFn != nil {
-		return r.retryPolicyFn(resp, err)
+		return r.retryPolicyFn(resp, err) // set by WithRetryPolicyFunc
 	}
 
 	var (
@@ -2422,7 +2419,12 @@ func (r *Request) shouldRetry(resp *http.Response, err error) bool {
 		isHTTPError = resp.StatusCode >= 400 && resp.StatusCode <= 599
 	}
 
-	switch r.retryPolicy {
+	policy := RetryTimeoutAndServerErrors // default policy
+	if r.retryPolicy != nil {
+		policy = *r.retryPolicy // set by WithRetryPolicy
+	}
+
+	switch policy {
 	case DontRetry:
 		break
 

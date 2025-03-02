@@ -3367,7 +3367,7 @@ func TestRequest_RetriesCancellation(t *testing.T) {
 	assert.Equal(t, 1, callCount)
 }
 
-func TestRequest_WithRetryPolicyFunc(t *testing.T) {
+func TestRequest_RetriesPolicyFunc(t *testing.T) {
 	tests := []struct {
 		name      string
 		fn        func(res *http.Response, err error) bool
