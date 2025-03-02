@@ -2,11 +2,11 @@ package examples
 
 import (
 	"crypto/tls"
-	"github.com/gavv/httpexpect/v2"
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"strconv"
 	"testing"
+
+	"github.com/gavv/httpexpect/v2"
 )
 
 func TLSClient() *http.Client {
@@ -15,8 +15,7 @@ func TLSClient() *http.Client {
 }
 
 func TestExampleTlsServer(t *testing.T) {
-
-	server := ExampleTLSServer() // ExampleTlsServer()
+	server := ExampleTLSServer()
 	server.StartTLS()
 	defer server.Close()
 
@@ -84,7 +83,8 @@ func TestExampleTlsServer(t *testing.T) {
 	r.JSON().Decode(&m)
 
 	for item, amount := range m {
-		assert.Equal(t, amount, items[item])
+		if amount != items[item] {
+			t.Fail()
+		}
 	}
-
 }

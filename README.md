@@ -130,6 +130,10 @@ See [`_examples`](_examples) directory for complete standalone examples.
 
     Testing a WebSocket server based on [`gorilla/websocket`](https://github.com/gorilla/websocket). Tests invoke the `http.Handler` or `fasthttp.RequestHandler` directly.
 
+* [`tls_test.go`](_examples/tls_test.go)
+
+  Testing a TLS server made with `net/http` and `crypto/tls`
+
 * [`oauth2_test.go`](_examples/oauth2_test.go)
 
   Testing a OAuth2 server with [`oauth2`](https://github.com/go-oauth2/oauth2/).
@@ -141,10 +145,6 @@ See [`_examples`](_examples) directory for complete standalone examples.
 * [`formatter_test.go`](_examples/formatter_test.go)
 
     Testing with custom formatter for assertion messages.
-
-* [`tls_test.go`](_examples/tls_test.go)
-
-    Testing a tls server made with `net/http` and `crypto/tls`
 
 ## Quick start
 
