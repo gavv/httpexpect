@@ -395,7 +395,7 @@ e.POST("/path").
 	Expect().
 	Status(http.StatusOK)
 
-// custom retry policy
+// custom built-in retry policy
 e.POST("/path").
 	WithMaxRetries(5).
 	WithRetryPolicy(httpexpect.RetryAllErrors).
@@ -406,6 +406,15 @@ e.POST("/path").
 e.POST("/path").
 	WithMaxRetries(5).
 	WithRetryDelay(time.Second, time.Minute).
+	Expect().
+	Status(http.StatusOK)
+
+// custom user-defined retry policy
+e.POST("/path").
+	WithMaxRetries(5).
+	WithRetryPolicyFunc(func(resp *http.Response, err error) bool {
+		return resp.StatusCode == http.StatusTeapot
+	}).
 	Expect().
 	Status(http.StatusOK)
 ```

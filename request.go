@@ -37,11 +37,13 @@ type Request struct {
 	redirectPolicy RedirectPolicy
 	maxRedirects   int
 
-	retryPolicy   RetryPolicy
-	maxRetries    int
-	minRetryDelay time.Duration
-	maxRetryDelay time.Duration
-	sleepFn       func(d time.Duration) <-chan time.Time
+	retryPolicy           RetryPolicy
+	withRetryPolicyCalled bool
+	maxRetries            int
+	minRetryDelay         time.Duration
+	maxRetryDelay         time.Duration
+	sleepFn               func(d time.Duration) <-chan time.Time
+	retryPolicyFn         func(*http.Response, error) bool
 
 	timeout time.Duration
 
@@ -756,7 +758,66 @@ func (r *Request) WithRetryPolicy(policy RetryPolicy) *Request {
 		return r
 	}
 
+	if r.retryPolicyFn != nil {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				fmt.Errorf("expected: " +
+					"WithRetryPolicyFunc() and WithRetryPolicy() should be mutual exclusive, " +
+					"WithRetryPolicyFunc() is already called"),
+			},
+		})
+		return r
+	}
+
 	r.retryPolicy = policy
+	r.withRetryPolicyCalled = true
+
+	return r
+}
+
+// WithRetryPolicyFunc sets a function to replace built-in policies
+// with user-defined policy.
+//
+// The function expects you to return true to perform a retry. And false to
+// not perform a retry.
+//
+// Example:
+//
+//	req := NewRequestC(config, "POST", "/path")
+//	req.WithRetryPolicyFunc(func(res *http.Response, err error) bool {
+//		return resp.StatusCode == http.StatusTeapot
+//	})
+func (r *Request) WithRetryPolicyFunc(
+	fn func(res *http.Response, err error) bool,
+) *Request {
+	opChain := r.chain.enter("WithRetryPolicyFunc()")
+	defer opChain.leave()
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	if opChain.failed() {
+		return r
+	}
+
+	if !r.checkOrder(opChain, "WithRetryPolicyFunc()") {
+		return r
+	}
+
+	if r.withRetryPolicyCalled {
+		opChain.fail(AssertionFailure{
+			Type: AssertUsage,
+			Errors: []error{
+				fmt.Errorf("expected: " +
+					"WithRetryPolicyFunc() and WithRetryPolicy() should be mutual exclusive, " +
+					"WithRetryPolicy() is already called"),
+			},
+		})
+		return r
+	}
+
+	r.retryPolicyFn = fn
 
 	return r
 }
@@ -2339,6 +2400,10 @@ func (r *Request) retryRequest(reqFunc func() (*http.Response, error)) (
 }
 
 func (r *Request) shouldRetry(resp *http.Response, err error) bool {
+	if r.retryPolicyFn != nil {
+		return r.retryPolicyFn(resp, err)
+	}
+
 	var (
 		isTemporaryNetworkError bool // Deprecated
 		isTimeoutError          bool

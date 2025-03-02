@@ -3367,6 +3367,60 @@ func TestRequest_RetriesCancellation(t *testing.T) {
 	assert.Equal(t, 1, callCount)
 }
 
+func TestRequest_WithRetryPolicyFunc(t *testing.T) {
+	tests := []struct {
+		name      string
+		fn        func(res *http.Response, err error) bool
+		callCount int
+	}{
+		{
+			name: "should not retry",
+			fn: func(res *http.Response, err error) bool {
+				return false
+			},
+			callCount: 1,
+		},
+		{
+			name: "should retry",
+			fn: func(res *http.Response, err error) bool {
+				return true
+			},
+			callCount: 2,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			callCount := 0
+
+			client := &mockClient{
+				resp: http.Response{
+					StatusCode: http.StatusTeapot,
+				},
+				cb: func(req *http.Request) {
+					callCount++
+				},
+			}
+
+			cfg := Config{
+				Client:   client,
+				Reporter: newMockReporter(t),
+			}
+
+			req := NewRequestC(cfg, http.MethodGet, "/url").
+				WithMaxRetries(1).
+				WithRetryDelay(0, 0).
+				WithRetryPolicyFunc(tt.fn)
+			req.chain.assert(t, success)
+
+			resp := req.Expect()
+			resp.chain.assert(t, success)
+
+			assert.Equal(t, tt.callCount, callCount)
+		})
+	}
+}
+
 func TestRequest_Conflicts(t *testing.T) {
 	client := &mockClient{}
 
@@ -3506,6 +3560,44 @@ func TestRequest_Conflicts(t *testing.T) {
 				req.chain.assert(t, success)
 
 				req.WithMultipart()
+				req.chain.assert(t, failure)
+			})
+		}
+	})
+
+	t.Run("retry policy conflict", func(t *testing.T) {
+		cases := []struct {
+			name string
+			fn   func(req *Request)
+		}{
+			{
+				"WithRetryPolicyFunc",
+				func(req *Request) {
+					req.WithRetryPolicyFunc(func(res *http.Response, err error) bool {
+						return res.StatusCode == http.StatusTeapot
+					})
+				},
+			},
+		}
+
+		for _, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				req := NewRequestC(config, "GET", "url")
+
+				tc.fn(req)
+				req.chain.assert(t, success)
+
+				req.WithRetryPolicy(RetryAllErrors)
+				req.chain.assert(t, failure)
+			})
+
+			t.Run(tc.name+" - reversed", func(t *testing.T) {
+				req := NewRequestC(config, "GET", "url")
+
+				req.WithRetryPolicy(RetryAllErrors)
+				req.chain.assert(t, success)
+
+				tc.fn(req)
 				req.chain.assert(t, failure)
 			})
 		}
@@ -3659,6 +3751,15 @@ func TestRequest_Usage(t *testing.T) {
 			},
 			prepFails:   false,
 			expectFails: true,
+		},
+		{
+			name:   "WithRetryPolicyFunc - nil argument",
+			client: &mockClient{},
+			prepFunc: func(req *Request) {
+				req.WithRetryPolicyFunc(nil)
+			},
+			prepFails:   false,
+			expectFails: false,
 		},
 	}
 
@@ -3950,6 +4051,14 @@ func TestRequest_Order(t *testing.T) {
 			name: "WithMultipart after Expect",
 			afterFunc: func(req *Request) {
 				req.WithMultipart()
+			},
+		},
+		{
+			name: "WithRetryPolicyFunc after Expect",
+			afterFunc: func(req *Request) {
+				req.WithRetryPolicyFunc(func(res *http.Response, err error) bool {
+					return res.StatusCode == http.StatusTeapot
+				})
 			},
 		},
 	}
