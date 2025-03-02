@@ -2475,7 +2475,7 @@ var bodyErr = `ambiguous request body contents:
   then replaced by %s`
 
 func (r *Request) setBody(
-	opChain *chain, setter string, reader io.Reader, len int, overwrite bool,
+	opChain *chain, setter string, reader io.Reader, length int, overwrite bool,
 ) {
 	if !overwrite && r.bodySetter != "" {
 		opChain.fail(AssertionFailure{
@@ -2487,7 +2487,7 @@ func (r *Request) setBody(
 		return
 	}
 
-	if len > 0 && reader == nil {
+	if length > 0 && reader == nil {
 		panic("invalid length")
 	}
 
@@ -2496,7 +2496,7 @@ func (r *Request) setBody(
 		r.httpReq.ContentLength = 0
 	} else {
 		r.httpReq.Body = io.NopCloser(reader)
-		r.httpReq.ContentLength = int64(len)
+		r.httpReq.ContentLength = int64(length)
 	}
 
 	r.bodySetter = setter

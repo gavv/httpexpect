@@ -4,7 +4,6 @@ linters:
     - revive
     - staticcheck
     - exhaustive
-    - exportloopref
     - lll
     - misspell
     - dupword
@@ -15,13 +14,12 @@ linters:
 linters-settings:
   lll:
     line-length: 90
-  revive:
-    rules:
-      - name: unused-parameter
-        disabled: true
 
 issues:
   exclude-rules:
+    - text: unused-parameter
+      linters:
+        - revive
     - text: error-strings
       linters:
         - revive

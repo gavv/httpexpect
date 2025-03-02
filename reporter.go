@@ -53,7 +53,7 @@ func NewFatalReporter(t testing.TB) *FatalReporter {
 
 // Errorf implements Reporter.Errorf.
 func (r *FatalReporter) Errorf(message string, args ...interface{}) {
-	r.backend.Fatalf(fmt.Sprintf(message, args...))
+	r.backend.Fatalf("%s", fmt.Sprintf(message, args...))
 }
 
 // PanicReporter is a struct that implements the Reporter interface
