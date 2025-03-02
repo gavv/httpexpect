@@ -18,7 +18,7 @@ Workflow:
 
 * URL path construction, with simple string interpolation provided by [`go-interpol`](https://github.com/imkira/go-interpol) package.
 * URL query parameters (encoding using [`go-querystring`](https://github.com/google/go-querystring) package).
-* Headers, cookies, payload: JSON,  urlencoded or multipart forms (encoding using [`form`](https://github.com/ajg/form) package), plain text.
+* Headers, cookies, payload: JSON, urlencoded or multipart forms (encoding using [`form`](https://github.com/ajg/form) package), plain text.
 * Custom reusable [request builders](#reusable-builders) and [request transformers](#request-transformers).
 
 ##### Response assertions
