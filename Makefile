@@ -1,4 +1,4 @@
-all: tidy gen build lint test spell
+all: tidy gen build lint test
 
 tidy:
 	go mod tidy -v
@@ -36,12 +36,6 @@ ifneq ($(shell which gotest),)
 	gotest -short ./...
 else
 	go test -short ./...
-endif
-
-spell:
-ifneq ($(shell which mdspell),)
-	mdspell -a README.md
-	sort .spelling -o .spelling
 endif
 
 toc:
