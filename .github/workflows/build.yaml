@@ -25,10 +25,10 @@ jobs:
     name: Go ${{ matrix.go }} ${{ matrix.os }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install Go
-        uses: actions/setup-go@v4.0.1
+        uses: actions/setup-go@v5.3.0
         with:
           go-version: ${{ matrix.go }}
           cache: true
@@ -48,10 +48,10 @@ jobs:
     name: Examples ${{ matrix.os }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install Go
-        uses: actions/setup-go@v4.0.1
+        uses: actions/setup-go@v5.3.0
         with:
           go-version: 1.x
           cache: true
@@ -68,10 +68,10 @@ jobs:
     name: Formatting
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5.3.0
         with:
           go-version: 1.x
 
@@ -107,19 +107,19 @@ jobs:
     name: Linters for ${{ matrix.name }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install Go
-        uses: actions/setup-go@v4.0.1
+        uses: actions/setup-go@v5.3.0
         with:
           go-version: 1.x
           cache: false
 
       - name: Run linters
-        uses: golangci/golangci-lint-action@v3
+        uses: golangci/golangci-lint-action@v6.5.0
         timeout-minutes: 20
         with:
-          version: v1.54.2
+          version: v1.63.4
           working-directory: ${{ matrix.dir }}
           args: --timeout=20m
 
@@ -130,10 +130,10 @@ jobs:
     name: Coverage
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install Go
-        uses: actions/setup-go@v4.0.1
+        uses: actions/setup-go@v5.3.0
         with:
           go-version: 1.x
           cache: true
@@ -142,7 +142,7 @@ jobs:
         run: go test -covermode=count -coverprofile=coverage.out -coverpkg=. ./...
 
       - name: Prepare coverage report
-        uses: jandelgado/gcov2lcov-action@v1.0.9
+        uses: jandelgado/gcov2lcov-action@v1.1.1
 
       - name: Send coverage report
         uses: coverallsapp/github-action@master
