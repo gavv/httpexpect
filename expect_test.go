@@ -858,7 +858,6 @@ func (h *contextAssertionHandler) Success(ctx *AssertionContext) {
 	}
 	h.Formatter.FormatSuccess(ctx)
 	h.AssertionContext = ctx
-
 }
 
 // Failure implements AssertionHandler.Failure.
@@ -885,11 +884,10 @@ func (h *contextAssertionHandler) Failure(
 
 		h.Formatter.FormatFailure(ctx, failure)
 		h.AssertionContext = ctx
-
 	}
 }
 
-func TestExpect_AssertionContext_Success(t *testing.T) {
+func TestExpect_AssertionContextSuccess(t *testing.T) {
 	client := &mockClient{}
 
 	reporter := NewAssertReporter(t)
@@ -915,7 +913,6 @@ func TestExpect_AssertionContext_Success(t *testing.T) {
 }
 
 func TestExpect_AssertionContextResponseRequest(t *testing.T) {
-
 	prepare := func(client Client) (*Expect, Config, *contextAssertionHandler) {
 		reporter := NewAssertReporter(t)
 		formatter := &DefaultFormatter{}
@@ -937,6 +934,10 @@ func TestExpect_AssertionContextResponseRequest(t *testing.T) {
 		req := e.GET("/test").WithText("test")
 		resp := req.Expect()
 		resp.Body()
+
+		req.chain.assertFlags(t, 0)
+		resp.chain.assertFlags(t, 0)
+
 		assert.Equal(t, &req, &handler.AssertionContext.Request)
 		assert.Equal(t, &resp, &handler.AssertionContext.Response)
 	})
@@ -946,6 +947,10 @@ func TestExpect_AssertionContextResponseRequest(t *testing.T) {
 		req := e.GET("/test").WithText("test")
 		resp := req.Expect()
 		resp.Body()
+
+		req.chain.assertFlags(t, flagFailed|flagFailedChildren)
+		resp.chain.assertFlags(t, flagFailed)
+
 		assert.Equal(t, &req, &handler.AssertionContext.Request)
 		assert.Nil(t, handler.AssertionContext.Response)
 	})
@@ -961,6 +966,10 @@ func TestExpect_AssertionContextResponseRequest(t *testing.T) {
 		req := e.GET("/test")
 		resp := req.Expect()
 		resp.Body()
+
+		req.chain.assertFlags(t, 0)
+		resp.chain.assertFlags(t, 0)
+
 		assert.Equal(t, &req, &handler.AssertionContext.Request)
 		assert.Equal(t, &resp, &handler.AssertionContext.Response)
 	})
@@ -970,7 +979,10 @@ func TestExpect_AssertionContextResponseRequest(t *testing.T) {
 		req := e.GET("/test").WithText("{{}")
 		resp := req.Expect()
 		resp.JSON().Array()
+
 		req.chain.assertFlags(t, flagFailedChildren)
+		resp.chain.assertFlags(t, flagFailed|flagFailedChildren)
+
 		assert.Equal(t, &req, &handler.AssertionContext.Request)
 		assert.Equal(t, &resp, &handler.AssertionContext.Response)
 	})
