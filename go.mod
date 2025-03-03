@@ -15,7 +15,7 @@ require (
 	github.com/mattn/go-isatty v0.0.18
 	github.com/mitchellh/go-wordwrap v1.0.1
 	github.com/sanity-io/litter v1.5.5
-	github.com/stretchr/testify v1.5.0
+	github.com/stretchr/testify v1.6.0
 	github.com/valyala/fasthttp v1.40.0
 	github.com/xeipuuv/gojsonschema v1.2.0
 	github.com/yalp/jsonpath v0.0.0-20180802001716-5cc68e5049a0
@@ -42,4 +42,5 @@ require (
 	github.com/yudai/pp v2.0.1+incompatible // indirect
 	golang.org/x/sys v0.28.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
+	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c // indirect
 )
