@@ -306,21 +306,19 @@ func TestObject_Schema(t *testing.T) {
 }
 
 func TestObject_Getters(t *testing.T) {
-	reporter := newMockReporter(t)
+	emptyData := map[string]interface{}{}
 
-	m := map[string]interface{}{
-		"foo": 123.0,
-		"bar": []interface{}{"456", 789.0},
-		"baz": map[string]interface{}{
+	data := map[string]interface{}{
+		"aaa": 123.0,
+		"bbb": []interface{}{"456", 789.0},
+		"ccc": map[string]interface{}{
 			"a": "b",
 		},
 	}
 
-	value := NewObject(reporter, m)
+	keyList := []interface{}{"aaa", "bbb", "ccc"}
 
-	keys := []interface{}{"foo", "bar", "baz"}
-
-	values := []interface{}{
+	valueList := []interface{}{
 		123.0,
 		[]interface{}{"456", 789.0},
 		map[string]interface{}{
@@ -328,33 +326,115 @@ func TestObject_Getters(t *testing.T) {
 		},
 	}
 
-	assert.Equal(t, m, value.Raw())
-	value.chain.assert(t, success)
-	value.chain.clear()
+	t.Run("length when empty", func(t *testing.T) {
+		reporter := newMockReporter(t)
 
-	value.Keys().ContainsOnly(keys...)
-	value.chain.assert(t, success)
-	value.chain.clear()
+		value := NewObject(reporter, emptyData)
 
-	value.Values().ContainsOnly(values...)
-	value.chain.assert(t, success)
-	value.chain.clear()
+		innerValue := value.Length()
+		assert.Equal(t, 0.0, innerValue.Raw())
 
-	assert.Equal(t, m["foo"], value.Value("foo").Raw())
-	value.chain.assert(t, success)
-	value.chain.clear()
+		value.chain.assert(t, success)
+		innerValue.chain.assert(t, success)
+	})
 
-	assert.Equal(t, m["bar"], value.Value("bar").Raw())
-	value.chain.assert(t, success)
-	value.chain.clear()
+	t.Run("length when non-empty", func(t *testing.T) {
+		reporter := newMockReporter(t)
 
-	assert.Equal(t, m["baz"], value.Value("baz").Raw())
-	value.chain.assert(t, success)
-	value.chain.clear()
+		value := NewObject(reporter, data)
 
-	assert.Equal(t, nil, value.Value("BAZ").Raw())
-	value.chain.assert(t, failure)
-	value.chain.clear()
+		innerValue := value.Length()
+		assert.Equal(t, float64(len(data)), innerValue.Raw())
+
+		value.chain.assert(t, success)
+		innerValue.chain.assert(t, success)
+	})
+
+	t.Run("value when empty", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewObject(reporter, emptyData)
+
+		innerValue := value.Value("aaa")
+		assert.NotNil(t, innerValue)
+
+		value.chain.assert(t, failure)
+		innerValue.chain.assert(t, failure)
+	})
+
+	t.Run("value when non-empty", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewObject(reporter, data)
+
+		for k, v := range data {
+			innerValue := value.Value(k)
+			assert.Equal(t, v, innerValue.Raw())
+
+			value.chain.assert(t, success)
+			innerValue.chain.assert(t, success)
+		}
+	})
+
+	t.Run("value bad key", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewObject(reporter, data)
+
+		innerValue := value.Value("bad_key")
+		assert.NotNil(t, innerValue)
+
+		value.chain.assert(t, failure)
+		innerValue.chain.assert(t, failure)
+	})
+
+	t.Run("keys when empty", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewObject(reporter, emptyData)
+
+		innerValue := value.Keys()
+		assert.Equal(t, []interface{}{}, innerValue.Raw())
+
+		value.chain.assert(t, success)
+		innerValue.chain.assert(t, success)
+	})
+
+	t.Run("keys when non-empty", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewObject(reporter, data)
+
+		innerValue := value.Keys()
+		assert.Equal(t, keyList, innerValue.Raw())
+
+		value.chain.assert(t, success)
+		innerValue.chain.assert(t, success)
+	})
+
+	t.Run("values when empty", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewObject(reporter, emptyData)
+
+		innerValue := value.Values()
+		assert.Equal(t, []interface{}{}, innerValue.Raw())
+
+		value.chain.assert(t, success)
+		innerValue.chain.assert(t, success)
+	})
+
+	t.Run("values when non-empty", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewObject(reporter, data)
+
+		innerValue := value.Values()
+		assert.Equal(t, valueList, innerValue.Raw())
+
+		value.chain.assert(t, success)
+		innerValue.chain.assert(t, success)
+	})
 }
 
 func TestObject_IsEmpty(t *testing.T) {

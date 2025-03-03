@@ -295,41 +295,74 @@ func TestArray_Schema(t *testing.T) {
 }
 
 func TestArray_Getters(t *testing.T) {
-	t.Run("empty", func(t *testing.T) {
+	t.Run("length when empty", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		data := []interface{}{}
 
 		value := NewArray(reporter, data)
 
-		assert.Equal(t, 0.0, value.Length().Raw())
-		value.chain.assert(t, success)
-		value.chain.clear()
+		innerValue := value.Length()
+		assert.Equal(t, 0.0, innerValue.Raw())
 
-		assert.NotNil(t, value.Value(0))
-		value.chain.assert(t, failure)
-		value.chain.clear()
+		value.chain.assert(t, success)
+		innerValue.chain.assert(t, success)
 	})
 
-	t.Run("not empty", func(t *testing.T) {
+	t.Run("length when non-empty", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		data := []interface{}{"foo", 123.0}
 
 		value := NewArray(reporter, data)
 
-		assert.Equal(t, 2.0, value.Length().Raw())
-		value.chain.assert(t, success)
-		value.chain.clear()
+		innerValue := value.Length()
+		assert.Equal(t, 2.0, innerValue.Raw())
 
-		assert.Equal(t, "foo", value.Value(0).Raw())
-		assert.Equal(t, 123.0, value.Value(1).Raw())
 		value.chain.assert(t, success)
-		value.chain.clear()
+		innerValue.chain.assert(t, success)
+	})
 
-		assert.Equal(t, nil, value.Value(2).Raw())
+	t.Run("value when empty", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		data := []interface{}{}
+
+		value := NewArray(reporter, data)
+
+		innerValue := value.Value(0)
+		assert.NotNil(t, innerValue)
+
 		value.chain.assert(t, failure)
-		value.chain.clear()
+		innerValue.chain.assert(t, failure)
+	})
+
+	t.Run("value when non-empty", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		data := []interface{}{"foo", 123.0}
+
+		value := NewArray(reporter, data)
+
+		innerValue := value.Value(0)
+		assert.Equal(t, "foo", innerValue.Raw())
+
+		value.chain.assert(t, success)
+		innerValue.chain.assert(t, success)
+	})
+
+	t.Run("value out of range", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		data := []interface{}{"foo", 123.0}
+
+		value := NewArray(reporter, data)
+
+		innerValue := value.Value(2)
+		assert.NotNil(t, innerValue)
+
+		value.chain.assert(t, failure)
+		innerValue.chain.assert(t, failure)
 	})
 }
 

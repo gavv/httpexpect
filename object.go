@@ -142,6 +142,23 @@ func (o *Object) Schema(schema interface{}) *Object {
 	return o
 }
 
+// Length returns a new Number instance with value count.
+//
+// Example:
+//
+//	object := NewObject(t, map[string]interface{}{"foo": 123, "bar": 456})
+//	object.Length().IsEqual(2)
+func (o *Object) Length() *Number {
+	opChain := o.chain.enter("Length()")
+	defer opChain.leave()
+
+	if opChain.failed() {
+		return newNumber(opChain, 0)
+	}
+
+	return newNumber(opChain, float64(len(o.value)))
+}
+
 // Keys returns a new Array instance with object's keys.
 // Keys are sorted in ascending order.
 //

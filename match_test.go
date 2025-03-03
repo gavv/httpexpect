@@ -96,41 +96,75 @@ func TestMatch_Alias(t *testing.T) {
 }
 
 func TestMatch_Getters(t *testing.T) {
-	reporter := newMockReporter(t)
-
 	matches := []string{"m0", "m1", "m2"}
 	names := []string{"", "n1", "n2"}
 
-	value := NewMatch(reporter, matches, names)
+	t.Run("length", func(t *testing.T) {
+		reporter := newMockReporter(t)
 
-	assert.Equal(t, matches, value.Raw())
+		value := NewMatch(reporter, matches, names)
 
-	assert.Equal(t, 3.0, value.Length().Raw())
+		innerValue := value.Length()
+		assert.Equal(t, 3.0, innerValue.Raw())
 
-	assert.Equal(t, "m0", value.Submatch(0).Raw())
-	assert.Equal(t, "m1", value.Submatch(1).Raw())
-	assert.Equal(t, "m2", value.Submatch(2).Raw())
-	value.chain.assert(t, success)
+		value.chain.assert(t, success)
+		innerValue.chain.assert(t, success)
+	})
 
-	assert.Equal(t, "m1", value.NamedSubmatch("n1").Raw())
-	assert.Equal(t, "m2", value.NamedSubmatch("n2").Raw())
-	value.chain.assert(t, success)
+	t.Run("submatch", func(t *testing.T) {
+		reporter := newMockReporter(t)
 
-	assert.Equal(t, "", value.Submatch(-1).Raw())
-	value.chain.assert(t, failure)
-	value.chain.clear()
+		value := NewMatch(reporter, matches, names)
 
-	assert.Equal(t, "", value.Submatch(3).Raw())
-	value.chain.assert(t, failure)
-	value.chain.clear()
+		for n := range matches {
+			innerValue := value.Submatch(n)
+			assert.Equal(t, matches[n], innerValue.Raw())
 
-	assert.Equal(t, "", value.NamedSubmatch("").Raw())
-	value.chain.assert(t, failure)
-	value.chain.clear()
+			value.chain.assert(t, success)
+			innerValue.chain.assert(t, success)
+		}
+	})
 
-	assert.Equal(t, "", value.NamedSubmatch("bad").Raw())
-	value.chain.assert(t, failure)
-	value.chain.clear()
+	t.Run("submatch out of range", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewMatch(reporter, matches, names)
+
+		innerValue := value.Submatch(3)
+		assert.NotNil(t, innerValue)
+
+		value.chain.assert(t, failure)
+		innerValue.chain.assert(t, failure)
+	})
+
+	t.Run("named submatch", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewMatch(reporter, matches, names)
+
+		for n := range matches {
+			if names[n] == "" {
+				continue
+			}
+			innerValue := value.NamedSubmatch(names[n])
+			assert.Equal(t, matches[n], innerValue.Raw())
+
+			value.chain.assert(t, success)
+			innerValue.chain.assert(t, success)
+		}
+	})
+
+	t.Run("named submatch bad key", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		value := NewMatch(reporter, matches, names)
+
+		innerValue := value.NamedSubmatch("bad_key")
+		assert.NotNil(t, innerValue)
+
+		value.chain.assert(t, failure)
+		innerValue.chain.assert(t, failure)
+	})
 }
 
 func TestMatch_IsEmpty(t *testing.T) {
