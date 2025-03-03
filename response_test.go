@@ -663,34 +663,26 @@ func TestResponse_NoContent(t *testing.T) {
 		}
 
 		resp := NewResponse(reporter, httpResp)
-
 		assert.Equal(t, "", resp.Body().Raw())
 		resp.chain.assert(t, success)
-		resp.chain.clear()
 
-		resp.NoContent()
-		resp.chain.assert(t, success)
-		resp.chain.clear()
+		NewResponse(reporter, httpResp).NoContent().
+			chain.assert(t, success)
 
-		resp.HasContentType("")
-		resp.chain.assert(t, success)
-		resp.chain.clear()
+		NewResponse(reporter, httpResp).HasContentType("").
+			chain.assert(t, success)
 
-		resp.Text()
-		resp.chain.assert(t, failure)
-		resp.chain.clear()
+		NewResponse(reporter, httpResp).Text().
+			chain.assert(t, failure)
 
-		resp.Form()
-		resp.chain.assert(t, failure)
-		resp.chain.clear()
+		NewResponse(reporter, httpResp).Form().
+			chain.assert(t, failure)
 
-		resp.JSON()
-		resp.chain.assert(t, failure)
-		resp.chain.clear()
+		NewResponse(reporter, httpResp).JSON().
+			chain.assert(t, failure)
 
-		resp.JSONP("")
-		resp.chain.assert(t, failure)
-		resp.chain.clear()
+		NewResponse(reporter, httpResp).JSONP("").
+			chain.assert(t, failure)
 	})
 
 	t.Run("empty Content-Type, nil Body", func(t *testing.T) {
@@ -707,34 +699,26 @@ func TestResponse_NoContent(t *testing.T) {
 		}
 
 		resp := NewResponse(reporter, httpResp)
-
 		assert.Equal(t, "", resp.Body().Raw())
 		resp.chain.assert(t, success)
-		resp.chain.clear()
 
-		resp.NoContent()
-		resp.chain.assert(t, success)
-		resp.chain.clear()
+		NewResponse(reporter, httpResp).NoContent().
+			chain.assert(t, success)
 
-		resp.HasContentType("")
-		resp.chain.assert(t, success)
-		resp.chain.clear()
+		NewResponse(reporter, httpResp).HasContentType("").
+			chain.assert(t, success)
 
-		resp.Text()
-		resp.chain.assert(t, failure)
-		resp.chain.clear()
+		NewResponse(reporter, httpResp).Text().
+			chain.assert(t, failure)
 
-		resp.Form()
-		resp.chain.assert(t, failure)
-		resp.chain.clear()
+		NewResponse(reporter, httpResp).Form().
+			chain.assert(t, failure)
 
-		resp.JSON()
-		resp.chain.assert(t, failure)
-		resp.chain.clear()
+		NewResponse(reporter, httpResp).JSON().
+			chain.assert(t, failure)
 
-		resp.JSONP("")
-		resp.chain.assert(t, failure)
-		resp.chain.clear()
+		NewResponse(reporter, httpResp).JSONP("").
+			chain.assert(t, failure)
 	})
 
 	t.Run("non-empty Content-Type, empty Body", func(t *testing.T) {
@@ -753,14 +737,11 @@ func TestResponse_NoContent(t *testing.T) {
 		}
 
 		resp := NewResponse(reporter, httpResp)
-
 		assert.Equal(t, body, resp.Body().Raw())
 		resp.chain.assert(t, success)
-		resp.chain.clear()
 
-		resp.NoContent()
-		resp.chain.assert(t, failure)
-		resp.chain.clear()
+		NewResponse(reporter, httpResp).NoContent().
+			chain.assert(t, failure)
 	})
 
 	t.Run("empty Content-Type, Body read failure", func(t *testing.T) {
@@ -780,7 +761,6 @@ func TestResponse_NoContent(t *testing.T) {
 		}
 
 		resp := NewResponse(reporter, httpResp)
-
 		resp.NoContent()
 		resp.chain.assert(t, failure)
 	})
@@ -802,7 +782,6 @@ func TestResponse_NoContent(t *testing.T) {
 		}
 
 		resp := NewResponse(reporter, httpResp)
-
 		resp.NoContent()
 		resp.chain.assert(t, failure)
 	})
@@ -816,37 +795,30 @@ func TestResponse_ContentType(t *testing.T) {
 			"Content-Type": {"text/plain; charset=utf-8"},
 		}
 
-		resp := NewResponse(reporter, &http.Response{
+		httpResp := &http.Response{
 			Header: http.Header(headers),
-		})
+		}
 
-		resp.HasContentType("text/plain")
-		resp.chain.assert(t, success)
-		resp.chain.clear()
+		NewResponse(reporter, httpResp).HasContentType("text/plain").
+			chain.assert(t, success)
 
-		resp.HasContentType("text/plain", "utf-8")
-		resp.chain.assert(t, success)
-		resp.chain.clear()
+		NewResponse(reporter, httpResp).HasContentType("text/plain", "utf-8").
+			chain.assert(t, success)
 
-		resp.HasContentType("text/plain", "UTF-8")
-		resp.chain.assert(t, success)
-		resp.chain.clear()
+		NewResponse(reporter, httpResp).HasContentType("text/plain", "UTF-8").
+			chain.assert(t, success)
 
-		resp.HasContentType("bad")
-		resp.chain.assert(t, failure)
-		resp.chain.clear()
+		NewResponse(reporter, httpResp).HasContentType("bad").
+			chain.assert(t, failure)
 
-		resp.HasContentType("text/plain", "bad")
-		resp.chain.assert(t, failure)
-		resp.chain.clear()
+		NewResponse(reporter, httpResp).HasContentType("text/plain", "bad").
+			chain.assert(t, failure)
 
-		resp.HasContentType("")
-		resp.chain.assert(t, failure)
-		resp.chain.clear()
+		NewResponse(reporter, httpResp).HasContentType("").
+			chain.assert(t, failure)
 
-		resp.HasContentType("text/plain", "")
-		resp.chain.assert(t, failure)
-		resp.chain.clear()
+		NewResponse(reporter, httpResp).HasContentType("text/plain", "").
+			chain.assert(t, failure)
 	})
 
 	t.Run("empty type", func(t *testing.T) {
@@ -856,17 +828,15 @@ func TestResponse_ContentType(t *testing.T) {
 			"Content-Type": {"charset=utf-8"},
 		}
 
-		resp := NewResponse(reporter, &http.Response{
+		httpResp := &http.Response{
 			Header: http.Header(headers),
-		})
+		}
 
-		resp.HasContentType("")
-		resp.chain.assert(t, failure)
-		resp.chain.clear()
+		NewResponse(reporter, httpResp).HasContentType("").
+			chain.assert(t, failure)
 
-		resp.HasContentType("", "")
-		resp.chain.assert(t, failure)
-		resp.chain.clear()
+		NewResponse(reporter, httpResp).HasContentType("", "").
+			chain.assert(t, failure)
 	})
 
 	t.Run("empty charset", func(t *testing.T) {
@@ -876,21 +846,18 @@ func TestResponse_ContentType(t *testing.T) {
 			"Content-Type": {"text/plain"},
 		}
 
-		resp := NewResponse(reporter, &http.Response{
+		httpResp := &http.Response{
 			Header: http.Header(headers),
-		})
+		}
 
-		resp.HasContentType("text/plain")
-		resp.chain.assert(t, success)
-		resp.chain.clear()
+		NewResponse(reporter, httpResp).HasContentType("text/plain").
+			chain.assert(t, success)
 
-		resp.HasContentType("text/plain", "")
-		resp.chain.assert(t, success)
-		resp.chain.clear()
+		NewResponse(reporter, httpResp).HasContentType("text/plain", "").
+			chain.assert(t, success)
 
-		resp.HasContentType("text/plain", "utf-8")
-		resp.chain.assert(t, failure)
-		resp.chain.clear()
+		NewResponse(reporter, httpResp).HasContentType("text/plain", "utf-8").
+			chain.assert(t, failure)
 	})
 
 	t.Run("empty type and charset", func(t *testing.T) {
@@ -900,17 +867,15 @@ func TestResponse_ContentType(t *testing.T) {
 			"Content-Type": {";"},
 		}
 
-		resp := NewResponse(reporter, &http.Response{
+		httpResp := &http.Response{
 			Header: http.Header(headers),
-		})
+		}
 
-		resp.HasContentType("")
-		resp.chain.assert(t, failure)
-		resp.chain.clear()
+		NewResponse(reporter, httpResp).HasContentType("").
+			chain.assert(t, failure)
 
-		resp.HasContentType("", "")
-		resp.chain.assert(t, failure)
-		resp.chain.clear()
+		NewResponse(reporter, httpResp).HasContentType("", "").
+			chain.assert(t, failure)
 	})
 }
 
@@ -921,45 +886,44 @@ func TestResponse_ContentEncoding(t *testing.T) {
 		"Content-Encoding": {"gzip", "deflate"},
 	}
 
-	resp := NewResponse(reporter, &http.Response{
+	httpResp := &http.Response{
 		Header: http.Header(headers),
-	})
+	}
 
-	resp.HasContentEncoding("gzip", "deflate")
-	resp.chain.assert(t, success)
-	resp.chain.clear()
+	NewResponse(reporter, httpResp).HasContentEncoding("gzip", "deflate").
+		chain.assert(t, success)
 
-	resp.HasContentEncoding("deflate", "gzip")
-	resp.chain.assert(t, failure)
-	resp.chain.clear()
+	NewResponse(reporter, httpResp).HasContentEncoding("deflate", "gzip").
+		chain.assert(t, failure)
 
-	resp.HasContentEncoding("gzip")
-	resp.chain.assert(t, failure)
-	resp.chain.clear()
+	NewResponse(reporter, httpResp).HasContentEncoding("gzip").
+		chain.assert(t, failure)
 
-	resp.HasContentEncoding()
-	resp.chain.assert(t, failure)
-	resp.chain.clear()
+	NewResponse(reporter, httpResp).HasContentEncoding().
+		chain.assert(t, failure)
 }
 
 func TestResponse_TransferEncoding(t *testing.T) {
 	reporter := newMockReporter(t)
 
-	resp := NewResponse(reporter, &http.Response{
+	httpResp := &http.Response{
 		TransferEncoding: []string{"foo", "bar"},
-	})
+	}
 
-	resp.HasTransferEncoding("foo", "bar")
-	resp.chain.assert(t, success)
-	resp.chain.clear()
+	NewResponse(reporter, httpResp).HasTransferEncoding("foo", "bar").
+		chain.assert(t, success)
 
-	resp.HasTransferEncoding("foo")
-	resp.chain.assert(t, failure)
-	resp.chain.clear()
+	NewResponse(reporter, httpResp).HasTransferEncoding("bar", "foo").
+		chain.assert(t, failure)
 
-	resp.HasTransferEncoding()
-	resp.chain.assert(t, failure)
-	resp.chain.clear()
+	NewResponse(reporter, httpResp).HasTransferEncoding("foo", "bar", "baz").
+		chain.assert(t, failure)
+
+	NewResponse(reporter, httpResp).HasTransferEncoding("foo").
+		chain.assert(t, failure)
+
+	NewResponse(reporter, httpResp).HasTransferEncoding().
+		chain.assert(t, failure)
 }
 
 func TestResponse_Text(t *testing.T) {
@@ -979,28 +943,25 @@ func TestResponse_Text(t *testing.T) {
 		}
 
 		resp := NewResponse(reporter, httpResp)
-
 		assert.Equal(t, body, resp.Body().Raw())
 		resp.chain.assert(t, success)
-		resp.chain.clear()
 
-		resp.HasContentType("text/plain")
+		respText := resp.Text()
+		respText.chain.assert(t, success)
 		resp.chain.assert(t, success)
-		resp.chain.clear()
+		assert.Equal(t, "hello, world!", respText.Raw())
 
-		resp.HasContentType("text/plain", "utf-8")
-		resp.chain.assert(t, success)
-		resp.chain.clear()
+		NewResponse(reporter, httpResp).HasContentType("text/plain").
+			chain.assert(t, success)
 
-		resp.HasContentType("application/json")
-		resp.chain.assert(t, failure)
-		resp.chain.clear()
+		NewResponse(reporter, httpResp).HasContentType("text/plain", "utf-8").
+			chain.assert(t, success)
 
-		resp.Text()
-		resp.chain.assert(t, success)
-		resp.chain.clear()
+		NewResponse(reporter, httpResp).HasContentType("application/json").
+			chain.assert(t, failure)
 
-		assert.Equal(t, "hello, world!", resp.Text().Raw())
+		NewResponse(reporter, httpResp).
+			chain.assert(t, success)
 	})
 
 	t.Run("read failure", func(t *testing.T) {
@@ -1020,9 +981,9 @@ func TestResponse_Text(t *testing.T) {
 		}
 
 		resp := NewResponse(reporter, httpResp)
+		resp.chain.assert(t, success)
 
 		respText := resp.Text()
-
 		assert.Equal(t, "", respText.Raw())
 		respText.chain.assert(t, failure)
 		resp.chain.assert(t, failure)
@@ -1046,33 +1007,23 @@ func TestResponse_Form(t *testing.T) {
 		}
 
 		resp := NewResponse(reporter, httpResp)
-
 		assert.Equal(t, body, resp.Body().Raw())
 		resp.chain.assert(t, success)
-		resp.chain.clear()
 
-		resp.HasContentType("application/x-www-form-urlencoded")
+		respForm := resp.Form()
+		respForm.chain.assert(t, success)
 		resp.chain.assert(t, success)
-		resp.chain.clear()
+		assert.Equal(t,
+			map[string]interface{}{"a": "1", "b": "2"}, respForm.Raw())
 
-		resp.HasContentType("application/x-www-form-urlencoded", "")
-		resp.chain.assert(t, success)
-		resp.chain.clear()
+		NewResponse(reporter, httpResp).HasContentType("application/x-www-form-urlencoded").
+			chain.assert(t, success)
 
-		resp.HasContentType("text/plain")
-		resp.chain.assert(t, failure)
-		resp.chain.clear()
+		NewResponse(reporter, httpResp).HasContentType("application/x-www-form-urlencoded", "").
+			chain.assert(t, success)
 
-		resp.Form()
-		resp.chain.assert(t, success)
-		resp.chain.clear()
-
-		expected := map[string]interface{}{
-			"a": "1",
-			"b": "2",
-		}
-
-		assert.Equal(t, expected, resp.Form().Raw())
+		NewResponse(reporter, httpResp).HasContentType("text/plain").
+			chain.assert(t, failure)
 	})
 
 	t.Run("bad body", func(t *testing.T) {
@@ -1091,12 +1042,12 @@ func TestResponse_Form(t *testing.T) {
 		}
 
 		resp := NewResponse(reporter, httpResp)
+		resp.chain.assert(t, success)
 
-		resp.Form()
+		respForm := resp.Form()
+		respForm.chain.assert(t, failure)
 		resp.chain.assert(t, failure)
-		resp.chain.clear()
-
-		assert.Nil(t, resp.Form().Raw())
+		assert.Nil(t, respForm.Raw())
 	})
 
 	t.Run("bad type", func(t *testing.T) {
@@ -1115,12 +1066,12 @@ func TestResponse_Form(t *testing.T) {
 		}
 
 		resp := NewResponse(reporter, httpResp)
+		resp.chain.assert(t, success)
 
-		resp.Form()
+		respForm := resp.Form()
+		respForm.chain.assert(t, failure)
 		resp.chain.assert(t, failure)
-		resp.chain.clear()
-
-		assert.Nil(t, resp.Form().Raw())
+		assert.Nil(t, respForm.Raw())
 	})
 
 	t.Run("read failure", func(t *testing.T) {
@@ -1140,13 +1091,12 @@ func TestResponse_Form(t *testing.T) {
 		}
 
 		resp := NewResponse(reporter, httpResp)
+		resp.chain.assert(t, success)
 
 		respForm := resp.Form()
-		assert.Nil(t, respForm.Raw())
-
 		respForm.chain.assert(t, failure)
 		resp.chain.assert(t, failure)
-		resp.chain.clear()
+		assert.Nil(t, respForm.Raw())
 	})
 }
 
@@ -1167,29 +1117,23 @@ func TestResponse_JSON(t *testing.T) {
 		}
 
 		resp := NewResponse(reporter, httpResp)
-
 		assert.Equal(t, body, resp.Body().Raw())
 		resp.chain.assert(t, success)
-		resp.chain.clear()
 
-		resp.HasContentType("application/json")
+		respJSON := resp.JSON()
+		respJSON.chain.assert(t, success)
 		resp.chain.assert(t, success)
-		resp.chain.clear()
-
-		resp.HasContentType("application/json", "utf-8")
-		resp.chain.assert(t, success)
-		resp.chain.clear()
-
-		resp.HasContentType("text/plain")
-		resp.chain.assert(t, failure)
-		resp.chain.clear()
-
-		resp.JSON()
-		resp.chain.assert(t, success)
-		resp.chain.clear()
-
 		assert.Equal(t,
-			map[string]interface{}{"key": "value"}, resp.JSON().Object().Raw())
+			map[string]interface{}{"key": "value"}, respJSON.Object().Raw())
+
+		NewResponse(reporter, httpResp).HasContentType("application/json").
+			chain.assert(t, success)
+
+		NewResponse(reporter, httpResp).HasContentType("application/json", "utf-8").
+			chain.assert(t, success)
+
+		NewResponse(reporter, httpResp).HasContentType("text/plain").
+			chain.assert(t, failure)
 	})
 
 	t.Run("bad body", func(t *testing.T) {
@@ -1208,12 +1152,12 @@ func TestResponse_JSON(t *testing.T) {
 		}
 
 		resp := NewResponse(reporter, httpResp)
+		resp.chain.assert(t, success)
 
-		resp.JSON()
+		respJSON := resp.JSON()
+		respJSON.chain.assert(t, failure)
 		resp.chain.assert(t, failure)
-		resp.chain.clear()
-
-		assert.Nil(t, resp.JSON().Raw())
+		assert.Nil(t, respJSON.Raw())
 	})
 
 	t.Run("empty charset", func(t *testing.T) {
@@ -1232,13 +1176,13 @@ func TestResponse_JSON(t *testing.T) {
 		}
 
 		resp := NewResponse(reporter, httpResp)
-
-		resp.JSON()
 		resp.chain.assert(t, success)
-		resp.chain.clear()
 
+		respJSON := resp.JSON()
+		respJSON.chain.assert(t, success)
+		resp.chain.assert(t, success)
 		assert.Equal(t,
-			map[string]interface{}{"key": "value"}, resp.JSON().Object().Raw())
+			map[string]interface{}{"key": "value"}, respJSON.Object().Raw())
 	})
 
 	t.Run("bad charset", func(t *testing.T) {
@@ -1257,12 +1201,12 @@ func TestResponse_JSON(t *testing.T) {
 		}
 
 		resp := NewResponse(reporter, httpResp)
+		resp.chain.assert(t, success)
 
-		resp.JSON()
+		respJSON := resp.JSON()
+		respJSON.chain.assert(t, failure)
 		resp.chain.assert(t, failure)
-		resp.chain.clear()
-
-		assert.Equal(t, nil, resp.JSON().Raw())
+		assert.Nil(t, respJSON.Raw())
 	})
 
 	t.Run("read failure", func(t *testing.T) {
@@ -1282,12 +1226,12 @@ func TestResponse_JSON(t *testing.T) {
 		}
 
 		resp := NewResponse(reporter, httpResp)
+		resp.chain.assert(t, success)
 
 		respJSON := resp.JSON()
-		assert.Nil(t, respJSON.Raw())
 		respJSON.chain.assert(t, failure)
 		resp.chain.assert(t, failure)
-		resp.chain.clear()
+		assert.Nil(t, respJSON.Raw())
 	})
 }
 
@@ -1313,38 +1257,30 @@ func TestResponse_JSONP(t *testing.T) {
 					}
 
 					resp := NewResponse(reporter, httpResp)
-
 					assert.Equal(t, body, resp.Body().Raw())
 					resp.chain.assert(t, success)
-					resp.chain.clear()
 
-					resp.HasContentType("application/javascript")
+					respJSONP := resp.JSONP("foo")
+					respJSONP.chain.assert(t, success)
 					resp.chain.assert(t, success)
-					resp.chain.clear()
-
-					resp.HasContentType("application/javascript", "utf-8")
-					resp.chain.assert(t, success)
-					resp.chain.clear()
-
-					resp.HasContentType("text/plain")
-					resp.chain.assert(t, failure)
-					resp.chain.clear()
-
-					resp.JSONP("foo")
-					resp.chain.assert(t, success)
-					resp.chain.clear()
-
 					assert.Equal(t,
 						map[string]interface{}{"key": "value"},
-						resp.JSONP("foo").Object().Raw())
+						respJSONP.Object().Raw())
 
-					resp.JSONP("fo")
-					resp.chain.assert(t, failure)
-					resp.chain.clear()
+					NewResponse(reporter, httpResp).HasContentType("application/javascript").
+						chain.assert(t, success)
 
-					resp.JSONP("")
-					resp.chain.assert(t, failure)
-					resp.chain.clear()
+					NewResponse(reporter, httpResp).HasContentType("application/javascript", "utf-8").
+						chain.assert(t, success)
+
+					NewResponse(reporter, httpResp).HasContentType("text/plain").
+						chain.assert(t, failure)
+
+					NewResponse(reporter, httpResp).JSONP("fo").
+						chain.assert(t, failure)
+
+					NewResponse(reporter, httpResp).JSONP("").
+						chain.assert(t, failure)
 				})
 		}
 	})
@@ -1371,12 +1307,12 @@ func TestResponse_JSONP(t *testing.T) {
 					}
 
 					resp := NewResponse(reporter, httpResp)
+					resp.chain.assert(t, success)
 
-					resp.JSONP("foo")
+					respJSONP := resp.JSONP("foo")
+					respJSONP.chain.assert(t, failure)
 					resp.chain.assert(t, failure)
-					resp.chain.clear()
-
-					assert.Nil(t, resp.JSONP("foo").Raw())
+					assert.Nil(t, respJSONP.Raw())
 				})
 		}
 	})
@@ -1400,8 +1336,6 @@ func TestResponse_JSONP(t *testing.T) {
 
 		resp.JSONP("foo")
 		resp.chain.assert(t, success)
-		resp.chain.clear()
-
 		assert.Equal(t,
 			map[string]interface{}{"key": "value"}, resp.JSONP("foo").Object().Raw())
 	})
@@ -1422,12 +1356,12 @@ func TestResponse_JSONP(t *testing.T) {
 		}
 
 		resp := NewResponse(reporter, httpResp)
+		resp.chain.assert(t, success)
 
-		resp.JSONP("foo")
+		respJSONP := resp.JSONP("foo")
+		respJSONP.chain.assert(t, failure)
 		resp.chain.assert(t, failure)
-		resp.chain.clear()
-
-		assert.Nil(t, resp.JSONP("foo").Raw())
+		assert.Nil(t, respJSONP.Raw())
 	})
 
 	t.Run("read failure", func(t *testing.T) {
@@ -1447,12 +1381,12 @@ func TestResponse_JSONP(t *testing.T) {
 		}
 
 		resp := NewResponse(reporter, httpResp)
+		resp.chain.assert(t, success)
 
 		respJSONP := resp.JSONP("foo")
-		assert.Nil(t, respJSONP.Raw())
 		respJSONP.chain.assert(t, failure)
 		resp.chain.assert(t, failure)
-		resp.chain.clear()
+		assert.Nil(t, respJSONP.Raw())
 	})
 }
 
