@@ -1,10 +1,10 @@
 package httpexpect
 
 import (
-	"bytes"
 	"errors"
 	"io"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -20,62 +20,171 @@ func (failingReader) Close() error {
 	return errors.New("error")
 }
 
+func httpRequest(body io.Reader) *http.Request {
+	req, _ := http.NewRequest("GET", "http://example.com", body)
+	return req
+}
+
+func httpResponse(body io.Reader) *http.Response {
+	resp := &http.Response{}
+	if body != nil {
+		resp.Body = io.NopCloser(body)
+	}
+	return resp
+}
+
 func TestPrinter_Compact(t *testing.T) {
-	printer := NewCompactPrinter(t)
+	cases := []struct {
+		name     string
+		request  *http.Request
+		response *http.Response
+	}{
+		{
+			name:     "nil request and response",
+			request:  nil,
+			response: nil,
+		},
+		{
+			name:     "has body",
+			request:  httpRequest(strings.NewReader("test")),
+			response: httpResponse(strings.NewReader("test")),
+		},
+		{
+			name:     "no body",
+			request:  httpRequest(nil),
+			response: httpResponse(nil),
+		},
+	}
 
-	body1 := bytes.NewBufferString("body1")
-	body2 := bytes.NewBufferString("body2")
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			printer := NewCompactPrinter(t)
 
-	req1, _ := http.NewRequest("GET", "http://example.com", body1)
-	req2, _ := http.NewRequest("GET", "http://example.com", nil)
+			printer.Request(tc.request)
+			printer.Response(tc.response, 0)
+		})
+	}
+}
 
-	printer.Request(req1)
-	printer.Request(req2)
-	printer.Request(nil)
+func TestPrinter_Curl(t *testing.T) {
+	cases := []struct {
+		name     string
+		request  *http.Request
+		response *http.Response
+	}{
+		{
+			name:     "nil request and response",
+			request:  nil,
+			response: nil,
+		},
+		{
+			name:     "has body",
+			request:  httpRequest(strings.NewReader("test")),
+			response: httpResponse(strings.NewReader("test")),
+		},
+		{
+			name:     "no body",
+			request:  httpRequest(nil),
+			response: httpResponse(nil),
+		},
+	}
 
-	printer.Response(&http.Response{Body: io.NopCloser(body2)}, 0)
-	printer.Response(&http.Response{}, 0)
-	printer.Response(nil, 0)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			printer := NewCurlPrinter(t)
+
+			printer.Request(tc.request)
+			printer.Response(tc.response, 0)
+		})
+	}
 }
 
 func TestPrinter_Debug(t *testing.T) {
-	printer := NewDebugPrinter(t, true)
+	cases := []struct {
+		name      string
+		printBody bool
+		request   *http.Request
+		response  *http.Response
+	}{
+		{
+			name:      "nil request and response",
+			printBody: true,
+			request:   nil,
+			response:  nil,
+		},
+		{
+			name:      "has body, print body",
+			printBody: true,
+			request:   httpRequest(strings.NewReader("test")),
+			response:  httpResponse(strings.NewReader("test")),
+		},
+		{
+			name:      "has body, don't print body",
+			printBody: false,
+			request:   httpRequest(strings.NewReader("test")),
+			response:  httpResponse(strings.NewReader("test")),
+		},
+		{
+			name:      "no body, print body",
+			printBody: true,
+			request:   httpRequest(nil),
+			response:  httpResponse(nil),
+		},
+		{
+			name:      "no body, don't print body",
+			printBody: false,
+			request:   httpRequest(nil),
+			response:  httpResponse(nil),
+		},
+	}
 
-	body1 := bytes.NewBufferString("body1")
-	body2 := bytes.NewBufferString("body2")
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			printer := NewDebugPrinter(t, tc.printBody)
 
-	req1, _ := http.NewRequest("GET", "http://example.com", body1)
-	req2, _ := http.NewRequest("GET", "http://example.com", nil)
-
-	printer.Request(req1)
-	printer.Request(req2)
-	printer.Request(nil)
-
-	printer.Response(&http.Response{Body: io.NopCloser(body2)}, 0)
-	printer.Response(&http.Response{}, 0)
-	printer.Response(nil, 0)
+			printer.Request(tc.request)
+			printer.Response(tc.response, 0)
+		})
+	}
 }
 
 func TestPrinter_Panics(t *testing.T) {
+	t.Run("CompactPrinter", func(t *testing.T) {
+		printer := NewCompactPrinter(t)
+
+		assert.NotPanics(t, func() {
+			printer.Request(&http.Request{})
+		})
+		assert.NotPanics(t, func() {
+			printer.Response(&http.Response{
+				Body: failingReader{},
+			}, 0)
+		})
+	})
+
 	t.Run("CurlPrinter", func(t *testing.T) {
-		curl := NewCurlPrinter(t)
+		printer := NewCurlPrinter(t)
 
 		assert.Panics(t, func() {
-			curl.Request(&http.Request{})
+			printer.Request(&http.Request{})
+		})
+		assert.NotPanics(t, func() {
+			printer.Response(&http.Response{
+				Body: failingReader{},
+			}, 0)
 		})
 	})
 
 	t.Run("DebugPrinter", func(t *testing.T) {
-		curl := NewDebugPrinter(t, true)
+		printer := NewDebugPrinter(t, true)
 
 		assert.Panics(t, func() {
-			curl.Request(&http.Request{
+			printer.Request(&http.Request{
 				Body: failingReader{},
 			})
 		})
-
 		assert.Panics(t, func() {
-			curl.Response(&http.Response{
+			printer.Response(&http.Response{
 				Body: failingReader{},
 			}, 0)
 		})

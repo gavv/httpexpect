@@ -196,7 +196,7 @@ func (m *Match) Index(index int) *String {
 	return m.Submatch(index)
 }
 
-// Deprecated: use Submatch instead.
+// Deprecated: use NamedSubmatch instead.
 func (m *Match) Name(name string) *String {
 	return m.NamedSubmatch(name)
 }
