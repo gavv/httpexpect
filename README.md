@@ -30,7 +30,7 @@ Workflow:
 
 ##### Payload assertions
 
-* Type-specific assertions, supported types: object, array, string, number, boolean, null, datetime.
+* Type-specific assertions, supported types: object, array, string, number, boolean, null, datetime, duration, cookie.
 * Regular expressions.
 * Simple JSON queries (using subset of [JSONPath](http://goessner.net/articles/JsonPath/)), provided by [`jsonpath`](https://github.com/yalp/jsonpath) package.
 * [JSON Schema](http://json-schema.org/) validation, provided by [`gojsonschema`](https://github.com/xeipuuv/gojsonschema) package.
@@ -48,31 +48,25 @@ Workflow:
 * Failures are reported using [`testify`](https://github.com/stretchr/testify/) (`assert` or `require` package) or standard `testing` package.
 * JSON values are pretty-printed using `encoding/json`, Go values are pretty-printed using [`litter`](https://github.com/sanity-io/litter).
 * Dumping requests and responses in various formats, using [`httputil`](https://golang.org/pkg/net/http/httputil/), [`http2curl`](https://github.com/moul/http2curl), or simple compact logger.
+* Printing stacktrace on failure in verbose or compact format.
 * Color support using [`fatih/color`](https://github.com/fatih/color).
 
 ##### Tuning
 
 * Tests can communicate with server via real HTTP client or invoke `net/http` or [`fasthttp`](https://github.com/valyala/fasthttp/) handler directly.
 * User can provide custom HTTP client, WebSocket dialer, HTTP request factory (e.g. from the Google App Engine testing).
-* User can configure formatting options or provide custom templates based on `text/template` engine.
+* User can configure redirect and retry policies and timeouts.
+* User can configure formatting options (what parts to display, how to format numbers, etc.) or provide custom templates based on `text/template` engine.
 * Custom handlers may be provided for logging, printing requests and responses, handling succeeded and failed assertions.
 
-## Versions
+## Versioning
 
 The versions are selected according to the [semantic versioning](https://semver.org/) scheme. Every new major version gets its own stable branch with a backwards compatibility promise. Releases are tagged from stable branches.
 
-The current stable branch is `v2`. Previous branches are still maintained, but no new features are added.
-
-If you're using go.mod, use a versioned import path:
+The current stable branch is `v2`:
 
 ```go
 import "github.com/gavv/httpexpect/v2"
-```
-
-Otherwise, use gopkg.in import path:
-
-```go
-import "gopkg.in/gavv/httpexpect.v2"
 ```
 
 ## Documentation
@@ -706,7 +700,7 @@ e := httpexpect.WithConfig(httpexpect.Config{
 })
 ```
 
-##### Global time-out/cancellation
+##### Global timeout/cancellation
 
 ```go
 handler := FruitsHandler()
@@ -732,7 +726,7 @@ e.GET("/fruits").
 	Status(http.StatusOK)
 ```
 
-##### Per-request time-out/cancellation
+##### Per-request timeout/cancellation
 
 ```go
 // per-request context
@@ -755,15 +749,56 @@ e.POST("/fruits").
 	Status(http.StatusOK)
 ```
 
-##### Support for aliases in failure messages
+##### Choosing failure reporter
+
+```go
+// default reporter, uses testify/assert
+// failures don't terminate test immediately, but mark test as failed
+e := httpexpect.WithConfig(httpexpect.Config{
+	Reporter: httpexpect.NewAssertReporter(t),
+})
+
+// uses testify/require
+// failures terminate test immediately
+e := httpexpect.WithConfig(httpexpect.Config{
+	Reporter: httpexpect.NewRequireReporter(t),
+})
+
+// if you're using bare testing.T without testify
+e := httpexpect.WithConfig(httpexpect.Config{
+	Reporter: t,
+})
+
+// if you're using bare testing.T and want failures to terminate test immediately
+e := httpexpect.WithConfig(httpexpect.Config{
+	Reporter: httpexpect.NewFatalReporter(t),
+})
+
+// if you want fatal failures triggered from other goroutines
+e := httpexpect.WithConfig(httpexpect.Config{
+	Reporter: httpexpect.NewPanicReporter(t),
+})
+```
+
+##### Assigning names to requests
+
+```go
+// when the tests fails, assertion message will mention request name:
+//   request name: Get Fruits
+e.GET("/fruits").
+    WithName("Get Fruits")
+	Expect().
+	Status(http.StatusOK).JSON().Array().IsEmpty()
+```
+
+##### Assigning aliases to values
 
 ```go
 // when the tests fails, assertion path in the failure message is:
-//   Request("GET").Expect().JSON().Array().IsEmpty()
+//   assertion: Request("GET").Expect().JSON().Array().IsEmpty()
 e.GET("/fruits").
 	Expect().
 	Status(http.StatusOK).JSON().Array().IsEmpty()
-
 
 // assign alias "fruits" to the Array variable
 fruits := e.GET("/fruits").
@@ -771,7 +806,7 @@ fruits := e.GET("/fruits").
 	Status(http.StatusOK).JSON().Array().Alias("fruits")
 
 // assertion path in the failure message is now:
-//   fruits.IsEmpty()
+//   assertion: fruits.IsEmpty()
 fruits.IsEmpty()
 ```
 
@@ -807,7 +842,7 @@ e := httpexpect.WithConfig(httpexpect.Config{
 ##### Customize failure formatting
 
 ```go
-// customize formatting options
+// change formatting options
 e := httpexpect.WithConfig(httpexpect.Config{
 	Reporter:  httpexpect.NewAssertReporter(t),
 	Formatter: &httpexpect.DefaultFormatter{
@@ -819,7 +854,7 @@ e := httpexpect.WithConfig(httpexpect.Config{
 	},
 })
 
-// customize formatting template
+// provide custom templates
 e := httpexpect.WithConfig(httpexpect.Config{
 	Reporter:  httpexpect.NewAssertReporter(t),
 	Formatter: &httpexpect.DefaultFormatter{
@@ -857,18 +892,24 @@ e := httpexpect.WithConfig(httpexpect.Config{
 })
 ```
 
+## Environment variables
+
+The following environment variables are checked when `ColorModeAuto` is used:
+
+* `FORCE_COLOR` - if set to a positive integers, colors are enabled
+* `NO_COLOR` - if set to non-empty string, colors are disabled ([see also](https://no-color.org/))
+* `TERM` - if starts with `dumb`, colors are disabled
+
 ## Similar packages
 
 * [`gorequest`](https://github.com/parnurzeal/gorequest)
-* [`baloo`](https://github.com/h2non/baloo)
 * [`apitest`](https://github.com/steinfletcher/apitest)
+* [`baloo`](https://github.com/h2non/baloo)
 * [`gofight`](https://github.com/appleboy/gofight)
+* [`go-hit`](https://github.com/Eun/go-hit)
 * [`frisby`](https://github.com/verdverm/frisby)
 * [`forest`](https://github.com/emicklei/forest)
 * [`restit`](https://github.com/go-restit/restit)
-* [`httptesting`](https://github.com/dolab/httptesting)
-* [`http-test`](https://github.com/vsco/http-test)
-* [`go-json-rest`](https://github.com/ant0ine/go-json-rest)
 
 ## License
 
