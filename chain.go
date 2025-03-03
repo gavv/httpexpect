@@ -472,7 +472,7 @@ func (c *chain) treeFailed() bool {
 }
 
 // Report failure unless chain has specified state.
-// For tests.
+// For httpexpect own tests.
 func (c *chain) assert(t testing.TB, result chainResult) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
@@ -489,22 +489,13 @@ func (c *chain) assert(t testing.TB, result chainResult) {
 }
 
 // Report failure unless chain has specified flags.
-// For tests.
+// For httpexpect own tests.
 func (c *chain) assertFlags(t testing.TB, flags chainFlags) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	assert.Equal(t, flags, c.flags,
 		"expected: chain has specified flags")
-}
-
-// Clear failure flags.
-// For tests.
-func (c *chain) clear() {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	c.flags &= ^(flagFailed | flagFailedChildren)
 }
 
 // Whether handler outputs to testing.TB
