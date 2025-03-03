@@ -1117,6 +1117,20 @@ func TestRequest_Path(t *testing.T) {
 		assert.Equal(t, "http://example.com/12345",
 			client.req.URL.String())
 	})
+
+	t.Run("urlencoded arg", func(t *testing.T) {
+		arg1 := "aaa:bbb/ccc/ddd@1.2.3"
+		arg2 := "foo/bar+baz"
+		req := NewRequestC(config, "GET", "/data/{arg1}/{arg2}")
+		req.WithPath("arg1", neturl.QueryEscape(arg1))
+		req.WithPath("arg2", neturl.QueryEscape(arg2))
+		req.Expect().chain.assert(t, success)
+		require.NotNil(t, client.req)
+		assert.Equal(t, "http://example.com/data/"+
+			neturl.QueryEscape(neturl.QueryEscape(arg1))+"/"+
+			neturl.QueryEscape(neturl.QueryEscape(arg2)),
+			client.req.URL.String())
+	})
 }
 
 func TestRequest_PathObject(t *testing.T) {

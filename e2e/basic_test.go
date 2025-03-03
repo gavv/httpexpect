@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/gavv/httpexpect/v2"
@@ -55,6 +57,12 @@ func createBasicHandler() http.Handler {
 		}
 	})
 
+	mux.HandleFunc("/echo/", func(w http.ResponseWriter, r *http.Request) {
+		arg := strings.TrimPrefix(r.URL.Path, "/echo/")
+		w.Header().Set("Content-Type", "text/plain")
+		_, _ = w.Write([]byte(arg))
+	})
+
 	return mux
 }
 
@@ -90,6 +98,18 @@ func testBasicHandler(e *httpexpect.Expect) {
 		Expect().
 		Status(http.StatusOK).
 		Form().HasValue("username", "john").HasValue("password", "secret")
+
+	e.PUT("/echo/{arg}").
+		WithPath("arg", "test_arg").
+		Expect().
+		Status(http.StatusOK).Body().IsEqual("test_arg")
+
+	e.PUT("/echo/{arg}").
+		WithPath("arg", url.QueryEscape("some:data/thats/encoded@0.1.0")).
+		Expect().
+		Status(http.StatusOK).
+		Body().
+		IsEqual(url.QueryEscape("some:data/thats/encoded@0.1.0"))
 }
 
 func TestE2EBasic_LiveDefault(t *testing.T) {
