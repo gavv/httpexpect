@@ -3,7 +3,7 @@ all: tidy gen build lint test
 tidy:
 	go mod tidy -v
 	cd _examples && go get -v -u github.com/gavv/httpexpect/v2
-	cd _examples && go mod tidy -v -compat=1.17
+	cd _examples && go mod tidy -v
 
 gen:
 	go generate ./...

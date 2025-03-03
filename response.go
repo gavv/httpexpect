@@ -237,7 +237,7 @@ func (r *Response) Alias(name string) *Response {
 // Example:
 //
 //	resp := NewResponse(t, response, time.Duration(10000000))
-//	resp.RoundTripTime().Lt(10 * time.Millisecond)
+//	resp.RoundTripTime().IsLt(10 * time.Millisecond)
 func (r *Response) RoundTripTime() *Duration {
 	opChain := r.chain.enter("RoundTripTime()")
 	defer opChain.leave()
@@ -453,7 +453,7 @@ func (r *Response) Headers() *Object {
 //
 //	resp := NewResponse(t, response)
 //	resp.Header("Content-Type").IsEqual("application-json")
-//	resp.Header("Date").AsDateTime().Le(time.Now())
+//	resp.Header("Date").AsDateTime().IsLe(time.Now())
 func (r *Response) Header(header string) *String {
 	opChain := r.chain.enter("Header(%q)", header)
 	defer opChain.leave()

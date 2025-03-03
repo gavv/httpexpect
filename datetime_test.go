@@ -22,10 +22,10 @@ func TestDateTime_FailedChain(t *testing.T) {
 	value.NotInRange(tm, tm)
 	value.InList(tm, tm)
 	value.NotInList(tm, tm)
-	value.Gt(tm)
-	value.Ge(tm)
-	value.Lt(tm)
-	value.Le(tm)
+	value.IsGt(tm)
+	value.IsGe(tm)
+	value.IsLt(tm)
+	value.IsLe(tm)
 
 	value.Zone().chain.assert(t, failure)
 	value.Year().chain.assert(t, failure)
@@ -198,10 +198,10 @@ func TestDateTime_IsGreater(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			NewDateTime(reporter, tc.time).Gt(tc.value).
+			NewDateTime(reporter, tc.time).IsGt(tc.value).
 				chain.assert(t, tc.wantGt)
 
-			NewDateTime(reporter, tc.time).Ge(tc.value).
+			NewDateTime(reporter, tc.time).IsGe(tc.value).
 				chain.assert(t, tc.wantGe)
 		})
 	}
@@ -242,10 +242,10 @@ func TestDateTime_IsLesser(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			NewDateTime(reporter, tc.time).Lt(tc.value).
+			NewDateTime(reporter, tc.time).IsLt(tc.value).
 				chain.assert(t, tc.wantLt)
 
-			NewDateTime(reporter, tc.time).Le(tc.value).
+			NewDateTime(reporter, tc.time).IsLe(tc.value).
 				chain.assert(t, tc.wantLe)
 		})
 	}

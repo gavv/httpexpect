@@ -21,10 +21,10 @@ func TestDuration_FailedChain(t *testing.T) {
 	value.NotInRange(tm, tm)
 	value.InList(tm)
 	value.NotInList(tm)
-	value.Gt(tm)
-	value.Ge(tm)
-	value.Lt(tm)
-	value.Le(tm)
+	value.IsGt(tm)
+	value.IsGe(tm)
+	value.IsLt(tm)
+	value.IsLe(tm)
 }
 
 func TestDuration_Constructors(t *testing.T) {
@@ -144,10 +144,10 @@ func TestDuration_IsGreater(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			NewDuration(reporter, tc.duration).Gt(tc.value).
+			NewDuration(reporter, tc.duration).IsGt(tc.value).
 				chain.assert(t, tc.wantGt)
 
-			NewDuration(reporter, tc.duration).Ge(tc.value).
+			NewDuration(reporter, tc.duration).IsGe(tc.value).
 				chain.assert(t, tc.wantGe)
 		})
 	}
@@ -188,10 +188,10 @@ func TestDuration_IsLesser(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 
-			NewDuration(reporter, tc.duration).Lt(tc.value).
+			NewDuration(reporter, tc.duration).IsLt(tc.value).
 				chain.assert(t, tc.wantLt)
 
-			NewDuration(reporter, tc.duration).Le(tc.value).
+			NewDuration(reporter, tc.duration).IsLe(tc.value).
 				chain.assert(t, tc.wantLe)
 		})
 	}

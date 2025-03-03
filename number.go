@@ -723,7 +723,7 @@ func (n *Number) NotInList(values ...interface{}) *Number {
 	return n
 }
 
-// Gt succeeds if number is greater than given value.
+// IsGt succeeds if number is greater than given value.
 //
 // value should have numeric type convertible to float64. Before comparison,
 // it is converted to float64.
@@ -731,10 +731,10 @@ func (n *Number) NotInList(values ...interface{}) *Number {
 // Example:
 //
 //	number := NewNumber(t, 123)
-//	number.Gt(float64(122))
-//	number.Gt(int32(122))
-func (n *Number) Gt(value interface{}) *Number {
-	opChain := n.chain.enter("Gt()")
+//	number.IsGt(float64(122))
+//	number.IsGt(int32(122))
+func (n *Number) IsGt(value interface{}) *Number {
+	opChain := n.chain.enter("IsGt()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -760,7 +760,7 @@ func (n *Number) Gt(value interface{}) *Number {
 	return n
 }
 
-// Ge succeeds if number is greater than or equal to given value.
+// IsGe succeeds if number is greater than or equal to given value.
 //
 // value should have numeric type convertible to float64. Before comparison,
 // it is converted to float64.
@@ -768,10 +768,10 @@ func (n *Number) Gt(value interface{}) *Number {
 // Example:
 //
 //	number := NewNumber(t, 123)
-//	number.Ge(float64(122))
-//	number.Ge(int32(122))
-func (n *Number) Ge(value interface{}) *Number {
-	opChain := n.chain.enter("Ge()")
+//	number.IsGe(float64(122))
+//	number.IsGe(int32(122))
+func (n *Number) IsGe(value interface{}) *Number {
+	opChain := n.chain.enter("IsGe()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -797,7 +797,7 @@ func (n *Number) Ge(value interface{}) *Number {
 	return n
 }
 
-// Lt succeeds if number is lesser than given value.
+// IsLt succeeds if number is lesser than given value.
 //
 // value should have numeric type convertible to float64. Before comparison,
 // it is converted to float64.
@@ -805,10 +805,10 @@ func (n *Number) Ge(value interface{}) *Number {
 // Example:
 //
 //	number := NewNumber(t, 123)
-//	number.Lt(float64(124))
-//	number.Lt(int32(124))
-func (n *Number) Lt(value interface{}) *Number {
-	opChain := n.chain.enter("Lt()")
+//	number.IsLt(float64(124))
+//	number.IsLt(int32(124))
+func (n *Number) IsLt(value interface{}) *Number {
+	opChain := n.chain.enter("IsLt()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -834,7 +834,7 @@ func (n *Number) Lt(value interface{}) *Number {
 	return n
 }
 
-// Le succeeds if number is lesser than or equal to given value.
+// IsLe succeeds if number is lesser than or equal to given value.
 //
 // value should have numeric type convertible to float64. Before comparison,
 // it is converted to float64.
@@ -842,10 +842,10 @@ func (n *Number) Lt(value interface{}) *Number {
 // Example:
 //
 //	number := NewNumber(t, 123)
-//	number.Le(float64(124))
-//	number.Le(int32(124))
-func (n *Number) Le(value interface{}) *Number {
-	opChain := n.chain.enter("Le()")
+//	number.IsLe(float64(124))
+//	number.IsLe(int32(124))
+func (n *Number) IsLe(value interface{}) *Number {
+	opChain := n.chain.enter("IsLe()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -869,6 +869,26 @@ func (n *Number) Le(value interface{}) *Number {
 	}
 
 	return n
+}
+
+// Deprecated: use IsGt instead.
+func (n *Number) Gt(value interface{}) *Number {
+	return n.IsGt(value)
+}
+
+// Deprecated: use IsGe instead.
+func (n *Number) Ge(value interface{}) *Number {
+	return n.IsGe(value)
+}
+
+// Deprecated: use IsLt instead.
+func (n *Number) Lt(value interface{}) *Number {
+	return n.IsLt(value)
+}
+
+// Deprecated: use IsLe instead.
+func (n *Number) Le(value interface{}) *Number {
+	return n.IsLe(value)
 }
 
 // IsInt succeeds if number is a signed integer of the specified bit width

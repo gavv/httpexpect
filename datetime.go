@@ -19,10 +19,10 @@ type DateTime struct {
 // Example:
 //
 //	dt := NewDateTime(t, time.Now())
-//	dt.Le(time.Now())
+//	dt.IsLe(time.Now())
 //
 //	time.Sleep(time.Second)
-//	dt.Lt(time.Now())
+//	dt.IsLt(time.Now())
 func NewDateTime(reporter Reporter, value time.Time) *DateTime {
 	return newDateTime(newChainWithDefaults("DateTime()", reporter), value)
 }
@@ -522,14 +522,14 @@ func (dt *DateTime) NotInList(values ...time.Time) *DateTime {
 	return dt
 }
 
-// Gt succeeds if DateTime is greater than given value.
+// IsGt succeeds if DateTime is greater than given value.
 //
 // Example:
 //
 //	dt := NewDateTime(t, time.Unix(0, 2))
-//	dt.Gt(time.Unix(0, 1))
-func (dt *DateTime) Gt(value time.Time) *DateTime {
-	opChain := dt.chain.enter("Gt()")
+//	dt.IsGt(time.Unix(0, 1))
+func (dt *DateTime) IsGt(value time.Time) *DateTime {
+	opChain := dt.chain.enter("IsGt()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -550,14 +550,14 @@ func (dt *DateTime) Gt(value time.Time) *DateTime {
 	return dt
 }
 
-// Ge succeeds if DateTime is greater than or equal to given value.
+// IsGe succeeds if DateTime is greater than or equal to given value.
 //
 // Example:
 //
 //	dt := NewDateTime(t, time.Unix(0, 2))
-//	dt.Ge(time.Unix(0, 1))
-func (dt *DateTime) Ge(value time.Time) *DateTime {
-	opChain := dt.chain.enter("Ge()")
+//	dt.IsGe(time.Unix(0, 1))
+func (dt *DateTime) IsGe(value time.Time) *DateTime {
+	opChain := dt.chain.enter("IsGe()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -578,14 +578,14 @@ func (dt *DateTime) Ge(value time.Time) *DateTime {
 	return dt
 }
 
-// Lt succeeds if DateTime is lesser than given value.
+// IsLt succeeds if DateTime is lesser than given value.
 //
 // Example:
 //
 //	dt := NewDateTime(t, time.Unix(0, 1))
-//	dt.Lt(time.Unix(0, 2))
-func (dt *DateTime) Lt(value time.Time) *DateTime {
-	opChain := dt.chain.enter("Lt()")
+//	dt.IsLt(time.Unix(0, 2))
+func (dt *DateTime) IsLt(value time.Time) *DateTime {
+	opChain := dt.chain.enter("IsLt()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -606,14 +606,14 @@ func (dt *DateTime) Lt(value time.Time) *DateTime {
 	return dt
 }
 
-// Le succeeds if DateTime is lesser than or equal to given value.
+// IsLe succeeds if DateTime is lesser than or equal to given value.
 //
 // Example:
 //
 //	dt := NewDateTime(t, time.Unix(0, 1))
-//	dt.Le(time.Unix(0, 2))
-func (dt *DateTime) Le(value time.Time) *DateTime {
-	opChain := dt.chain.enter("Le()")
+//	dt.IsLe(time.Unix(0, 2))
+func (dt *DateTime) IsLe(value time.Time) *DateTime {
+	opChain := dt.chain.enter("IsLe()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -632,6 +632,26 @@ func (dt *DateTime) Le(value time.Time) *DateTime {
 	}
 
 	return dt
+}
+
+// Deprecated: use IsGt instead.
+func (dt *DateTime) Gt(value time.Time) *DateTime {
+	return dt.IsGt(value)
+}
+
+// Deprecated: use IsGe instead.
+func (dt *DateTime) Ge(value time.Time) *DateTime {
+	return dt.IsGe(value)
+}
+
+// Deprecated: use IsLt instead.
+func (dt *DateTime) Lt(value time.Time) *DateTime {
+	return dt.IsLt(value)
+}
+
+// Deprecated: use IsLe instead.
+func (dt *DateTime) Le(value time.Time) *DateTime {
+	return dt.IsLe(value)
 }
 
 // AsUTC returns a new DateTime instance in UTC timeZone.

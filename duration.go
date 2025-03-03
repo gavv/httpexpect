@@ -19,7 +19,7 @@ type Duration struct {
 // Example:
 //
 //	d := NewDuration(t, time.Second)
-//	d.Le(time.Minute)
+//	d.IsLe(time.Minute)
 func NewDuration(reporter Reporter, value time.Duration) *Duration {
 	return newDuration(newChainWithDefaults("Duration()", reporter), &value)
 }
@@ -31,7 +31,7 @@ func NewDuration(reporter Reporter, value time.Duration) *Duration {
 // Example:
 //
 //	d := NewDurationC(config, time.Second)
-//	d.Le(time.Minute)
+//	d.IsLe(time.Minute)
 func NewDurationC(config Config, value time.Duration) *Duration {
 	return newDuration(newChainWithConfig("Duration()", config.withDefaults()), &value)
 }
@@ -194,14 +194,14 @@ func (d *Duration) Equal(value time.Duration) *Duration {
 	return d.IsEqual(value)
 }
 
-// Gt succeeds if Duration is greater than given value.
+// IsGt succeeds if Duration is greater than given value.
 //
 // Example:
 //
 //	d := NewDuration(t, time.Minute)
-//	d.Gt(time.Second)
-func (d *Duration) Gt(value time.Duration) *Duration {
-	opChain := d.chain.enter("Gt()")
+//	d.IsGt(time.Second)
+func (d *Duration) IsGt(value time.Duration) *Duration {
+	opChain := d.chain.enter("IsGt()")
 	defer opChain.leave()
 
 	if opChain.failed() {
@@ -233,13 +233,13 @@ func (d *Duration) Gt(value time.Duration) *Duration {
 	return d
 }
 
-// Ge succeeds if Duration is greater than or equal to given value.
+// IsGe succeeds if Duration is greater than or equal to given value.
 //
 // Example:
 //
 //	d := NewDuration(t, time.Minute)
-//	d.Ge(time.Second)
-func (d *Duration) Ge(value time.Duration) *Duration {
+//	d.IsGe(time.Second)
+func (d *Duration) IsGe(value time.Duration) *Duration {
 	opChain := d.chain.enter("Ge()")
 	defer opChain.leave()
 
@@ -272,13 +272,13 @@ func (d *Duration) Ge(value time.Duration) *Duration {
 	return d
 }
 
-// Lt succeeds if Duration is lesser than given value.
+// IsLt succeeds if Duration is lesser than given value.
 //
 // Example:
 //
 //	d := NewDuration(t, time.Second)
-//	d.Lt(time.Minute)
-func (d *Duration) Lt(value time.Duration) *Duration {
+//	d.IsLt(time.Minute)
+func (d *Duration) IsLt(value time.Duration) *Duration {
 	opChain := d.chain.enter("Lt()")
 	defer opChain.leave()
 
@@ -311,13 +311,13 @@ func (d *Duration) Lt(value time.Duration) *Duration {
 	return d
 }
 
-// Le succeeds if Duration is lesser than or equal to given value.
+// IsLe succeeds if Duration is lesser than or equal to given value.
 //
 // Example:
 //
 //	d := NewDuration(t, time.Second)
-//	d.Le(time.Minute)
-func (d *Duration) Le(value time.Duration) *Duration {
+//	d.IsLe(time.Minute)
+func (d *Duration) IsLe(value time.Duration) *Duration {
 	opChain := d.chain.enter("Le()")
 	defer opChain.leave()
 
@@ -348,6 +348,26 @@ func (d *Duration) Le(value time.Duration) *Duration {
 	}
 
 	return d
+}
+
+// Deprecated: use IsGt instead.
+func (d *Duration) Gt(value time.Duration) *Duration {
+	return d.IsGt(value)
+}
+
+// Deprecated: use IsGe instead.
+func (d *Duration) Ge(value time.Duration) *Duration {
+	return d.IsGe(value)
+}
+
+// Deprecated: use IsLt instead.
+func (d *Duration) Lt(value time.Duration) *Duration {
+	return d.IsLt(value)
+}
+
+// Deprecated: use IsLe instead.
+func (d *Duration) Le(value time.Duration) *Duration {
+	return d.IsLe(value)
 }
 
 // InRange succeeds if Duration is within given range [min; max].

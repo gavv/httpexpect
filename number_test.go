@@ -30,10 +30,10 @@ func TestNumber_FailedChain(t *testing.T) {
 	value.NotInRange(0, 0)
 	value.InList(0)
 	value.NotInList(0)
-	value.Gt(0)
-	value.Ge(0)
-	value.Lt(0)
-	value.Le(0)
+	value.IsGt(0)
+	value.IsGe(0)
+	value.IsLt(0)
+	value.IsLe(0)
 	value.IsInt()
 	value.NotInt()
 	value.IsUint()
@@ -779,10 +779,10 @@ func TestNumber_IsGreater(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
 
-				NewNumber(reporter, tc.number).Gt(tc.value).
+				NewNumber(reporter, tc.number).IsGt(tc.value).
 					chain.assert(t, tc.wantGt)
 
-				NewNumber(reporter, tc.number).Ge(tc.value).
+				NewNumber(reporter, tc.number).IsGe(tc.value).
 					chain.assert(t, tc.wantGe)
 			})
 		}
@@ -791,26 +791,26 @@ func TestNumber_IsGreater(t *testing.T) {
 	t.Run("canonization", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
-		NewNumber(reporter, 1234).Gt(int64(1233)).
+		NewNumber(reporter, 1234).IsGt(int64(1233)).
 			chain.assert(t, success)
 
-		NewNumber(reporter, 1234).Gt(float32(1233)).
+		NewNumber(reporter, 1234).IsGt(float32(1233)).
 			chain.assert(t, success)
 
-		NewNumber(reporter, 1234).Ge(int64(1233)).
+		NewNumber(reporter, 1234).IsGe(int64(1233)).
 			chain.assert(t, success)
 
-		NewNumber(reporter, 1234).Ge(float32(1233)).
+		NewNumber(reporter, 1234).IsGe(float32(1233)).
 			chain.assert(t, success)
 	})
 
 	t.Run("invalid argument", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
-		NewNumber(reporter, 1234).Gt("NOT NUMBER").
+		NewNumber(reporter, 1234).IsGt("NOT NUMBER").
 			chain.assert(t, failure)
 
-		NewNumber(reporter, 1234).Ge("NOT NUMBER").
+		NewNumber(reporter, 1234).IsGe("NOT NUMBER").
 			chain.assert(t, failure)
 	})
 }
@@ -851,10 +851,10 @@ func TestNumber_IsLesser(t *testing.T) {
 			t.Run(tc.name, func(t *testing.T) {
 				reporter := newMockReporter(t)
 
-				NewNumber(reporter, tc.number).Lt(tc.value).
+				NewNumber(reporter, tc.number).IsLt(tc.value).
 					chain.assert(t, tc.wantLt)
 
-				NewNumber(reporter, tc.number).Le(tc.value).
+				NewNumber(reporter, tc.number).IsLe(tc.value).
 					chain.assert(t, tc.wantLe)
 			})
 		}
@@ -863,26 +863,26 @@ func TestNumber_IsLesser(t *testing.T) {
 	t.Run("canonization", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
-		NewNumber(reporter, 1234).Lt(int64(1235)).
+		NewNumber(reporter, 1234).IsLt(int64(1235)).
 			chain.assert(t, success)
 
-		NewNumber(reporter, 1234).Lt(float32(1235)).
+		NewNumber(reporter, 1234).IsLt(float32(1235)).
 			chain.assert(t, success)
 
-		NewNumber(reporter, 1234).Le(int64(1235)).
+		NewNumber(reporter, 1234).IsLe(int64(1235)).
 			chain.assert(t, success)
 
-		NewNumber(reporter, 1234).Le(float32(1235)).
+		NewNumber(reporter, 1234).IsLe(float32(1235)).
 			chain.assert(t, success)
 	})
 
 	t.Run("invalid argument", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
-		NewNumber(reporter, 1234).Lt("NOT NUMBER").
+		NewNumber(reporter, 1234).IsLt("NOT NUMBER").
 			chain.assert(t, failure)
 
-		NewNumber(reporter, 1234).Le("NOT NUMBER").
+		NewNumber(reporter, 1234).IsLe("NOT NUMBER").
 			chain.assert(t, failure)
 	})
 }

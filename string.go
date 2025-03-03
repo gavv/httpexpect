@@ -1240,10 +1240,10 @@ func (s *String) AsBoolean() *Boolean {
 // Example:
 //
 //	str := NewString(t, "Tue, 15 Nov 1994 08:12:31 GMT")
-//	str.AsDateTime().Lt(time.Now())
+//	str.AsDateTime().IsLt(time.Now())
 //
 //	str := NewString(t, "15 Nov 94 08:12 GMT")
-//	str.AsDateTime(time.RFC822).Lt(time.Now())
+//	str.AsDateTime(time.RFC822).IsLt(time.Now())
 func (s *String) AsDateTime(format ...string) *DateTime {
 	opChain := s.chain.enter("AsDateTime()")
 	defer opChain.leave()
