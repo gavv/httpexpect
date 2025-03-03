@@ -32,23 +32,92 @@ func (p *mockPrinter) Response(resp *http.Response, rtt time.Duration) {
 	p.rtt = rtt
 }
 
-func createPrinterHandler() http.Handler {
+func createPrinterHandler(request, response string) http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
 		body, _ := io.ReadAll(r.Body)
-		if string(body) != "test_request" {
+		if string(body) != request {
 			panic("unexpected request body " + string(body))
 		}
 		w.Header().Set("Content-Type", "text/plain")
-		_, _ = w.Write([]byte(`test_response`))
+		_, _ = w.Write([]byte(response))
 	})
 
 	return mux
 }
 
+func TestE2EPrinter_Smoke(t *testing.T) {
+	cases := []struct {
+		name     string
+		printers []httpexpect.Printer
+	}{
+		{
+			name: "CompactPrinter",
+			printers: []httpexpect.Printer{
+				httpexpect.NewCompactPrinter(t),
+			},
+		},
+		{
+			name: "CurlPrinter",
+			printers: []httpexpect.Printer{
+				httpexpect.NewCurlPrinter(t),
+			},
+		},
+		{
+			name: "DebugPrinter with body",
+			printers: []httpexpect.Printer{
+				httpexpect.NewDebugPrinter(t, true),
+			},
+		},
+		{
+			name: "DebugPrinter without body",
+			printers: []httpexpect.Printer{
+				httpexpect.NewDebugPrinter(t, false),
+			},
+		},
+		{
+			name: "print body twice",
+			printers: []httpexpect.Printer{
+				httpexpect.NewDebugPrinter(t, true),
+				httpexpect.NewDebugPrinter(t, true),
+			},
+		},
+		{
+			name: "all printers",
+			printers: []httpexpect.Printer{
+				httpexpect.NewCompactPrinter(t),
+				httpexpect.NewCurlPrinter(t),
+				httpexpect.NewDebugPrinter(t, false),
+				httpexpect.NewDebugPrinter(t, true),
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			handler := createPrinterHandler("test_request", "test_response")
+
+			server := httptest.NewServer(handler)
+			defer server.Close()
+
+			e := httpexpect.WithConfig(httpexpect.Config{
+				BaseURL:  server.URL,
+				Reporter: httpexpect.NewAssertReporter(t),
+				Printers: tc.printers,
+			})
+
+			e.POST("/test").
+				WithText("test_request").
+				Expect().
+				Text().
+				IsEqual("test_response")
+		})
+	}
+}
+
 func TestE2EPrinter_Single(t *testing.T) {
-	handler := createPrinterHandler()
+	handler := createPrinterHandler("test_request", "test_response")
 
 	server := httptest.NewServer(handler)
 	defer server.Close()
@@ -74,7 +143,7 @@ func TestE2EPrinter_Single(t *testing.T) {
 }
 
 func TestE2EPrinter_Multiple(t *testing.T) {
-	handler := createPrinterHandler()
+	handler := createPrinterHandler("test_request", "test_response")
 
 	server := httptest.NewServer(handler)
 	defer server.Close()

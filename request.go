@@ -2457,7 +2457,13 @@ func (r *Request) retryRequest(reqFunc func() (*http.Response, error)) (
 			if reqBody != nil {
 				reqBody.Rewind()
 			}
-			printer.Request(r.httpReq)
+			// Make a copy to avoid accidental modification of request.
+			// In particular, httputil.DumpRequest reads sets request body into a buffer
+			// and set req.Body to a wrapper that will re-read body from buffer.
+			// It breaks our bodyWrapper logic as we don't expect that someone will
+			// replace bodyWrapper with something else.
+			httpReqCopy := *r.httpReq
+			printer.Request(&httpReqCopy)
 		}
 
 		if reqBody != nil {
@@ -2492,7 +2498,10 @@ func (r *Request) retryRequest(reqFunc func() (*http.Response, error)) (
 				if resp.Body != nil {
 					resp.Body.(*bodyWrapper).Rewind()
 				}
-				printer.Response(resp, elapsed)
+				// Make a copy to avoid accidental modification of request.
+				// See comment above.
+				httpRespCopy := *resp
+				printer.Response(&httpRespCopy, elapsed)
 			}
 		}
 
