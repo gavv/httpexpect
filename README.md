@@ -63,6 +63,8 @@ Workflow:
 
 The versions are selected according to the [semantic versioning](https://semver.org/) scheme. Every new major version gets its own stable branch with a backwards compatibility promise. Releases are tagged from stable branches.
 
+Changelog file can be found here: [changelog](CHANGES.md).
+
 The current stable branch is `v2`:
 
 ```go
@@ -910,6 +912,12 @@ The following environment variables are checked when `ColorModeAuto` is used:
 * [`frisby`](https://github.com/verdverm/frisby)
 * [`forest`](https://github.com/emicklei/forest)
 * [`restit`](https://github.com/go-restit/restit)
+
+## Authors
+
+List of contributors can be [found here](AUTHORS.md).
+
+If your name is missing or you want to change its appearance, feel free to submit PR!
 
 ## License
 

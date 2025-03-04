@@ -3,16 +3,16 @@
 <!-- toc -->
 
 - [Working on a task](#working-on-a-task)
-  * [Choosing a task](#choosing-a-task)
-  * [Creating pull request](#creating-pull-request)
+  - [Choosing a task](#choosing-a-task)
+  - [Creating pull request](#creating-pull-request)
 - [Developer instructions](#developer-instructions)
-  * [Development dependencies](#development-dependencies)
-  * [Makefile targets](#makefile-targets)
+  - [Development dependencies](#development-dependencies)
+  - [Makefile targets](#makefile-targets)
 - [Code style](#code-style)
-  * [Comment formatting](#comment-formatting)
+  - [Comment formatting](#comment-formatting)
 - [Project internals](#project-internals)
-  * [Object tree](#object-tree)
-  * [Failure reporting](#failure-reporting)
+  - [Object tree](#object-tree)
+  - [Failure reporting](#failure-reporting)
 
 <!-- tocstop -->
 
@@ -90,10 +90,10 @@ Run go mod tidy:
 make tidy
 ```
 
-Generate TOC in HACKING.md:
+Update markdown files:
 
 ```
-make toc
+make md
 ```
 
 ## Code style

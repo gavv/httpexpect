@@ -38,5 +38,6 @@ else
 	go test -short ./...
 endif
 
-toc:
-	markdown-toc --maxdepth 3 -i HACKING.md
+md:
+	markdown-toc --maxdepth 3 --bullets=- -i HACKING.md
+	md-authors --format modern --append AUTHORS.md
