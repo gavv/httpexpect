@@ -51,8 +51,8 @@ func TestIrisThings(t *testing.T) {
 	for n, desc := range things.Path("$..description").Array().Iter() {
 		m := desc.String().Match("(.+) (.+)")
 
-		m.Index(1).IsEqual(names.Value(n).String().Raw())
-		m.Index(2).IsEqual("thing")
+		m.Submatch(1).IsEqual(names.Value(n).String().Raw())
+		m.Submatch(2).IsEqual("thing")
 	}
 }
 
