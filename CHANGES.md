@@ -19,6 +19,8 @@
 * Add TLS example (#205)
 * Bump some dependencies
 
+[v2.17.0]: https://github.com/gavv/httpexpect/releases/tag/v2.17.0
+
 ## [v2.16.0][v2.16.0] - 03 Oct 2023
 
 * Bump minimum Go version to 1.19
