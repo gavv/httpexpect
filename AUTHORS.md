@@ -5,7 +5,7 @@ httpexpect authors, ordered by first contribution:
 <!-- authors -->
 
 1. Victor Gaydov `gavv`
-2. Makis Maropoulos `kataras`
+2. Gerasimos (Makis) Maropoulos `kataras`
 3. Ömer Faruk Almali `oalmali`
 4. Peter Butkovic `typekpb`
 5. Joona Hoikkala `joohoi`
@@ -31,11 +31,11 @@ httpexpect authors, ordered by first contribution:
 25. ni3k `ni3k`
 26. Rafi Ramadhana `rafiramadhana`
 27. Angshuman Halder `angshumanHalder`
-28. Miko `vtech6`
+28. Mikolaj Witkowski `vtech6`
 29. knry0329 `k4n4ry`
 30. Edwin Wijaya `edwinwijaya94`
 31. Gabriel Vacari `VacariGabriel`
-32. labala-sravani `labala-sravani`
+32. Sravani Labala `labala-sravani`
 33. Rohith Raju `Rohith-Raju`
 34. Maksim Panfilov `maxfilov`
 35. mor kaire `kairemor`
@@ -45,7 +45,7 @@ httpexpect authors, ordered by first contribution:
 39. Nayeem Hasan Anik `nhAnik`
 40. Piotr Lewandowski `PiotrLewandowski323`
 41. Aashish KC `kcaashish`
-42. Ross `rrhodes`
+42. Ross Rhodes `rrhodes`
 43. Darrel Idiagbor `Darrellbor`
 44. Ethan Berman `e-berman`
 45. Gabriel Servais `gpjservais`
@@ -63,20 +63,20 @@ httpexpect authors, ordered by first contribution:
 57. harshabangi `harsha-aqfer`
 58. Vikranth Kumar Bala `VikranthBala`
 59. cmg2146 `cmg2146`
-60. Matt `MattSilvaa`
+60. Matheus `MattSilvaa`
 61. Jeremy Phua `jeremyphua`
 62. Paul Stølen `paul-at-cybr`
 63. g41797 `g41797`
 64. Florian Schlund `FloSchl8`
 65. Ananda Ilyasa Putra `AnandaIlyasa`
-66. vasundhara785 `vasundhara785`
+66. Abhishek `vasundhara785`
 67. David Minkovski `dminkovski`
 68. tymnec `tymnec`
 69. balavignesh `balavigneshgjk`
 70. Carlos Robles `selborsolrac`
 71. Sergey Aksenov `SergeAx`
 72. Zahin Zaman `alvii147`
-73. yoktoJH `yoktoJH`
+73. Jozef Hoschek `yoktoJH`
 74. Michal Posluszny `m-posluszny`
 
 <!-- endauthors -->
