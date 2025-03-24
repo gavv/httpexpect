@@ -150,6 +150,20 @@ func (a *Array) Length() *Number {
 	return newNumber(opChain, float64(len(a.value)))
 }
 
+// rawIndex returns array index for given index. Supports negative index. issue #461
+// If index is out of array bounds, remain unchanged
+// index must be between [-len(a.value), len(a.value)-1]
+func (a *Array) rawIndex(index int) int {
+	maxIdx := len(a.value)
+	// support negative index
+	if index < 0 {
+		// negative index, calculate actual index
+		index += maxIdx
+	}
+
+	return index
+}
+
 // Value returns a new Value instance with array element for given index.
 //
 // If index is out of array bounds, Value reports failure and returns empty
@@ -168,12 +182,15 @@ func (a *Array) Value(index int) *Value {
 		return newValue(opChain, nil)
 	}
 
+	srcIndex := index
+	index = a.rawIndex(index)
+
 	if index < 0 || index >= len(a.value) {
 		opChain.fail(AssertionFailure{
 			Type:   AssertInRange,
-			Actual: &AssertionValue{index},
+			Actual: &AssertionValue{srcIndex},
 			Expected: &AssertionValue{AssertionRange{
-				Min: 0,
+				Min: -len(a.value),
 				Max: len(a.value) - 1,
 			}},
 			Errors: []error{
@@ -208,12 +225,15 @@ func (a *Array) HasValue(index int, value interface{}) *Array {
 		return a
 	}
 
+	srcIndex := index
+	index = a.rawIndex(index)
+
 	if index < 0 || index >= len(a.value) {
 		opChain.fail(AssertionFailure{
 			Type:   AssertInRange,
-			Actual: &AssertionValue{index},
+			Actual: &AssertionValue{srcIndex},
 			Expected: &AssertionValue{AssertionRange{
-				Min: 0,
+				Min: -len(a.value),
 				Max: len(a.value) - 1,
 			}},
 			Errors: []error{
@@ -262,12 +282,14 @@ func (a *Array) NotHasValue(index int, value interface{}) *Array {
 		return a
 	}
 
+	srcIndex := index
+	index = a.rawIndex(index)
 	if index < 0 || index >= len(a.value) {
 		opChain.fail(AssertionFailure{
 			Type:   AssertInRange,
-			Actual: &AssertionValue{index},
+			Actual: &AssertionValue{srcIndex},
 			Expected: &AssertionValue{AssertionRange{
-				Min: 0,
+				Min: -len(a.value),
 				Max: len(a.value) - 1,
 			}},
 			Errors: []error{
