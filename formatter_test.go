@@ -1,7 +1,9 @@
 package httpexpect
 
 import (
+	"encoding/json"
 	"fmt"
+	"math/big"
 	"strings"
 	"testing"
 	"time"
@@ -695,6 +697,176 @@ func TestFormatter_FloatFormat(t *testing.T) {
 			format:   FloatFormatScientific,
 			value:    int(12345678),
 			wantText: "12_345_678",
+		},
+		// slice of floats
+		{
+			name:     "slice of float auto",
+			format:   FloatFormatAuto,
+			value:    []float32{1.234, 0.0056, 78000},
+			wantText: "[\n  1.234,\n  0.0056,\n  78000\n]",
+		},
+		{
+			name:     "slice of float decimal",
+			format:   FloatFormatDecimal,
+			value:    []float32{1.234, 0.0056, 78000},
+			wantText: "[\n  1.234,\n  0.0056,\n  78000\n]",
+		},
+		{
+			name:     "slice of float scientific",
+			format:   FloatFormatScientific,
+			value:    []float32{1.234, 0.0056, 78000},
+			wantText: "[\n  1.234e+00,\n  5.6e-03,\n  7.8e+04\n]",
+		},
+		// slice of json.Number
+		{
+			name:     "slice of json.Number auto",
+			format:   FloatFormatAuto,
+			value:    []json.Number{"12.34", ".0056", "789"},
+			wantText: "[\n  12.34,\n  0.0056,\n  789\n]",
+		},
+		{
+			name:     "slice of json.Number decimal",
+			format:   FloatFormatDecimal,
+			value:    []json.Number{"12.34", ".0056", "789"},
+			wantText: "[\n  12.34,\n  0.0056,\n  789\n]",
+		},
+		{
+			name:     "slice of json.Number scientific",
+			format:   FloatFormatScientific,
+			value:    []json.Number{"12.34", ".0056", "789"},
+			wantText: "[\n  1.234e+01,\n  5.6e-03,\n  7.89e+02\n]",
+		},
+		// slice of big.Float
+		{
+			name:     "slice of big.Float auto",
+			format:   FloatFormatAuto,
+			value:    []*big.Float{big.NewFloat(1234.5678), big.NewFloat(0.000234)},
+			wantText: "[\n  1234.5678,\n  0.000234\n]",
+		},
+		{
+			name:     "slice of big.Float decimal",
+			format:   FloatFormatDecimal,
+			value:    []*big.Float{big.NewFloat(1234.5678), big.NewFloat(0.000234)},
+			wantText: "[\n  1234.5678,\n  0.000234\n]",
+		},
+		{
+			name:     "slice of big.Float scientific",
+			format:   FloatFormatScientific,
+			value:    []*big.Float{big.NewFloat(1234.5678), big.NewFloat(0.000234)},
+			wantText: "[\n  1.2345678e+03,\n  2.34e-04\n]",
+		},
+		// slice of slice
+		{
+			name:     "slice of slice auto",
+			format:   FloatFormatAuto,
+			value:    []interface{}{[]float64{.01, 20}, []json.Number{"23.45"}, 10},
+			wantText: "[\n  [\n    0.01,\n    20\n  ],\n  [\n    23.45\n  ],\n  10\n]",
+		},
+		{
+			name:     "slice of slice decimal",
+			format:   FloatFormatDecimal,
+			value:    []interface{}{[]float64{.01, 20}, []json.Number{"23.45"}, 10},
+			wantText: "[\n  [\n    0.01,\n    20\n  ],\n  [\n    23.45\n  ],\n  10\n]",
+		},
+		{
+			name:     "slice of slice scientific",
+			format:   FloatFormatScientific,
+			value:    []interface{}{[]float64{.01, 20}, []json.Number{"23.45"}, 10},
+			wantText: "[\n  [\n    1e-02,\n    2e+01\n  ],\n  [\n    2.345e+01\n  ],\n  1e+01\n]",
+		},
+		// map of floats
+		{
+			name:     "map of float auto",
+			format:   FloatFormatAuto,
+			value:    map[string]float32{"a": 123.45, "b": 0.00678},
+			wantText: "{\n  \"a\": 123.45,\n  \"b\": 0.00678\n}",
+		},
+		{
+			name:     "map of float decimal",
+			format:   FloatFormatDecimal,
+			value:    map[string]float32{"a": 123.45, "b": 0.00678},
+			wantText: "{\n  \"a\": 123.45,\n  \"b\": 0.00678\n}",
+		},
+		{
+			name:     "map of float scientific",
+			format:   FloatFormatScientific,
+			value:    map[string]float32{"a": 123.45, "b": 0.00678},
+			wantText: "{\n  \"a\": 1.2345e+02,\n  \"b\": 6.78e-03\n}",
+		},
+		// map of json.Number
+		{
+			name:     "map of json.Number auto",
+			format:   FloatFormatAuto,
+			value:    map[int]json.Number{1: "0.123", 2: "45.67", 3: "100"},
+			wantText: "{\n  \"1\": 0.123,\n  \"2\": 45.67,\n  \"3\": 100\n}",
+		},
+		{
+			name:     "map of json.Number decimal",
+			format:   FloatFormatDecimal,
+			value:    map[int]json.Number{1: "0.123", 2: "45.67", 3: "100"},
+			wantText: "{\n  \"1\": 0.123,\n  \"2\": 45.67,\n  \"3\": 100\n}",
+		},
+		{
+			name:     "map of json.Number scientific",
+			format:   FloatFormatScientific,
+			value:    map[int]json.Number{1: "0.123", 2: "45.67", 3: "100"},
+			wantText: "{\n  \"1\": 1.23e-01,\n  \"2\": 4.567e+01,\n  \"3\": 1e+02\n}",
+		},
+		// map of any
+		{
+			name:     "map of any auto",
+			format:   FloatFormatAuto,
+			value:    map[string]interface{}{"a": []float32{12.34}, "b": []int{100}},
+			wantText: "{\n  \"a\": [\n    12.34\n  ],\n  \"b\": [\n    100\n  ]\n}",
+		},
+		{
+			name:     "map of any decimal",
+			format:   FloatFormatDecimal,
+			value:    map[string]interface{}{"a": []float32{12.34}, "b": []int{100}},
+			wantText: "{\n  \"a\": [\n    12.34\n  ],\n  \"b\": [\n    100\n  ]\n}",
+		},
+		{
+			name:     "map of any scientific",
+			format:   FloatFormatScientific,
+			value:    map[string]interface{}{"a": []float32{12.3}, "b": []int{100}},
+			wantText: "{\n  \"a\": [\n    1.23e+01\n  ],\n  \"b\": [\n    1e+02\n  ]\n}",
+		},
+		// dump go values
+		{
+			name:   "go values auto",
+			format: FloatFormatAuto,
+			value:  map[[1]int][]float64{{1}: {12345.678}},
+			wantText: `map[[1]int]interface {}{
+  [1]int{
+    1,
+  }: []interface {}{
+    *httpexpect.formatNumber12_345.678,
+  },
+}`,
+		},
+		{
+			name:   "go values decimal",
+			format: FloatFormatDecimal,
+			value:  map[[1]int][]float64{{1}: {12345.678}},
+			wantText: `map[[1]int]interface {}{
+  [1]int{
+    1,
+  }: []interface {}{
+    *httpexpect.formatNumber12_345.678,
+  },
+}`,
+		},
+		{
+			name:   "go values scientific",
+			format: FloatFormatScientific,
+			value:  map[[1]int][]float64{{1}: {12345.678}},
+			wantText: `map[[1]int]interface {}{
+  [1]int{
+    1,
+  }: []interface {}{
+    *httpexpect.formatNumber1.234_567_8e+04,
+  },
+}`,
 		},
 	}
 
