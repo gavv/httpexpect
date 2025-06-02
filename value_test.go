@@ -1278,3 +1278,117 @@ func TestValue_Schema(t *testing.T) {
 			chain.assert(t, failure)
 	})
 }
+
+func TestValue_Raw(t *testing.T) {
+	cases := []struct {
+		name string
+		data any
+		want any
+	}{
+		{
+			name: "null",
+			data: nil,
+			want: nil,
+		},
+		{
+			name: "null object",
+			data: map[string]any(nil),
+			want: nil,
+		},
+		{
+			name: "null array",
+			data: []any(nil),
+			want: nil,
+		},
+		{
+			name: "object",
+			data: map[string]any{"test1": "data1"},
+			want: map[string]any{"test1": "data1"},
+		},
+		{
+			name: "array",
+			data: []any{"test2", "data2"},
+			want: []any{"test2", "data2"},
+		},
+		{
+			name: "empty string",
+			data: "",
+			want: "",
+		},
+		{
+			name: "string",
+			data: "some string",
+			want: "some string",
+		},
+		{
+			name: "number",
+			data: 10.20,
+			want: 10.20,
+		},
+		{
+			name: "boolean",
+			data: true,
+			want: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			reporter := newMockReporter(t)
+
+			t.Run("null", func(t *testing.T) {
+				value := NewValue(reporter, tc.data)
+				assert.Equal(t, tc.want, value.Raw())
+				value.chain.assert(t, success)
+			})
+
+			t.Run("null object", func(t *testing.T) {
+				value := NewValue(reporter, tc.data)
+				assert.Equal(t, tc.want, value.Raw())
+				value.chain.assert(t, success)
+			})
+
+			t.Run("null array", func(t *testing.T) {
+				value := NewValue(reporter, tc.data)
+				assert.Equal(t, tc.want, value.Raw())
+				value.chain.assert(t, success)
+			})
+
+			t.Run("object", func(t *testing.T) {
+				value := NewValue(reporter, tc.data)
+				assert.Equal(t, tc.want, value.Raw())
+				value.chain.assert(t, success)
+			})
+
+			t.Run("array", func(t *testing.T) {
+				value := NewValue(reporter, tc.data)
+				assert.Equal(t, tc.want, value.Raw())
+				value.chain.assert(t, success)
+			})
+
+			t.Run("empty string", func(t *testing.T) {
+				value := NewValue(reporter, tc.data)
+				assert.Equal(t, tc.want, value.Raw())
+				value.chain.assert(t, success)
+			})
+
+			t.Run("string", func(t *testing.T) {
+				value := NewValue(reporter, tc.data)
+				assert.Equal(t, tc.want, value.Raw())
+				value.chain.assert(t, success)
+			})
+
+			t.Run("number", func(t *testing.T) {
+				value := NewValue(reporter, tc.data)
+				assert.Equal(t, tc.want, value.Raw())
+				value.chain.assert(t, success)
+			})
+
+			t.Run("boolean", func(t *testing.T) {
+				value := NewValue(reporter, tc.data)
+				assert.Equal(t, tc.want, value.Raw())
+				value.chain.assert(t, success)
+			})
+		})
+	}
+}
