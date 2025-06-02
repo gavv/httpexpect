@@ -5,10 +5,13 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"math"
+	"math/big"
 	"net/http/httputil"
 	"os"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -622,6 +625,7 @@ func (f *DefaultFormatter) formatValue(value interface{}) string {
 				return ss
 			}
 		}
+		value, _ = f.convertNumber(value)
 		if b, err := json.MarshalIndent(value, "", defaultIndent); err == nil {
 			return string(b)
 		}
@@ -631,6 +635,95 @@ func (f *DefaultFormatter) formatValue(value interface{}) string {
 		Separator: defaultIndent,
 	}
 	return sq.Sdump(value)
+}
+
+func (f *DefaultFormatter) convertNumber(value interface{}) (interface{}, bool) {
+	if fm := newFormatNumber(value, f); fm != nil {
+		return fm, true
+	}
+
+	rv := reflect.ValueOf(value)
+
+	switch rv.Kind() { //nolint
+	case reflect.Slice:
+		sl := reflect.MakeSlice(reflect.TypeOf([]interface{}{}), rv.Len(), rv.Cap())
+		updated := false
+
+		for i := 0; i < rv.Len(); i++ {
+			converted, changed := f.convertNumber(rv.Index(i).Interface())
+			if changed {
+				sl.Index(i).Set(reflect.ValueOf(converted))
+				updated = true
+			}
+		}
+
+		return sl.Interface(), updated
+
+	case reflect.Map:
+		keyType := reflect.TypeOf(value).Key()
+		mapType := reflect.MapOf(keyType, reflect.TypeOf((*interface{})(nil)).Elem())
+		mp := reflect.MakeMap(mapType)
+		updated := false
+
+		iter := rv.MapRange()
+		for iter.Next() {
+			converted, changed := f.convertNumber(iter.Value().Interface())
+			if changed {
+				mp.SetMapIndex(iter.Key(), reflect.ValueOf(converted))
+				updated = true
+			}
+		}
+
+		return mp.Interface(), updated
+
+	default:
+		return value, false
+	}
+}
+
+type formatNumber struct {
+	value *big.Float
+	f     *DefaultFormatter
+}
+
+func newFormatNumber(value interface{}, f *DefaultFormatter) *formatNumber {
+	if flt := extractBigFloat(value); flt != nil {
+		return &formatNumber{
+			value: flt,
+			f:     f,
+		}
+	}
+	return nil
+}
+
+func (fn formatNumber) MarshalJSON() ([]byte, error) {
+	if flt, accuracy := fn.value.Float32(); accuracy == big.Exact {
+		return []byte(fn.f.formatFloatValue(float64(flt), 32)), nil
+	}
+
+	if flt, accuracy := fn.value.Float64(); accuracy == big.Exact {
+		return []byte(fn.f.formatFloatValue(flt, 64)), nil
+	}
+
+	return fn.value.MarshalText()
+}
+
+func (fn formatNumber) LitterDump(w io.Writer) {
+	if flt, accuracy := fn.value.Float32(); accuracy == big.Exact {
+		s := fn.f.reformatNumber(fn.f.formatFloatValue(float64(flt), 32))
+		_, _ = w.Write([]byte(s))
+		return
+	}
+
+	if flt, accuracy := fn.value.Float64(); accuracy == big.Exact {
+		s := fn.f.reformatNumber(fn.f.formatFloatValue(flt, 64))
+		_, _ = w.Write([]byte(s))
+		return
+	}
+
+	if bytes, err := fn.value.MarshalText(); err == nil {
+		_, _ = w.Write(bytes)
+	}
 }
 
 func (f *DefaultFormatter) formatFloatValue(value float64, bits int) string {
@@ -853,6 +946,23 @@ func extractFloat64(value interface{}) *float64 {
 	default:
 		return nil
 	}
+}
+
+func extractBigFloat(value interface{}) *big.Float {
+	if flt, err := strconv.ParseFloat(fmt.Sprint(value), 64); err == nil {
+		return big.NewFloat(flt)
+	}
+
+	switch value := value.(type) {
+	case *big.Float:
+		return value
+
+	case json.Number:
+		if flt, err := value.Float64(); err == nil {
+			return big.NewFloat(flt)
+		}
+	}
+	return nil
 }
 
 func exctractRange(value interface{}) *AssertionRange {
@@ -1081,8 +1191,9 @@ var defaultTemplateFuncs = template.FuncMap{
 		}
 
 		var parsedInput interface{}
-		err := json.Unmarshal([]byte(input), &parsedInput)
-		if err != nil {
+		decoder := json.NewDecoder(strings.NewReader(input))
+		decoder.UseNumber()
+		if err := decoder.Decode(&parsedInput); err != nil {
 			return color.New(fallbackColor).Sprint(input)
 		}
 
