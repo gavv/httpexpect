@@ -2568,3 +2568,60 @@ func TestArray_ComparatorErrors(t *testing.T) {
 		chain.assert(t, success)
 	})
 }
+
+func TestArray_NegativeIndex(t *testing.T) {
+	waitTestArr := []interface{}{"1", "2", "3", "4", "5", "6"}
+	testArgs := []struct {
+		index int
+		value string
+	}{{-1, "6"}, {-2, "5"}, {-3, "4"}, {-4, "3"}, {-5, "2"}, {-6, "1"}}
+
+	newTestArr := func() *Array {
+		reporter := newMockReporter(t)
+		return NewArray(reporter, waitTestArr)
+	}
+
+	t.Run("negative index Value", func(t *testing.T) {
+
+		for _, arg := range testArgs {
+			value := newTestArr().Value(arg.index)
+			value.chain.assert(t, success)
+			assert.Equal(t, value.Raw(), arg.value)
+		}
+
+		failedArgs := []int{-7, -9999999}
+		for _, arg := range failedArgs {
+			value := newTestArr().Value(arg)
+			value.chain.assert(t, failure)
+
+		}
+
+	})
+
+	t.Run("negative index HasValue", func(t *testing.T) {
+
+		for _, arg := range testArgs {
+			newTestArr().HasValue(arg.index, arg.value).
+				chain.assert(t, success)
+		}
+	})
+
+	t.Run("negative index NotHasValue_failure", func(t *testing.T) {
+
+		for _, arg := range testArgs {
+			newTestArr().NotHasValue(arg.index, arg.value).
+				chain.assert(t, failure)
+		}
+
+	})
+
+	t.Run("negative index NotHasValue_success", func(t *testing.T) {
+
+		for _, arg := range testArgs {
+			newTestArr().NotHasValue(arg.index, arg.value+"1").
+				chain.assert(t, success)
+		}
+
+	})
+
+}
