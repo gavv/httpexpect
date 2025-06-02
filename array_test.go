@@ -12,6 +12,7 @@ func TestArray_FailedChain(t *testing.T) {
 		value.chain.assert(t, failure)
 
 		value.Path("$").chain.assert(t, failure)
+		value.Query("$").chain.assert(t, failure)
 		value.Schema("")
 		value.Alias("foo")
 
@@ -239,28 +240,41 @@ func TestArray_Alias(t *testing.T) {
 	assert.Equal(t, []string{"foo", "Filter()"}, childValue.chain.context.AliasedPath)
 }
 
-func TestArray_Path(t *testing.T) {
-	cases := []struct {
-		name  string
-		value []interface{}
-	}{
-		{
-			name:  "empty",
-			value: []interface{}{},
-		},
-		{
-			name:  "not empty",
-			value: []interface{}{"foo", 123.0},
-		},
-	}
+var jsonPathCases = []struct {
+	name  string
+	value []interface{}
+}{
+	{
+		name:  "empty",
+		value: []interface{}{},
+	},
+	{
+		name:  "not empty",
+		value: []interface{}{"foo", 123.0},
+	},
+}
 
-	for _, tc := range cases {
+func TestArray_Path(t *testing.T) {
+	for _, tc := range jsonPathCases {
 		t.Run(tc.name, func(t *testing.T) {
 			reporter := newMockReporter(t)
 
 			value := NewArray(reporter, tc.value)
 
 			assert.Equal(t, tc.value, value.Path("$").Raw())
+			value.chain.assert(t, success)
+		})
+	}
+}
+
+func TestArray_Query(t *testing.T) {
+	for _, tc := range jsonPathCases {
+		t.Run(tc.name, func(t *testing.T) {
+			reporter := newMockReporter(t)
+
+			value := NewArray(reporter, tc.value)
+
+			assert.Equal(t, tc.value, value.Query("$").Raw())
 			value.chain.assert(t, success)
 		})
 	}

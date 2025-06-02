@@ -14,6 +14,7 @@ func TestNumber_FailedChain(t *testing.T) {
 	value.chain.assert(t, failure)
 
 	value.Path("$").chain.assert(t, failure)
+	value.Query("$").chain.assert(t, failure)
 	value.Schema("")
 	value.Alias("foo")
 
@@ -152,6 +153,15 @@ func TestNumber_Path(t *testing.T) {
 	value := NewNumber(reporter, 123.0)
 
 	assert.Equal(t, 123.0, value.Path("$").Raw())
+	value.chain.assert(t, success)
+}
+
+func TestNumber_Query(t *testing.T) {
+	reporter := newMockReporter(t)
+
+	value := NewNumber(reporter, 123.0)
+
+	assert.Equal(t, 123.0, value.Query("$").Raw())
 	value.chain.assert(t, success)
 }
 
