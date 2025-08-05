@@ -208,6 +208,10 @@ func (r *Request) initReq(opChain *chain, method string) {
 	}
 
 	r.httpReq = httpReq
+	if httpReq != nil && httpReq.URL != nil && httpReq.URL.RawQuery != "" {
+		query, _ := url.ParseQuery(httpReq.URL.RawQuery)
+		r.query = query
+	}
 }
 
 // Alias is similar to Value.Alias.
