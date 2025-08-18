@@ -351,6 +351,20 @@ func TestArray_Getters(t *testing.T) {
 		innerValue.chain.assert(t, success)
 	})
 
+	t.Run("value negative", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		data := []interface{}{"foo", 123.0}
+
+		value := NewArray(reporter, data)
+
+		innerValue := value.Value(-1)
+		assert.Equal(t, 123.0, innerValue.Raw())
+
+		value.chain.assert(t, success)
+		innerValue.chain.assert(t, success)
+	})
+
 	t.Run("value out of range", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
@@ -1423,6 +1437,20 @@ func TestArray_HasValue(t *testing.T) {
 				},
 				index:           2,
 				value:           map[string]interface{}{"a": "b"},
+				wantHasValue:    success,
+				wantNotHasValue: failure,
+			},
+			{
+				name: "negative index check",
+				array: []interface{}{
+					123,
+					[]interface{}{"456", 789},
+					map[string]interface{}{
+						"a": "b",
+					},
+				},
+				index:           -3,
+				value:           123,
 				wantHasValue:    success,
 				wantNotHasValue: failure,
 			},
