@@ -365,7 +365,7 @@ func TestArray_Getters(t *testing.T) {
 		innerValue.chain.assert(t, success)
 	})
 
-	t.Run("value out of range", func(t *testing.T) {
+	t.Run("value out of range (positive)", func(t *testing.T) {
 		reporter := newMockReporter(t)
 
 		data := []interface{}{"foo", 123.0}
@@ -373,6 +373,20 @@ func TestArray_Getters(t *testing.T) {
 		value := NewArray(reporter, data)
 
 		innerValue := value.Value(2)
+		assert.NotNil(t, innerValue)
+
+		value.chain.assert(t, failure)
+		innerValue.chain.assert(t, failure)
+	})
+
+	t.Run("value out of range (negative)", func(t *testing.T) {
+		reporter := newMockReporter(t)
+
+		data := []interface{}{"foo", 123.0}
+
+		value := NewArray(reporter, data)
+
+		innerValue := value.Value(-3)
 		assert.NotNil(t, innerValue)
 
 		value.chain.assert(t, failure)
