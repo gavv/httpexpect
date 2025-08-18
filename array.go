@@ -168,6 +168,9 @@ func (a *Array) Value(index int) *Value {
 		return newValue(opChain, nil)
 	}
 
+	if index < 0 {
+		index = len(a.value) + index
+	}
 	if index < 0 || index >= len(a.value) {
 		opChain.fail(AssertionFailure{
 			Type:   AssertInRange,
@@ -208,6 +211,9 @@ func (a *Array) HasValue(index int, value interface{}) *Array {
 		return a
 	}
 
+	if index < 0 {
+		index = len(a.value) + index
+	}
 	if index < 0 || index >= len(a.value) {
 		opChain.fail(AssertionFailure{
 			Type:   AssertInRange,
@@ -262,6 +268,9 @@ func (a *Array) NotHasValue(index int, value interface{}) *Array {
 		return a
 	}
 
+	if index < 0 {
+		index = len(a.value) + index
+	}
 	if index < 0 || index >= len(a.value) {
 		opChain.fail(AssertionFailure{
 			Type:   AssertInRange,
