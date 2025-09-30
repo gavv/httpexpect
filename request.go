@@ -26,6 +26,10 @@ import (
 	"github.com/imkira/go-interpol"
 )
 
+var (
+	DefaultJSONMarshaller = json.Marshal
+)
+
 // Request provides methods to incrementally build http.Request object,
 // send it, and receive response.
 type Request struct {
@@ -1867,7 +1871,11 @@ func (r *Request) WithJSON(object interface{}) *Request {
 		return r
 	}
 
-	b, err := json.Marshal(object)
+	if DefaultJSONMarshaller == nil {
+		DefaultJSONMarshaller = json.Marshal
+	}
+
+	b, err := DefaultJSONMarshaller(object)
 
 	if err != nil {
 		opChain.fail(AssertionFailure{
