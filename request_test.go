@@ -190,6 +190,69 @@ func TestRequest_Reentrancy(t *testing.T) {
 	})
 }
 
+func TestRequest_Raw(t *testing.T) {
+	t.Run("with different HTTP methods", func(t *testing.T) {
+		config := Config{
+			Client:   &mockClient{},
+			Reporter: newMockReporter(t),
+		}
+
+		methods := []string{"GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"}
+
+		for _, method := range methods {
+			t.Run(method, func(t *testing.T) {
+				req := NewRequestC(config, method, "/test")
+				httpReq := req.Raw()
+
+				assert.NotNil(t, httpReq)
+				assert.Equal(t, method, httpReq.Method)
+
+				req.chain.assert(t, success)
+			})
+		}
+	})
+
+	t.Run("after modifications", func(t *testing.T) {
+		config := Config{
+			Client:   &mockClient{},
+			Reporter: newMockReporter(t),
+		}
+
+		req := NewRequestC(config, "PUT", "/api/users/{id}", "123")
+		httpReqBefore := req.Raw()
+		assert.Equal(t, "", httpReqBefore.Header.Get("Content-Type"))
+
+		req.WithHeader("Content-Type", "application/json")
+		req.WithJSON(map[string]string{"name": "test"})
+
+		httpReqAfter := req.Raw()
+
+		assert.Same(t, httpReqBefore, httpReqAfter)
+		assert.Equal(t, "application/json", httpReqAfter.Header.Get("Content-Type"))
+
+		req.chain.assert(t, success)
+	})
+
+	t.Run("with failed chain", func(t *testing.T) {
+		reporter := newMockReporter(t)
+		config := Config{
+			Client:   &mockClient{},
+			Reporter: reporter,
+		}
+
+		req := NewRequestC(config, "GET", "/test")
+
+		// Intentionally cause failure (pass invalid argument)
+		req.WithClient(nil)
+
+		httpReq := req.Raw()
+		assert.NotNil(t, httpReq)
+		assert.Equal(t, "GET", httpReq.Method)
+
+		req.chain.assert(t, failure)
+	})
+}
+
 func TestRequest_Alias(t *testing.T) {
 	config := Config{
 		Client:   &mockClient{},

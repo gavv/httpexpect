@@ -210,6 +210,11 @@ func (r *Request) initReq(opChain *chain, method string) {
 	r.httpReq = httpReq
 }
 
+// Raw returns underlying http.Request object.
+func (r *Request) Raw() *http.Request {
+	return r.httpReq
+}
+
 // Alias is similar to Value.Alias.
 func (r *Request) Alias(name string) *Request {
 	opChain := r.chain.enter("Alias(%q)", name)
