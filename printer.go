@@ -127,7 +127,7 @@ func (p DebugPrinter) Response(resp *http.Response, duration time.Duration) {
 		panic(err)
 	}
 
-	text := strings.Replace(string(dump), "\r\n", "\n", -1)
+	text := strings.ReplaceAll(string(dump), "\r\n", "\n")
 	lines := strings.SplitN(text, "\n", 2)
 
 	p.logger.Logf("%s %s\n%s", lines[0], duration, lines[1])
@@ -136,37 +136,37 @@ func (p DebugPrinter) Response(resp *http.Response, duration time.Duration) {
 // WebsocketWrite implements WebsocketPrinter.WebsocketWrite.
 func (p DebugPrinter) WebsocketWrite(typ int, content []byte, closeCode int) {
 	b := &bytes.Buffer{}
-	fmt.Fprintf(b, "-> Sent: %s", wsMessageType(typ))
+	_, _ = fmt.Fprintf(b, "-> Sent: %s", wsMessageType(typ))
 	if typ == websocket.CloseMessage {
-		fmt.Fprintf(b, " %s", wsCloseCode(closeCode))
+		_, _ = fmt.Fprintf(b, " %s", wsCloseCode(closeCode))
 	}
-	fmt.Fprint(b, "\n")
+	_, _ = fmt.Fprint(b, "\n")
 	if len(content) > 0 {
 		if typ == websocket.BinaryMessage {
-			fmt.Fprintf(b, "%v\n", content)
+			_, _ = fmt.Fprintf(b, "%v\n", content)
 		} else {
-			fmt.Fprintf(b, "%s\n", content)
+			_, _ = fmt.Fprintf(b, "%s\n", content)
 		}
 	}
-	fmt.Fprintf(b, "\n")
+	_, _ = fmt.Fprintf(b, "\n")
 	p.logger.Logf(b.String())
 }
 
 // WebsocketRead implements WebsocketPrinter.WebsocketRead.
 func (p DebugPrinter) WebsocketRead(typ int, content []byte, closeCode int) {
 	b := &bytes.Buffer{}
-	fmt.Fprintf(b, "<- Received: %s", wsMessageType(typ))
+	_, _ = fmt.Fprintf(b, "<- Received: %s", wsMessageType(typ))
 	if typ == websocket.CloseMessage {
-		fmt.Fprintf(b, " %s", wsCloseCode(closeCode))
+		_, _ = fmt.Fprintf(b, " %s", wsCloseCode(closeCode))
 	}
-	fmt.Fprint(b, "\n")
+	_, _ = fmt.Fprint(b, "\n")
 	if len(content) > 0 {
 		if typ == websocket.BinaryMessage {
-			fmt.Fprintf(b, "%v\n", content)
+			_, _ = fmt.Fprintf(b, "%v\n", content)
 		} else {
-			fmt.Fprintf(b, "%s\n", content)
+			_, _ = fmt.Fprintf(b, "%s\n", content)
 		}
 	}
-	fmt.Fprintf(b, "\n")
+	_, _ = fmt.Fprintf(b, "\n")
 	p.logger.Logf(b.String())
 }

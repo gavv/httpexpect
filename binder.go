@@ -202,13 +202,14 @@ func fast2std(stdreq *http.Request, fastresp *fasthttp.Response) *http.Response 
 		Request:    stdreq,
 	}
 
-	fastresp.Header.VisitAll(func(k, v []byte) {
+	fastresp.Header.All()(func(k, v []byte) bool {
 		sk := string(k)
 		sv := string(v)
 		if stdresp.Header == nil {
 			stdresp.Header = make(http.Header)
 		}
 		stdresp.Header.Add(sk, sv)
+		return true
 	})
 
 	if fastresp.Header.ContentLength() >= 0 {

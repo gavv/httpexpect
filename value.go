@@ -404,7 +404,7 @@ func (v *Value) IsNull() *Value {
 		return v
 	}
 
-	if !(v.value == nil) {
+	if v.value != nil {
 		opChain.fail(AssertionFailure{
 			Type:   AssertNil,
 			Actual: &AssertionValue{v.value},

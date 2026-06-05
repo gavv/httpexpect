@@ -15,7 +15,7 @@ func TestE2EFs_FastBinder(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.RemoveAll(tempdir)
+	defer os.RemoveAll(tempdir) // nolint:errcheck
 
 	if err := os.WriteFile(
 		path.Join(tempdir, "hello"), []byte("hello, world!"), 0666); err != nil {

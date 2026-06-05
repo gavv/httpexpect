@@ -186,7 +186,7 @@ func (r *Response) getContent(opChain *chain, method string) ([]byte, bool) {
 
 	content, err := io.ReadAll(resp.Body)
 
-	closeErr := resp.Body.Close()
+	closeErr := resp.Body.Close() // nolint:errcheck
 	if err == nil {
 		err = closeErr
 	}

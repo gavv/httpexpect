@@ -1,4 +1,12 @@
+version: "2"
 linters:
+  settings:
+    lll:
+      line-length: 90
+    revive:
+      rules:
+        - name: unused-parameter
+          disabled: true
   enable:
     - govet
     - revive
@@ -7,16 +15,4 @@ linters:
     - misspell
     - dupword
   disable:
-    - gosimple
-    - unused
     - errcheck
-
-linters-settings:
-  lll:
-    line-length: 90
-
-issues:
-  exclude-rules:
-    - text: unused-parameter
-      linters:
-        - revive

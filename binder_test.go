@@ -195,9 +195,9 @@ func TestFastBinder_Basic(t *testing.T) {
 		assert.Nil(t, ctx.TLSConnectionState())
 
 		headers := map[string][]string{}
-
-		ctx.Request.Header.VisitAll(func(k, v []byte) {
+		ctx.Request.Header.All()(func(k, v []byte) bool {
 			headers[string(k)] = append(headers[string(k)], string(v))
+			return true
 		})
 
 		expected := map[string][]string{
@@ -411,8 +411,9 @@ func TestFastBinder_Chunked(t *testing.T) {
 
 		headers := map[string][]string{}
 
-		ctx.Request.Header.VisitAll(func(k, v []byte) {
+		ctx.Request.Header.All()(func(k, v []byte) bool {
 			headers[string(k)] = append(headers[string(k)], string(v))
+			return true
 		})
 
 		expected := map[string][]string{

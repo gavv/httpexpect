@@ -11,7 +11,7 @@ type mockT struct {
 	fatalfInvoked bool
 }
 
-func (m *mockT) Fatalf(format string, args ...interface{}) {
+func (m *mockT) Fatalf(_ string, _ ...interface{}) {
 	m.fatalfInvoked = true
 }
 
@@ -19,7 +19,7 @@ type mockAssertT struct {
 	errorfInvoked bool
 }
 
-func (m *mockAssertT) Errorf(format string, args ...interface{}) {
+func (m *mockAssertT) Errorf(_ string, _ ...interface{}) {
 	m.errorfInvoked = true
 }
 

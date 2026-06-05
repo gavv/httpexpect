@@ -127,7 +127,7 @@ func (n *Number) IsEqual(value interface{}) *Number {
 		return n
 	}
 
-	if !(n.value == num) {
+	if n.value != num {
 		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{n.value},
@@ -277,7 +277,7 @@ func (n *Number) NotInDelta(value, delta float64) *Number {
 
 	diff := n.value - value
 
-	if !(diff < -delta || diff > delta) {
+	if diff >= -delta && diff <= delta {
 		opChain.fail(AssertionFailure{
 			Type:     AssertNotEqual,
 			Actual:   &AssertionValue{n.value},
@@ -562,7 +562,7 @@ func (n *Number) InRange(min, max interface{}) *Number {
 		return n
 	}
 
-	if !(n.value >= a && n.value <= b) {
+	if n.value < a || n.value > b {
 		opChain.fail(AssertionFailure{
 			Type:     AssertInRange,
 			Actual:   &AssertionValue{n.value},
@@ -746,7 +746,7 @@ func (n *Number) IsGt(value interface{}) *Number {
 		return n
 	}
 
-	if !(n.value > num) {
+	if n.value <= num {
 		opChain.fail(AssertionFailure{
 			Type:     AssertGt,
 			Actual:   &AssertionValue{n.value},
@@ -783,7 +783,7 @@ func (n *Number) IsGe(value interface{}) *Number {
 		return n
 	}
 
-	if !(n.value >= num) {
+	if n.value < num {
 		opChain.fail(AssertionFailure{
 			Type:     AssertGe,
 			Actual:   &AssertionValue{n.value},
@@ -820,7 +820,7 @@ func (n *Number) IsLt(value interface{}) *Number {
 		return n
 	}
 
-	if !(n.value < num) {
+	if n.value >= num {
 		opChain.fail(AssertionFailure{
 			Type:     AssertLt,
 			Actual:   &AssertionValue{n.value},
@@ -857,7 +857,7 @@ func (n *Number) IsLe(value interface{}) *Number {
 		return n
 	}
 
-	if !(n.value <= num) {
+	if n.value > num {
 		opChain.fail(AssertionFailure{
 			Type:     AssertLe,
 			Actual:   &AssertionValue{n.value},
@@ -951,7 +951,7 @@ func (n *Number) IsInt(bits ...int) *Number {
 	}
 
 	inum, acc := big.NewFloat(n.value).Int(nil)
-	if !(acc == big.Exact) {
+	if acc != big.Exact {
 		opChain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{n.value},
@@ -1059,7 +1059,7 @@ func (n *Number) NotInt(bits ...int) *Number {
 			imin := new(big.Int)
 			imin.Neg(imax)
 			imin.Sub(imin, big.NewInt(1))
-			if !(inum.Cmp(imin) < 0 || inum.Cmp(imax) > 0) {
+			if inum.Cmp(imin) >= 0 && inum.Cmp(imax) <= 0 {
 				opChain.fail(AssertionFailure{
 					Type:   AssertNotInRange,
 					Actual: &AssertionValue{n.value},
@@ -1141,7 +1141,7 @@ func (n *Number) IsUint(bits ...int) *Number {
 	}
 
 	inum, acc := big.NewFloat(n.value).Int(nil)
-	if !(acc == big.Exact) {
+	if acc != big.Exact {
 		opChain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{n.value},
@@ -1333,7 +1333,7 @@ func (n *Number) NotFinite() *Number {
 		return n
 	}
 
-	if !(math.IsInf(n.value, 0) || math.IsNaN(n.value)) {
+	if !(math.IsInf(n.value, 0) || math.IsNaN(n.value)) { //nolint:staticcheck
 		opChain.fail(AssertionFailure{
 			Type:   AssertValid,
 			Actual: &AssertionValue{n.value},

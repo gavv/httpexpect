@@ -34,7 +34,7 @@ func createWebsocketHandler(opts wsHandlerOpts) http.Handler {
 		if err != nil {
 			panic(err)
 		}
-		defer c.Close()
+		defer c.Close() // nolint:errcheck
 
 		for {
 			if opts.preRead != nil {
@@ -63,7 +63,7 @@ func websocketFastHandler(ctx *fasthttp.RequestCtx) {
 	ctx.Response.Header.Set("X-Test", "test_header")
 
 	err := upgrader.Upgrade(ctx, func(c *fastwebsocket.Conn) {
-		defer c.Close()
+		defer c.Close() // nolint:errcheck
 
 		for {
 			mt, message, err := c.ReadMessage()

@@ -656,7 +656,6 @@ func TestObject_InList(t *testing.T) {
 	t.Run("canonization", func(t *testing.T) {
 		type (
 			myMap map[string]interface{}
-			myInt int
 		)
 		reporter := newMockReporter(t)
 

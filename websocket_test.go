@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func noWsPreSteps(ws *Websocket) {}
+func noWsPreSteps(_ *Websocket) {}
 
 func TestWebsocket_FailedChain(t *testing.T) {
 	reporter := newMockReporter(t)

@@ -117,7 +117,7 @@ func (b *Boolean) IsTrue() *Boolean {
 		return b
 	}
 
-	if !(b.value == true) {
+	if !b.value {
 		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{b.value},
@@ -145,7 +145,7 @@ func (b *Boolean) IsFalse() *Boolean {
 		return b
 	}
 
-	if !(b.value == false) {
+	if b.value {
 		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{b.value},
@@ -183,7 +183,7 @@ func (b *Boolean) IsEqual(value bool) *Boolean {
 		return b
 	}
 
-	if !(b.value == value) {
+	if b.value != value {
 		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{b.value},

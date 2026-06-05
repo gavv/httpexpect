@@ -377,8 +377,8 @@ func (dt *DateTime) InRange(min, max time.Time) *DateTime {
 		return dt
 	}
 
-	if !((dt.value.After(min) || dt.value.Equal(min)) &&
-		(dt.value.Before(max) || dt.value.Equal(max))) {
+	if !((dt.value.After(min) || dt.value.Equal(min)) && //nolint:staticcheck
+		(dt.value.Before(max) || dt.value.Equal(max))) { //nolint:staticcheck
 		opChain.fail(AssertionFailure{
 			Type:     AssertInRange,
 			Actual:   &AssertionValue{dt.value},
@@ -564,7 +564,7 @@ func (dt *DateTime) IsGe(value time.Time) *DateTime {
 		return dt
 	}
 
-	if !(dt.value.After(value) || dt.value.Equal(value)) {
+	if !dt.value.After(value) && !dt.value.Equal(value) {
 		opChain.fail(AssertionFailure{
 			Type:     AssertGe,
 			Actual:   &AssertionValue{dt.value},
@@ -620,7 +620,7 @@ func (dt *DateTime) IsLe(value time.Time) *DateTime {
 		return dt
 	}
 
-	if !(dt.value.Before(value) || dt.value.Equal(value)) {
+	if !dt.value.Before(value) && !dt.value.Equal(value) {
 		opChain.fail(AssertionFailure{
 			Type:     AssertLe,
 			Actual:   &AssertionValue{dt.value},

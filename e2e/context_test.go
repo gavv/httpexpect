@@ -109,7 +109,7 @@ func newErrorSuppressor(
 	}
 }
 
-func (h *errorSuppressor) Success(ctx *httpexpect.AssertionContext) {
+func (h *errorSuppressor) Success(_ *httpexpect.AssertionContext) {
 }
 
 func (h *errorSuppressor) Failure(

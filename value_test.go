@@ -893,13 +893,11 @@ func TestValue_PathTypes(t *testing.T) {
 	})
 
 	t.Run("boolean", func(t *testing.T) {
-		data := true
-
 		reporter := newMockReporter(t)
 
-		value := NewValue(reporter, data)
+		value := NewValue(reporter, true)
 
-		assert.Equal(t, data, value.Path("$").Raw())
+		assert.Equal(t, true, value.Path("$").Raw())
 		value.chain.assert(t, success)
 	})
 
@@ -1216,7 +1214,7 @@ func TestValue_Schema(t *testing.T) {
 			"bar": 1,
 		}
 		tmp, _ := os.CreateTemp("", "httpexpect")
-		defer os.Remove(tmp.Name())
+		defer os.Remove(tmp.Name()) // nolint:errcheck
 
 		_, err := tmp.Write([]byte(schema))
 		require.Nil(t, err)
@@ -1241,7 +1239,7 @@ func TestValue_Schema(t *testing.T) {
 		}
 
 		tmp, _ := os.CreateTemp("", "httpexpect")
-		defer os.Remove(tmp.Name())
+		defer os.Remove(tmp.Name()) // nolint:errcheck
 
 		_, err := tmp.Write([]byte(schema))
 		require.Nil(t, err)

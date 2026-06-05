@@ -139,7 +139,7 @@ func (s *String) IsEmpty() *String {
 		return s
 	}
 
-	if !(s.value == "") {
+	if s.value != "" {
 		opChain.fail(AssertionFailure{
 			Type:   AssertEmpty,
 			Actual: &AssertionValue{s.value},
@@ -198,7 +198,7 @@ func (s *String) IsEqual(value string) *String {
 		return s
 	}
 
-	if !(s.value == value) {
+	if s.value != value {
 		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{s.value},

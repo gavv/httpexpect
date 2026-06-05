@@ -78,7 +78,7 @@ func (mf *mockFormatter) FormatSuccess(ctx *AssertionContext) string {
 }
 
 func (mf *mockFormatter) FormatFailure(
-	ctx *AssertionContext, failure *AssertionFailure,
+	ctx *AssertionContext, _ *AssertionFailure,
 ) string {
 	mf.formattedFailure++
 	return ctx.TestName
@@ -126,11 +126,11 @@ func (mp *mockWebsocketPrinter) Request(*http.Request) {
 func (mp *mockWebsocketPrinter) Response(*http.Response, time.Duration) {
 }
 
-func (mp *mockWebsocketPrinter) WebsocketWrite(typ int, content []byte, closeCode int) {
+func (mp *mockWebsocketPrinter) WebsocketWrite(_ int, _ []byte, _ int) {
 	mp.isWrittenTo = true
 }
 
-func (mp *mockWebsocketPrinter) WebsocketRead(typ int, content []byte, closeCode int) {
+func (mp *mockWebsocketPrinter) WebsocketRead(_ int, _ []byte, _ int) {
 	mp.isReadFrom = true
 }
 
@@ -143,7 +143,6 @@ type mockWebsocketConn struct {
 	readDlError  error
 	writeDlError error
 	msgType      int
-	msg          []byte
 }
 
 func (mc *mockWebsocketConn) Subprotocol() string {
@@ -154,11 +153,11 @@ func (mc *mockWebsocketConn) Close() error {
 	return mc.closeError
 }
 
-func (mc *mockWebsocketConn) SetReadDeadline(t time.Time) error {
+func (mc *mockWebsocketConn) SetReadDeadline(_ time.Time) error {
 	return mc.readDlError
 }
 
-func (mc *mockWebsocketConn) SetWriteDeadline(t time.Time) error {
+func (mc *mockWebsocketConn) SetWriteDeadline(_ time.Time) error {
 	return mc.writeDlError
 }
 
@@ -166,7 +165,7 @@ func (mc *mockWebsocketConn) ReadMessage() (messageType int, p []byte, err error
 	return mc.msgType, []byte{}, mc.readMsgErr
 }
 
-func (mc *mockWebsocketConn) WriteMessage(messageType int, data []byte) error {
+func (mc *mockWebsocketConn) WriteMessage(_ int, _ []byte) error {
 	return mc.writeMsgErr
 }
 
@@ -356,6 +355,6 @@ func (me *mockError) Error() string {
 }
 
 // mock sleep function
-func mockSleep(time.Duration) <-chan time.Time {
+func mockSleep(_ time.Duration) <-chan time.Time {
 	return time.After(0)
 }

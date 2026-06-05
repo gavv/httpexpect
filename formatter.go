@@ -354,7 +354,7 @@ func (f *DefaultFormatter) fillGeneral(
 }
 
 func (f *DefaultFormatter) fillErrors(
-	data *FormatData, ctx *AssertionContext, failure *AssertionFailure,
+	data *FormatData, _ *AssertionContext, failure *AssertionFailure,
 ) {
 	data.Errors = []string{}
 
@@ -367,7 +367,7 @@ func (f *DefaultFormatter) fillErrors(
 }
 
 func (f *DefaultFormatter) fillActual(
-	data *FormatData, ctx *AssertionContext, failure *AssertionFailure,
+	data *FormatData, _ *AssertionContext, failure *AssertionFailure,
 ) {
 	switch failure.Type { //nolint
 	case AssertUsage, AssertOperation:
@@ -384,7 +384,7 @@ func (f *DefaultFormatter) fillActual(
 }
 
 func (f *DefaultFormatter) fillExpected(
-	data *FormatData, ctx *AssertionContext, failure *AssertionFailure,
+	data *FormatData, _ *AssertionContext, failure *AssertionFailure,
 ) {
 	switch failure.Type {
 	case AssertUsage, AssertOperation,
@@ -478,7 +478,7 @@ func (f *DefaultFormatter) fillExpected(
 }
 
 func (f *DefaultFormatter) fillIsNegation(
-	data *FormatData, ctx *AssertionContext, failure *AssertionFailure,
+	data *FormatData, _ *AssertionContext, failure *AssertionFailure,
 ) {
 	switch failure.Type {
 	case AssertUsage, AssertOperation,
@@ -518,7 +518,7 @@ func (f *DefaultFormatter) fillIsNegation(
 }
 
 func (f *DefaultFormatter) fillIsComparison(
-	data *FormatData, ctx *AssertionContext, failure *AssertionFailure,
+	data *FormatData, _ *AssertionContext, failure *AssertionFailure,
 ) {
 	switch failure.Type { //nolint
 	case AssertLt, AssertLe, AssertGt, AssertGe:
@@ -527,21 +527,21 @@ func (f *DefaultFormatter) fillIsComparison(
 }
 
 func (f *DefaultFormatter) fillReference(
-	data *FormatData, ctx *AssertionContext, failure *AssertionFailure,
+	data *FormatData, _ *AssertionContext, failure *AssertionFailure,
 ) {
 	data.HaveReference = true
 	data.Reference = f.formatValue(failure.Reference.Value)
 }
 
 func (f *DefaultFormatter) fillDelta(
-	data *FormatData, ctx *AssertionContext, failure *AssertionFailure,
+	data *FormatData, _ *AssertionContext, failure *AssertionFailure,
 ) {
 	data.HaveDelta = true
 	data.Delta = f.formatValue(failure.Delta.Value)
 }
 
 func (f *DefaultFormatter) fillRequest(
-	data *FormatData, ctx *AssertionContext, failure *AssertionFailure,
+	data *FormatData, ctx *AssertionContext, _ *AssertionFailure,
 ) {
 	if !f.DisableRequests && ctx.Request != nil && ctx.Request.httpReq != nil {
 		dump, err := httputil.DumpRequest(ctx.Request.httpReq, false)
@@ -555,7 +555,7 @@ func (f *DefaultFormatter) fillRequest(
 }
 
 func (f *DefaultFormatter) fillResponse(
-	data *FormatData, ctx *AssertionContext, failure *AssertionFailure,
+	data *FormatData, ctx *AssertionContext, _ *AssertionFailure,
 ) {
 	if !f.DisableResponses && ctx.Response != nil && ctx.Response.httpResp != nil {
 		dump, err := httputil.DumpResponse(ctx.Response.httpResp, false)
@@ -563,7 +563,7 @@ func (f *DefaultFormatter) fillResponse(
 			return
 		}
 
-		text := strings.Replace(string(dump), "\r\n", "\n", -1)
+		text := strings.Replace(string(dump), "\r\n", "\n", -1) // nolint:staticcheck
 		lines := strings.SplitN(text, "\n", 2)
 
 		data.HaveResponse = true
@@ -572,7 +572,7 @@ func (f *DefaultFormatter) fillResponse(
 }
 
 func (f *DefaultFormatter) fillStacktrace(
-	data *FormatData, ctx *AssertionContext, failure *AssertionFailure,
+	data *FormatData, _ *AssertionContext, failure *AssertionFailure,
 ) {
 	data.Stacktrace = []string{}
 
@@ -796,13 +796,10 @@ func (f *DefaultFormatter) applySeparator(numStr string, dir int) string {
 	switch f.DigitSeparator {
 	case DigitSeparatorUnderscore:
 		separator = "_"
-		break
 	case DigitSeparatorApostrophe:
 		separator = "'"
-		break
 	case DigitSeparatorComma:
 		separator = ","
-		break
 	case DigitSeparatorNone:
 	default:
 		return numStr
@@ -905,7 +902,6 @@ func colorMode() int {
 		}
 
 		colorsSupportedMode = colorsUnsupported
-		return
 	})
 
 	return colorsSupportedMode
@@ -1031,7 +1027,7 @@ var defaultTemplateFuncs = template.FuncMap{
 
 			var words []string
 			if isFirstLine {
-				words = strings.SplitN(line, " ", -1)
+				words = strings.SplitN(line, " ", -1) // nolint:staticcheck
 			} else {
 				words = strings.SplitN(line, " ", 2)
 			}

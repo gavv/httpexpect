@@ -215,7 +215,7 @@ func (m *Match) IsEmpty() *Match {
 		return m
 	}
 
-	if !(len(m.submatchValues) == 0) {
+	if len(m.submatchValues) != 0 {
 		opChain.fail(AssertionFailure{
 			Type:   AssertEmpty,
 			Actual: &AssertionValue{m.submatchValues},
@@ -242,7 +242,7 @@ func (m *Match) NotEmpty() *Match {
 		return m
 	}
 
-	if !(len(m.submatchValues) != 0) {
+	if len(m.submatchValues) == 0 {
 		opChain.fail(AssertionFailure{
 			Type:   AssertNotEmpty,
 			Actual: &AssertionValue{m.submatchValues},

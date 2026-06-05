@@ -39,8 +39,9 @@ func createChunkedFastHandler(t *testing.T) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		headers := map[string][]string{}
 
-		ctx.Request.Header.VisitAll(func(k, v []byte) {
+		ctx.Request.Header.All()(func(k, v []byte) bool {
 			headers[string(k)] = append(headers[string(k)], string(v))
+			return true
 		})
 
 		assert.Equal(t, []string{"chunked"}, headers["Transfer-Encoding"])

@@ -1,4 +1,16 @@
+version: "2"
 linters:
+  settings:
+    lll:
+      line-length: 90
+    revive:
+      rules:
+        - name: unused-parameter
+          disabled: true
+        - name: error-strings
+          disabled: true
+        - name: indent-error-flow
+          disabled: true
   enable:
     - govet
     - revive
@@ -7,22 +19,3 @@ linters:
     - lll
     - misspell
     - dupword
-  disable:
-    - gosimple
-    - unused
-
-linters-settings:
-  lll:
-    line-length: 90
-
-issues:
-  exclude-rules:
-    - text: unused-parameter
-      linters:
-        - revive
-    - text: error-strings
-      linters:
-        - revive
-    - text: indent-error-flow
-      linters:
-        - revive

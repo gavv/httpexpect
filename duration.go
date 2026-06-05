@@ -98,7 +98,7 @@ func (d *Duration) NotSet() *Duration {
 		return d
 	}
 
-	if !(d.value == nil) {
+	if d.value != nil {
 		opChain.fail(AssertionFailure{
 			Type:   AssertNotNil,
 			Actual: &AssertionValue{d.value},
@@ -136,7 +136,7 @@ func (d *Duration) IsEqual(value time.Duration) *Duration {
 		return d
 	}
 
-	if !(*d.value == value) {
+	if *d.value != value {
 		opChain.fail(AssertionFailure{
 			Type:     AssertEqual,
 			Actual:   &AssertionValue{d.value},
@@ -219,7 +219,7 @@ func (d *Duration) IsGt(value time.Duration) *Duration {
 		return d
 	}
 
-	if !(*d.value > value) {
+	if *d.value <= value {
 		opChain.fail(AssertionFailure{
 			Type:     AssertGt,
 			Actual:   &AssertionValue{d.value},
@@ -258,7 +258,7 @@ func (d *Duration) IsGe(value time.Duration) *Duration {
 		return d
 	}
 
-	if !(*d.value >= value) {
+	if *d.value < value {
 		opChain.fail(AssertionFailure{
 			Type:     AssertGe,
 			Actual:   &AssertionValue{d.value},
@@ -297,7 +297,7 @@ func (d *Duration) IsLt(value time.Duration) *Duration {
 		return d
 	}
 
-	if !(*d.value < value) {
+	if *d.value >= value {
 		opChain.fail(AssertionFailure{
 			Type:     AssertLt,
 			Actual:   &AssertionValue{d.value},
@@ -336,7 +336,7 @@ func (d *Duration) IsLe(value time.Duration) *Duration {
 		return d
 	}
 
-	if !(*d.value <= value) {
+	if *d.value > value {
 		opChain.fail(AssertionFailure{
 			Type:     AssertLe,
 			Actual:   &AssertionValue{d.value},
@@ -396,7 +396,7 @@ func (d *Duration) InRange(min, max time.Duration) *Duration {
 		return d
 	}
 
-	if !(*d.value >= min && *d.value <= max) {
+	if *d.value < min || *d.value > max {
 		opChain.fail(AssertionFailure{
 			Type:     AssertInRange,
 			Actual:   &AssertionValue{d.value},

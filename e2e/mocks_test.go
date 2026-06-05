@@ -5,6 +5,6 @@ type mockReporter struct {
 }
 
 // Errorf implements Reporter.Errorf.
-func (r *mockReporter) Errorf(message string, args ...interface{}) {
+func (r *mockReporter) Errorf(_ string, _ ...interface{}) {
 	r.failed = true
 }

@@ -20,14 +20,14 @@ type mockPrinter struct {
 func (p *mockPrinter) Request(req *http.Request) {
 	if req.Body != nil {
 		p.reqBody, _ = io.ReadAll(req.Body)
-		req.Body.Close()
+		req.Body.Close() // nolint:errcheck
 	}
 }
 
 func (p *mockPrinter) Response(resp *http.Response, rtt time.Duration) {
 	if resp.Body != nil {
 		p.respBody, _ = io.ReadAll(resp.Body)
-		resp.Body.Close()
+		resp.Body.Close() // nolint:errcheck
 	}
 	p.rtt = rtt
 }

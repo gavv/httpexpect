@@ -901,7 +901,7 @@ func (r *Request) WithRetryDelay(minDelay, maxDelay time.Duration) *Request {
 		return r
 	}
 
-	if !(minDelay <= maxDelay) {
+	if minDelay > maxDelay {
 		opChain.fail(AssertionFailure{
 			Type: AssertValid,
 			Actual: &AssertionValue{
@@ -2152,7 +2152,7 @@ func (r *Request) withFile(
 			return
 		}
 		rd = f
-		defer f.Close()
+		defer f.Close() // nolint:errcheck
 	}
 
 	if _, err := io.Copy(wr, rd); err != nil {
@@ -2414,7 +2414,7 @@ func (r *Request) sendWebsocketRequest(opChain *chain) (
 		return resp, err
 	})
 
-	if err != nil && err != websocket.ErrBadHandshake {
+	if err != nil && !errors.Is(err, websocket.ErrBadHandshake) {
 		opChain.fail(AssertionFailure{
 			Type: AssertOperation,
 			Errors: []error{
@@ -2515,7 +2515,7 @@ func (r *Request) retryRequest(reqFunc func() (*http.Response, error)) (
 		}
 
 		if resp != nil && resp.Body != nil {
-			resp.Body.Close()
+			resp.Body.Close() // nolint:errcheck
 		}
 
 		if configCtx := r.config.Context; configCtx != nil {
@@ -2601,10 +2601,7 @@ func (r *Request) setupRedirects(opChain *chain) {
 						"WithRedirectPolicy() can be used only if Client is *http.Client"),
 				},
 			})
-			return
-		}
-
-		if r.maxRedirects != -1 {
+		} else if r.maxRedirects != -1 {
 			opChain.fail(AssertionFailure{
 				Type: AssertUsage,
 				Errors: []error{
@@ -2612,14 +2609,14 @@ func (r *Request) setupRedirects(opChain *chain) {
 						"WithMaxRedirects() can be used only if Client is *http.Client"),
 				},
 			})
-			return
 		}
-	} else {
-		if r.redirectPolicy != defaultRedirectPolicy || r.maxRedirects != -1 {
-			clientCopy := *httpClient
-			httpClient = &clientCopy
-			r.config.Client = &clientCopy
-		}
+		return
+	}
+
+	if r.redirectPolicy != defaultRedirectPolicy || r.maxRedirects != -1 {
+		clientCopy := *httpClient
+		httpClient = &clientCopy
+		r.config.Client = &clientCopy
 	}
 
 	if r.redirectPolicy == DontFollowRedirects {

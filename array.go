@@ -715,7 +715,7 @@ func (a *Array) IsEmpty() *Array {
 		return a
 	}
 
-	if !(len(a.value) == 0) {
+	if len(a.value) > 0 {
 		opChain.fail(AssertionFailure{
 			Type:   AssertEmpty,
 			Actual: &AssertionValue{a.value},
@@ -1240,7 +1240,7 @@ func (a *Array) NotContains(values ...interface{}) *Array {
 	}
 
 	for _, expected := range elements {
-		if !(countElement(a.value, expected) == 0) {
+		if countElement(a.value, expected) > 0 {
 			opChain.fail(AssertionFailure{
 				Type:      AssertNotContainsElement,
 				Actual:    &AssertionValue{a.value},

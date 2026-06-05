@@ -1811,8 +1811,8 @@ func TestRequest_BodyMultipart(t *testing.T) {
 		fh, _ := os.CreateTemp("", "httpexpect")
 		filename2 := fh.Name()
 		_, _ = fh.WriteString("2")
-		fh.Close()
-		defer os.Remove(filename2)
+		_ = fh.Close()
+		defer os.Remove(filename2) // nolint:errcheck
 
 		req.WithMultipart()
 		req.WithForm(map[string]string{"a": "1"})
