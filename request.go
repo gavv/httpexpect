@@ -2495,13 +2495,13 @@ func (r *Request) retryRequest(reqFunc func() (*http.Response, error)) (
 
 		if resp != nil {
 			for _, printer := range r.config.Printers {
-				if resp.Body != nil {
-					resp.Body.(*bodyWrapper).Rewind()
-				}
 				// Make a copy to avoid accidental modification of request.
 				// See comment above.
 				httpRespCopy := *resp
 				printer.Response(&httpRespCopy, elapsed)
+				if resp.Body != nil {
+					resp.Body.(*bodyWrapper).Rewind()
+				}
 			}
 		}
 
